@@ -42,6 +42,7 @@ class AgendaEvent extends Component {
       id,
       author,
       title,
+      displayTitle,
       titleSlug,
       releaseDate,
       monitored,
@@ -96,7 +97,7 @@ class AgendaEvent extends Component {
 
           <div className={styles.bookTitle}>
             <Link to={`/book/${titleSlug}`}>
-              {title}
+              {displayTitle || title}
             </Link>
           </div>
 
@@ -124,6 +125,7 @@ AgendaEvent.propTypes = {
   id: PropTypes.number.isRequired,
   author: PropTypes.object.isRequired,
   title: PropTypes.string.isRequired,
+  displayTitle: PropTypes.string,
   titleSlug: PropTypes.string.isRequired,
   bookType: PropTypes.string.isRequired,
   releaseDate: PropTypes.string.isRequired,

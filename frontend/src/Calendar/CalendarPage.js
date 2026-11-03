@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import NoAuthor from 'Author/NoAuthor';
+import Alert from 'Components/Alert';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import Measure from 'Components/Measure';
 import FilterMenu from 'Components/Menu/FilterMenu';
@@ -9,7 +10,7 @@ import PageContentBody from 'Components/Page/PageContentBody';
 import PageToolbar from 'Components/Page/Toolbar/PageToolbar';
 import PageToolbarButton from 'Components/Page/Toolbar/PageToolbarButton';
 import PageToolbarSection from 'Components/Page/Toolbar/PageToolbarSection';
-import { align, icons } from 'Helpers/Props';
+import { align, icons, kinds } from 'Helpers/Props';
 import getErrorMessage from 'Utilities/Object/getErrorMessage';
 import translate from 'Utilities/String/translate';
 import CalendarConnector from './CalendarConnector';
@@ -135,6 +136,13 @@ class CalendarPage extends Component {
           className={styles.calendarPageBody}
           innerClassName={styles.calendarInnerPageBody}
         >
+          {
+            selectedFilterKey === 'monitored' &&
+              <Alert kind={kinds.INFO}>
+                Only monitored books from monitored authors are shown. Choose All in the filter menu to include unmonitored releases without enabling downloads.
+              </Alert>
+          }
+
           {
             authorIsFetching && !authorIsPopulated &&
               <LoadingIndicator />

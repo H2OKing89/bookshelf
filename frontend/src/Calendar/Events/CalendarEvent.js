@@ -46,6 +46,7 @@ class CalendarEvent extends Component {
       id,
       author,
       title,
+      displayTitle,
       titleSlug,
       releaseDate,
       monitored,
@@ -106,7 +107,7 @@ class CalendarEvent extends Component {
           <div className={styles.bookInfo}>
             <div className={styles.bookTitle}>
               <Link to={`/book/${titleSlug}`}>
-                {title}
+                {displayTitle || title}
               </Link>
             </div>
           </div>
@@ -120,6 +121,7 @@ CalendarEvent.propTypes = {
   id: PropTypes.number.isRequired,
   author: PropTypes.object.isRequired,
   title: PropTypes.string.isRequired,
+  displayTitle: PropTypes.string,
   titleSlug: PropTypes.string.isRequired,
   statistics: PropTypes.object.isRequired,
   releaseDate: PropTypes.string.isRequired,
