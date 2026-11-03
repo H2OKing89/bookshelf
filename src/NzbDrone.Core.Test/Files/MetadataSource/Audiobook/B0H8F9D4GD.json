@@ -1,0 +1,129 @@
+{
+  "region": "us",
+  "audnexus": {
+    "asin": "B0H8F9D4GD",
+    "region": "us",
+    "title": "My Girlfriend Cheated on Me, and Now My Flirty Underclassman Won't Leave Me Alone, Vol. 1",
+    "subtitle": "Light Novel",
+    "authors": [
+      {
+        "asin": "B0GVW7FF1Q",
+        "name": "Yu Omiya"
+      }
+    ],
+    "narrators": [
+      {
+        "name": "David Lee Huynh"
+      }
+    ],
+    "genres": [
+      {
+        "asin": "18580518011",
+        "name": "Romance",
+        "type": "genre"
+      },
+      {
+        "asin": "18580535011",
+        "name": "Romantic Comedy",
+        "type": "tag"
+      }
+    ],
+    "seriesPrimary": {
+      "asin": "B0H8QJKN8Z",
+      "name": "My Girlfriend Cheated on Me, and Now My Flirty Underclassman Won't Leave Me Alone",
+      "position": "1"
+    },
+    "releaseDate": "2026-07-10T00:00:00.000Z",
+    "language": "english",
+    "publisherName": "Seven Seas Entertainment, Seven Seas Siren",
+    "runtimeLengthMin": 309,
+    "formatType": "unabridged",
+    "rating": "4.7",
+    "isbn": ""
+  },
+  "audible": {
+    "status": 200,
+    "body": {
+      "product": {
+        "asin": "B0H8F9D4GD",
+        "title": "My Girlfriend Cheated on Me, and Now My Flirty Underclassman Won't Leave Me Alone, Vol. 1",
+        "subtitle": "Light Novel",
+        "authors": [
+          {
+            "asin": "B0GVW7FF1Q",
+            "name": "Yu Omiya"
+          }
+        ],
+        "narrators": [
+          {
+            "name": "David Lee Huynh"
+          }
+        ],
+        "category_ladders": [
+          {
+            "ladder": [
+              {
+                "id": "18580518011",
+                "name": "Romance"
+              },
+              {
+                "id": "18580535011",
+                "name": "Romantic Comedy"
+              }
+            ],
+            "root": "Genres"
+          }
+        ],
+        "series": [
+          {
+            "asin": "B0H8QJKN8Z",
+            "sequence": "1",
+            "title": "My Girlfriend Cheated on Me, and Now My Flirty Underclassman Won't Leave Me Alone",
+            "url": "/pd/My-Girlfriend-Cheated-on-Me-and-Now-My-Flirty-Underclassman-Wont-Leave-Me-Alone-Audiobook/B0H8QJKN8Z"
+          }
+        ],
+        "release_date": "2026-07-10",
+        "language": "english",
+        "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+        "runtime_length_min": 309,
+        "format_type": "unabridged",
+        "rating": {
+          "num_reviews": 2,
+          "overall_distribution": {
+            "average_rating": 4.7,
+            "display_average_rating": "4.7",
+            "display_stars": 4.5,
+            "num_five_star_ratings": 8,
+            "num_four_star_ratings": 1,
+            "num_one_star_ratings": 0,
+            "num_ratings": 10,
+            "num_three_star_ratings": 1,
+            "num_two_star_ratings": 0
+          },
+          "performance_distribution": {
+            "average_rating": 4.8,
+            "display_average_rating": "4.8",
+            "display_stars": 5.0,
+            "num_five_star_ratings": 8,
+            "num_four_star_ratings": 2,
+            "num_one_star_ratings": 0,
+            "num_ratings": 10,
+            "num_three_star_ratings": 0,
+            "num_two_star_ratings": 0
+          },
+          "story_distribution": {
+            "average_rating": 4.2,
+            "display_average_rating": "4.2",
+            "display_stars": 4.0,
+            "num_five_star_ratings": 7,
+            "num_four_star_ratings": 1,
+            "num_one_star_ratings": 1,
+            "num_ratings": 10,
+            "num_three_star_ratings": 0,
+            "num_two_star_ratings": 1
+          }
+        }
+      }
+    }
+  }
+}

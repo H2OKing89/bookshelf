@@ -1,0 +1,200 @@
+{
+  "region": "us",
+  "audnexus": {
+    "asin": "B0BK9W82PQ",
+    "region": "us",
+    "title": "Primal Hunter 4",
+    "subtitle": "A LitRPG Adventure (The Primal Hunter)",
+    "authors": [
+      {
+        "asin": "B09MV5DTRC",
+        "name": "Zogarth"
+      }
+    ],
+    "narrators": [
+      {
+        "name": "Travis Baldree"
+      }
+    ],
+    "genres": [
+      {
+        "asin": "18580606011",
+        "name": "Science Fiction & Fantasy",
+        "type": "genre"
+      },
+      {
+        "asin": "18580607011",
+        "name": "Fantasy",
+        "type": "tag"
+      },
+      {
+        "asin": "18580613011",
+        "name": "Dragons & Mythical Creatures",
+        "type": "tag"
+      },
+      {
+        "asin": "18580615011",
+        "name": "Epic",
+        "type": "tag"
+      },
+      {
+        "asin": "18580628011",
+        "name": "Science Fiction",
+        "type": "tag"
+      },
+      {
+        "asin": "18580633011",
+        "name": "Cyberpunk",
+        "type": "tag"
+      }
+    ],
+    "seriesPrimary": {
+      "asin": "B09MZKWFTB",
+      "name": "The Primal Hunter",
+      "position": "4"
+    },
+    "releaseDate": "2022-12-06T00:00:00.000Z",
+    "language": "english",
+    "publisherName": "Aethon Audio",
+    "runtimeLengthMin": 1228,
+    "formatType": "unabridged",
+    "rating": "4.9",
+    "isbn": ""
+  },
+  "audible": {
+    "status": 200,
+    "body": {
+      "product": {
+        "asin": "B0BK9W82PQ",
+        "title": "Primal Hunter 4",
+        "subtitle": "A LitRPG Adventure (The Primal Hunter)",
+        "authors": [
+          {
+            "asin": "B09MV5DTRC",
+            "name": "Zogarth"
+          }
+        ],
+        "narrators": [
+          {
+            "name": "Travis Baldree"
+          }
+        ],
+        "category_ladders": [
+          {
+            "ladder": [
+              {
+                "id": "18580606011",
+                "name": "Science Fiction & Fantasy"
+              },
+              {
+                "id": "18580607011",
+                "name": "Fantasy"
+              }
+            ],
+            "root": "Genres"
+          },
+          {
+            "ladder": [
+              {
+                "id": "18580606011",
+                "name": "Science Fiction & Fantasy"
+              },
+              {
+                "id": "18580607011",
+                "name": "Fantasy"
+              },
+              {
+                "id": "18580613011",
+                "name": "Dragons & Mythical Creatures"
+              }
+            ],
+            "root": "Genres"
+          },
+          {
+            "ladder": [
+              {
+                "id": "18580606011",
+                "name": "Science Fiction & Fantasy"
+              },
+              {
+                "id": "18580607011",
+                "name": "Fantasy"
+              },
+              {
+                "id": "18580615011",
+                "name": "Epic"
+              }
+            ],
+            "root": "Genres"
+          },
+          {
+            "ladder": [
+              {
+                "id": "18580606011",
+                "name": "Science Fiction & Fantasy"
+              },
+              {
+                "id": "18580628011",
+                "name": "Science Fiction"
+              },
+              {
+                "id": "18580633011",
+                "name": "Cyberpunk"
+              }
+            ],
+            "root": "Genres"
+          }
+        ],
+        "series": [
+          {
+            "asin": "B09MZKWFTB",
+            "sequence": "4",
+            "title": "The Primal Hunter",
+            "url": "/pd/The-Primal-Hunter-Audiobook/B09MZKWFTB"
+          }
+        ],
+        "release_date": "2022-12-06",
+        "language": "english",
+        "publisher_name": "Aethon Audio",
+        "runtime_length_min": 1228,
+        "format_type": "unabridged",
+        "rating": {
+          "num_reviews": 492,
+          "overall_distribution": {
+            "average_rating": 4.865936190783113,
+            "display_average_rating": "4.9",
+            "display_stars": 5.0,
+            "num_five_star_ratings": 8330,
+            "num_four_star_ratings": 784,
+            "num_one_star_ratings": 21,
+            "num_ratings": 9309,
+            "num_three_star_ratings": 142,
+            "num_two_star_ratings": 32
+          },
+          "performance_distribution": {
+            "average_rating": 4.93382728666326,
+            "display_average_rating": "4.9",
+            "display_stars": 5.0,
+            "num_five_star_ratings": 7365,
+            "num_four_star_ratings": 419,
+            "num_one_star_ratings": 2,
+            "num_ratings": 7828,
+            "num_three_star_ratings": 35,
+            "num_two_star_ratings": 7
+          },
+          "story_distribution": {
+            "average_rating": 4.844342037890425,
+            "display_average_rating": "4.8",
+            "display_stars": 5.0,
+            "num_five_star_ratings": 6913,
+            "num_four_star_ratings": 680,
+            "num_one_star_ratings": 29,
+            "num_ratings": 7812,
+            "num_three_star_ratings": 150,
+            "num_two_star_ratings": 40
+          }
+        }
+      }
+    }
+  }
+}

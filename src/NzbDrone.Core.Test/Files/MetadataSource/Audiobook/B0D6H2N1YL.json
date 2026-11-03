@@ -1,0 +1,158 @@
+{
+  "region": "us",
+  "audnexus": {
+    "asin": "B0D6H2N1YL",
+    "region": "us",
+    "title": "The Primal Hunter 9: A LitRPG Adventure",
+    "authors": [
+      {
+        "asin": "B09MV5DTRC",
+        "name": "Zogarth"
+      }
+    ],
+    "narrators": [
+      {
+        "name": "Travis Baldree"
+      }
+    ],
+    "genres": [
+      {
+        "asin": "18580606011",
+        "name": "Science Fiction & Fantasy",
+        "type": "genre"
+      },
+      {
+        "asin": "18580607011",
+        "name": "Fantasy",
+        "type": "tag"
+      },
+      {
+        "asin": "18580608011",
+        "name": "Action & Adventure",
+        "type": "tag"
+      },
+      {
+        "asin": "18580615011",
+        "name": "Epic",
+        "type": "tag"
+      }
+    ],
+    "seriesPrimary": {
+      "asin": "B09MZKWFTB",
+      "name": "The Primal Hunter",
+      "position": "9"
+    },
+    "releaseDate": "2024-07-02T00:00:00.000Z",
+    "language": "english",
+    "publisherName": "Aethon Audio",
+    "runtimeLengthMin": 1223,
+    "formatType": "unabridged",
+    "rating": "4.9",
+    "isbn": ""
+  },
+  "audible": {
+    "status": 200,
+    "body": {
+      "product": {
+        "asin": "B0D6H2N1YL",
+        "title": "The Primal Hunter 9: A LitRPG Adventure",
+        "authors": [
+          {
+            "asin": "B09MV5DTRC",
+            "name": "Zogarth"
+          }
+        ],
+        "narrators": [
+          {
+            "name": "Travis Baldree"
+          }
+        ],
+        "category_ladders": [
+          {
+            "ladder": [
+              {
+                "id": "18580606011",
+                "name": "Science Fiction & Fantasy"
+              },
+              {
+                "id": "18580607011",
+                "name": "Fantasy"
+              },
+              {
+                "id": "18580608011",
+                "name": "Action & Adventure"
+              }
+            ],
+            "root": "Genres"
+          },
+          {
+            "ladder": [
+              {
+                "id": "18580606011",
+                "name": "Science Fiction & Fantasy"
+              },
+              {
+                "id": "18580607011",
+                "name": "Fantasy"
+              },
+              {
+                "id": "18580615011",
+                "name": "Epic"
+              }
+            ],
+            "root": "Genres"
+          }
+        ],
+        "series": [
+          {
+            "asin": "B09MZKWFTB",
+            "sequence": "9",
+            "title": "The Primal Hunter",
+            "url": "/pd/The-Primal-Hunter-Audiobook/B09MZKWFTB"
+          }
+        ],
+        "release_date": "2024-07-02",
+        "language": "english",
+        "publisher_name": "Aethon Audio",
+        "runtime_length_min": 1223,
+        "format_type": "unabridged",
+        "rating": {
+          "num_reviews": 711,
+          "overall_distribution": {
+            "average_rating": 4.91074357572444,
+            "display_average_rating": "4.9",
+            "display_stars": 5.0,
+            "num_five_star_ratings": 6780,
+            "num_four_star_ratings": 445,
+            "num_one_star_ratings": 6,
+            "num_ratings": 7316,
+            "num_three_star_ratings": 71,
+            "num_two_star_ratings": 14
+          },
+          "performance_distribution": {
+            "average_rating": 4.957805907172996,
+            "display_average_rating": "5.0",
+            "display_stars": 5.0,
+            "num_five_star_ratings": 6165,
+            "num_four_star_ratings": 203,
+            "num_one_star_ratings": 1,
+            "num_ratings": 6399,
+            "num_three_star_ratings": 27,
+            "num_two_star_ratings": 3
+          },
+          "story_distribution": {
+            "average_rating": 4.892778993435448,
+            "display_average_rating": "4.9",
+            "display_stars": 5.0,
+            "num_five_star_ratings": 5872,
+            "num_four_star_ratings": 408,
+            "num_one_star_ratings": 9,
+            "num_ratings": 6398,
+            "num_three_star_ratings": 85,
+            "num_two_star_ratings": 24
+          }
+        }
+      }
+    }
+  }
+}

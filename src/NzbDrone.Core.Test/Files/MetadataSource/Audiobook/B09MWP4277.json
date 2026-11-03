@@ -1,0 +1,236 @@
+{
+  "region": "us",
+  "audnexus": {
+    "asin": "B09MWP4277",
+    "region": "us",
+    "title": "The Primal Hunter",
+    "subtitle": "A LitRPG Adventure",
+    "authors": [
+      {
+        "asin": "B09MV5DTRC",
+        "name": "Zogarth"
+      }
+    ],
+    "narrators": [
+      {
+        "name": "Travis Baldree"
+      }
+    ],
+    "genres": [
+      {
+        "asin": "18574426011",
+        "name": "Literature & Fiction",
+        "type": "genre"
+      },
+      {
+        "asin": "18580606011",
+        "name": "Science Fiction & Fantasy",
+        "type": "genre"
+      },
+      {
+        "asin": "18574456011",
+        "name": "Genre Fiction",
+        "type": "tag"
+      },
+      {
+        "asin": "18580621011",
+        "name": "Movie, TV & Video Game Tie-Ins",
+        "type": "tag"
+      },
+      {
+        "asin": "18580607011",
+        "name": "Fantasy",
+        "type": "tag"
+      },
+      {
+        "asin": "18580608011",
+        "name": "Action & Adventure",
+        "type": "tag"
+      },
+      {
+        "asin": "18580615011",
+        "name": "Epic",
+        "type": "tag"
+      },
+      {
+        "asin": "18580628011",
+        "name": "Science Fiction",
+        "type": "tag"
+      },
+      {
+        "asin": "18580633011",
+        "name": "Cyberpunk",
+        "type": "tag"
+      }
+    ],
+    "seriesPrimary": {
+      "asin": "B09MZKWFTB",
+      "name": "The Primal Hunter",
+      "position": "1"
+    },
+    "releaseDate": "2022-03-08T00:00:00.000Z",
+    "language": "english",
+    "publisherName": "Aethon Audio",
+    "runtimeLengthMin": 1209,
+    "formatType": "unabridged",
+    "rating": "4.6",
+    "isbn": ""
+  },
+  "audible": {
+    "status": 200,
+    "body": {
+      "product": {
+        "asin": "B09MWP4277",
+        "title": "The Primal Hunter",
+        "subtitle": "A LitRPG Adventure",
+        "authors": [
+          {
+            "asin": "B09MV5DTRC",
+            "name": "Zogarth"
+          }
+        ],
+        "narrators": [
+          {
+            "name": "Travis Baldree"
+          }
+        ],
+        "category_ladders": [
+          {
+            "ladder": [
+              {
+                "id": "18574426011",
+                "name": "Literature & Fiction"
+              },
+              {
+                "id": "18574456011",
+                "name": "Genre Fiction"
+              },
+              {
+                "id": "18574473011",
+                "name": "Movie, TV & Video Game Tie-Ins"
+              }
+            ],
+            "root": "Genres"
+          },
+          {
+            "ladder": [
+              {
+                "id": "18580606011",
+                "name": "Science Fiction & Fantasy"
+              },
+              {
+                "id": "18580607011",
+                "name": "Fantasy"
+              },
+              {
+                "id": "18580608011",
+                "name": "Action & Adventure"
+              }
+            ],
+            "root": "Genres"
+          },
+          {
+            "ladder": [
+              {
+                "id": "18580606011",
+                "name": "Science Fiction & Fantasy"
+              },
+              {
+                "id": "18580607011",
+                "name": "Fantasy"
+              },
+              {
+                "id": "18580615011",
+                "name": "Epic"
+              }
+            ],
+            "root": "Genres"
+          },
+          {
+            "ladder": [
+              {
+                "id": "18580606011",
+                "name": "Science Fiction & Fantasy"
+              },
+              {
+                "id": "18580607011",
+                "name": "Fantasy"
+              },
+              {
+                "id": "18580621011",
+                "name": "Movie, TV & Video Game Tie-Ins"
+              }
+            ],
+            "root": "Genres"
+          },
+          {
+            "ladder": [
+              {
+                "id": "18580606011",
+                "name": "Science Fiction & Fantasy"
+              },
+              {
+                "id": "18580628011",
+                "name": "Science Fiction"
+              },
+              {
+                "id": "18580633011",
+                "name": "Cyberpunk"
+              }
+            ],
+            "root": "Genres"
+          }
+        ],
+        "series": [
+          {
+            "asin": "B09MZKWFTB",
+            "sequence": "1",
+            "title": "The Primal Hunter",
+            "url": "/pd/The-Primal-Hunter-Audiobook/B09MZKWFTB"
+          }
+        ],
+        "release_date": "2022-03-08",
+        "language": "english",
+        "publisher_name": "Aethon Audio",
+        "runtime_length_min": 1209,
+        "format_type": "unabridged",
+        "rating": {
+          "num_reviews": 1740,
+          "overall_distribution": {
+            "average_rating": 4.612336394533227,
+            "display_average_rating": "4.6",
+            "display_stars": 4.5,
+            "num_five_star_ratings": 10543,
+            "num_four_star_ratings": 2060,
+            "num_one_star_ratings": 270,
+            "num_ratings": 13829,
+            "num_three_star_ratings": 647,
+            "num_two_star_ratings": 309
+          },
+          "performance_distribution": {
+            "average_rating": 4.778230253669297,
+            "display_average_rating": "4.8",
+            "display_stars": 5.0,
+            "num_five_star_ratings": 9921,
+            "num_four_star_ratings": 1393,
+            "num_one_star_ratings": 99,
+            "num_ratings": 11787,
+            "num_three_star_ratings": 297,
+            "num_two_star_ratings": 77
+          },
+          "story_distribution": {
+            "average_rating": 4.562011552837241,
+            "display_average_rating": "4.6",
+            "display_stars": 4.5,
+            "num_five_star_ratings": 8715,
+            "num_four_star_ratings": 1860,
+            "num_one_star_ratings": 314,
+            "num_ratings": 11772,
+            "num_three_star_ratings": 609,
+            "num_two_star_ratings": 274
+          }
+        }
+      }
+    }
+  }
+}
