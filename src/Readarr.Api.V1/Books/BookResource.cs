@@ -27,6 +27,8 @@ namespace Readarr.Api.V1.Books
         public Ratings Ratings { get; set; }
         public DateTime? ReleaseDate { get; set; }
         public int PageCount { get; set; }
+        public List<string> Narrators { get; set; }
+        public int? RuntimeLengthMinutes { get; set; }
         public List<string> Genres { get; set; }
         public AuthorResource Author { get; set; }
         public List<MediaCover> Images { get; set; }
@@ -72,6 +74,8 @@ namespace Readarr.Api.V1.Books
                 AnyEditionOk = model.AnyEditionOk,
                 ReleaseDate = model.ReleaseDate,
                 PageCount = selectedEdition?.PageCount ?? 0,
+                Narrators = selectedEdition?.Narrators ?? new List<string>(),
+                RuntimeLengthMinutes = selectedEdition?.RuntimeLengthMinutes,
                 Genres = model.Genres,
                 Title = title,
                 AuthorTitle = authorTitle,

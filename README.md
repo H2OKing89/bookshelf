@@ -1,62 +1,73 @@
-# bookshelf
+# Bookshelf
 
-This is a revival of [Readarr](https://github.com/Readarr/Readarr). The images
-published are configured to use working Goodreads or Hardcover metadata out of
-the box.
+An audiobook collection manager based on Readarr. Bookshelf searches the Audible
+catalog through [Audnexus](https://audnex.us/), stores recording metadata, and
+uses Usenet and BitTorrent indexers to find monitored audiobooks. Goodreads and
+Hardcover are not used for catalog search or refresh.
 
-Bookshelf is an ebook and audiobook collection manager for Usenet and BitTorrent
-users. It can monitor multiple RSS feeds for new books from your favorite
-authors and will grab, sort, and rename them. Note that only one type of a
-given book is supported. If you want both an audiobook and ebook of a given
-book you will need multiple instances.
+Each recording has a stable identity consisting of its Audible marketplace and
+ASIN. Alternate narrators, languages, and rerecordings stay separate. The
+calendar uses the recording's release date. Metadata includes narrators,
+runtime, descriptions, covers, publisher, language, ratings, and series.
+Library scans recognize audio files; new installations get an Audiobooks
+quality profile.
 
-## Getting Started
+## Run locally
 
-The container listens on port 8787 and expects a volume mounted at `/config`.
+The server listens on port 8787. Build the frontend with `yarn build` and the
+server with `dotnet build src/NzbDrone.Console/Readarr.Console.csproj`. Serve the
+built UI from the server output's `UI` directory, then run the generated Readarr
+executable with `-nobrowser -data=/path/to/config`.
 
-    docker run -p 8787:8787 -v ~/.config/bookshelf:/config ghcr.io/pennydreadful/bookshelf:hardcover
+## Catalog settings
 
-The `softcover` tags use [Goodreads](https://www.goodreads.com) as the metadata
-provider. The quality of this metadata is generally poor and contains a lot of
-slop. However, it is backward-compatible with existing Readarr databases and
-functionality like Goodreads list imports should continue to work normally.
+Under **Settings → Metadata → Audiobook Catalog**, select an Audible marketplace
+and use `https://api.audnex.us` or a self-hosted Audnexus API. No Audible account
+or API key is needed for Audnexus. Search by title, author, or `asin:B08G9PRS1K`.
+Audnexus searches return up to ten keyword matches and are not complete author
+bibliographies. Existing recordings are retained when absent from results.
 
-The `hardcover` tags use [Hardcover](https://hardcover.app/home) as a metadata
-provider. This metadata is higher quality but isn't backward-compatible; if
-you're already running Readarr you'll need to redeploy this from scratch.
-Goodreads list imports haven't been tested and likely don't work.
+For paginated author release discovery, enable **Discover Author Releases** in
+the **audible-rs** section. Configure:
+
+- The agent's HTTPS base URL (HTTP is supported on localhost).
+- An absolute server-side file path containing an audible-rs token with the
+  `api` scope. The token itself is not stored in Bookshelf settings.
+- An optional agent account name. The selected catalog marketplace is also sent
+  to the agent; it must be configured for that account.
+
+The agent must have an available account session for unattended polling.
+Bookshelf issues catalog GET requests through `/v1/api/request`; it does not
+invoke downloads, change owned content, or manage account locks. Author refresh
+reads pages starting at zero and rejects missing/repeated pages and catalogs
+larger than 1,000 recordings instead of accepting a partial snapshot. Catalog
+omissions never automatically delete saved audiobook records.
+
+Book and author refresh use the existing scheduler and monitoring controls.
+Choose **All** or **New** for an author's new items to monitor discovered
+recordings. Without audible-rs, discovery remains limited to Audnexus keyword
+results. Catalog availability, preorder coverage, and metadata freshness depend
+on the upstream marketplace.
+
+## Existing libraries and lists
+
+This is an audiobook catalog, not an automatic Goodreads database migration.
+Existing records and files are retained, but legacy numeric catalog IDs cannot
+be refreshed through the new providers. Add recordings through audiobook search
+or import an audio library to obtain native IDs. Existing custom quality
+profiles remain available; choose an audio profile for audiobook roots.
+
+Goodreads list integrations are hidden and inactive. Other list sources are
+matched against audiobook titles and authors, and ambiguous recording matches
+are skipped. Legacy API field names used by import lists remain for wire
+compatibility; they do not trigger Goodreads metadata requests.
 
 ## Support
 
-This project won't use Discord for support. If you have a problem please file
-an issue or start a discussion.
+File an issue or start a discussion in the repository.
 
-## Contributors & Developers
+## License
 
-Help is very welcome. Priority is on fixing quality of life issues
-
-- [ ] Monitor series.
-- [ ] Support ebook and audio files in the same root.
-
-Already done
-
-- [x] Native support for MyAnonaMouse without Prowlarr.
-- [x] Hardcover list import.
-- [x] Improved matching.
-- [x] Metadata is no longer cached locally.
-- [x] Removed servarr analytics spyware.
-- [x] Supports selfhosted metadata (UI or `METADATA_URL` env var).
-
-## Sponsors
-
-If you ever donated to [this](https://opencollective.com/readarr) project you
-should request a refund. Those people don't deserve your money.
-
-### License
-
-The is a derivative work of the [Readarr](https://github.com/Readarr/Readarr)
-and [Prowlarr](https://github.com/Prowlarr/Prowlarr) projects which are both
-licensed [GPLv3](http://www.gnu.org/licenses/gpl.html). This project is
-therefore also licensed under the terms of GPLv3.
-
-Copyright 2025-2026
+This derivative of [Readarr](https://github.com/Readarr/Readarr) and
+[Prowlarr](https://github.com/Prowlarr/Prowlarr) is licensed under
+[GPLv3](LICENSE.md).

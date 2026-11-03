@@ -12,7 +12,7 @@ using NzbDrone.Core.IndexerSearch;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.MetadataSource;
-using NzbDrone.Core.MetadataSource.Goodreads;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.ImportLists
@@ -22,12 +22,11 @@ namespace NzbDrone.Core.ImportLists
         private readonly IImportListFactory _importListFactory;
         private readonly IImportListExclusionService _importListExclusionService;
         private readonly IFetchAndParseImportList _listFetcherAndParser;
-        private readonly IGoodreadsProxy _goodreadsProxy;
-        private readonly IGoodreadsSearchProxy _goodreadsSearchProxy;
+        private readonly ISearchForNewBook _bookSearch;
+        private readonly ISearchForNewAuthor _authorSearch;
         private readonly IProvideBookInfo _bookInfoProxy;
         private readonly IAuthorService _authorService;
         private readonly IBookService _bookService;
-        private readonly IEditionService _editionService;
         private readonly IAddAuthorService _addAuthorService;
         private readonly IAddBookService _addBookService;
         private readonly IEventAggregator _eventAggregator;
@@ -37,12 +36,11 @@ namespace NzbDrone.Core.ImportLists
         public ImportListSyncService(IImportListFactory importListFactory,
                                      IImportListExclusionService importListExclusionService,
                                      IFetchAndParseImportList listFetcherAndParser,
-                                     IGoodreadsProxy goodreadsProxy,
-                                     IGoodreadsSearchProxy goodreadsSearchProxy,
+                                     ISearchForNewBook bookSearch,
+                                     ISearchForNewAuthor authorSearch,
                                      IProvideBookInfo bookInfoProxy,
                                      IAuthorService authorService,
                                      IBookService bookService,
-                                     IEditionService editionService,
                                      IAddAuthorService addAuthorService,
                                      IAddBookService addBookService,
                                      IEventAggregator eventAggregator,
@@ -52,12 +50,11 @@ namespace NzbDrone.Core.ImportLists
             _importListFactory = importListFactory;
             _importListExclusionService = importListExclusionService;
             _listFetcherAndParser = listFetcherAndParser;
-            _goodreadsProxy = goodreadsProxy;
-            _goodreadsSearchProxy = goodreadsSearchProxy;
+            _bookSearch = bookSearch;
+            _authorSearch = authorSearch;
             _bookInfoProxy = bookInfoProxy;
             _authorService = authorService;
             _bookService = bookService;
-            _editionService = editionService;
             _addAuthorService = addAuthorService;
             _addBookService = addBookService;
             _eventAggregator = eventAggregator;
@@ -119,16 +116,19 @@ namespace NzbDrone.Core.ImportLists
 
                 if (report.Book.IsNotNullOrWhiteSpace() || report.EditionGoodreadsId.IsNotNullOrWhiteSpace())
                 {
-                    if (report.EditionGoodreadsId.IsNullOrWhiteSpace() || report.AuthorGoodreadsId.IsNullOrWhiteSpace() || report.BookGoodreadsId.IsNullOrWhiteSpace())
+                    if (!AudiobookId.IsNative(report.BookGoodreadsId) || !AudiobookId.IsNative(report.AuthorGoodreadsId) || !AudiobookId.IsNative(report.EditionGoodreadsId))
                     {
                         MapBookReport(report);
                     }
 
-                    ProcessBookReport(importList, report, listExclusions, booksToAdd, authorsToAdd);
+                    if (AudiobookId.IsNative(report.BookGoodreadsId))
+                    {
+                        ProcessBookReport(importList, report, listExclusions, booksToAdd, authorsToAdd);
+                    }
                 }
                 else if (report.Author.IsNotNullOrWhiteSpace() || report.AuthorGoodreadsId.IsNotNullOrWhiteSpace())
                 {
-                    if (report.AuthorGoodreadsId.IsNullOrWhiteSpace())
+                    if (!AudiobookId.IsNative(report.AuthorGoodreadsId))
                     {
                         MapAuthorReport(report);
                     }
@@ -155,68 +155,48 @@ namespace NzbDrone.Core.ImportLists
 
         private void MapBookReport(ImportListItemInfo report)
         {
-            if (report.AuthorGoodreadsId.IsNotNullOrWhiteSpace() && report.BookGoodreadsId.IsNotNullOrWhiteSpace())
+            var nativeId = AudiobookId.IsNative(report.BookGoodreadsId) ? report.BookGoodreadsId :
+                AudiobookId.IsNative(report.EditionGoodreadsId) ? report.EditionGoodreadsId : null;
+            Book mapped = null;
+            if (nativeId != null)
             {
-                return;
-            }
-
-            if (report.EditionGoodreadsId.IsNotNullOrWhiteSpace() && int.TryParse(report.EditionGoodreadsId, out var goodreadsId))
-            {
-                // check the local DB
-                var edition = _editionService.GetEditionByForeignEditionId(report.EditionGoodreadsId);
-
-                if (edition != null)
-                {
-                    var book = edition.Book.Value;
-                    report.BookGoodreadsId = book.ForeignBookId;
-                    report.Book = edition.Title;
-                    report.Author ??= book.AuthorMetadata.Value.Name;
-                    report.AuthorGoodreadsId ??= book.AuthorMetadata.Value.ForeignAuthorId;
-                    return;
-                }
-
                 try
                 {
-                    var remoteBook = _goodreadsProxy.GetBookInfo(report.EditionGoodreadsId);
-
-                    _logger.Trace($"Mapped {report.EditionGoodreadsId} to [{remoteBook.ForeignBookId}] {remoteBook.Title}");
-
-                    report.BookGoodreadsId = remoteBook.ForeignBookId;
-                    report.Book = remoteBook.Title;
-                    report.Author ??= remoteBook.AuthorMetadata.Value.Name;
-                    report.AuthorGoodreadsId ??= remoteBook.AuthorMetadata.Value.ForeignAuthorId;
+                    mapped = _bookInfoProxy.GetBookInfo(nativeId).Item2;
                 }
                 catch (BookNotFoundException)
                 {
-                    _logger.Debug($"Nothing found for edition [{report.EditionGoodreadsId}]");
-                    report.EditionGoodreadsId = null;
+                    _logger.Debug("No audiobook found for {0}", nativeId);
                 }
             }
-            else if (report.BookGoodreadsId.IsNotNullOrWhiteSpace())
+            else if (AudiobookId.IsAsin(report.EditionGoodreadsId))
             {
-                var mappedBook = _bookInfoProxy.GetBookInfo(report.BookGoodreadsId);
+                mapped = _bookSearch.SearchByAsin(report.EditionGoodreadsId).SingleOrDefault();
+            }
+            else if (report.Book.IsNotNullOrWhiteSpace())
+            {
+                var matches = _bookSearch.SearchForNewBook(report.Book, report.Author)
+                    .Where(b => Parser.Parser.CleanBookTitle(b.Title) == Parser.Parser.CleanBookTitle(report.Book))
+                    .Where(b => report.Author.IsNullOrWhiteSpace() ||
+                        Parser.Parser.CleanAuthorName(b.AuthorMetadata.Value.Name) == Parser.Parser.CleanAuthorName(report.Author))
+                    .DistinctBy(b => b.ForeignBookId).ToList();
+                if (matches.Count == 1)
+                {
+                    mapped = matches[0];
+                }
+            }
 
-                report.BookGoodreadsId = mappedBook.Item2.ForeignBookId;
-                report.Book = mappedBook.Item2.Title;
-                report.AuthorGoodreadsId = mappedBook.Item3.First().ForeignAuthorId;
+            report.BookGoodreadsId = mapped?.ForeignBookId;
+            report.AuthorGoodreadsId = mapped?.AuthorMetadata.Value.ForeignAuthorId;
+            report.EditionGoodreadsId = mapped?.Editions.Value.Single(e => e.Monitored).ForeignEditionId;
+            if (mapped != null)
+            {
+                report.Book = mapped.Title;
+                report.Author = mapped.AuthorMetadata.Value.Name;
             }
             else
             {
-                var mappedBook = _goodreadsSearchProxy.Search($"{report.Book} {report.Author}").FirstOrDefault();
-
-                if (mappedBook == null)
-                {
-                    _logger.Trace($"Nothing found for {report.Author} - {report.Book}");
-                    return;
-                }
-
-                _logger.Trace($"Mapped Book {report.Book} by Author {report.Author} to [{mappedBook.WorkId}] {mappedBook.BookTitleBare}");
-
-                report.BookGoodreadsId = mappedBook.WorkId.ToString();
-                report.Book = mappedBook.BookTitleBare;
-                report.Author ??= mappedBook.Author.Name;
-                report.AuthorGoodreadsId ??= mappedBook.Author.Id.ToString();
-                report.EditionGoodreadsId = mappedBook.BookId.ToString();
+                _logger.Info("No unambiguous audiobook match for {0} by {1}; skipping this list item", report.Book, report.Author);
             }
         }
 
@@ -328,7 +308,7 @@ namespace NzbDrone.Core.ImportLists
                     }
                 };
 
-                if (report.EditionGoodreadsId.IsNotNullOrWhiteSpace() && int.TryParse(report.EditionGoodreadsId, out var goodreadsId))
+                if (AudiobookId.IsNative(report.EditionGoodreadsId))
                 {
                     toAdd.Editions.Value.Add(new Edition
                     {
@@ -349,18 +329,14 @@ namespace NzbDrone.Core.ImportLists
 
         private void MapAuthorReport(ImportListItemInfo report)
         {
-            var mappedBook = _goodreadsSearchProxy.Search(report.Author).FirstOrDefault();
-
-            if (mappedBook == null)
+            var matches = report.Author.IsNullOrWhiteSpace() ? new List<Author>() : _authorSearch.SearchForNewAuthor(report.Author)
+                .Where(a => Parser.Parser.CleanAuthorName(a.Name) == Parser.Parser.CleanAuthorName(report.Author))
+                .DistinctBy(a => a.ForeignAuthorId).ToList();
+            report.AuthorGoodreadsId = matches.Count == 1 ? matches[0].ForeignAuthorId : null;
+            if (matches.Count == 1)
             {
-                _logger.Trace($"Nothing found for {report.Author}");
-                return;
+                report.Author = matches[0].Name;
             }
-
-            _logger.Trace($"Mapped {report.Author} to [{mappedBook.Author.Name}]");
-
-            report.Author = mappedBook.Author.Name;
-            report.AuthorGoodreadsId = mappedBook.Author.Id.ToString();
         }
 
         private Author ProcessAuthorReport(ImportListDefinition importList, ImportListItemInfo report, List<ImportListExclusion> listExclusions, List<Author> authorsToAdd)

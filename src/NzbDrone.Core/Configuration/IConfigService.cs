@@ -67,6 +67,12 @@ namespace NzbDrone.Core.Configuration
 
         //Metadata
         string MetadataSource { get; set; }
+        string AudnexusUrl { get; set; }
+        string AudnexusRegion { get; set; }
+        bool AudibleRsEnabled { get; set; }
+        string AudibleRsUrl { get; set; }
+        string AudibleRsTokenFile { get; set; }
+        string AudibleRsAccount { get; set; }
         WriteAudioTagsType WriteAudioTags { get; set; }
         bool ScrubAudioTags { get; set; }
         WriteBookTagsType WriteBookTags { get; set; }

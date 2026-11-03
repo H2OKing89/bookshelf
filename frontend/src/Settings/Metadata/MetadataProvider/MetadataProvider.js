@@ -37,25 +37,17 @@ const writeAudioTagOptions = [
   }
 ];
 
-const writeBookTagOptions = [
-  {
-    key: 'sync',
-    get value() {
-      return translate('WriteTagsSync');
-    }
-  },
-  {
-    key: 'allFiles',
-    get value() {
-      return translate('WriteTagsAll');
-    }
-  },
-  {
-    key: 'newFiles',
-    get value() {
-      return translate('WriteTagsNew');
-    }
-  }
+const audnexusRegionOptions = [
+  { key: 'au', value: 'Australia' },
+  { key: 'ca', value: 'Canada' },
+  { key: 'de', value: 'Germany' },
+  { key: 'es', value: 'Spain' },
+  { key: 'fr', value: 'France' },
+  { key: 'in', value: 'India' },
+  { key: 'it', value: 'Italy' },
+  { key: 'jp', value: 'Japan' },
+  { key: 'us', value: 'United States' },
+  { key: 'uk', value: 'United Kingdom' }
 ];
 
 function MetadataProvider(props) {
@@ -85,51 +77,85 @@ function MetadataProvider(props) {
       {
         hasSettings && !isFetching && !error &&
           <Form>
-            <FieldSet legend={translate('CalibreMetadata')}>
+            <FieldSet legend={translate('AudiobookCatalog')}>
               <FormGroup>
-                <FormLabel>
-                  {translate('SendMetadataToCalibre')}
-                </FormLabel>
+                <FormLabel>{translate('AudnexusUrl')}</FormLabel>
+
+                <FormInputGroup
+                  type={inputTypes.TEXT}
+                  name="audnexusUrl"
+                  helpText={translate('AudnexusUrlHelpText')}
+                  onChange={onInputChange}
+                  {...settings.audnexusUrl}
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <FormLabel>{translate('AudnexusRegion')}</FormLabel>
 
                 <FormInputGroup
                   type={inputTypes.SELECT}
-                  name="writeBookTags"
-                  helpTextWarning={translate('WriteBookTagsHelpTextWarning')}
-                  helpLink="https://wiki.servarr.com/readarr/settings#write-metadata-to-book-files"
-                  values={writeBookTagOptions}
+                  name="audnexusRegion"
+                  values={audnexusRegionOptions}
+                  helpText={translate('AudnexusRegionHelpText')}
                   onChange={onInputChange}
-                  {...settings.writeBookTags}
+                  {...settings.audnexusRegion}
                 />
               </FormGroup>
+            </FieldSet>
 
+            <FieldSet legend="audible-rs">
               <FormGroup>
-                <FormLabel>
-                  {translate('UpdateCovers')}
-                </FormLabel>
+                <FormLabel>{translate('AudibleRsEnabled')}</FormLabel>
 
                 <FormInputGroup
                   type={inputTypes.CHECK}
-                  name="updateCovers"
-                  helpText={translate('UpdateCoversHelpText')}
+                  name="audibleRsEnabled"
+                  helpText={translate('AudibleRsEnabledHelpText')}
                   onChange={onInputChange}
-                  {...settings.updateCovers}
+                  {...settings.audibleRsEnabled}
                 />
               </FormGroup>
 
-              <FormGroup>
-                <FormLabel>
-                  {translate('EmbedMetadataInBookFiles')}
-                </FormLabel>
+              {
+                settings.audibleRsEnabled.value &&
+                  <div>
+                    <FormGroup>
+                      <FormLabel>{translate('AudibleRsUrl')}</FormLabel>
 
-                <FormInputGroup
-                  type={inputTypes.CHECK}
-                  name="embedMetadata"
-                  helpText={translate('EmbedMetadataHelpText')}
-                  onChange={onInputChange}
-                  {...settings.embedMetadata}
-                />
-              </FormGroup>
+                      <FormInputGroup
+                        type={inputTypes.TEXT}
+                        name="audibleRsUrl"
+                        onChange={onInputChange}
+                        {...settings.audibleRsUrl}
+                      />
+                    </FormGroup>
 
+                    <FormGroup>
+                      <FormLabel>{translate('AudibleRsTokenFile')}</FormLabel>
+
+                      <FormInputGroup
+                        type={inputTypes.TEXT}
+                        name="audibleRsTokenFile"
+                        helpText={translate('AudibleRsTokenFileHelpText')}
+                        onChange={onInputChange}
+                        {...settings.audibleRsTokenFile}
+                      />
+                    </FormGroup>
+
+                    <FormGroup>
+                      <FormLabel>{translate('AudibleRsAccount')}</FormLabel>
+
+                      <FormInputGroup
+                        type={inputTypes.TEXT}
+                        name="audibleRsAccount"
+                        helpText={translate('AudibleRsAccountHelpText')}
+                        onChange={onInputChange}
+                        {...settings.audibleRsAccount}
+                      />
+                    </FormGroup>
+                  </div>
+              }
             </FieldSet>
 
             <FieldSet legend={translate('AudioFileMetadata')}>

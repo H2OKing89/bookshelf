@@ -5,6 +5,12 @@ namespace Readarr.Api.V1.Config
 {
     public class MetadataProviderConfigResource : RestResource
     {
+        public string AudnexusUrl { get; set; }
+        public string AudnexusRegion { get; set; }
+        public bool AudibleRsEnabled { get; set; }
+        public string AudibleRsUrl { get; set; }
+        public string AudibleRsTokenFile { get; set; }
+        public string AudibleRsAccount { get; set; }
         public WriteAudioTagsType WriteAudioTags { get; set; }
         public bool ScrubAudioTags { get; set; }
         public WriteBookTagsType WriteBookTags { get; set; }
@@ -18,6 +24,12 @@ namespace Readarr.Api.V1.Config
         {
             return new MetadataProviderConfigResource
             {
+                AudnexusUrl = model.AudnexusUrl,
+                AudnexusRegion = model.AudnexusRegion,
+                AudibleRsEnabled = model.AudibleRsEnabled,
+                AudibleRsUrl = model.AudibleRsUrl,
+                AudibleRsTokenFile = model.AudibleRsTokenFile,
+                AudibleRsAccount = model.AudibleRsAccount,
                 WriteAudioTags = model.WriteAudioTags,
                 ScrubAudioTags = model.ScrubAudioTags,
                 WriteBookTags = model.WriteBookTags,

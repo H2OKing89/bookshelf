@@ -16,6 +16,7 @@ using NzbDrone.Core.MediaFiles.Commands;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.MetadataSource;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.Profiles.Metadata;
 using NzbDrone.Core.RootFolders;
 
@@ -113,6 +114,11 @@ namespace NzbDrone.Core.Books
 
         protected override bool ShouldDelete(Author local)
         {
+            if (AudiobookId.IsNative(local.ForeignAuthorId))
+            {
+                return false;
+            }
+
             return !_mediaFileService.GetFilesByAuthor(local.Id).Any();
         }
 

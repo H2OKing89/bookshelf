@@ -16,6 +16,7 @@ namespace NzbDrone.Core.Books
             Images = new List<MediaCover.MediaCover>();
             Links = new List<Links>();
             Ratings = new Ratings();
+            Narrators = new List<string>();
         }
 
         // These correspond to columns in the Books table
@@ -25,6 +26,9 @@ namespace NzbDrone.Core.Books
         public string TitleSlug { get; set; }
         public string Isbn13 { get; set; }
         public string Asin { get; set; }
+        public string AudibleRegion { get; set; }
+        public List<string> Narrators { get; set; }
+        public int? RuntimeLengthMinutes { get; set; }
         public string Title { get; set; }
         public string Language { get; set; }
         public string Overview { get; set; }
@@ -59,6 +63,9 @@ namespace NzbDrone.Core.Books
             TitleSlug = other.TitleSlug;
             Isbn13 = other.Isbn13;
             Asin = other.Asin;
+            AudibleRegion = other.AudibleRegion;
+            Narrators = other.Narrators;
+            RuntimeLengthMinutes = other.RuntimeLengthMinutes;
             Title = other.Title;
             Language = other.Language;
             Overview = other.Overview.IsNullOrWhiteSpace() ? Overview : other.Overview;

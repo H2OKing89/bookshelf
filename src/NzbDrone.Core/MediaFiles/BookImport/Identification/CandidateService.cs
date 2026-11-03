@@ -5,6 +5,7 @@ using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.MetadataSource;
+using NzbDrone.Core.MetadataSource.BookInfo;
 using NzbDrone.Core.MetadataSource.Goodreads;
 using NzbDrone.Core.Parser.Model;
 
@@ -345,6 +346,11 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
             catch (GoodreadsException e)
             {
                 _logger.Info(e, "Skipping {0} due to Goodreads Error", searchDescription);
+                return new List<Book>();
+            }
+            catch (BookInfoException e)
+            {
+                _logger.Info(e, "Skipping {0} because the audiobook catalog is unavailable", searchDescription);
                 return new List<Book>();
             }
         }

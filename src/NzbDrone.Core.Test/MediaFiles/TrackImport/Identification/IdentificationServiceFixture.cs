@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -29,6 +30,20 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport.Identification
     [TestFixture]
     public class IdentificationServiceFixture : DbTest
     {
+        private sealed class LegacyMetadataFixtureProxy : IProvideAuthorInfo, IProvideBookInfo
+        {
+            private readonly BookInfoProxy _proxy;
+
+            public LegacyMetadataFixtureProxy(BookInfoProxy proxy)
+            {
+                _proxy = proxy;
+            }
+
+            public Author GetAuthorInfo(string id, bool useCache = true) => _proxy.GetAuthorInfo(id, useCache);
+            public HashSet<string> GetChangedAuthors(DateTime since) => _proxy.GetChangedAuthors(since);
+            public Tuple<string, Book, List<AuthorMetadata>> GetBookInfo(string id) => _proxy.GetBookInfo(id);
+        }
+
         private AuthorService _authorService;
         private AddAuthorService _addAuthorService;
         private RefreshAuthorService _refreshAuthorService;
@@ -57,8 +72,11 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport.Identification
             Mocker.SetConstant<IMediaFileService>(Mocker.Resolve<MediaFileService>());
 
             Mocker.SetConstant<IConfigService>(Mocker.Resolve<IConfigService>());
-            Mocker.SetConstant<IProvideAuthorInfo>(Mocker.Resolve<BookInfoProxy>());
-            Mocker.SetConstant<IProvideBookInfo>(Mocker.Resolve<BookInfoProxy>());
+
+            // Historical Goodreads fixtures use an explicit test-only adapter.
+            var legacy = new LegacyMetadataFixtureProxy(Mocker.Resolve<BookInfoProxy>());
+            Mocker.SetConstant<IProvideAuthorInfo>(legacy);
+            Mocker.SetConstant<IProvideBookInfo>(legacy);
 
             _addAuthorService = Mocker.Resolve<AddAuthorService>();
 

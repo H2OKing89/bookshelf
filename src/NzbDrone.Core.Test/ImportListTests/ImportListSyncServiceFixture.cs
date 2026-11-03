@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using FizzWare.NBuilder;
@@ -7,7 +8,6 @@ using NzbDrone.Core.Books;
 using NzbDrone.Core.ImportLists;
 using NzbDrone.Core.ImportLists.Exclusions;
 using NzbDrone.Core.MetadataSource;
-using NzbDrone.Core.MetadataSource.Goodreads;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Test.Framework;
 
@@ -33,23 +33,25 @@ namespace NzbDrone.Core.Test.ImportListTests
                 .Setup(v => v.Fetch())
                 .Returns(_importListReports);
 
-            Mocker.GetMock<IGoodreadsSearchProxy>()
-                .Setup(v => v.Search(It.IsAny<string>()))
-                .Returns(new List<SearchJsonResource>());
-
-            Mocker.GetMock<IGoodreadsProxy>()
+            Mocker.GetMock<ISearchForNewBook>()
+                .Setup(v => v.SearchForNewBook(It.IsAny<string>(), It.IsAny<string>(), true))
+                .Returns(new List<Book>());
+            Mocker.GetMock<ISearchForNewAuthor>()
+                .Setup(v => v.SearchForNewAuthor(It.IsAny<string>()))
+                .Returns(new List<Author>());
+            Mocker.GetMock<IProvideBookInfo>()
                 .Setup(v => v.GetBookInfo(It.IsAny<string>()))
-                .Returns<string>((id) => Builder<Book>
-                .CreateNew()
-                .With(b => b.AuthorMetadata = Builder<AuthorMetadata>.CreateNew().Build())
-                .With(b => b.ForeignBookId = "4321")
-                .With(b => b.Editions = Builder<Edition>
-                    .CreateListOfSize(1)
-                    .TheFirst(1)
-                    .With(e => e.ForeignEditionId = id.ToString())
-                    .With(e => e.Monitored = true)
-                    .BuildList())
-                .Build());
+                .Returns<string>(id =>
+                {
+                    var metadata = new AuthorMetadata { ForeignAuthorId = "audible:us:B000000001", Name = "Linkin Park" };
+                    var book = Builder<Book>.CreateNew()
+                        .With(b => b.AuthorMetadata = metadata)
+                        .With(b => b.ForeignBookId = id)
+                        .With(b => b.Title = "Meteora")
+                        .With(b => b.Editions = new List<Edition> { new Edition { ForeignEditionId = id, Monitored = true } })
+                        .Build();
+                    return Tuple.Create(metadata.ForeignAuthorId, book, new List<AuthorMetadata> { metadata });
+                });
 
             Mocker.GetMock<IImportListFactory>()
                 .Setup(v => v.Get(It.IsAny<int>()))
@@ -83,12 +85,12 @@ namespace NzbDrone.Core.Test.ImportListTests
 
         private void WithAuthorId()
         {
-            _importListReports.First().AuthorGoodreadsId = "f59c5520-5f46-4d2c-b2c4-822eabf53419";
+            _importListReports.First().AuthorGoodreadsId = "audible:us:B000000001";
         }
 
         private void WithBookId()
         {
-            _importListReports.First().EditionGoodreadsId = "1234";
+            _importListReports.First().EditionGoodreadsId = "audible:us:B000000002";
         }
 
         private void WithSecondBook()
@@ -96,10 +98,10 @@ namespace NzbDrone.Core.Test.ImportListTests
             var importListItem2 = new ImportListItemInfo
             {
                 Author = "Linkin Park",
-                AuthorGoodreadsId = "f59c5520-5f46-4d2c-b2c4-822eabf53419",
+                AuthorGoodreadsId = "audible:us:B000000001",
                 Book = "Meteora 2",
-                EditionGoodreadsId = "5678",
-                BookGoodreadsId = "8765"
+                EditionGoodreadsId = "audible:us:B000000003",
+                BookGoodreadsId = "audible:us:B000000003"
             };
             _importListReports.Add(importListItem2);
         }
@@ -114,7 +116,7 @@ namespace NzbDrone.Core.Test.ImportListTests
         private void WithExistingBook()
         {
             Mocker.GetMock<IBookService>()
-                .Setup(v => v.FindById("4321"))
+                .Setup(v => v.FindById("audible:us:B000000002"))
                 .Returns(new Book { Id = 1, ForeignBookId = _importListReports.First().BookGoodreadsId });
         }
 
@@ -126,7 +128,7 @@ namespace NzbDrone.Core.Test.ImportListTests
                 {
                     new ImportListExclusion
                     {
-                        ForeignId = "f59c5520-5f46-4d2c-b2c4-822eabf53419"
+                        ForeignId = "audible:us:B000000001"
                     }
                 });
         }
@@ -139,7 +141,7 @@ namespace NzbDrone.Core.Test.ImportListTests
                 {
                     new ImportListExclusion
                     {
-                        ForeignId = "4321"
+                        ForeignId = "audible:us:B000000002"
                     }
                 });
         }
@@ -156,8 +158,8 @@ namespace NzbDrone.Core.Test.ImportListTests
         {
             Subject.Execute(new ImportListSyncCommand());
 
-            Mocker.GetMock<IGoodreadsSearchProxy>()
-                .Verify(v => v.Search(It.IsAny<string>()), Times.Once());
+            Mocker.GetMock<ISearchForNewAuthor>()
+                .Verify(v => v.SearchForNewAuthor(It.IsAny<string>()), Times.Once());
         }
 
         [Test]
@@ -176,8 +178,8 @@ namespace NzbDrone.Core.Test.ImportListTests
             WithBook();
             Subject.Execute(new ImportListSyncCommand());
 
-            Mocker.GetMock<IGoodreadsSearchProxy>()
-                .Verify(v => v.Search(It.IsAny<string>()), Times.Once());
+            Mocker.GetMock<ISearchForNewBook>()
+                .Verify(v => v.SearchForNewBook(It.IsAny<string>(), It.IsAny<string>(), true), Times.Once());
         }
 
         [Test]
@@ -187,8 +189,8 @@ namespace NzbDrone.Core.Test.ImportListTests
             WithBookId();
             Subject.Execute(new ImportListSyncCommand());
 
-            Mocker.GetMock<IGoodreadsSearchProxy>()
-                .Verify(v => v.Search(It.IsAny<string>()), Times.Never());
+            Mocker.GetMock<ISearchForNewBook>()
+                .Verify(v => v.SearchForNewBook(It.IsAny<string>(), It.IsAny<string>(), true), Times.Never());
         }
 
         [Test]
@@ -199,11 +201,11 @@ namespace NzbDrone.Core.Test.ImportListTests
             WithBookId();
             Subject.Execute(new ImportListSyncCommand());
 
-            Mocker.GetMock<IGoodreadsSearchProxy>()
-                .Verify(v => v.Search(It.IsAny<string>()), Times.Never());
+            Mocker.GetMock<ISearchForNewBook>()
+                .Verify(v => v.SearchForNewBook(It.IsAny<string>(), It.IsAny<string>(), true), Times.Never());
 
-            Mocker.GetMock<IGoodreadsSearchProxy>()
-                .Verify(v => v.Search(It.IsAny<string>()), Times.Never());
+            Mocker.GetMock<ISearchForNewBook>()
+                .Verify(v => v.SearchForNewBook(It.IsAny<string>(), It.IsAny<string>(), true), Times.Never());
         }
 
         [Test]

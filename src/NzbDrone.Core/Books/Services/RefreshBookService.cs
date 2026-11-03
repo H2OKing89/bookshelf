@@ -13,6 +13,7 @@ using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.MetadataSource;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.RootFolders;
 
 namespace NzbDrone.Core.Books
@@ -81,7 +82,9 @@ namespace NzbDrone.Core.Books
             try
             {
                 var tuple = _bookInfo.GetBookInfo(book.ForeignBookId);
-                var author = _authorInfo.GetAuthorInfo(tuple.Item1);
+                var author = AudiobookId.IsNative(book.ForeignBookId)
+                    ? tuple.Item2.Author.Value
+                    : _authorInfo.GetAuthorInfo(tuple.Item1);
                 var newbook = tuple.Item2;
 
                 newbook.Author = author;
@@ -156,6 +159,12 @@ namespace NzbDrone.Core.Books
 
         protected override bool ShouldDelete(Book local)
         {
+            // Catalog omissions and regional availability are not deletion signals.
+            if (AudiobookId.IsNative(local.ForeignBookId))
+            {
+                return false;
+            }
+
             // not manually added and has no files
             return local.AddOptions.AddType != BookAddType.Manual &&
                 !_mediaFileService.GetFilesByBook(local.Id).Any();
@@ -357,6 +366,11 @@ namespace NzbDrone.Core.Books
         public bool RefreshBookInfo(Book book)
         {
             var data = GetSkyhookData(book);
+
+            if (data == null)
+            {
+                return false;
+            }
 
             return RefreshBookInfo(book, data.Books, data, false);
         }

@@ -97,7 +97,7 @@ namespace NzbDrone.Core.MediaFiles
             return new AudioTag
             {
                 Title = edition.Title,
-                Performers = new[] { author.Name },
+                Performers = edition.Narrators?.Any() == true ? edition.Narrators.ToArray() : new[] { author.Name },
                 BookAuthors = new[] { author.Name },
                 Track = (uint)trackfile.Part,
                 TrackCount = (uint)partCount,

@@ -10,6 +10,7 @@ using NzbDrone.Core.ImportLists;
 using NzbDrone.Core.Lifecycle;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.Profiles.Releases;
 using NzbDrone.Core.RootFolders;
 
@@ -210,7 +211,8 @@ namespace NzbDrone.Core.Profiles.Metadata
                 return false;
             }
 
-            return (b.Ratings.Popularity >= p.MinPopularity) || b.ReleaseDate > DateTime.UtcNow;
+            // Audnexus does not supply rating vote counts for popularity scoring.
+            return AudiobookId.IsNative(b.ForeignBookId) || (b.Ratings.Popularity >= p.MinPopularity) || b.ReleaseDate > DateTime.UtcNow;
         }
 
         private bool IsPartOrSet(Book book, List<SeriesBookLink> seriesLinks, HashSet<string> titles)
@@ -282,17 +284,10 @@ namespace NzbDrone.Core.Profiles.Metadata
             {
                 _logger.Info("Setting up standard metadata profile");
 
-                var minPopularity = 350;
-                var hc = Environment.GetEnvironmentVariable("HARDCOVER") == "true";
-                if (hc)
-                {
-                    minPopularity = 50;
-                }
-
                 Add(new MetadataProfile
                 {
                     Name = "Standard",
-                    MinPopularity = minPopularity,
+                    MinPopularity = 0,
                     SkipMissingDate = true,
                     SkipPartsAndSets = true,
                     AllowedLanguages = "eng, null"

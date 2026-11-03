@@ -16,6 +16,9 @@ namespace Readarr.Api.V1.Books
         public string TitleSlug { get; set; }
         public string Isbn13 { get; set; }
         public string Asin { get; set; }
+        public string AudibleRegion { get; set; }
+        public List<string> Narrators { get; set; }
+        public int? RuntimeLengthMinutes { get; set; }
         public string Title { get; set; }
         public string Language { get; set; }
         public string Overview { get; set; }
@@ -55,6 +58,9 @@ namespace Readarr.Api.V1.Books
                 TitleSlug = model.TitleSlug,
                 Isbn13 = model.Isbn13,
                 Asin = model.Asin,
+                AudibleRegion = model.AudibleRegion,
+                Narrators = model.Narrators,
+                RuntimeLengthMinutes = model.RuntimeLengthMinutes,
                 Title = model.Title,
                 Language = model.Language,
                 Overview = model.Overview,
@@ -87,6 +93,9 @@ namespace Readarr.Api.V1.Books
                 TitleSlug = resource.TitleSlug,
                 Isbn13 = resource.Isbn13,
                 Asin = resource.Asin,
+                AudibleRegion = resource.AudibleRegion,
+                Narrators = resource.Narrators,
+                RuntimeLengthMinutes = resource.RuntimeLengthMinutes,
                 Title = resource.Title,
                 Language = resource.Language,
                 Overview = resource.Overview,

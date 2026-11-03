@@ -15,6 +15,7 @@ import { icons, kinds, sizes, tooltipPositions } from 'Helpers/Props';
 import fonts from 'Styles/Variables/fonts';
 import formatBytes from 'Utilities/Number/formatBytes';
 import stripHtml from 'Utilities/String/stripHtml';
+import translate from 'Utilities/String/translate';
 import BookDetailsLinks from './BookDetailsLinks';
 import styles from './BookDetailsHeader.css';
 
@@ -60,6 +61,8 @@ class BookDetailsHeader extends Component {
       title,
       seriesTitle,
       pageCount,
+      narrators = [],
+      runtimeLengthMinutes,
       overview,
       statistics = {},
       monitored,
@@ -139,7 +142,14 @@ class BookDetailsHeader extends Component {
                 />
 
                 {
-                  !!pageCount &&
+                  !!runtimeLengthMinutes &&
+                    <span className={styles.duration}>
+                      {translate('RuntimeMinutes', [runtimeLengthMinutes])}
+                    </span>
+                }
+
+                {
+                  !runtimeLengthMinutes && !!pageCount &&
                     <span className={styles.duration}>
                       {`${pageCount} pages`}
                     </span>
@@ -150,6 +160,13 @@ class BookDetailsHeader extends Component {
                   iconSize={20}
                 />
               </div>
+
+              {
+                narrators.length > 0 &&
+                  <div>
+                    {translate('NarratedBy', [narrators.join(', ')])}
+                  </div>
+              }
             </div>
 
             <div className={styles.detailsLabels}>
@@ -252,6 +269,8 @@ BookDetailsHeader.propTypes = {
   title: PropTypes.string.isRequired,
   seriesTitle: PropTypes.string.isRequired,
   pageCount: PropTypes.number,
+  narrators: PropTypes.arrayOf(PropTypes.string),
+  runtimeLengthMinutes: PropTypes.number,
   overview: PropTypes.string,
   statistics: PropTypes.object.isRequired,
   releaseDate: PropTypes.string.isRequired,

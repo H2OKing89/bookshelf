@@ -287,6 +287,42 @@ namespace NzbDrone.Core.Configuration
             }
         }
 
+        public string AudnexusUrl
+        {
+            get { return GetValue("AudnexusUrl", "https://api.audnex.us"); }
+            set { SetValue("AudnexusUrl", value); }
+        }
+
+        public string AudnexusRegion
+        {
+            get { return GetValue("AudnexusRegion", "us"); }
+            set { SetValue("AudnexusRegion", value); }
+        }
+
+        public bool AudibleRsEnabled
+        {
+            get { return GetValueBoolean("AudibleRsEnabled", false); }
+            set { SetValue("AudibleRsEnabled", value); }
+        }
+
+        public string AudibleRsUrl
+        {
+            get { return GetValue("AudibleRsUrl", string.Empty); }
+            set { SetValue("AudibleRsUrl", value); }
+        }
+
+        public string AudibleRsTokenFile
+        {
+            get { return GetValue("AudibleRsTokenFile", string.Empty); }
+            set { SetValue("AudibleRsTokenFile", value); }
+        }
+
+        public string AudibleRsAccount
+        {
+            get { return GetValue("AudibleRsAccount", string.Empty); }
+            set { SetValue("AudibleRsAccount", value); }
+        }
+
         public WriteAudioTagsType WriteAudioTags
         {
             get { return GetValueEnum("WriteAudioTags", WriteAudioTagsType.No); }

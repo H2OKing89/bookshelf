@@ -26,13 +26,14 @@ namespace NzbDrone.Core.ImportLists
                               Logger logger)
             : base(providerRepository, providers, container, eventAggregator, logger)
         {
+            _providers.RemoveAll(provider => provider.ListType == ImportListType.Goodreads);
             _importListStatusService = importListStatusService;
             _logger = logger;
         }
 
         protected override List<ImportListDefinition> Active()
         {
-            return base.Active().Where(c => c.Enable).ToList();
+            return base.Active().Where(c => c.Enable && !c.Implementation.StartsWith("Goodreads", StringComparison.Ordinal)).ToList();
         }
 
         public override void SetProviderCharacteristics(IImportList provider, ImportListDefinition definition)
