@@ -8,6 +8,7 @@ using Ical.Net.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.Tags;
 using Readarr.Http;
 
@@ -19,12 +20,16 @@ namespace Readarr.Api.V1.Calendar
         private readonly IBookService _bookService;
         private readonly IAuthorService _authorService;
         private readonly ITagService _tagService;
+        private readonly IAudiobookMetadataOverrideService _overrides;
+        private readonly ISeriesBookLinkService _seriesBookLinkService;
 
-        public CalendarFeedController(IBookService bookService, IAuthorService authorService, ITagService tagService)
+        public CalendarFeedController(IBookService bookService, IAuthorService authorService, ITagService tagService, IAudiobookMetadataOverrideService overrides, ISeriesBookLinkService seriesBookLinkService)
         {
             _bookService = bookService;
             _authorService = authorService;
             _tagService = tagService;
+            _overrides = overrides;
+            _seriesBookLinkService = seriesBookLinkService;
         }
 
         [HttpGet("Readarr.ics")]
@@ -40,6 +45,8 @@ namespace Readarr.Api.V1.Calendar
             }
 
             var books = _bookService.BooksBetweenDates(start, end, unmonitored);
+            var seriesLinks = _seriesBookLinkService.GetLinksByBook(books.Select(book => book.Id).ToList())
+                .GroupBy(link => link.BookId).ToDictionary(group => group.Key, group => group.ToList());
             var calendar = new Ical.Net.Calendar
             {
                 ProductId = "-//readarr.com//Readarr//EN"
@@ -51,6 +58,7 @@ namespace Readarr.Api.V1.Calendar
 
             foreach (var book in books.OrderBy(v => v.ReleaseDate.Value))
             {
+                book.SeriesLinks = seriesLinks.GetValueOrDefault(book.Id) ?? new List<SeriesBookLink>();
                 var author = _authorService.GetAuthor(book.AuthorId); // Temp fix TODO: Figure out why Book.Author is not populated during BooksBetweenDates Query
 
                 if (tags.Any() && tags.None(author.Tags.Contains))
@@ -69,7 +77,7 @@ namespace Readarr.Api.V1.Calendar
                 occurrence.End = occurrence.Start;
                 occurrence.IsAllDay = true;
 
-                occurrence.Summary = $"{author.Name} - {book.Title}";
+                occurrence.Summary = $"{author.Name} - {_overrides.DisplayTitle(book)}";
             }
 
             var serializer = (IStringSerializer)new SerializerFactory().Build(calendar.GetType(), new SerializationContext());

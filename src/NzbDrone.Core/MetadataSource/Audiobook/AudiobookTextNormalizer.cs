@@ -13,13 +13,6 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
     {
         private static readonly Regex Whitespace = new Regex(@"\s+", RegexOptions.Compiled);
         private static readonly Regex CommaSpacing = new Regex(@",\s*", RegexOptions.Compiled);
-        private static readonly Dictionary<string, (string Published, string Match)> TitleCorrections = new Dictionary<string, (string Published, string Match)>
-        {
-            // The publisher identifies volume 18; Audible drops the final "n".
-            // https://sevenseasentertainment.com/audio_books/mushoku-tensei-jobless-reincarnation-audiobook-vol-18/
-            { "audible:us:B0D5JN2RH2", ("Mushoku Tensei: Jobless Reincarnatio, Vol. 18", "Mushoku Tensei: Jobless Reincarnation, Vol. 18") }
-        };
-
         public static string Text(string value) => string.IsNullOrWhiteSpace(value)
             ? null : Whitespace.Replace(value.Normalize(NormalizationForm.FormC).Trim(), " ");
 
@@ -61,13 +54,6 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             if (subtitle != null)
             {
                 candidates.Add(title + ": " + subtitle);
-            }
-
-            // Corrections are scoped to a recording and its exact observed title.
-            // An upstream title change must be evaluated again rather than replaced.
-            if (book.ForeignBookId != null && TitleCorrections.TryGetValue(book.ForeignBookId, out var correction) && title == correction.Published)
-            {
-                candidates.Add(correction.Match);
             }
 
             // Only reshape titles built from this recording's own series name and number.

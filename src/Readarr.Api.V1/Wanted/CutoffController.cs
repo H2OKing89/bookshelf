@@ -4,6 +4,7 @@ using NzbDrone.Core.Books;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.DecisionEngine.Specifications;
 using NzbDrone.Core.MediaCover;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.SignalR;
 using Readarr.Api.V1.Books;
 using Readarr.Http;
@@ -22,8 +23,9 @@ namespace Readarr.Api.V1.Wanted
                             IAuthorStatisticsService authorStatisticsService,
                             IMapCoversToLocal coverMapper,
                             IUpgradableSpecification upgradableSpecification,
-                            IBroadcastSignalRMessage signalRBroadcaster)
-        : base(bookService, seriesBookLinkService, authorStatisticsService, coverMapper, upgradableSpecification, signalRBroadcaster)
+                            IBroadcastSignalRMessage signalRBroadcaster,
+                            IAudiobookMetadataOverrideService overrides)
+        : base(bookService, seriesBookLinkService, authorStatisticsService, coverMapper, upgradableSpecification, signalRBroadcaster, overrides)
         {
             _bookCutoffService = bookCutoffService;
         }

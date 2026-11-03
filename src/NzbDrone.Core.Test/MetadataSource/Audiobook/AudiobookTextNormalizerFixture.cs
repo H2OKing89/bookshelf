@@ -85,7 +85,7 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
         [TestCase("audible:uk:B0D5JN2RH2", "Mushoku Tensei: Jobless Reincarnatio, Vol. 18", "18", "Mushoku Tensei: Jobless Reincarnatio, Vol. 18")]
         [TestCase("audible:us:B000000001", "Mushoku Tensei: Jobless Reincarnatio, Vol. 18", "18", "Mushoku Tensei: Jobless Reincarnatio, Vol. 18")]
         [TestCase("audible:us:B0D5JN2RH2", "A New Published Title", "18", "A New Published Title")]
-        [TestCase("audible:us:B0D5JN2RH2", "Mushoku Tensei: Jobless Reincarnatio, Vol. 18", "19", "Mushoku Tensei: Jobless Reincarnatio, Vol. 18")]
+        [TestCase("audible:us:B0D5JN2RH2", "Mushoku Tensei: Jobless Reincarnatio, Vol. 18", "19", "Mushoku Tensei: Jobless Reincarnation, Vol. 18")]
         public void should_scope_verified_title_corrections_to_the_recording_and_observed_title(string id, string title, string position, string expected)
         {
             var resource = new AudnexusBookResource
@@ -96,8 +96,9 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
             };
             var book = AudiobookMetadataMapper.Book(resource, "us");
             book.ForeignBookId = id;
+            Mocker.GetMock<IAudiobookMetadataOverrideRepository>().Setup(r => r.All()).Returns(AudiobookMetadataOverrideSeed.Read());
 
-            AudiobookTextNormalizer.DisplayTitle(book).Should().Be(expected);
+            Mocker.Resolve<AudiobookMetadataOverrideService>().DisplayTitle(book).Should().Be(expected);
             book.Title.Should().Be(title);
         }
 

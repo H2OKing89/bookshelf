@@ -15,9 +15,8 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 {
     public static class AudiobookMetadataMapper
     {
-        public static AuthorMetadata Author(AudnexusContributorResource contributor, string region)
+        public static AuthorMetadata Author(AudnexusContributorResource contributor, string region, AudiobookAuthorIdentity identity = null)
         {
-            var identity = AudiobookAuthorIdentity.Find(contributor, region);
             var asin = identity?.Asin ?? contributor.Asin;
             var name = identity?.Name ?? AudiobookTextNormalizer.Text(contributor.Name);
             var id = AudiobookId.IsAsin(asin)
@@ -33,7 +32,8 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 SortName = name,
                 NameLastFirst = name,
                 SortNameLastFirst = name,
-                Aliases = identity?.Aliases.ToList() ?? new List<string>(),
+                Aliases = AudiobookTextNormalizer.Names((identity?.Aliases ?? Array.Empty<string>()).Append(contributor.Name))
+                    .Where(alias => !string.Equals(alias, name, StringComparison.OrdinalIgnoreCase)).ToList(),
                 Overview = profile?.Description,
                 Status = AuthorStatusType.Continuing
             };
@@ -46,7 +46,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             return result;
         }
 
-        public static Book Book(AudnexusBookResource resource, string region, AuthorMetadata expectedAuthor = null)
+        public static Book Book(AudnexusBookResource resource, string region, AuthorMetadata expectedAuthor = null, AudiobookAuthorIdentity identity = null)
         {
             if (!AudiobookId.IsAsin(resource?.Asin) || resource.Region != region || resource.Title.IsNullOrWhiteSpace() ||
                 resource.Authors?.Any(a => a?.Name.IsNotNullOrWhiteSpace() == true) != true)
@@ -55,7 +55,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             }
 
             var contributor = resource.Authors.First(a => a?.Name.IsNotNullOrWhiteSpace() == true);
-            var metadata = Author(contributor, region);
+            var metadata = Author(contributor, region, identity);
 
             // A missing contributor ASIN can use the author already established for
             // this bibliography/recording. A conflicting ASIN must remain separate.

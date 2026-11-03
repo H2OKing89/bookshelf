@@ -14,6 +14,7 @@ using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.Validation;
 using NzbDrone.Core.Validation.Paths;
 using NzbDrone.Http.REST.Attributes;
@@ -47,10 +48,11 @@ namespace Readarr.Api.V1.Books
                           IMapCoversToLocal coverMapper,
                           IUpgradableSpecification upgradableSpecification,
                           IBroadcastSignalRMessage signalRBroadcaster,
+                          IAudiobookMetadataOverrideService overrides,
                           QualityProfileExistsValidator qualityProfileExistsValidator,
                           MetadataProfileExistsValidator metadataProfileExistsValidator)
 
-        : base(bookService, seriesBookLinkService, authorStatisticsService, coverMapper, upgradableSpecification, signalRBroadcaster)
+        : base(bookService, seriesBookLinkService, authorStatisticsService, coverMapper, upgradableSpecification, signalRBroadcaster, overrides)
         {
             _authorService = authorService;
             _editionService = editionService;
@@ -220,7 +222,7 @@ namespace Readarr.Api.V1.Books
         {
             foreach (var book in message.Book.Books)
             {
-                var resource = book.ToResource();
+                var resource = book.ToResource(_overrides);
                 resource.Grabbed = true;
 
                 BroadcastResourceChange(ModelAction.Updated, resource);
@@ -242,7 +244,7 @@ namespace Readarr.Api.V1.Books
         [NonAction]
         public void Handle(BookDeletedEvent message)
         {
-            BroadcastResourceChange(ModelAction.Deleted, message.Book.ToResource());
+            BroadcastResourceChange(ModelAction.Deleted, message.Book.ToResource(_overrides));
         }
 
         [NonAction]
@@ -254,7 +256,7 @@ namespace Readarr.Api.V1.Books
         [NonAction]
         public void Handle(TrackImportedEvent message)
         {
-            BroadcastResourceChange(ModelAction.Updated, message.BookInfo.Book.ToResource());
+            BroadcastResourceChange(ModelAction.Updated, message.BookInfo.Book.ToResource(_overrides));
         }
 
         [NonAction]

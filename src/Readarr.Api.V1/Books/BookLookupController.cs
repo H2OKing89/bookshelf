@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MetadataSource;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using Readarr.Http;
 
 namespace Readarr.Api.V1.Books
@@ -12,11 +13,13 @@ namespace Readarr.Api.V1.Books
     {
         private readonly ISearchForNewBook _searchProxy;
         private readonly IMapCoversToLocal _coverMapper;
+        private readonly IAudiobookMetadataOverrideService _overrides;
 
-        public BookLookupController(ISearchForNewBook searchProxy, IMapCoversToLocal coverMapper)
+        public BookLookupController(ISearchForNewBook searchProxy, IMapCoversToLocal coverMapper, IAudiobookMetadataOverrideService overrides)
         {
             _searchProxy = searchProxy;
             _coverMapper = coverMapper;
+            _overrides = overrides;
         }
 
         [HttpGet]
@@ -30,7 +33,7 @@ namespace Readarr.Api.V1.Books
         {
             foreach (var currentBook in books)
             {
-                var resource = currentBook.ToResource();
+                var resource = currentBook.ToResource(_overrides);
 
                 _coverMapper.ConvertToLocalUrls(resource.Id, MediaCoverEntity.Book, resource.Images);
 

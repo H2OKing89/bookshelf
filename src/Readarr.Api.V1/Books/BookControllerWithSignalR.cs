@@ -4,6 +4,7 @@ using NzbDrone.Core.AuthorStats;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.DecisionEngine.Specifications;
 using NzbDrone.Core.MediaCover;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.SignalR;
 using Readarr.Api.V1.Author;
 using Readarr.Http.REST;
@@ -12,6 +13,7 @@ namespace Readarr.Api.V1.Books
 {
     public abstract class BookControllerWithSignalR : RestControllerWithSignalR<BookResource, Book>
     {
+        protected readonly IAudiobookMetadataOverrideService _overrides;
         protected readonly IBookService _bookService;
         protected readonly ISeriesBookLinkService _seriesBookLinkService;
         protected readonly IAuthorStatisticsService _authorStatisticsService;
@@ -23,9 +25,11 @@ namespace Readarr.Api.V1.Books
                                         IAuthorStatisticsService authorStatisticsService,
                                         IMapCoversToLocal coverMapper,
                                         IUpgradableSpecification qualityUpgradableSpecification,
-                                        IBroadcastSignalRMessage signalRBroadcaster)
+                                        IBroadcastSignalRMessage signalRBroadcaster,
+                                        IAudiobookMetadataOverrideService overrides)
             : base(signalRBroadcaster)
         {
+            _overrides = overrides;
             _bookService = bookService;
             _seriesBookLinkService = seriesBookLinkService;
             _authorStatisticsService = authorStatisticsService;
@@ -49,7 +53,7 @@ namespace Readarr.Api.V1.Books
 
         protected BookResource MapToResource(Book book, bool includeAuthor)
         {
-            var resource = book.ToResource();
+            var resource = book.ToResource(_overrides);
 
             if (includeAuthor)
             {
@@ -82,7 +86,7 @@ namespace Readarr.Api.V1.Books
                 }
             }
 
-            var result = books.ToResource();
+            var result = books.ToResource(_overrides);
 
             if (includeAuthor)
             {

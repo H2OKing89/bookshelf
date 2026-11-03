@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MetadataSource;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.Organizer;
 using Readarr.Api.V1.Author;
 using Readarr.Api.V1.Books;
@@ -17,12 +18,14 @@ namespace Readarr.Api.V1.Search
         private readonly ISearchForNewEntity _searchProxy;
         private readonly IBuildFileNames _fileNameBuilder;
         private readonly IMapCoversToLocal _coverMapper;
+        private readonly IAudiobookMetadataOverrideService _overrides;
 
-        public SearchController(ISearchForNewEntity searchProxy, IBuildFileNames fileNameBuilder, IMapCoversToLocal coverMapper)
+        public SearchController(ISearchForNewEntity searchProxy, IBuildFileNames fileNameBuilder, IMapCoversToLocal coverMapper, IAudiobookMetadataOverrideService overrides)
         {
             _searchProxy = searchProxy;
             _fileNameBuilder = fileNameBuilder;
             _coverMapper = coverMapper;
+            _overrides = overrides;
         }
 
         [HttpGet]
@@ -58,7 +61,7 @@ namespace Readarr.Api.V1.Search
                 }
                 else if (result is NzbDrone.Core.Books.Book book)
                 {
-                    resource.Book = book.ToResource();
+                    resource.Book = book.ToResource(_overrides);
                     resource.Book.Overview = book.Editions.Value.Single(x => x.Monitored).Overview;
                     resource.Book.Author = book.Author.Value.ToResource();
                     resource.Book.Editions = book.Editions.Value.ToResource();

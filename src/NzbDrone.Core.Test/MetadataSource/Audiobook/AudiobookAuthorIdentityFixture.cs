@@ -26,6 +26,8 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
         [SetUp]
         public void Setup()
         {
+            Mocker.GetMock<IAudiobookMetadataOverrideRepository>().Setup(r => r.All()).Returns(AudiobookMetadataOverrideSeed.Read());
+            Mocker.SetConstant<IAudiobookMetadataOverrideService>(Mocker.Resolve<AudiobookMetadataOverrideService>());
             _fixture = JObject.Parse(ReadAllText("Files/MetadataSource/Audiobook/KumaKumaKumaBear.json"));
             Mocker.GetMock<IConfigService>().SetupGet(c => c.AudnexusRegion).Returns("us");
             Mocker.GetMock<IConfigService>().SetupGet(c => c.AudibleRsEnabled).Returns(true);
@@ -132,7 +134,7 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
             volumes.Select(l => l.Position).Should().BeEquivalentTo(Enumerable.Range(1, 26).Select(n => n.ToString()));
             foreach (var volume in volumes)
             {
-                AudiobookTextNormalizer.DisplayTitle(volume.Book.Value).Should().Be(mainSeries.Title + " #" + volume.Position);
+                Mocker.Resolve<IAudiobookMetadataOverrideService>().DisplayTitle(volume.Book.Value).Should().Be(mainSeries.Title + " #" + volume.Position);
             }
 
             var products = _fixture["catalogs"].SelectMany(c => c["response"]["body"]["products"]).ToList();

@@ -53,7 +53,7 @@ namespace Readarr.Api.V1.Books
 
     public static class BookResourceMapper
     {
-        public static BookResource ToResource(this Book model)
+        public static BookResource ToResource(this Book model, IAudiobookMetadataOverrideService overrides = null)
         {
             if (model == null)
             {
@@ -83,7 +83,7 @@ namespace Readarr.Api.V1.Books
                 RuntimeLengthMinutes = selectedEdition?.RuntimeLengthMinutes,
                 Genres = model.Genres,
                 Title = title,
-                DisplayTitle = AudiobookTextNormalizer.DisplayTitle(model, title),
+                DisplayTitle = overrides?.DisplayTitle(model, title) ?? AudiobookTextNormalizer.DisplayTitle(model, title),
                 Subtitle = selectedEdition?.Subtitle,
                 AuthorTitle = authorTitle,
                 SeriesTitle = seriesTitle,
@@ -131,9 +131,9 @@ namespace Readarr.Api.V1.Books
             return book;
         }
 
-        public static List<BookResource> ToResource(this IEnumerable<Book> models)
+        public static List<BookResource> ToResource(this IEnumerable<Book> models, IAudiobookMetadataOverrideService overrides = null)
         {
-            return models?.Select(ToResource).ToList();
+            return models?.Select(model => model.ToResource(overrides)).ToList();
         }
 
         public static List<Book> ToModel(this IEnumerable<BookResource> resources)

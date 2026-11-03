@@ -24,6 +24,8 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
         [SetUp]
         public void Setup()
         {
+            Mocker.GetMock<IAudiobookMetadataOverrideRepository>().Setup(r => r.All()).Returns(AudiobookMetadataOverrideSeed.Read());
+            Mocker.SetConstant<IAudiobookMetadataOverrideService>(Mocker.Resolve<AudiobookMetadataOverrideService>());
             _resources = new List<AudnexusBookResource> { Recording("B0H8F9D4GD", "Volume 1"), Recording("B0HMVRXW3C", "Volume 2") };
             Mocker.GetMock<IConfigService>().SetupGet(x => x.AudnexusRegion).Returns("us");
             Mocker.GetMock<IAudnexusProxy>().Setup(x => x.SearchBooks(It.IsAny<string>(), "us")).Returns(() => _resources);

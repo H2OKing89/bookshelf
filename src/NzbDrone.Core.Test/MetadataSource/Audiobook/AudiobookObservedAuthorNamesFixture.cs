@@ -18,6 +18,13 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
     [TestFixture]
     public class AudiobookObservedAuthorNamesFixture : CoreTest<AudiobookInfoProxy>
     {
+        [SetUp]
+        public void Setup()
+        {
+            Mocker.GetMock<IAudiobookMetadataOverrideRepository>().Setup(r => r.All()).Returns(AudiobookMetadataOverrideSeed.Read());
+            Mocker.SetConstant<IAudiobookMetadataOverrideService>(Mocker.Resolve<AudiobookMetadataOverrideService>());
+        }
+
         [TestCase("Mitizou")]
         [TestCase("Miya Kazuki")]
         [TestCase("Pirateaba")]

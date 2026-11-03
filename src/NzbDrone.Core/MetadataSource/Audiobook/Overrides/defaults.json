@@ -1,0 +1,34 @@
+[
+  {
+    "kind": "author",
+    "region": "us",
+    "asin": "B0DSLB5CG5",
+    "name": "Kumanano",
+    "alternateAsins": ["B074QPMWRL"],
+    "aliases": ["くまなの"],
+    "sourceUrl": "https://www.audible.com/series/B0F7Z67917",
+    "reason": "The English Kuma Kuma Kuma Bear recordings credit both author profiles and both spellings, sometimes without an author ASIN.",
+    "enabled": true
+  },
+  {
+    "kind": "author",
+    "region": "us",
+    "asin": "B00LR4UJB8",
+    "name": "Rifujin na Magonote",
+    "alternateAsins": ["B076N4Q46Q"],
+    "aliases": ["理不尽な孫の手"],
+    "sourceUrl": "https://www.audible.com/series/B0CJYVSQFB",
+    "reason": "The publisher credits one author. Audible splits English recordings between two profiles and Japanese or name-only credits; volumes 13, 17 and 18 require the Japanese name query.",
+    "enabled": true
+  },
+  {
+    "kind": "title",
+    "region": "us",
+    "asin": "B0D5JN2RH2",
+    "originalTitle": "Mushoku Tensei: Jobless Reincarnatio, Vol. 18",
+    "replacementTitle": "Mushoku Tensei: Jobless Reincarnation, Vol. 18",
+    "sourceUrl": "https://sevenseasentertainment.com/audio_books/mushoku-tensei-jobless-reincarnation-audiobook-vol-18/",
+    "reason": "Audible drops the final n in Reincarnation. The publisher and structured series identify volume 18. Preserve the provider title and correct its display label only.",
+    "enabled": true
+  }
+]

@@ -25,7 +25,8 @@ and series positions. Both profiles can be checked against the
 The `series` catalog query parameter is ignored by Audible and must not be used
 as evidence of series membership; these captures use the `author` parameter.
 
-`AudiobookAuthorIdentity` maps only verified identities within a marketplace.
+`AudiobookMetadataOverrideService` reads verified identities from the database,
+scoped to a marketplace.
 Add aliases with evidence and a regression fixture; do not infer identity from
 transliteration, matching titles, or participation in the same series. Author
 spellings do not change a recording's language or its marketplace/ASIN identity.
@@ -53,4 +54,31 @@ by the [publisher's volume 18 listing](https://sevenseasentertainment.com/audio_
 and [Audible's structured series listing](https://www.audible.com/series/Mushoku-Tensei-Jobless-Reincarnation-Audiobooks/B0CJYVSQFB).
 Tests retain original titles and recording IDs, require every main-series
 position 1–26, and reject title corrections for different recordings,
-marketplaces, volume positions, or changed source titles.
+marketplaces, or changed source titles. A conflicting series position prevents
+building a numbered series label; the explicit corrected title is shown instead.
+
+## Persistent overrides
+
+Migration 044 copies the initial curated records from
+`src/NzbDrone.Core/MetadataSource/Audiobook/Overrides/defaults.json` into
+`AudiobookMetadataOverrides`. Seed data is read only by the migration; disabling
+or deleting a record never restores it on startup. The generic mapper and text
+normalizer contain no author ASIN lists or individual title corrections.
+
+Manage records in **Settings → Metadata → Metadata overrides**, or through
+`GET/POST /api/v1/metadataoverride` and `GET/PUT/DELETE /api/v1/metadataoverride/{id}`.
+Each record has an enabled flag, marketplace, ASIN, evidence URL, reason, and UTC
+update timestamp. Author mappings additionally hold a canonical name, alternate
+ASINs, and name spellings. Overlapping enabled author claims and mapping chains
+are rejected. Refresh affected authors after editing an identity mapping.
+
+Title corrections hold an exact provider title and a corrected display title.
+Only the display label uses the correction; stored book and edition titles stay
+unchanged. A different provider title stops matching and appears as **Needs
+review** in the editor, alongside the currently stored provider title. Corrections
+for books outside the library are marked **Not in library**. Book lists, search,
+calendar, and iCalendar use the same display-label service.
+
+The calendar defaults to **Monitored Only**, which requires both the book and its
+author to be monitored. **All** includes unmonitored sample metadata without
+changing monitoring or enabling download searches.

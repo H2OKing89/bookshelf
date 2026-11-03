@@ -17,6 +17,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         private readonly IAudnexusProxy _audnexus;
         private readonly IAudibleCatalogProxy _audible;
         private readonly IConfigService _config;
+        private readonly IAudiobookMetadataOverrideService _overrides;
         private readonly IAuthorService _authorService;
         private readonly IBookService _bookService;
         private readonly IEditionService _editionService;
@@ -28,8 +29,10 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             IAuthorService authorService,
             IBookService bookService,
             IEditionService editionService,
-            ICacheManager cacheManager)
+            ICacheManager cacheManager,
+            IAudiobookMetadataOverrideService overrides)
         {
+            _overrides = overrides;
             _audnexus = audnexus;
             _audible = audible;
             _config = config;
@@ -132,14 +135,14 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
             var book = Map(resource, identity.Region);
             var authors = resource.Authors.Where(a => a?.Name.IsNotNullOrWhiteSpace() == true).Skip(1)
-                .Select(a => AudiobookMetadataMapper.Author(a, identity.Region)).Prepend(book.AuthorMetadata.Value)
+                .Select(a => MapAuthor(a, identity.Region)).Prepend(book.AuthorMetadata.Value)
                 .DistinctBy(a => a.ForeignAuthorId).ToList();
             return Tuple.Create(book.AuthorMetadata.Value.ForeignAuthorId, book, authors);
         }
 
         public Author GetAuthorInfo(string id, bool useCache = true)
         {
-            id = AudiobookAuthorIdentity.CanonicalId(id);
+            id = _overrides.CanonicalAuthorId(id);
             var identity = AudiobookId.Parse(id);
             var local = _authorService.FindById(id);
             var metadata = local?.Metadata.Value ?? _authors.Find(id);
@@ -153,14 +156,14 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 var profile = _audnexus.GetAuthor(identity.Value, identity.Region);
                 if (profile != null)
                 {
-                    var updated = AudiobookMetadataMapper.Author(profile, identity.Region);
+                    var updated = MapAuthor(profile, identity.Region);
                     AudiobookAuthorIdentity.PreserveNames(updated, metadata);
                     metadata = updated;
                 }
             }
             else
             {
-                metadata ??= AudiobookMetadataMapper.Author(new AudnexusContributorResource { Name = identity.Value }, identity.Region);
+                metadata ??= MapAuthor(new AudnexusContributorResource { Name = identity.Value }, identity.Region);
             }
 
             if (metadata == null)
@@ -168,7 +171,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 throw new BookInfoException("No author profile was found for this ASIN. Search for an audiobook title by this author first.");
             }
 
-            var resources = AudiobookAuthorIdentity.SearchNames(metadata, identity.Region)
+            var resources = _overrides.AuthorSearchNames(metadata, identity.Region)
                 .SelectMany(name => _config.AudibleRsEnabled
                     ? _audible.GetAuthorBooks(name, identity.Region)
                     : _audnexus.SearchBooks(name, identity.Region))
@@ -226,7 +229,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 .Where(a => a?.Name.IsNotNullOrWhiteSpace() == true)
                 .Select(a =>
                 {
-                    var metadata = AudiobookMetadataMapper.Author(a, _config.AudnexusRegion);
+                    var metadata = MapAuthor(a, _config.AudnexusRegion);
                     RememberAuthor(metadata);
                     return _authorService.FindById(metadata.ForeignAuthorId) ?? new Author
                     {
@@ -238,7 +241,9 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         private Book Map(AudnexusBookResource resource, string region, AuthorMetadata expectedAuthor = null)
         {
             var existing = resource == null ? null : _bookService.FindById(AudiobookId.ForAsin(region, resource.Asin));
-            var book = AudiobookMetadataMapper.Book(resource, region, expectedAuthor ?? existing?.AuthorMetadata.Value);
+            var contributor = resource?.Authors?.FirstOrDefault(a => !string.IsNullOrWhiteSpace(a?.Name));
+            var identity = contributor == null ? null : _overrides.FindAuthor(contributor, region);
+            var book = AudiobookMetadataMapper.Book(resource, region, expectedAuthor ?? existing?.AuthorMetadata.Value, identity);
             var metadata = book.AuthorMetadata.Value;
             RememberAuthor(metadata);
             if (existing != null)
@@ -266,6 +271,9 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
             return book;
         }
+
+        private AuthorMetadata MapAuthor(AudnexusContributorResource contributor, string region) =>
+            AudiobookMetadataMapper.Author(contributor, region, _overrides.FindAuthor(contributor, region));
 
         private void RememberAuthor(AuthorMetadata metadata)
         {
