@@ -44,6 +44,8 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
             var fromAudible = AudiobookMetadataMapper.Book(audible, "us");
 
             fromAudible.ForeignBookId.Should().Be(fromAudnexus.ForeignBookId);
+            fromAudible.ReleaseDate.Should().Be(fromAudnexus.ReleaseDate);
+            fromAudible.ReleaseDate.Value.Kind.Should().Be(System.DateTimeKind.Utc);
             fromAudible.Editions.Value.Single().Subtitle.Should().Be(audnexus.Subtitle);
             fromAudible.Genres.Should().NotBeEmpty().And.OnlyHaveUniqueItems();
             fromAudnexus.Genres.Should().NotBeEmpty();

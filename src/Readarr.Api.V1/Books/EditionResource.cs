@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
+using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.MediaCover;
 using Readarr.Http.REST;
@@ -28,6 +29,7 @@ namespace Readarr.Api.V1.Books
         public string Disambiguation { get; set; }
         public string Publisher { get; set; }
         public int PageCount { get; set; }
+        [global::System.Text.Json.Serialization.JsonConverter(typeof(STJCalendarDateConverter))]
         public DateTime? ReleaseDate { get; set; }
         public List<MediaCover> Images { get; set; }
         public List<Links> Links { get; set; }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.MediaCover;
 using Readarr.Api.V1.Author;
@@ -26,6 +27,7 @@ namespace Readarr.Api.V1.Books
         public bool Monitored { get; set; }
         public bool AnyEditionOk { get; set; }
         public Ratings Ratings { get; set; }
+        [global::System.Text.Json.Serialization.JsonConverter(typeof(STJCalendarDateConverter))]
         public DateTime? ReleaseDate { get; set; }
         public int PageCount { get; set; }
         public List<string> Narrators { get; set; }

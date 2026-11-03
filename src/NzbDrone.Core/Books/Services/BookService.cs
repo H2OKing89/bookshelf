@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NLog;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Messaging.Events;
@@ -230,14 +231,14 @@ namespace NzbDrone.Core.Books
 
         public List<Book> BooksBetweenDates(DateTime start, DateTime end, bool includeUnmonitored)
         {
-            var books = _bookRepository.BooksBetweenDates(start.ToUniversalTime(), end.ToUniversalTime(), includeUnmonitored);
+            var books = _bookRepository.BooksBetweenDates(CalendarDate.Normalize(start), CalendarDate.Normalize(end).AddDays(1).AddTicks(-1), includeUnmonitored);
 
             return books;
         }
 
         public List<Book> AuthorBooksBetweenDates(Author author, DateTime start, DateTime end, bool includeUnmonitored)
         {
-            var books = _bookRepository.AuthorBooksBetweenDates(author, start.ToUniversalTime(), end.ToUniversalTime(), includeUnmonitored);
+            var books = _bookRepository.AuthorBooksBetweenDates(author, CalendarDate.Normalize(start), CalendarDate.Normalize(end).AddDays(1).AddTicks(-1), includeUnmonitored);
 
             return books;
         }

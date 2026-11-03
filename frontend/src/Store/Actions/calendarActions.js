@@ -240,8 +240,8 @@ export const actionHandlers = handleThunks({
       url: '/calendar',
       data: {
         unmonitored,
-        start,
-        end
+        start: moment(start).format('YYYY-MM-DD'),
+        end: moment(end).format('YYYY-MM-DD')
       }
     }).request;
 

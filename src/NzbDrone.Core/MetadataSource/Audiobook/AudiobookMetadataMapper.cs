@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MetadataSource.Audnexus;
@@ -53,6 +54,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             var author = new Author { Metadata = metadata, CleanName = Parser.Parser.CleanAuthorName(metadata.Name), Series = new List<Series>() };
             var id = AudiobookId.ForAsin(region, resource.Asin);
             decimal.TryParse(resource.Rating, NumberStyles.Number, CultureInfo.InvariantCulture, out var rating);
+            var releaseDate = CalendarDate.Normalize(resource.ReleaseDate);
             var edition = new Edition
             {
                 ForeignEditionId = id,
@@ -67,7 +69,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 Disambiguation = resource.FormatType,
                 Publisher = resource.PublisherName,
                 Isbn13 = resource.Isbn,
-                ReleaseDate = resource.ReleaseDate,
+                ReleaseDate = releaseDate,
                 RuntimeLengthMinutes = resource.RuntimeLengthMin > 0 ? resource.RuntimeLengthMin : null,
                 Narrators = resource.Narrators?.Where(n => n?.Name.IsNotNullOrWhiteSpace() == true).Select(n => n.Name.Trim()).Distinct().ToList() ?? new List<string>(),
                 Ratings = new Ratings { Value = rating },
@@ -82,7 +84,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 TitleSlug = edition.TitleSlug,
                 Title = resource.Title,
                 CleanTitle = Parser.Parser.CleanBookTitle(resource.Title),
-                ReleaseDate = resource.ReleaseDate,
+                ReleaseDate = releaseDate,
                 Genres = resource.Genres?.Where(g => g?.Name.IsNotNullOrWhiteSpace() == true).Select(g => g.Name).Distinct().ToList() ?? new List<string>(),
                 Ratings = edition.Ratings,
                 Author = author,
