@@ -234,6 +234,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             {
                 book.UseDbFieldsFrom(existing);
                 var editions = _editionService.GetEditionsByBook(existing.Id);
+                AudiobookMetadataMerger.PreserveMissing(book, existing, editions);
                 foreach (var edition in book.Editions.Value)
                 {
                     var previous = editions.SingleOrDefault(e => e.ForeignEditionId == edition.ForeignEditionId);

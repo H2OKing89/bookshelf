@@ -20,6 +20,7 @@ namespace Readarr.Api.V1.Books
         public List<string> Narrators { get; set; }
         public int? RuntimeLengthMinutes { get; set; }
         public string Title { get; set; }
+        public string Subtitle { get; set; }
         public string Language { get; set; }
         public string Overview { get; set; }
         public string Format { get; set; }
@@ -62,6 +63,7 @@ namespace Readarr.Api.V1.Books
                 Narrators = model.Narrators,
                 RuntimeLengthMinutes = model.RuntimeLengthMinutes,
                 Title = model.Title,
+                Subtitle = model.Subtitle,
                 Language = model.Language,
                 Overview = model.Overview,
                 Format = model.Format,
@@ -97,6 +99,7 @@ namespace Readarr.Api.V1.Books
                 Narrators = resource.Narrators,
                 RuntimeLengthMinutes = resource.RuntimeLengthMinutes,
                 Title = resource.Title,
+                Subtitle = resource.Subtitle,
                 Language = resource.Language,
                 Overview = resource.Overview,
                 Format = resource.Format,

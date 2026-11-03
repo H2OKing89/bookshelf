@@ -17,6 +17,7 @@ namespace NzbDrone.Core.Test.Datastore
             {
                 ForeignEditionId = "primary-edition",
                 Title = "Project Hail Mary",
+                Subtitle = "A Novel",
                 TitleSlug = "primary-edition",
                 Asin = "B08G9PRS1K",
                 AudibleRegion = "us",
@@ -24,6 +25,7 @@ namespace NzbDrone.Core.Test.Datastore
                 RuntimeLengthMinutes = 970
             });
 
+            StoredModel.Subtitle.Should().Be("A Novel");
             StoredModel.AudibleRegion.Should().Be("us");
             StoredModel.Narrators.Should().Equal("Ray Porter", "Another Narrator");
             StoredModel.RuntimeLengthMinutes.Should().Be(970);

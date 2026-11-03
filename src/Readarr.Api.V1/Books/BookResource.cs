@@ -14,6 +14,7 @@ namespace Readarr.Api.V1.Books
     public class BookResource : RestResource
     {
         public string Title { get; set; }
+        public string Subtitle { get; set; }
         public string AuthorTitle { get; set; }
         public string SeriesTitle { get; set; }
         public string Disambiguation { get; set; }
@@ -78,6 +79,7 @@ namespace Readarr.Api.V1.Books
                 RuntimeLengthMinutes = selectedEdition?.RuntimeLengthMinutes,
                 Genres = model.Genres,
                 Title = title,
+                Subtitle = selectedEdition?.Subtitle,
                 AuthorTitle = authorTitle,
                 SeriesTitle = seriesTitle,
                 Disambiguation = selectedEdition?.Disambiguation,

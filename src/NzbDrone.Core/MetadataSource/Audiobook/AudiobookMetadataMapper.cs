@@ -60,6 +60,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 Asin = resource.Asin,
                 AudibleRegion = region,
                 Title = resource.Title,
+                Subtitle = resource.Subtitle,
                 Overview = resource.Description,
                 Language = resource.Language,
                 Format = "Audiobook",

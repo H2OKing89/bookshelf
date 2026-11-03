@@ -21,7 +21,7 @@ namespace NzbDrone.Core.MetadataSource.Audible
 
     public class AudibleCatalogProxy : IAudibleCatalogProxy
     {
-        private const string ResponseGroups = "product_desc,contributors,series,product_attrs,product_details,media,rating";
+        private const string ResponseGroups = "product_desc,contributors,series,product_attrs,product_details,media,rating,category_ladders";
         private readonly IHttpClient _httpClient;
         private readonly IDiskProvider _diskProvider;
         private readonly IConfigService _configService;
@@ -175,6 +175,7 @@ namespace NzbDrone.Core.MetadataSource.Audible
                 Asin = product.Value<string>("asin"),
                 Region = region,
                 Title = product.Value<string>("title"),
+                Subtitle = product.Value<string>("subtitle"),
                 Description = product.Value<string>("publisher_summary"),
                 Language = product.Value<string>("language"),
                 PublisherName = product.Value<string>("publisher_name"),
@@ -183,6 +184,12 @@ namespace NzbDrone.Core.MetadataSource.Audible
                 FormatType = product.Value<string>("format_type"),
                 Authors = product["authors"]?.ToObject<List<AudnexusContributorResource>>(),
                 Narrators = product["narrators"]?.ToObject<List<AudnexusContributorResource>>(),
+                Genres = (product["category_ladders"] as JArray)?.OfType<JObject>()
+                    .Where(ladder => ladder.Value<string>("root") == "Genres")
+                    .SelectMany(ladder => (ladder["ladder"] as JArray)?.OfType<JObject>() ?? Enumerable.Empty<JObject>())
+                    .Select(category => category.Value<string>("name"))
+                    .Where(name => name.IsNotNullOrWhiteSpace()).Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Select(name => new AudnexusGenreResource { Name = name }).ToList(),
                 Image = images?.Properties().OrderByDescending(p => int.TryParse(p.Name, out var size) ? size : 0).FirstOrDefault()?.Value.Value<string>(),
                 Rating = product["rating"]?["overall_distribution"]?.Value<string>("display_average_rating"),
                 SeriesPrimary = series == null ? null : new AudnexusSeriesResource

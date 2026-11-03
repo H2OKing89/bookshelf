@@ -30,6 +30,7 @@ namespace NzbDrone.Core.Books
         public List<string> Narrators { get; set; }
         public int? RuntimeLengthMinutes { get; set; }
         public string Title { get; set; }
+        public string Subtitle { get; set; }
         public string Language { get; set; }
         public string Overview { get; set; }
         public string Format { get; set; }
@@ -67,6 +68,7 @@ namespace NzbDrone.Core.Books
             Narrators = other.Narrators;
             RuntimeLengthMinutes = other.RuntimeLengthMinutes;
             Title = other.Title;
+            Subtitle = other.Subtitle;
             Language = other.Language;
             Overview = other.Overview.IsNullOrWhiteSpace() ? Overview : other.Overview;
             Format = other.Format;

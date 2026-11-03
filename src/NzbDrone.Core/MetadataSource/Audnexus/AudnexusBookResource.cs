@@ -8,6 +8,7 @@ namespace NzbDrone.Core.MetadataSource.Audnexus
         public string Asin { get; set; }
         public string Region { get; set; }
         public string Title { get; set; }
+        public string Subtitle { get; set; }
         public string Description { get; set; }
         public string Language { get; set; }
         public string PublisherName { get; set; }
