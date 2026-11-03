@@ -36,3 +36,21 @@ shares the same author ASIN but uses different profile and book-credit names.
 These spellings can be learned as aliases using that shared identity. Regression
 tests also clear the memory cache and reload persisted author metadata to check
 that later refreshes retain the aliases and continue finding the books.
+
+`RifujinNaMagonote.json` contains projected Audible catalog responses for
+Rifujin na Magonote and 理不尽な孫の手, plus both Audnexus author profiles
+(B00LR4UJB8 and B076N4Q46Q). The two name queries return 33 and 3 recordings:
+all 26 main-series volumes, Recollections, A Journey of Two Lifetimes, three
+Redundant Reincarnation volumes, and five Orc Eroica volumes. The Japanese
+credits account for main-series volumes 13, 17, and 18. Some other credits have
+no author ASIN. Several volumes put the series subtitle and volume number in
+the subtitle field rather than the title. Volume 21 uses a colon before its
+volume number, and later Orc Eroica titles end with `(light novel)`.
+
+The original title of B0D5JN2RH2 (volume 18) ends in `Reincarnatio`. Its display
+label has a correction scoped to the US ASIN and exact observed title, supported
+by the [publisher's volume 18 listing](https://sevenseasentertainment.com/audio_books/mushoku-tensei-jobless-reincarnation-audiobook-vol-18/)
+and [Audible's structured series listing](https://www.audible.com/series/Mushoku-Tensei-Jobless-Reincarnation-Audiobooks/B0CJYVSQFB).
+Tests retain original titles and recording IDs, require every main-series
+position 1–26, and reject title corrections for different recordings,
+marketplaces, volume positions, or changed source titles.

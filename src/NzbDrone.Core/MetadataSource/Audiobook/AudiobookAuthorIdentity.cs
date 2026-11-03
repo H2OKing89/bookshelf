@@ -14,7 +14,12 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         {
             // https://www.audible.com/series/B0F7Z67917
             // English recordings credit both profiles, and sometimes omit the ASIN.
-            new AudiobookAuthorIdentity("us", "B0DSLB5CG5", "Kumanano", new[] { "B074QPMWRL" }, new[] { "くまなの" })
+            new AudiobookAuthorIdentity("us", "B0DSLB5CG5", "Kumanano", new[] { "B074QPMWRL" }, new[] { "くまなの" }),
+
+            // https://www.audible.com/series/B0CJYVSQFB
+            // The publisher credits one author; Audible splits the English
+            // recordings between two profiles and Japanese/name-only credits.
+            new AudiobookAuthorIdentity("us", "B00LR4UJB8", "Rifujin na Magonote", new[] { "B076N4Q46Q" }, new[] { "理不尽な孫の手" })
         };
 
         public string Region { get; }

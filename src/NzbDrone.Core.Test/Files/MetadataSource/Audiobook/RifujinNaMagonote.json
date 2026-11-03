@@ -1,0 +1,1090 @@
+{
+  "region": "us",
+  "seriesAsin": "B0CJYVSQFB",
+  "profiles": [
+    {
+      "asin": "B00LR4UJB8",
+      "name": "Rifujin na Magonote",
+      "region": "us"
+    },
+    {
+      "asin": "B076N4Q46Q",
+      "name": "Rifujin na Magonote",
+      "region": "us"
+    }
+  ],
+  "catalogs": [
+    {
+      "name": "Rifujin na Magonote",
+      "response": {
+        "status": 200,
+        "body": {
+          "total_results": 33,
+          "products": [
+            {
+              "asin": "B0CJWTXLPJ",
+              "title": "Mushoku Tensei",
+              "subtitle": "Jobless Reincarnation (Light Novel), Vol. 1",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "1",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2023-09-26",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 437,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0CKWMHPD1",
+              "title": "Mushoku Tensei",
+              "subtitle": "Jobless Reincarnation (Light Novel), Vol. 3",
+              "authors": [
+                {
+                  "asin": "B076N4Q46Q",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "3",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2023-10-12",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 562,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0CKWMS1TZ",
+              "title": "Mushoku Tensei",
+              "subtitle": "Jobless Reincarnation (Light Novel), Vol. 2",
+              "authors": [
+                {
+                  "asin": "B076N4Q46Q",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "2",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2023-10-12",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 418,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0CNL44KVJ",
+              "title": "Mushoku Tensei",
+              "subtitle": "Jobless Reincarnation (Light Novel), Vol. 5",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "5",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2023-11-17",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 483,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0CNQ9C66F",
+              "title": "Mushoku Tensei: Jobless Reincarnation (Light Novel) Vol. 4",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "4",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2023-11-20",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 450,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0CQMGRT9R",
+              "title": "Mushoku Tensei: Jobless Reincarnation (Light Novel), Vol. 6",
+              "authors": [
+                {
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "6",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2023-12-21",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 489,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0CQMKH6MC",
+              "title": "Mushoku Tensei: Jobless Reincarnation (Light Novel), Vol. 7",
+              "authors": [
+                {
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "7",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2023-12-21",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 446,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0CSL9GKMM",
+              "title": "Mushoku Tensei: Jobless Reincarnation, Vol. 8",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "8",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-01-18",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 426,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0CSKQ2246",
+              "title": "Mushoku Tensei: Jobless Reincarnation, Vol. 9",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "asin": "B076N4Q46Q",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "9",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-01-19",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 560,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0CTV8TKMS",
+              "title": "Mushoku Tensei",
+              "subtitle": "Jobless Reincarnation (Light Novel), Vol. 11",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "11",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-02-05",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 558,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0CV5VWRNP",
+              "title": "Mushoku Tensei",
+              "subtitle": "Jobless Reincarnation (Light Novel), Vol. 10",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "10",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-02-08",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 434,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0CYDS9NT6",
+              "title": "Mushoku Tensei: Jobless Reincarnation, Vol. 12",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "asin": "B076N4Q46Q",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "12",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-03-19",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 506,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0D2SFVP74",
+              "title": "Mushoku Tensei: Jobless Reincarnation, Vol. 15",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "15",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-04-26",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 538,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0D2SDB6PV",
+              "title": "Mushoku Tensei: Jobless Reincarnation, Vol. 16",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "16",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-04-26",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 519,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0D2S3KM63",
+              "title": "Mushoku Tensei: Jobless Reincarnation, Vol. 14",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "14",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-04-26",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 502,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0D5JYJFXF",
+              "title": "Mushoku Tensei: Jobless Reincarnation, Vol. 19",
+              "authors": [
+                {
+                  "asin": "B076N4Q46Q",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "19",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-05-29",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 560,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0D9C8GQ98",
+              "title": "Mushoku Tensei: Jobless Reincarnation: Vol. 21",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "21",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-07-12",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 452,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0D9HTQYQ9",
+              "title": "Mushoku Tensei",
+              "subtitle": "Jobless Reincarnation (Light Novel), Vol. 20",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "20",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-07-15",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 480,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0DD92949N",
+              "title": "Mushoku Tensei: Jobless Reincarnation (Light Novel), Vol. 23",
+              "authors": [
+                {
+                  "asin": "B076N4Q46Q",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "23",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-08-15",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 490,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0DD8VHMJF",
+              "title": "Mushoku Tensei",
+              "subtitle": "Jobless Reincarnation (Light Novel), Vol. 22",
+              "authors": [
+                {
+                  "asin": "B076N4Q46Q",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "22",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-08-15",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 453,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0DHF34C3D",
+              "title": "Mushoku Tensei: Jobless Reincarnation (Light Novel), Vol. 24",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "24",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-09-18",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 427,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0DHF4STG3",
+              "title": "Mushoku Tensei: Jobless Reincarnation (Light Novel), Vol. 25",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "25",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-09-19",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 398,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0DK2GS3LZ",
+              "title": "Mushoku Tensei: Jobless Reincarnation (Light Novel), Vol. 26",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "26",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-10-15",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 357,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0DNNS1S9Y",
+              "title": "Mushoku Tensei: Redundant Reincarnation (Light Novel) Vol. 1",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0GFG9WSKS",
+                  "sequence": "1",
+                  "title": "Mushoku Tensei: Redundant Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Redundant-Reincarnation-Audiobook/B0GFG9WSKS"
+                }
+              ],
+              "release_date": "2024-11-21",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 318,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0DP3CQC6N",
+              "title": "Mushoku Tensei: Jobless Reincarnation: Recollections (Light Novel)",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-11-26",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 236,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0F3982MBX",
+              "title": "Mushoku Tensei: Redundant Reincarnation, Vol. 2",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0GFG9WSKS",
+                  "sequence": "2",
+                  "title": "Mushoku Tensei: Redundant Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Redundant-Reincarnation-Audiobook/B0GFG9WSKS"
+                }
+              ],
+              "release_date": "2025-04-01",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 462,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0F393V818",
+              "title": "A Journey of Two Lifetimes",
+              "subtitle": "Light Novel (Mushoku Tensei: Jobless Reincarnation, Book 28)",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "28",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2025-04-01",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 494,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0G968GB48",
+              "title": "Mushoku Tensei: Redundant Reincarnation, Vol. 3",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0GFG9WSKS",
+                  "sequence": "3",
+                  "title": "Mushoku Tensei: Redundant Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Redundant-Reincarnation-Audiobook/B0GFG9WSKS"
+                }
+              ],
+              "release_date": "2025-12-19",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 376,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0G1VH19MQ",
+              "title": "Orc Eroica, Vol. 1",
+              "subtitle": "Conjecture Chronicles",
+              "authors": [
+                {
+                  "name": "Rifujin na Magonote"
+                },
+                {
+                  "name": "Asanagi"
+                },
+                {
+                  "name": "Evie Lund - translator"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "TJ Clark"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0G1YFV28D",
+                  "sequence": "1",
+                  "title": "Orc Eroica",
+                  "url": "/pd/Orc-Eroica-Audiobook/B0G1YFV28D"
+                }
+              ],
+              "release_date": "2026-02-24",
+              "language": "english",
+              "publisher_name": "Yen Audio",
+              "runtime_length_min": 318,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0GQD2LFQ3",
+              "title": "Orc Eroica, Vol. 2",
+              "subtitle": "Conjecture Chronicles",
+              "authors": [
+                {
+                  "name": "Rifujin na Magonote"
+                },
+                {
+                  "name": "Asanagi"
+                },
+                {
+                  "name": "Evie Lund - translator"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "TJ Clark"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0G1YFV28D",
+                  "sequence": "2",
+                  "title": "Orc Eroica",
+                  "url": "/pd/Orc-Eroica-Audiobook/B0G1YFV28D"
+                }
+              ],
+              "release_date": "2026-05-19",
+              "language": "english",
+              "publisher_name": "Yen Audio",
+              "runtime_length_min": 318,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0H6KJ15X1",
+              "title": "Orc Eroica, Vol. 3",
+              "subtitle": "Conjecture Chronicles",
+              "authors": [
+                {
+                  "name": "Rifujin na Magonote"
+                },
+                {
+                  "name": "Asanagi"
+                },
+                {
+                  "name": "Evie Lund - translator"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "TJ Clark"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0G1YFV28D",
+                  "sequence": "3",
+                  "title": "Orc Eroica",
+                  "url": "/pd/Orc-Eroica-Audiobook/B0G1YFV28D"
+                }
+              ],
+              "release_date": "2026-08-11",
+              "language": "english",
+              "publisher_name": "Yen Audio",
+              "runtime_length_min": 278,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0HCTVKZQ6",
+              "title": "Orc Eroica, Vol. 4 (light novel)",
+              "subtitle": "Conjecture Chronicles",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "Rifujin na Magonote"
+                },
+                {
+                  "asin": "B0GZZT2GJX",
+                  "name": "Asanagi"
+                },
+                {
+                  "name": "Evie Lund - translator"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "TJ Clark"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0G1YFV28D",
+                  "sequence": "4",
+                  "title": "Orc Eroica",
+                  "url": "/pd/Orc-Eroica-Audiobook/B0G1YFV28D"
+                }
+              ],
+              "release_date": "2026-11-10",
+              "language": "english",
+              "publisher_name": "Yen Audio",
+              "runtime_length_min": 319,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0HLLJLVPT",
+              "title": "Orc Eroica, Vol. 5 (light novel)",
+              "subtitle": "Conjecture Chronicles",
+              "authors": [
+                {
+                  "name": "Rifujin na Magonote"
+                },
+                {
+                  "name": "Asanagi"
+                },
+                {
+                  "name": "Evie Lund - translator"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0G1YFV28D",
+                  "sequence": "5",
+                  "title": "Orc Eroica",
+                  "url": "/pd/Orc-Eroica-Audiobook/B0G1YFV28D"
+                }
+              ],
+              "release_date": "2027-02-09",
+              "language": "english",
+              "publisher_name": "Yen Audio",
+              "runtime_length_min": 330,
+              "format_type": "unabridged"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "理不尽な孫の手",
+      "response": {
+        "status": 200,
+        "body": {
+          "total_results": 3,
+          "products": [
+            {
+              "asin": "B0CYN77F48",
+              "title": "Mushoku Tensei: Jobless Reincarnation, Vol. 13",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "理不尽な孫の手"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "13",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-03-20",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 548,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0D2SK9CTN",
+              "title": "Mushoku Tensei: Jobless Reincarnation, Vol. 17",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "name": "理不尽な孫の手"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "17",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-04-30",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 535,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0D5JN2RH2",
+              "title": "Mushoku Tensei: Jobless Reincarnatio, Vol. 18",
+              "authors": [
+                {
+                  "asin": "B00LR4UJB8",
+                  "name": "理不尽な孫の手"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Cliff Kirk"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0CJYVSQFB",
+                  "sequence": "18",
+                  "title": "Mushoku Tensei: Jobless Reincarnation",
+                  "url": "/pd/Mushoku-Tensei-Jobless-Reincarnation-Audiobook/B0CJYVSQFB"
+                }
+              ],
+              "release_date": "2024-05-29",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 536,
+              "format_type": "unabridged"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

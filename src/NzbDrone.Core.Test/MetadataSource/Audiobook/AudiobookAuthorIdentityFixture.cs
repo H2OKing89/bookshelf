@@ -20,6 +20,7 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
     public class AudiobookAuthorIdentityFixture : CoreTest<AudiobookInfoProxy>
     {
         private const string CanonicalId = "audible:us:B0DSLB5CG5";
+        private const string RifujinId = "audible:us:B00LR4UJB8";
         private JObject _fixture;
 
         [SetUp]
@@ -108,6 +109,50 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
                 Encoding.UTF8.GetString(r.ContentData).Contains("くまなの"))))
                 .Returns((HttpRequest r) => new HttpResponse(r, new HttpHeader(), "{\"status\":503,\"body\":{}}"));
             Assert.Throws<BookInfoException>(() => Subject.GetAuthorInfo(CanonicalId));
+        }
+
+        [TestCase(RifujinId)]
+        [TestCase("audible:us:B076N4Q46Q")]
+        [TestCase("audible:us:name:Rifujin%20na%20Magonote")]
+        [TestCase("audible:us:name:%E7%90%86%E4%B8%8D%E5%B0%BD%E3%81%AA%E5%AD%AB%E3%81%AE%E6%89%8B")]
+        public void should_discover_rifujin_recordings_across_profiles_and_japanese_credits(string id)
+        {
+            _fixture = JObject.Parse(ReadAllText("Files/MetadataSource/Audiobook/RifujinNaMagonote.json"));
+            Mocker.GetMock<IAudnexusProxy>().Setup(x => x.GetAuthor("B00LR4UJB8", "us"))
+                .Returns(_fixture["profiles"][0].ToObject<AudnexusAuthorResource>());
+
+            var author = Subject.GetAuthorInfo(id);
+
+            author.ForeignAuthorId.Should().Be(RifujinId);
+            author.Books.Value.Should().HaveCount(36);
+            author.Books.Value.Should().OnlyContain(b => b.AuthorMetadata.Value.ForeignAuthorId == RifujinId);
+            author.Books.Value.SelectMany(b => b.Editions.Value).Should().OnlyContain(e => e.Language == "eng");
+            var mainSeries = author.Series.Value.Single(s => s.ForeignSeriesId == "audible:us:B0CJYVSQFB");
+            var volumes = mainSeries.LinkItems.Value.Where(l => int.TryParse(l.Position, out var n) && n >= 1 && n <= 26).ToList();
+            volumes.Select(l => l.Position).Should().BeEquivalentTo(Enumerable.Range(1, 26).Select(n => n.ToString()));
+            foreach (var volume in volumes)
+            {
+                AudiobookTextNormalizer.DisplayTitle(volume.Book.Value).Should().Be(mainSeries.Title + " #" + volume.Position);
+            }
+
+            var products = _fixture["catalogs"].SelectMany(c => c["response"]["body"]["products"]).ToList();
+            author.Books.Value.Select(b => b.Title).Should().BeEquivalentTo(products.Select(p => p.Value<string>("title")));
+            author.Books.Value.Select(b => b.ForeignBookId).Should().BeEquivalentTo(products.Select(p => "audible:us:" + p.Value<string>("asin")));
+        }
+
+        [TestCase("B076N4Q46Q", "Rifujin na Magonote")]
+        [TestCase("B00LR4UJB8", "理不尽な孫の手")]
+        [TestCase(null, "理不尽な孫の手")]
+        public void should_keep_rifujin_identity_during_individual_book_refresh(string asin, string name)
+        {
+            var recording = Recording(asin, name);
+            recording.Asin = "B0CJWTXLPJ";
+            Mocker.GetMock<IAudnexusProxy>().Setup(x => x.GetBook(recording.Asin, "us")).Returns(recording);
+
+            var result = Subject.GetBookInfo("audible:us:" + recording.Asin);
+
+            result.Item1.Should().Be(RifujinId);
+            result.Item3.Should().ContainSingle(a => a.ForeignAuthorId == RifujinId);
         }
 
         private static AudnexusBookResource Recording(string authorAsin, string name) => new AudnexusBookResource
