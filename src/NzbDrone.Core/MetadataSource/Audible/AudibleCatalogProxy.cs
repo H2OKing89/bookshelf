@@ -44,7 +44,7 @@ namespace NzbDrone.Core.MetadataSource.Audible
                 var body = Read("/1.0/catalog/products", region, new Dictionary<string, object>
                 {
                     { "author", name }, { "page", page }, { "num_results", pageSize },
-                    { "sort_by", "ReleaseDate" }, { "response_groups", ResponseGroups }
+                    { "products_sort_by", "ReleaseDate" }, { "response_groups", ResponseGroups }
                 });
                 if (body["products"] is not JArray items || body["total_results"]?.Type != JTokenType.Integer)
                 {

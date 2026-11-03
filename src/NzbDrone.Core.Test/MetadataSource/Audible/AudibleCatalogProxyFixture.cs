@@ -60,6 +60,8 @@ namespace NzbDrone.Core.Test.MetadataSource.Audible
             _requests[0]["query"].Value<int>("page").Should().Be(0);
             _requests[1]["query"].Value<int>("page").Should().Be(1);
             _requests[0]["query"].Value<string>("author").Should().Be("Yu Omiya");
+            _requests[0]["query"].Value<string>("products_sort_by").Should().Be("ReleaseDate");
+            _requests[0]["query"]["sort_by"].Should().BeNull();
             _requests[0]["query"].Value<string>("response_groups").Should().Contain("product_desc");
         }
 
