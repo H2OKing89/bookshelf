@@ -88,6 +88,7 @@ class BookIndexRow extends Component {
       authorId,
       monitored,
       title,
+      displayTitle,
       author,
       titleSlug,
       qualityProfile,
@@ -168,6 +169,7 @@ class BookIndexRow extends Component {
                   <BookNameLink
                     titleSlug={titleSlug}
                     title={title}
+                    displayTitle={displayTitle}
                   />
                 </VirtualTableRowCell>
               );
@@ -369,6 +371,7 @@ BookIndexRow.propTypes = {
   authorId: PropTypes.number.isRequired,
   monitored: PropTypes.bool.isRequired,
   title: PropTypes.string.isRequired,
+  displayTitle: PropTypes.string,
   titleSlug: PropTypes.string.isRequired,
   author: PropTypes.object.isRequired,
   qualityProfile: PropTypes.object.isRequired,

@@ -16,6 +16,7 @@
   "AudnexusUrlHelpText": "Use the public Audnexus API or the base URL of your own instance.",
   "AudnexusRegion": "Audible Marketplace",
   "AudnexusRegionHelpText": "Choose the marketplace for your audiobook ASINs. Availability and release dates can differ by marketplace.",
+  "PublishedTitle": "Published title: {0}",
   "NarratedBy": "Narrated by {0}",
   "RuntimeMinutes": "{0} min",
   "About": "About",

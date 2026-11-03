@@ -101,6 +101,7 @@ class BookIndexOverview extends Component {
     const {
       id,
       title,
+      displayTitle,
       monitored,
       titleSlug,
       nextAiring,
@@ -206,7 +207,7 @@ class BookIndexOverview extends Component {
                 className={styles.title}
                 to={link}
               >
-                {title}
+                {displayTitle || title}
               </Link>
 
               <div className={styles.actions}>
@@ -284,6 +285,7 @@ class BookIndexOverview extends Component {
 BookIndexOverview.propTypes = {
   id: PropTypes.number.isRequired,
   title: PropTypes.string.isRequired,
+  displayTitle: PropTypes.string,
   monitored: PropTypes.bool.isRequired,
   titleSlug: PropTypes.string.isRequired,
   nextAiring: PropTypes.string,

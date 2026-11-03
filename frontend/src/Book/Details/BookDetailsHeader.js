@@ -59,6 +59,8 @@ class BookDetailsHeader extends Component {
       width,
       titleSlug,
       title,
+      displayTitle,
+      subtitle,
       seriesTitle,
       pageCount,
       narrators = [],
@@ -123,15 +125,25 @@ class BookDetailsHeader extends Component {
                 </div>
 
                 <div className={styles.title} style={{ width: marqueeWidth }}>
-                  <Marquee text={title} />
+                  <Marquee text={displayTitle || title} />
                 </div>
 
               </div>
             </Measure>
 
             <div className={styles.details}>
+              {
+                displayTitle && displayTitle !== title &&
+                  <div>{translate('PublishedTitle', [title])}</div>
+              }
+
+              {
+                subtitle &&
+                  <div>{subtitle}</div>
+              }
+
               <div>
-                {seriesTitle}
+                {seriesTitle === (displayTitle || title) ? null : seriesTitle}
               </div>
 
               <div>
@@ -267,6 +279,8 @@ BookDetailsHeader.propTypes = {
   width: PropTypes.number.isRequired,
   titleSlug: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
+  displayTitle: PropTypes.string,
+  subtitle: PropTypes.string,
   seriesTitle: PropTypes.string.isRequired,
   pageCount: PropTypes.number,
   narrators: PropTypes.arrayOf(PropTypes.string),

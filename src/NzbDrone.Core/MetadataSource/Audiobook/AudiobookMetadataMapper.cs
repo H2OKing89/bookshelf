@@ -26,10 +26,10 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 ForeignAuthorId = id,
                 TitleSlug = "author-" + region + "-" + (AudiobookId.IsAsin(contributor.Asin) ? contributor.Asin :
                     Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(contributor.Name))).Substring(0, 16).ToLowerInvariant()),
-                Name = contributor.Name,
-                SortName = contributor.Name,
-                NameLastFirst = contributor.Name,
-                SortNameLastFirst = contributor.Name,
+                Name = AudiobookTextNormalizer.Text(contributor.Name),
+                SortName = AudiobookTextNormalizer.Text(contributor.Name),
+                NameLastFirst = AudiobookTextNormalizer.Text(contributor.Name),
+                SortNameLastFirst = AudiobookTextNormalizer.Text(contributor.Name),
                 Overview = profile?.Description,
                 Status = AuthorStatusType.Continuing
             };
@@ -62,16 +62,16 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 Asin = resource.Asin,
                 AudibleRegion = region,
                 Title = resource.Title,
-                Subtitle = resource.Subtitle,
+                Subtitle = AudiobookTextNormalizer.Text(resource.Subtitle),
                 Overview = resource.Description,
-                Language = resource.Language,
+                Language = AudiobookTextNormalizer.Language(resource.Language),
                 Format = "Audiobook",
-                Disambiguation = resource.FormatType,
-                Publisher = resource.PublisherName,
+                Disambiguation = AudiobookTextNormalizer.Text(resource.FormatType)?.ToLowerInvariant(),
+                Publisher = AudiobookTextNormalizer.Publisher(resource.PublisherName),
                 Isbn13 = resource.Isbn,
                 ReleaseDate = releaseDate,
                 RuntimeLengthMinutes = resource.RuntimeLengthMin > 0 ? resource.RuntimeLengthMin : null,
-                Narrators = resource.Narrators?.Where(n => n?.Name.IsNotNullOrWhiteSpace() == true).Select(n => n.Name.Trim()).Distinct().ToList() ?? new List<string>(),
+                Narrators = AudiobookTextNormalizer.Names(resource.Narrators?.Select(n => n?.Name)),
                 Ratings = new Ratings { Value = rating },
                 Monitored = true
             };
@@ -85,7 +85,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 Title = resource.Title,
                 CleanTitle = Parser.Parser.CleanBookTitle(resource.Title),
                 ReleaseDate = releaseDate,
-                Genres = resource.Genres?.Where(g => g?.Name.IsNotNullOrWhiteSpace() == true).Select(g => g.Name).Distinct().ToList() ?? new List<string>(),
+                Genres = AudiobookTextNormalizer.Names(resource.Genres?.Select(g => g?.Name)),
                 Ratings = edition.Ratings,
                 Author = author,
                 AuthorMetadata = metadata,
@@ -111,7 +111,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             {
                 ForeignSeriesId = AudiobookId.IsAsin(source.Asin) ? AudiobookId.ForAsin(region, source.Asin) : AudiobookId.ForName(region, source.Name),
                 ForeignAuthorId = book.AuthorMetadata.Value.ForeignAuthorId,
-                Title = source.Name,
+                Title = AudiobookTextNormalizer.Text(source.Name),
                 Numbered = source.Position.IsNotNullOrWhiteSpace(),
                 Books = new List<Book> { book }
             };
@@ -120,7 +120,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             {
                 Book = book,
                 Series = series,
-                Position = source.Position,
+                Position = AudiobookTextNormalizer.Position(source.Position),
                 SeriesPosition = (int)Math.Clamp(position * 1000, 0, int.MaxValue),
                 IsPrimary = primary
             };

@@ -6,6 +6,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.MediaCover;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using Readarr.Api.V1.Author;
 using Readarr.Http.REST;
 using Swashbuckle.AspNetCore.Annotations;
@@ -15,6 +16,7 @@ namespace Readarr.Api.V1.Books
     public class BookResource : RestResource
     {
         public string Title { get; set; }
+        public string DisplayTitle { get; set; }
         public string Subtitle { get; set; }
         public string AuthorTitle { get; set; }
         public string SeriesTitle { get; set; }
@@ -81,6 +83,7 @@ namespace Readarr.Api.V1.Books
                 RuntimeLengthMinutes = selectedEdition?.RuntimeLengthMinutes,
                 Genres = model.Genres,
                 Title = title,
+                DisplayTitle = AudiobookTextNormalizer.DisplayTitle(model, title),
                 Subtitle = selectedEdition?.Subtitle,
                 AuthorTitle = authorTitle,
                 SeriesTitle = seriesTitle,

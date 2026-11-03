@@ -74,6 +74,7 @@ class AddNewBookSearchResult extends Component {
       foreignBookId,
       titleSlug,
       title,
+      displayTitle,
       seriesTitle,
       releaseDate,
       disambiguation,
@@ -117,7 +118,7 @@ class AddNewBookSearchResult extends Component {
             <div className={styles.titleRow}>
               <div className={styles.titleContainer}>
                 <div className={styles.title}>
-                  {title}
+                  {displayTitle || title}
 
                   {
                     !!disambiguation &&
@@ -216,6 +217,7 @@ AddNewBookSearchResult.propTypes = {
   foreignBookId: PropTypes.string.isRequired,
   titleSlug: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
+  displayTitle: PropTypes.string,
   seriesTitle: PropTypes.string,
   releaseDate: PropTypes.string,
   disambiguation: PropTypes.string,

@@ -2,12 +2,12 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import Link from 'Components/Link/Link';
 
-function BookTitleLink({ titleSlug, title, disambiguation }) {
+function BookTitleLink({ titleSlug, title, displayTitle, disambiguation }) {
   const link = `/book/${titleSlug}`;
 
   return (
-    <Link to={link}>
-      {title}{disambiguation ? ` (${disambiguation})` : ''}
+    <Link to={link} title={title}>
+      {displayTitle || title}{disambiguation ? ` (${disambiguation})` : ''}
     </Link>
   );
 }
@@ -15,6 +15,7 @@ function BookTitleLink({ titleSlug, title, disambiguation }) {
 BookTitleLink.propTypes = {
   titleSlug: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
+  displayTitle: PropTypes.string,
   disambiguation: PropTypes.string
 };
 

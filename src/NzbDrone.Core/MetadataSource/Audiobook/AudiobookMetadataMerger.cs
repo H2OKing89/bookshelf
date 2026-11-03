@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using NzbDrone.Common.Extensions;
@@ -16,8 +15,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             }
 
             // Catalog responses can omit the tags present in a detailed Audnexus lookup.
-            incoming.Genres = (incoming.Genres ?? new List<string>()).Concat(stored.Genres ?? new List<string>())
-                .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            incoming.Genres = AudiobookTextNormalizer.Names((incoming.Genres ?? new List<string>()).Concat(stored.Genres ?? new List<string>()));
             incoming.ReleaseDate ??= stored.ReleaseDate;
             if (incoming.Ratings.Value <= 0)
             {
@@ -33,17 +31,17 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                     continue;
                 }
 
-                edition.Subtitle = PreferPresent(edition.Subtitle, previous.Subtitle);
+                edition.Subtitle = AudiobookTextNormalizer.Text(PreferPresent(edition.Subtitle, previous.Subtitle));
                 edition.Overview = PreferPresent(edition.Overview, previous.Overview);
-                edition.Publisher = PreferPresent(edition.Publisher, previous.Publisher);
-                edition.Language = PreferPresent(edition.Language, previous.Language);
+                edition.Publisher = AudiobookTextNormalizer.Publisher(PreferPresent(edition.Publisher, previous.Publisher));
+                edition.Language = AudiobookTextNormalizer.Language(PreferPresent(edition.Language, previous.Language));
                 edition.Isbn13 = PreferPresent(edition.Isbn13, previous.Isbn13);
                 edition.Disambiguation = PreferPresent(edition.Disambiguation, previous.Disambiguation);
                 edition.ReleaseDate ??= previous.ReleaseDate;
                 edition.RuntimeLengthMinutes ??= previous.RuntimeLengthMinutes;
                 if (edition.Narrators?.Any() != true)
                 {
-                    edition.Narrators = previous.Narrators;
+                    edition.Narrators = AudiobookTextNormalizer.Names(previous.Narrators);
                 }
 
                 if (edition.Images?.Any() != true)

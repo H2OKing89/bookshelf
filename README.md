@@ -49,6 +49,30 @@ recordings. Without audible-rs, discovery remains limited to Audnexus keyword
 results. Catalog availability, preorder coverage, and metadata freshness depend
 on the upstream marketplace.
 
+## Metadata normalization
+
+Published titles remain intact for matching and reference. The API adds
+`displayTitle` for consistent series labels, such as `The Primal Hunter #4`.
+Labels are derived only when the published title agrees with the recording's
+series name and position. Distinctive titles, conflicting numbers, and volume
+ranges retain their published titles. The UI shows the published title on the
+book details page and in title-link tooltips.
+
+Subtitles are stored separately. Names and genres receive Unicode/whitespace
+normalization and case-insensitive deduplication; publisher comma spacing and
+language codes are standardized. A sparse response for the same ASIN and
+marketplace retains richer stored metadata, including genres and subtitles.
+Recording identity and published titles are never inferred from these labels.
+
+Book and edition `releaseDate` values are calendar dates serialized as
+`YYYY-MM-DD`. Legacy ISO timestamp input is still accepted. Storage uses
+midnight UTC as a convention; calendars and feeds do not convert the release
+day between timezones. Refresh existing authors to repair previously stored
+metadata and dates.
+
+Run .NET with ICU/globalization support enabled. Invariant globalization mode
+disables the Unicode normalization used for metadata names.
+
 ## Existing libraries and lists
 
 This is an audiobook catalog, not an automatic Goodreads database migration.

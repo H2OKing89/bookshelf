@@ -63,6 +63,7 @@ class BookRow extends Component {
       monitored,
       releaseDate,
       title,
+      displayTitle,
       seriesTitle,
       authorName,
       position,
@@ -132,6 +133,7 @@ class BookRow extends Component {
                   <BookTitleLink
                     titleSlug={titleSlug}
                     title={title}
+                    displayTitle={displayTitle}
                   />
                 </TableRowCell>
               );
@@ -254,6 +256,7 @@ BookRow.propTypes = {
   monitored: PropTypes.bool.isRequired,
   releaseDate: PropTypes.string,
   title: PropTypes.string.isRequired,
+  displayTitle: PropTypes.string,
   seriesTitle: PropTypes.string.isRequired,
   authorName: PropTypes.string.isRequired,
   position: PropTypes.string,
