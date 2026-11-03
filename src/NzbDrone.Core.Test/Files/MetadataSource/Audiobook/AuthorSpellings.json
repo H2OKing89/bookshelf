@@ -1,0 +1,100 @@
+[
+  {
+    "query": "Mitizou",
+    "profile": {
+      "asin": "B0D9LJTQFX",
+      "region": "us",
+      "name": "道造"
+    },
+    "book": {
+      "asin": "B0GSC3K8XT",
+      "region": "us",
+      "title": "Virgin Knight: I Became the Frontier Lord in a World Ruled by Women, Vol. 1",
+      "authors": [
+        {
+          "asin": "B0D9LJTQFX",
+          "name": "Mitizou"
+        }
+      ],
+      "narrators": [
+        {
+          "name": "John Patneaude"
+        }
+      ],
+      "language": "english",
+      "releaseDate": "2026-03-12T00:00:00.000Z",
+      "seriesPrimary": {
+        "asin": "B0GSS8PYN4",
+        "name": "Virgin Knight: I Became the Frontier Lord in a World Ruled by Women",
+        "position": "1"
+      },
+      "subtitle": "Light Novel"
+    }
+  },
+  {
+    "query": "Miya Kazuki",
+    "profile": {
+      "asin": "B00QPOM2M4",
+      "region": "us",
+      "name": "香月美夜"
+    },
+    "book": {
+      "asin": "B0DFHMW24T",
+      "region": "us",
+      "title": "Ascendance of a Bookworm: Part 1, Volume 2",
+      "authors": [
+        {
+          "asin": "B00QPOM2M4",
+          "name": "Miya Kazuki"
+        },
+        {
+          "name": "quof - translator"
+        }
+      ],
+      "narrators": [
+        {
+          "name": "Reba Buhr"
+        }
+      ],
+      "language": "english",
+      "releaseDate": "2024-08-28T00:00:00.000Z",
+      "seriesPrimary": {
+        "asin": "B0CRH9JWVZ",
+        "name": "Ascendance of a Bookworm",
+        "position": "1.2"
+      }
+    }
+  },
+  {
+    "query": "Pirateaba",
+    "profile": {
+      "asin": "B07XCYVYMW",
+      "region": "us",
+      "name": "pirate aba"
+    },
+    "book": {
+      "asin": "1774240327",
+      "region": "us",
+      "title": "The Wandering Inn",
+      "authors": [
+        {
+          "asin": "B07XCYVYMW",
+          "name": "pirateaba"
+        }
+      ],
+      "narrators": [
+        {
+          "name": "Andrea Parsneau"
+        }
+      ],
+      "language": "english",
+      "releaseDate": "2019-09-10T00:00:00.000Z",
+      "seriesPrimary": {
+        "asin": "B07X3TZ2YQ",
+        "name": "The Wandering Inn",
+        "position": "1"
+      },
+      "subtitle": "The Wandering Inn Series, Book 1: Parts 1 and 2"
+    }
+  }
+]

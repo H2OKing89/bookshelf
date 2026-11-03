@@ -29,3 +29,10 @@ as evidence of series membership; these captures use the `author` parameter.
 Add aliases with evidence and a regression fixture; do not infer identity from
 transliteration, matching titles, or participation in the same series. Author
 spellings do not change a recording's language or its marketplace/ASIN identity.
+
+`AuthorSpellings.json` pairs projected Audnexus profiles and book-search results
+for Mitizou (道造), Miya Kazuki (香月美夜), and Pirateaba (pirate aba). Each pair
+shares the same author ASIN but uses different profile and book-credit names.
+These spellings can be learned as aliases using that shared identity. Regression
+tests also clear the memory cache and reload persisted author metadata to check
+that later refreshes retain the aliases and continue finding the books.

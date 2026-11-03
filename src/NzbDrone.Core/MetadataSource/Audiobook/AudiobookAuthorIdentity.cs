@@ -59,7 +59,21 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 Asin = parsed.IsName ? null : parsed.Value,
                 Name = metadata.Name
             }, region);
-            return identity?.Names() ?? new[] { metadata.Name };
+            return AudiobookTextNormalizer.Names((identity?.Names() ?? Enumerable.Empty<string>())
+                .Concat(new[] { metadata.Name }).Concat(metadata.Aliases));
+        }
+
+        public static void PreserveNames(AuthorMetadata target, AuthorMetadata previous)
+        {
+            // An identical provider ID is evidence that these observed spellings
+            // belong together. Names alone never establish this relationship.
+            if (previous == null || target.ForeignAuthorId != previous.ForeignAuthorId)
+            {
+                return;
+            }
+
+            target.Aliases = AudiobookTextNormalizer.Names(target.Aliases.Concat(previous.Aliases).Append(previous.Name))
+                .Where(name => !string.Equals(name, target.Name, StringComparison.OrdinalIgnoreCase)).ToList();
         }
 
         private IEnumerable<string> Names() => new[] { Name }.Concat(Aliases);

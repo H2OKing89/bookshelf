@@ -143,12 +143,19 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             var identity = AudiobookId.Parse(id);
             var local = _authorService.FindById(id);
             var metadata = local?.Metadata.Value ?? _authors.Find(id);
+            if (metadata != null)
+            {
+                AudiobookAuthorIdentity.PreserveNames(metadata, _authors.Find(id));
+            }
+
             if (!identity.IsName)
             {
                 var profile = _audnexus.GetAuthor(identity.Value, identity.Region);
                 if (profile != null)
                 {
-                    metadata = AudiobookMetadataMapper.Author(profile, identity.Region);
+                    var updated = AudiobookMetadataMapper.Author(profile, identity.Region);
+                    AudiobookAuthorIdentity.PreserveNames(updated, metadata);
+                    metadata = updated;
                 }
             }
             else
@@ -197,7 +204,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 book.AuthorMetadataId = metadata.Id;
             }
 
-            _authors.Set(id, metadata, TimeSpan.FromHours(1));
+            RememberAuthor(metadata);
             return result;
         }
 
@@ -220,7 +227,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 .Select(a =>
                 {
                     var metadata = AudiobookMetadataMapper.Author(a, _config.AudnexusRegion);
-                    _authors.Set(metadata.ForeignAuthorId, metadata, TimeSpan.FromHours(1));
+                    RememberAuthor(metadata);
                     return _authorService.FindById(metadata.ForeignAuthorId) ?? new Author
                     {
                         Metadata = metadata, Books = new List<Book>(), Series = new List<Series>()
@@ -233,7 +240,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             var existing = resource == null ? null : _bookService.FindById(AudiobookId.ForAsin(region, resource.Asin));
             var book = AudiobookMetadataMapper.Book(resource, region, expectedAuthor ?? existing?.AuthorMetadata.Value);
             var metadata = book.AuthorMetadata.Value;
-            _authors.Set(metadata.ForeignAuthorId, metadata, TimeSpan.FromHours(1));
+            RememberAuthor(metadata);
             if (existing != null)
             {
                 book.UseDbFieldsFrom(existing);
@@ -258,6 +265,12 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             }
 
             return book;
+        }
+
+        private void RememberAuthor(AuthorMetadata metadata)
+        {
+            AudiobookAuthorIdentity.PreserveNames(metadata, _authors.Find(metadata.ForeignAuthorId));
+            _authors.Set(metadata.ForeignAuthorId, metadata, TimeSpan.FromHours(1));
         }
 
         private static List<Series> MergeSeries(List<Book> books)
