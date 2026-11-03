@@ -17,32 +17,36 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
     {
         public static AuthorMetadata Author(AudnexusContributorResource contributor, string region)
         {
-            var id = AudiobookId.IsAsin(contributor.Asin)
-                ? AudiobookId.ForAsin(region, contributor.Asin)
+            var identity = AudiobookAuthorIdentity.Find(contributor, region);
+            var asin = identity?.Asin ?? contributor.Asin;
+            var name = identity?.Name ?? AudiobookTextNormalizer.Text(contributor.Name);
+            var id = AudiobookId.IsAsin(asin)
+                ? AudiobookId.ForAsin(region, asin)
                 : AudiobookId.ForName(region, contributor.Name);
             var profile = contributor as AudnexusAuthorResource;
             var result = new AuthorMetadata
             {
                 ForeignAuthorId = id,
-                TitleSlug = "author-" + region + "-" + (AudiobookId.IsAsin(contributor.Asin) ? contributor.Asin :
+                TitleSlug = "author-" + region + "-" + (AudiobookId.IsAsin(asin) ? asin :
                     Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(contributor.Name))).Substring(0, 16).ToLowerInvariant()),
-                Name = AudiobookTextNormalizer.Text(contributor.Name),
-                SortName = AudiobookTextNormalizer.Text(contributor.Name),
-                NameLastFirst = AudiobookTextNormalizer.Text(contributor.Name),
-                SortNameLastFirst = AudiobookTextNormalizer.Text(contributor.Name),
+                Name = name,
+                SortName = name,
+                NameLastFirst = name,
+                SortNameLastFirst = name,
+                Aliases = identity?.Aliases.ToList() ?? new List<string>(),
                 Overview = profile?.Description,
                 Status = AuthorStatusType.Continuing
             };
             AddImage(result.Images, profile?.Image, MediaCoverTypes.Poster);
-            if (AudiobookId.IsAsin(contributor.Asin))
+            if (AudiobookId.IsAsin(asin))
             {
-                result.Links.Add(new Links { Name = "Audible", Url = $"{StoreUrl(region)}/author/{contributor.Asin}" });
+                result.Links.Add(new Links { Name = "Audible", Url = $"{StoreUrl(region)}/author/{asin}" });
             }
 
             return result;
         }
 
-        public static Book Book(AudnexusBookResource resource, string region)
+        public static Book Book(AudnexusBookResource resource, string region, AuthorMetadata expectedAuthor = null)
         {
             if (!AudiobookId.IsAsin(resource?.Asin) || resource.Region != region || resource.Title.IsNullOrWhiteSpace() ||
                 resource.Authors?.Any(a => a?.Name.IsNotNullOrWhiteSpace() == true) != true)
@@ -50,7 +54,19 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 throw new BookInfoException("Audiobook metadata is missing its ASIN, marketplace, title, or author.");
             }
 
-            var metadata = Author(resource.Authors.First(a => a?.Name.IsNotNullOrWhiteSpace() == true), region);
+            var contributor = resource.Authors.First(a => a?.Name.IsNotNullOrWhiteSpace() == true);
+            var metadata = Author(contributor, region);
+
+            // A missing contributor ASIN can use the author already established for
+            // this bibliography/recording. A conflicting ASIN must remain separate.
+            if (!AudiobookId.IsAsin(contributor.Asin) && expectedAuthor != null &&
+                AudiobookId.Parse(expectedAuthor.ForeignAuthorId).Region == region &&
+                new[] { expectedAuthor.Name }.Concat(expectedAuthor.Aliases).Any(name =>
+                    string.Equals(AudiobookTextNormalizer.Text(name), AudiobookTextNormalizer.Text(contributor.Name), StringComparison.OrdinalIgnoreCase)))
+            {
+                metadata = expectedAuthor;
+            }
+
             var author = new Author { Metadata = metadata, CleanName = Parser.Parser.CleanAuthorName(metadata.Name), Series = new List<Series>() };
             var id = AudiobookId.ForAsin(region, resource.Asin);
             decimal.TryParse(resource.Rating, NumberStyles.Number, CultureInfo.InvariantCulture, out var rating);

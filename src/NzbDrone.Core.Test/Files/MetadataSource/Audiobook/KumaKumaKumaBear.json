@@ -1,0 +1,425 @@
+{
+  "region": "us",
+  "seriesAsin": "B0F7Z67917",
+  "catalogs": [
+    {
+      "name": "Kumanano",
+      "response": {
+        "status": 200,
+        "body": {
+          "total_results": 7,
+          "products": [
+            {
+              "asin": "B0HMVHLQPJ",
+              "title": "Kuma Kuma Kuma Bear (Light Novel) Vol. 13",
+              "authors": [
+                {
+                  "asin": "B0DSLB5CG5",
+                  "name": "Kumanano"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Marissa Lenti"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0F7Z67917",
+                  "sequence": "13",
+                  "title": "Kuma Kuma Kuma Bear Light Novel",
+                  "url": "/pd/Kuma-Kuma-Kuma-Bear-Light-Novel-Audiobook/B0F7Z67917"
+                }
+              ],
+              "release_date": "2026-11-05",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment,Seven Seas Siren",
+              "runtime_length_min": 466,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0HL11YMR3",
+              "title": "Kuma Kuma Kuma Bear, Vol. 12",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "asin": "B0DSLB5CG5",
+                  "name": "Kumanano"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Marissa Lenti"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0F7Z67917",
+                  "sequence": "12",
+                  "title": "Kuma Kuma Kuma Bear Light Novel",
+                  "url": "/pd/Kuma-Kuma-Kuma-Bear-Light-Novel-Audiobook/B0F7Z67917"
+                }
+              ],
+              "release_date": "2026-09-25",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 459,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0H7T2B2B1",
+              "title": "Kuma Kuma Kuma Bear, Vol. 11.5",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "asin": "B0DSLB5CG5",
+                  "name": "Kumanano"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Marissa Lenti"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0F7Z67917",
+                  "sequence": "11.5",
+                  "title": "Kuma Kuma Kuma Bear Light Novel",
+                  "url": "/pd/Kuma-Kuma-Kuma-Bear-Light-Novel-Audiobook/B0F7Z67917"
+                }
+              ],
+              "release_date": "2026-07-06",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 559,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0FP5NP5Y1",
+              "title": "Kuma Kuma Kuma Bear, Vol. 4",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "asin": "B0DSLB5CG5",
+                  "name": "Kumanano"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Marissa Lenti"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0F7Z67917",
+                  "sequence": "4",
+                  "title": "Kuma Kuma Kuma Bear Light Novel",
+                  "url": "/pd/Kuma-Kuma-Kuma-Bear-Light-Novel-Audiobook/B0F7Z67917"
+                }
+              ],
+              "release_date": "2025-08-29",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 353,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0FG3FF8M8",
+              "title": "Kuma Kuma Kuma Bear (Light Novel) Vol. 2",
+              "authors": [
+                {
+                  "name": "Kumanano"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Marissa Lenti"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0F7Z67917",
+                  "sequence": "2",
+                  "title": "Kuma Kuma Kuma Bear Light Novel",
+                  "url": "/pd/Kuma-Kuma-Kuma-Bear-Light-Novel-Audiobook/B0F7Z67917"
+                }
+              ],
+              "release_date": "2025-06-30",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 280,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0FKNNMWN1",
+              "title": "Kuma Kuma Kuma Bear, Vol. 3",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "name": "Kumanano"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Marissa Lenti"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0F7Z67917",
+                  "sequence": "3",
+                  "title": "Kuma Kuma Kuma Bear Light Novel",
+                  "url": "/pd/Kuma-Kuma-Kuma-Bear-Light-Novel-Audiobook/B0F7Z67917"
+                }
+              ],
+              "release_date": "2025-07-31",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 321,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0F7SC7WVW",
+              "title": "Kuma Kuma Kuma Bear (Light Novel) Vol. 1",
+              "authors": [
+                {
+                  "name": "Kumanano"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Marissa Lenti"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0F7Z67917",
+                  "sequence": "1",
+                  "title": "Kuma Kuma Kuma Bear Light Novel",
+                  "url": "/pd/Kuma-Kuma-Kuma-Bear-Light-Novel-Audiobook/B0F7Z67917"
+                }
+              ],
+              "release_date": "2025-05-07",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 257,
+              "format_type": "unabridged"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "くまなの",
+      "response": {
+        "status": 200,
+        "body": {
+          "total_results": 7,
+          "products": [
+            {
+              "asin": "B0GKPYTYJF",
+              "title": "Kuma Kuma Kuma Bear, Vol. 8",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "name": "くまなの"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Marissa Lenti"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0F7Z67917",
+                  "sequence": "8",
+                  "title": "Kuma Kuma Kuma Bear Light Novel",
+                  "url": "/pd/Kuma-Kuma-Kuma-Bear-Light-Novel-Audiobook/B0F7Z67917"
+                }
+              ],
+              "release_date": "2026-01-30",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 420,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0G4NFQDWR",
+              "title": "Kuma Kuma Kuma Bear (Light Novel) Vol. 7",
+              "authors": [
+                {
+                  "asin": "B074QPMWRL",
+                  "name": "くまなの"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Marissa Lenti"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0F7Z67917",
+                  "sequence": "7",
+                  "title": "Kuma Kuma Kuma Bear Light Novel",
+                  "url": "/pd/Kuma-Kuma-Kuma-Bear-Light-Novel-Audiobook/B0F7Z67917"
+                }
+              ],
+              "release_date": "2025-12-01",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 387,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0GZ8J8XGS",
+              "title": "Kuma Kuma Kuma Bear, Vol. 10",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "asin": "B074QPMWRL",
+                  "name": "くまなの"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Marissa Lenti"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0F7Z67917",
+                  "sequence": "10",
+                  "title": "Kuma Kuma Kuma Bear Light Novel",
+                  "url": "/pd/Kuma-Kuma-Kuma-Bear-Light-Novel-Audiobook/B0F7Z67917"
+                }
+              ],
+              "release_date": "2026-05-01",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 353,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0FZLXFVB6",
+              "title": "Kuma Kuma Kuma Bear, Vol. 6",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "name": "くまなの"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Marissa Lenti"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0F7Z67917",
+                  "sequence": "6",
+                  "title": "Kuma Kuma Kuma Bear Light Novel",
+                  "url": "/pd/Kuma-Kuma-Kuma-Bear-Light-Novel-Audiobook/B0F7Z67917"
+                }
+              ],
+              "release_date": "2025-11-04",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 387,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0H3LTF4RF",
+              "title": "Kuma Kuma Kuma Bear, Vol. 11",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "asin": "B074QPMWRL",
+                  "name": "くまなの"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Marissa Lenti"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0F7Z67917",
+                  "sequence": "11",
+                  "title": "Kuma Kuma Kuma Bear Light Novel",
+                  "url": "/pd/Kuma-Kuma-Kuma-Bear-Light-Novel-Audiobook/B0F7Z67917"
+                }
+              ],
+              "release_date": "2026-06-01",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment,Seven Seas Siren",
+              "runtime_length_min": 406,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0GR17K5G5",
+              "title": "Kuma Kuma Kuma Bear, Vol. 9",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "asin": "B074QPMWRL",
+                  "name": "くまなの"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Marissa Lenti"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0F7Z67917",
+                  "sequence": "9",
+                  "title": "Kuma Kuma Kuma Bear Light Novel",
+                  "url": "/pd/Kuma-Kuma-Kuma-Bear-Light-Novel-Audiobook/B0F7Z67917"
+                }
+              ],
+              "release_date": "2026-03-03",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 372,
+              "format_type": "unabridged"
+            },
+            {
+              "asin": "B0FT43R19G",
+              "title": "Kuma Kuma Kuma Bear, Vol. 5",
+              "subtitle": "Light Novel",
+              "authors": [
+                {
+                  "asin": "B074QPMWRL",
+                  "name": "くまなの"
+                }
+              ],
+              "narrators": [
+                {
+                  "name": "Marissa Lenti"
+                }
+              ],
+              "series": [
+                {
+                  "asin": "B0F7Z67917",
+                  "sequence": "5",
+                  "title": "Kuma Kuma Kuma Bear Light Novel",
+                  "url": "/pd/Kuma-Kuma-Kuma-Bear-Light-Novel-Audiobook/B0F7Z67917"
+                }
+              ],
+              "release_date": "2025-09-29",
+              "language": "english",
+              "publisher_name": "Seven Seas Entertainment, Seven Seas Siren",
+              "runtime_length_min": 415,
+              "format_type": "unabridged"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

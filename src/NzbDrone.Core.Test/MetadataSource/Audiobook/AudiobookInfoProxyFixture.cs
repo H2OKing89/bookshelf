@@ -183,5 +183,41 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
             identity.Value.Should().Be("Yu Omiya");
             found.AuthorMetadata.Value.TitleSlug.Should().NotContain(":").And.NotContain("%");
         }
+
+        [Test]
+        public void should_include_an_exact_name_without_asin_in_an_established_bibliography()
+        {
+            _resources[0].Authors[0].Asin = null;
+
+            var result = Subject.GetAuthorInfo(AuthorId);
+
+            result.Books.Value.Should().HaveCount(2);
+            result.Books.Value.Should().OnlyContain(b => b.AuthorMetadata.Value.ForeignAuthorId == AuthorId);
+        }
+
+        [TestCase("B000000001", "Yu Omiya")]
+        [TestCase(null, "Someone Else")]
+        public void should_not_attach_a_conflicting_contributor_to_an_established_author(string asin, string name)
+        {
+            _resources[0].Authors[0].Asin = asin;
+            _resources[0].Authors[0].Name = name;
+
+            Subject.GetAuthorInfo(AuthorId).Books.Value.Should().ContainSingle(b => b.ForeignBookId == "audible:us:B0HMVRXW3C");
+        }
+
+        [Test]
+        public void should_keep_the_stored_recording_author_when_a_detail_response_omits_its_asin()
+        {
+            var stored = AudiobookMetadataMapper.Book(_resources[0], "us");
+            stored.Id = 42;
+            Mocker.GetMock<IBookService>().Setup(x => x.FindById(stored.ForeignBookId)).Returns(stored);
+            Mocker.GetMock<IEditionService>().Setup(x => x.GetEditionsByBook(42)).Returns(stored.Editions.Value);
+            _resources[0].Authors[0].Asin = null;
+
+            var result = Subject.GetBookInfo(stored.ForeignBookId);
+
+            result.Item1.Should().Be(AuthorId);
+            result.Item3.Should().ContainSingle(a => a.ForeignAuthorId == AuthorId);
+        }
     }
 }

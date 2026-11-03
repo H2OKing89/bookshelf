@@ -131,13 +131,15 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             }
 
             var book = Map(resource, identity.Region);
-            var authors = resource.Authors.Where(a => a?.Name.IsNotNullOrWhiteSpace() == true)
-                .Select(a => AudiobookMetadataMapper.Author(a, identity.Region)).DistinctBy(a => a.ForeignAuthorId).ToList();
+            var authors = resource.Authors.Where(a => a?.Name.IsNotNullOrWhiteSpace() == true).Skip(1)
+                .Select(a => AudiobookMetadataMapper.Author(a, identity.Region)).Prepend(book.AuthorMetadata.Value)
+                .DistinctBy(a => a.ForeignAuthorId).ToList();
             return Tuple.Create(book.AuthorMetadata.Value.ForeignAuthorId, book, authors);
         }
 
         public Author GetAuthorInfo(string id, bool useCache = true)
         {
+            id = AudiobookAuthorIdentity.CanonicalId(id);
             var identity = AudiobookId.Parse(id);
             var local = _authorService.FindById(id);
             var metadata = local?.Metadata.Value ?? _authors.Find(id);
@@ -159,10 +161,12 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 throw new BookInfoException("No author profile was found for this ASIN. Search for an audiobook title by this author first.");
             }
 
-            var resources = _config.AudibleRsEnabled
-                ? _audible.GetAuthorBooks(metadata.Name, identity.Region)
-                : _audnexus.SearchBooks(metadata.Name, identity.Region);
-            var discovered = resources.Select(r => Map(r, identity.Region))
+            var resources = AudiobookAuthorIdentity.SearchNames(metadata, identity.Region)
+                .SelectMany(name => _config.AudibleRsEnabled
+                    ? _audible.GetAuthorBooks(name, identity.Region)
+                    : _audnexus.SearchBooks(name, identity.Region))
+                .DistinctBy(resource => resource.Asin);
+            var discovered = resources.Select(r => Map(r, identity.Region, metadata))
                 .Where(b => b.AuthorMetadata.Value.ForeignAuthorId == id).ToList();
 
             // Neither a capped search nor a regional catalog is an authoritative deletion feed.
@@ -224,12 +228,12 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 }).DistinctBy(a => a.ForeignAuthorId).ToList();
         }
 
-        private Book Map(AudnexusBookResource resource, string region)
+        private Book Map(AudnexusBookResource resource, string region, AuthorMetadata expectedAuthor = null)
         {
-            var book = AudiobookMetadataMapper.Book(resource, region);
+            var existing = resource == null ? null : _bookService.FindById(AudiobookId.ForAsin(region, resource.Asin));
+            var book = AudiobookMetadataMapper.Book(resource, region, expectedAuthor ?? existing?.AuthorMetadata.Value);
             var metadata = book.AuthorMetadata.Value;
             _authors.Set(metadata.ForeignAuthorId, metadata, TimeSpan.FromHours(1));
-            var existing = _bookService.FindById(book.ForeignBookId);
             if (existing != null)
             {
                 book.UseDbFieldsFrom(existing);
