@@ -102,7 +102,7 @@ namespace Readarr.Api.V1.MetadataOverrides
                 OriginalTitle = item.OriginalTitle, ReplacementTitle = item.ReplacementTitle,
                 SourceUrl = item.SourceUrl, Reason = item.Reason, Enabled = item.Enabled, UpdatedAt = item.UpdatedAt,
                 ObservedTitle = observed,
-                Status = !item.Enabled ? "disabled" : item.Kind == "author" ? "enabled" : observed == null ? "notInLibrary" :
+                Status = !item.Enabled ? "disabled" : item.Kind != "title" ? "enabled" : observed == null ? "notInLibrary" :
                     observed == item.OriginalTitle ? "enabled" : "needsReview"
             };
         }

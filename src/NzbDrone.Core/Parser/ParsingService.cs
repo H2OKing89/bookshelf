@@ -7,6 +7,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.IndexerSearch.Definitions;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.Parser
@@ -30,18 +31,24 @@ namespace NzbDrone.Core.Parser
         private readonly IBookService _bookService;
         private readonly IEditionService _editionService;
         private readonly IMediaFileService _mediaFileService;
+        private readonly ISeriesBookLinkService _seriesBookLinkService;
+        private readonly IAudiobookMetadataOverrideService _overrides;
         private readonly Logger _logger;
 
         public ParsingService(IAuthorService authorService,
                               IBookService bookService,
                               IEditionService editionService,
                               IMediaFileService mediaFileService,
+                              ISeriesBookLinkService seriesBookLinkService,
+                              IAudiobookMetadataOverrideService overrides,
                               Logger logger)
         {
             _bookService = bookService;
             _editionService = editionService;
             _authorService = authorService;
             _mediaFileService = mediaFileService;
+            _seriesBookLinkService = seriesBookLinkService;
+            _overrides = overrides;
             _logger = logger;
         }
 
@@ -87,6 +94,24 @@ namespace NzbDrone.Core.Parser
 
         public List<Book> GetBooks(ParsedBookInfo parsedBookInfo, Author author, SearchCriteriaBase searchCriteria = null)
         {
+            if (parsedBookInfo.StructuredRelease != null && AudiobookId.IsNative(author.ForeignAuthorId))
+            {
+                var books = _bookService.GetBooksByAuthor(author.Id);
+                var editions = _editionService.GetEditionsByAuthor(author.Id).GroupBy(edition => edition.BookId).ToDictionary(group => group.Key, group => group.ToList());
+                var links = _seriesBookLinkService.GetLinksByBook(books.Select(book => book.Id).ToList())
+                    .GroupBy(link => link.BookId).ToDictionary(group => group.Key, group => group.ToList());
+                foreach (var book in books)
+                {
+                    book.Editions = editions.GetValueOrDefault(book.Id) ?? new List<Edition>();
+                    book.SeriesLinks = links.GetValueOrDefault(book.Id) ?? new List<SeriesBookLink>();
+                }
+
+                var region = AudiobookId.Parse(author.ForeignAuthorId).Region;
+                var matches = AudiobookReleaseMatcher.Match(parsedBookInfo.StructuredRelease, books, out var rejection, name => _overrides.NarratorName(name, region));
+                parsedBookInfo.ExtraInfo["StructuredMetadataRejection"] = rejection;
+                return matches;
+            }
+
             var bookTitle = parsedBookInfo.BookTitle;
             var result = new List<Book>();
 

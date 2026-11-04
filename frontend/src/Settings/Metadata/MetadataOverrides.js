@@ -13,7 +13,7 @@ const empty = {
   kind: 'author', region: 'us', asin: '', name: '', alternateAsins: '', aliases: '',
   originalTitle: '', replacementTitle: '', sourceUrl: '', reason: '', enabled: true
 };
-const typeOptions = [{ key: 'author', value: 'Author identity' }, { key: 'title', value: 'Title correction' }];
+const typeOptions = [{ key: 'author', value: 'Author identity' }, { key: 'title', value: 'Title correction' }, { key: 'narrator', value: 'Narrator alias' }];
 const regionOptions = ['au', 'ca', 'de', 'es', 'fr', 'in', 'it', 'jp', 'us', 'uk'].map((region) => ({ key: region, value: region.toUpperCase() }));
 const statuses = { enabled: 'Enabled', disabled: 'Disabled', needsReview: 'Needs review', notInLibrary: 'Not in library' };
 
@@ -66,14 +66,14 @@ function MetadataOverrides() {
   const fields = form ? [
     ['kind', 'Correction type', inputTypes.SELECT, { values: typeOptions, isDisabled: !!form.id }],
     ['region', 'Marketplace', inputTypes.SELECT, { values: regionOptions }],
-    ['asin', form.kind === 'author' ? 'Canonical author ASIN' : 'Recording ASIN', inputTypes.TEXT],
-    ...(form.kind === 'author' ? [
-      ['name', 'Canonical author name', inputTypes.TEXT],
-      ['alternateAsins', 'Alternate author ASINs', inputTypes.TEXT_AREA, { helpText: 'One ASIN per line. Add only profiles verified to belong to the same author.' }],
-      ['aliases', 'Other author spellings', inputTypes.TEXT_AREA, { helpText: 'One name per line. Names without an author ASIN can use these spellings.' }]
-    ] : [
+    ...(form.kind === 'narrator' ? [] : [['asin', form.kind === 'author' ? 'Canonical author ASIN' : 'Recording ASIN', inputTypes.TEXT]]),
+    ...(form.kind === 'title' ? [
       ['originalTitle', 'Exact provider title', inputTypes.TEXT],
       ['replacementTitle', 'Corrected title', inputTypes.TEXT, { helpText: 'Used for display labels. The original provider title remains stored.' }]
+    ] : [
+      ['name', form.kind === 'author' ? 'Canonical author name' : 'Canonical narrator name', inputTypes.TEXT],
+      ...(form.kind === 'author' ? [['alternateAsins', 'Alternate author ASINs', inputTypes.TEXT_AREA, { helpText: 'One ASIN per line. Add only profiles verified to belong to the same author.' }]] : []),
+      ['aliases', 'Other spellings or aliases', inputTypes.TEXT_AREA, { helpText: 'One name per line. Add only names verified to identify the same person.' }]
     ]),
     ['sourceUrl', 'Evidence URL', inputTypes.TEXT],
     ['reason', 'Reason', inputTypes.TEXT_AREA],
@@ -83,7 +83,7 @@ function MetadataOverrides() {
   return (
     <FieldSet legend="Metadata overrides">
       <p>
-        Keep verified author identities and title corrections here. Refresh affected authors after changing an author identity. Title corrections apply to display labels immediately after the page reloads.
+        Keep verified author identities, narrator aliases, and title corrections here. Refresh affected authors after changing an author identity. Title corrections apply to display labels immediately after the page reloads.
       </p>
       {
         error && <Alert kind={kinds.DANGER}>{error}</Alert>
@@ -95,7 +95,7 @@ function MetadataOverrides() {
         items.map((item) => (
           <div key={item.id}>
             <Button isDisabled={isSaving} onPress={() => edit(item)}>
-              {item.kind === 'author' ? item.name : item.replacementTitle} ({item.region.toUpperCase()}) — {statuses[item.status]}
+              {item.kind === 'title' ? item.replacementTitle : item.name} ({item.region.toUpperCase()}) — {statuses[item.status]}
             </Button>
             {
               item.status === 'needsReview' &&

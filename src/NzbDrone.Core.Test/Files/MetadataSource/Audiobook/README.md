@@ -82,3 +82,42 @@ calendar, and iCalendar use the same display-label service.
 The calendar defaults to **Monitored Only**, which requires both the book and its
 author to be monitored. **All** includes unmonitored sample metadata without
 changing monitoring or enabling download searches.
+
+## MAM search and matching
+
+MAM requests use JSON POST to `tor/js/loadSearchJSONbasic.php`, `main_cat: [13]`
+for audiobooks, a top-level `perpage`, and `tor.startNumber` offsets. RSS uses
+`dateDesc`; interactive searches preserve the configured fields, language, and
+search type. Each query is bounded to 1,000 results and uses the indexer's rate
+limit. Search does not request account-bound download hashes or download files.
+The `tid` download request receives the session cookie only for the configured
+indexer origin.
+
+The adapter preserves structured author, narrator, title, and series metadata.
+Actual `seeders` counts are distinct from `times_completed`. Numeric flags can
+arrive as numbers, booleans, or strings; `fl_vip` can be nonzero beyond 1. Encoded
+author/narrator/series objects are parsed separately. Inferred `browseflags`
+meanings and uploader ownership are not used to decide recording identity.
+
+Native audiobook matching uses the full author's catalog rather than assuming a
+search result is the requested book. Titles and series positions must agree;
+narrators distinguish recordings of the same volume. Conflicting credits,
+ambiguous recordings, and series ranges/packs remain rejected for manual review.
+Structured failures cannot fall back to a fuzzy match against a short provider
+title such as `Mushoku Tensei`. The existing requested-book check then rejects a
+correctly identified companion title returned during a volume-one search.
+
+Migration 045 adds narrator aliases to the existing override editor. Narrator
+records have a marketplace, canonical name, aliases, evidence, reason, and
+enabled state; they do not require an ASIN. Aliases affect matching only and
+preserve both catalog and indexer credits. Overlapping enabled identities are
+rejected. The initial Cliff Kirk/Cliff Kurt equivalence is supported by
+[the narrator's own explanation](https://www.reddit.com/r/mushokutensei/comments/1ds42cu/i_am_the_narrator_of_the_mushoku_tensei_audiobooks/)
+and [the publisher's announcement](https://sevenseasentertainment.com/2023/07/24/seven-seas-launches-audiobook-for-mushoku-tensei-light-novel-series/).
+It is seed data, with no narrator-specific matching rule in C#.
+
+`MyAnonaMouseOfflineFixture`, `AudiobookReleaseMatcherFixture`, and
+`AudiobookSearchDecisionFixture` use synthetic tracker data. They cover paging,
+numeric flags, real seeder counts, metadata retention, different narrations,
+conflicting volume numbers, packs, and preventing a companion release from being
+approved as volume one. They require no tracker credentials or torrent downloads.

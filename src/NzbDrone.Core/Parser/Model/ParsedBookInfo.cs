@@ -20,6 +20,9 @@ namespace NzbDrone.Core.Parser.Model
         public string ReleaseTitle { get; set; }
 
         [JsonIgnore]
+        public ReleaseInfo StructuredRelease { get; set; }
+
+        [JsonIgnore]
         public Dictionary<string, object> ExtraInfo { get; set; } = new Dictionary<string, object>();
 
         public override string ToString()

@@ -8,10 +8,10 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
     {
         // Used only by the database migration. Deleting or disabling a correction
         // must not cause it to reappear at startup or on the next catalog request.
-        public static List<AudiobookMetadataOverride> Read()
+        public static List<AudiobookMetadataOverride> Read(string resource = "defaults.json")
         {
             using var stream = typeof(AudiobookMetadataOverrideSeed).Assembly.GetManifestResourceStream(
-                "NzbDrone.Core.MetadataSource.Audiobook.Overrides.defaults.json");
+                "NzbDrone.Core.MetadataSource.Audiobook.Overrides." + resource);
             using var reader = new StreamReader(stream);
             return Json.Deserialize<List<AudiobookMetadataOverride>>(reader.ReadToEnd());
         }

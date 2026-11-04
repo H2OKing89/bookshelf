@@ -73,7 +73,26 @@ namespace NzbDrone.Core.DecisionEngine
 
                 try
                 {
-                    var parsedBookInfo = Parser.Parser.ParseBookTitle(report.Title);
+                    ParsedBookInfo parsedBookInfo;
+                    if (!string.IsNullOrWhiteSpace(report.Book) && report.BookAuthors?.Any() == true)
+                    {
+                        var names = report.BookAuthors.Any() ? report.BookAuthors : new List<string> { report.Author };
+                        var expectedNames = searchCriteria == null ? new List<string>() :
+                            searchCriteria.Author.Metadata.Value.Aliases.Append(searchCriteria.Author.Name).Select(name => name.CleanAuthorName()).ToList();
+                        parsedBookInfo = new ParsedBookInfo
+                        {
+                            AuthorName = searchCriteria != null && names.Any(name => expectedNames.Contains(name.CleanAuthorName()))
+                                ? searchCriteria.Author.Name : names.First(),
+                            BookTitle = report.Book,
+                            StructuredRelease = report,
+                            ReleaseTitle = report.Title,
+                            Quality = QualityParser.ParseQuality(report.Title, null, report.Categories)
+                        };
+                    }
+                    else
+                    {
+                        parsedBookInfo = Parser.Parser.ParseBookTitle(report.Title);
+                    }
 
                     if (parsedBookInfo == null)
                     {
@@ -98,7 +117,7 @@ namespace NzbDrone.Core.DecisionEngine
                         _aggregationService.Augment(remoteBook);
 
                         // try parsing again using the search criteria, in case it parsed but parsed incorrectly
-                        if ((remoteBook.Author == null || remoteBook.Books.Empty()) && searchCriteria != null)
+                        if ((remoteBook.Author == null || remoteBook.Books.Empty()) && searchCriteria != null && parsedBookInfo.StructuredRelease == null)
                         {
                             _logger.Debug("Author/Book null for {0}, reparsing with search criteria", report.Title);
                             var parsedBookInfoWithCriteria = Parser.Parser.ParseBookTitleWithSearchCriteria(report.Title,
@@ -132,7 +151,8 @@ namespace NzbDrone.Core.DecisionEngine
                         }
                         else if (remoteBook.Books.Empty())
                         {
-                            decision = new DownloadDecision(remoteBook, new Rejection("Unable to parse books from release name"));
+                            var reason = parsedBookInfo.ExtraInfo.GetValueOrDefault("StructuredMetadataRejection") as string ?? "Unable to parse books from release name";
+                            decision = new DownloadDecision(remoteBook, new Rejection(reason));
                             if (searchCriteria != null)
                             {
                                 remoteBook.Books = searchCriteria.Books;

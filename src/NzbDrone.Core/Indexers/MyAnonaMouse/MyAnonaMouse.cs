@@ -9,6 +9,7 @@ using System.Net;
 using System.Threading.Tasks;
 using FluentValidation.Results;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NLog;
 using NzbDrone.Common.Cache;
 using NzbDrone.Common.Extensions;
@@ -26,6 +27,7 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
     {
         public override string Name => "MyAnonaMouse";
         public override DownloadProtocol Protocol => DownloadProtocol.Torrent;
+        public override int PageSize => 100;
         private IndexerCapabilities Capabilities => SetCapabilities();
 
         private readonly ICacheManager _cacheManager;
@@ -67,6 +69,17 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
             return new Dictionary<string, string> { { "mam_id", Settings.MamId } };
         }
 
+        public override HttpRequest GetDownloadRequest(string link)
+        {
+            var request = base.GetDownloadRequest(link);
+            if (Uri.Compare(new Uri(link), new Uri(Settings.BaseUrl), UriComponents.SchemeAndServer, UriFormat.Unescaped, StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                request.Cookies["mam_id"] = Settings.MamId;
+            }
+
+            return request;
+        }
+
         protected override async Task Test(List<ValidationFailure> failures)
         {
             CookiesUpdater?.Invoke(null, null);
@@ -87,9 +100,6 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
             };
 
             caps.Categories.AddCategoryMapping("13", NewznabStandardCategory.AudioAudiobook, "AudioBooks");
-            caps.Categories.AddCategoryMapping("14", NewznabStandardCategory.BooksEBook, "E-Books");
-            caps.Categories.AddCategoryMapping("15", NewznabStandardCategory.AudioAudiobook, "Musicology");
-            caps.Categories.AddCategoryMapping("16", NewznabStandardCategory.AudioAudiobook, "Radio");
             caps.Categories.AddCategoryMapping("39", NewznabStandardCategory.AudioAudiobook, "Audiobooks - Action/Adventure");
             caps.Categories.AddCategoryMapping("49", NewznabStandardCategory.AudioAudiobook, "Audiobooks - Art");
             caps.Categories.AddCategoryMapping("50", NewznabStandardCategory.AudioAudiobook, "Audiobooks - Biographical");
@@ -125,61 +135,6 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
             caps.Categories.AddCategoryMapping("108", NewznabStandardCategory.AudioAudiobook, "Audiobooks - Urban Fantasy");
             caps.Categories.AddCategoryMapping("48", NewznabStandardCategory.AudioAudiobook, "Audiobooks - Western");
             caps.Categories.AddCategoryMapping("111", NewznabStandardCategory.AudioAudiobook, "Audiobooks - Young Adult");
-            caps.Categories.AddCategoryMapping("60", NewznabStandardCategory.BooksEBook, "Ebooks - Action/Adventure");
-            caps.Categories.AddCategoryMapping("71", NewznabStandardCategory.BooksEBook, "Ebooks - Art");
-            caps.Categories.AddCategoryMapping("72", NewznabStandardCategory.BooksEBook, "Ebooks - Biographical");
-            caps.Categories.AddCategoryMapping("90", NewznabStandardCategory.BooksEBook, "Ebooks - Business");
-            caps.Categories.AddCategoryMapping("61", NewznabStandardCategory.BooksComics, "Ebooks - Comics/Graphic novels");
-            caps.Categories.AddCategoryMapping("73", NewznabStandardCategory.BooksEBook, "Ebooks - Computer/Internet");
-            caps.Categories.AddCategoryMapping("101", NewznabStandardCategory.BooksEBook, "Ebooks - Crafts");
-            caps.Categories.AddCategoryMapping("62", NewznabStandardCategory.BooksEBook, "Ebooks - Crime/Thriller");
-            caps.Categories.AddCategoryMapping("63", NewznabStandardCategory.BooksEBook, "Ebooks - Fantasy");
-            caps.Categories.AddCategoryMapping("107", NewznabStandardCategory.BooksEBook, "Ebooks - Food");
-            caps.Categories.AddCategoryMapping("64", NewznabStandardCategory.BooksEBook, "Ebooks - General Fiction");
-            caps.Categories.AddCategoryMapping("74", NewznabStandardCategory.BooksEBook, "Ebooks - General Non-Fiction");
-            caps.Categories.AddCategoryMapping("102", NewznabStandardCategory.BooksEBook, "Ebooks - Historical Fiction");
-            caps.Categories.AddCategoryMapping("76", NewznabStandardCategory.BooksEBook, "Ebooks - History");
-            caps.Categories.AddCategoryMapping("77", NewznabStandardCategory.BooksEBook, "Ebooks - Home/Garden");
-            caps.Categories.AddCategoryMapping("65", NewznabStandardCategory.BooksEBook, "Ebooks - Horror");
-            caps.Categories.AddCategoryMapping("103", NewznabStandardCategory.BooksEBook, "Ebooks - Humor");
-            caps.Categories.AddCategoryMapping("115", NewznabStandardCategory.BooksEBook, "Ebooks - Illusion/Magic");
-            caps.Categories.AddCategoryMapping("91", NewznabStandardCategory.BooksEBook, "Ebooks - Instructional");
-            caps.Categories.AddCategoryMapping("66", NewznabStandardCategory.BooksEBook, "Ebooks - Juvenile");
-            caps.Categories.AddCategoryMapping("78", NewznabStandardCategory.BooksEBook, "Ebooks - Language");
-            caps.Categories.AddCategoryMapping("67", NewznabStandardCategory.BooksEBook, "Ebooks - Literary Classics");
-            caps.Categories.AddCategoryMapping("79", NewznabStandardCategory.BooksMags, "Ebooks - Magazines/Newspapers");
-            caps.Categories.AddCategoryMapping("80", NewznabStandardCategory.BooksTechnical, "Ebooks - Math/Science/Tech");
-            caps.Categories.AddCategoryMapping("92", NewznabStandardCategory.BooksEBook, "Ebooks - Medical");
-            caps.Categories.AddCategoryMapping("118", NewznabStandardCategory.BooksEBook, "Ebooks - Mixed Collections");
-            caps.Categories.AddCategoryMapping("94", NewznabStandardCategory.BooksEBook, "Ebooks - Mystery");
-            caps.Categories.AddCategoryMapping("120", NewznabStandardCategory.BooksEBook, "Ebooks - Nature");
-            caps.Categories.AddCategoryMapping("95", NewznabStandardCategory.BooksEBook, "Ebooks - Philosophy");
-            caps.Categories.AddCategoryMapping("81", NewznabStandardCategory.BooksEBook, "Ebooks - Pol/Soc/Relig");
-            caps.Categories.AddCategoryMapping("82", NewznabStandardCategory.BooksEBook, "Ebooks - Recreation");
-            caps.Categories.AddCategoryMapping("68", NewznabStandardCategory.BooksEBook, "Ebooks - Romance");
-            caps.Categories.AddCategoryMapping("69", NewznabStandardCategory.BooksEBook, "Ebooks - Science Fiction");
-            caps.Categories.AddCategoryMapping("75", NewznabStandardCategory.BooksEBook, "Ebooks - Self-Help");
-            caps.Categories.AddCategoryMapping("96", NewznabStandardCategory.BooksEBook, "Ebooks - Travel/Adventure");
-            caps.Categories.AddCategoryMapping("104", NewznabStandardCategory.BooksEBook, "Ebooks - True Crime");
-            caps.Categories.AddCategoryMapping("109", NewznabStandardCategory.BooksEBook, "Ebooks - Urban Fantasy");
-            caps.Categories.AddCategoryMapping("70", NewznabStandardCategory.BooksEBook, "Ebooks - Western");
-            caps.Categories.AddCategoryMapping("112", NewznabStandardCategory.BooksEBook, "Ebooks - Young Adult");
-            caps.Categories.AddCategoryMapping("19", NewznabStandardCategory.AudioAudiobook, "Guitar/Bass Tabs");
-            caps.Categories.AddCategoryMapping("20", NewznabStandardCategory.AudioAudiobook, "Individual Sheet");
-            caps.Categories.AddCategoryMapping("24", NewznabStandardCategory.AudioAudiobook, "Individual Sheet MP3");
-            caps.Categories.AddCategoryMapping("126", NewznabStandardCategory.AudioAudiobook, "Instructional Book with Video");
-            caps.Categories.AddCategoryMapping("22", NewznabStandardCategory.AudioAudiobook, "Instructional Media - Music");
-            caps.Categories.AddCategoryMapping("113", NewznabStandardCategory.AudioAudiobook, "Lick Library - LTP/Jam With");
-            caps.Categories.AddCategoryMapping("114", NewznabStandardCategory.AudioAudiobook, "Lick Library - Techniques/QL");
-            caps.Categories.AddCategoryMapping("17", NewznabStandardCategory.AudioAudiobook, "Music - Complete Editions");
-            caps.Categories.AddCategoryMapping("26", NewznabStandardCategory.AudioAudiobook, "Music Book");
-            caps.Categories.AddCategoryMapping("27", NewznabStandardCategory.AudioAudiobook, "Music Book MP3");
-            caps.Categories.AddCategoryMapping("30", NewznabStandardCategory.AudioAudiobook, "Sheet Collection");
-            caps.Categories.AddCategoryMapping("31", NewznabStandardCategory.AudioAudiobook, "Sheet Collection MP3");
-            caps.Categories.AddCategoryMapping("127", NewznabStandardCategory.AudioAudiobook, "Radio -  Comedy");
-            caps.Categories.AddCategoryMapping("130", NewznabStandardCategory.AudioAudiobook, "Radio - Drama");
-            caps.Categories.AddCategoryMapping("128", NewznabStandardCategory.AudioAudiobook, "Radio - Factual/Documentary");
-            caps.Categories.AddCategoryMapping("132", NewznabStandardCategory.AudioAudiobook, "Radio - Reading");
 
             return caps;
         }
@@ -229,7 +184,7 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
             if (httpResponse.StatusCode != HttpStatusCode.OK)
             {
                 // Remove cookie cache
-                CookiesUpdater(null, null);
+                CookiesUpdater?.Invoke(null, null);
 
                 throw new IndexerException(indexerResponse, $"Unexpected response status {httpResponse.StatusCode} code from indexer request");
             }
@@ -257,7 +212,13 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
                 throw new IndexerException(indexerResponse, "Unexpected response content from indexer request: {0}", jsonResponse.Message ?? "Check the logs for more information.");
             }
 
-            var hasUserVip = HasUserVip(httpResponse.GetCookies());
+            var cookies = httpResponse.GetCookies();
+            if (!cookies.ContainsKey("mam_id"))
+            {
+                cookies["mam_id"] = _settings.MamId;
+            }
+
+            var hasUserVip = jsonResponse.Data.Any(item => item.FreeVip && !item.Free && !item.PersonalFreeLeech) && HasUserVip(cookies);
 
             foreach (var item in jsonResponse.Data)
             {
@@ -266,18 +227,33 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
 
                 var id = item.Id;
 
-                release.Title = item.Title;
+                release.Title = WebUtility.HtmlDecode(item.Title);
+                release.Book = release.Title;
 
                 if (item.AuthorInfo != null)
                 {
                     var authorInfo = JsonConvert.DeserializeObject<Dictionary<string, string>>(item.AuthorInfo);
-                    var author = authorInfo?.Take(5).Select(v => v.Value).Join(", ");
+                    release.BookAuthors = authorInfo?.Values.Select(WebUtility.HtmlDecode).Where(value => !string.IsNullOrWhiteSpace(value)).ToList() ?? new List<string>();
+                    var author = release.BookAuthors.Take(5).Join(", ");
 
                     if (author.IsNotNullOrWhiteSpace())
                     {
                         release.Title += " by " + author;
                         release.Author = author;
                     }
+                }
+
+                if (!string.IsNullOrWhiteSpace(item.NarratorInfo))
+                {
+                    release.Narrators = JsonConvert.DeserializeObject<Dictionary<string, string>>(item.NarratorInfo)
+                        ?.Values.Select(WebUtility.HtmlDecode).Where(value => !string.IsNullOrWhiteSpace(value)).ToList() ?? new List<string>();
+                }
+
+                if (!string.IsNullOrWhiteSpace(item.SeriesInfo))
+                {
+                    release.BookSeries = JObject.Parse(item.SeriesInfo).Properties().Select(property => property.Value).OfType<JArray>()
+                        .Where(series => series.Count >= 2 && !string.IsNullOrWhiteSpace(series[0].ToString()))
+                        .Select(series => new ReleaseBookSeries { Name = WebUtility.HtmlDecode(series[0].ToString()), Position = series[1].ToString() }).ToList();
                 }
 
                 var flags = new List<string>();
@@ -306,8 +282,8 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
 
                 var isFreeLeech = item.Free || item.PersonalFreeLeech || (hasUserVip && item.FreeVip);
 
+                release.IndexerFlags = isFreeLeech ? IndexerFlags.Freeleech : 0;
                 release.DownloadUrl = GetDownloadUrl(id, !isFreeLeech);
-                release.InfoUrl = $"{_settings.BaseUrl}t/{id}";
                 release.InfoUrl = $"{_settings.BaseUrl}t/{id}";
                 release.Guid = release.InfoUrl;
                 release.Categories = _categories.MapTrackerCatToNewznab(item.Category).Select(c => c.Id).ToList();
@@ -602,16 +578,24 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
         public string AuthorInfo { get; set; }
         [JsonProperty(PropertyName = "lang_code")]
         public string LanguageCode { get; set; }
+        [JsonProperty(PropertyName = "narrator_info")]
+        public string NarratorInfo { get; set; }
+        [JsonProperty(PropertyName = "series_info")]
+        public string SeriesInfo { get; set; }
         public string Filetype { get; set; }
+        [JsonConverter(typeof(MyAnonaMouseFlagConverter))]
         public bool Vip { get; set; }
+        [JsonConverter(typeof(MyAnonaMouseFlagConverter))]
         public bool Free { get; set; }
         [JsonProperty(PropertyName = "personal_freeleech")]
+        [JsonConverter(typeof(MyAnonaMouseFlagConverter))]
         public bool PersonalFreeLeech { get; set; }
         [JsonProperty(PropertyName = "fl_vip")]
+        [JsonConverter(typeof(MyAnonaMouseFlagConverter))]
         public bool FreeVip { get; set; }
         public string Category { get; set; }
         public string Added { get; set; }
-        [JsonProperty(PropertyName = "times_completed")]
+        [JsonProperty(PropertyName = "seeders")]
         public int Seeders { get; set; }
         public int Leechers { get; set; }
         public string Size { get; set; }

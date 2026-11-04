@@ -1,13 +1,10 @@
-// Modified from
-// https://raw.githubusercontent.com/Prowlarr/Prowlarr/refs/heads/develop/src/NzbDrone.Core/Indexers/Definitions/MyAnonamouse.cs
-
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
+using System.Net.Http;
 using NLog;
-using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Http;
+using NzbDrone.Common.Serializer;
 using NzbDrone.Core.IndexerSearch.Definitions;
 
 namespace NzbDrone.Core.Indexers.MyAnonaMouse
@@ -15,55 +12,65 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
     public class MyAnonaMouseRequestGenerator : IIndexerRequestGenerator
     {
         private readonly MyAnonaMouseSettings _settings;
-        private readonly IndexerCapabilities _capabilities;
         private readonly Logger _logger;
 
         public MyAnonaMouseRequestGenerator(MyAnonaMouseSettings settings, IndexerCapabilities capabilities, Logger logger)
         {
             _settings = settings;
-            _capabilities = capabilities;
             _logger = logger;
         }
 
         public Func<IDictionary<string, string>> GetCookies { get; set; }
         public Action<IDictionary<string, string>, DateTime?> CookiesUpdater { get; set; }
 
-        public virtual IndexerPageableRequestChain GetRecentRequests()
+        public IndexerPageableRequestChain GetRecentRequests()
         {
-            var pageableRequests = new IndexerPageableRequestChain();
-
-            pageableRequests.Add(GetPagedRequests(""));
-
-            return pageableRequests;
+            var requests = new IndexerPageableRequestChain();
+            requests.Add(GetPagedRequests(string.Empty, true));
+            return requests;
         }
 
-        private IEnumerable<IndexerRequest> GetPagedRequests(BookSearchCriteria searchCriteria)
+        public IndexerPageableRequestChain GetSearchRequests(BookSearchCriteria criteria)
         {
-            var query = searchCriteria.AuthorQuery + " " + searchCriteria.BookQuery;
-            if (query.IsNullOrWhiteSpace())
+            return Search(criteria.AuthorQuery + " " + criteria.BookQuery);
+        }
+
+        public IndexerPageableRequestChain GetSearchRequests(AuthorSearchCriteria criteria)
+        {
+            return Search(criteria.AuthorQuery);
+        }
+
+        private IndexerPageableRequestChain Search(string query)
+        {
+            var requests = new IndexerPageableRequestChain();
+            if (string.IsNullOrWhiteSpace(query))
             {
-                _logger.Info("Search term is empty after being sanitized, stopping search. Initial book search term: '{0}'", query);
-                return null;
+                _logger.Debug("Skipping empty MAM search.");
+                return requests;
             }
 
-            return GetPagedRequests(query);
+            requests.Add(GetPagedRequests(query, false));
+            return requests;
         }
 
-        private IEnumerable<IndexerRequest> GetPagedRequests(AuthorSearchCriteria searchCriteria)
+        private IEnumerable<IndexerRequest> GetPagedRequests(string query, bool recent)
         {
-            var query = searchCriteria.AuthorQuery.Trim();
-            if (query.IsNullOrWhiteSpace())
+            var term = query.Replace('+', ' ').Trim();
+            var fields = new List<string> { "title", "author", "narrator" };
+            if (_settings.SearchInDescription)
             {
-                _logger.Info("Search term is empty after being sanitized, stopping search. Initial author search term: '{0}'", query);
-                return null;
+                fields.Add("description");
             }
 
-            return GetPagedRequests(query);
-        }
+            if (_settings.SearchInSeries)
+            {
+                fields.Add("series");
+            }
 
-        private IEnumerable<IndexerRequest> GetPagedRequests(string query)
-        {
-            var term = query.Trim();
+            if (_settings.SearchInFilenames)
+            {
+                fields.Add("filenames");
+            }
 
             var searchType = _settings.SearchType switch
             {
@@ -75,117 +82,39 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
                 _ => "all"
             };
 
-            var parameters = new NameValueCollection
+            for (var offset = 0; offset < 1000; offset += 100)
             {
-                { "tor[searchType]", searchType },
-                { "tor[srchIn][title]", "true" },
-                { "tor[srchIn][author]", "true" },
-                { "tor[srchIn][narrator]", "true" },
-                { "tor[searchIn]", "torrents" },
-                { "tor[sortType]", "default" },
-                { "tor[perpage]", "100" },
-                { "tor[startNumber]", "0" },
-                { "thumbnails", "1" }, // gives links for thumbnail sized versions of their posters
-                { "description", "1" } // include the description
-            };
-            if (!term.IsNullOrWhiteSpace())
-            {
-                parameters.Set("tor[text]", term);
-            }
-
-            if (_settings.SearchInDescription)
-            {
-                parameters.Set("tor[srchIn][description]", "true");
-            }
-
-            if (_settings.SearchInSeries)
-            {
-                parameters.Set("tor[srchIn][series]", "true");
-            }
-
-            if (_settings.SearchInFilenames)
-            {
-                parameters.Set("tor[srchIn][filenames]", "true");
-            }
-
-            if (_settings.SearchLanguages.Count() > 0)
-            {
-                foreach (var (language, index) in _settings.SearchLanguages.Select((value, index) => (value, index)))
+                var request = new IndexerRequest(_settings.BaseUrl.TrimEnd('/') + "/tor/js/loadSearchJSONbasic.php", HttpAccept.Json);
+                request.HttpRequest.Method = HttpMethod.Post;
+                request.HttpRequest.Headers.ContentType = "application/json";
+                request.HttpRequest.SetContent(new
                 {
-                    parameters.Set($"tor[browse_lang][{index}]", language.ToString());
-                }
-            }
-
-            var catList = _capabilities.Categories.GetTrackerCategories();
-
-            if (catList.Any())
-            {
-                foreach (var (category, index) in catList.Select((value, index) => (value, index)))
-                {
-                    parameters.Set($"tor[cat][{index}]", category);
-                }
-            }
-            else
-            {
-                parameters.Set("tor[cat][]", "0");
-            }
-
-            var searchUrl = _settings.BaseUrl + "tor/js/loadSearchJSONbasic.php";
-
-            if (parameters.Count > 0)
-            {
-                var queryParts = new List<string>();
-                foreach (var key in parameters.AllKeys)
-                {
-                    if (!string.IsNullOrEmpty(key))
+                    tor = new
                     {
-                        var values = parameters.GetValues(key);
-                        if (values != null)
-                        {
-                            foreach (var value in values)
-                            {
-                                queryParts.Add($"{key}={value}");
-                            }
-                        }
-                    }
-                }
-
-                searchUrl += "?" + string.Join("&", queryParts);
-            }
-
-            var request = new IndexerRequest(searchUrl, HttpAccept.Json);
-
-            if (GetCookies != null)
-            {
-                var cookies = GetCookies();
-                if (cookies != null && cookies.Any())
+                        text = term,
+                        srchIn = fields,
+                        main_cat = new[] { 13 },
+                        searchIn = "torrents",
+                        searchType,
+                        sortType = recent ? "dateDesc" : "default",
+                        startNumber = offset,
+                        browse_lang = _settings.SearchLanguages?.ToArray() ?? Array.Empty<int>()
+                    },
+                    perpage = 100,
+                    mediaInfo = "1"
+                }.ToJson());
+                request.HttpRequest.ContentSummary = "MAM audiobook search";
+                var cookies = GetCookies?.Invoke();
+                if (cookies != null)
                 {
                     foreach (var cookie in cookies)
                     {
                         request.HttpRequest.Cookies[cookie.Key] = cookie.Value;
                     }
                 }
+
+                yield return request;
             }
-
-            yield return request;
-        }
-
-        public IndexerPageableRequestChain GetSearchRequests(BookSearchCriteria searchCriteria)
-        {
-            var pageableRequests = new IndexerPageableRequestChain();
-
-            pageableRequests.Add(GetPagedRequests(searchCriteria));
-
-            return pageableRequests;
-        }
-
-        public IndexerPageableRequestChain GetSearchRequests(AuthorSearchCriteria searchCriteria)
-        {
-            var pageableRequests = new IndexerPageableRequestChain();
-
-            pageableRequests.Add(GetPagedRequests(searchCriteria));
-
-            return pageableRequests;
         }
     }
 }

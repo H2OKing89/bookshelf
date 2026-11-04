@@ -19,6 +19,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         string CanonicalAuthorId(string id);
         IEnumerable<string> AuthorSearchNames(AuthorMetadata metadata, string region);
         string DisplayTitle(Book book, string publishedTitle = null);
+        string NarratorName(string name, string region);
     }
 
     public class AudiobookMetadataOverrideService : IAudiobookMetadataOverrideService
@@ -48,6 +49,11 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             item.Kind = item.Kind?.Trim().ToLowerInvariant();
             item.Region = item.Region?.Trim().ToLowerInvariant();
             item.Asin = item.Asin?.Trim().ToUpperInvariant();
+            if (item.Kind == "narrator")
+            {
+                item.Asin = null;
+            }
+
             item.Name = AudiobookTextNormalizer.Text(item.Name);
             item.AlternateAsins = (item.AlternateAsins ?? new List<string>()).Select(asin => asin?.Trim().ToUpperInvariant()).Distinct().ToList();
             item.Aliases = AudiobookTextNormalizer.Names(item.Aliases)
@@ -110,6 +116,13 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             return AudiobookTextNormalizer.DisplayTitle(book, correction?.ReplacementTitle ?? title);
         }
 
+        public string NarratorName(string name, string region)
+        {
+            var matches = Snapshot().Where(item => item.Enabled && item.Kind == "narrator" && item.Region == region &&
+                item.Aliases.Append(item.Name).Contains(AudiobookTextNormalizer.Text(name), StringComparer.OrdinalIgnoreCase)).ToList();
+            return matches.Count == 1 ? matches[0].Name : name;
+        }
+
         private void Validate(AudiobookMetadataOverride item)
         {
             var errors = new List<ValidationFailure>();
@@ -121,13 +134,17 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 }
             }
 
-            Require(item.Kind == "author" || item.Kind == "title", "kind", "Choose author or title.");
+            Require(item.Kind == "author" || item.Kind == "title" || item.Kind == "narrator", "kind", "Choose author, title, or narrator.");
             Require(item.Region != null && AudnexusProxy.Regions.Contains(item.Region), "region", "Choose a supported marketplace.");
-            Require(AudiobookId.IsAsin(item.Asin), "asin", "Enter a valid Audible ASIN.");
+            Require(item.Kind == "narrator" || AudiobookId.IsAsin(item.Asin), "asin", "Enter a valid Audible ASIN.");
             Require(Uri.TryCreate(item.SourceUrl, UriKind.Absolute, out var source) && (source.Scheme == "https" || source.Scheme == "http"), "sourceUrl", "Provide a source URL for this correction.");
             Require(!string.IsNullOrWhiteSpace(item.Reason), "reason", "Explain the evidence for this correction.");
             var others = All().Where(other => other.Id != item.Id).ToList();
-            Require(!others.Any(other => other.Kind == item.Kind && other.Region == item.Region && other.Asin == item.Asin), "asin", "A correction already exists for this identity.");
+            Require(
+                !others.Any(other => other.Kind == item.Kind && other.Region == item.Region &&
+                (item.Kind == "narrator" ? string.Equals(other.Name, item.Name, StringComparison.OrdinalIgnoreCase) : other.Asin == item.Asin)),
+                "asin",
+                "A correction already exists for this identity.");
             if (item.Kind == "author")
             {
                 Require(!string.IsNullOrWhiteSpace(item.Name), "name", "Provide the canonical author name.");
@@ -147,6 +164,16 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             {
                 Require(!string.IsNullOrWhiteSpace(item.OriginalTitle), "originalTitle", "Provide the exact provider title this correction applies to.");
                 Require(!string.IsNullOrWhiteSpace(item.ReplacementTitle) && item.ReplacementTitle != item.OriginalTitle, "replacementTitle", "Provide a different corrected title.");
+            }
+            else if (item.Kind == "narrator")
+            {
+                Require(!string.IsNullOrWhiteSpace(item.Name), "name", "Provide the canonical narrator name.");
+                var names = item.Aliases.Append(item.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                Require(
+                    !item.Enabled || !others.Where(other => other.Enabled && other.Kind == "narrator" && other.Region == item.Region)
+                    .Any(other => other.Aliases.Append(other.Name).Any(names.Contains)),
+                    "aliases",
+                    "An enabled narrator mapping already claims one of these names.");
             }
 
             if (errors.Any())

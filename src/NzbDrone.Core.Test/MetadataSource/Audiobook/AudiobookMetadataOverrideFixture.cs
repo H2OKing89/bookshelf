@@ -108,6 +108,42 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
         }
 
         [Test]
+        public void should_normalize_only_enabled_verified_narrator_aliases_in_their_marketplace()
+        {
+            var item = new AudiobookMetadataOverride
+            {
+                Kind = "narrator", Region = "us", Name = "Reader One", Aliases = new List<string> { "Reader Alias" },
+                SourceUrl = "https://narrator.example/credits", Reason = "Narrator confirms both names."
+            };
+            Subject.Save(item);
+
+            Subject.NarratorName("Reader Alias", "us").Should().Be("Reader One");
+            Subject.NarratorName("Reader Alias", "jp").Should().Be("Reader Alias");
+            Subject.NarratorName("Another Reader", "us").Should().Be("Another Reader");
+            item.Enabled = false;
+            Subject.Save(item);
+            Subject.NarratorName("Reader Alias", "us").Should().Be("Reader Alias");
+        }
+
+        [Test]
+        public void should_reject_overlapping_narrator_identities()
+        {
+            var original = new AudiobookMetadataOverride
+            {
+                Kind = "narrator", Region = "us", Name = "Reader One", Aliases = new List<string> { "Reader Alias" },
+                SourceUrl = "https://narrator.example/credits", Reason = "Narrator confirms both names."
+            };
+            Subject.Save(original);
+            var other = new AudiobookMetadataOverride
+            {
+                Kind = "narrator", Region = "us", Name = "Different Reader", Aliases = new List<string> { "Reader Alias" },
+                SourceUrl = "https://narrator.example/credits", Reason = "Conflicting identity."
+            };
+
+            Assert.Throws<ValidationException>(() => Subject.Save(other));
+        }
+
+        [Test]
         public void should_have_no_hardcoded_fallback_when_the_database_is_empty()
         {
             _rows.Clear();
