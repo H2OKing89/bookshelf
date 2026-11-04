@@ -81,6 +81,59 @@ namespace NzbDrone.Core.Test.IndexerTests.MyAnonaMouseTests
         }
 
         [Test]
+        public async Task should_find_a_book_using_an_observed_author_spelling()
+        {
+            GivenPages(0, 1);
+            var author = new Author { Name = "pirate aba" };
+            author.Metadata.Value.Aliases.Add("pirateaba");
+
+            var releases = await Subject.Fetch(new BookSearchCriteria { Author = author, BookTitle = "Memory's Flame" });
+
+            releases.Should().ContainSingle();
+            _requests.Select(request => request["tor"].Value<string>("text")).Should()
+                .Equal("pirate aba Memory's Flame", "pirateaba Memory's Flame");
+            _requests.Select(request => request["tor"].Value<int>("startNumber")).Should().Equal(0, 0);
+        }
+
+        [Test]
+        public async Task should_search_all_author_spellings_and_deduplicate_overlapping_results()
+        {
+            GivenPages(1, 1);
+            var author = new Author { Name = "Example Author" };
+            author.Metadata.Value.Aliases.Add("Another Name");
+
+            var releases = await Subject.Fetch(new AuthorSearchCriteria { Author = author });
+
+            releases.Should().ContainSingle();
+            _requests.Select(request => request["tor"].Value<string>("text")).Should().Equal("Example Author", "Another Name");
+        }
+
+        [Test]
+        public async Task should_skip_blank_aliases_and_search_equivalent_queries_only_once()
+        {
+            GivenPages(1, 1);
+            var author = new Author { Name = "pirate aba" };
+            author.Metadata.Value.Aliases.AddRange(new[] { null, "", " ", "PIRATE ABA", "pirate-aba", "pirateaba", " Pirateaba " });
+
+            await Subject.Fetch(new BookSearchCriteria { Author = author, BookTitle = "Memory's Flame" });
+
+            _requests.Select(request => request["tor"].Value<string>("text")).Should()
+                .Equal("pirate aba Memory's Flame", "pirateaba Memory's Flame");
+        }
+
+        [Test]
+        public async Task should_search_authors_without_an_alias_list()
+        {
+            GivenPages(1);
+            var author = new Author { Name = "Example Author" };
+            author.Metadata.Value.Aliases = null;
+
+            await Subject.Fetch(new AuthorSearchCriteria { Author = author });
+
+            _requests.Select(request => request["tor"].Value<string>("text")).Should().Equal("Example Author");
+        }
+
+        [Test]
         public async Task should_keep_structured_metadata_and_use_seeders_instead_of_completions()
         {
             GivenPages(1);

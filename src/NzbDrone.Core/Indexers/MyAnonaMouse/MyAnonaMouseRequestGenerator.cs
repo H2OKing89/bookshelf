@@ -32,24 +32,41 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
 
         public IndexerPageableRequestChain GetSearchRequests(BookSearchCriteria criteria)
         {
-            return Search(criteria.AuthorQuery + " " + criteria.BookQuery);
+            var bookQuery = criteria.BookQuery;
+            return Search(GetAuthorQueries(criteria).Select(author => author + " " + bookQuery));
         }
 
         public IndexerPageableRequestChain GetSearchRequests(AuthorSearchCriteria criteria)
         {
-            return Search(criteria.AuthorQuery);
+            return Search(GetAuthorQueries(criteria));
         }
 
-        private IndexerPageableRequestChain Search(string query)
+        private static IEnumerable<string> GetAuthorQueries(SearchCriteriaBase criteria)
+        {
+            return new[] { criteria.Author.Name }
+                .Concat(criteria.Author.Metadata.Value.Aliases ?? new List<string>())
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select(SearchCriteriaBase.GetQueryTitle);
+        }
+
+        private IndexerPageableRequestChain Search(IEnumerable<string> queries)
         {
             var requests = new IndexerPageableRequestChain();
-            if (string.IsNullOrWhiteSpace(query))
+            var terms = queries.Select(query => query.Replace('+', ' ').Trim())
+                .Where(query => !string.IsNullOrWhiteSpace(query))
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var term in terms)
             {
-                _logger.Debug("Skipping empty MAM search.");
-                return requests;
+                // Search every known spelling even if another spelling returns partial results.
+                requests.Add(GetPagedRequests(term, false));
             }
 
-            requests.Add(GetPagedRequests(query, false));
+            if (!requests.GetAllTiers().Any())
+            {
+                _logger.Debug("Skipping empty MAM search.");
+            }
+
             return requests;
         }
 
