@@ -18,7 +18,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         AudiobookAuthorIdentity FindAuthor(AudnexusContributorResource contributor, string region);
         string CanonicalAuthorId(string id);
         IEnumerable<string> AuthorSearchNames(AuthorMetadata metadata, string region);
-        string DisplayTitle(Book book, string publishedTitle = null);
+        string DisplayTitle(Book book, string publishedTitle = null, Edition edition = null);
         string NarratorName(string name, string region);
     }
 
@@ -108,12 +108,12 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 .Concat(new[] { identity?.Name, metadata.Name }).Concat(metadata.Aliases));
         }
 
-        public string DisplayTitle(Book book, string publishedTitle = null)
+        public string DisplayTitle(Book book, string publishedTitle = null, Edition edition = null)
         {
             var title = publishedTitle ?? book.Title;
             var correction = Snapshot().SingleOrDefault(item => item.Enabled && item.Kind == "title" &&
                 AudiobookId.ForAsin(item.Region, item.Asin) == book.ForeignBookId && item.OriginalTitle == title);
-            return AudiobookTextNormalizer.DisplayTitle(book, correction?.ReplacementTitle ?? title);
+            return AudiobookTextNormalizer.DisplayTitle(book, correction?.ReplacementTitle ?? title, edition);
         }
 
         public string NarratorName(string name, string region)

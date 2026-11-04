@@ -11,6 +11,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Qualities;
 
@@ -30,6 +31,7 @@ namespace NzbDrone.Core.Organizer
         private readonly INamingConfigService _namingConfigService;
         private readonly IQualityDefinitionService _qualityDefinitionService;
         private readonly ICustomFormatCalculationService _formatCalculator;
+        private readonly IAudiobookMetadataOverrideService _metadataOverrides;
         private readonly ICached<BookFormat[]> _trackFormatCache;
         private readonly Logger _logger;
 
@@ -45,7 +47,7 @@ namespace NzbDrone.Core.Organizer
         public static readonly Regex AuthorNameRegex = new Regex(@"(?<token>\{(?:Author)(?<separator>[- ._])(Clean)?(Sort)?Name(The)?\})",
                                                                             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        public static readonly Regex BookTitleRegex = new Regex(@"(?<token>\{(?:Book)(?<separator>[- ._])(Clean)?Title(The)?(NoSub)?\})",
+        public static readonly Regex BookTitleRegex = new Regex(@"(?<token>\{(?:Book)(?<separator>[- ._])(?:(Clean)?Title(The)?(NoSub)?|DisplayTitle|NamingTitle|WorkTitle)\})",
                                                                             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private static readonly Regex FileNameCleanupRegex = new Regex(@"([- ._])(\1)+", RegexOptions.Compiled);
@@ -60,11 +62,13 @@ namespace NzbDrone.Core.Organizer
                                IQualityDefinitionService qualityDefinitionService,
                                ICacheManager cacheManager,
                                ICustomFormatCalculationService formatCalculator,
+                               IAudiobookMetadataOverrideService metadataOverrides,
                                Logger logger)
         {
             _namingConfigService = namingConfigService;
             _qualityDefinitionService = qualityDefinitionService;
             _formatCalculator = formatCalculator;
+            _metadataOverrides = metadataOverrides;
             _trackFormatCache = cacheManager.GetCache<BookFormat[]>(GetType(), "bookFormat");
             _logger = logger;
         }
@@ -256,6 +260,19 @@ namespace NzbDrone.Core.Organizer
             tokenHandlers["{Book TitleThe}"] = m => TitleThe(edition.Title);
 
             var (titleNoSub, subtitle) = edition.Title.SplitBookTitle(edition.Book.Value.AuthorMetadata.Value.Name);
+            subtitle = AudiobookTextNormalizer.Text(edition.Subtitle) ?? subtitle;
+
+            var displayTitle = new Lazy<string>(() => _metadataOverrides.DisplayTitle(edition.Book.Value, edition.Title, edition) ??
+                AudiobookTextNormalizer.DisplayTitle(edition.Book.Value, edition.Title, edition));
+            var namingFields = new Lazy<AudiobookNamingFields>(() => AudiobookNamingFields.From(edition, displayTitle.Value));
+            tokenHandlers["{Book DisplayTitle}"] = m => displayTitle.Value;
+            tokenHandlers["{Book NamingTitle}"] = m => namingFields.Value.Title;
+            tokenHandlers["{Book WorkTitle}"] = m => namingFields.Value.WorkTitle;
+            tokenHandlers["{Book Asin}"] = m => AudiobookId.IsAsin(edition.Asin) ? edition.Asin : string.Empty;
+            tokenHandlers["{Book Narrators}"] = m => string.Join(", ", AudiobookTextNormalizer.Names(edition.Narrators?.Select(name =>
+                _metadataOverrides.NarratorName(name, edition.AudibleRegion) ?? name)));
+            tokenHandlers["{Book Language}"] = m => edition.Language ?? string.Empty;
+            tokenHandlers["{Book Publisher}"] = m => edition.Publisher ?? string.Empty;
 
             tokenHandlers["{Book TitleNoSub}"] = m => titleNoSub;
             tokenHandlers["{Book CleanTitleNoSub}"] = m => CleanTitle(titleNoSub);
@@ -268,11 +285,11 @@ namespace NzbDrone.Core.Organizer
             var seriesLinks = edition.Book.Value.SeriesLinks.Value;
             if (seriesLinks.Any())
             {
-                var primarySeries = seriesLinks.OrderBy(x => x.SeriesPosition).First();
+                var primarySeries = seriesLinks.OrderByDescending(x => x.IsPrimary).ThenBy(x => x.SeriesPosition).First();
                 var seriesTitle = primarySeries.Series?.Value?.Title + (primarySeries.Position.IsNotNullOrWhiteSpace() ? $" #{primarySeries.Position}" : string.Empty);
 
                 tokenHandlers["{Book Series}"] = m => primarySeries.Series.Value.Title;
-                tokenHandlers["{Book SeriesPosition}"] = m => primarySeries.Position;
+                tokenHandlers["{Book SeriesPosition}"] = m => AudiobookNamingFields.FormatPosition(primarySeries.Position, m.CustomFormat);
                 tokenHandlers["{Book SeriesTitle}"] = m => seriesTitle;
             }
 

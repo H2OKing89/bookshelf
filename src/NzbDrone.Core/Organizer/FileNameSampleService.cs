@@ -33,27 +33,28 @@ namespace NzbDrone.Core.Organizer
             {
                 Metadata = new AuthorMetadata
                 {
-                    Name = "The Author Name",
-                    Disambiguation = "US Author",
-                    NameLastFirst = "Last name, First name"
+                    Name = "pirate aba",
+                    Disambiguation = "Author",
+                    NameLastFirst = "pirate aba"
                 }
             };
 
             var series = new Series
             {
-                Title = "Series Title"
+                Title = "The Wandering Inn"
             };
 
             var seriesLink = new SeriesBookLink
             {
-                Position = "1",
+                Position = "20",
+                IsPrimary = true,
                 Series = series
             };
 
             _standardBook = new Book
             {
-                Title = "The Book Title",
-                ReleaseDate = System.DateTime.Today,
+                Title = "Memory's Flame",
+                ReleaseDate = new System.DateTime(2026, 11, 3),
                 Author = _standardAuthor,
                 AuthorMetadata = _standardAuthor.Metadata.Value,
                 SeriesLinks = new List<SeriesBookLink> { seriesLink }
@@ -61,9 +62,17 @@ namespace NzbDrone.Core.Organizer
 
             _standardEdition = new Edition
             {
-                Title = "The Edition Title",
+                Title = "Memory's Flame",
+                Subtitle = "The Wandering Inn, Book 20",
+                Asin = "B0HGBVHDM2",
+                AudibleRegion = "us",
+                Narrators = new List<string> { "Erin Bennett" },
+                Language = "eng",
+                Monitored = true,
+                ReleaseDate = new System.DateTime(2026, 11, 3),
                 Book = _standardBook
             };
+            _standardBook.Editions = new List<Edition> { _standardEdition };
 
             _customFormats = new List<CustomFormat>
             {
@@ -74,25 +83,25 @@ namespace NzbDrone.Core.Organizer
                 },
                 new CustomFormat
                 {
-                    Name = "x264",
+                    Name = "Unabridged",
                     IncludeCustomFormatWhenRenaming = true
                 }
             };
 
             var mediaInfo = new MediaInfoModel()
             {
-                AudioFormat = "Flac Audio",
+                AudioFormat = "AAC",
                 AudioChannels = 2,
-                AudioBitrate = 875,
-                AudioBits = 24,
+                AudioBitrate = 128,
+                AudioBits = 16,
                 AudioSampleRate = 44100
             };
 
             _singleTrackFile = new BookFile
             {
-                Quality = new QualityModel(Quality.MP3, new Revision(2)),
-                Path = "/music/Author.Name.Book.Name.TrackNum.Track.Title.MP3256.mp3",
-                SceneName = "Author.Name.Book.Name.TrackNum.Track.Title.MP3256",
+                Quality = new QualityModel(Quality.M4B),
+                Path = "/audiobooks/Memory's Flame.m4b",
+                SceneName = "Memory's Flame",
                 ReleaseGroup = "RlsGrp",
                 MediaInfo = mediaInfo,
                 Edition = _standardEdition,
@@ -103,13 +112,16 @@ namespace NzbDrone.Core.Organizer
             _multiTrackFile = new BookFile
             {
                 Quality = new QualityModel(Quality.MP3, new Revision(2)),
-                Path = "/music/Author.Name.Book.Name.TrackNum.Track.Title.MP3256.mp3",
-                SceneName = "Author.Name.Book.Name.TrackNum.Track.Title.MP3256",
+                Path = "/audiobooks/Memory's Flame - 01.mp3",
+                SceneName = "Memory's Flame",
                 ReleaseGroup = "RlsGrp",
-                MediaInfo = mediaInfo,
+                MediaInfo = new MediaInfoModel
+                {
+                    AudioFormat = "MP3", AudioChannels = 2, AudioBitrate = 128, AudioBits = 16, AudioSampleRate = 44100
+                },
                 Edition = _standardEdition,
                 Part = 1,
-                PartCount = 2
+                PartCount = 10
             };
         }
 
@@ -133,7 +145,7 @@ namespace NzbDrone.Core.Organizer
                 FileName = BuildTrackSample(_standardAuthor, _multiTrackFile, nameSpec),
                 Author = _standardAuthor,
                 Book = _standardBook,
-                BookFile = _singleTrackFile
+                BookFile = _multiTrackFile
             };
 
             return result;

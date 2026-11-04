@@ -38,7 +38,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 out number);
         }
 
-        public static string DisplayTitle(Book book, string publishedTitle = null)
+        public static string DisplayTitle(Book book, string publishedTitle = null, Edition edition = null)
         {
             var title = Text(publishedTitle ?? book.Title);
             var primary = book.SeriesLinks?.Value?.FirstOrDefault(l => l.IsPrimary);
@@ -50,7 +50,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             }
 
             var candidates = new List<string> { title };
-            var subtitle = Text(book.Editions?.Value?.SingleOrDefault(e => e.Monitored)?.Subtitle);
+            var subtitle = Text(edition != null ? edition.Subtitle : book.Editions?.Value?.SingleOrDefault(e => e.Monitored)?.Subtitle);
             if (subtitle != null)
             {
                 candidates.Add(title + ": " + subtitle);

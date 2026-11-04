@@ -12,6 +12,10 @@ runtime, descriptions, covers, publisher, language, ratings, and series.
 Library scans recognize audio files; new installations get an Audiobooks
 quality profile.
 
+Book naming supports normalized titles, primary series, padded positions,
+narrators, and ASINs, with two optional audiobook presets. See
+[Audiobook file naming](docs/audiobook-naming.md) for formats and examples.
+
 ## Run locally
 
 The server listens on port 8787. Build the frontend with `yarn build` and the

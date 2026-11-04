@@ -29,20 +29,28 @@ const caseOptions = [
 
 const fileNameTokens = [
   {
-    token: '{Author Name} - {Book Title} - {Quality Full}',
-    example: 'Author Name - Book Title - MP3 Proper'
+    token: '{Author Name} - {Book Title}{ (PartNumber)} - {Quality Full}',
+    example: 'Author Name - Book Title (2) - M4B Proper'
   },
   {
-    token: '{Author.Name}.{Book.Title}.{Quality.Full}',
-    example: 'Author.Name.Book.Title.MP3'
+    token: '{Author.Name}.{Book.Title}{.PartNumber:00}.{Quality.Full}',
+    example: 'Author.Name.Book.Title.02.M4B'
   },
   {
     token: '{Author Name} - {Book Title}{ (PartNumber)}',
     example: 'Author Name - Book Title (2)'
   },
   {
-    token: '{Author Name} - {Book Title}{ (PartNumber/PartCount)}',
-    example: 'Author Name - Book Title (2/10)'
+    token: '{Author Name} - {Book Title}{ (PartNumber:00 of PartCount:00)}',
+    example: 'Author Name - Book Title (02 of 10)'
+  },
+  {
+    token: '{Book Series}/{Book NamingTitle}{ (Edition Year)}{ (Author Name)}{ [Book Asin]}/{Book NamingTitle}{ (Edition Year)}{ (Author Name)}{ [Book Asin]}{ (PartNumber:00)}',
+    example: 'The Wandering Inn/The Wandering Inn vol_20 Memory\'s Flame (2026) (pirate aba) [B0HGBVHDM2]/The Wandering Inn vol_20 Memory\'s Flame (2026) (pirate aba) [B0HGBVHDM2] (02)'
+  },
+  {
+    token: '{Book Series}/{Book SeriesPosition:00 - }{Book WorkTitle}{ [Book Asin]}/{Author Name} - {Book WorkTitle}{ (PartNumber:00)}',
+    example: 'The Wandering Inn/20 - Memory\'s Flame [B0HGBVHDM2]/pirate aba - Memory\'s Flame (02)'
   }
 ];
 
@@ -62,6 +70,12 @@ const authorTokens = [
 
 const bookTokens = [
   { token: '{Book Title}', example: 'The Book\'s Title!: Subtitle!' },
+
+  { token: '{Book DisplayTitle}', example: 'The Primal Hunter #4' },
+
+  { token: '{Book NamingTitle}', example: 'The Wandering Inn vol_20 Memory\'s Flame' },
+
+  { token: '{Book WorkTitle}', example: 'Memory\'s Flame' },
 
   { token: '{Book TitleThe}', example: 'Book\'s Title!, The: Subtitle!' },
 
@@ -85,7 +99,17 @@ const bookTokens = [
 
   { token: '{Book SeriesPosition}', example: '1' },
 
+  { token: '{Book SeriesPosition:00}', example: '01' },
+
   { token: '{Book SeriesTitle}', example: 'Series Title #1' },
+
+  { token: '{Book Narrators}', example: 'Erin Bennett' },
+
+  { token: '{Book Asin}', example: 'B0HGBVHDM2' },
+
+  { token: '{Book Language}', example: 'eng' },
+
+  { token: '{Book Publisher}', example: 'Podium Audio' },
 
   { token: '{PartNumber:0}', example: '2' },
   { token: '{PartNumber:00}', example: '02' },
@@ -100,8 +124,8 @@ const releaseDateTokens = [
 ];
 
 const qualityTokens = [
-  { token: '{Quality Full}', example: 'AZW3 Proper' },
-  { token: '{Quality Title}', example: 'AZW3' }
+  { token: '{Quality Full}', example: 'M4B Proper' },
+  { token: '{Quality Title}', example: 'M4B' }
 ];
 
 const mediaInfoTokens = [
@@ -118,7 +142,7 @@ const otherTokens = [
 ];
 
 const originalTokens = [
-  { token: '{Original Title}', example: 'Author.Name.Book.Name.2018.AZW3-EVOLVE' },
+  { token: '{Original Title}', example: 'Author.Name.Book.Name.2026.M4B-EVOLVE' },
   { token: '{Original Filename}', example: '01 - book name' }
 ];
 
@@ -191,7 +215,6 @@ class NamingModal extends Component {
       name,
       value,
       isOpen,
-      advancedSettings,
       book,
       additional,
       onInputChange,
@@ -233,7 +256,7 @@ class NamingModal extends Component {
             </div>
 
             {
-              !advancedSettings &&
+              book &&
                 <FieldSet legend={translate('FileNames')}>
                   <div className={styles.groups}>
                     {
@@ -446,7 +469,6 @@ NamingModal.propTypes = {
   name: PropTypes.string.isRequired,
   value: PropTypes.string.isRequired,
   isOpen: PropTypes.bool.isRequired,
-  advancedSettings: PropTypes.bool.isRequired,
   book: PropTypes.bool.isRequired,
   additional: PropTypes.bool.isRequired,
   onInputChange: PropTypes.func.isRequired,
