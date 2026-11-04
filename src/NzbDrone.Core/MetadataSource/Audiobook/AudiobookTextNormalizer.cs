@@ -38,6 +38,8 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 out number);
         }
 
+        // Retained for release-matching compatibility. Presentation and naming use the
+        // editable cleanup projection so rule disables and field protections are honored.
         public static string DisplayTitle(Book book, string publishedTitle = null, Edition edition = null)
         {
             var title = Text(publishedTitle ?? book.Title);

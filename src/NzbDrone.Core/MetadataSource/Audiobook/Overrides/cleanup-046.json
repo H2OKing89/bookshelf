@@ -1,0 +1,16 @@
+[
+  { "phrase": "Light Novel", "labels": ["Light Novel"], "reason": "A complete light-novel format label." },
+  { "phrase": "A Light Novel", "labels": ["Light Novel"], "reason": "A complete light-novel format label." },
+  { "phrase": "A Sci-Fi Light Novel", "labels": ["Light Novel"], "reason": "A complete light-novel format label." },
+  { "phrase": "LitRPG", "labels": ["LitRPG"], "reason": "A complete genre label rather than a distinctive work title." },
+  { "phrase": "A LitRPG", "labels": ["LitRPG"], "reason": "A complete genre label rather than a distinctive work title." },
+  { "phrase": "A LitRPG Adventure", "labels": ["LitRPG"], "reason": "A complete promotional genre line." },
+  { "phrase": "A Fantasy LitRPG Adventure", "labels": ["LitRPG"], "reason": "A complete promotional genre line." },
+  { "phrase": "A Novel", "labels": [], "reason": "A complete generic format label." },
+  { "phrase": "A Slice of Life Harem", "labels": [], "reason": "A complete promotional genre line." },
+  { "phrase": "A Slice-of-Life Harem", "labels": [], "reason": "A complete promotional genre line." },
+  { "phrase": "A Slice of Life Harem LitRPG", "labels": ["LitRPG"], "reason": "A complete promotional genre line with an explicit LitRPG label." },
+  { "phrase": "A Slice-of-Life Harem LitRPG", "labels": ["LitRPG"], "reason": "A complete promotional genre line with an explicit LitRPG label." },
+  { "phrase": "Now a Major Motion Picture", "labels": [], "reason": "A complete promotional adaptation line." },
+  { "phrase": "The International Best Seller", "labels": [], "reason": "A complete promotional sales line." }
+]

@@ -129,6 +129,12 @@ export const defaultState = {
       isVisible: false
     },
     {
+      name: 'metadataLabels',
+      label: 'Metadata Labels',
+      isSortable: false,
+      isVisible: false
+    },
+    {
       name: 'ratings',
       label: 'Rating',
       isSortable: true,
@@ -262,6 +268,17 @@ export const defaultState = {
         }, []);
 
         return tagList.sort(sortByName);
+      }
+    },
+    {
+      name: 'metadataLabels',
+      label: 'Metadata Labels',
+      type: filterBuilderTypes.ARRAY,
+      optionsSelector: function(items) {
+        const labels = new Set();
+        items.forEach((book) => (book.metadataLabels || []).forEach((label) => labels.add(label)));
+
+        return Array.from(labels).map((label) => ({ id: label, name: label })).sort(sortByName);
       }
     },
     {

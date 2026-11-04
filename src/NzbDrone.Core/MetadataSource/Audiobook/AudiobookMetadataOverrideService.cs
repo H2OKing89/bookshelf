@@ -18,6 +18,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         AudiobookAuthorIdentity FindAuthor(AudnexusContributorResource contributor, string region);
         string CanonicalAuthorId(string id);
         IEnumerable<string> AuthorSearchNames(AuthorMetadata metadata, string region);
+        AudiobookMetadataProjection Project(Book book, Edition edition = null, IEnumerable<AudiobookMetadataCleanupRule> rules = null);
         string DisplayTitle(Book book, string publishedTitle = null, Edition edition = null);
         string NarratorName(string name, string region);
     }
@@ -25,11 +26,13 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
     public class AudiobookMetadataOverrideService : IAudiobookMetadataOverrideService
     {
         private readonly IAudiobookMetadataOverrideRepository _repository;
+        private readonly IAudiobookMetadataCleanupRuleService _cleanupRules;
         private readonly ICached<List<AudiobookMetadataOverride>> _cache;
 
-        public AudiobookMetadataOverrideService(IAudiobookMetadataOverrideRepository repository, ICacheManager cacheManager)
+        public AudiobookMetadataOverrideService(IAudiobookMetadataOverrideRepository repository, ICacheManager cacheManager, IAudiobookMetadataCleanupRuleService cleanupRules)
         {
             _repository = repository;
+            _cleanupRules = cleanupRules;
             _cache = cacheManager.GetCache<List<AudiobookMetadataOverride>>(GetType());
         }
 
@@ -39,7 +42,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         {
             Id = item.Id, Kind = item.Kind, Region = item.Region, Asin = item.Asin, Name = item.Name,
             AlternateAsins = item.AlternateAsins.ToList(), Aliases = item.Aliases.ToList(),
-            OriginalTitle = item.OriginalTitle, ReplacementTitle = item.ReplacementTitle,
+            OriginalTitle = item.OriginalTitle, OriginalSubtitle = item.OriginalSubtitle, ReplacementTitle = item.ReplacementTitle,
             SourceUrl = item.SourceUrl, Reason = item.Reason, Enabled = item.Enabled, UpdatedAt = item.UpdatedAt
         }).ToList();
         public AudiobookMetadataOverride Find(int id) => All().SingleOrDefault(item => item.Id == id);
@@ -60,6 +63,12 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 .Where(name => !string.Equals(name, item.Name, StringComparison.OrdinalIgnoreCase)).ToList();
             item.SourceUrl = item.SourceUrl?.Trim();
             item.Reason = item.Reason?.Trim();
+            if (item.Kind == "titleprotection")
+            {
+                item.OriginalTitle = string.IsNullOrWhiteSpace(item.OriginalTitle) ? null : item.OriginalTitle;
+                item.OriginalSubtitle = string.IsNullOrWhiteSpace(item.OriginalSubtitle) ? null : item.OriginalSubtitle;
+            }
+
             Validate(item);
             item.UpdatedAt = DateTime.UtcNow;
             var saved = item.Id == 0 ? _repository.Insert(item) : _repository.Update(item);
@@ -108,12 +117,66 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 .Concat(new[] { identity?.Name, metadata.Name }).Concat(metadata.Aliases));
         }
 
+        public AudiobookMetadataProjection Project(Book book, Edition edition = null, IEnumerable<AudiobookMetadataCleanupRule> rules = null)
+        {
+            edition ??= book.Editions?.Value?.SingleOrDefault(item => item.Monitored);
+            var title = edition?.Title ?? book.Title;
+            var recordingIds = new[]
+            {
+                NativeRecordingId(book.ForeignBookId), NativeRecordingId(edition?.ForeignEditionId),
+                AudiobookId.IsAsin(edition?.Asin) ? NativeRecordingId(AudiobookId.ForAsin(edition.AudibleRegion, edition.Asin)) : null
+            }.Where(id => id != null).Distinct(StringComparer.Ordinal).ToList();
+            var recordingId = recordingIds.Count == 1 ? recordingIds[0] : null;
+            var correction = Snapshot().SingleOrDefault(item => item.Enabled && item.Kind == "title" &&
+                AudiobookId.ForAsin(item.Region, item.Asin) == recordingId && item.OriginalTitle == title);
+            var protection = Snapshot().SingleOrDefault(item => item.Enabled && item.Kind == "titleprotection" &&
+                AudiobookId.ForAsin(item.Region, item.Asin) == recordingId);
+            var projection = AudiobookMetadataCleanup.Project(book,
+                edition,
+                rules ?? _cleanupRules.All() ?? new List<AudiobookMetadataCleanupRule>(),
+                correction?.ReplacementTitle,
+                correction == null && protection?.OriginalTitle != null && protection.OriginalTitle == title,
+                protection?.OriginalSubtitle != null && protection.OriginalSubtitle == edition?.Subtitle);
+            if (recordingIds.Count > 1)
+            {
+                projection.Warnings.Add("The available recording identities disagree; recording-specific corrections and protections were not applied.");
+            }
+
+            if (protection?.OriginalTitle != null && protection.OriginalTitle != title)
+            {
+                projection.Warnings.Add("The provider title changed; its protection no longer applies.");
+            }
+
+            if (protection?.OriginalSubtitle != null && protection.OriginalSubtitle != edition?.Subtitle)
+            {
+                projection.Warnings.Add("The provider subtitle changed; its protection no longer applies.");
+            }
+
+            return projection;
+        }
+
+        private static string NativeRecordingId(string id)
+        {
+            var parts = id?.Split(':');
+            return parts?.Length == 3 && parts[0] == "audible" && AudnexusProxy.Regions.Contains(parts[1]) && AudiobookId.IsAsin(parts[2])
+                ? id : null;
+        }
+
         public string DisplayTitle(Book book, string publishedTitle = null, Edition edition = null)
         {
-            var title = publishedTitle ?? book.Title;
-            var correction = Snapshot().SingleOrDefault(item => item.Enabled && item.Kind == "title" &&
-                AudiobookId.ForAsin(item.Region, item.Asin) == book.ForeignBookId && item.OriginalTitle == title);
-            return AudiobookTextNormalizer.DisplayTitle(book, correction?.ReplacementTitle ?? title, edition);
+            edition ??= book.Editions?.Value?.SingleOrDefault(item => item.Monitored);
+            if (publishedTitle != null && publishedTitle != (edition?.Title ?? book.Title))
+            {
+                edition = new Edition
+                {
+                    Id = edition?.Id ?? 0, BookId = edition?.BookId ?? 0, ForeignEditionId = edition?.ForeignEditionId,
+                    Book = book, Title = publishedTitle, Subtitle = edition?.Subtitle,
+                    Asin = edition?.Asin, AudibleRegion = edition?.AudibleRegion, Language = edition?.Language,
+                    Narrators = edition?.Narrators, Publisher = edition?.Publisher
+                };
+            }
+
+            return Project(book, edition).DisplayTitle;
         }
 
         public string NarratorName(string name, string region)
@@ -134,7 +197,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 }
             }
 
-            Require(item.Kind == "author" || item.Kind == "title" || item.Kind == "narrator", "kind", "Choose author, title, or narrator.");
+            Require(item.Kind == "author" || item.Kind == "title" || item.Kind == "narrator" || item.Kind == "titleprotection", "kind", "Choose author, title, narrator, or title protection.");
             Require(item.Region != null && AudnexusProxy.Regions.Contains(item.Region), "region", "Choose a supported marketplace.");
             Require(item.Kind == "narrator" || AudiobookId.IsAsin(item.Asin), "asin", "Enter a valid Audible ASIN.");
             Require(Uri.TryCreate(item.SourceUrl, UriKind.Absolute, out var source) && (source.Scheme == "https" || source.Scheme == "http"), "sourceUrl", "Provide a source URL for this correction.");
@@ -164,6 +227,10 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             {
                 Require(!string.IsNullOrWhiteSpace(item.OriginalTitle), "originalTitle", "Provide the exact provider title this correction applies to.");
                 Require(!string.IsNullOrWhiteSpace(item.ReplacementTitle) && item.ReplacementTitle != item.OriginalTitle, "replacementTitle", "Provide a different corrected title.");
+            }
+            else if (item.Kind == "titleprotection")
+            {
+                Require(item.OriginalTitle != null || item.OriginalSubtitle != null, "originalTitle", "Provide the exact provider title or subtitle to protect.");
             }
             else if (item.Kind == "narrator")
             {

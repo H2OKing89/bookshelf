@@ -18,12 +18,14 @@ namespace Readarr.Api.V1.MetadataOverrides
         public List<string> AlternateAsins { get; set; }
         public List<string> Aliases { get; set; }
         public string OriginalTitle { get; set; }
+        public string OriginalSubtitle { get; set; }
         public string ReplacementTitle { get; set; }
         public string SourceUrl { get; set; }
         public string Reason { get; set; }
         public bool Enabled { get; set; } = true;
         public DateTime UpdatedAt { get; set; }
         public string ObservedTitle { get; set; }
+        public string ObservedSubtitle { get; set; }
         public string Status { get; set; }
     }
 
@@ -93,17 +95,23 @@ namespace Readarr.Api.V1.MetadataOverrides
 
         private MetadataOverrideResource ToResource(AudiobookMetadataOverride item)
         {
-            var book = item.Kind == "title" ? _books.FindById(AudiobookId.ForAsin(item.Region, item.Asin)) : null;
-            var observed = book?.Editions?.Value?.SingleOrDefault(edition => edition.Monitored)?.Title ?? book?.Title;
+            var recordingOverride = item.Kind == "title" || item.Kind == "titleprotection";
+            var book = recordingOverride ? _books.FindById(AudiobookId.ForAsin(item.Region, item.Asin)) : null;
+            var edition = book?.Editions?.Value?.SingleOrDefault(value => value.Monitored);
+            var observed = edition?.Title ?? book?.Title;
+            var observedSubtitle = edition?.Subtitle;
+            var needsReview = item.Kind == "title" ? observed != item.OriginalTitle :
+                (item.OriginalTitle != null && observed != item.OriginalTitle) ||
+                (item.OriginalSubtitle != null && observedSubtitle != item.OriginalSubtitle);
             return new MetadataOverrideResource
             {
                 Id = item.Id, Kind = item.Kind, Region = item.Region, Asin = item.Asin, Name = item.Name,
                 AlternateAsins = item.AlternateAsins, Aliases = item.Aliases,
-                OriginalTitle = item.OriginalTitle, ReplacementTitle = item.ReplacementTitle,
+                OriginalTitle = item.OriginalTitle, OriginalSubtitle = item.OriginalSubtitle, ReplacementTitle = item.ReplacementTitle,
                 SourceUrl = item.SourceUrl, Reason = item.Reason, Enabled = item.Enabled, UpdatedAt = item.UpdatedAt,
-                ObservedTitle = observed,
-                Status = !item.Enabled ? "disabled" : item.Kind != "title" ? "enabled" : observed == null ? "notInLibrary" :
-                    observed == item.OriginalTitle ? "enabled" : "needsReview"
+                ObservedTitle = observed, ObservedSubtitle = observedSubtitle,
+                Status = !item.Enabled ? "disabled" : !recordingOverride ? "enabled" : book == null ? "notInLibrary" :
+                    needsReview ? "needsReview" : "enabled"
             };
         }
 
@@ -111,7 +119,7 @@ namespace Readarr.Api.V1.MetadataOverrides
         {
             Id = item.Id, Kind = item.Kind, Region = item.Region, Asin = item.Asin, Name = item.Name,
             AlternateAsins = item.AlternateAsins, Aliases = item.Aliases,
-            OriginalTitle = item.OriginalTitle, ReplacementTitle = item.ReplacementTitle,
+            OriginalTitle = item.OriginalTitle, OriginalSubtitle = item.OriginalSubtitle, ReplacementTitle = item.ReplacementTitle,
             SourceUrl = item.SourceUrl, Reason = item.Reason, Enabled = item.Enabled
         };
     }

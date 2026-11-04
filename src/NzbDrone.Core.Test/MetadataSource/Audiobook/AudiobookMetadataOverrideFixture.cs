@@ -17,11 +17,14 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
     public class AudiobookMetadataOverrideFixture : CoreTest<AudiobookMetadataOverrideService>
     {
         private List<AudiobookMetadataOverride> _rows;
+        private List<AudiobookMetadataCleanupRule> _rules;
 
         [SetUp]
         public void Setup()
         {
             _rows = AudiobookMetadataOverrideSeed.Read();
+            _rules = new List<AudiobookMetadataCleanupRule>();
+            Mocker.GetMock<IAudiobookMetadataCleanupRuleService>().Setup(service => service.All()).Returns(() => _rules.ToList());
             for (var i = 0; i < _rows.Count; i++)
             {
                 _rows[i].Id = i + 1;
@@ -61,7 +64,7 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
             Subject.Save(edit);
 
             Subject.CanonicalAuthorId("audible:us:B074QPMWRL").Should().Be("audible:us:B074QPMWRL");
-            var restarted = new AudiobookMetadataOverrideService(Mocker.GetMock<IAudiobookMetadataOverrideRepository>().Object, new CacheManager());
+            var restarted = new AudiobookMetadataOverrideService(Mocker.GetMock<IAudiobookMetadataOverrideRepository>().Object, new CacheManager(), Mocker.GetMock<IAudiobookMetadataCleanupRuleService>().Object);
             restarted.CanonicalAuthorId("audible:us:B074QPMWRL").Should().Be("audible:us:B074QPMWRL");
             restarted.Delete(1);
             restarted.All().Should().NotContain(row => row.Asin == "B0DSLB5CG5");
@@ -252,6 +255,186 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
 
             Subject.DisplayTitle(book).Should().Be("A Corrected Distinctive Title");
             book.Title.Should().Be(resource.Title);
+        }
+
+        private void GivenPromotionalRule()
+        {
+            _rules.Add(new AudiobookMetadataCleanupRule
+            {
+                Phrase = "A LitRPG Adventure", Labels = new List<string> { "LitRPG" }, Enabled = true,
+                Reason = "A complete promotional label."
+            });
+        }
+
+        private static AudnexusBookResource PromotionalBook(string title = "A Work: A LitRPG Adventure") => new AudnexusBookResource
+        {
+            Asin = "B000000004", Region = "us", Title = title, Subtitle = "A LitRPG Adventure",
+            Authors = new List<AudnexusContributorResource> { new AudnexusContributorResource { Name = "Example" } }
+        };
+
+        private static AudiobookMetadataOverride Protection(string title, string subtitle) => new AudiobookMetadataOverride
+        {
+            Kind = "titleprotection", Region = "us", Asin = "B000000004", OriginalTitle = title, OriginalSubtitle = subtitle,
+            SourceUrl = "https://publisher.example/book", Reason = "The publisher confirms these fields are meaningful text."
+        };
+
+        [Test]
+        public void should_protect_exact_fields_without_mutating_the_provider_metadata()
+        {
+            GivenPromotionalRule();
+            var resource = PromotionalBook();
+            var book = AudiobookMetadataMapper.Book(resource, "us");
+            Subject.Save(Protection(resource.Title, resource.Subtitle));
+
+            var projection = Subject.Project(book);
+
+            projection.Title.Should().Be(resource.Title);
+            projection.DisplayTitle.Should().Be(resource.Title);
+            projection.Subtitle.Should().Be(resource.Subtitle);
+            projection.Changes.Should().BeEmpty();
+            book.Title.Should().Be(resource.Title);
+            book.Editions.Value.Single().Subtitle.Should().Be(resource.Subtitle);
+            Subject.All().Should().Contain(row => row.Kind == "titleprotection" && row.OriginalSubtitle == resource.Subtitle);
+        }
+
+        [Test]
+        public void should_apply_title_and_subtitle_guards_independently_after_provider_changes()
+        {
+            GivenPromotionalRule();
+            var resource = PromotionalBook();
+            var book = AudiobookMetadataMapper.Book(resource, "us");
+            Subject.Save(Protection("An Earlier Title", resource.Subtitle));
+
+            var projection = Subject.Project(book);
+
+            projection.Title.Should().Be("A Work");
+            projection.Subtitle.Should().Be(resource.Subtitle);
+            projection.Warnings.Should().Contain(warning => warning.Contains("title changed"));
+            book.Title.Should().Be(resource.Title);
+        }
+
+        [Test]
+        public void should_invalidate_protection_after_disable_and_delete()
+        {
+            GivenPromotionalRule();
+            var resource = PromotionalBook();
+            var book = AudiobookMetadataMapper.Book(resource, "us");
+            var saved = Subject.Save(Protection(resource.Title, resource.Subtitle));
+            Subject.Project(book).Title.Should().Be(resource.Title);
+            var edit = Subject.Find(saved.Id);
+            edit.Enabled = false;
+            Subject.Save(edit);
+
+            Subject.Project(book).Title.Should().Be("A Work");
+            Subject.Project(book).Subtitle.Should().BeEmpty();
+            Subject.Delete(saved.Id);
+            Subject.Project(book).Title.Should().Be("A Work");
+        }
+
+        [Test]
+        public void should_allow_title_correction_and_field_protection_for_the_same_recording()
+        {
+            GivenPromotionalRule();
+            var resource = PromotionalBook();
+            var book = AudiobookMetadataMapper.Book(resource, "us");
+            Subject.Save(new AudiobookMetadataOverride
+            {
+                Kind = "title", Region = "us", Asin = resource.Asin, OriginalTitle = resource.Title,
+                ReplacementTitle = "A Corrected Work: A LitRPG Adventure",
+                SourceUrl = "https://publisher.example/book", Reason = "The publisher confirms the full corrected title."
+            });
+            Subject.Save(Protection(resource.Title, resource.Subtitle));
+
+            var projection = Subject.Project(book);
+
+            projection.Title.Should().Be("A Corrected Work: A LitRPG Adventure");
+            projection.Subtitle.Should().Be(resource.Subtitle);
+            book.Title.Should().Be(resource.Title);
+        }
+
+        [Test]
+        public void should_not_apply_a_protection_to_a_different_recording()
+        {
+            GivenPromotionalRule();
+            var resource = PromotionalBook();
+            Subject.Save(Protection(resource.Title, resource.Subtitle));
+            resource.Asin = "B000000005";
+
+            var projection = Subject.Project(AudiobookMetadataMapper.Book(resource, "us"));
+
+            projection.Title.Should().Be("A Work");
+            projection.Subtitle.Should().BeEmpty();
+        }
+
+        [TestCase("audible:uk:B000000004")]
+        [TestCase("audible:us:B000000005")]
+        public void should_not_apply_recording_overrides_when_book_and_edition_identities_disagree(string bookId)
+        {
+            GivenPromotionalRule();
+            var resource = PromotionalBook();
+            var book = AudiobookMetadataMapper.Book(resource, "us");
+            book.ForeignBookId = bookId;
+            Subject.Save(new AudiobookMetadataOverride
+            {
+                Kind = "title", Region = "us", Asin = resource.Asin, OriginalTitle = resource.Title,
+                ReplacementTitle = "A Corrected Work",
+                SourceUrl = "https://publisher.example/book", Reason = "A correction scoped to the original recording."
+            });
+            Subject.Save(Protection(resource.Title, resource.Subtitle));
+
+            var projection = Subject.Project(book);
+
+            projection.Title.Should().Be("A Work");
+            projection.Subtitle.Should().BeEmpty();
+            projection.Warnings.Should().Contain(warning => warning.Contains("identities disagree"));
+        }
+
+        [Test]
+        public void should_use_an_explicit_edition_identity_when_the_book_has_no_native_identity()
+        {
+            GivenPromotionalRule();
+            var resource = PromotionalBook();
+            var book = AudiobookMetadataMapper.Book(resource, "us");
+            book.ForeignBookId = "legacy-book";
+            Subject.Save(Protection(resource.Title, resource.Subtitle));
+
+            var projection = Subject.Project(book);
+
+            projection.Title.Should().Be(resource.Title);
+            projection.Subtitle.Should().Be(resource.Subtitle);
+            projection.Warnings.Should().BeEmpty();
+        }
+
+        [Test]
+        public void should_require_at_least_one_nonempty_protection_guard()
+        {
+            Assert.Throws<ValidationException>(() => Subject.Save(Protection(" ", null)));
+        }
+
+        [Test]
+        public void should_preview_draft_rules_without_replacing_saved_rules()
+        {
+            var book = AudiobookMetadataMapper.Book(PromotionalBook(), "us");
+            var draft = new[]
+            {
+                new AudiobookMetadataCleanupRule { Phrase = "A LitRPG Adventure", Enabled = true, Reason = "Draft phrase." }
+            };
+
+            Subject.Project(book, null, draft).Title.Should().Be("A Work");
+            Subject.Project(book).Title.Should().Be(book.Title);
+            _rules.Should().BeEmpty();
+        }
+
+        [Test]
+        public void should_preserve_explicit_published_title_without_mutating_the_selected_edition()
+        {
+            GivenPromotionalRule();
+            var book = AudiobookMetadataMapper.Book(PromotionalBook(), "us");
+
+            Subject.DisplayTitle(book, "Another Work: A LitRPG Adventure").Should().Be("Another Work");
+
+            book.Title.Should().Be("A Work: A LitRPG Adventure");
+            book.Editions.Value.Single().Title.Should().Be(book.Title);
         }
     }
 }

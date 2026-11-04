@@ -209,6 +209,7 @@ namespace NzbDrone.Core.Datastore
 
             Mapper.Entity<CustomFilter>("CustomFilters").RegisterModel();
             Mapper.Entity<AudiobookMetadataOverride>("AudiobookMetadataOverrides").RegisterModel();
+            Mapper.Entity<AudiobookMetadataCleanupRule>("AudiobookMetadataCleanupRules").RegisterModel();
             Mapper.Entity<ImportListExclusion>("ImportListExclusions").RegisterModel();
 
             Mapper.Entity<CachedHttpResponse>("HttpResponse").RegisterModel();

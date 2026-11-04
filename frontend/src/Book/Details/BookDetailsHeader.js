@@ -61,7 +61,10 @@ class BookDetailsHeader extends Component {
       title,
       displayTitle,
       subtitle,
+      displaySubtitle,
       seriesTitle,
+      displaySeriesTitle,
+      metadataLabels = [],
       pageCount,
       narrators = [],
       runtimeLengthMinutes,
@@ -86,6 +89,8 @@ class BookDetailsHeader extends Component {
 
     const fanartUrl = getFanartUrl(author.images);
     const marqueeWidth = titleWidth - (isSmallScreen ? 85 : 160);
+    const visibleSubtitle = displaySubtitle === undefined ? subtitle : displaySubtitle;
+    const visibleSeries = displaySeriesTitle === undefined ? seriesTitle : displaySeriesTitle;
 
     return (
       <div className={styles.header} style={{ width }}>
@@ -138,12 +143,12 @@ class BookDetailsHeader extends Component {
               }
 
               {
-                subtitle &&
-                  <div>{subtitle}</div>
+                visibleSubtitle &&
+                  <div>{visibleSubtitle}</div>
               }
 
               <div>
-                {seriesTitle === (displayTitle || title) ? null : seriesTitle}
+                {visibleSeries === (displayTitle || title) ? null : visibleSeries}
               </div>
 
               <div>
@@ -182,6 +187,13 @@ class BookDetailsHeader extends Component {
             </div>
 
             <div className={styles.detailsLabels}>
+              {
+                metadataLabels.map((label) => (
+                  <Label key={label} className={styles.detailsLabel} size={sizes.LARGE}>
+                    {label}
+                  </Label>
+                ))
+              }
               {
                 releaseDate &&
                   <Label
@@ -281,7 +293,10 @@ BookDetailsHeader.propTypes = {
   title: PropTypes.string.isRequired,
   displayTitle: PropTypes.string,
   subtitle: PropTypes.string,
+  displaySubtitle: PropTypes.string,
   seriesTitle: PropTypes.string.isRequired,
+  displaySeriesTitle: PropTypes.string,
+  metadataLabels: PropTypes.arrayOf(PropTypes.string),
   pageCount: PropTypes.number,
   narrators: PropTypes.arrayOf(PropTypes.string),
   runtimeLengthMinutes: PropTypes.number,

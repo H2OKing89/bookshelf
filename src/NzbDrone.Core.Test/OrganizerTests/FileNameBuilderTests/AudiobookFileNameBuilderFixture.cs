@@ -18,13 +18,14 @@ namespace NzbDrone.Core.Test.OrganizerTests.FileNameBuilderTests
     [TestFixture]
     public class AudiobookFileNameBuilderFixture : CoreTest<FileNameBuilder>
     {
-        private const string ImporterFormat = "{Book Series}/{Book NamingTitle}{ (Edition Year)}{ (Author Name)}{ [Book Asin]}/{Book NamingTitle}{ (Edition Year)}{ (Author Name)}{ [Book Asin]}{ (PartNumber:00)}";
-        private const string ShortFormat = "{Book Series}/{Book SeriesPosition:00 - }{Book WorkTitle}{ [Book Asin]}/{Author Name} - {Book WorkTitle}{ (PartNumber:00)}";
+        private const string ImporterFormat = "{Book NamingSeries}/{Book NamingTitle}{ (Edition Year)}{ (Author Name)}{ [Book Asin]}/{Book NamingTitle}{ (Edition Year)}{ (Author Name)}{ [Book Asin]}{ (PartNumber:00)}";
+        private const string ShortFormat = "{Book NamingSeries}/{Book SeriesPosition:00 - }{Book WorkTitle}{ [Book Asin]}/{Author Name} - {Book WorkTitle}{ (PartNumber:00)}";
         private Author _author;
         private Book _book;
         private Edition _edition;
         private BookFile _file;
         private List<AudiobookMetadataOverride> _overrides;
+        private List<AudiobookMetadataCleanupRule> _rules;
 
         [SetUp]
         public void Setup()
@@ -47,6 +48,9 @@ namespace NzbDrone.Core.Test.OrganizerTests.FileNameBuilderTests
             _book.Editions = new List<Edition> { _edition };
             _file = new BookFile { Quality = new QualityModel(Quality.M4B), Path = "/source/original.m4b", Part = 1, PartCount = 1 };
             _overrides = new List<AudiobookMetadataOverride>();
+            _rules = AudiobookMetadataCleanupRuleSeed.Read();
+            _rules.ForEach(rule => rule.Enabled = true);
+            Mocker.GetMock<IAudiobookMetadataCleanupRuleService>().Setup(service => service.All()).Returns(_rules);
             Mocker.GetMock<IAudiobookMetadataOverrideRepository>().Setup(repository => repository.All()).Returns(_overrides);
             Mocker.SetConstant<IAudiobookMetadataOverrideService>(Mocker.Resolve<AudiobookMetadataOverrideService>());
             Mocker.GetMock<IQualityDefinitionService>().Setup(service => service.Get(It.IsAny<Quality>()))
@@ -154,6 +158,96 @@ namespace NzbDrone.Core.Test.OrganizerTests.FileNameBuilderTests
             _edition.Title.Should().Be("Memory's Flame");
             _book.Title.Should().Be("Memory's Flame");
             _edition.Narrators.Should().Equal("Erin Bennett");
+        }
+
+        [Test]
+        public void should_use_shared_cleanup_without_changing_published_naming_tokens()
+        {
+            _edition.Title = "The Primal Hunter 4: A LitRPG Adventure";
+            _edition.Subtitle = "Light Novel";
+            _book.SeriesLinks.Value[0].Series.Value.Title = "The Primal Hunter (Light Novel)";
+            _book.SeriesLinks.Value[0].Position = "4";
+
+            Build("{Book DisplayTitle}").Should().Be("The Primal Hunter #4");
+            Build("{Book NamingTitle}").Should().Be("The Primal Hunter vol_04");
+            Build("{Book NamingSeries}").Should().Be("The Primal Hunter");
+            Build("{Book NamingSubtitle}").Should().BeEmpty();
+            Build("{Book Series}").Should().Be("The Primal Hunter (Light Novel)");
+            Build("{Book Subtitle}").Should().Be("Light Novel");
+            Build("{Book Title}").Should().Contain("A LitRPG Adventure");
+            _edition.Title.Should().Be("The Primal Hunter 4: A LitRPG Adventure");
+            _edition.Subtitle.Should().Be("Light Novel");
+        }
+
+        [Test]
+        public void should_honor_disabled_rules_in_every_normalized_naming_token()
+        {
+            _rules.ForEach(rule => rule.Enabled = false);
+            _edition.Title = "An Independent Work: A LitRPG Adventure";
+            _edition.Subtitle = "Light Novel";
+
+            Build("{Book DisplayTitle}").Should().Contain("A LitRPG Adventure");
+            Build("{Book NamingTitle}").Should().Contain("A LitRPG Adventure").And.Contain("Light Novel");
+            Build("{Book NamingSubtitle}").Should().Be("Light Novel");
+        }
+
+        [Test]
+        public void should_preserve_exact_protected_fields_through_naming()
+        {
+            _edition.Title = "An Independent Work: A LitRPG Adventure";
+            _edition.Subtitle = "Light Novel";
+            _overrides.Add(new AudiobookMetadataOverride
+            {
+                Kind = "titleprotection", Enabled = true, Region = "us", Asin = _edition.Asin,
+                OriginalTitle = _edition.Title, OriginalSubtitle = _edition.Subtitle
+            });
+
+            Build("{Book DisplayTitle}").Should().Be("An Independent Work - A LitRPG Adventure");
+            Build("{Book NamingTitle}").Should().Be("An Independent Work - A LitRPG Adventure - Light Novel");
+            Build("{Book NamingSubtitle}").Should().Be("Light Novel");
+        }
+
+        [Test]
+        public void should_retain_a_protected_subtitle_in_standalone_naming()
+        {
+            _book.SeriesLinks.Value.Clear();
+            _edition.Subtitle = "Light Novel";
+            _overrides.Add(new AudiobookMetadataOverride
+            {
+                Kind = "titleprotection", Enabled = true, Region = "us", Asin = _edition.Asin,
+                OriginalSubtitle = _edition.Subtitle
+            });
+
+            Build("{Book NamingTitle}").Should().Be("Memory's Flame - Light Novel");
+            Build("{Book WorkTitle}").Should().Be("Memory's Flame - Light Novel");
+        }
+
+        [Test]
+        public void should_retain_a_protected_subtitle_when_a_work_title_cannot_be_split_from_its_series()
+        {
+            _edition.Title = "Sword Art Online: Progressive";
+            _edition.Subtitle = "Light Novel";
+            _book.SeriesLinks.Value[0].Series.Value.Title = "Sword Art Online";
+            _book.SeriesLinks.Value[0].Position = "2";
+            _overrides.Add(new AudiobookMetadataOverride
+            {
+                Kind = "titleprotection", Enabled = true, Region = "us", Asin = _edition.Asin,
+                OriginalSubtitle = _edition.Subtitle
+            });
+
+            Build("{Book NamingTitle}").Should().Be("Sword Art Online - Progressive - Light Novel");
+            Build("{Book WorkTitle}").Should().Be("Sword Art Online - Progressive - Light Novel");
+        }
+
+        [Test]
+        public void should_preserve_meaningful_repeated_hyphens_in_a_work_title()
+        {
+            _edition.Title = "86--EIGHTY-SIX (Light Novel)";
+            _edition.Subtitle = null;
+            _book.SeriesLinks.Value.Clear();
+
+            Build("{Book DisplayTitle}").Should().Be("86--EIGHTY-SIX");
+            Build("{Book WorkTitle}").Should().Be("86--EIGHTY-SIX");
         }
 
         [TestCase("{Book DisplayTitle}{ (PartNumber)}")]

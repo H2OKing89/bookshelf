@@ -3,6 +3,7 @@ import PageContent from 'Components/Page/PageContent';
 import PageContentBody from 'Components/Page/PageContentBody';
 import SettingsToolbarConnector from 'Settings/SettingsToolbarConnector';
 import translate from 'Utilities/String/translate';
+import MetadataCleanup from './MetadataCleanup';
 import MetadataOverrides from './MetadataOverrides';
 // import MetadatasConnector from './Metadata/MetadatasConnector';
 import MetadataProviderConnector from './MetadataProvider/MetadataProviderConnector';
@@ -61,6 +62,7 @@ class MetadataSettings extends Component {
             onChildMounted={this.onChildMounted}
             onChildStateChange={this.onChildStateChange}
           />
+          <MetadataCleanup />
           <MetadataOverrides />
           {/* <MetadatasConnector /> */}
         </PageContentBody>

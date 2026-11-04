@@ -45,11 +45,11 @@ const fileNameTokens = [
     example: 'Author Name - Book Title (02 of 10)'
   },
   {
-    token: '{Book Series}/{Book NamingTitle}{ (Edition Year)}{ (Author Name)}{ [Book Asin]}/{Book NamingTitle}{ (Edition Year)}{ (Author Name)}{ [Book Asin]}{ (PartNumber:00)}',
+    token: '{Book NamingSeries}/{Book NamingTitle}{ (Edition Year)}{ (Author Name)}{ [Book Asin]}/{Book NamingTitle}{ (Edition Year)}{ (Author Name)}{ [Book Asin]}{ (PartNumber:00)}',
     example: 'The Wandering Inn/The Wandering Inn vol_20 Memory\'s Flame (2026) (pirate aba) [B0HGBVHDM2]/The Wandering Inn vol_20 Memory\'s Flame (2026) (pirate aba) [B0HGBVHDM2] (02)'
   },
   {
-    token: '{Book Series}/{Book SeriesPosition:00 - }{Book WorkTitle}{ [Book Asin]}/{Author Name} - {Book WorkTitle}{ (PartNumber:00)}',
+    token: '{Book NamingSeries}/{Book SeriesPosition:00 - }{Book WorkTitle}{ [Book Asin]}/{Author Name} - {Book WorkTitle}{ (PartNumber:00)}',
     example: 'The Wandering Inn/20 - Memory\'s Flame [B0HGBVHDM2]/pirate aba - Memory\'s Flame (02)'
   }
 ];
@@ -76,6 +76,10 @@ const bookTokens = [
   { token: '{Book NamingTitle}', example: 'The Wandering Inn vol_20 Memory\'s Flame' },
 
   { token: '{Book WorkTitle}', example: 'Memory\'s Flame' },
+
+  { token: '{Book NamingSubtitle}', example: 'Aincrad' },
+
+  { token: '{Book NamingSeries}', example: 'The Wandering Inn' },
 
   { token: '{Book TitleThe}', example: 'Book\'s Title!, The: Subtitle!' },
 

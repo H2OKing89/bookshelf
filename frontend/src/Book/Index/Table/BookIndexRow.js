@@ -96,6 +96,7 @@ class BookIndexRow extends Component {
       added,
       statistics,
       genres,
+      metadataLabels = [],
       ratings,
       tags,
       showSearchAction,
@@ -272,6 +273,16 @@ class BookIndexRow extends Component {
               );
             }
 
+            if (name === 'metadataLabels') {
+              const joinedLabels = metadataLabels.join(', ');
+
+              return (
+                <VirtualTableRowCell key={name} className={styles.genres}>
+                  <span title={joinedLabels}>{joinedLabels}</span>
+                </VirtualTableRowCell>
+              );
+            }
+
             if (name === 'ratings') {
               return (
                 <VirtualTableRowCell
@@ -379,6 +390,7 @@ BookIndexRow.propTypes = {
   added: PropTypes.string,
   statistics: PropTypes.object.isRequired,
   genres: PropTypes.arrayOf(PropTypes.string).isRequired,
+  metadataLabels: PropTypes.arrayOf(PropTypes.string),
   ratings: PropTypes.object.isRequired,
   tags: PropTypes.arrayOf(PropTypes.number).isRequired,
   images: PropTypes.arrayOf(PropTypes.object).isRequired,

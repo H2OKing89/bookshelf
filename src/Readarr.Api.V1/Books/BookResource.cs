@@ -18,8 +18,11 @@ namespace Readarr.Api.V1.Books
         public string Title { get; set; }
         public string DisplayTitle { get; set; }
         public string Subtitle { get; set; }
+        public string DisplaySubtitle { get; set; }
         public string AuthorTitle { get; set; }
         public string SeriesTitle { get; set; }
+        public string DisplaySeriesTitle { get; set; }
+        public List<string> MetadataLabels { get; set; }
         public string Disambiguation { get; set; }
         public string Overview { get; set; }
         public int AuthorId { get; set; }
@@ -63,6 +66,8 @@ namespace Readarr.Api.V1.Books
             var selectedEdition = model.Editions?.Value.Where(x => x.Monitored).SingleOrDefault();
 
             var title = selectedEdition?.Title ?? model.Title;
+            var projection = overrides?.Project(model, selectedEdition) ??
+                AudiobookMetadataCleanup.Project(model, selectedEdition, Array.Empty<AudiobookMetadataCleanupRule>());
             var authorTitle = $"{model.AuthorMetadata?.Value?.SortNameLastFirst} {title}";
 
             var seriesLinks = model.SeriesLinks?.Value?.OrderBy(x => x.SeriesPosition);
@@ -83,10 +88,13 @@ namespace Readarr.Api.V1.Books
                 RuntimeLengthMinutes = selectedEdition?.RuntimeLengthMinutes,
                 Genres = model.Genres,
                 Title = title,
-                DisplayTitle = overrides?.DisplayTitle(model, title) ?? AudiobookTextNormalizer.DisplayTitle(model, title),
+                DisplayTitle = projection.DisplayTitle,
                 Subtitle = selectedEdition?.Subtitle,
+                DisplaySubtitle = projection.Subtitle,
+                MetadataLabels = projection.MetadataLabels,
                 AuthorTitle = authorTitle,
                 SeriesTitle = seriesTitle,
+                DisplaySeriesTitle = projection.Series + (!string.IsNullOrWhiteSpace(projection.Series) && !string.IsNullOrWhiteSpace(projection.Position) ? " #" + projection.Position : string.Empty),
                 Disambiguation = selectedEdition?.Disambiguation,
                 Images = selectedEdition?.Images ?? new List<MediaCover>(),
                 Links = model.Links.Concat(selectedEdition?.Links ?? new List<Links>()).ToList(),

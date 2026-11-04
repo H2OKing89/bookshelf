@@ -15,16 +15,28 @@ namespace NzbDrone.Core.Organizer
         public string Title { get; set; } = string.Empty;
         public string WorkTitle { get; set; } = string.Empty;
 
-        public static AudiobookNamingFields From(Edition edition, string displayTitle)
+        public static AudiobookNamingFields From(Edition edition, AudiobookMetadataProjection projection)
         {
-            var title = AudiobookTextNormalizer.Text(displayTitle) ?? AudiobookTextNormalizer.Text(edition.Title) ?? string.Empty;
+            var title = projection?.DisplayTitle ?? AudiobookTextNormalizer.Text(edition.Title) ?? string.Empty;
             var result = new AudiobookNamingFields { Title = title, WorkTitle = title };
-            var primary = edition.Book?.Value?.SeriesLinks?.Value?
-                .OrderByDescending(link => link.IsPrimary).ThenBy(link => link.SeriesPosition).FirstOrDefault();
-            var series = AudiobookTextNormalizer.Text(primary?.Series?.Value?.Title);
-            var position = AudiobookTextNormalizer.Text(primary?.Position);
-            if (series == null || position == null || !PositionPattern.IsMatch(position))
+            if (projection?.SubtitleProtected == true && !string.IsNullOrWhiteSpace(projection.Subtitle))
             {
+                result.Title = title + ": " + projection.Subtitle;
+                result.WorkTitle = result.Title;
+            }
+
+            var series = AudiobookTextNormalizer.Text(projection?.Series);
+            var position = AudiobookTextNormalizer.Text(projection?.Position);
+            if (projection?.TitleProtected == true || series == null || position == null || !PositionPattern.IsMatch(position))
+            {
+                var retainedSubtitle = AudiobookTextNormalizer.Text(projection?.Subtitle);
+                if (retainedSubtitle != null && (projection.SubtitleProtected || (projection.TitleProtected &&
+                    !Same(retainedSubtitle, title) && !HasCompleteSubtitle(title, retainedSubtitle))))
+                {
+                    result.Title = title + ": " + retainedSubtitle;
+                    result.WorkTitle = result.Title;
+                }
+
                 return result;
             }
 
@@ -33,27 +45,28 @@ namespace NzbDrone.Core.Organizer
                 return result;
             }
 
-            var subtitle = AudiobookTextNormalizer.Text(edition.Subtitle);
-            if (Same(subtitle, AudiobookTextNormalizer.Text(edition.Title)))
+            var subtitle = AudiobookTextNormalizer.Text(projection.Subtitle);
+            if (!projection.SubtitleProtected && Same(subtitle, AudiobookTextNormalizer.Text(edition.Title)))
             {
                 subtitle = null;
             }
 
             var combinedTitle = (AudiobookTextNormalizer.Text(edition.Title) ?? title) + ": " + subtitle;
-            if (subtitle != null && TryWorkTitle(combinedTitle, series, position, out var combinedWork) && string.IsNullOrWhiteSpace(combinedWork))
+            if (!projection.SubtitleProtected && subtitle != null && TryWorkTitle(combinedTitle, series, position, out var combinedWork) && string.IsNullOrWhiteSpace(combinedWork))
             {
                 subtitle = null;
             }
 
-            if (subtitle != null && !Same(subtitle, "A LitRPG Adventure"))
+            if (subtitle != null)
             {
-                if (!TryWorkTitle(subtitle, series, position, out var subtitleWork))
+                var subtitleWork = subtitle;
+                if (!projection.SubtitleProtected && !TryWorkTitle(subtitle, series, position, out subtitleWork))
                 {
                     return result;
                 }
 
-                if (!string.IsNullOrWhiteSpace(subtitleWork) && !Same(subtitleWork, workTitle) &&
-                    !Same(subtitleWork, title) && !HasCompleteSubtitle(workTitle, subtitleWork))
+                if (!string.IsNullOrWhiteSpace(subtitleWork) && (projection.SubtitleProtected ||
+                    (!Same(subtitleWork, workTitle) && !Same(subtitleWork, title) && !HasCompleteSubtitle(workTitle, subtitleWork))))
                 {
                     workTitle = string.IsNullOrWhiteSpace(workTitle) ? subtitleWork : workTitle + ": " + subtitleWork;
                 }
@@ -87,16 +100,16 @@ namespace NzbDrone.Core.Organizer
             workTitle = title;
             var prefix = series.StartsWith("The ", StringComparison.OrdinalIgnoreCase)
                 ? @"(?:The\s+)?" + Regex.Escape(series.Substring(4)) : Regex.Escape(series);
-            var seriesOnly = @"\A" + prefix + @"(?:\s+\(Light Novel\))?\z";
+            var seriesOnly = @"\A" + prefix + @"\z";
             if (Regex.IsMatch(title, seriesOnly, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100)))
             {
                 workTitle = string.Empty;
                 return true;
             }
 
-            var pattern = @"\A" + prefix + @"(?:\s+\(Light Novel\))?(?:\s*[:,#]\s*|\s+)" +
+            var pattern = @"\A" + prefix + @"(?:\s*[:,#]\s*|\s+)" +
                 @"(?:(?:books?|vol(?:ume)?s?)\.?\s*)?(?<position>" + NumberPattern + @")" +
-                @"(?:\s+\(Light Novel\))?(?:\s*[:–—-]\s*(?<work>.+))?\z";
+                @"(?:\s*[:–—-]\s*(?<work>.+))?\z";
             var match = Regex.Match(title, pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100));
             if (match.Success)
             {

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.Organizer;
 
 namespace NzbDrone.Core.Test.OrganizerTests
@@ -20,22 +21,34 @@ namespace NzbDrone.Core.Test.OrganizerTests
             return new Edition { Title = title, Subtitle = subtitle, Book = book };
         }
 
+        private static AudiobookNamingFields Fields(Edition edition, string title)
+        {
+            var rules = AudiobookMetadataCleanupRuleSeed.Read();
+            foreach (var rule in rules)
+            {
+                rule.Enabled = true;
+            }
+
+            var projection = AudiobookMetadataCleanup.Project(edition.Book?.Value, edition, rules, title != edition.Title ? title : null);
+            return AudiobookNamingFields.From(edition, projection);
+        }
+
         [TestCase("Memory's Flame", "The Wandering Inn, Book 20", "The Wandering Inn", "20", "The Wandering Inn vol_20 Memory's Flame", "Memory's Flame")]
         [TestCase("Sword Art Online #1", "Aincrad", "Sword Art Online", "1", "Sword Art Online vol_01 Aincrad", "Aincrad")]
         [TestCase("Sword Art Online (Light Novel), Vol. 1", "Aincrad", "Sword Art Online", "1", "Sword Art Online vol_01 Aincrad", "Aincrad")]
         [TestCase("The Primal Hunter #4", "A LitRPG Adventure", "The Primal Hunter", "4", "The Primal Hunter vol_04", "The Primal Hunter #4")]
-        [TestCase("Primal Hunter 4", null, "The Primal Hunter", "4", "The Primal Hunter vol_04", "Primal Hunter 4")]
+        [TestCase("Primal Hunter 4", null, "The Primal Hunter", "4", "The Primal Hunter vol_04", "The Primal Hunter #4")]
         [TestCase("Series #1: A Distinct Work", null, "Series", "1", "Series vol_01 A Distinct Work", "A Distinct Work")]
         [TestCase("Series #01.0: A Distinct Work", null, "Series", "1", "Series vol_01 A Distinct Work", "A Distinct Work")]
         [TestCase("Amongst the Fallen", null, "The Beginning After the End", "8.5", "The Beginning After the End vol_08.5 Amongst the Fallen", "Amongst the Fallen")]
-        [TestCase("Series, Books 1-3.5", null, "Series", "1-3.5", "Series vol_01-03.5", "Series, Books 1-3.5")]
-        [TestCase("Re:ZERO", null, "Re:ZERO", "2", "Re:ZERO vol_02", "Re:ZERO")]
+        [TestCase("Series, Books 1-3.5", null, "Series", "1-3.5", "Series vol_01-03.5", "Series #1-3.5")]
+        [TestCase("Re:ZERO", null, "Re:ZERO", "2", "Re:ZERO vol_02", "Re:ZERO #2")]
         [TestCase("Re:ZERO: Starting Life in Another World", null, "Other Series", "2", "Other Series vol_02 Re:ZERO: Starting Life in Another World", "Re:ZERO: Starting Life in Another World")]
         public void should_render_confirmed_series_fields_without_losing_work_titles(string title, string subtitle, string series, string position, string expectedTitle, string expectedWork)
         {
             var edition = Edition(title, subtitle, series, position);
 
-            var fields = AudiobookNamingFields.From(edition, title);
+            var fields = Fields(edition, title);
 
             fields.Title.Should().Be(expectedTitle);
             fields.WorkTitle.Should().Be(expectedWork);
@@ -52,7 +65,7 @@ namespace NzbDrone.Core.Test.OrganizerTests
         [TestCase("Sword Art Online: Progressive", null, "Sword Art Online", "2")]
         public void should_retain_titles_when_position_or_structural_separation_is_uncertain(string title, string subtitle, string series, string position)
         {
-            var fields = AudiobookNamingFields.From(Edition(title, subtitle, series, position), title);
+            var fields = Fields(Edition(title, subtitle, series, position), title);
 
             fields.Title.Should().Be(title);
             fields.WorkTitle.Should().Be(title);
@@ -66,7 +79,7 @@ namespace NzbDrone.Core.Test.OrganizerTests
         [TestCase("Main", "A LitRPG Adventure in Space", "Main: A LitRPG Adventure in Space")]
         public void should_deduplicate_only_complete_subtitle_components(string title, string subtitle, string expectedWork)
         {
-            var fields = AudiobookNamingFields.From(Edition(title, subtitle, "Series", "1"), title);
+            var fields = Fields(Edition(title, subtitle, "Series", "1"), title);
 
             fields.Title.Should().Be("Series vol_01 " + expectedWork);
             fields.WorkTitle.Should().Be(expectedWork);
@@ -78,7 +91,7 @@ namespace NzbDrone.Core.Test.OrganizerTests
             var edition = Edition("A Work", null, "Primary", "2");
             edition.Book.Value.SeriesLinks.Value.Insert(0, new SeriesBookLink { SeriesPosition = -1, Series = new Series { Title = "Secondary" }, Position = "9" });
 
-            AudiobookNamingFields.From(edition, "A Work").Title.Should().Be("Primary vol_02 A Work");
+            Fields(edition, "A Work").Title.Should().Be("Primary vol_02 A Work");
         }
 
         [Test]
@@ -89,7 +102,7 @@ namespace NzbDrone.Core.Test.OrganizerTests
             edition.Book.Value.SeriesLinks.Value[0].SeriesPosition = 1;
             edition.Book.Value.SeriesLinks.Value.Add(new SeriesBookLink { SeriesPosition = 0, Series = new Series { Title = "Legacy Primary" }, Position = "3" });
 
-            AudiobookNamingFields.From(edition, "A Work").Title.Should().Be("Legacy Primary vol_03 A Work");
+            Fields(edition, "A Work").Title.Should().Be("Legacy Primary vol_03 A Work");
         }
 
         [Test]
@@ -97,7 +110,7 @@ namespace NzbDrone.Core.Test.OrganizerTests
         {
             var edition = Edition("Series, Vol. 18", null, "Series", "18");
 
-            AudiobookNamingFields.From(edition, "Corrected Work").Title.Should().Be("Series vol_18 Corrected Work");
+            Fields(edition, "Corrected Work").Title.Should().Be("Series vol_18 Corrected Work");
             edition.Title.Should().Be("Series, Vol. 18");
         }
 
@@ -106,7 +119,7 @@ namespace NzbDrone.Core.Test.OrganizerTests
         {
             var edition = Edition("Provider typo", "Provider typo", "Series", "1");
 
-            AudiobookNamingFields.From(edition, "Corrected Work").Title.Should().Be("Series vol_01 Corrected Work");
+            Fields(edition, "Corrected Work").Title.Should().Be("Series vol_01 Corrected Work");
             edition.Subtitle.Should().Be("Provider typo");
         }
 
@@ -115,7 +128,7 @@ namespace NzbDrone.Core.Test.OrganizerTests
         {
             var edition = Edition("Mushoku Tensei", "Jobless Reincarnation (Light Novel), Vol. 1", "Mushoku Tensei: Jobless Reincarnation", "1");
 
-            var fields = AudiobookNamingFields.From(edition, "Mushoku Tensei: Jobless Reincarnation #1");
+            var fields = Fields(edition, "Mushoku Tensei: Jobless Reincarnation #1");
 
             fields.Title.Should().Be("Mushoku Tensei: Jobless Reincarnation vol_01");
             fields.WorkTitle.Should().Be("Mushoku Tensei: Jobless Reincarnation #1");
@@ -124,7 +137,7 @@ namespace NzbDrone.Core.Test.OrganizerTests
         [Test]
         public void should_return_non_null_tokens_when_optional_metadata_is_absent()
         {
-            var fields = AudiobookNamingFields.From(new Edition(), null);
+            var fields = Fields(new Edition(), null);
 
             fields.Title.Should().BeEmpty();
             fields.WorkTitle.Should().BeEmpty();

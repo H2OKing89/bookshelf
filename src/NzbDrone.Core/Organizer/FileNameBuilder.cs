@@ -111,7 +111,22 @@ namespace NzbDrone.Core.Organizer
                 var component = ReplacePartTokens(splitPattern, tokenHandlers, namingConfig).Trim();
                 component = ReplaceTokens(component, tokenHandlers, namingConfig).Trim();
 
-                component = FileNameCleanupRegex.Replace(component, match => match.Captures[0].Value[0].ToString());
+                string CleanupSeparator(Match match)
+                {
+                    if (match.Value[0] == '-' && match.Index > 0 && match.Index + match.Length < component.Length &&
+                        char.IsLetterOrDigit(component[match.Index - 1]) && char.IsLetterOrDigit(component[match.Index + match.Length]))
+                    {
+                        var titleContext = component.Substring(match.Index - 1, match.Length + 2);
+                        if (tokenHandlers["{Book NamingTitle}"](new TokenMatch()).IndexOf(titleContext, StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            return match.Value;
+                        }
+                    }
+
+                    return match.Captures[0].Value[0].ToString();
+                }
+
+                component = FileNameCleanupRegex.Replace(component, CleanupSeparator);
                 component = TrimSeparatorsRegex.Replace(component, string.Empty);
 
                 if (component.IsNotNullOrWhiteSpace())
@@ -262,10 +277,12 @@ namespace NzbDrone.Core.Organizer
             var (titleNoSub, subtitle) = edition.Title.SplitBookTitle(edition.Book.Value.AuthorMetadata.Value.Name);
             subtitle = AudiobookTextNormalizer.Text(edition.Subtitle) ?? subtitle;
 
-            var displayTitle = new Lazy<string>(() => _metadataOverrides.DisplayTitle(edition.Book.Value, edition.Title, edition) ??
-                AudiobookTextNormalizer.DisplayTitle(edition.Book.Value, edition.Title, edition));
-            var namingFields = new Lazy<AudiobookNamingFields>(() => AudiobookNamingFields.From(edition, displayTitle.Value));
-            tokenHandlers["{Book DisplayTitle}"] = m => displayTitle.Value;
+            var projection = new Lazy<AudiobookMetadataProjection>(() => _metadataOverrides.Project(edition.Book.Value, edition) ??
+                AudiobookMetadataCleanup.Project(edition.Book.Value, edition, Array.Empty<AudiobookMetadataCleanupRule>()));
+            var namingFields = new Lazy<AudiobookNamingFields>(() => AudiobookNamingFields.From(edition, projection.Value));
+            tokenHandlers["{Book DisplayTitle}"] = m => projection.Value.DisplayTitle;
+            tokenHandlers["{Book NamingSubtitle}"] = m => projection.Value.Subtitle;
+            tokenHandlers["{Book NamingSeries}"] = m => projection.Value.Series;
             tokenHandlers["{Book NamingTitle}"] = m => namingFields.Value.Title;
             tokenHandlers["{Book WorkTitle}"] = m => namingFields.Value.WorkTitle;
             tokenHandlers["{Book Asin}"] = m => AudiobookId.IsAsin(edition.Asin) ? edition.Asin : string.Empty;

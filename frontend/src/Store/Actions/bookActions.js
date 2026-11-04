@@ -91,6 +91,18 @@ export const filters = [
 ];
 
 export const filterPredicates = {
+  title: function(item, filterValue, type) {
+    const predicate = filterTypePredicates[type];
+    const titles = [item.title, item.displayTitle || item.title];
+    const negative = [filterTypes.NOT_CONTAINS, filterTypes.NOT_EQUAL, filterTypes.NOT_STARTS_WITH, filterTypes.NOT_ENDS_WITH].includes(type);
+
+    return negative ? titles.every((title) => predicate(title, filterValue)) : titles.some((title) => predicate(title, filterValue));
+  },
+
+  metadataLabels: function(item, filterValue, type) {
+    return filterTypePredicates[type](item.metadataLabels || [], filterValue);
+  },
+
   missing: function(item) {
     const { statistics = {} } = item;
 
@@ -141,6 +153,10 @@ export const filterPredicates = {
 };
 
 export const sortPredicates = {
+  title: function(item) {
+    return item.displayTitle || item.title;
+  },
+
   sizeOnDisk: function(item) {
     const { statistics = {} } = item;
 
@@ -152,7 +168,7 @@ export const sortPredicates = {
   },
 
   series: function(item) {
-    return item.seriesTitle;
+    return item.displaySeriesTitle === undefined ? item.seriesTitle : item.displaySeriesTitle;
   },
 
   rating: function(item) {

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import Alert from 'Components/Alert';
 import FieldSet from 'Components/FieldSet';
 import FormGroup from 'Components/Form/FormGroup';
@@ -6,18 +7,32 @@ import FormInputGroup from 'Components/Form/FormInputGroup';
 import FormLabel from 'Components/Form/FormLabel';
 import Button from 'Components/Link/Button';
 import { inputTypes, kinds } from 'Helpers/Props';
+import { fetchBooks } from 'Store/Actions/bookActions';
 import createAjaxRequest from 'Utilities/createAjaxRequest';
 import getErrorMessage from 'Utilities/Object/getErrorMessage';
 
 const empty = {
   kind: 'author', region: 'us', asin: '', name: '', alternateAsins: '', aliases: '',
-  originalTitle: '', replacementTitle: '', sourceUrl: '', reason: '', enabled: true
+  originalTitle: '', originalSubtitle: '', replacementTitle: '', sourceUrl: '', reason: '', enabled: true
 };
-const typeOptions = [{ key: 'author', value: 'Author identity' }, { key: 'title', value: 'Title correction' }, { key: 'narrator', value: 'Narrator alias' }];
+const typeOptions = [{ key: 'author', value: 'Author identity' }, { key: 'title', value: 'Title correction' }, { key: 'titleprotection', value: 'Title/subtitle protection' }, { key: 'narrator', value: 'Narrator alias' }];
 const regionOptions = ['au', 'ca', 'de', 'es', 'fr', 'in', 'it', 'jp', 'us', 'uk'].map((region) => ({ key: region, value: region.toUpperCase() }));
 const statuses = { enabled: 'Enabled', disabled: 'Disabled', needsReview: 'Needs review', notInLibrary: 'Not in library' };
 
+function overrideName(item) {
+  if (item.kind === 'title') {
+    return item.replacementTitle;
+  }
+
+  if (item.kind === 'titleprotection') {
+    return `Protected: ${item.originalTitle || item.originalSubtitle}`;
+  }
+
+  return item.name;
+}
+
 function MetadataOverrides() {
+  const dispatch = useDispatch();
   const [items, setItems] = useState([]);
   const [form, setForm] = useState(null);
   const [error, setError] = useState(null);
@@ -35,7 +50,7 @@ function MetadataOverrides() {
   }, []);
 
   const edit = (item) => {
-    setForm({ ...item, alternateAsins: item.alternateAsins.join('\n'), aliases: item.aliases.join('\n') });
+    setForm({ ...empty, ...item, alternateAsins: (item.alternateAsins || []).join('\n'), aliases: (item.aliases || []).join('\n') });
     setError(null);
     setSaved(false);
   };
@@ -57,24 +72,50 @@ function MetadataOverrides() {
       setItems((previous) => [...previous.filter((row) => row.id !== item.id), item]);
       setForm(null);
       setSaved(true);
+      dispatch(fetchBooks({}));
     }).fail((xhr) => {
       const validation = Array.isArray(xhr.responseJSON) ? xhr.responseJSON.map((e) => e.errorMessage).join(' ') : null;
       setError(validation || getErrorMessage(xhr, 'Unable to save metadata override.'));
     }).always(() => setIsSaving(false));
   };
 
+  const remove = () => {
+    setIsSaving(true);
+    setError(null);
+    createAjaxRequest({ url: `/metadataoverride/${form.id}`, method: 'DELETE' }).request.done(() => {
+      setItems((previous) => previous.filter((item) => item.id !== form.id));
+      setForm(null);
+      setSaved(true);
+      dispatch(fetchBooks({}));
+    }).fail((xhr) => {
+      setError(getErrorMessage(xhr, 'Unable to delete metadata override.'));
+    }).always(() => setIsSaving(false));
+  };
+
+  let specificFields = [];
+  if (form?.kind === 'title') {
+    specificFields = [
+      ['originalTitle', 'Exact provider title', inputTypes.TEXT],
+      ['replacementTitle', 'Corrected title', inputTypes.TEXT, { helpText: 'Used for display labels. The original provider title remains stored.' }]
+    ];
+  } else if (form?.kind === 'titleprotection') {
+    specificFields = [
+      ['originalTitle', 'Exact provider title to protect', inputTypes.TEXT, { helpText: 'Leave blank to protect only the subtitle. Protected text stays intact while the provider field matches exactly.' }],
+      ['originalSubtitle', 'Exact provider subtitle to protect', inputTypes.TEXT, { helpText: 'Provide the title, subtitle, or both. A provider change requires a new review.' }]
+    ];
+  } else if (form) {
+    specificFields = [
+      ['name', form.kind === 'author' ? 'Canonical author name' : 'Canonical narrator name', inputTypes.TEXT],
+      ...(form.kind === 'author' ? [['alternateAsins', 'Alternate author ASINs', inputTypes.TEXT_AREA, { helpText: 'One ASIN per line. Add only profiles verified to belong to the same author.' }]] : []),
+      ['aliases', 'Other spellings or aliases', inputTypes.TEXT_AREA, { helpText: 'One name per line. Add only names verified to identify the same person.' }]
+    ];
+  }
+
   const fields = form ? [
     ['kind', 'Correction type', inputTypes.SELECT, { values: typeOptions, isDisabled: !!form.id }],
     ['region', 'Marketplace', inputTypes.SELECT, { values: regionOptions }],
     ...(form.kind === 'narrator' ? [] : [['asin', form.kind === 'author' ? 'Canonical author ASIN' : 'Recording ASIN', inputTypes.TEXT]]),
-    ...(form.kind === 'title' ? [
-      ['originalTitle', 'Exact provider title', inputTypes.TEXT],
-      ['replacementTitle', 'Corrected title', inputTypes.TEXT, { helpText: 'Used for display labels. The original provider title remains stored.' }]
-    ] : [
-      ['name', form.kind === 'author' ? 'Canonical author name' : 'Canonical narrator name', inputTypes.TEXT],
-      ...(form.kind === 'author' ? [['alternateAsins', 'Alternate author ASINs', inputTypes.TEXT_AREA, { helpText: 'One ASIN per line. Add only profiles verified to belong to the same author.' }]] : []),
-      ['aliases', 'Other spellings or aliases', inputTypes.TEXT_AREA, { helpText: 'One name per line. Add only names verified to identify the same person.' }]
-    ]),
+    ...specificFields,
     ['sourceUrl', 'Evidence URL', inputTypes.TEXT],
     ['reason', 'Reason', inputTypes.TEXT_AREA],
     ['enabled', 'Enabled', inputTypes.CHECK]
@@ -83,24 +124,24 @@ function MetadataOverrides() {
   return (
     <FieldSet legend="Metadata overrides">
       <p>
-        Keep verified author identities, narrator aliases, and title corrections here. Refresh affected authors after changing an author identity. Title corrections apply to display labels immediately after the page reloads.
+        Keep verified author identities, narrator aliases, title corrections, and title/subtitle protections here. Protections preserve meaningful text that would otherwise match a cleanup rule. Refresh affected authors after changing an author identity.
       </p>
       {
         error && <Alert kind={kinds.DANGER}>{error}</Alert>
       }
       {
-        saved && <Alert kind={kinds.SUCCESS}>Correction saved.</Alert>
+        saved && <Alert kind={kinds.SUCCESS}>Metadata overrides updated.</Alert>
       }
       {
         items.map((item) => (
           <div key={item.id}>
             <Button isDisabled={isSaving} onPress={() => edit(item)}>
-              {item.kind === 'title' ? item.replacementTitle : item.name} ({item.region.toUpperCase()}) — {statuses[item.status]}
+              {overrideName(item)} ({item.region.toUpperCase()}) — {statuses[item.status]}
             </Button>
             {
               item.status === 'needsReview' &&
                 <Alert kind={kinds.WARNING}>
-                  The provider title changed to “{item.observedTitle}”. This correction no longer applies. Review its evidence before updating it.
+                  Provider text changed. Current title: “{item.observedTitle}”; current subtitle: “{item.observedSubtitle || '(none)'}”. Changed fields no longer receive this correction or protection. Review the evidence before updating it.
                 </Alert>
             }
           </div>
@@ -128,6 +169,7 @@ function MetadataOverrides() {
               ))
             }
             <Button kind={kinds.PRIMARY} isDisabled={isSaving} onPress={save}>Save correction</Button>
+            {form.id && <Button isDisabled={isSaving} onPress={remove}>Delete override</Button>}
             <Button isDisabled={isSaving} onPress={() => setForm(null)}>Cancel</Button>
           </div>
       }

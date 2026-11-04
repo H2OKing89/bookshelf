@@ -26,6 +26,9 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
         [SetUp]
         public void Setup()
         {
+            var cleanupRules = AudiobookMetadataCleanupRuleSeed.Read();
+            cleanupRules.ForEach(rule => rule.Enabled = true);
+            Mocker.GetMock<IAudiobookMetadataCleanupRuleService>().Setup(service => service.All()).Returns(cleanupRules);
             Mocker.GetMock<IAudiobookMetadataOverrideRepository>().Setup(r => r.All()).Returns(AudiobookMetadataOverrideSeed.Read());
             Mocker.SetConstant<IAudiobookMetadataOverrideService>(Mocker.Resolve<AudiobookMetadataOverrideService>());
             _fixture = JObject.Parse(ReadAllText("Files/MetadataSource/Audiobook/KumaKumaKumaBear.json"));
