@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AutoFixture;
@@ -8,6 +10,7 @@ using NUnit.Framework;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Datastore;
+using NzbDrone.Core.MediaCover;
 using NzbDrone.Test.Common;
 
 namespace NzbDrone.Core.Test.MusicTests
@@ -16,6 +19,20 @@ namespace NzbDrone.Core.Test.MusicTests
     public class EntityFixture : LoggingTest
     {
         private Fixture _fixture = new Fixture();
+
+        private List<MediaCover.MediaCover> CompleteImages()
+        {
+            return Enum.GetValues(typeof(MediaCoverTypes)).Cast<MediaCoverTypes>()
+                .Select(type => new MediaCover.MediaCover(type, $"https://covers.example/{_fixture.Create<string>()}/{type}.jpg"))
+                .ToList();
+        }
+
+        private AuthorMetadata GivenAuthorMetadata()
+        {
+            return _fixture.Build<AuthorMetadata>()
+                .With(metadata => metadata.Images, CompleteImages())
+                .Create();
+        }
 
         private static bool IsNotMarkedAsIgnore(PropertyInfo propertyInfo)
         {
@@ -53,7 +70,7 @@ namespace NzbDrone.Core.Test.MusicTests
         [Test]
         public void two_equivalent_author_metadata_should_be_equal()
         {
-            var item1 = _fixture.Create<AuthorMetadata>();
+            var item1 = GivenAuthorMetadata();
             var item2 = item1.JsonClone();
 
             item1.Should().NotBeSameAs(item2);
@@ -64,9 +81,9 @@ namespace NzbDrone.Core.Test.MusicTests
         [TestCaseSource(typeof(EqualityPropertySource<AuthorMetadata>), "TestCases")]
         public void two_different_author_metadata_should_not_be_equal(PropertyInfo prop)
         {
-            var item1 = _fixture.Create<AuthorMetadata>();
+            var item1 = GivenAuthorMetadata();
             var item2 = item1.JsonClone();
-            var different = _fixture.Create<AuthorMetadata>();
+            var different = GivenAuthorMetadata();
 
             // make item2 different in the property under consideration
             var differentEntry = prop.GetValue(different);
@@ -79,8 +96,8 @@ namespace NzbDrone.Core.Test.MusicTests
         [Test]
         public void metadata_and_db_fields_should_replicate_author_metadata()
         {
-            var item1 = _fixture.Create<AuthorMetadata>();
-            var item2 = _fixture.Create<AuthorMetadata>();
+            var item1 = GivenAuthorMetadata();
+            var item2 = GivenAuthorMetadata();
 
             item1.Should().NotBe(item2);
 
@@ -148,6 +165,7 @@ namespace NzbDrone.Core.Test.MusicTests
             return _fixture.Build<Edition>()
                 .Without(x => x.Book)
                 .Without(x => x.BookFiles)
+                .With(x => x.Images, CompleteImages())
                 .Create();
         }
 
@@ -174,6 +192,11 @@ namespace NzbDrone.Core.Test.MusicTests
             {
                 prop.SetValue(item2, !(bool)prop.GetValue(item1));
             }
+            else if (prop.PropertyType == typeof(bool?))
+            {
+                var current = (bool?)prop.GetValue(item1);
+                prop.SetValue(item2, current.HasValue ? !current.Value : true);
+            }
             else
             {
                 prop.SetValue(item2, prop.GetValue(different));
@@ -199,7 +222,7 @@ namespace NzbDrone.Core.Test.MusicTests
         private Author GivenAuthor()
         {
             return _fixture.Build<Author>()
-                .With(x => x.Metadata, new LazyLoaded<AuthorMetadata>(_fixture.Create<AuthorMetadata>()))
+                .With(x => x.Metadata, new LazyLoaded<AuthorMetadata>(GivenAuthorMetadata()))
                 .Without(x => x.QualityProfile)
                 .Without(x => x.MetadataProfile)
                 .Without(x => x.Books)

@@ -68,11 +68,62 @@ language codes are standardized. A sparse response for the same ASIN and
 marketplace retains richer stored metadata, including genres and subtitles.
 Recording identity and published titles are never inferred from these labels.
 
+An Audible marketplace does not select a recording language. Each author's
+metadata profile controls allowed languages; set it to `eng` for English-only
+discovery. Disallowed languages are skipped before detail and chapter enrichment.
+Existing file-backed recordings remain available for review. Verified English
+author credits and established Latin display names take priority over native
+profile spellings for the same author identity; native names remain aliases.
+
+Audio identification reads embedded and bracketed filename ASINs even when
+title and author tags are complete. An exact recording and marketplace take
+priority over fuzzy album/title matching. Conflicting identifiers require review,
+and a missing exact ASIN cannot silently select a different recording.
+
+Recording refresh also enriches complete-looking catalog entries with Audnexus
+details and chapters. Successful lookups and missing records are cached for a
+day; transient enrichment failures are retried after a minute. Provider requests
+keep the existing timeout, throttling and cooldown controls. Chapters are fetched
+for recording details and author refresh, rather than each keyword search result.
+The configured Audnexus URL is used for every request, including chapters. A
+self-hosted instance can remove reliance on the public endpoint, but requires
+separate deployment and maintenance.
+
+The importer retains all author, narrator and recognized contributor roles on
+the recording, plus external contributor IDs when supplied. The library still
+has one owning author per book; refreshing reordered coauthor credits preserves
+that owner. Translator and editor credits cannot become the owning author merely
+by appearing first. Both provider series links are retained and detail metadata
+can correct the primary series. Series are matched by provider identity rather
+than similar names.
+
+Full publisher summaries are preferred to catalog extracts, with HTML and
+standalone retailer calls to action removed. Typed genre and tag IDs are retained
+alongside the existing flat genre list. Copyright year, adult-content status,
+literature type, author genres, similar-author references, and chapter timings
+are stored when supplied. Unknown values remain unknown. Book details show
+recording credits, classification and an expandable chapter list; the API exposes
+chapter metadata on edition resources and `GET /api/v1/book/{id}/chapters`.
+Chapter lists are excluded from book-list responses.
+
+Catalog requests ask for cover sizes up to 2400 pixels and choose the largest
+returned variant. Refreshes preserve larger variants of the same cover asset;
+they do not manufacture URLs or upscale a small image. Missing upstream images,
+biographies, credits or chapters cannot be recovered by this importer alone.
+
 Book and edition `releaseDate` values are calendar dates serialized as
 `YYYY-MM-DD`. Legacy ISO timestamp input is still accepted. Storage uses
 midnight UTC as a convention; calendars and feeds do not convert the release
 day between timezones. Refresh existing authors to repair previously stored
 metadata and dates.
+
+The observed native Audible placeholder date `2050-12-30` is retained separately
+as `sourceReleaseDate` and flagged with `releaseDateIsPlaceholder`, while the
+calendar release date remains unknown. Other future dates remain valid. The
+metadata migration normalizes existing native English language codes and this
+specific placeholder; other enrichment arrives through normal refreshes. Back
+up the database before upgrading. Older binaries do not understand the new
+columns, so rolling back a deployed upgrade requires restoring its backup.
 
 Run .NET with ICU/globalization support enabled. Invariant globalization mode
 disables the Unicode normalization used for metadata names.

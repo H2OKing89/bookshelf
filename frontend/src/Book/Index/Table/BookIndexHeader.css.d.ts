@@ -7,10 +7,12 @@ interface CssExports {
   'bookFileCount': string;
   'genres': string;
   'metadataProfileId': string;
+  'narrators': string;
   'path': string;
   'qualityProfileId': string;
   'ratings': string;
   'releaseDate': string;
+  'runtimeLengthMinutes': string;
   'sizeOnDisk': string;
   'status': string;
   'tags': string;

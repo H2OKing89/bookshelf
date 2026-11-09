@@ -156,6 +156,18 @@ namespace Readarr.Api.V1.Books
             };
         }
 
+        [HttpGet("{id:int}/chapters")]
+        public ActionResult<AudiobookChapterMetadata> Chapters(int id)
+        {
+            var edition = _editionService.GetEditionsByBook(id).SingleOrDefault(item => item.Monitored);
+            if (edition == null)
+            {
+                return NotFound();
+            }
+
+            return edition.ChapterMetadata ?? new AudiobookChapterMetadata();
+        }
+
         [RestPostById]
         public ActionResult<BookResource> AddBook(BookResource bookResource)
         {

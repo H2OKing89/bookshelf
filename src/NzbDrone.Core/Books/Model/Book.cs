@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text.Json.Serialization;
 using Equ;
 using NzbDrone.Common.Extensions;
@@ -16,6 +17,7 @@ namespace NzbDrone.Core.Books
         {
             Links = new List<Links>();
             Genres = new List<string>();
+            Classifications = new List<AudiobookClassification>();
             RelatedBooks = new List<int>();
             Ratings = new Ratings();
             Author = new Author();
@@ -32,6 +34,7 @@ namespace NzbDrone.Core.Books
         public DateTime? ReleaseDate { get; set; }
         public List<Links> Links { get; set; }
         public List<string> Genres { get; set; }
+        public List<AudiobookClassification> Classifications { get; set; }
         public List<int> RelatedBooks { get; set; }
         public Ratings Ratings { get; set; }
         public DateTime? LastSearchTime { get; set; }
@@ -79,6 +82,7 @@ namespace NzbDrone.Core.Books
             ReleaseDate = other.ReleaseDate;
             Links = other.Links;
             Genres = other.Genres;
+            Classifications = other.Classifications?.Any() == true ? other.Classifications.JsonClone() : Classifications;
             RelatedBooks = other.RelatedBooks;
             Ratings = other.Ratings;
             CleanTitle = other.CleanTitle;

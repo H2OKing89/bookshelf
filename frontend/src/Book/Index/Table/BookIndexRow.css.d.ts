@@ -12,11 +12,13 @@ interface CssExports {
   'genres': string;
   'link': string;
   'metadataProfileId': string;
+  'narrators': string;
   'overlayTitle': string;
   'path': string;
   'qualityProfileId': string;
   'ratings': string;
   'releaseDate': string;
+  'runtimeLengthMinutes': string;
   'sizeOnDisk': string;
   'status': string;
   'tags': string;

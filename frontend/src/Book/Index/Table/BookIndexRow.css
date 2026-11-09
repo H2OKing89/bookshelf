@@ -83,6 +83,18 @@
   flex: 1 0 150px;
 }
 
+.runtimeLengthMinutes {
+  composes: cell;
+
+  flex: 0 0 110px;
+}
+
+.narrators {
+  composes: cell;
+
+  flex: 1 0 180px;
+}
+
 .sizeOnDisk {
   composes: cell;
 

@@ -47,6 +47,7 @@ namespace Readarr.Api.V1.Author
         public string RootFolderPath { get; set; }
         public string Folder { get; set; }
         public List<string> Genres { get; set; }
+        public List<AudiobookPersonReference> SimilarAuthors { get; set; }
         public string CleanName { get; set; }
         public string SortName { get; set; }
         public string SortNameLastFirst { get; set; }
@@ -101,6 +102,7 @@ namespace Readarr.Api.V1.Author
                 // Root folder path is now calculated from the author path
                 // RootFolderPath = model.RootFolderPath,
                 Genres = model.Metadata.Value.Genres,
+                SimilarAuthors = model.Metadata.Value.SimilarAuthors,
                 Tags = model.Tags,
                 Added = model.Added,
                 AddOptions = model.AddOptions,
@@ -134,6 +136,7 @@ namespace Readarr.Api.V1.Author
                     Links = resource.Links,
                     Images = resource.Images,
                     Genres = resource.Genres,
+                    SimilarAuthors = resource.SimilarAuthors ?? new List<AudiobookPersonReference>(),
                     Ratings = resource.Ratings,
                 },
 

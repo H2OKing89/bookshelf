@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
@@ -36,6 +37,62 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
         }
 
         private static AudiobookMetadataProjection Project(Edition edition) => AudiobookMetadataCleanup.Project(edition.Book.Value, edition, Rules());
+
+        [Test]
+        [SetCulture("ar-SA")]
+        public void should_warn_about_distant_provider_dates_without_changing_metadata()
+        {
+            var edition = Recording("Main");
+            var releaseDate = new DateTime(2050, 12, 30, 0, 0, 0, DateTimeKind.Utc);
+            edition.ReleaseDate = releaseDate;
+            edition.Book.Value.ReleaseDate = releaseDate;
+            edition.Asin = "B012345678";
+
+            var result = AudiobookMetadataCleanup.Project(edition.Book.Value, edition, Rules(), today: new DateTime(2026, 11, 8));
+
+            result.Warnings.Should().Equal("The provider release date (2050-12-30) is more than 10 years away. Verify it with the publisher before relying on it.");
+            result.Changes.Should().BeEmpty();
+            edition.ReleaseDate.Should().Be(releaseDate);
+            edition.Book.Value.ReleaseDate.Should().Be(releaseDate);
+            edition.Asin.Should().Be("B012345678");
+            edition.Monitored.Should().BeTrue();
+        }
+
+        [TestCase(-1, false)]
+        [TestCase(0, false)]
+        [TestCase(1, true)]
+        public void should_warn_only_after_ten_calendar_years(int daysAfterThreshold, bool expected)
+        {
+            var today = new DateTime(2026, 11, 8);
+            var edition = Recording("Main");
+            edition.ReleaseDate = today.AddYears(10).AddDays(daysAfterThreshold).AddHours(12);
+
+            var result = AudiobookMetadataCleanup.Project(edition.Book.Value, edition, Rules(), today: today);
+
+            result.Warnings.Any().Should().Be(expected);
+        }
+
+        [Test]
+        public void should_not_warn_about_missing_release_dates()
+        {
+            var edition = Recording("Main");
+
+            AudiobookMetadataCleanup.Project(edition.Book.Value, edition, Rules(), today: new DateTime(2026, 11, 8))
+                .Warnings.Should().BeEmpty();
+        }
+
+        [Test]
+        public void should_retain_the_date_warning_when_title_cleanup_finds_a_series_conflict()
+        {
+            var edition = Recording("Series, Book 2", series: "Series", position: "1");
+            edition.Book.Value.ReleaseDate = new DateTime(2050, 12, 30);
+
+            var result = AudiobookMetadataCleanup.Project(edition.Book.Value, edition, Rules(), today: new DateTime(2026, 11, 8));
+
+            result.Warnings.Should().Contain(warning => warning.Contains("provider release date (2050-12-30)"));
+            result.Warnings.Should().Contain(warning => warning.Contains("conflicts with the catalog series position"));
+            edition.Book.Value.ReleaseDate.Should().Be(new DateTime(2050, 12, 30));
+        }
 
         [TestCase("Main: A LitRPG Adventure", "Main", "LitRPG")]
         [TestCase("Main - A Fantasy LitRPG Adventure", "Main", "LitRPG")]

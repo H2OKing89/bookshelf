@@ -4,6 +4,7 @@ import React, { Component } from 'react';
 import TextTruncate from 'react-text-truncate';
 import AuthorNameLink from 'Author/AuthorNameLink';
 import BookCover from 'Book/BookCover';
+import Alert from 'Components/Alert';
 import HeartRating from 'Components/HeartRating';
 import Icon from 'Components/Icon';
 import Label from 'Components/Label';
@@ -35,8 +36,7 @@ class BookDetailsHeader extends Component {
     super(props);
 
     this.state = {
-      overviewHeight: 0,
-      titleWidth: 0
+      overviewHeight: 0
     };
   }
 
@@ -45,10 +45,6 @@ class BookDetailsHeader extends Component {
 
   onOverviewMeasure = ({ height }) => {
     this.setState({ overviewHeight: height });
-  };
-
-  onTitleMeasure = ({ width }) => {
-    this.setState({ titleWidth: width });
   };
 
   //
@@ -65,6 +61,7 @@ class BookDetailsHeader extends Component {
       seriesTitle,
       displaySeriesTitle,
       metadataLabels = [],
+      metadataWarnings = [],
       pageCount,
       narrators = [],
       runtimeLengthMinutes,
@@ -83,204 +80,208 @@ class BookDetailsHeader extends Component {
     } = this.props;
 
     const {
-      overviewHeight,
-      titleWidth
+      overviewHeight
     } = this.state;
 
     const fanartUrl = getFanartUrl(author.images);
-    const marqueeWidth = titleWidth - (isSmallScreen ? 85 : 160);
     const visibleSubtitle = displaySubtitle === undefined ? subtitle : displaySubtitle;
     const visibleSeries = displaySeriesTitle === undefined ? seriesTitle : displaySeriesTitle;
 
     return (
-      <div className={styles.header} style={{ width }}>
-        <div
-          className={styles.backdrop}
-          style={
-            fanartUrl ?
-              { backgroundImage: `url(${fanartUrl})` } :
-              null
-          }
-        >
-          <div className={styles.backdropOverlay} />
-        </div>
+      <div className={styles.headerContainer} style={{ width }}>
+        <div className={styles.header}>
+          <div
+            className={styles.backdrop}
+            style={
+              fanartUrl ?
+                { backgroundImage: `url(${fanartUrl})` } :
+                null
+            }
+          >
+            <div className={styles.backdropOverlay} />
+          </div>
 
-        <div className={styles.headerContent}>
-          <BookCover
-            className={styles.cover}
-            images={images}
-            size={250}
-            lazy={false}
-          />
+          <div className={styles.headerContent}>
+            <BookCover
+              className={styles.cover}
+              images={images}
+              size={250}
+              lazy={false}
+            />
 
-          <div className={styles.info}>
-            <Measure
-              className={styles.titleRow}
-              onMeasure={this.onTitleMeasure}
-            >
-              <div className={styles.titleContainer}>
-                <div className={styles.toggleMonitoredContainer}>
-                  <MonitorToggleButton
-                    className={styles.monitorToggleButton}
-                    monitored={monitored}
-                    isSaving={isSaving}
-                    size={isSmallScreen ? 30 : 40}
-                    onPress={onMonitorTogglePress}
-                  />
-                </div>
-
-                <div className={styles.title} style={{ width: marqueeWidth }}>
-                  <Marquee text={displayTitle || title} />
-                </div>
-
-              </div>
-            </Measure>
-
-            <div className={styles.details}>
-              {
-                displayTitle && displayTitle !== title &&
-                  <div>{translate('PublishedTitle', [title])}</div>
-              }
-
-              {
-                visibleSubtitle &&
-                  <div>{visibleSubtitle}</div>
-              }
-
-              <div>
-                {visibleSeries === (displayTitle || title) ? null : visibleSeries}
-              </div>
-
-              <div>
-                <AuthorNameLink
-                  className={styles.authorLink}
-                  titleSlug={author.titleSlug}
-                  authorName={author.authorName}
-                />
-
-                {
-                  !!runtimeLengthMinutes &&
-                    <span className={styles.duration}>
-                      {translate('RuntimeMinutes', [runtimeLengthMinutes])}
-                    </span>
-                }
-
-                {
-                  !runtimeLengthMinutes && !!pageCount &&
-                    <span className={styles.duration}>
-                      {`${pageCount} pages`}
-                    </span>
-                }
-
-                <HeartRating
-                  rating={ratings.value}
-                  iconSize={20}
-                />
-              </div>
-
-              {
-                narrators.length > 0 &&
-                  <div>
-                    {translate('NarratedBy', [narrators.join(', ')])}
+            <div className={styles.info}>
+              <div className={styles.titleRow}>
+                <div className={styles.titleContainer}>
+                  <div className={styles.toggleMonitoredContainer}>
+                    <MonitorToggleButton
+                      className={styles.monitorToggleButton}
+                      monitored={monitored}
+                      isSaving={isSaving}
+                      size={isSmallScreen ? 30 : 40}
+                      onPress={onMonitorTogglePress}
+                    />
                   </div>
-              }
-            </div>
 
-            <div className={styles.detailsLabels}>
-              {
-                metadataLabels.map((label) => (
-                  <Label key={label} className={styles.detailsLabel} size={sizes.LARGE}>
-                    {label}
-                  </Label>
-                ))
-              }
-              {
-                releaseDate &&
-                  <Label
-                    className={styles.detailsLabel}
-                    size={sizes.LARGE}
-                  >
-                    <Icon
-                      name={icons.CALENDAR}
-                      size={17}
-                    />
+                  <div className={styles.title}>
+                    {isSmallScreen ? displayTitle || title : <Marquee text={displayTitle || title} />}
+                  </div>
 
-                    <span className={styles.sizeOnDisk}>
-                      {
-                        moment(releaseDate).format(shortDateFormat)
-                      }
-                    </span>
-                  </Label>
-              }
+                </div>
+              </div>
 
-              <Label
-                className={styles.detailsLabel}
-                size={sizes.LARGE}
-              >
-                <Icon
-                  name={icons.DRIVE}
-                  size={17}
-                />
-
-                <span className={styles.sizeOnDisk}>
-                  {
-                    formatBytes(statistics.sizeOnDisk)
-                  }
-                </span>
-              </Label>
-
-              <Label
-                className={styles.detailsLabel}
-                size={sizes.LARGE}
-              >
-                <Icon
-                  name={monitored ? icons.MONITORED : icons.UNMONITORED}
-                  size={17}
-                />
-
-                <span className={styles.qualityProfileName}>
-                  {monitored ? 'Monitored' : 'Unmonitored'}
-                </span>
-              </Label>
-
-              <Tooltip
-                anchor={
-                  <Label
-                    className={styles.detailsLabel}
-                    size={sizes.LARGE}
-                  >
-                    <Icon
-                      name={icons.EXTERNAL_LINK}
-                      size={17}
-                    />
-
-                    <span className={styles.links}>
-                      Links
-                    </span>
-                  </Label>
+              <div className={styles.details}>
+                {
+                  displayTitle && displayTitle !== title &&
+                    <div>{translate('PublishedTitle', [title])}</div>
                 }
-                tooltip={
-                  <BookDetailsLinks
-                    titleSlug={titleSlug}
-                    links={links}
+
+                {
+                  visibleSubtitle &&
+                    <div>{visibleSubtitle}</div>
+                }
+
+                <div>
+                  {visibleSeries === (displayTitle || title) ? null : visibleSeries}
+                </div>
+
+                <div>
+                  <AuthorNameLink
+                    className={styles.authorLink}
+                    titleSlug={author.titleSlug}
+                    authorName={author.authorName}
                   />
-                }
-                kind={kinds.INVERSE}
-                position={tooltipPositions.BOTTOM}
-              />
 
+                  {
+                    !!runtimeLengthMinutes &&
+                      <span className={styles.duration}>
+                        {translate('RuntimeMinutes', [runtimeLengthMinutes])}
+                      </span>
+                  }
+
+                  {
+                    !runtimeLengthMinutes && !!pageCount &&
+                      <span className={styles.duration}>
+                        {`${pageCount} pages`}
+                      </span>
+                  }
+
+                  <HeartRating
+                    rating={ratings.value}
+                    iconSize={20}
+                  />
+                </div>
+
+                {
+                  narrators.length > 0 &&
+                    <div>
+                      {translate('NarratedBy', [narrators.join(', ')])}
+                    </div>
+                }
+              </div>
+
+              <div className={styles.detailsLabels}>
+                {
+                  metadataLabels.map((label) => (
+                    <Label key={label} className={styles.detailsLabel} size={sizes.LARGE}>
+                      {label}
+                    </Label>
+                  ))
+                }
+                {
+                  releaseDate &&
+                    <Label
+                      className={styles.detailsLabel}
+                      size={sizes.LARGE}
+                    >
+                      <Icon
+                        name={icons.CALENDAR}
+                        size={17}
+                      />
+
+                      <span className={styles.sizeOnDisk}>
+                        {
+                          moment(releaseDate).format(shortDateFormat)
+                        }
+                      </span>
+                    </Label>
+                }
+
+                <Label
+                  className={styles.detailsLabel}
+                  size={sizes.LARGE}
+                >
+                  <Icon
+                    name={icons.DRIVE}
+                    size={17}
+                  />
+
+                  <span className={styles.sizeOnDisk}>
+                    {
+                      formatBytes(statistics.sizeOnDisk)
+                    }
+                  </span>
+                </Label>
+
+                <Label
+                  className={styles.detailsLabel}
+                  size={sizes.LARGE}
+                >
+                  <Icon
+                    name={monitored ? icons.MONITORED : icons.UNMONITORED}
+                    size={17}
+                  />
+
+                  <span className={styles.qualityProfileName}>
+                    {monitored ? 'Monitored' : 'Unmonitored'}
+                  </span>
+                </Label>
+
+                <Tooltip
+                  anchor={
+                    <Label
+                      className={styles.detailsLabel}
+                      size={sizes.LARGE}
+                    >
+                      <Icon
+                        name={icons.EXTERNAL_LINK}
+                        size={17}
+                      />
+
+                      <span className={styles.links}>
+                        Links
+                      </span>
+                    </Label>
+                  }
+                  tooltip={
+                    <BookDetailsLinks
+                      titleSlug={titleSlug}
+                      links={links}
+                    />
+                  }
+                  kind={kinds.INVERSE}
+                  position={tooltipPositions.BOTTOM}
+                />
+
+              </div>
+              <Measure
+                onMeasure={this.onOverviewMeasure}
+                className={styles.overview}
+              >
+                <TextTruncate
+                  line={Math.floor(overviewHeight / (defaultFontSize * lineHeight))}
+                  text={stripHtml(overview)}
+                />
+              </Measure>
             </div>
-            <Measure
-              onMeasure={this.onOverviewMeasure}
-              className={styles.overview}
-            >
-              <TextTruncate
-                line={Math.floor(overviewHeight / (defaultFontSize * lineHeight))}
-                text={stripHtml(overview)}
-              />
-            </Measure>
           </div>
         </div>
+        {
+          metadataWarnings.map((warning) => (
+            <Alert key={warning} kind={kinds.WARNING} role="status">
+              {warning}
+            </Alert>
+          ))
+        }
       </div>
     );
   }
@@ -297,12 +298,13 @@ BookDetailsHeader.propTypes = {
   seriesTitle: PropTypes.string.isRequired,
   displaySeriesTitle: PropTypes.string,
   metadataLabels: PropTypes.arrayOf(PropTypes.string),
+  metadataWarnings: PropTypes.arrayOf(PropTypes.string),
   pageCount: PropTypes.number,
   narrators: PropTypes.arrayOf(PropTypes.string),
   runtimeLengthMinutes: PropTypes.number,
   overview: PropTypes.string,
   statistics: PropTypes.object.isRequired,
-  releaseDate: PropTypes.string.isRequired,
+  releaseDate: PropTypes.string,
   ratings: PropTypes.object.isRequired,
   images: PropTypes.arrayOf(PropTypes.object).isRequired,
   links: PropTypes.arrayOf(PropTypes.object).isRequired,

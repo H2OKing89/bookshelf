@@ -18,7 +18,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         public static AuthorMetadata Author(AudnexusContributorResource contributor, string region, AudiobookAuthorIdentity identity = null)
         {
             var asin = identity?.Asin ?? contributor.Asin;
-            var name = identity?.Name ?? AudiobookTextNormalizer.Text(contributor.Name);
+            var name = identity?.Name ?? AudiobookContributors.Credit(contributor, "Author")?.Name;
             var id = AudiobookId.IsAsin(asin)
                 ? AudiobookId.ForAsin(region, asin)
                 : AudiobookId.ForName(region, contributor.Name);
@@ -34,7 +34,15 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 SortNameLastFirst = name,
                 Aliases = AudiobookTextNormalizer.Names((identity?.Aliases ?? Array.Empty<string>()).Append(contributor.Name))
                     .Where(alias => !string.Equals(alias, name, StringComparison.OrdinalIgnoreCase)).ToList(),
-                Overview = profile?.Description,
+                Overview = AudiobookSynopsis.Clean(profile?.Description),
+                Genres = AudiobookTextNormalizer.Names(profile?.Genres?.Select(genre => genre?.Name)),
+                SimilarAuthors = (profile?.Similar ?? new List<AudnexusContributorResource>())
+                    .Where(person => AudiobookTextNormalizer.Text(person?.Name) != null)
+                    .Select(person => new AudiobookPersonReference
+                    {
+                        Name = AudiobookTextNormalizer.Text(person.Name),
+                        Asin = AudiobookId.IsAsin(person.Asin) ? person.Asin : null
+                    }).DistinctBy(person => person.Asin ?? person.Name.ToUpperInvariant()).ToList(),
                 Status = AuthorStatusType.Continuing
             };
             AddImage(result.Images, profile?.Image, MediaCoverTypes.Poster);
@@ -48,21 +56,29 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
         public static Book Book(AudnexusBookResource resource, string region, AuthorMetadata expectedAuthor = null, AudiobookAuthorIdentity identity = null)
         {
+            if (resource != null && !AudiobookCatalogPolicy.IsRecording(resource))
+            {
+                throw new BookInfoException("The catalog product is not an audiobook recording.");
+            }
+
             if (!AudiobookId.IsAsin(resource?.Asin) || resource.Region != region || resource.Title.IsNullOrWhiteSpace() ||
-                resource.Authors?.Any(a => a?.Name.IsNotNullOrWhiteSpace() == true) != true)
+                AudiobookContributors.PrimaryAuthor(resource) == null)
             {
                 throw new BookInfoException("Audiobook metadata is missing its ASIN, marketplace, title, or author.");
             }
 
-            var contributor = resource.Authors.First(a => a?.Name.IsNotNullOrWhiteSpace() == true);
+            var contributor = AudiobookContributors.PrimaryAuthor(resource);
             var metadata = Author(contributor, region, identity);
+            var contributors = AudiobookContributors.All(resource);
 
-            // A missing contributor ASIN can use the author already established for
-            // this bibliography/recording. A conflicting ASIN must remain separate.
-            if (!AudiobookId.IsAsin(contributor.Asin) && expectedAuthor != null &&
-                AudiobookId.Parse(expectedAuthor.ForeignAuthorId).Region == region &&
-                new[] { expectedAuthor.Name }.Concat(expectedAuthor.Aliases).Any(name =>
-                    string.Equals(AudiobookTextNormalizer.Text(name), AudiobookTextNormalizer.Text(contributor.Name), StringComparison.OrdinalIgnoreCase)))
+            // Credit ordering is not ownership: retain the established author when
+            // their explicit identity is among the recording's author credits.
+            // Names are a fallback only when the primary credit has no ASIN.
+            if (expectedAuthor != null && AudiobookId.Parse(expectedAuthor.ForeignAuthorId).Region == region &&
+                (contributors.Any(credit => credit.Role == "Author" && AudiobookId.IsAsin(credit.Asin) &&
+                    AudiobookId.ForAsin(region, credit.Asin) == expectedAuthor.ForeignAuthorId) ||
+                 (!AudiobookId.IsAsin(contributor.Asin) && new[] { expectedAuthor.Name }.Concat(expectedAuthor.Aliases).Any(name =>
+                    string.Equals(AudiobookTextNormalizer.Text(name), AudiobookTextNormalizer.Text(contributor.Name), StringComparison.OrdinalIgnoreCase)))))
             {
                 metadata = expectedAuthor;
             }
@@ -70,7 +86,8 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             var author = new Author { Metadata = metadata, CleanName = Parser.Parser.CleanAuthorName(metadata.Name), Series = new List<Series>() };
             var id = AudiobookId.ForAsin(region, resource.Asin);
             decimal.TryParse(resource.Rating, NumberStyles.Number, CultureInfo.InvariantCulture, out var rating);
-            var releaseDate = CalendarDate.Normalize(resource.ReleaseDate);
+            var sourceDate = CalendarDate.Normalize(resource.ReleaseDate);
+            var releaseDate = AudiobookReleaseDate.Normalize(resource.ReleaseDate);
             var edition = new Edition
             {
                 ForeignEditionId = id,
@@ -79,7 +96,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 AudibleRegion = region,
                 Title = resource.Title,
                 Subtitle = AudiobookTextNormalizer.Text(resource.Subtitle),
-                Overview = resource.Description,
+                Overview = AudiobookSynopsis.Select(resource.Summary, resource.Description),
                 Language = AudiobookTextNormalizer.Language(resource.Language),
                 Format = "Audiobook",
                 Disambiguation = AudiobookTextNormalizer.Text(resource.FormatType)?.ToLowerInvariant(),
@@ -87,7 +104,13 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 Isbn13 = resource.Isbn,
                 ReleaseDate = releaseDate,
                 RuntimeLengthMinutes = resource.RuntimeLengthMin > 0 ? resource.RuntimeLengthMin : null,
-                Narrators = AudiobookTextNormalizer.Names(resource.Narrators?.Select(n => n?.Name)),
+                Narrators = AudiobookTextNormalizer.Names(contributors.Where(credit => credit.Role == "Narrator").Select(credit => credit.Name)),
+                Contributors = contributors,
+                CopyrightYear = resource.Copyright is >= 1000 and <= 9999 ? resource.Copyright : null,
+                IsAdult = resource.IsAdult,
+                LiteratureType = AudiobookTextNormalizer.Text(resource.LiteratureType)?.ToLowerInvariant(),
+                SourceReleaseDate = sourceDate,
+                ReleaseDateIsPlaceholder = AudiobookReleaseDate.IsPlaceholder(resource.ReleaseDate),
                 Ratings = new Ratings { Value = rating },
                 Monitored = true
             };
@@ -102,6 +125,14 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 CleanTitle = Parser.Parser.CleanBookTitle(resource.Title),
                 ReleaseDate = releaseDate,
                 Genres = AudiobookTextNormalizer.Names(resource.Genres?.Select(g => g?.Name)),
+                Classifications = (resource.Genres ?? new List<AudnexusGenreResource>())
+                    .Where(genre => AudiobookTextNormalizer.Text(genre?.Name) != null)
+                    .Select(genre => new AudiobookClassification
+                    {
+                        Name = AudiobookTextNormalizer.Text(genre.Name),
+                        Asin = AudiobookTextNormalizer.Text(genre.Asin),
+                        Type = AudiobookTextNormalizer.Text(genre.Type)?.ToLowerInvariant()
+                    }).DistinctBy(genre => (genre.Asin ?? genre.Name.ToUpperInvariant()) + ":" + genre.Type).ToList(),
                 Ratings = edition.Ratings,
                 Author = author,
                 AuthorMetadata = metadata,
@@ -114,6 +145,63 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             author.Books = new List<Book> { book };
             author.Series = book.SeriesLinks.Value.Select(x => x.Series.Value).ToList();
             return book;
+        }
+
+        public static AudiobookChapterMetadata Chapters(AudnexusChapterResource resource, string asin, string region)
+        {
+            if (resource == null)
+            {
+                return null;
+            }
+
+            if (resource.Asin != asin || resource.Region != region)
+            {
+                throw new BookInfoException("Audnexus chapters do not match this recording or marketplace.");
+            }
+
+            if (resource.Chapters?.Any() != true)
+            {
+                return null;
+            }
+
+            var chapters = new List<AudiobookChapter>();
+            long previousEnd = 0;
+            var previousOrdinal = 0;
+            foreach (var source in resource.Chapters)
+            {
+                var ordinal = source?.Ordinal ?? previousOrdinal + 1;
+                if (source == null || source.StartOffsetMs < 0 || source.LengthMs <= 0 ||
+                    source.StartOffsetMs < previousEnd || source.LengthMs > long.MaxValue - source.StartOffsetMs ||
+                    ordinal <= previousOrdinal)
+                {
+                    throw new BookInfoException("Audnexus returned invalid chapter positions or timings.");
+                }
+
+                previousEnd = source.StartOffsetMs + source.LengthMs;
+                previousOrdinal = ordinal;
+                chapters.Add(new AudiobookChapter
+                {
+                    Title = AudiobookTextNormalizer.Text(source.Title),
+                    Ordinal = ordinal,
+                    StartOffsetMs = source.StartOffsetMs,
+                    LengthMs = source.LengthMs
+                });
+            }
+
+            if (resource.RuntimeLengthMs is <= 0 ||
+                (resource.RuntimeLengthMs.HasValue && previousEnd > resource.RuntimeLengthMs.Value))
+            {
+                throw new BookInfoException("Audnexus chapter timings exceed the recording runtime.");
+            }
+
+            return new AudiobookChapterMetadata
+            {
+                RuntimeLengthMs = resource.RuntimeLengthMs ?? previousEnd,
+                BrandIntroDurationMs = resource.BrandIntroDurationMs >= 0 ? resource.BrandIntroDurationMs : null,
+                BrandOutroDurationMs = resource.BrandOutroDurationMs >= 0 ? resource.BrandOutroDurationMs : null,
+                IsAccurate = resource.IsAccurate,
+                Chapters = chapters
+            };
         }
 
         private static void AddSeries(Book book, AudnexusSeriesResource source, string region, bool primary)

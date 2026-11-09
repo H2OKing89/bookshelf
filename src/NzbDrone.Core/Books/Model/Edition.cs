@@ -5,6 +5,7 @@ using Equ;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.MetadataSource.Audiobook;
 
 namespace NzbDrone.Core.Books
 {
@@ -17,6 +18,7 @@ namespace NzbDrone.Core.Books
             Links = new List<Links>();
             Ratings = new Ratings();
             Narrators = new List<string>();
+            Contributors = new List<AudiobookContributor>();
         }
 
         // These correspond to columns in the Books table
@@ -28,7 +30,12 @@ namespace NzbDrone.Core.Books
         public string Asin { get; set; }
         public string AudibleRegion { get; set; }
         public List<string> Narrators { get; set; }
+        public List<AudiobookContributor> Contributors { get; set; }
+        public AudiobookChapterMetadata ChapterMetadata { get; set; }
         public int? RuntimeLengthMinutes { get; set; }
+        public int? CopyrightYear { get; set; }
+        public bool? IsAdult { get; set; }
+        public string LiteratureType { get; set; }
         public string Title { get; set; }
         public string Subtitle { get; set; }
         public string Language { get; set; }
@@ -39,6 +46,8 @@ namespace NzbDrone.Core.Books
         public string Publisher { get; set; }
         public int PageCount { get; set; }
         public DateTime? ReleaseDate { get; set; }
+        public DateTime? SourceReleaseDate { get; set; }
+        public bool ReleaseDateIsPlaceholder { get; set; }
         public List<MediaCover.MediaCover> Images { get; set; }
         public List<Links> Links { get; set; }
         public Ratings Ratings { get; set; }
@@ -66,7 +75,12 @@ namespace NzbDrone.Core.Books
             Asin = other.Asin;
             AudibleRegion = other.AudibleRegion;
             Narrators = other.Narrators;
+            Contributors = other.Contributors?.Any() == true ? other.Contributors.JsonClone() : Contributors;
+            ChapterMetadata = other.ChapterMetadata?.JsonClone() ?? ChapterMetadata;
             RuntimeLengthMinutes = other.RuntimeLengthMinutes;
+            CopyrightYear = other.CopyrightYear ?? CopyrightYear;
+            IsAdult = other.IsAdult ?? IsAdult;
+            LiteratureType = other.LiteratureType.IsNullOrWhiteSpace() ? LiteratureType : other.LiteratureType;
             Title = other.Title;
             Subtitle = other.Subtitle;
             Language = other.Language;
@@ -77,7 +91,13 @@ namespace NzbDrone.Core.Books
             Publisher = other.Publisher;
             PageCount = other.PageCount;
             ReleaseDate = other.ReleaseDate;
-            Images = other.Images.Any() ? other.Images : Images;
+            if (other.SourceReleaseDate.HasValue || other.ReleaseDate.HasValue || other.ReleaseDateIsPlaceholder)
+            {
+                SourceReleaseDate = other.SourceReleaseDate ?? other.ReleaseDate;
+                ReleaseDateIsPlaceholder = other.ReleaseDateIsPlaceholder;
+            }
+
+            Images = AudiobookCoverSelector.PreferLarger(other.Images, Images);
             Links = other.Links;
             Ratings = other.Ratings;
         }

@@ -9,7 +9,6 @@ using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.MetadataSource;
-using NzbDrone.Core.Organizer;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Test.Common;
 
@@ -43,9 +42,9 @@ namespace NzbDrone.Core.Test.MusicTests
 
         private void GivenValidPath()
         {
-            Mocker.GetMock<IBuildFileNames>()
-                  .Setup(s => s.GetAuthorFolder(It.IsAny<Author>(), null))
-                  .Returns<Author, NamingConfig>((c, n) => c.Name);
+            Mocker.GetMock<IBuildAuthorPaths>()
+                  .Setup(s => s.BuildPath(It.IsAny<Author>(), false))
+                  .Returns<Author, bool>((author, _) => Path.Combine(author.RootFolderPath, author.Name));
 
             Mocker.GetMock<IAddAuthorValidator>()
                   .Setup(s => s.Validate(It.IsAny<Author>()))
@@ -84,6 +83,40 @@ namespace NzbDrone.Core.Test.MusicTests
             var author = Subject.AddAuthor(newAuthor);
 
             author.Path.Should().Be(Path.Combine(newAuthor.RootFolderPath, _fakeAuthor.Name));
+        }
+
+        [Test]
+        public void should_use_the_existing_folder_selected_by_the_path_builder()
+        {
+            var newAuthor = new Author
+            {
+                ForeignAuthorId = "ce09ea31-3d4a-4487-a797-e315175457a0",
+                RootFolderPath = Path.GetTempPath()
+            };
+            var existingPath = Path.Combine(newAuthor.RootFolderPath, "Existing alias");
+            GivenValidAuthor(newAuthor.ForeignAuthorId);
+            GivenValidPath();
+            Mocker.GetMock<IBuildAuthorPaths>()
+                .Setup(x => x.BuildPath(It.IsAny<Author>(), false)).Returns(existingPath);
+
+            Subject.AddAuthor(newAuthor).Path.Should().Be(existingPath);
+        }
+
+        [Test]
+        public void should_preserve_an_explicit_author_path()
+        {
+            var newAuthor = new Author
+            {
+                ForeignAuthorId = "ce09ea31-3d4a-4487-a797-e315175457a0",
+                Path = Path.Combine(Path.GetTempPath(), "My custom folder")
+            };
+            GivenValidAuthor(newAuthor.ForeignAuthorId);
+            GivenValidPath();
+
+            Subject.AddAuthor(newAuthor).Path.Should().Be(newAuthor.Path);
+
+            Mocker.GetMock<IBuildAuthorPaths>()
+                .Verify(x => x.BuildPath(It.IsAny<Author>(), It.IsAny<bool>()), Times.Never());
         }
 
         [Test]

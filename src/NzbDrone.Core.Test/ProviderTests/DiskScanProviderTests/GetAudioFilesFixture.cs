@@ -24,6 +24,7 @@ namespace NzbDrone.Core.Test.ProviderTests.DiskScanProviderTests
                         {
                             @"30 Rock1.mp3",
                             @"30 Rock2.flac",
+                            @"30 Rock5.m4b",
                             @"30 Rock3.pdf",
                             @"30 Rock4.epub",
                             @"30 Rock.mobi",
@@ -83,11 +84,12 @@ namespace NzbDrone.Core.Test.ProviderTests.DiskScanProviderTests
         }
 
         [Test]
-        public void should_return_book_files_only()
+        public void should_return_audio_files_only()
         {
             GivenFiles(GetFiles(_path));
 
-            Subject.GetBookFiles(_path).Should().HaveCount(5);
+            Subject.GetBookFiles(_path).Select(file => file.Name)
+                .Should().BeEquivalentTo("30 Rock1.mp3", "30 Rock2.flac", "30 Rock5.m4b");
         }
 
         [TestCase("Extras")]

@@ -4,7 +4,10 @@ using System.Linq;
 using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.Configuration;
 using NzbDrone.Core.MetadataSource;
+using NzbDrone.Core.MetadataSource.Audiobook;
+using NzbDrone.Core.MetadataSource.Audnexus;
 using NzbDrone.Core.MetadataSource.BookInfo;
 using NzbDrone.Core.MetadataSource.Goodreads;
 using NzbDrone.Core.Parser.Model;
@@ -24,6 +27,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
         private readonly IBookService _bookService;
         private readonly IEditionService _editionService;
         private readonly IMediaFileService _mediaFileService;
+        private readonly IConfigService _configService;
         private readonly Logger _logger;
 
         public CandidateService(ISearchForNewBook bookSearchService,
@@ -31,6 +35,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
                                 IBookService bookService,
                                 IEditionService editionService,
                                 IMediaFileService mediaFileService,
+                                IConfigService configService,
                                 Logger logger)
         {
             _bookSearchService = bookSearchService;
@@ -38,12 +43,33 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
             _bookService = bookService;
             _editionService = editionService;
             _mediaFileService = mediaFileService;
+            _configService = configService;
             _logger = logger;
         }
 
         public List<CandidateEdition> GetDbCandidatesFromTags(LocalEdition localEdition, IdentificationOverrides idOverrides, bool includeExisting)
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
+
+            var asin = GetRecordingAsin(localEdition, out var conflict);
+            if (conflict)
+            {
+                _logger.Debug("Conflicting recording ASINs; automatic identification requires an unambiguous recording");
+                return new List<CandidateEdition>();
+            }
+
+            if (asin != null)
+            {
+                var region = GetMarketplace(idOverrides);
+                var edition = _editionService.GetEditionByForeignEditionId(AudiobookId.ForAsin(region, asin));
+                if (edition == null || !string.Equals(edition.Asin, asin, StringComparison.OrdinalIgnoreCase) || !SatisfiesOverride(edition, idOverrides))
+                {
+                    return new List<CandidateEdition>();
+                }
+
+                _logger.Debug("Selecting recording {0} from exact ASIN {1} in marketplace {2}", edition, asin, region);
+                return GetDbCandidatesByEdition(new List<Edition> { edition }, includeExisting);
+            }
 
             // Generally author, book and release are null.  But if they're not then limit candidates appropriately.
             // We've tried to make sure that tracks are all for a single release.
@@ -202,6 +228,31 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
             List<Book> remoteBooks;
             var seenCandidates = new HashSet<string>();
 
+            var recordingAsin = GetRecordingAsin(localEdition, out var conflict);
+            if (conflict)
+            {
+                yield break;
+            }
+
+            if (recordingAsin != null)
+            {
+                var region = GetMarketplace(idOverrides);
+                var identity = AudiobookId.ForAsin(region, recordingAsin);
+                remoteBooks = TryRemoteSearch(localEdition, "ASIN search", () => region == (_configService.AudnexusRegion ?? "us")
+                    ? _bookSearchService.SearchByAsin(recordingAsin)
+                    : _bookSearchService.SearchForNewBook(identity, null));
+                foreach (var candidate in ToCandidates(remoteBooks, seenCandidates, idOverrides)
+                    .Where(candidate => string.Equals(candidate.Edition.Asin, recordingAsin, StringComparison.OrdinalIgnoreCase) &&
+                                        (!AudiobookId.IsNative(candidate.Edition.ForeignEditionId) || candidate.Edition.ForeignEditionId == identity)))
+                {
+                    yield return candidate;
+                }
+
+                // A different ASIN denotes a different recording. Title similarity must not
+                // silently replace an explicit recording identity, including when it is absent.
+                yield break;
+            }
+
             var isbns = localEdition.LocalBooks.Select(x => x.FileTrackInfo.Isbn).Distinct().ToList();
             var asins = localEdition.LocalBooks.Select(x => x.FileTrackInfo.Asin).Distinct().ToList();
             var goodreads = localEdition.LocalBooks.Select(x => x.FileTrackInfo.GoodreadsId).Distinct().ToList();
@@ -330,6 +381,34 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
                     yield return candidate;
                 }
             }
+        }
+
+        private static string GetRecordingAsin(LocalEdition localEdition, out bool conflict)
+        {
+            var audioTracks = localEdition.LocalBooks.Where(track => MediaFileExtensions.AudioExtensions.Contains(System.IO.Path.GetExtension(track.Path))).ToList();
+            foreach (var track in audioTracks)
+            {
+                AudioRecordingIdentifier.Apply(track.FileTrackInfo, track.Path, null);
+            }
+
+            var asins = audioTracks.Select(track => AudioRecordingIdentifier.Normalize(track.FileTrackInfo.Asin))
+                .Where(asin => asin != null)
+                .Distinct()
+                .ToList();
+            conflict = audioTracks.Any(track => track.FileTrackInfo.AsinConflict) || asins.Count > 1;
+            return asins.Count == 1 ? asins[0] : null;
+        }
+
+        private string GetMarketplace(IdentificationOverrides idOverrides)
+        {
+            var identity = idOverrides?.Edition?.ForeignEditionId ?? idOverrides?.Book?.ForeignBookId ?? idOverrides?.Author?.ForeignAuthorId;
+            var parts = identity?.Split(':');
+            if (parts?.Length >= 3 && parts[0] == "audible" && AudnexusProxy.Regions.Contains(parts[1]))
+            {
+                return parts[1];
+            }
+
+            return _configService.AudnexusRegion ?? "us";
         }
 
         // Runs a remote metadata search, marking the edition as successfully searched when the call

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Books;
 
 namespace NzbDrone.Core.MetadataSource.Audiobook
@@ -21,7 +23,8 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             IEnumerable<AudiobookMetadataCleanupRule> rules,
             string correctedTitle = null,
             bool protectTitle = false,
-            bool protectSubtitle = false)
+            bool protectSubtitle = false,
+            DateTime? today = null)
         {
             book ??= edition?.Book?.Value ?? new Book();
             edition ??= book.Editions?.Value?.SingleOrDefault(item => item.Monitored);
@@ -37,6 +40,12 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 TitleProtected = protectTitle, SubtitleProtected = protectSubtitle
             };
             projection.DisplayTitle = projection.Title;
+            var releaseDate = CalendarDate.Normalize(book.ReleaseDate ?? edition?.ReleaseDate);
+            if (releaseDate.HasValue && releaseDate.Value > CalendarDate.Normalize(today ?? DateTime.UtcNow).AddYears(10))
+            {
+                projection.Warnings.Add($"The provider release date ({releaseDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}) is more than 10 years away. Verify it with the publisher before relying on it.");
+            }
+
             if (correctedTitle != null && !string.Equals(correctedTitle, originalTitle, StringComparison.Ordinal))
             {
                 AddChange(projection, "title", originalTitle, originalTitle, null, "Verified title correction");

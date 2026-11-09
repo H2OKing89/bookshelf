@@ -8,14 +8,13 @@ using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
-using NzbDrone.Core.Organizer;
 
 namespace NzbDrone.Core.Books
 {
     public class MoveAuthorService : IExecute<MoveAuthorCommand>, IExecute<BulkMoveAuthorCommand>
     {
         private readonly IAuthorService _authorService;
-        private readonly IBuildFileNames _filenameBuilder;
+        private readonly IBuildAuthorPaths _authorPathBuilder;
         private readonly IDiskProvider _diskProvider;
         private readonly IRootFolderWatchingService _rootFolderWatchingService;
         private readonly IDiskTransferService _diskTransferService;
@@ -23,7 +22,7 @@ namespace NzbDrone.Core.Books
         private readonly Logger _logger;
 
         public MoveAuthorService(IAuthorService authorService,
-                                 IBuildFileNames filenameBuilder,
+                                 IBuildAuthorPaths authorPathBuilder,
                                  IDiskProvider diskProvider,
                                  IRootFolderWatchingService rootFolderWatchingService,
                                  IDiskTransferService diskTransferService,
@@ -31,7 +30,7 @@ namespace NzbDrone.Core.Books
                                  Logger logger)
         {
             _authorService = authorService;
-            _filenameBuilder = filenameBuilder;
+            _authorPathBuilder = authorPathBuilder;
             _diskProvider = diskProvider;
             _rootFolderWatchingService = rootFolderWatchingService;
             _diskTransferService = diskTransferService;
@@ -105,7 +104,8 @@ namespace NzbDrone.Core.Books
             {
                 var s = authorToMove[index];
                 var author = _authorService.GetAuthor(s.AuthorId);
-                var destinationPath = Path.Combine(destinationRootFolder, _filenameBuilder.GetAuthorFolder(author));
+                author.RootFolderPath = destinationRootFolder;
+                var destinationPath = _authorPathBuilder.BuildPath(author, false);
 
                 MoveSingleAuthor(author, s.SourcePath, destinationPath, index, authorToMove.Count);
             }

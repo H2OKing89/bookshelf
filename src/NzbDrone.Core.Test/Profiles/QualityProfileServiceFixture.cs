@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using FizzWare.NBuilder;
+using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
@@ -8,6 +9,7 @@ using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.ImportLists;
 using NzbDrone.Core.Lifecycle;
 using NzbDrone.Core.Profiles.Qualities;
+using NzbDrone.Core.Qualities;
 using NzbDrone.Core.RootFolders;
 using NzbDrone.Core.Test.Framework;
 
@@ -18,8 +20,13 @@ namespace NzbDrone.Core.Test.Profiles
     public class QualityProfileServiceFixture : CoreTest<QualityProfileService>
     {
         [Test]
-        public void init_should_add_default_profiles()
+        public void init_should_add_default_audiobook_profile()
         {
+            QualityProfile added = null;
+            Mocker.GetMock<IProfileRepository>()
+                .Setup(repository => repository.Insert(It.IsAny<QualityProfile>()))
+                .Callback<QualityProfile>(profile => added = profile);
+
             Mocker.GetMock<ICustomFormatService>()
                 .Setup(s => s.All())
                 .Returns(new List<CustomFormat>());
@@ -27,7 +34,13 @@ namespace NzbDrone.Core.Test.Profiles
             Subject.Handle(new ApplicationStartedEvent());
 
             Mocker.GetMock<IProfileRepository>()
-                .Verify(v => v.Insert(It.IsAny<QualityProfile>()), Times.Exactly(2));
+                .Verify(v => v.Insert(It.IsAny<QualityProfile>()), Times.Once());
+
+            added.Should().NotBeNull();
+            added.Name.Should().Be("Audiobooks");
+            added.Cutoff.Should().Be(Quality.MP3.Id);
+            added.Items.Where(item => item.Allowed).SelectMany(item => item.GetQualities())
+                .Should().BeEquivalentTo(Quality.UnknownAudio, Quality.MP3, Quality.M4B, Quality.FLAC);
         }
 
         [Test]

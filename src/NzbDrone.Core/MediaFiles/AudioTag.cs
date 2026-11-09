@@ -16,6 +16,8 @@ namespace NzbDrone.Core.MediaFiles
     public class AudioTag
     {
         private static readonly Logger Logger = NzbDroneLogger.GetLogger(typeof(AudioTag));
+        private readonly List<string> _embeddedAsins = new List<string>();
+        private string _path;
 
         public string Title { get; set; }
         public string[] Performers { get; set; }
@@ -53,6 +55,9 @@ namespace NzbDrone.Core.MediaFiles
         public void Read(string path)
         {
             Logger.Debug($"Starting tag read for {path}");
+
+            _path = path;
+            _embeddedAsins.Clear();
 
             IsValid = false;
             TagLib.File file = null;
@@ -95,6 +100,7 @@ namespace NzbDrone.Core.MediaFiles
                 Duration = file.Properties.Duration;
                 Genres = tag.Genres;
                 ImageSize = tag.Pictures.FirstOrDefault()?.Data.Count ?? 0;
+                _embeddedAsins.Add(tag.AmazonId);
 
                 DateTime tempDate;
 
@@ -105,6 +111,7 @@ namespace NzbDrone.Core.MediaFiles
                     Media = id3tag.GetTextAsString("TMED");
                     Date = ReadId3Date(id3tag, "TDRC");
                     OriginalReleaseDate = ReadId3Date(id3tag, "TDOR");
+                    _embeddedAsins.AddRange(UserTextInformationFrame.Get(id3tag, "ASIN", false)?.Text ?? Array.Empty<string>());
                 }
                 else if (file.TagTypesOnDisk.HasFlag(TagTypes.Xiph))
                 {
@@ -115,6 +122,7 @@ namespace NzbDrone.Core.MediaFiles
                     Date = DateTime.TryParse(flactag.GetField("DATE").ExclusiveOrDefault(), out tempDate) ? tempDate : default(DateTime?);
                     OriginalReleaseDate = DateTime.TryParse(flactag.GetField("ORIGINALDATE").ExclusiveOrDefault(), out tempDate) ? tempDate : default(DateTime?);
                     Publisher = flactag.GetField("LABEL").ExclusiveOrDefault();
+                    _embeddedAsins.AddRange(flactag.GetField("ASIN") ?? Array.Empty<string>());
                 }
                 else if (file.TagTypesOnDisk.HasFlag(TagTypes.Ape))
                 {
@@ -123,6 +131,7 @@ namespace NzbDrone.Core.MediaFiles
                     Date = DateTime.TryParse(apetag.GetItem("Year")?.ToString(), out tempDate) ? tempDate : default(DateTime?);
                     OriginalReleaseDate = DateTime.TryParse(apetag.GetItem("Original Date")?.ToString(), out tempDate) ? tempDate : default(DateTime?);
                     Publisher = apetag.GetItem("Label")?.ToString();
+                    _embeddedAsins.Add(apetag.GetItem("ASIN")?.ToString());
                 }
                 else if (file.TagTypesOnDisk.HasFlag(TagTypes.Asf))
                 {
@@ -131,6 +140,7 @@ namespace NzbDrone.Core.MediaFiles
                     Date = DateTime.TryParse(asftag.GetDescriptorString("WM/Year"), out tempDate) ? tempDate : default(DateTime?);
                     OriginalReleaseDate = DateTime.TryParse(asftag.GetDescriptorString("WM/OriginalReleaseTime"), out tempDate) ? tempDate : default(DateTime?);
                     Publisher = asftag.GetDescriptorString("WM/Publisher");
+                    _embeddedAsins.Add(asftag.GetDescriptorString("ASIN"));
                 }
                 else if (file.TagTypesOnDisk.HasFlag(TagTypes.Apple))
                 {
@@ -138,6 +148,9 @@ namespace NzbDrone.Core.MediaFiles
                     Media = appletag.GetDashBox("com.apple.iTunes", "MEDIA");
                     Date = DateTime.TryParse(appletag.DataBoxes(FixAppleId("day")).FirstOrDefault()?.Text, out tempDate) ? tempDate : default(DateTime?);
                     OriginalReleaseDate = DateTime.TryParse(appletag.GetDashBox("com.apple.iTunes", "Original Date"), out tempDate) ? tempDate : default(DateTime?);
+                    _embeddedAsins.Add(appletag.GetDashBox("com.apple.iTunes", "ASIN"));
+                    _embeddedAsins.Add(appletag.GetDashBox("com.apple.iTunes", "asin"));
+                    _embeddedAsins.Add(appletag.GetDashBox("com.audible", "asin"));
                 }
 
                 OriginalYear = OriginalReleaseDate.HasValue ? (uint)OriginalReleaseDate?.Year : 0;
@@ -521,11 +534,14 @@ namespace NzbDrone.Core.MediaFiles
         {
             if (!tag.IsValid)
             {
-                return new ParsedTrackInfo
+                var invalidTags = new ParsedTrackInfo
                 {
                     Quality = tag.Quality ?? new QualityModel { Quality = NzbDrone.Core.Qualities.Quality.Unknown },
                     MediaInfo = tag.MediaInfo ?? new MediaInfoModel()
                 };
+
+                AudioRecordingIdentifier.Apply(invalidTags, tag._path, tag._embeddedAsins);
+                return invalidTags;
             }
 
             var authors = tag.BookAuthors.Where(x => x.IsNotNullOrWhiteSpace()).ToList();
@@ -534,7 +550,7 @@ namespace NzbDrone.Core.MediaFiles
                 authors.AddRange(tag.Performers.Where(x => x.IsNotNullOrWhiteSpace()));
             }
 
-            return new ParsedTrackInfo
+            var parsed = new ParsedTrackInfo
             {
                 BookTitle = tag.Book.IsNotNullOrWhiteSpace() ? tag.Book : tag.Title,
                 Authors = authors,
@@ -549,6 +565,9 @@ namespace NzbDrone.Core.MediaFiles
                 Quality = tag.Quality,
                 MediaInfo = tag.MediaInfo
             };
+
+            AudioRecordingIdentifier.Apply(parsed, tag._path, tag._embeddedAsins);
+            return parsed;
         }
     }
 }

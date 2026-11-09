@@ -19,7 +19,12 @@ namespace Readarr.Api.V1.Books
         public string Asin { get; set; }
         public string AudibleRegion { get; set; }
         public List<string> Narrators { get; set; }
+        public List<AudiobookContributor> Contributors { get; set; }
+        public AudiobookChapterMetadata ChapterMetadata { get; set; }
         public int? RuntimeLengthMinutes { get; set; }
+        public int? CopyrightYear { get; set; }
+        public bool? IsAdult { get; set; }
+        public string LiteratureType { get; set; }
         public string Title { get; set; }
         public string Subtitle { get; set; }
         public string Language { get; set; }
@@ -31,6 +36,8 @@ namespace Readarr.Api.V1.Books
         public int PageCount { get; set; }
         [global::System.Text.Json.Serialization.JsonConverter(typeof(STJCalendarDateConverter))]
         public DateTime? ReleaseDate { get; set; }
+        public DateTime? SourceReleaseDate { get; set; }
+        public bool ReleaseDateIsPlaceholder { get; set; }
         public List<MediaCover> Images { get; set; }
         public List<Links> Links { get; set; }
         public Ratings Ratings { get; set; }
@@ -63,7 +70,12 @@ namespace Readarr.Api.V1.Books
                 Asin = model.Asin,
                 AudibleRegion = model.AudibleRegion,
                 Narrators = model.Narrators,
+                Contributors = model.Contributors,
+                ChapterMetadata = model.ChapterMetadata,
                 RuntimeLengthMinutes = model.RuntimeLengthMinutes,
+                CopyrightYear = model.CopyrightYear,
+                IsAdult = model.IsAdult,
+                LiteratureType = model.LiteratureType,
                 Title = model.Title,
                 Subtitle = model.Subtitle,
                 Language = model.Language,
@@ -74,6 +86,8 @@ namespace Readarr.Api.V1.Books
                 Publisher = model.Publisher,
                 PageCount = model.PageCount,
                 ReleaseDate = model.ReleaseDate,
+                SourceReleaseDate = model.SourceReleaseDate,
+                ReleaseDateIsPlaceholder = model.ReleaseDateIsPlaceholder,
                 Images = model.Images,
                 Links = model.Links,
                 Ratings = model.Ratings,
@@ -99,7 +113,12 @@ namespace Readarr.Api.V1.Books
                 Asin = resource.Asin,
                 AudibleRegion = resource.AudibleRegion,
                 Narrators = resource.Narrators,
+                Contributors = resource.Contributors ?? new List<AudiobookContributor>(),
+                ChapterMetadata = resource.ChapterMetadata,
                 RuntimeLengthMinutes = resource.RuntimeLengthMinutes,
+                CopyrightYear = resource.CopyrightYear,
+                IsAdult = resource.IsAdult,
+                LiteratureType = resource.LiteratureType,
                 Title = resource.Title,
                 Subtitle = resource.Subtitle,
                 Language = resource.Language,
@@ -110,6 +129,8 @@ namespace Readarr.Api.V1.Books
                 Publisher = resource.Publisher,
                 PageCount = resource.PageCount,
                 ReleaseDate = resource.ReleaseDate,
+                SourceReleaseDate = resource.SourceReleaseDate,
+                ReleaseDateIsPlaceholder = resource.ReleaseDateIsPlaceholder,
                 Images = resource.Images,
                 Links = resource.Links,
                 Ratings = resource.Ratings,

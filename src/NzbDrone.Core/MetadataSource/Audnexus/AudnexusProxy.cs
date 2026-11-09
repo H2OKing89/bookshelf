@@ -14,6 +14,7 @@ namespace NzbDrone.Core.MetadataSource.Audnexus
     public interface IAudnexusProxy
     {
         AudnexusBookResource GetBook(string asin, string region);
+        AudnexusChapterResource GetChapters(string asin, string region);
         List<AudnexusBookResource> SearchBooks(string query, string region);
         AudnexusAuthorResource GetAuthor(string asin, string region);
         List<AudnexusContributorResource> SearchAuthors(string name, string region);
@@ -61,6 +62,22 @@ namespace NzbDrone.Core.MetadataSource.Audnexus
 
             return Read<List<AudnexusBookResource>>("books/search", region, TimeSpan.FromHours(1), "q", query.Trim())
                 ?? throw new BookInfoException("Audnexus book search returned no response.");
+        }
+
+        public AudnexusChapterResource GetChapters(string asin, string region)
+        {
+            if (!AudiobookId.IsAsin(asin))
+            {
+                return null;
+            }
+
+            var chapters = Read<AudnexusChapterResource>($"books/{asin}/chapters", region, TimeSpan.FromDays(1));
+            if (chapters != null && (chapters.Asin != asin || chapters.Region != region))
+            {
+                throw new BookInfoException("Audnexus returned chapters for a different ASIN or marketplace.");
+            }
+
+            return chapters;
         }
 
         public AudnexusAuthorResource GetAuthor(string asin, string region)

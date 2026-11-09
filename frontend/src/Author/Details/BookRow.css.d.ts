@@ -3,10 +3,12 @@
 interface CssExports {
   'indexerFlags': string;
   'monitored': string;
+  'narrators': string;
   'pageCount': string;
   'position': string;
   'rating': string;
   'releaseDate': string;
+  'runtimeLengthMinutes': string;
   'status': string;
   'title': string;
 }

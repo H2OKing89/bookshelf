@@ -60,6 +60,36 @@ namespace NzbDrone.Core.Test.MetadataSource.Audnexus
                 TimeSpan.FromDays(1)), Times.Once());
         }
 
+        [Test]
+        public void should_read_chapters_using_the_same_provider_marketplace_and_cache_policy()
+        {
+            GivenResponse(@"{""asin"":""B08G9PRS1K"",""region"":""us"",""runtimeLengthMs"":2000,""chapters"":[{""title"":""Opening Credits"",""startOffsetMs"":0,""lengthMs"":2000}]}");
+
+            var chapters = Subject.GetChapters(Asin, "us");
+
+            chapters.RuntimeLengthMs.Should().Be(2000);
+            chapters.Chapters.Should().ContainSingle(chapter => chapter.Title == "Opening Credits");
+            Mocker.GetMock<ICachedHttpResponseService>().Verify(x => x.Get(
+                It.Is<HttpRequest>(request => request.Url.FullUri == "https://audnexus.example/api/books/B08G9PRS1K/chapters?region=us"),
+                true,
+                TimeSpan.FromDays(1)), Times.Once());
+        }
+
+        [TestCase("B000000000", "us")]
+        [TestCase(Asin, "uk")]
+        public void should_reject_chapters_for_a_different_recording_or_marketplace(string asin, string region)
+        {
+            GivenResponse(@"{""asin"":""B08G9PRS1K"",""region"":""us"",""chapters"":[]}");
+            Assert.Throws<BookInfoException>(() => Subject.GetChapters(asin, region));
+        }
+
+        [Test]
+        public void should_allow_missing_chapters_without_failing_book_metadata()
+        {
+            GivenResponse("{}", HttpStatusCode.NotFound);
+            Subject.GetChapters(Asin, "us").Should().BeNull();
+        }
+
         [TestCase(null, "us")]
         [TestCase("not-an-asin", "us")]
         [TestCase("B08G9PRS1K/other", "us")]

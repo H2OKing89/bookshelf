@@ -93,6 +93,8 @@ class BookIndexRow extends Component {
       titleSlug,
       qualityProfile,
       releaseDate,
+      runtimeLengthMinutes,
+      narrators = [],
       added,
       statistics,
       genres,
@@ -188,6 +190,24 @@ class BookIndexRow extends Component {
                     titleSlug={author.titleSlug}
                     authorName={author.authorName}
                   />
+                </VirtualTableRowCell>
+              );
+            }
+
+            if (name === 'runtimeLengthMinutes') {
+              return (
+                <VirtualTableRowCell key={name} className={styles.runtimeLengthMinutes}>
+                  {runtimeLengthMinutes > 0 ? translate('RuntimeMinutes', [runtimeLengthMinutes]) : ''}
+                </VirtualTableRowCell>
+              );
+            }
+
+            if (name === 'narrators') {
+              const narratorNames = narrators.join(', ');
+
+              return (
+                <VirtualTableRowCell key={name} className={styles.narrators}>
+                  <span title={narratorNames}>{narratorNames}</span>
                 </VirtualTableRowCell>
               );
             }
@@ -387,6 +407,8 @@ BookIndexRow.propTypes = {
   author: PropTypes.object.isRequired,
   qualityProfile: PropTypes.object.isRequired,
   releaseDate: PropTypes.string,
+  runtimeLengthMinutes: PropTypes.number,
+  narrators: PropTypes.arrayOf(PropTypes.string),
   added: PropTypes.string,
   statistics: PropTypes.object.isRequired,
   genres: PropTypes.arrayOf(PropTypes.string).isRequired,

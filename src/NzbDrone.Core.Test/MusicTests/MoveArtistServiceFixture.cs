@@ -7,7 +7,6 @@ using NUnit.Framework;
 using NzbDrone.Common.Disk;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Books.Commands;
-using NzbDrone.Core.Organizer;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Test.Common;
 
@@ -98,8 +97,8 @@ namespace NzbDrone.Core.Test.MusicTests
                                           TransferMode.Move),
                     Times.Once());
 
-            Mocker.GetMock<IBuildFileNames>()
-                .Verify(v => v.GetAuthorFolder(It.IsAny<Author>(), null), Times.Never());
+            Mocker.GetMock<IBuildAuthorPaths>()
+                .Verify(v => v.BuildPath(It.IsAny<Author>(), It.IsAny<bool>()), Times.Never());
         }
 
         [Test]
@@ -108,9 +107,9 @@ namespace NzbDrone.Core.Test.MusicTests
             var authorFolder = "Author";
             var expectedPath = Path.Combine(_bulkCommand.DestinationRootFolder, authorFolder);
 
-            Mocker.GetMock<IBuildFileNames>()
-                .Setup(s => s.GetAuthorFolder(It.IsAny<Author>(), null))
-                .Returns(authorFolder);
+            Mocker.GetMock<IBuildAuthorPaths>()
+                .Setup(s => s.BuildPath(It.Is<Author>(a => a.RootFolderPath == _bulkCommand.DestinationRootFolder), false))
+                .Returns(expectedPath);
 
             Subject.Execute(_bulkCommand);
 
@@ -120,6 +119,20 @@ namespace NzbDrone.Core.Test.MusicTests
                                           expectedPath,
                                           TransferMode.Move),
                     Times.Once());
+        }
+
+        [Test]
+        public void should_move_to_the_existing_folder_selected_by_the_path_builder()
+        {
+            var existingPath = Path.Combine(_bulkCommand.DestinationRootFolder, "Existing alias folder");
+            Mocker.GetMock<IBuildAuthorPaths>()
+                .Setup(s => s.BuildPath(It.Is<Author>(a => a.RootFolderPath == _bulkCommand.DestinationRootFolder), false))
+                .Returns(existingPath);
+
+            Subject.Execute(_bulkCommand);
+
+            Mocker.GetMock<IDiskTransferService>()
+                .Verify(v => v.TransferFolder(_bulkCommand.Author.First().SourcePath, existingPath, TransferMode.Move), Times.Once());
         }
 
         [Test]
@@ -137,8 +150,8 @@ namespace NzbDrone.Core.Test.MusicTests
                         _command.DestinationPath,
                         TransferMode.Move), Times.Never());
 
-            Mocker.GetMock<IBuildFileNames>()
-                .Verify(v => v.GetAuthorFolder(It.IsAny<Author>(), null), Times.Never());
+            Mocker.GetMock<IBuildAuthorPaths>()
+                .Verify(v => v.BuildPath(It.IsAny<Author>(), It.IsAny<bool>()), Times.Never());
         }
     }
 }

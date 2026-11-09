@@ -8,25 +8,18 @@ import createDimensionsSelector from 'Store/Selectors/createDimensionsSelector';
 import createUISettingsSelector from 'Store/Selectors/createUISettingsSelector';
 import BookDetailsHeader from './BookDetailsHeader';
 
-const selectOverview = createSelector(
-  (state) => state.editions,
-  (editions) => {
-    const monitored = editions.items.find((e) => e.monitored === true);
-    return monitored?.overview;
-  }
-);
-
 function createMapStateToProps() {
   return createSelector(
     createBookSelector(),
-    selectOverview,
+    (state) => state.editions,
     createUISettingsSelector(),
     createDimensionsSelector(),
-    (book, overview, uiSettings, dimensions) => {
+    (book, editions, uiSettings, dimensions) => {
+      const edition = editions.items.find((item) => item.bookId === book.id && item.monitored);
 
       return {
         ...book,
-        overview,
+        overview: edition?.overview || book.overview,
         shortDateFormat: uiSettings.shortDateFormat,
         isSmallScreen: dimensions.isSmallScreen
       };

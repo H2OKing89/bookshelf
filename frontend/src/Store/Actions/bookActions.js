@@ -250,10 +250,22 @@ export const defaultState = {
       isVisible: true
     },
     {
+      name: 'runtimeLengthMinutes',
+      label: 'Runtime',
+      isSortable: true,
+      isVisible: true
+    },
+    {
+      name: 'narrators',
+      label: 'Narrators',
+      isSortable: false,
+      isVisible: true
+    },
+    {
       name: 'pageCount',
       label: 'Pages',
       isSortable: true,
-      isVisible: true
+      isVisible: false
     },
     {
       name: 'rating',

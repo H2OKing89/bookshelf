@@ -10,6 +10,7 @@ interface CssExports {
   'detailsLabel': string;
   'duration': string;
   'header': string;
+  'headerContainer': string;
   'headerContent': string;
   'info': string;
   'links': string;

@@ -21,6 +21,7 @@ import OrganizePreviewModalConnector from 'Organize/OrganizePreviewModalConnecto
 import RetagPreviewModalConnector from 'Retag/RetagPreviewModalConnector';
 import translate from 'Utilities/String/translate';
 import BookDetailsHeaderConnector from './BookDetailsHeaderConnector';
+import BookRecordingMetadataConnector from './BookRecordingMetadataConnector';
 import styles from './BookDetails.css';
 
 class BookDetails extends Component {
@@ -223,6 +224,7 @@ class BookDetails extends Component {
           </SwipeHeaderConnector>
 
           <div className={styles.contentContainer}>
+            <BookRecordingMetadataConnector bookId={id} />
             {
               !isPopulated && !bookFilesError &&
                 <LoadingIndicator />
@@ -336,7 +338,7 @@ BookDetails.propTypes = {
   seriesTitle: PropTypes.string.isRequired,
   pageCount: PropTypes.number,
   overview: PropTypes.string,
-  releaseDate: PropTypes.string.isRequired,
+  releaseDate: PropTypes.string,
   ratings: PropTypes.object.isRequired,
   images: PropTypes.arrayOf(PropTypes.object).isRequired,
   links: PropTypes.arrayOf(PropTypes.object).isRequired,

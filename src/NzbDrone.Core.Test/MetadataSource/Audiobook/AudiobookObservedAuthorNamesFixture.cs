@@ -48,8 +48,9 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
             Subject.SearchForNewAuthor(query);
             var first = Subject.GetAuthorInfo(id);
 
-            first.Name.Should().Be(profile.Name);
-            first.Metadata.Value.Aliases.Should().Contain(credit);
+            var expectedName = AudiobookAuthorIdentity.IsLatinName(profile.Name) ? profile.Name : credit;
+            first.Name.Should().Be(expectedName);
+            first.Metadata.Value.Aliases.Should().Contain(expectedName == credit ? profile.Name : credit);
             first.Books.Value.Should().ContainSingle(b => b.ForeignBookId == AudiobookId.ForAsin("us", book.Asin));
 
             // Refresh after a restart must retain persisted aliases even when the
@@ -63,7 +64,8 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
 
             var refreshed = Subject.GetAuthorInfo(id);
 
-            refreshed.Metadata.Value.Aliases.Should().Contain(credit);
+            refreshed.Name.Should().Be(expectedName);
+            refreshed.Metadata.Value.Aliases.Should().Contain(expectedName == credit ? profile.Name : credit);
             refreshed.Books.Value.Should().ContainSingle(b => b.ForeignBookId == AudiobookId.ForAsin("us", book.Asin));
             Mocker.GetMock<IAudibleCatalogProxy>().Verify(x => x.GetAuthorBooks(credit, "us"), Times.Exactly(2));
         }

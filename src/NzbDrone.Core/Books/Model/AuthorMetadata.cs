@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Core.MetadataSource.Audiobook;
 
 namespace NzbDrone.Core.Books
 {
@@ -11,6 +12,7 @@ namespace NzbDrone.Core.Books
         {
             Images = new List<MediaCover.MediaCover>();
             Genres = new List<string>();
+            SimilarAuthors = new List<AudiobookPersonReference>();
             Links = new List<Links>();
             Aliases = new List<string>();
             Ratings = new Ratings();
@@ -33,6 +35,7 @@ namespace NzbDrone.Core.Books
         public List<MediaCover.MediaCover> Images { get; set; }
         public List<Links> Links { get; set; }
         public List<string> Genres { get; set; }
+        public List<AudiobookPersonReference> SimilarAuthors { get; set; }
         public Ratings Ratings { get; set; }
 
         public override string ToString()
@@ -56,9 +59,10 @@ namespace NzbDrone.Core.Books
             Born = other.Born;
             Died = other.Died;
             Status = other.Status;
-            Images = other.Images.Any() ? other.Images : Images;
+            Images = AudiobookCoverSelector.PreferLarger(other.Images, Images);
             Links = other.Links;
             Genres = other.Genres;
+            SimilarAuthors = other.SimilarAuthors?.Any() == true ? other.SimilarAuthors.JsonClone() : SimilarAuthors;
             Ratings = other.Ratings.Votes > 0 ? other.Ratings : Ratings;
         }
     }

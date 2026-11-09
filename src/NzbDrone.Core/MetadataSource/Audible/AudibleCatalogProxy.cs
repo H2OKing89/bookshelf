@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Http;
 using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.MetadataSource.Audnexus;
 using NzbDrone.Core.MetadataSource.BookInfo;
 
@@ -21,7 +24,9 @@ namespace NzbDrone.Core.MetadataSource.Audible
 
     public class AudibleCatalogProxy : IAudibleCatalogProxy
     {
-        private const string ResponseGroups = "product_desc,contributors,series,product_attrs,product_details,media,rating,category_ladders";
+        private const string ResponseGroups = "product_desc,contributors,series,product_attrs,product_extended_attrs,product_details,media,rating,category_ladders";
+        private const string ImageSizes = "500,1024,2400";
+        private static readonly Regex CopyrightYear = new Regex(@"(?:©|\(c\)|\bcopyright\b)\s*(?<year>\d{4})\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100));
         private readonly IHttpClient _httpClient;
         private readonly IDiskProvider _diskProvider;
         private readonly IConfigService _configService;
@@ -44,7 +49,8 @@ namespace NzbDrone.Core.MetadataSource.Audible
                 var body = Read("/1.0/catalog/products", region, new Dictionary<string, object>
                 {
                     { "author", name }, { "page", page }, { "num_results", pageSize },
-                    { "products_sort_by", "ReleaseDate" }, { "response_groups", ResponseGroups }
+                    { "products_sort_by", "ReleaseDate" }, { "response_groups", ResponseGroups },
+                    { "image_sizes", ImageSizes }
                 });
                 if (body["products"] is not JArray items || body["total_results"]?.Type != JTokenType.Integer)
                 {
@@ -65,10 +71,14 @@ namespace NzbDrone.Core.MetadataSource.Audible
                         throw new BookInfoException("audible-rs repeated a catalog page. Existing recordings have been retained.");
                     }
 
-                    products.Add(product);
+                    if (AudiobookCatalogPolicy.IsRecording(product))
+                    {
+                        products.Add(product);
+                    }
                 }
 
-                if (products.Count >= total)
+                // The upstream total includes podcasts and other rejected products.
+                if (seen.Count >= total)
                 {
                     return products;
                 }
@@ -84,13 +94,17 @@ namespace NzbDrone.Core.MetadataSource.Audible
 
         public AudnexusBookResource GetBook(string asin, string region)
         {
-            var body = Read("/1.0/catalog/products/" + asin, region, new Dictionary<string, object> { { "response_groups", ResponseGroups } });
+            var body = Read("/1.0/catalog/products/" + asin, region, new Dictionary<string, object>
+            {
+                { "response_groups", ResponseGroups }, { "image_sizes", ImageSizes }
+            });
             if (body["product"] is not JObject product || product.Value<string>("asin") != asin)
             {
                 throw new BookInfoException("audible-rs returned a different recording or an incomplete product.");
             }
 
-            return MapProduct(product, region);
+            var recording = MapProduct(product, region);
+            return AudiobookCatalogPolicy.IsRecording(recording) ? recording : null;
         }
 
         private JObject Read(string path, string region, Dictionary<string, object> query)
@@ -169,34 +183,81 @@ namespace NzbDrone.Core.MetadataSource.Audible
             }
 
             var images = product["product_images"] as JObject;
-            var series = (product["series"] as JArray)?.FirstOrDefault();
+            var series = (product["series"] as JArray)?.OfType<JObject>()
+                .Where(seriesEntry => seriesEntry.Value<string>("title").IsNotNullOrWhiteSpace())
+                .Select(seriesEntry => new AudnexusSeriesResource
+                {
+                    Asin = seriesEntry.Value<string>("asin"),
+                    Name = AudiobookTextNormalizer.Text(seriesEntry.Value<string>("title")),
+                    Position = seriesEntry.Value<string>("sequence")
+                })
+                .DistinctBy(seriesEntry => seriesEntry.Asin.IsNotNullOrWhiteSpace() ? seriesEntry.Asin : seriesEntry.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList() ?? new List<AudnexusSeriesResource>();
+            var publicationName = AudiobookTextNormalizer.Text(product.Value<string>("publication_name"));
+            var primary = series.FirstOrDefault(seriesEntry => string.Equals(seriesEntry.Name, publicationName, StringComparison.OrdinalIgnoreCase)) ?? series.FirstOrDefault();
+            var descriptionField = new[] { "extended_product_description", "publisher_summary", "merchandising_description", "merchandising_summary" }
+                .FirstOrDefault(field => product.Value<string>(field).IsNotNullOrWhiteSpace());
             return new AudnexusBookResource
             {
                 Asin = product.Value<string>("asin"),
                 Region = region,
                 Title = product.Value<string>("title"),
                 Subtitle = product.Value<string>("subtitle"),
-                Description = product.Value<string>("publisher_summary"),
+                Description = descriptionField == null ? null : product.Value<string>(descriptionField),
+                DescriptionIsSummary = descriptionField == "merchandising_summary",
+                Copyright = ParseCopyright(product["copyright"]),
+                IsAdult = product["is_adult_product"]?.Type == JTokenType.Boolean ? product.Value<bool?>("is_adult_product") : null,
+                LiteratureType = product["literature_type"]?.Type == JTokenType.String ? product.Value<string>("literature_type") : null,
                 Language = product.Value<string>("language"),
                 PublisherName = product.Value<string>("publisher_name"),
+                Isbn = product.Value<string>("isbn"),
                 RuntimeLengthMin = product.Value<int?>("runtime_length_min"),
                 ReleaseDate = product.Value<DateTime?>("release_date"),
                 FormatType = product.Value<string>("format_type"),
+                ContentType = product.Value<string>("content_type"),
+                ContentDeliveryType = product.Value<string>("content_delivery_type"),
+                PublicationType = product.Value<string>("publication_type"),
                 Authors = product["authors"]?.ToObject<List<AudnexusContributorResource>>(),
                 Narrators = product["narrators"]?.ToObject<List<AudnexusContributorResource>>(),
                 Genres = (product["category_ladders"] as JArray)?.OfType<JObject>()
-                    .Where(ladder => ladder.Value<string>("root") == "Genres")
-                    .SelectMany(ladder => (ladder["ladder"] as JArray)?.OfType<JObject>() ?? Enumerable.Empty<JObject>())
-                    .Select(category => category.Value<string>("name"))
-                    .Where(name => name.IsNotNullOrWhiteSpace()).Distinct(StringComparer.OrdinalIgnoreCase)
-                    .Select(name => new AudnexusGenreResource { Name = name }).ToList(),
-                Image = images?.Properties().OrderByDescending(p => int.TryParse(p.Name, out var size) ? size : 0).FirstOrDefault()?.Value.Value<string>(),
+                    .Where(ladder => string.Equals(ladder.Value<string>("root"), "Genres", StringComparison.OrdinalIgnoreCase))
+                    .SelectMany(ladder => ((ladder["ladder"] as JArray)?.OfType<JObject>() ?? Enumerable.Empty<JObject>())
+                        .Select((category, index) => new AudnexusGenreResource
+                        {
+                            Asin = category.Value<string>("id"),
+                            Name = AudiobookTextNormalizer.Text(category.Value<string>("name")),
+                            Type = index == 0 ? "genre" : "tag"
+                        }))
+                    .Where(category => category.Name.IsNotNullOrWhiteSpace())
+                    .DistinctBy(category => (category.Asin.IsNotNullOrWhiteSpace() ? category.Asin : category.Name) + ":" + category.Type, StringComparer.OrdinalIgnoreCase)
+                    .ToList(),
+                Image = AudiobookCoverSelector.Largest(images?.Properties().Select(property =>
+                    new KeyValuePair<int, string>(int.TryParse(property.Name, out var size) ? size : 0,
+                        property.Value.Type == JTokenType.String ? property.Value.Value<string>() : null))),
                 Rating = product["rating"]?["overall_distribution"]?.Value<string>("display_average_rating"),
-                SeriesPrimary = series == null ? null : new AudnexusSeriesResource
-                {
-                    Asin = series.Value<string>("asin"), Name = series.Value<string>("title"), Position = series.Value<string>("sequence")
-                }
+                SeriesPrimary = primary,
+                SeriesSecondary = series.FirstOrDefault(seriesEntry => seriesEntry != primary)
             };
+        }
+
+        private static int? ParseCopyright(JToken value)
+        {
+            if (value?.Type != JTokenType.String && value?.Type != JTokenType.Integer)
+            {
+                return null;
+            }
+
+            var text = value.Value<string>();
+            if (!int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var year))
+            {
+                var match = CopyrightYear.Match(text);
+                if (!match.Success || !int.TryParse(match.Groups["year"].Value, NumberStyles.None, CultureInfo.InvariantCulture, out year))
+                {
+                    return null;
+                }
+            }
+
+            return year > 0 && year <= 9999 ? year : null;
         }
     }
 }

@@ -68,6 +68,8 @@ class BookRow extends Component {
       authorName,
       position,
       pageCount,
+      runtimeLengthMinutes,
+      narrators = [],
       ratings,
       isSaving,
       authorMonitored,
@@ -187,6 +189,24 @@ class BookRow extends Component {
               );
             }
 
+            if (name === 'runtimeLengthMinutes') {
+              return (
+                <TableRowCell key={name} className={styles.runtimeLengthMinutes}>
+                  {runtimeLengthMinutes > 0 ? translate('RuntimeMinutes', [runtimeLengthMinutes]) : ''}
+                </TableRowCell>
+              );
+            }
+
+            if (name === 'narrators') {
+              const narratorNames = narrators.join(', ');
+
+              return (
+                <TableRowCell key={name} className={styles.narrators}>
+                  <span title={narratorNames}>{narratorNames}</span>
+                </TableRowCell>
+              );
+            }
+
             if (name === 'pageCount') {
               return (
                 <TableRowCell
@@ -261,6 +281,8 @@ BookRow.propTypes = {
   authorName: PropTypes.string.isRequired,
   position: PropTypes.string,
   pageCount: PropTypes.number,
+  runtimeLengthMinutes: PropTypes.number,
+  narrators: PropTypes.arrayOf(PropTypes.string),
   ratings: PropTypes.object.isRequired,
   indexerFlags: PropTypes.number.isRequired,
   titleSlug: PropTypes.string.isRequired,

@@ -38,6 +38,18 @@
   flex: 1 0 150px;
 }
 
+.runtimeLengthMinutes {
+  composes: headerCell from '~Components/Table/VirtualTableHeaderCell.css';
+
+  flex: 0 0 110px;
+}
+
+.narrators {
+  composes: headerCell from '~Components/Table/VirtualTableHeaderCell.css';
+
+  flex: 1 0 180px;
+}
+
 .sizeOnDisk {
   composes: headerCell from '~Components/Table/VirtualTableHeaderCell.css';
 

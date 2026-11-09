@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using NLog;
+using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Instrumentation.Extensions;
 using NzbDrone.Core.Books.Commands;
 using NzbDrone.Core.Books.Events;
@@ -34,6 +35,8 @@ namespace NzbDrone.Core.Books
         private readonly IRootFolderService _rootFolderService;
         private readonly IAddAuthorService _addAuthorService;
         private readonly IEditionService _editionService;
+        private readonly ISeriesService _seriesService;
+        private readonly ISeriesBookLinkService _seriesBookLinkService;
         private readonly IProvideAuthorInfo _authorInfo;
         private readonly IProvideBookInfo _bookInfo;
         private readonly IRefreshEditionService _refreshEditionService;
@@ -49,6 +52,8 @@ namespace NzbDrone.Core.Books
                                   IRootFolderService rootFolderService,
                                   IAddAuthorService addAuthorService,
                                   IEditionService editionService,
+                                  ISeriesService seriesService,
+                                  ISeriesBookLinkService seriesBookLinkService,
                                   IAuthorMetadataService authorMetadataService,
                                   IProvideAuthorInfo authorInfo,
                                   IProvideBookInfo bookInfo,
@@ -66,6 +71,8 @@ namespace NzbDrone.Core.Books
             _rootFolderService = rootFolderService;
             _addAuthorService = addAuthorService;
             _editionService = editionService;
+            _seriesService = seriesService;
+            _seriesBookLinkService = seriesBookLinkService;
             _authorInfo = authorInfo;
             _bookInfo = bookInfo;
             _refreshEditionService = refreshEditionService;
@@ -372,7 +379,98 @@ namespace NzbDrone.Core.Books
                 return false;
             }
 
-            return RefreshBookInfo(book, data.Books, data, false);
+            // The author-wide refresh persists its complete series graph separately.
+            // A direct recording refresh must save just this book's links before the
+            // normal updated event reloads the book from the database.
+            var remote = data.Books.Value.Single();
+            var seriesUpdated = RefreshBookSeries(book, remote);
+            var updated = RefreshBookInfo(book, data.Books, data, false);
+            if (seriesUpdated && !updated)
+            {
+                PublishEntityUpdatedEvent(book);
+            }
+
+            return updated || seriesUpdated;
+        }
+
+        private bool RefreshBookSeries(Book book, Book remote)
+        {
+            if (!AudiobookId.IsNative(book.ForeignBookId) || remote.SeriesLinks?.Value?.Any() != true)
+            {
+                return false;
+            }
+
+            var storedLinks = (_seriesBookLinkService.GetLinksByBook(new List<int> { book.Id }) ?? new List<SeriesBookLink>())
+                .Where(link => link.BookId == book.Id).ToList();
+            var combined = new Book
+            {
+                Id = book.Id,
+                ForeignBookId = book.ForeignBookId,
+                AuthorMetadata = book.AuthorMetadata,
+                SeriesLinks = remote.SeriesLinks.Value
+            };
+            AudiobookMetadataMerger.MergeSeries(combined, new Book { ForeignBookId = book.ForeignBookId, SeriesLinks = storedLinks });
+            var desired = combined.SeriesLinks.Value;
+            var ids = desired.Select(link => link.Series.Value.ForeignSeriesId).ToList();
+            var existingSeries = _seriesService.FindById(ids) ?? new List<Series>();
+            var byForeignId = existingSeries.ToDictionary(series => series.ForeignSeriesId);
+            var toAdd = desired.Where(link => !byForeignId.ContainsKey(link.Series.Value.ForeignSeriesId))
+                .Select(link => new Series
+                {
+                    ForeignSeriesId = link.Series.Value.ForeignSeriesId,
+                    Title = link.Series.Value.Title,
+                    Description = link.Series.Value.Description,
+                    Numbered = link.Position.IsNotNullOrWhiteSpace(),
+                    WorkCount = 1,
+                    PrimaryWorkCount = link.IsPrimary ? 1 : 0
+                }).ToList();
+            if (toAdd.Any())
+            {
+                _seriesService.InsertMany(toAdd);
+                foreach (var series in toAdd)
+                {
+                    byForeignId.Add(series.ForeignSeriesId, series);
+                }
+            }
+
+            // Do not replace shared series metadata or counts with a one-book view,
+            // and never remove omitted memberships from an incomplete provider response.
+            var addedLinks = new List<SeriesBookLink>();
+            var updatedLinks = new List<SeriesBookLink>();
+            foreach (var link in desired)
+            {
+                var series = byForeignId[link.Series.Value.ForeignSeriesId];
+                var previous = storedLinks.SingleOrDefault(item => item.SeriesId == series.Id);
+                link.Book = book;
+                link.BookId = book.Id;
+                link.Series = series;
+                link.SeriesId = series.Id;
+                if (previous == null)
+                {
+                    addedLinks.Add(link);
+                }
+                else
+                {
+                    link.Id = previous.Id;
+                    if (previous.Position != link.Position || previous.SeriesPosition != link.SeriesPosition || previous.IsPrimary != link.IsPrimary)
+                    {
+                        updatedLinks.Add(link);
+                    }
+                }
+            }
+
+            if (addedLinks.Any())
+            {
+                _seriesBookLinkService.InsertMany(addedLinks);
+            }
+
+            if (updatedLinks.Any())
+            {
+                _seriesBookLinkService.UpdateMany(updatedLinks);
+            }
+
+            book.SeriesLinks = desired;
+            return addedLinks.Any() || updatedLinks.Any();
         }
 
         public void Execute(BulkRefreshBookCommand message)

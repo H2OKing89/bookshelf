@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using FluentValidation;
 using FluentValidation.Results;
@@ -9,7 +8,6 @@ using NzbDrone.Common.EnsureThat;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.MetadataSource;
-using NzbDrone.Core.Organizer;
 using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.Books
@@ -25,21 +23,21 @@ namespace NzbDrone.Core.Books
         private readonly IAuthorService _authorService;
         private readonly IAuthorMetadataService _authorMetadataService;
         private readonly IProvideAuthorInfo _authorInfo;
-        private readonly IBuildFileNames _fileNameBuilder;
+        private readonly IBuildAuthorPaths _authorPathBuilder;
         private readonly IAddAuthorValidator _addAuthorValidator;
         private readonly Logger _logger;
 
         public AddAuthorService(IAuthorService authorService,
                                 IAuthorMetadataService authorMetadataService,
                                 IProvideAuthorInfo authorInfo,
-                                IBuildFileNames fileNameBuilder,
+                                IBuildAuthorPaths authorPathBuilder,
                                 IAddAuthorValidator addAuthorValidator,
                                 Logger logger)
         {
             _authorService = authorService;
             _authorMetadataService = authorMetadataService;
             _authorInfo = authorInfo;
-            _fileNameBuilder = fileNameBuilder;
+            _authorPathBuilder = authorPathBuilder;
             _addAuthorValidator = addAuthorValidator;
             _logger = logger;
         }
@@ -117,8 +115,7 @@ namespace NzbDrone.Core.Books
             var path = newAuthor.Path;
             if (string.IsNullOrWhiteSpace(path))
             {
-                var folderName = _fileNameBuilder.GetAuthorFolder(newAuthor);
-                path = Path.Combine(newAuthor.RootFolderPath, folderName);
+                path = _authorPathBuilder.BuildPath(newAuthor, false);
             }
 
             // Disambiguate author path if it exists already

@@ -1,0 +1,47 @@
+.metadata {
+  margin-bottom: 20px;
+}
+
+.fields {
+  margin: 0;
+}
+
+.field {
+  display: flex;
+  margin-bottom: 6px;
+
+  dt {
+    flex: 0 0 120px;
+    font-weight: bold;
+  }
+
+  dd {
+    margin-left: 12px;
+    overflow-wrap: anywhere;
+  }
+}
+
+.chapters {
+  margin-top: 15px;
+
+  summary {
+    cursor: pointer;
+  }
+}
+
+.chapterList {
+  overflow: auto;
+  max-height: 400px;
+}
+
+.chapterTable {
+  margin-top: 10px;
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 6px 10px;
+    text-align: left;
+  }
+}

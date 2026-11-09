@@ -93,6 +93,18 @@ export const defaultState = {
       isVisible: false
     },
     {
+      name: 'runtimeLengthMinutes',
+      label: 'Runtime',
+      isSortable: true,
+      isVisible: false
+    },
+    {
+      name: 'narrators',
+      label: 'Narrators',
+      isSortable: false,
+      isVisible: false
+    },
+    {
       name: 'qualityProfileId',
       label: 'Quality Profile',
       isSortable: true,
