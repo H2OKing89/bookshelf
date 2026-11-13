@@ -7,6 +7,7 @@ using NLog;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.ImportLists.Exclusions;
 using NzbDrone.Core.MetadataSource;
+using NzbDrone.Core.MetadataSource.Audiobook;
 
 namespace NzbDrone.Core.Books
 {
@@ -69,7 +70,9 @@ namespace NzbDrone.Core.Books
 
                 author.Metadata.Value.ForeignAuthorId = book.AuthorMetadata.Value.ForeignAuthorId;
 
-                dbAuthor = _addAuthorService.AddAuthor(author, false);
+                dbAuthor = AudiobookId.IsNative(book.ForeignBookId)
+                    ? _addAuthorService.AddAuthorFromBook(author, book)
+                    : _addAuthorService.AddAuthor(author, false);
             }
 
             book.Author = dbAuthor;

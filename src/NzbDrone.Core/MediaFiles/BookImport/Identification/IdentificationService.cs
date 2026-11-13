@@ -158,8 +158,9 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
                 // populate the overrides and return
                 foreach (var localTrack in localBookRelease.LocalBooks)
                 {
-                    localTrack.Edition = idOverrides.Edition;
-                    localTrack.Book = idOverrides.Book;
+                    var compatible = AudioRecordingIdentifier.MatchesEdition(localTrack.FileTrackInfo, localTrack.Path, idOverrides.Edition);
+                    localTrack.Edition = compatible ? idOverrides.Edition : null;
+                    localTrack.Book = compatible ? idOverrides.Book : null;
                     localTrack.Author = idOverrides.Author;
                 }
 
@@ -222,6 +223,12 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
 
             foreach (var candidateRelease in candidateReleases)
             {
+                if (localBookRelease.LocalBooks.Any(x => !AudioRecordingIdentifier.MatchesEdition(x.FileTrackInfo, x.Path, candidateRelease.Edition)))
+                {
+                    _logger.Debug("Skipping candidate with a different explicit recording ASIN");
+                    continue;
+                }
+
                 seenCandidate = true;
 
                 var release = candidateRelease.Edition;
@@ -229,7 +236,8 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
                 var rwatch = System.Diagnostics.Stopwatch.StartNew();
 
                 var extraTrackPaths = candidateRelease.ExistingFiles.Select(x => x.Path).ToList();
-                var extraTracks = extraTracksOnDisk.Where(x => extraTrackPaths.Contains(x.Path)).ToList();
+                var extraTracks = extraTracksOnDisk.Where(x => extraTrackPaths.Contains(x.Path) &&
+                    AudioRecordingIdentifier.MatchesEdition(x.FileTrackInfo, x.Path, release)).ToList();
                 var allLocalTracks = localBookRelease.LocalBooks.Concat(extraTracks).DistinctBy(x => x.Path).ToList();
 
                 var distance = DistanceCalculator.BookDistance(allLocalTracks, release);

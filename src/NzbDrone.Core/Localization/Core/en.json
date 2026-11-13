@@ -20,6 +20,13 @@
   "NarratedBy": "Narrated by {0}",
   "RuntimeMinutes": "{0} min",
   "RecordingMetadata": "Recording details",
+  "RecordingCatalogLabel": "Catalog: Audible {marketplace}",
+  "RecordingMissing": "Missing recording",
+  "RecordingAvailableButMissing": "No file is matched to recording ASIN {asin}.",
+  "SeriesRecordingCount": "Recordings: {recordingCount}",
+  "SeriesVolumesAndRecordings": "Volumes: {volumeCount} · Recordings: {recordingCount}",
+  "SeriesVolumesWithFiles": "Volumes with files: {ownedVolumeCount}/{volumeCount}",
+  "SeriesAlternateRecordingStatus": "Each row is a separate recording. Status applies to its ASIN.",
   "ReleaseDateUnconfirmed": "No confirmed release date is available.",
   "Chapters": "Chapters",
   "Chapter": "Chapter",
@@ -1153,5 +1160,7 @@
   "Year": "Year",
   "Yes": "Yes",
   "YesCancel": "Yes, Cancel",
-  "Yesterday": "Yesterday"
+  "Yesterday": "Yesterday",
+  "PreferPathAsin": "Prefer filename ASIN",
+  "PreferPathAsinHelpText": "Use the bracketed ASIN in the filename or nearest recording folder for matching, even when embedded tags disagree. Filename and folder ASINs must agree. This does not change file tags or allow conflicting tags to be scrubbed."
 }

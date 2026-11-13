@@ -69,6 +69,7 @@ namespace NzbDrone.Core.Configuration
         string MetadataSource { get; set; }
         string AudnexusUrl { get; set; }
         string AudnexusRegion { get; set; }
+        bool PreferPathAsin { get; set; }
         bool AudibleRsEnabled { get; set; }
         string AudibleRsUrl { get; set; }
         string AudibleRsTokenFile { get; set; }

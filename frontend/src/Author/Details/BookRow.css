@@ -2,6 +2,12 @@
   composes: cell from '~Components/Table/Cells/TableRowCell.css';
 }
 
+.recordingIdentity {
+  margin-top: 4px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
 .monitored {
   composes: cell from '~Components/Table/Cells/TableRowCell.css';
 

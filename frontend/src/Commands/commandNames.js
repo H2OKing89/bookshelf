@@ -14,6 +14,7 @@ export const MOVE_AUTHOR = 'MoveAuthor';
 export const REFRESH_AUTHOR = 'RefreshAuthor';
 export const BULK_REFRESH_AUTHOR = 'BulkRefreshAuthor';
 export const REFRESH_BOOK = 'RefreshBook';
+export const REFRESH_MEDIA_INFO = 'RefreshMediaInfo';
 export const BULK_REFRESH_BOOK = 'BulkRefreshBook';
 export const RENAME_FILES = 'RenameFiles';
 export const RENAME_AUTHOR = 'RenameAuthor';

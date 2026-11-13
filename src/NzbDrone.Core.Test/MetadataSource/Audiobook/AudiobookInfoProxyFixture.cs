@@ -158,6 +158,201 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
             uk.Editions.Value.Single().ForeignEditionId.Should().NotBe(us.Editions.Value.Single().ForeignEditionId);
         }
 
+        [TestCase("B0F14RFHS6")]
+        [TestCase("asin:B0F14RFHS6")]
+        public void should_discover_a_bare_uk_asin_without_inventing_a_us_recording(string query)
+        {
+            var uk = Recording("B0F14RFHS6", "Harry Potter and the Philosopher's Stone (Full-Cast Edition)");
+            uk.Region = "uk";
+            Mocker.GetMock<IAudnexusProxy>().Setup(proxy => proxy.GetBook(uk.Asin, "uk")).Returns(uk);
+
+            var book = Subject.SearchForNewBook(query, null).Single();
+
+            book.ForeignBookId.Should().Be("audible:uk:B0F14RFHS6");
+            book.Editions.Value.Single().Asin.Should().Be(uk.Asin);
+            book.Editions.Value.Single().AudibleRegion.Should().Be("uk");
+            Mocker.GetMock<IAudnexusProxy>().Verify(proxy => proxy.GetBook(uk.Asin, "us"), Times.Once());
+            Mocker.GetMock<IAudnexusProxy>().Verify(proxy => proxy.GetBook(uk.Asin, "uk"), Times.Once());
+            Mocker.GetMock<IAudnexusProxy>().Verify(proxy => proxy.GetBook(uk.Asin, "au"), Times.Never());
+        }
+
+        [Test]
+        public void should_stop_at_a_successful_preferred_marketplace_lookup()
+        {
+            var asin = _resources[0].Asin;
+
+            Subject.SearchByAsin(asin).Should().ContainSingle(book => book.ForeignBookId == "audible:us:" + asin);
+
+            Mocker.GetMock<IAudnexusProxy>().Verify(proxy => proxy.GetBook(asin, It.Is<string>(region => region != "us")), Times.Never());
+        }
+
+        [Test]
+        public void should_keep_explicit_marketplace_ids_strict_when_the_asin_exists_elsewhere()
+        {
+            var uk = Recording("B0F14RFHS6", "Harry Potter and the Philosopher's Stone (Full-Cast Edition)");
+            uk.Region = "uk";
+            Mocker.GetMock<IAudnexusProxy>().Setup(proxy => proxy.GetBook(uk.Asin, "uk")).Returns(uk);
+
+            Subject.SearchForNewBook("audible:us:" + uk.Asin, null).Should().BeEmpty();
+
+            Mocker.GetMock<IAudnexusProxy>().Verify(proxy => proxy.GetBook(uk.Asin, "uk"), Times.Never());
+        }
+
+        [Test]
+        public void should_not_search_other_marketplaces_after_a_provider_failure()
+        {
+            Mocker.GetMock<IAudnexusProxy>().Setup(proxy => proxy.GetBook("B0F14RFHS6", "us"))
+                .Throws(new BookInfoException("Provider unavailable"));
+
+            Assert.Throws<BookInfoException>(() => Subject.SearchByAsin("B0F14RFHS6"));
+
+            Mocker.GetMock<IAudnexusProxy>().Verify(proxy => proxy.GetBook("B0F14RFHS6", It.Is<string>(region => region != "us")), Times.Never());
+        }
+
+        [Test]
+        public void should_skip_a_skeletal_us_product_and_identify_the_exact_uk_recording()
+        {
+            const string asin = "B0F14RFHS6";
+            var uk = Recording(asin, "Harry Potter and the Philosopher's Stone (Full-Cast Edition)");
+            uk.Region = "uk";
+            Mocker.GetMock<IConfigService>().SetupGet(config => config.AudibleRsEnabled).Returns(true);
+            Mocker.GetMock<IAudibleCatalogProxy>().Setup(proxy => proxy.GetBook(asin, "us"))
+                .Returns(new AudnexusBookResource { Asin = asin, Region = "us" });
+            Mocker.GetMock<IAudnexusProxy>().Setup(proxy => proxy.GetBook(asin, "uk")).Returns(uk);
+
+            var book = Subject.SearchByAsin(asin).Single();
+
+            book.ForeignBookId.Should().Be("audible:uk:" + asin);
+            book.Editions.Value.Single().Title.Should().Be(uk.Title);
+            book.Editions.Value.Single().AudibleRegion.Should().Be("uk");
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void should_try_the_same_marketplace_alternate_provider_when_primary_required_fields_are_missing(bool missingTitle)
+        {
+            var complete = Recording("B0F14RFHS6", "A complete US recording");
+            var partial = Recording(complete.Asin, complete.Title);
+            if (missingTitle)
+            {
+                partial.Title = null;
+            }
+            else
+            {
+                partial.Authors = null;
+            }
+
+            Mocker.GetMock<IConfigService>().SetupGet(config => config.AudibleRsEnabled).Returns(true);
+            Mocker.GetMock<IAudnexusProxy>().Setup(proxy => proxy.GetBook(complete.Asin, "us")).Returns(partial);
+            Mocker.GetMock<IAudibleCatalogProxy>().Setup(proxy => proxy.GetBook(complete.Asin, "us")).Returns(complete);
+
+            var book = Subject.SearchByAsin(complete.Asin).Single();
+
+            book.ForeignBookId.Should().Be("audible:us:" + complete.Asin);
+            book.Editions.Value.Single().Title.Should().Be(complete.Title);
+            Mocker.GetMock<IAudnexusProxy>().Verify(proxy => proxy.GetBook(complete.Asin, It.Is<string>(region => region != "us")), Times.Never());
+        }
+
+        [Test]
+        public void should_try_other_marketplaces_when_primary_metadata_is_incomplete_and_the_alternate_is_absent()
+        {
+            const string asin = "B0F14RFHS6";
+            var uk = Recording(asin, "A verified UK recording");
+            uk.Region = "uk";
+            Mocker.GetMock<IConfigService>().SetupGet(config => config.AudibleRsEnabled).Returns(true);
+            Mocker.GetMock<IAudnexusProxy>().Setup(proxy => proxy.GetBook(asin, "us"))
+                .Returns(new AudnexusBookResource { Asin = asin, Region = "us" });
+            Mocker.GetMock<IAudnexusProxy>().Setup(proxy => proxy.GetBook(asin, "uk")).Returns(uk);
+
+            Subject.SearchByAsin(asin).Should().ContainSingle(book => book.ForeignBookId == "audible:uk:" + asin);
+            Mocker.GetMock<IAudibleCatalogProxy>().Verify(proxy => proxy.GetBook(asin, "us"), Times.Once());
+        }
+
+        [Test]
+        public void should_preserve_explicit_marketplace_constraints_for_incomplete_metadata()
+        {
+            const string asin = "B0F14RFHS6";
+            Mocker.GetMock<IConfigService>().SetupGet(config => config.AudibleRsEnabled).Returns(true);
+            Mocker.GetMock<IAudibleCatalogProxy>().Setup(proxy => proxy.GetBook(asin, "us"))
+                .Returns(new AudnexusBookResource { Asin = asin, Region = "us" });
+
+            var failure = Assert.Catch<BookInfoException>(() => Subject.SearchForNewBook("audible:us:" + asin, null));
+
+            failure.Message.Should().Contain("incomplete in this marketplace");
+            Mocker.GetMock<IAudnexusProxy>().Verify(proxy => proxy.GetBook(asin, It.Is<string>(region => region != "us")), Times.Never());
+        }
+
+        [Test]
+        public void should_not_hide_provider_failures_behind_an_incomplete_alternate_product()
+        {
+            const string asin = "B0F14RFHS6";
+            Mocker.GetMock<IConfigService>().SetupGet(config => config.AudibleRsEnabled).Returns(true);
+            Mocker.GetMock<IAudnexusProxy>().Setup(proxy => proxy.GetBook(asin, "us"))
+                .Throws(new BookInfoException("Provider unavailable"));
+            Mocker.GetMock<IAudibleCatalogProxy>().Setup(proxy => proxy.GetBook(asin, "us"))
+                .Returns(new AudnexusBookResource { Asin = asin, Region = "us" });
+
+            var failure = Assert.Throws<BookInfoException>(() => Subject.SearchByAsin(asin));
+
+            failure.Message.Should().Contain("temporarily unavailable");
+            Mocker.GetMock<IAudnexusProxy>().Verify(proxy => proxy.GetBook(asin, It.Is<string>(region => region != "us")), Times.Never());
+        }
+
+        [Test]
+        public void should_keep_verified_primary_metadata_when_optional_details_are_skeletal()
+        {
+            var asin = _resources[0].Asin;
+            Mocker.GetMock<IConfigService>().SetupGet(config => config.AudibleRsEnabled).Returns(true);
+            Mocker.GetMock<IAudibleCatalogProxy>().Setup(proxy => proxy.GetBook(asin, "us"))
+                .Returns(new AudnexusBookResource { Asin = asin, Region = "us" });
+
+            var book = Subject.GetBookInfo("audible:us:" + asin).Item2;
+
+            book.Title.Should().Be(_resources[0].Title);
+            book.AuthorMetadata.Value.ForeignAuthorId.Should().Be(AuthorId);
+        }
+
+        [Test]
+        public void should_keep_a_verified_regional_recording_with_the_established_author_identity()
+        {
+            var established = new Author
+            {
+                Id = 5, AuthorMetadataId = 6,
+                Metadata = AudiobookMetadataMapper.Author(_resources[0].Authors.Single(), "us")
+            };
+            established.Metadata.Value.Id = 6;
+            var uk = Recording("B0F14RFHS6", "Harry Potter and the Philosopher's Stone (Full-Cast Edition)");
+            uk.Region = "uk";
+            Mocker.GetMock<IAuthorService>().Setup(service => service.FindById(AuthorId)).Returns(established);
+            Mocker.GetMock<IAudnexusProxy>().Setup(proxy => proxy.GetBook(uk.Asin, "uk")).Returns(uk);
+            Mocker.GetMock<IConfigService>().SetupGet(config => config.AudibleRsEnabled).Returns(true);
+            Mocker.GetMock<IAudibleCatalogProxy>().Setup(proxy => proxy.GetBook(uk.Asin, "uk")).Returns(uk);
+
+            var book = Subject.GetBookInfo("audible:uk:" + uk.Asin).Item2;
+
+            book.ForeignBookId.Should().Be("audible:uk:" + uk.Asin);
+            book.Editions.Value.Single().AudibleRegion.Should().Be("uk");
+            book.Author.Value.Should().BeSameAs(established);
+            book.AuthorMetadata.Value.ForeignAuthorId.Should().Be(AuthorId);
+            book.AuthorMetadataId.Should().Be(6);
+        }
+
+        [Test]
+        public void should_not_choose_a_regional_author_from_a_matching_name_without_an_explicit_contributor_asin()
+        {
+            var established = new Author { Id = 5, Metadata = AudiobookMetadataMapper.Author(_resources[0].Authors.Single(), "us") };
+            var uk = Recording("B0F14RFHS6", "Harry Potter and the Philosopher's Stone (Full-Cast Edition)");
+            uk.Region = "uk";
+            uk.Authors[0].Asin = null;
+            Mocker.GetMock<IAuthorService>().Setup(service => service.FindById(AuthorId)).Returns(established);
+            Mocker.GetMock<IAudnexusProxy>().Setup(proxy => proxy.GetBook(uk.Asin, "uk")).Returns(uk);
+
+            var book = Subject.GetBookInfo("audible:uk:" + uk.Asin).Item2;
+
+            book.AuthorMetadata.Value.ForeignAuthorId.Should().Be("audible:uk:name:Yu%20Omiya");
+            book.Author.Value.Should().NotBeSameAs(established);
+        }
+
         [Test]
         public void should_keep_different_narrations_as_distinct_recordings()
         {

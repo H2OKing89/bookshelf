@@ -28,6 +28,7 @@ namespace NzbDrone.Core.Parser.Model
         public List<string> BookAuthors { get; set; } = new List<string>();
         public List<string> Narrators { get; set; } = new List<string>();
         public List<ReleaseBookSeries> BookSeries { get; set; } = new List<ReleaseBookSeries>();
+        public MediaInfoModel MediaInfo { get; set; }
         public int IndexerPriority { get; set; }
         public DownloadProtocol DownloadProtocol { get; set; }
         public DateTime PublishDate { get; set; }

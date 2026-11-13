@@ -160,6 +160,18 @@ function MetadataProvider(props) {
 
             <FieldSet legend={translate('AudioFileMetadata')}>
               <FormGroup>
+                <FormLabel>{translate('PreferPathAsin')}</FormLabel>
+
+                <FormInputGroup
+                  type={inputTypes.CHECK}
+                  name="preferPathAsin"
+                  helpText={translate('PreferPathAsinHelpText')}
+                  onChange={onInputChange}
+                  {...settings.preferPathAsin}
+                />
+              </FormGroup>
+
+              <FormGroup>
                 <FormLabel>{translate('WriteAudioTags')}</FormLabel>
 
                 <FormInputGroup

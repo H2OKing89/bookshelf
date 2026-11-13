@@ -1,0 +1,9 @@
+# Official release archives. Update versions and SHA-256 values together.
+MEDIAINFO_VERSION=26.10
+MEDIAINFO_ARCHIVE=MediaInfo_CLI_26.10_GNU_FromSource.tar.xz
+MEDIAINFO_URL=https://mediaarea.net/download/binary/mediainfo/26.10/MediaInfo_CLI_26.10_GNU_FromSource.tar.xz
+MEDIAINFO_SHA256=7785bb75d69efd21b7c0b2c2269164aeb21cea2be6f6b9103ad79743af6fdec7
+ZLIB_VERSION=1.4
+ZLIB_ARCHIVE=zlib-1.4.tar.xz
+ZLIB_URL=https://zlib.net/zlib-1.4.tar.xz
+ZLIB_SHA256=4f11c512053d7bab8d9e9b89bde3575add3e4c50a383b42ef6cb837035fc5a7c

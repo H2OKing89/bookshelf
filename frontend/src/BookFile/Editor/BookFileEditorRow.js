@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import BookQuality from 'Book/BookQuality';
+import MediaInfo from 'BookFile/MediaInfo';
+import { AUDIO } from 'BookFile/mediaInfoTypes';
 import RelativeDateCellConnector from 'Components/Table/Cells/RelativeDateCellConnector';
 import TableRowCell from 'Components/Table/Cells/TableRowCell';
 import TableSelectCell from 'Components/Table/Cells/TableSelectCell';
@@ -17,6 +19,7 @@ function BookFileEditorRow(props) {
     dateAdded,
     quality,
     qualityCutoffNotMet,
+    mediaInfo,
     isSelected,
     onSelectedChange,
     deleteBookFile
@@ -32,7 +35,8 @@ function BookFileEditorRow(props) {
       <TableRowCell
         className={styles.path}
       >
-        {path}
+        <div className={styles.filePath}>{path}</div>
+        {mediaInfo && <MediaInfo type={AUDIO} {...mediaInfo} />}
       </TableRowCell>
 
       <TableRowCell
@@ -70,6 +74,7 @@ BookFileEditorRow.propTypes = {
   size: PropTypes.number.isRequired,
   quality: PropTypes.object.isRequired,
   qualityCutoffNotMet: PropTypes.bool.isRequired,
+  mediaInfo: PropTypes.object,
   dateAdded: PropTypes.string.isRequired,
   isSelected: PropTypes.bool,
   onSelectedChange: PropTypes.func.isRequired,

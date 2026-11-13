@@ -18,6 +18,7 @@ using NzbDrone.Core.History;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
@@ -90,6 +91,14 @@ namespace NzbDrone.Core.MediaFiles.BookImport
             var allOldTrackFiles = new List<BookFile>();
             var addedAuthors = new List<Author>();
             var addedBooks = new List<Book>();
+
+            foreach (var decision in decisions.Where(x => x.Approved))
+            {
+                if (!AudioRecordingIdentifier.MatchesEdition(decision.Item.FileTrackInfo, decision.Item.Path, decision.Item.Edition))
+                {
+                    decision.Reject(new Rejection("File recording ASIN does not match the selected edition"));
+                }
+            }
 
             var bookDecisions = decisions.Where(e => e.Item.Book != null && e.Approved)
                 .GroupBy(e => e.Item.Book.ForeignBookId).ToList();
@@ -397,7 +406,11 @@ namespace NzbDrone.Core.MediaFiles.BookImport
 
                     try
                     {
-                        dbAuthor = _addAuthorService.AddAuthor(author, false);
+                        var recording = decisions.Select(decision => decision.Item.Book)
+                            .FirstOrDefault(book => AudiobookId.IsNative(book.ForeignBookId));
+                        dbAuthor = recording != null
+                            ? _addAuthorService.AddAuthorFromBook(author, recording)
+                            : _addAuthorService.AddAuthor(author, false);
 
                         // this looks redundant but is necessary to get the LazyLoads populated
                         dbAuthor = _authorService.GetAuthor(dbAuthor.Id);

@@ -38,7 +38,7 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport.Identification
         {
             var author = new Author { Id = 126, AuthorMetadataId = 125, Name = "Miya Kazuki", ForeignAuthorId = $"audible:{region}:B00M9KPHF2" };
             var book = new Book { Id = 3671, Title = title, ForeignBookId = $"audible:{region}:{asin}", Author = author, AuthorMetadataId = 125, AuthorMetadata = author.Metadata };
-            var edition = new Edition { Id = 3671, BookId = book.Id, Book = book, Asin = asin, Title = title, ForeignEditionId = book.ForeignBookId, Language = "eng" };
+            var edition = new Edition { Id = 3671, BookId = book.Id, Book = book, Asin = asin, AudibleRegion = region, Title = title, ForeignEditionId = book.ForeignBookId, Language = "eng" };
             book.Editions = new List<Edition> { edition };
             return edition;
         }
@@ -116,11 +116,59 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport.Identification
                 .Setup(service => service.SearchForNewBook(edition.ForeignEditionId, null, true))
                 .Returns(new List<Book> { edition.Book.Value });
 
-            var candidates = Subject.GetRemoteCandidates(AudioBook(edition.Asin), new IdentificationOverrides { Author = edition.Book.Value.Author.Value }).ToList();
+            var candidates = Subject.GetRemoteCandidates(AudioBook(edition.Asin), new IdentificationOverrides { Book = edition.Book.Value }).ToList();
 
             candidates.Should().ContainSingle().Which.Edition.Should().BeSameAs(edition);
             Mocker.GetMock<ISearchForNewBook>().Verify(service => service.SearchByAsin(It.IsAny<string>()), Times.Never());
             Mocker.GetMock<ISearchForNewBook>().Verify(service => service.SearchForNewBook(edition.ForeignEditionId, null, true), Times.Once());
+        }
+
+        [Test]
+        public void should_find_an_exact_regional_recording_under_an_author_added_in_another_marketplace()
+        {
+            var uk = Recording("B0F14RFHS6", "Philosopher's Stone", "uk");
+            var usAuthor = Recording("B0F14RPXHR", "Sorcerer's Stone", "us").Book.Value.Author.Value;
+            Mocker.GetMock<IConfigService>().SetupGet(config => config.AudnexusRegion).Returns("us");
+            Mocker.GetMock<IEditionService>().Setup(service => service.GetEditionByForeignEditionId(uk.ForeignEditionId)).Returns(uk);
+            Mocker.GetMock<ISearchForNewBook>().Setup(service => service.SearchByAsin(uk.Asin)).Returns(new List<Book> { uk.Book.Value });
+            var overrides = new IdentificationOverrides { Author = usAuthor };
+
+            Subject.GetDbCandidatesFromTags(AudioBook(uk.Asin), overrides, false).Should().ContainSingle().Which.Edition.Should().BeSameAs(uk);
+            Subject.GetRemoteCandidates(AudioBook(uk.Asin), overrides).Should().ContainSingle().Which.Edition.Should().BeSameAs(uk);
+
+            uk.ForeignEditionId.Should().Be("audible:uk:B0F14RFHS6");
+            Mocker.GetMock<ISearchForNewBook>().Verify(service => service.SearchForNewBook(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never());
+        }
+
+        [Test]
+        public void should_not_use_a_matching_author_name_to_cross_explicit_contributor_identities()
+        {
+            var uk = Recording("B0F14RFHS6", "Philosopher's Stone", "uk");
+            var usAuthor = Recording("B0F14RPXHR", "Sorcerer's Stone", "us").Book.Value.Author.Value;
+            usAuthor.ForeignAuthorId = "audible:us:B000000001";
+            Mocker.GetMock<IEditionService>().Setup(service => service.GetEditionByForeignEditionId(uk.ForeignEditionId)).Returns(uk);
+            Mocker.GetMock<ISearchForNewBook>().Setup(service => service.SearchByAsin(uk.Asin)).Returns(new List<Book> { uk.Book.Value });
+            var overrides = new IdentificationOverrides { Author = usAuthor };
+
+            Subject.GetDbCandidatesFromTags(AudioBook(uk.Asin), overrides, false).Should().BeEmpty();
+            Subject.GetRemoteCandidates(AudioBook(uk.Asin), overrides).Should().BeEmpty();
+        }
+
+        [Test]
+        public void should_not_cross_an_explicit_recording_marketplace_even_for_the_same_asin()
+        {
+            var uk = Recording("B0F14RFHS6", "Philosopher's Stone", "uk");
+            var forced = Recording(uk.Asin, "Explicit US selection", "us");
+            Mocker.GetMock<IEditionService>().Setup(service => service.GetEditionByForeignEditionId(uk.ForeignEditionId)).Returns(uk);
+            Mocker.GetMock<ISearchForNewBook>().Setup(service => service.SearchForNewBook(forced.ForeignEditionId, null, true))
+                .Returns(new List<Book> { uk.Book.Value });
+            var overrides = new IdentificationOverrides { Edition = forced };
+
+            Subject.GetDbCandidatesFromTags(AudioBook(uk.Asin), overrides, false).Should().BeEmpty();
+            Subject.GetRemoteCandidates(AudioBook(uk.Asin), overrides).Should().BeEmpty();
+
+            Mocker.GetMock<IEditionService>().Verify(service => service.GetEditionByForeignEditionId(uk.ForeignEditionId), Times.Never());
+            Mocker.GetMock<ISearchForNewBook>().Verify(service => service.SearchByAsin(It.IsAny<string>()), Times.Never());
         }
 
         [Test]

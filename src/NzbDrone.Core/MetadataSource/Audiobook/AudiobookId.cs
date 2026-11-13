@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using NzbDrone.Core.MetadataSource.Audnexus;
 using NzbDrone.Core.MetadataSource.BookInfo;
@@ -13,6 +15,13 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         public static bool IsNative(string value) => value?.StartsWith("audible:", StringComparison.Ordinal) == true;
         public static string ForAsin(string region, string asin) => $"audible:{region}:{asin}";
         public static string ForName(string region, string name) => $"audible:{region}:name:{Uri.EscapeDataString(name.Trim())}";
+
+        // A bare ASIN does not contain a marketplace. Try the configured preference
+        // first, retaining the marketplace returned by a successful exact lookup.
+        public static IEnumerable<string> LookupRegions(string preferredRegion) => new[] { preferredRegion ?? "us", "us", "uk" }
+            .Concat(AudnexusProxy.Regions.OrderBy(region => region, StringComparer.Ordinal))
+            .Where(AudnexusProxy.Regions.Contains)
+            .Distinct(StringComparer.Ordinal);
 
         public static (string Region, string Value, bool IsName) Parse(string id)
         {

@@ -106,5 +106,26 @@ namespace NzbDrone.Core.Test.MusicTests
 
             ExceptionVerification.ExpectedErrors(1);
         }
+
+        [Test]
+        public void should_add_a_native_recordings_missing_author_from_its_verified_credit()
+        {
+            const string id = "audible:us:B08QSKXDG8";
+            var request = BookToAdd(id, id, "audible:us:B000APYNYE");
+            _fakeAuthor.Metadata.Value.ForeignAuthorId = "audible:us:B000APYNYE";
+            GivenValidBook(id, id);
+            _fakeBook.ForeignBookId = id;
+            Mocker.GetMock<IAddAuthorService>().Setup(service => service.AddAuthorFromBook(It.IsAny<Author>(), It.IsAny<Book>()))
+                .Returns(_fakeAuthor);
+
+            var book = Subject.AddBook(request, false);
+
+            book.Author.Value.Should().BeSameAs(_fakeAuthor);
+            book.AuthorMetadataId.Should().Be(_fakeAuthor.AuthorMetadataId);
+            book.ForeignBookId.Should().Be(id);
+            Mocker.GetMock<IAddAuthorService>().Verify(service => service.AddAuthorFromBook(It.IsAny<Author>(), book), Times.Once());
+            Mocker.GetMock<IAddAuthorService>().Verify(service => service.AddAuthor(It.IsAny<Author>(), It.IsAny<bool>()), Times.Never());
+            Mocker.GetMock<IBookService>().Verify(service => service.AddBook(book, false), Times.Once());
+        }
     }
 }

@@ -299,6 +299,12 @@ namespace NzbDrone.Core.Configuration
             set { SetValue("AudnexusRegion", value); }
         }
 
+        public bool PreferPathAsin
+        {
+            get { return GetValueBoolean("PreferPathAsin", false); }
+            set { SetValue("PreferPathAsin", value); }
+        }
+
         public bool AudibleRsEnabled
         {
             get { return GetValueBoolean("AudibleRsEnabled", false); }

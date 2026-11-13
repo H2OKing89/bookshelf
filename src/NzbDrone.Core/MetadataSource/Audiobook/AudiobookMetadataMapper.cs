@@ -74,10 +74,12 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             // Credit ordering is not ownership: retain the established author when
             // their explicit identity is among the recording's author credits.
             // Names are a fallback only when the primary credit has no ASIN.
-            if (expectedAuthor != null && AudiobookId.Parse(expectedAuthor.ForeignAuthorId).Region == region &&
+            if (expectedAuthor != null &&
                 (contributors.Any(credit => credit.Role == "Author" && AudiobookId.IsAsin(credit.Asin) &&
-                    AudiobookId.ForAsin(region, credit.Asin) == expectedAuthor.ForeignAuthorId) ||
-                 (!AudiobookId.IsAsin(contributor.Asin) && new[] { expectedAuthor.Name }.Concat(expectedAuthor.Aliases).Any(name =>
+                    !AudiobookId.Parse(expectedAuthor.ForeignAuthorId).IsName &&
+                    credit.Asin == AudiobookId.Parse(expectedAuthor.ForeignAuthorId).Value) ||
+                 (AudiobookId.Parse(expectedAuthor.ForeignAuthorId).Region == region && !AudiobookId.IsAsin(contributor.Asin) &&
+                  new[] { expectedAuthor.Name }.Concat(expectedAuthor.Aliases).Any(name =>
                     string.Equals(AudiobookTextNormalizer.Text(name), AudiobookTextNormalizer.Text(contributor.Name), StringComparison.OrdinalIgnoreCase)))))
             {
                 metadata = expectedAuthor;

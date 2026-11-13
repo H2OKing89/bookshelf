@@ -62,12 +62,25 @@ LintUI()
     ProgressEnd 'Stylelint'
 }
 
+BuildMediaInfo()
+{
+    local runtime
+    local runtimes="${RID:-linux-x64;linux-musl-x64;linux-musl-arm64}"
+    local split_runtimes
+    IFS=';' read -ra split_runtimes <<< "$runtimes"
+    for runtime in "${split_runtimes[@]}"; do
+        ./scripts/build-mediainfo.sh --runtime "$runtime"
+    done
+}
+
 Build()
 {
     ProgressStart 'Build'
 
     rm -rf $outputFolder
     rm -rf $testPackageFolder
+
+    BuildMediaInfo
 
     slnFile=src/Readarr.sln
 
@@ -112,6 +125,8 @@ PackageFiles()
     cp -r $outputFolder/$framework/$runtime/publish/* $folder
     cp -r $outputFolder/Readarr.Update/$framework/$runtime/publish $folder/Readarr.Update
     cp -r $outputFolder/UI $folder
+
+    ./scripts/build-mediainfo.sh --runtime "$runtime" --output "$folder/tools/mediainfo"
 
     echo "Adding LICENSE"
     cp LICENSE.md $folder

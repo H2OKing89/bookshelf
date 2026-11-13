@@ -12,6 +12,7 @@ import TableSelectCell from 'Components/Table/Cells/TableSelectCell';
 import TableRow from 'Components/Table/TableRow';
 import Popover from 'Components/Tooltip/Popover';
 import { icons, kinds, tooltipPositions } from 'Helpers/Props';
+import { getRecordingIdentity } from 'Utilities/Book/recordingIdentity';
 import translate from 'Utilities/String/translate';
 import BookStatus from './BookStatus';
 import styles from './BookRow.css';
@@ -64,6 +65,8 @@ class BookRow extends Component {
       releaseDate,
       title,
       displayTitle,
+      foreignBookId,
+      foreignEditionId,
       seriesTitle,
       authorName,
       position,
@@ -83,6 +86,7 @@ class BookRow extends Component {
     } = this.props;
 
     const bookFile = bookFiles[0];
+    const recording = getRecordingIdentity(foreignEditionId || foreignBookId);
     const isAvailable = Date.parse(releaseDate) < new Date();
 
     return (
@@ -137,6 +141,12 @@ class BookRow extends Component {
                     title={title}
                     displayTitle={displayTitle}
                   />
+                  {
+                    recording &&
+                      <div className={styles.recordingIdentity}>
+                        ASIN {recording.asin} · {translate('RecordingCatalogLabel', { marketplace: recording.marketplace })}
+                      </div>
+                  }
                 </TableRowCell>
               );
             }
@@ -246,6 +256,7 @@ class BookRow extends Component {
                     isAvailable={isAvailable}
                     monitored={monitored}
                     bookFile={bookFile}
+                    recordingAsin={recording?.asin}
                   />
                 </TableRowCell>
               );
@@ -277,6 +288,8 @@ BookRow.propTypes = {
   releaseDate: PropTypes.string,
   title: PropTypes.string.isRequired,
   displayTitle: PropTypes.string,
+  foreignBookId: PropTypes.string,
+  foreignEditionId: PropTypes.string,
   seriesTitle: PropTypes.string.isRequired,
   authorName: PropTypes.string.isRequired,
   position: PropTypes.string,

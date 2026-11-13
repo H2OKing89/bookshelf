@@ -2,6 +2,7 @@
 // Please do not change this file!
 interface CssExports {
   'dateAdded': string;
+  'filePath': string;
   'path': string;
   'quality': string;
   'size': string;

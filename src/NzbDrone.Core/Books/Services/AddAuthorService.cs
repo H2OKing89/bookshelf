@@ -8,6 +8,7 @@ using NzbDrone.Common.EnsureThat;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.MetadataSource;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.Books
@@ -15,6 +16,7 @@ namespace NzbDrone.Core.Books
     public interface IAddAuthorService
     {
         Author AddAuthor(Author newAuthor, bool doRefresh = true);
+        Author AddAuthorFromBook(Author newAuthor, Book book);
         List<Author> AddAuthors(List<Author> newAuthors, bool doRefresh = true);
     }
 
@@ -57,6 +59,35 @@ namespace NzbDrone.Core.Books
 
             // add the author itself
             return _authorService.AddAuthor(newAuthor, doRefresh);
+        }
+
+        public Author AddAuthorFromBook(Author newAuthor, Book book)
+        {
+            Ensure.That(newAuthor, () => newAuthor).IsNotNull();
+            var metadata = book?.AuthorMetadata?.Value;
+            var edition = book?.Editions?.Value?.SingleOrDefault(item => item.Monitored);
+            if (!AudiobookId.IsNative(book?.ForeignBookId) || metadata == null || string.IsNullOrWhiteSpace(metadata.Name) ||
+                !AudiobookId.IsNative(metadata.ForeignAuthorId) || edition?.ForeignEditionId != book.ForeignBookId)
+            {
+                throw new InvalidOperationException("Adding an author from a recording requires verified recording and author metadata.");
+            }
+
+            var recording = AudiobookId.Parse(book.ForeignBookId);
+            AudiobookId.Parse(metadata.ForeignAuthorId);
+            if (recording.IsName || edition.Asin != recording.Value || edition.AudibleRegion != recording.Region)
+            {
+                throw new InvalidOperationException("The recording metadata must retain its exact ASIN and marketplace.");
+            }
+
+            // The exact recording lookup already supplied this author credit. A
+            // missing profile or an unavailable full bibliography must not block it.
+            newAuthor.Id = 0;
+            newAuthor.AuthorMetadataId = 0;
+            newAuthor.Metadata = metadata;
+            newAuthor = SetPropertiesAndValidate(newAuthor);
+            _authorMetadataService.Upsert(metadata);
+            newAuthor.AuthorMetadataId = metadata.Id;
+            return _authorService.AddAuthor(newAuthor, false);
         }
 
         public List<Author> AddAuthors(List<Author> newAuthors, bool doRefresh = true)

@@ -31,6 +31,11 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
 
             var releases = new List<LocalEdition>();
 
+            foreach (var track in localTracks.Where(x => MediaFileExtensions.AudioExtensions.Contains(Path.GetExtension(x.Path))))
+            {
+                AudioRecordingIdentifier.Apply(track.FileTrackInfo, track.Path, null);
+            }
+
             // text files are always single file releases
             var textFiles = localTracks.Where(x => MediaFileExtensions.TextExtensions.Contains(Path.GetExtension(x.Path))).ToList();
 
@@ -74,7 +79,13 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
             foreach (var group in unprocessed2.GroupBy(x => new { x.FileTrackInfo.AuthorTitle, x.FileTrackInfo.BookTitle }))
             {
                 _logger.Debug("Falling back to grouping by book+author tag");
-                releases.Add(new LocalEdition(group.ToList()));
+
+                // Similar titles and author tags cannot combine different recordings.
+                // Keep unidentified tracks separate when multiple ASINs are present.
+                foreach (var recording in group.GroupBy(x => x.FileTrackInfo.AsinConflict ? x.Path : AudioRecordingIdentifier.Normalize(x.FileTrackInfo.Asin)))
+                {
+                    releases.Add(new LocalEdition(recording.ToList()));
+                }
             }
 
             return releases;
@@ -114,7 +125,13 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
 
         public static bool LooksLikeSingleRelease(List<LocalBook> tracks)
         {
-            // returns true if we think all the tracks belong to a single release
+            // Returns true if all the tracks can belong to a single recording.
+            if (tracks.Any(x => x.FileTrackInfo.AsinConflict) ||
+                tracks.Select(x => AudioRecordingIdentifier.Normalize(x.FileTrackInfo.Asin)).Distinct().Count(x => x != null) > 1)
+            {
+                _logger.Trace("LooksLikeSingleRelease: recording ASINs are not unique");
+                return false;
+            }
 
             // author/book tags must be the same for 75% of tracks, with no more than 25% having different values
             // (except in the case of various authors)

@@ -60,15 +60,23 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
 
             if (asin != null)
             {
-                var region = GetMarketplace(idOverrides);
-                var edition = _editionService.GetEditionByForeignEditionId(AudiobookId.ForAsin(region, asin));
-                if (edition == null || !string.Equals(edition.Asin, asin, StringComparison.OrdinalIgnoreCase) || !SatisfiesOverride(edition, idOverrides))
+                var forcedRegion = GetMarketplace(idOverrides);
+                var regions = forcedRegion == null ? AudiobookId.LookupRegions(_configService.AudnexusRegion) : new[] { forcedRegion };
+                foreach (var region in regions)
                 {
-                    return new List<CandidateEdition>();
+                    var identity = AudiobookId.ForAsin(region, asin);
+                    var edition = _editionService.GetEditionByForeignEditionId(identity);
+                    if (edition == null || edition.ForeignEditionId != identity ||
+                        !string.Equals(edition.Asin, asin, StringComparison.OrdinalIgnoreCase) || !SatisfiesOverride(edition, idOverrides))
+                    {
+                        continue;
+                    }
+
+                    _logger.Debug("Selecting recording {0} from exact ASIN {1} in marketplace {2}", edition, asin, region);
+                    return GetDbCandidatesByEdition(new List<Edition> { edition }, includeExisting);
                 }
 
-                _logger.Debug("Selecting recording {0} from exact ASIN {1} in marketplace {2}", edition, asin, region);
-                return GetDbCandidatesByEdition(new List<Edition> { edition }, includeExisting);
+                return new List<CandidateEdition>();
             }
 
             // Generally author, book and release are null.  But if they're not then limit candidates appropriately.
@@ -237,13 +245,15 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
             if (recordingAsin != null)
             {
                 var region = GetMarketplace(idOverrides);
-                var identity = AudiobookId.ForAsin(region, recordingAsin);
-                remoteBooks = TryRemoteSearch(localEdition, "ASIN search", () => region == (_configService.AudnexusRegion ?? "us")
+                var identity = region == null ? null : AudiobookId.ForAsin(region, recordingAsin);
+                remoteBooks = TryRemoteSearch(localEdition, "ASIN search", () => identity == null
                     ? _bookSearchService.SearchByAsin(recordingAsin)
                     : _bookSearchService.SearchForNewBook(identity, null));
                 foreach (var candidate in ToCandidates(remoteBooks, seenCandidates, idOverrides)
                     .Where(candidate => string.Equals(candidate.Edition.Asin, recordingAsin, StringComparison.OrdinalIgnoreCase) &&
-                                        (!AudiobookId.IsNative(candidate.Edition.ForeignEditionId) || candidate.Edition.ForeignEditionId == identity)))
+                                        AudiobookId.IsNative(candidate.Edition.ForeignEditionId) &&
+                                        AudiobookId.Parse(candidate.Edition.ForeignEditionId).Value == recordingAsin &&
+                                        (identity == null || candidate.Edition.ForeignEditionId == identity)))
                 {
                     yield return candidate;
                 }
@@ -401,14 +411,16 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
 
         private string GetMarketplace(IdentificationOverrides idOverrides)
         {
-            var identity = idOverrides?.Edition?.ForeignEditionId ?? idOverrides?.Book?.ForeignBookId ?? idOverrides?.Author?.ForeignAuthorId;
+            // Author ownership and the configured preference do not establish a
+            // recording's marketplace. Only a selected book or edition does.
+            var identity = idOverrides?.Edition?.ForeignEditionId ?? idOverrides?.Book?.ForeignBookId;
             var parts = identity?.Split(':');
             if (parts?.Length >= 3 && parts[0] == "audible" && AudnexusProxy.Regions.Contains(parts[1]))
             {
                 return parts[1];
             }
 
-            return _configService.AudnexusRegion ?? "us";
+            return null;
         }
 
         // Runs a remote metadata search, marking the edition as successfully searched when the call
@@ -475,7 +487,18 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
 
             if (idOverride?.Author != null)
             {
-                return edition.Book.Value.Author.Value.ForeignAuthorId == idOverride.Author.ForeignAuthorId;
+                var candidateAuthor = edition.Book.Value.Author.Value.ForeignAuthorId;
+                var expectedAuthor = idOverride.Author.ForeignAuthorId;
+                if (candidateAuthor == expectedAuthor)
+                {
+                    return true;
+                }
+
+                // The same explicit contributor ASIN can be credited in several
+                // marketplaces. A matching name alone never crosses ownership.
+                return AudiobookId.IsNative(candidateAuthor) && AudiobookId.IsNative(expectedAuthor) &&
+                    !AudiobookId.Parse(candidateAuthor).IsName && !AudiobookId.Parse(expectedAuthor).IsName &&
+                    AudiobookId.Parse(candidateAuthor).Value == AudiobookId.Parse(expectedAuthor).Value;
             }
 
             return true;

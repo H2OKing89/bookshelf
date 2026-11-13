@@ -29,6 +29,12 @@ namespace NzbDrone.Core.Test.Configuration
         }
 
         [Test]
+        public void path_asin_preference_should_be_off_by_default()
+        {
+            Subject.PreferPathAsin.Should().BeFalse();
+        }
+
+        [Test]
         public void Get_value_should_return_default_when_no_value()
         {
             Subject.RssSyncInterval.Should().Be(15);

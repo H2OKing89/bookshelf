@@ -94,10 +94,19 @@ namespace NzbDrone.Core.MetadataSource.Audible
 
         public AudnexusBookResource GetBook(string asin, string region)
         {
-            var body = Read("/1.0/catalog/products/" + asin, region, new Dictionary<string, object>
+            var body = Read(
+                "/1.0/catalog/products/" + asin,
+                region,
+                new Dictionary<string, object>
+                {
+                    { "response_groups", ResponseGroups }, { "image_sizes", ImageSizes }
+                },
+                allowMissing: true);
+            if (body == null)
             {
-                { "response_groups", ResponseGroups }, { "image_sizes", ImageSizes }
-            });
+                return null;
+            }
+
             if (body["product"] is not JObject product || product.Value<string>("asin") != asin)
             {
                 throw new BookInfoException("audible-rs returned a different recording or an incomplete product.");
@@ -107,7 +116,7 @@ namespace NzbDrone.Core.MetadataSource.Audible
             return AudiobookCatalogPolicy.IsRecording(recording) ? recording : null;
         }
 
-        private JObject Read(string path, string region, Dictionary<string, object> query)
+        private JObject Read(string path, string region, Dictionary<string, object> query, bool allowMissing = false)
         {
             if (!_configService.AudibleRsEnabled || DateTime.UtcNow < _unavailableUntil)
             {
@@ -150,6 +159,14 @@ namespace NzbDrone.Core.MetadataSource.Audible
                 }
 
                 var envelope = JObject.Parse(response.Content);
+
+                // The agent can successfully relay a catalog 404 for a recording
+                // unavailable in this marketplace. This is not a provider outage.
+                if (allowMissing && envelope.Value<int?>("status") == 404)
+                {
+                    return null;
+                }
+
                 if (envelope.Value<int?>("status") != 200 || envelope["body"] is not JObject body)
                 {
                     throw new BookInfoException("Audible catalog request failed with status {0}.", envelope.Value<int?>("status"));

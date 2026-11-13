@@ -20,6 +20,7 @@ namespace NzbDrone.Core.MediaFiles
         void Update(List<BookFile> bookFiles);
         void Delete(BookFile bookFile, DeleteMediaFileReason reason);
         void DeleteMany(List<BookFile> bookFiles, DeleteMediaFileReason reason);
+        List<BookFile> GetFiles();
         List<BookFile> GetFilesByAuthor(int authorId);
         List<BookFile> GetFilesByAuthorMetadataId(int authorMetadataId);
         List<BookFile> GetFilesByBook(int bookId);
@@ -188,6 +189,11 @@ namespace NzbDrone.Core.MediaFiles
         public List<BookFile> GetFilesByAuthor(int authorId)
         {
             return _mediaFileRepository.GetFilesByAuthor(authorId);
+        }
+
+        public List<BookFile> GetFiles()
+        {
+            return _mediaFileRepository.All().ToList();
         }
 
         public List<BookFile> GetFilesByAuthorMetadataId(int authorMetadataId)

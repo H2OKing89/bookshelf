@@ -7,6 +7,7 @@ interface CssExports {
   'pageCount': string;
   'position': string;
   'rating': string;
+  'recordingIdentity': string;
   'releaseDate': string;
   'runtimeLengthMinutes': string;
   'status': string;

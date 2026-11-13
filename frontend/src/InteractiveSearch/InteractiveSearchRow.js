@@ -4,6 +4,8 @@ import ProtocolLabel from 'Activity/Queue/ProtocolLabel';
 import BookFormats from 'Book/BookFormats';
 import BookQuality from 'Book/BookQuality';
 import IndexerFlags from 'Book/IndexerFlags';
+import MediaInfo from 'BookFile/MediaInfo';
+import { AUDIO } from 'BookFile/mediaInfoTypes';
 import Icon from 'Components/Icon';
 import Link from 'Components/Link/Link';
 import SpinnerIconButton from 'Components/Link/SpinnerIconButton';
@@ -128,6 +130,7 @@ class InteractiveSearchRow extends Component {
       seeders,
       leechers,
       quality,
+      mediaInfo,
       customFormatScore,
       customFormats,
       indexerFlags = 0,
@@ -161,6 +164,7 @@ class InteractiveSearchRow extends Component {
               {title}
             </Link>
           </div>
+          {mediaInfo && <MediaInfo type={AUDIO} {...mediaInfo} />}
         </TableRowCell>
 
         <TableRowCell className={styles.indexer}>
@@ -276,6 +280,7 @@ InteractiveSearchRow.propTypes = {
   seeders: PropTypes.number,
   leechers: PropTypes.number,
   quality: PropTypes.object.isRequired,
+  mediaInfo: PropTypes.object,
   customFormats: PropTypes.arrayOf(PropTypes.object),
   customFormatScore: PropTypes.number.isRequired,
   indexerFlags: PropTypes.number.isRequired,

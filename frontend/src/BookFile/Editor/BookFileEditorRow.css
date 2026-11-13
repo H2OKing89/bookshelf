@@ -2,6 +2,8 @@
   composes: cell from '~Components/Table/Cells/TableRowCell.css';
 
   flex: 4 0 400px;
+  min-width: 260px;
+  white-space: normal;
   font-size: 13px;
   font-family: $monoSpaceFontFamily;
 }
@@ -17,4 +19,8 @@
   composes: cell from '~Components/Table/Cells/TableRowCell.css';
 
   width: 120px;
+}
+
+.filePath {
+  overflow-wrap: anywhere;
 }

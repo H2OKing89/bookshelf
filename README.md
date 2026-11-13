@@ -75,10 +75,36 @@ Existing file-backed recordings remain available for review. Verified English
 author credits and established Latin display names take priority over native
 profile spellings for the same author identity; native names remain aliases.
 
-Audio identification reads embedded and bracketed filename ASINs even when
-title and author tags are complete. An exact recording and marketplace take
+Audio identification reads embedded `ASIN` and `AUDIBLE_ASIN` tags, bracketed
+filename ASINs, and the nearest identified recording folder, including disc
+subfolders, even when title and author tags are complete. An exact recording and marketplace take
 priority over fuzzy album/title matching. Conflicting identifiers require review,
 and a missing exact ASIN cannot silently select a different recording.
+For a bare ASIN, lookup tries the preferred marketplace first, then other supported
+marketplaces after confirmed missing results. A successful lookup retains its
+verified marketplace; provider failures stop discovery rather than imply absence.
+Use `audible:uk:B0F14RFHS6` to require an explicit marketplace. Selecting a book or
+edition also fixes its recording identity; selecting an author does not establish
+the recording's marketplace. Regional recordings can share an established owning
+author only when their explicit contributor ASIN matches a unique saved owner.
+Matching author names alone never establish that relationship.
+
+Series tables keep each recording as its own row and show its ASIN and catalog
+marketplace. Numbered audiobook series distinguish volume counts from recording
+counts and report how many volumes have files. "Missing recording" applies to
+that row's ASIN; another recording of the same volume can already have a file.
+The marketplace label identifies the catalog used for the lookup.
+
+Adding or importing a verified ASIN can create its missing author directly from
+the recording's catalog credit and the selected library settings. It does not
+require a separate author profile or a complete bibliography lookup before the
+recording can be added. Reviewed author ID and spelling corrections are saved in
+Metadata Overrides; they preserve each recording's ASIN and marketplace.
+
+Automatic and forced audio retagging check the file's current recording identifiers
+before changing or scrubbing tags. A conflict or a different selected recording
+prevents the write and excludes the file from retag previews. Monitoring and
+metadata edits preserve native audiobook file links.
 
 Recording refresh also enriches complete-looking catalog entries with Audnexus
 details and chapters. Successful lookups and missing records are cached for a
@@ -140,6 +166,18 @@ Goodreads list integrations are hidden and inactive. Other list sources are
 matched against audiobook titles and authors, and ambiguous recording matches
 are skipped. Legacy API field names used by import lists remain for wire
 compatibility; they do not trigger Goodreads metadata requests.
+
+Changing an audiobook's monitoring or metadata does not reassign its files.
+Conflicting recording IDs require review instead of an automatic title match.
+For libraries with curated filenames, Settings → Metadata → Audio File Metadata
+provides **Prefer filename ASIN** (off by default). This uses a bracketed ASIN
+from the filename or nearest identified recording folder over embedded ASINs.
+Filename and folder IDs must agree; files without path IDs keep the strict tag
+checks. The selected recording must still match that exact ASIN. This preference
+does not change media tags or bypass the stricter retagging checks.
+API clients adding verified recordings can use `POST /api/v1/book?doRefresh=false`
+to skip the queued author refresh; recording metadata is still fetched and
+validated synchronously. The default remains `doRefresh=true`.
 
 ## Support
 

@@ -1,0 +1,60 @@
+.mediaInfo {
+  margin-top: 5px;
+  max-width: 480px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+
+  font-size: 12px;
+  font-family: $defaultFontFamily;
+}
+
+.details {
+  min-width: 0;
+}
+
+.summary {
+  cursor: pointer;
+}
+
+.container,
+.stream {
+  margin-top: 8px;
+}
+
+.streamHeading {
+  font-weight: bold;
+}
+
+.fields {
+  margin: 4px 0 0;
+}
+
+.field {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+
+  margin-top: 2px;
+
+  dt {
+    flex: 0 0 105px;
+    font-weight: normal;
+  }
+
+  dd {
+    flex: 1 1 140px;
+    margin: 0;
+  }
+}
+
+.source {
+  margin-top: 2px;
+  color: var(--helpTextColor);
+  font-size: 11px;
+}
+
+@media only screen and (max-width: $breakpointSmall) {
+  .mediaInfo {
+    max-width: 250px;
+  }
+}

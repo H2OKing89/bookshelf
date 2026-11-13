@@ -184,6 +184,12 @@ namespace NzbDrone.Core.Books
 
         protected override bool IsMerge(Book local, Book remote)
         {
+            if (local.ForeignBookId != remote.ForeignBookId &&
+                (AudiobookId.IsNative(local.ForeignBookId) || AudiobookId.IsNative(remote.ForeignBookId)))
+            {
+                throw new InvalidOperationException("Metadata refresh cannot replace an audiobook's recording identity.");
+            }
+
             return local.ForeignBookId != remote.ForeignBookId;
         }
 
@@ -224,6 +230,11 @@ namespace NzbDrone.Core.Books
 
         protected override UpdateResult MergeEntity(Book local, Book target, Book remote)
         {
+            if (AudiobookId.IsNative(local.ForeignBookId) || AudiobookId.IsNative(target.ForeignBookId))
+            {
+                throw new InvalidOperationException("Distinct audiobook recording IDs cannot be merged or have their files reassigned during metadata refresh.");
+            }
+
             _logger.Warn($"Book {local} was merged with {remote} because the original was a duplicate.");
 
             // Update book ids for trackfiles
@@ -385,6 +396,13 @@ namespace NzbDrone.Core.Books
             var remote = data.Books.Value.Single();
             var seriesUpdated = RefreshBookSeries(book, remote);
             var updated = RefreshBookInfo(book, data.Books, data, false);
+            if (AudiobookId.IsNative(book.ForeignBookId))
+            {
+                // Direct recording refreshes do not raise the author refresh
+                // event that normally downloads covers for the bibliography.
+                _mediaCoverService.EnsureBookCovers(_bookService.GetBook(book.Id) ?? book);
+            }
+
             if (seriesUpdated && !updated)
             {
                 PublishEntityUpdatedEvent(book);

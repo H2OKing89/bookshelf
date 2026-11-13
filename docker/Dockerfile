@@ -1,3 +1,12 @@
+FROM alpine:3.21 AS mediainfo
+
+RUN apk add --no-cache bash build-base cmake curl xz
+WORKDIR /src
+COPY scripts/build-mediainfo.sh scripts/mediainfo.lock scripts/
+COPY scripts/mediainfo-licenses/ scripts/mediainfo-licenses/
+COPY docker/mediainfo.Dockerfile docker/mediainfo.Dockerfile
+RUN scripts/build-mediainfo.sh --output /bundle
+
 FROM ghcr.io/linuxserver/baseimage-alpine:3.21
 
 ARG TARGETPLATFORM
@@ -34,6 +43,9 @@ RUN --mount=type=bind,source=_output,target=_output \
     *) echo "Unknown platform: $TARGETPLATFORM" && exit 1 ;; \
     esac; \
     cp -r /_output/UI /app/readarr/bin/UI
+
+COPY --from=mediainfo /bundle/ /app/readarr/bin/tools/mediainfo/
+RUN /app/readarr/bin/tools/mediainfo/mediainfo --Version
 
 RUN echo -e "UpdateMethod=docker\nBranch=${GIT_BRANCH}\nPackageVersion=${COMMIT_HASH}}\nPackageAuthor=pennydreadful" > /app/readarr/package_info && \
     printf "version: ${COMMIT_HASH}}\nBuild-date: ${BUILD_DATE}" > /build_version

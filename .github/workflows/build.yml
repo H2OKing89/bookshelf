@@ -77,6 +77,18 @@ jobs:
             webpack-${{ runner.os }}-${{ hashFiles('frontend/src/**/*', 'yarn.lock') }}
             webpack-${{ runner.os }}-
 
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Cache bundled MediaInfo
+        uses: actions/cache@v4
+        with:
+          path: |
+            _cache/mediainfo/downloads
+            _cache/mediainfo/bundles
+          key: mediainfo-${{ runner.os }}-${{ hashFiles('scripts/build-mediainfo.sh', 'scripts/mediainfo.lock', 'scripts/mediainfo-licenses/*', 'docker/mediainfo.Dockerfile') }}
+
       - name: Build
         shell: bash
         run: ./build.sh --backend --frontend
@@ -103,8 +115,6 @@ jobs:
           list-tests: "failed"
           reporter: dotnet-nunit
           fail-on-error: true
-
-      - uses: docker/setup-buildx-action@v3
 
       - uses: docker/metadata-action@v5
         id: gr_meta

@@ -18,6 +18,7 @@ using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Annotations;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Indexers.Exceptions;
+using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 
@@ -229,6 +230,7 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
 
                 release.Title = WebUtility.HtmlDecode(item.Title);
                 release.Book = release.Title;
+                release.MediaInfo = MediaInfoJsonParser.ParseMam(item.MediaInfo?.ToString());
 
                 if (item.AuthorInfo != null)
                 {
@@ -582,6 +584,8 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
         public string NarratorInfo { get; set; }
         [JsonProperty(PropertyName = "series_info")]
         public string SeriesInfo { get; set; }
+        [JsonProperty(PropertyName = "mediainfo")]
+        public JToken MediaInfo { get; set; }
         public string Filetype { get; set; }
         [JsonConverter(typeof(MyAnonaMouseFlagConverter))]
         public bool Vip { get; set; }

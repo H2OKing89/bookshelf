@@ -73,6 +73,8 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport.Identification
                 .All()
                 .With(f => f.Authors = new List<string> { author })
                 .With(f => f.BookTitle = book)
+                .With(f => f.Asin = null)
+                .With(f => f.AsinConflict = false)
                 .With(f => f.BookMBId = null)
                 .With(f => f.ReleaseMBId = null)
                 .Build();
@@ -115,6 +117,8 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport.Identification
                 .CreateListOfSize<ParsedTrackInfo>(count)
                 .All()
                 .With(f => f.BookTitle = "book")
+                .With(f => f.Asin = null)
+                .With(f => f.AsinConflict = false)
                 .With(f => f.BookMBId = null)
                 .With(f => f.ReleaseMBId = null)
                 .Build();
@@ -218,6 +222,53 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport.Identification
             var output = Subject.GroupTracks(tracks);
             output.Count.Should().Be(1);
             output[0].LocalBooks.Count.Should().Be(15);
+        }
+
+        [TestCase("B0BXV7C8PX", "B0CCFTQW7R")]
+        [TestCase("B0F14RFHS6", "B0F14RPXHR")]
+        public void should_separate_different_recordings_even_when_all_other_tags_match(string firstAsin, string secondAsin)
+        {
+            var root = Path.Combine(Path.GetTempPath(), "bookshelf-incoming");
+            var tracks = GivenTracksWithNoTags(root, 2);
+            tracks[0].Path = Path.Combine(root, $"Book [{firstAsin}].m4b");
+            tracks[1].Path = Path.Combine(root, $"Book [{secondAsin}].m4b");
+            tracks.ForEach(x =>
+            {
+                x.FileTrackInfo.Authors = new List<string> { "Author" };
+                x.FileTrackInfo.BookTitle = "Same misleading album";
+            });
+
+            var output = Subject.GroupTracks(tracks);
+
+            output.Should().HaveCount(2);
+            output.Should().OnlyContain(x => x.LocalBooks.Count == 1);
+            TrackGroupingService.LooksLikeSingleRelease(tracks).Should().BeFalse();
+        }
+
+        [Test]
+        public void should_keep_multipart_tracks_from_the_same_recording_folder_together()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "Book [B0BXV7C8PX]");
+            var tracks = GivenTracksWithNoTags(Path.Combine(root, "CD 1"), 2);
+            tracks.AddRange(GivenTracksWithNoTags(Path.Combine(root, "CD 2"), 2));
+
+            var output = Subject.GroupTracks(tracks);
+
+            output.Should().ContainSingle().Which.LocalBooks.Should().HaveCount(4);
+            tracks.Should().OnlyContain(x => x.FileTrackInfo.Asin == "B0BXV7C8PX");
+        }
+
+        [Test]
+        public void should_isolate_conflicting_file_identity_from_other_tracks()
+        {
+            var tracks = GivenTracksWithNoTags(Path.Combine(Path.GetTempPath(), "Book [B0BXV7C8PX]"), 2);
+            tracks[0].FileTrackInfo.Asin = "B0CCFTQW7R";
+
+            var output = Subject.GroupTracks(tracks);
+
+            output.Should().HaveCount(2);
+            output.Should().OnlyContain(x => x.LocalBooks.Count == 1);
+            tracks[0].FileTrackInfo.AsinConflict.Should().BeTrue();
         }
 
         [Test]

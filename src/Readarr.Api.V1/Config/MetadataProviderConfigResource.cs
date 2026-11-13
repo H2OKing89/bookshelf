@@ -7,6 +7,7 @@ namespace Readarr.Api.V1.Config
     {
         public string AudnexusUrl { get; set; }
         public string AudnexusRegion { get; set; }
+        public bool PreferPathAsin { get; set; }
         public bool AudibleRsEnabled { get; set; }
         public string AudibleRsUrl { get; set; }
         public string AudibleRsTokenFile { get; set; }
@@ -26,6 +27,7 @@ namespace Readarr.Api.V1.Config
             {
                 AudnexusUrl = model.AudnexusUrl,
                 AudnexusRegion = model.AudnexusRegion,
+                PreferPathAsin = model.PreferPathAsin,
                 AudibleRsEnabled = model.AudibleRsEnabled,
                 AudibleRsUrl = model.AudibleRsUrl,
                 AudibleRsTokenFile = model.AudibleRsTokenFile,

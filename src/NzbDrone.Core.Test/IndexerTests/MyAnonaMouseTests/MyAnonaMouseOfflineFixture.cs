@@ -21,11 +21,13 @@ namespace NzbDrone.Core.Test.IndexerTests.MyAnonaMouseTests
     public class MyAnonaMouseOfflineFixture : CoreTest<MyAnonaMouse>
     {
         private readonly List<JObject> _requests = new List<JObject>();
+        private JToken _mediaInfo;
 
         [SetUp]
         public void Setup()
         {
             _requests.Clear();
+            _mediaInfo = null;
             Subject.Definition = new IndexerDefinition
             {
                 Name = "MAM fixture",
@@ -58,7 +60,16 @@ namespace NzbDrone.Core.Test.IndexerTests.MyAnonaMouseTests
                     var offset = body["tor"].Value<int>("startNumber");
                     var count = counts[_requests.Count];
                     _requests.Add(body);
-                    var items = new JArray(Enumerable.Range(offset + 1, count).Select(Torrent));
+                    var items = new JArray(Enumerable.Range(offset + 1, count).Select(id =>
+                    {
+                        var item = Torrent(id);
+                        if (_mediaInfo != null)
+                        {
+                            item["mediainfo"] = _mediaInfo.DeepClone();
+                        }
+
+                        return item;
+                    }));
                     var content = new JObject { ["data"] = items, ["found"] = counts.Sum(), ["total"] = count }.ToString();
                     return Task.FromResult(new HttpResponse(request, new HttpHeader { ContentType = "application/json" }, content));
                 });
@@ -78,6 +89,7 @@ namespace NzbDrone.Core.Test.IndexerTests.MyAnonaMouseTests
             _requests[0]["tor"]["srchIn"].Values<string>().Should().Contain(new[] { "title", "author", "series", "filenames" });
             _requests[0]["tor"].Value<string>("text").Should().Be("Example Author Example Series");
             _requests[0]["dlLink"].Should().BeNull();
+            _requests.Should().OnlyContain(request => request.Value<string>("mediaInfo") == "1");
         }
 
         [Test]
@@ -149,6 +161,55 @@ namespace NzbDrone.Core.Test.IndexerTests.MyAnonaMouseTests
             release.IndexerFlags.Should().HaveFlag(IndexerFlags.Freeleech);
             _requests[0]["tor"].Value<string>("sortType").Should().Be("dateDesc");
             Mocker.GetMock<IHttpClient>().Verify(client => client.Execute(It.IsAny<HttpRequest>()), Times.Never());
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task should_keep_indexer_reported_audio_details(bool directObject)
+        {
+            var mediaInfo = new JObject
+            {
+                ["Audio1"] = new JObject
+                {
+                    ["Format"] = "AAC",
+                    ["BitRate"] = "126k",
+                    ["Channels"] = 2,
+                    ["BitRate_Mode"] = "VBR",
+                    ["CodecID"] = "mp4a-40-2"
+                },
+                ["menu"] = new JObject { ["00:00:00.000"] = "Chapter One" }
+            };
+            _mediaInfo = directObject ? mediaInfo : new JValue(mediaInfo.ToString());
+            GivenPages(1);
+
+            var release = (await Subject.FetchRecent()).Single();
+
+            release.MediaInfo.Should().NotBeNull();
+            release.MediaInfo.AudioFormat.Should().Be("AAC");
+            release.MediaInfo.AudioBitrate.Should().Be(126);
+            release.MediaInfo.AudioChannels.Should().Be(2);
+            release.MediaInfo.Source.Should().Be("MyAnonaMouse");
+            release.Title.Should().Contain("[ENG / M4B]");
+        }
+
+        [TestCase(null)]
+        [TestCase("null")]
+        [TestCase("\"\"")]
+        [TestCase("\"{}\"")]
+        [TestCase("{}")]
+        [TestCase("\"not json\"")]
+        [TestCase("[]")]
+        [TestCase("true")]
+        public async Task should_keep_release_when_optional_media_info_is_unavailable(string json)
+        {
+            _mediaInfo = json == null ? null : JToken.Parse(json);
+            GivenPages(1);
+
+            var release = (TorrentInfo)(await Subject.FetchRecent()).Single();
+
+            release.MediaInfo.Should().BeNull();
+            release.Book.Should().Be("Example Series, Vol. 1 & More");
+            release.Seeders.Should().Be(7);
         }
 
         [Test]

@@ -74,6 +74,12 @@ function createMapStateToProps() {
         isCommandExecuting(isRefreshingCommand) &&
         isRefreshingCommand.body.bookId === book.id
       );
+      const isRefreshingMediaInfo = commands.some((command) => (
+        isCommandExecuting(command) &&
+        command.body.name.toLowerCase() === commandNames.REFRESH_MEDIA_INFO.toLowerCase() &&
+        (!command.body.bookId || command.body.bookId === book.id) &&
+        (!command.body.authorId || command.body.authorId === author.id)
+      ));
       const isSearchingCommand = findCommand(commands, { name: commandNames.BOOK_SEARCH });
       const isSearching = (
         isCommandExecuting(isSearchingCommand) &&
@@ -94,6 +100,7 @@ function createMapStateToProps() {
         shortDateFormat: uiSettings.shortDateFormat,
         author,
         isRefreshing,
+        isRefreshingMediaInfo,
         isSearching,
         isRenamingFiles,
         isRenamingAuthor,
@@ -136,12 +143,14 @@ class BookDetailsConnector extends Component {
       id,
       anyReleaseOk,
       isRenamingFiles,
-      isRenamingAuthor
+      isRenamingAuthor,
+      isRefreshingMediaInfo
     } = this.props;
 
     if (
       (prevProps.isRenamingFiles && !isRenamingFiles) ||
       (prevProps.isRenamingAuthor && !isRenamingAuthor) ||
+      (prevProps.isRefreshingMediaInfo && !isRefreshingMediaInfo) ||
       !_.isEqual(getMonitoredEditions(prevProps), getMonitoredEditions(this.props)) ||
       (prevProps.anyReleaseOk === false && anyReleaseOk === true)
     ) {
@@ -197,6 +206,13 @@ class BookDetailsConnector extends Component {
     });
   };
 
+  onRefreshMediaInfoPress = () => {
+    this.props.executeCommand({
+      name: commandNames.REFRESH_MEDIA_INFO,
+      bookId: this.props.id
+    });
+  };
+
   onSearchPress = () => {
     this.props.executeCommand({
       name: commandNames.BOOK_SEARCH,
@@ -213,6 +229,7 @@ class BookDetailsConnector extends Component {
         {...this.props}
         onMonitorTogglePress={this.onMonitorTogglePress}
         onRefreshPress={this.onRefreshPress}
+        onRefreshMediaInfoPress={this.onRefreshMediaInfoPress}
         onSearchPress={this.onSearchPress}
       />
     );
@@ -222,6 +239,7 @@ class BookDetailsConnector extends Component {
 BookDetailsConnector.propTypes = {
   id: PropTypes.number,
   anyReleaseOk: PropTypes.bool,
+  isRefreshingMediaInfo: PropTypes.bool.isRequired,
   isRenamingFiles: PropTypes.bool.isRequired,
   isRenamingAuthor: PropTypes.bool.isRequired,
   isBookFetching: PropTypes.bool,

@@ -6,6 +6,7 @@ using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
+using Readarr.Api.V1.BookFiles;
 using Readarr.Api.V1.CustomFormats;
 using Readarr.Http.REST;
 
@@ -15,6 +16,7 @@ namespace Readarr.Api.V1.Indexers
     {
         public string Guid { get; set; }
         public QualityModel Quality { get; set; }
+        public MediaInfoResource MediaInfo { get; set; }
         public int QualityWeight { get; set; }
         public int Age { get; set; }
         public double AgeHours { get; set; }
@@ -80,6 +82,7 @@ namespace Readarr.Api.V1.Indexers
             {
                 Guid = releaseInfo.Guid,
                 Quality = parsedBookInfo.Quality,
+                MediaInfo = releaseInfo.MediaInfo.ToResource(),
 
                 //QualityWeight
                 Age = releaseInfo.Age,

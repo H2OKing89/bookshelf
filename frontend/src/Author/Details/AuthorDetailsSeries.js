@@ -8,6 +8,7 @@ import MonitorToggleButton from 'Components/MonitorToggleButton';
 import Table from 'Components/Table/Table';
 import TableBody from 'Components/Table/TableBody';
 import { icons, sortDirections } from 'Helpers/Props';
+import { summarizeSeriesRecordings } from 'Utilities/Book/recordingIdentity';
 import translate from 'Utilities/String/translate';
 import getToggledRange from 'Utilities/Table/getToggledRange';
 import BookRowConnector from './BookRowConnector';
@@ -117,6 +118,11 @@ class AuthorDetailsSeries extends Component {
       authorMonitored
     } = this.props;
 
+    const recordings = summarizeSeriesRecordings(items, positionMap);
+    const recordingCount = recordings && (recordings.volumeCount == null ?
+      translate('SeriesRecordingCount', { recordingCount: recordings.recordingCount }) :
+      translate('SeriesVolumesAndRecordings', { volumeCount: recordings.volumeCount, recordingCount: recordings.recordingCount }));
+
     return (
       <div
         className={styles.bookType}
@@ -143,7 +149,7 @@ class AuthorDetailsSeries extends Component {
                     </span>
 
                     <span className={styles.bookCount}>
-                      ({items.length} Books)
+                      ({recordingCount || `${items.length} Books`})
                     </span>
                   </div>
                 }
@@ -165,6 +171,23 @@ class AuthorDetailsSeries extends Component {
             </div>
           </Link>
         </div>
+
+        {
+          recordings &&
+            <div className={styles.recordingSummary}>
+              <span>
+                {translate('RecordingCatalogLabel', { marketplace: recordings.marketplaces.join(', ') })}
+              </span>
+              {
+                recordings.ownedVolumeCount != null &&
+                  <span>{translate('SeriesVolumesWithFiles', { ownedVolumeCount: recordings.ownedVolumeCount, volumeCount: recordings.volumeCount })}</span>
+              }
+              {
+                recordings.hasAlternates &&
+                  <span>{translate('SeriesAlternateRecordingStatus')}</span>
+              }
+            </div>
+        }
 
         <div>
           {

@@ -7,6 +7,8 @@ using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Exceptions;
+using NzbDrone.Core.MediaCover;
+using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.MetadataSource;
 using NzbDrone.Core.MetadataSource.Audiobook;
@@ -68,6 +70,87 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
 
             Mocker.GetMock<IBookService>().Verify(x => x.DeleteBook(It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never());
             ExceptionVerification.ExpectedErrors(1);
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void should_download_selected_recording_covers_without_forcing_file_tags_or_fetching_an_author_catalog(bool metadataChanged)
+        {
+            var (local, remote) = GivenRecordingRefresh();
+            if (!metadataChanged)
+            {
+                local.ReleaseDate = remote.ReleaseDate;
+            }
+
+            var refreshed = new Book
+            {
+                Id = local.Id,
+                ForeignBookId = local.ForeignBookId,
+                Editions = remote.Editions.Value
+            };
+            var refreshEditions = new Mock<IRefreshEditionService>();
+            Mocker.SetConstant<IRefreshEditionService>(refreshEditions.Object);
+            Mocker.GetMock<IBookService>().Setup(service => service.GetBook(local.Id)).Returns(refreshed);
+
+            Subject.RefreshBookInfo(local);
+
+            Mocker.GetMock<IMapCoversToLocal>().Verify(service => service.EnsureBookCovers(refreshed), Times.Once());
+            refreshEditions.Verify(
+                service => service.RefreshEditionInfo(
+                    It.IsAny<List<Edition>>(),
+                    It.IsAny<List<Edition>>(),
+                    It.IsAny<List<Tuple<Edition, Edition>>>(),
+                    It.IsAny<List<Edition>>(),
+                    It.IsAny<List<Edition>>(),
+                    It.IsAny<List<Edition>>(),
+                    false),
+                Times.Once());
+            Mocker.GetMock<IMediaFileService>().Verify(service => service.Update(It.IsAny<List<BookFile>>()), Times.Never());
+            Mocker.GetMock<IMetadataTagService>().Verify(service => service.SyncTags(It.IsAny<List<Edition>>()), Times.Never());
+            Mocker.GetMock<IProvideAuthorInfo>().Verify(service => service.GetAuthorInfo(It.IsAny<string>(), It.IsAny<bool>()), Times.Never());
+        }
+
+        [Test]
+        public void should_retain_a_regional_recording_and_its_established_author_during_refresh()
+        {
+            var resource = new AudnexusBookResource
+            {
+                Asin = "B0F14RFHS6", Region = "uk", Title = "Harry Potter and the Philosopher's Stone (Full-Cast Edition)",
+                Authors = new List<AudnexusContributorResource> { new AudnexusContributorResource { Asin = "B000AP9A6K", Name = "J.K. Rowling" } }
+            };
+            var author = new Author
+            {
+                Id = 2, AuthorMetadataId = 3,
+                Metadata = AudiobookMetadataMapper.Author(resource.Authors.Single(), "us")
+            };
+            author.Metadata.Value.Id = 3;
+            var local = AudiobookMetadataMapper.Book(resource, "uk", author.Metadata.Value);
+            var remote = AudiobookMetadataMapper.Book(resource, "uk", author.Metadata.Value);
+            local.Id = 7;
+            local.Author = author;
+            local.AuthorMetadataId = 3;
+            var edition = local.Editions.Value.Single();
+            edition.Id = 9;
+            edition.BookId = 7;
+            remote.Editions.Value.Single().RuntimeLengthMinutes = 521;
+            Mocker.GetMock<IProvideBookInfo>().Setup(provider => provider.GetBookInfo(local.ForeignBookId))
+                .Returns(Tuple.Create(author.ForeignAuthorId, remote, new List<AuthorMetadata> { author.Metadata.Value }));
+            Mocker.GetMock<IAuthorService>().Setup(service => service.FindById(author.ForeignAuthorId)).Returns(author);
+            Mocker.GetMock<IBookService>().Setup(service => service.GetBook(7)).Returns(local);
+            Mocker.GetMock<IEditionService>().Setup(service => service.GetEditionsForRefresh(7, It.IsAny<List<string>>()))
+                .Returns(new List<Edition> { edition });
+            Mocker.SetConstant<IRefreshEditionService>(Mocker.Resolve<RefreshEditionService>());
+
+            Subject.RefreshBookInfo(local).Should().BeTrue();
+
+            local.ForeignBookId.Should().Be("audible:uk:B0F14RFHS6");
+            local.AuthorMetadata.Value.ForeignAuthorId.Should().Be("audible:us:B000AP9A6K");
+            local.AuthorMetadataId.Should().Be(3);
+            edition.AudibleRegion.Should().Be("uk");
+            edition.Asin.Should().Be("B0F14RFHS6");
+            edition.RuntimeLengthMinutes.Should().Be(521);
+            Mocker.GetMock<IAddAuthorService>().Verify(service => service.AddAuthor(It.IsAny<Author>(), It.IsAny<bool>()), Times.Never());
+            Mocker.GetMock<IMediaFileService>().Verify(service => service.Update(It.IsAny<List<BookFile>>()), Times.Never());
         }
 
         [Test]

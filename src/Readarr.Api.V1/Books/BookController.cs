@@ -169,9 +169,9 @@ namespace Readarr.Api.V1.Books
         }
 
         [RestPostById]
-        public ActionResult<BookResource> AddBook(BookResource bookResource)
+        public ActionResult<BookResource> AddBook(BookResource bookResource, [FromQuery]bool doRefresh = true)
         {
-            var book = _addBookService.AddBook(bookResource.ToModel());
+            var book = _addBookService.AddBook(bookResource.ToModel(), doRefresh);
 
             return Created(book.Id);
         }
@@ -188,7 +188,10 @@ namespace Readarr.Api.V1.Books
 
             var newEdition = model.Editions.Value.SingleOrDefault(e => e.Monitored);
 
-            if (newEdition != null)
+            // Monitoring and metadata edits do not identify local recordings. Native
+            // audiobook files retain their explicit recording links until an import
+            // or reconciliation verifies the file's ASIN.
+            if (newEdition != null && !AudiobookId.IsNative(model.ForeignBookId))
             {
                 var files = _mediaFileService.GetFilesByBook(model.Id);
 

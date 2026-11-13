@@ -91,6 +91,7 @@ class BookDetails extends Component {
       id,
       title,
       isRefreshing,
+      isRefreshingMediaInfo,
       isFetching,
       isPopulated,
       bookFilesError,
@@ -100,6 +101,7 @@ class BookDetails extends Component {
       nextBook,
       isSearching,
       onRefreshPress,
+      onRefreshMediaInfoPress,
       onSearchPress,
       statistics = {}
     } = this.props;
@@ -137,6 +139,16 @@ class BookDetails extends Component {
             />
 
             <PageToolbarSeparator />
+
+            <PageToolbarButton
+              label="Refresh media info"
+              title="Read audio details from the files"
+              iconName={icons.MEDIA_INFO}
+              spinningName={icons.REFRESH}
+              isDisabled={!hasBookFiles}
+              isSpinning={isRefreshingMediaInfo}
+              onPress={onRefreshMediaInfoPress}
+            />
 
             <PageToolbarButton
               label={translate('PreviewRename')}
@@ -347,6 +359,7 @@ BookDetails.propTypes = {
   shortDateFormat: PropTypes.string.isRequired,
   isSaving: PropTypes.bool.isRequired,
   isRefreshing: PropTypes.bool,
+  isRefreshingMediaInfo: PropTypes.bool,
   isSearching: PropTypes.bool,
   isFetching: PropTypes.bool,
   isPopulated: PropTypes.bool,
@@ -358,6 +371,7 @@ BookDetails.propTypes = {
   isSmallScreen: PropTypes.bool.isRequired,
   onMonitorTogglePress: PropTypes.func.isRequired,
   onRefreshPress: PropTypes.func,
+  onRefreshMediaInfoPress: PropTypes.func,
   onSearchPress: PropTypes.func.isRequired
 };
 

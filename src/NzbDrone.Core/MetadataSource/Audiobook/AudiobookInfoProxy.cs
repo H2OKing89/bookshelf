@@ -90,7 +90,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             if (query.StartsWith("asin:", StringComparison.OrdinalIgnoreCase))
             {
                 var asin = query.Substring(5).Trim().ToUpperInvariant();
-                return AudiobookId.IsAsin(asin) ? Lookup(AudiobookId.ForAsin(_config.AudnexusRegion, asin)) : new List<Book>();
+                return AudiobookId.IsAsin(asin) ? LookupAsin(asin) : new List<Book>();
             }
 
             if (query.StartsWith("author:", StringComparison.OrdinalIgnoreCase))
@@ -107,7 +107,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
             if (AudiobookId.IsAsin(query.ToUpperInvariant()))
             {
-                return Lookup(AudiobookId.ForAsin(_config.AudnexusRegion, query.ToUpperInvariant()));
+                return LookupAsin(query.ToUpperInvariant());
             }
 
             if (author.IsNotNullOrWhiteSpace())
@@ -137,29 +137,37 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
             var resource = OptionalDetails(() => _audnexus.GetBook(identity.Value, identity.Region), id, "Audnexus");
             var primaryError = _details.Find(DetailKey(id, "Audnexus"))?.Error;
-            var hasAudnexusDetails = resource != null;
-            if (resource == null && _config.AudibleRsEnabled)
+            ValidateRecordingIdentity(resource, identity.Value, identity.Region);
+            if (resource != null && !AudiobookCatalogPolicy.IsRecording(resource))
             {
-                resource = OptionalDetails(() => _audible.GetBook(identity.Value, identity.Region), id, "Audible");
+                throw new BookNotFoundException(id);
+            }
+
+            var hasAudnexusDetails = HasRequiredRecordingMetadata(resource);
+            if (!hasAudnexusDetails && _config.AudibleRsEnabled)
+            {
+                var fallback = OptionalDetails(() => _audible.GetBook(identity.Value, identity.Region), id, "Audible");
                 var fallbackError = _details.Find(DetailKey(id, "Audible"))?.Error;
-                if (resource == null && (primaryError != null || fallbackError != null))
+                ValidateRecordingIdentity(fallback, identity.Value, identity.Region);
+                resource = fallback ?? resource;
+                if (!HasRequiredRecordingMetadata(resource) && (primaryError != null || fallbackError != null))
                 {
                     throw new BookInfoException("Audiobook metadata providers are temporarily unavailable for this recording.", fallbackError ?? primaryError);
                 }
             }
-            else if (resource == null && primaryError != null)
+            else if (!hasAudnexusDetails && primaryError != null)
             {
                 throw new BookInfoException("Unable to retrieve recording metadata from Audnexus.", primaryError);
-            }
-
-            if (resource != null && (resource.Asin != identity.Value || resource.Region != identity.Region))
-            {
-                throw new BookInfoException("The metadata response does not match this recording or marketplace.");
             }
 
             if (!AudiobookCatalogPolicy.IsRecording(resource))
             {
                 throw new BookNotFoundException(id);
+            }
+
+            if (!HasRequiredRecordingMetadata(resource))
+            {
+                throw new IncompleteRecordingMetadataException();
             }
 
             var book = Map(resource, identity.Region);
@@ -287,6 +295,35 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             }
         }
 
+        private List<Book> LookupAsin(string asin)
+        {
+            IncompleteRecordingMetadataException incomplete = null;
+            foreach (var region in AudiobookId.LookupRegions(_config.AudnexusRegion))
+            {
+                try
+                {
+                    var books = Lookup(AudiobookId.ForAsin(region, asin));
+                    if (books.Any())
+                    {
+                        return books;
+                    }
+                }
+                catch (IncompleteRecordingMetadataException ex)
+                {
+                    // A skeletal regional product is not a verified recording.
+                    // Other marketplaces can still identify this exact ASIN.
+                    incomplete = ex;
+                }
+            }
+
+            if (incomplete != null)
+            {
+                throw incomplete;
+            }
+
+            return new List<Book>();
+        }
+
         private List<Author> FindAuthors(string name)
         {
             return _audnexus.SearchAuthors(name, _config.AudnexusRegion)
@@ -307,7 +344,8 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             var existing = resource == null ? null : _bookService.FindById(AudiobookId.ForAsin(region, resource.Asin));
             var contributor = AudiobookContributors.PrimaryAuthor(resource);
             var identity = contributor == null ? null : _overrides.FindAuthor(contributor, region);
-            var book = AudiobookMetadataMapper.Book(resource, region, existing?.AuthorMetadata.Value ?? expectedAuthor, identity);
+            var establishedAuthor = existing?.AuthorMetadata.Value ?? expectedAuthor ?? FindEstablishedAuthor(contributor, region);
+            var book = AudiobookMetadataMapper.Book(resource, region, establishedAuthor, identity);
             var metadata = book.AuthorMetadata.Value;
             if (existing?.AuthorMetadata?.Value != null &&
                 _overrides.CanonicalAuthorId(existing.AuthorMetadata.Value.ForeignAuthorId) != _overrides.CanonicalAuthorId(metadata.ForeignAuthorId))
@@ -318,7 +356,8 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             RememberAuthor(metadata);
             foreach (var credit in book.Editions.Value.SelectMany(edition => edition.Contributors)
                 .Where(credit => credit.Role == "Author" &&
-                    (AudiobookId.IsAsin(credit.Asin) ? AudiobookId.ForAsin(region, credit.Asin) == metadata.ForeignAuthorId :
+                    (AudiobookId.IsAsin(credit.Asin) ? !AudiobookId.Parse(metadata.ForeignAuthorId).IsName &&
+                        credit.Asin == AudiobookId.Parse(metadata.ForeignAuthorId).Value :
                         new[] { metadata.Name }.Concat(metadata.Aliases).Contains(credit.Name, StringComparer.OrdinalIgnoreCase))))
             {
                 credit.Name = metadata.Name;
@@ -359,6 +398,28 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             return book;
         }
 
+        private AuthorMetadata FindEstablishedAuthor(AudnexusContributorResource contributor, string region)
+        {
+            if (!AudiobookId.IsAsin(contributor?.Asin))
+            {
+                return null;
+            }
+
+            var sameMarketplace = _authorService.FindById(AudiobookId.ForAsin(region, contributor.Asin));
+            if (sameMarketplace != null)
+            {
+                return sameMarketplace.Metadata.Value;
+            }
+
+            // A regional recording can belong to an established author whose
+            // identical contributor ASIN was added in a different marketplace.
+            // Two already separate owners are ambiguous; never choose by name.
+            var existing = AudiobookId.LookupRegions(_config.AudnexusRegion).Where(candidate => candidate != region)
+                .Select(candidate => _authorService.FindById(AudiobookId.ForAsin(candidate, contributor.Asin)))
+                .Where(author => author != null).DistinctBy(author => author.ForeignAuthorId).ToList();
+            return existing.Count == 1 ? existing[0].Metadata.Value : null;
+        }
+
         private bool MatchesAuthor(AudnexusBookResource resource, string region, AuthorMetadata expectedAuthor)
         {
             var contributors = AudiobookContributors.All(resource).Where(credit => credit.Role == "Author")
@@ -368,7 +429,9 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 throw new BookInfoException("Audiobook metadata is missing its author.");
             }
 
-            if (contributors.Any(contributor => MapAuthor(contributor, region).ForeignAuthorId == expectedAuthor.ForeignAuthorId))
+            var expectedIdentity = AudiobookId.Parse(expectedAuthor.ForeignAuthorId);
+            if (contributors.Any(contributor => MapAuthor(contributor, region).ForeignAuthorId == expectedAuthor.ForeignAuthorId ||
+                (!expectedIdentity.IsName && contributor.Asin == expectedIdentity.Value)))
             {
                 return true;
             }
@@ -462,7 +525,17 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         private void MergeDetails(Book book, AudnexusBookResource details, string region, bool preferSeries)
         {
             if (details.Asin != AudiobookId.Parse(book.ForeignBookId).Value || details.Region != region ||
-                !AudiobookCatalogPolicy.IsRecording(details) || !MatchesAuthor(details, region, book.AuthorMetadata.Value))
+                !AudiobookCatalogPolicy.IsRecording(details))
+            {
+                throw new BookInfoException("Audiobook details do not match this recording, marketplace, or author.");
+            }
+
+            if (!HasRequiredRecordingMetadata(details))
+            {
+                return;
+            }
+
+            if (!MatchesAuthor(details, region, book.AuthorMetadata.Value))
             {
                 throw new BookInfoException("Audiobook details do not match this recording, marketplace, or author.");
             }
@@ -479,6 +552,26 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         }
 
         private static int SynopsisLength(string value) => AudiobookSynopsis.Clean(value)?.Length ?? 0;
+
+        private static bool HasRequiredRecordingMetadata(AudnexusBookResource resource) =>
+            AudiobookId.IsAsin(resource?.Asin) && resource.Title.IsNotNullOrWhiteSpace() &&
+            AudiobookContributors.PrimaryAuthor(resource) != null;
+
+        private static void ValidateRecordingIdentity(AudnexusBookResource resource, string asin, string region)
+        {
+            if (resource != null && (resource.Asin != asin || resource.Region != region))
+            {
+                throw new BookInfoException("The metadata response does not match this recording or marketplace.");
+            }
+        }
+
+        private sealed class IncompleteRecordingMetadataException : BookInfoException
+        {
+            public IncompleteRecordingMetadataException()
+                : base("Recording metadata is incomplete in this marketplace; a title and author are required to identify it.")
+            {
+            }
+        }
 
         private static bool NeedsDetails(Book book)
         {

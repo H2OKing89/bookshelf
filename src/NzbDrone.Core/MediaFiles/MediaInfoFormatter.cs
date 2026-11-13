@@ -1,6 +1,5 @@
+using System;
 using System.Collections.Generic;
-using NLog;
-using NzbDrone.Common.Instrumentation;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 
@@ -8,31 +7,24 @@ namespace NzbDrone.Core.MediaFiles
 {
     public static class MediaInfoFormatter
     {
-        private static readonly Logger Logger = NzbDroneLogger.GetLogger(typeof(MediaInfoFormatter));
-
-        public static string FormatAudioBitrate(MediaInfoModel mediaInfo)
+        public static string FormatAudioBitrate(AudioStreamInfo mediaInfo)
         {
-            return mediaInfo.AudioBitrate + " kbps";
+            return mediaInfo != null && mediaInfo.AudioBitrate > 0 ? mediaInfo.AudioBitrate + " kbps" : string.Empty;
         }
 
-        public static string FormatAudioBitsPerSample(MediaInfoModel mediaInfo)
+        public static string FormatAudioBitsPerSample(AudioStreamInfo mediaInfo)
         {
-            if (mediaInfo.AudioBits == 0)
-            {
-                return string.Empty;
-            }
-
-            return mediaInfo.AudioBits + "bit";
+            return mediaInfo != null && mediaInfo.AudioBits > 0 ? mediaInfo.AudioBits + "bit" : string.Empty;
         }
 
-        public static string FormatAudioSampleRate(MediaInfoModel mediaInfo)
+        public static string FormatAudioSampleRate(AudioStreamInfo mediaInfo)
         {
-            return $"{(double)mediaInfo.AudioSampleRate / 1000:0.#}kHz";
+            return mediaInfo != null && mediaInfo.AudioSampleRate > 0 ? $"{(double)mediaInfo.AudioSampleRate / 1000:0.#}kHz" : string.Empty;
         }
 
-        public static decimal FormatAudioChannels(MediaInfoModel mediaInfo)
+        public static decimal FormatAudioChannels(AudioStreamInfo mediaInfo)
         {
-            return mediaInfo.AudioChannels;
+            return mediaInfo?.AudioChannels ?? 0;
         }
 
         public static readonly Dictionary<Codec, string> CodecNames = new Dictionary<Codec, string>
@@ -53,22 +45,83 @@ namespace NzbDrone.Core.MediaFiles
             { Codec.WMA, "WMA" }
         };
 
-        public static string FormatAudioCodec(MediaInfoModel mediaInfo)
+        public static string FormatAudioCodec(AudioStreamInfo mediaInfo)
         {
-            var codec = QualityParser.ParseCodec(mediaInfo.AudioFormat, null);
-
-            if (CodecNames.ContainsKey(codec))
+            if (mediaInfo == null)
             {
-                return CodecNames[codec];
-            }
-            else
-            {
-                Logger.ForDebugEvent()
-                    .Message("Unknown audio format: '{0}'.", string.Join(", ", mediaInfo.AudioFormat))
-                    .Log();
-
                 return "Unknown";
             }
+
+            var format = mediaInfo.AudioFormat?.Trim() ?? string.Empty;
+            var reported = string.Join(" ", format, mediaInfo.AudioProfile, mediaInfo.AudioAdditionalFeatures, mediaInfo.AudioCommercialName);
+            var normalized = reported.Replace(" ", string.Empty).Replace("_", "-");
+
+            // USAC is also used outside the xHE-AAC profile. Require an explicit xHE-AAC label.
+            if (Contains(normalized, "xHE-AAC") || Contains(normalized, "xHEAAC"))
+            {
+                return "xHE-AAC (USAC)";
+            }
+
+            if (Contains(reported, "USAC"))
+            {
+                return "USAC";
+            }
+
+            if (string.Equals(format, "MPEG Audio", StringComparison.OrdinalIgnoreCase))
+            {
+                if (Contains(normalized, "Layer3"))
+                {
+                    return "MP3";
+                }
+
+                if (Contains(normalized, "Layer2"))
+                {
+                    return "MP2";
+                }
+
+                if (Contains(normalized, "Layer1"))
+                {
+                    return "MP1";
+                }
+            }
+
+            var codec = QualityParser.ParseCodec(format, null);
+            var codecName = CodecNames.TryGetValue(codec, out var knownName) ? knownName : format;
+            if (Contains(reported, "Atmos") ||
+                (Contains(reported, "JOC") && (Contains(format, "E-AC-3") || Contains(format, "EAC3") || Contains(reported, "Dolby"))))
+            {
+                return string.IsNullOrWhiteSpace(format) ? "Dolby Atmos" : $"Dolby Atmos ({format})";
+            }
+
+            if (codec == Codec.AAC || codec == Codec.AACVBR || Contains(format, "AAC"))
+            {
+                if (Contains(normalized, "HE-AACv2") || Contains(normalized, "HEAACv2") || Contains(reported, "PS"))
+                {
+                    return "HE-AAC v2";
+                }
+
+                if (Contains(normalized, "HE-AAC") || Contains(normalized, "HEAAC") || Contains(reported, "SBR"))
+                {
+                    return "HE-AAC";
+                }
+
+                if (string.Equals(mediaInfo.AudioProfile?.Trim(), "LC", StringComparison.OrdinalIgnoreCase) || Contains(normalized, "AACLC"))
+                {
+                    return "AAC LC";
+                }
+            }
+
+            if (codec == Codec.Unknown && !string.IsNullOrWhiteSpace(mediaInfo.AudioCommercialName))
+            {
+                return mediaInfo.AudioCommercialName.Trim();
+            }
+
+            return string.IsNullOrWhiteSpace(codecName) ? "Unknown" : codecName;
+        }
+
+        private static bool Contains(string value, string search)
+        {
+            return value.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
         }
     }
 }

@@ -10,6 +10,7 @@ using NzbDrone.Core.Configuration;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MediaFiles.Commands;
 using NzbDrone.Core.MediaFiles.Events;
+using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser.Model;
 using TagLib;
@@ -36,6 +37,7 @@ namespace NzbDrone.Core.MediaFiles
         private readonly IAuthorService _authorService;
         private readonly IMapCoversToLocal _mediaCoverService;
         private readonly IEventAggregator _eventAggregator;
+        private readonly IMediaInfoProbe _mediaInfoProbe;
         private readonly Logger _logger;
 
         public AudioTagService(IConfigService configService,
@@ -45,6 +47,7 @@ namespace NzbDrone.Core.MediaFiles
                                IAuthorService authorService,
                                IMapCoversToLocal mediaCoverService,
                                IEventAggregator eventAggregator,
+                               IMediaInfoProbe mediaInfoProbe,
                                Logger logger)
         {
             _configService = configService;
@@ -54,17 +57,45 @@ namespace NzbDrone.Core.MediaFiles
             _authorService = authorService;
             _mediaCoverService = mediaCoverService;
             _eventAggregator = eventAggregator;
+            _mediaInfoProbe = mediaInfoProbe;
             _logger = logger;
         }
 
         public AudioTag ReadAudioTag(string path)
         {
-            return new AudioTag(path);
+            var tag = new AudioTag(path);
+            var mediaInfo = _mediaInfoProbe.Read(path);
+            if (mediaInfo != null)
+            {
+                // TagLib can fill gaps in a partial probe of a single audio stream.
+                // With multiple streams it may describe a different stream from MediaInfo's default.
+                if (mediaInfo.AudioStreams.Count <= 1)
+                {
+                    var durationSeconds = mediaInfo.DurationSeconds;
+                    var primary = mediaInfo.AudioStreams.FirstOrDefault() ?? mediaInfo;
+                    primary.AudioBitrate = primary.AudioBitrate > 0 ? primary.AudioBitrate : tag.MediaInfo.AudioBitrate;
+                    primary.AudioChannels = primary.AudioChannels > 0 ? primary.AudioChannels : tag.MediaInfo.AudioChannels;
+                    primary.AudioBits = primary.AudioBits > 0 ? primary.AudioBits : tag.MediaInfo.AudioBits;
+                    primary.AudioSampleRate = primary.AudioSampleRate > 0 ? primary.AudioSampleRate : tag.MediaInfo.AudioSampleRate;
+                    mediaInfo.SetPrimaryStream(primary);
+                    mediaInfo.DurationSeconds ??= durationSeconds;
+                }
+
+                tag.MediaInfo = mediaInfo;
+                if (mediaInfo.DurationSeconds.HasValue)
+                {
+                    tag.Duration = TimeSpan.FromSeconds(mediaInfo.DurationSeconds.Value);
+                }
+            }
+
+            return tag;
         }
 
         public ParsedTrackInfo ReadTags(string path)
         {
-            return new AudioTag(path);
+            // Apply the import preference only when identifying files. Tag writes and
+            // previews continue reading all identifiers without this override.
+            return ReadAudioTag(path).ToParsedTrackInfo(_configService.PreferPathAsin);
         }
 
         public AudioTag GetTrackMetadata(BookFile trackfile)
@@ -168,10 +199,16 @@ namespace NzbDrone.Core.MediaFiles
                 }
             }
 
-            var newTags = GetTrackMetadata(trackfile);
             var path = trackfile.Path;
+            var oldTags = ReadAudioTag(path);
+            if (!AudioRecordingIdentifier.MatchesEdition(oldTags, path, trackfile.Edition?.Value))
+            {
+                _logger.Warn("Skipping audio tag update because the file's recording ASIN conflicts with the selected edition: {0}", path);
+                return;
+            }
 
-            var diff = ReadAudioTag(path).Diff(newTags);
+            var newTags = GetTrackMetadata(trackfile);
+            var diff = oldTags.Diff(newTags);
 
             if (!diff.Any())
             {
@@ -247,6 +284,12 @@ namespace NzbDrone.Core.MediaFiles
                 }
 
                 var oldTags = ReadAudioTag(f.Path);
+                if (!AudioRecordingIdentifier.MatchesEdition(oldTags, f.Path, f.Edition.Value))
+                {
+                    _logger.Debug("Skipping retag preview for a conflicting recording ASIN: {0}", f.Path);
+                    continue;
+                }
+
                 var newTags = GetTrackMetadata(f);
                 var diff = oldTags.Diff(newTags);
 

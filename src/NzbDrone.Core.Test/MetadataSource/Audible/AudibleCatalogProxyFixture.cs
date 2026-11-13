@@ -108,6 +108,28 @@ namespace NzbDrone.Core.Test.MetadataSource.Audible
         }
 
         [Test]
+        public void should_treat_a_missing_exact_product_as_absent_without_disabling_the_provider()
+        {
+            GivenPages(
+                "{\"status\":404,\"body\":{\"message\":\"Product not found\"}}",
+                "{\"status\":200,\"body\":{\"product\":{\"asin\":\"B0H8F9D4GD\",\"title\":\"Volume 1\"}}}");
+
+            Subject.GetBook("B0F14RFHS6", "us").Should().BeNull();
+            Subject.GetBook("B0H8F9D4GD", "us").Asin.Should().Be("B0H8F9D4GD");
+            _requests.Should().HaveCount(2);
+        }
+
+        [Test]
+        public void should_preserve_catalog_failure_semantics_for_an_upstream_author_search_404()
+        {
+            GivenPages("{\"status\":404,\"body\":{\"message\":\"Not found\"}}");
+
+            Assert.Throws<BookInfoException>(() => Subject.GetAuthorBooks("Yu Omiya", "us"));
+            Assert.Throws<BookInfoException>(() => Subject.GetBook("B0H8F9D4GD", "us"));
+            _requests.Should().ContainSingle();
+        }
+
+        [Test]
         public void should_keep_both_series_and_use_the_published_primary_order()
         {
             var product = new JObject

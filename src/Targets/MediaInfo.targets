@@ -1,0 +1,21 @@
+<Project>
+  <PropertyGroup>
+    <MediaInfoBundleRuntime>$(RuntimeIdentifier)</MediaInfoBundleRuntime>
+    <MediaInfoBundleRuntime Condition="'$(RuntimeIdentifier)' == 'linux-x64'">linux-musl-x64</MediaInfoBundleRuntime>
+    <MediaInfoBundleDirectory>$(ReadarrRootDir)_cache/mediainfo/bundles/$(MediaInfoBundleRuntime)</MediaInfoBundleDirectory>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('$(MediaInfoBundleDirectory)/mediainfo') and
+                        ('$(MSBuildProjectName)' == 'Readarr.Console' or '$(MSBuildProjectName)' == 'Readarr' or '$(ReadarrOutputType)' == 'Test')">
+    <Content Include="$(MediaInfoBundleDirectory)/**/*">
+      <Link>tools/mediainfo/%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+  <Target Name="RequireBundledMediaInfo" BeforeTargets="PrepareForPublish"
+          Condition="('$(MSBuildProjectName)' == 'Readarr.Console' or '$(MSBuildProjectName)' == 'Readarr') and
+                     ('$(RuntimeIdentifier)' == 'linux-x64' or '$(RuntimeIdentifier)' == 'linux-musl-x64' or '$(RuntimeIdentifier)' == 'linux-musl-arm64')">
+    <Error Condition="!Exists('$(MediaInfoBundleDirectory)/mediainfo')"
+           Text="Bundled MediaInfo helper $(MediaInfoBundleRuntime) is missing for $(RuntimeIdentifier). Run scripts/build-mediainfo.sh --runtime $(RuntimeIdentifier) before publishing." />
+  </Target>
+</Project>

@@ -14,6 +14,7 @@ using NzbDrone.Core.Configuration;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Test.Common;
 using NzbDrone.Test.Common.AutoMoq;
@@ -395,6 +396,111 @@ namespace NzbDrone.Core.Test.MediaFiles.AudioTagServiceFixture
 
             Mocker.GetMock<IEventAggregator>()
                 .Verify(v => v.PublishEvent(It.IsAny<BookFileRetaggedEvent>()), Times.Once());
+        }
+
+        private BookFile GivenRecordingFile(string fileAsin, string editionAsin, string otherEmbeddedAsin = null)
+        {
+            GivenFileCopy("nin.m4a");
+            using (var audio = TagLib.File.Create(_copiedFile))
+            {
+                var tag = (TagLib.Mpeg4.AppleTag)audio.GetTag(TagLib.TagTypes.Apple);
+                tag.SetDashBox("com.pilabor.tone", "AUDIBLE_ASIN", fileAsin);
+                if (otherEmbeddedAsin != null)
+                {
+                    tag.SetDashBox("com.apple.iTunes", "ASIN", otherEmbeddedAsin);
+                }
+
+                audio.Save();
+            }
+
+            var file = GivenPopulatedTrackfile(0);
+            file.Path = _copiedFile;
+            file.Edition.Value.Asin = editionAsin;
+            file.Edition.Value.ForeignEditionId = $"audible:us:{editionAsin}";
+            return file;
+        }
+
+        [TestCase("B0BXV7C8PX", "B0HLLTHK38", null, false)]
+        [TestCase("B0CCFTQW7R", "B0HLLTHK38", null, true)]
+        [TestCase("B0F14RFHS6", "B0F14RPXHR", null, false)]
+        [TestCase("B0F14RFHS6", "B0F14RPXHR", null, true)]
+        [TestCase("B0F14RFHS6", "B0F14RPXHR", "B0F14RPXHR", true)]
+        [TestCase("not-an-asin", "B0F14RPXHR", null, true)]
+        public void should_not_scrub_or_retag_a_conflicting_recording(string fileAsin, string editionAsin, string otherEmbeddedAsin, bool force)
+        {
+            var file = GivenRecordingFile(fileAsin, editionAsin, otherEmbeddedAsin);
+            Mocker.GetMock<IConfigService>().Setup(x => x.ScrubAudioTags).Returns(true);
+            var original = File.ReadAllBytes(file.Path);
+
+            if (force)
+            {
+                Subject.WriteTags(file, false, true);
+            }
+            else
+            {
+                Subject.SyncTags(new List<Edition> { file.Edition.Value });
+            }
+
+            File.ReadAllBytes(file.Path).Should().Equal(original);
+            Mocker.GetMock<IRootFolderWatchingService>().Verify(x => x.ReportFileSystemChangeBeginning(It.IsAny<string>()), Times.Never());
+            Mocker.GetMock<IMediaFileService>().Verify(x => x.Update(It.IsAny<BookFile>()), Times.Never());
+            Mocker.GetMock<IEventAggregator>().Verify(x => x.PublishEvent(It.IsAny<BookFileRetaggedEvent>()), Times.Never());
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
+        public void should_prefer_path_for_import_without_allowing_conflicting_tags_to_be_scrubbed()
+        {
+            var file = GivenRecordingFile("B079TJTK8S", "B0D1CW8W56");
+            var path = Path.Combine(Path.GetDirectoryName(file.Path), $"{Guid.NewGuid():N} [B0D1CW8W56].m4a");
+            File.Move(file.Path, path);
+            _copiedFile = file.Path = path;
+            Mocker.GetMock<IConfigService>().Setup(x => x.PreferPathAsin).Returns(true);
+            Mocker.GetMock<IConfigService>().Setup(x => x.ScrubAudioTags).Returns(true);
+            var original = File.ReadAllBytes(path);
+
+            var parsed = Subject.ReadTags(path);
+            parsed.Asin.Should().Be("B0D1CW8W56");
+            parsed.AsinConflict.Should().BeFalse();
+            AudioRecordingIdentifier.MatchesEdition(parsed, path, file.Edition.Value).Should().BeTrue();
+
+            Subject.WriteTags(file, false, true);
+
+            File.ReadAllBytes(path).Should().Equal(original);
+            ParsedTrackInfo raw = Subject.ReadAudioTag(path);
+            raw.Asin.Should().Be("B079TJTK8S");
+            raw.AsinConflict.Should().BeTrue();
+            Mocker.GetMock<IEventAggregator>().Verify(x => x.PublishEvent(It.IsAny<BookFileRetaggedEvent>()), Times.Never());
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
+        public void should_allow_retagging_the_exact_recording()
+        {
+            var file = GivenRecordingFile("B0F14RFHS6", "B0F14RFHS6");
+            file.Edition.Value.Title = "Correct recording title";
+
+            Subject.WriteTags(file, false, true);
+
+            ParsedTrackInfo actual = new AudioTag(file.Path);
+            actual.Title.Should().Be("Correct recording title");
+            actual.Asin.Should().Be("B0F14RFHS6");
+            actual.AsinConflict.Should().BeFalse();
+            Mocker.GetMock<IEventAggregator>().Verify(x => x.PublishEvent(It.IsAny<BookFileRetaggedEvent>()), Times.Once());
+        }
+
+        [TestCase("B0F14RFHS6", "B0F14RPXHR", null)]
+        [TestCase("B0F14RFHS6", "B0F14RFHS6", "B0F14RPXHR")]
+        public void should_exclude_conflicting_recordings_from_retag_previews(string fileAsin, string editionAsin, string otherEmbeddedAsin)
+        {
+            var file = GivenRecordingFile(fileAsin, editionAsin, otherEmbeddedAsin);
+            var bookId = file.Edition.Value.Book.Value.Id;
+            Mocker.GetMock<IMediaFileService>().Setup(x => x.GetFilesByBook(bookId)).Returns(new List<BookFile> { file });
+            var original = File.ReadAllBytes(file.Path);
+
+            Subject.GetRetagPreviewsByBook(bookId).Should().BeEmpty();
+
+            File.ReadAllBytes(file.Path).Should().Equal(original);
         }
 
         [Test]

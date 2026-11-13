@@ -103,6 +103,25 @@ namespace NzbDrone.Core.Test.MediaFiles
             Mocker.GetMock<IMediaFileService>().Verify(v => v.Add(It.IsAny<BookFile>()), Times.Never());
         }
 
+        [TestCase("B0BXV7C8PX", "B0HLLTHK38")]
+        [TestCase("B0CCFTQW7R", "B0HLLTHK38")]
+        [TestCase("B0F14RFHS6", "B0F14RPXHR")]
+        public void should_reject_explicit_recording_mismatch_before_import_side_effects(string fileAsin, string editionAsin)
+        {
+            var decision = _approvedDecisions.Single();
+            decision.Item.Path = Path.Combine(Path.GetTempPath(), $"Book [{fileAsin}].m4b");
+            decision.Item.Edition.Asin = editionAsin;
+            decision.Item.Edition.ForeignEditionId = $"audible:us:{editionAsin}";
+
+            var result = Subject.Import(_approvedDecisions, false);
+
+            result.Should().ContainSingle().Which.Result.Should().Be(ImportResultType.Rejected);
+            decision.Rejections.Should().ContainSingle().Which.Reason.Should().Contain("ASIN");
+            Mocker.GetMock<IEditionService>().Verify(x => x.SetMonitored(It.IsAny<Edition>()), Times.Never());
+            Mocker.GetMock<IUpgradeMediaFiles>().Verify(x => x.UpgradeBookFile(It.IsAny<BookFile>(), It.IsAny<LocalBook>(), It.IsAny<bool>()), Times.Never());
+            Mocker.GetMock<IMetadataTagService>().Verify(x => x.WriteTags(It.IsAny<BookFile>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never());
+        }
+
         [Test]
         public void should_import_each_approved()
         {

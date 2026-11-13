@@ -10,7 +10,8 @@ function BookStatus(props) {
   const {
     isAvailable,
     monitored,
-    bookFile
+    bookFile,
+    recordingAsin
   } = props;
 
   const hasBookFile = !!bookFile;
@@ -48,10 +49,10 @@ function BookStatus(props) {
     return (
       <div className={styles.center}>
         <Label
-          title={translate('BookAvailableButMissing')}
+          title={recordingAsin ? translate('RecordingAvailableButMissing', { asin: recordingAsin }) : translate('BookAvailableButMissing')}
           kind={kinds.DANGER}
         >
-          {translate('Missing')}
+          {translate(recordingAsin ? 'RecordingMissing' : 'Missing')}
         </Label>
       </div>
     );
@@ -72,7 +73,8 @@ function BookStatus(props) {
 BookStatus.propTypes = {
   isAvailable: PropTypes.bool,
   monitored: PropTypes.bool.isRequired,
-  bookFile: PropTypes.object
+  bookFile: PropTypes.object,
+  recordingAsin: PropTypes.string
 };
 
 export default BookStatus;
