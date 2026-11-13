@@ -235,7 +235,7 @@
   "ContinuingNoAdditionalBooksAreExpected": "No additional books are expected",
   "ConvertToFormat": "Convert To Format",
   "CopyToClipboard": "Copy to clipboard",
-  "CopyUsingHardlinksHelpText": "Hardlinks allow Readarr to import seeding torrents to the the series folder without taking extra disk space or copying the entire contents of the file. Hardlinks will only work if the source and destination are on the same volume",
+  "CopyUsingHardlinksHelpText": "Use hardlinks for copied extra files when the source and destination share a volume. Imported recordings use independent copies to protect downloads during tagging and replacement; allow space for the full replacement.",
   "CopyUsingHardlinksHelpTextWarning": "Occasionally, file locks may prevent renaming files that are being seeded. You may temporarily disable seeding and use Readarr's rename function as a work around.",
   "CouldntFindAnyResultsForTerm": "Couldn't find any results for '{0}'",
   "CountAuthorsSelected": "{selectedCount} author(s) selected",

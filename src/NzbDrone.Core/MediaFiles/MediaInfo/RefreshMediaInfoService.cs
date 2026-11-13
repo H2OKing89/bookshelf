@@ -14,13 +14,13 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
         private const int BatchSize = 100;
 
         private readonly IMediaFileService _mediaFileService;
-        private readonly IMediaInfoProbe _mediaInfoProbe;
+        private readonly IAudioTagService _audioTagService;
         private readonly Logger _logger;
 
-        public RefreshMediaInfoService(IMediaFileService mediaFileService, IMediaInfoProbe mediaInfoProbe, Logger logger)
+        public RefreshMediaInfoService(IMediaFileService mediaFileService, IAudioTagService audioTagService, Logger logger)
         {
             _mediaFileService = mediaFileService;
-            _mediaInfoProbe = mediaInfoProbe;
+            _audioTagService = audioTagService;
             _logger = logger;
         }
 
@@ -55,8 +55,10 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
 
                 try
                 {
-                    var mediaInfo = _mediaInfoProbe.Read(file.Path);
-                    if (mediaInfo == null)
+                    // Use the same fresh TagLib fallback as imports for partial native probes.
+                    // A failed native probe must not replace previously stored rich metadata.
+                    var mediaInfo = _audioTagService.ReadAudioTag(file.Path)?.MediaInfo;
+                    if (mediaInfo?.Source != "MediaInfo")
                     {
                         retained++;
                     }

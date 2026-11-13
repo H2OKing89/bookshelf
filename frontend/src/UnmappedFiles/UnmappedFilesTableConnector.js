@@ -5,6 +5,9 @@ import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import * as commandNames from 'Commands/commandNames';
 import withCurrentPage from 'Components/withCurrentPage';
+import { fetchAuthor } from 'Store/Actions/authorActions';
+import { updateItem } from 'Store/Actions/baseActions';
+import { fetchBooks } from 'Store/Actions/bookActions';
 import { deleteBookFile, deleteBookFiles, fetchBookFiles, setBookFilesSort, setBookFilesTableOption } from 'Store/Actions/bookFileActions';
 import { executeCommand } from 'Store/Actions/commandActions';
 import createClientSideCollectionSelector from 'Store/Selectors/createClientSideCollectionSelector';
@@ -34,6 +37,7 @@ function createMapStateToProps() {
       return {
         items: unmappedFiles,
         ...otherProps,
+        columns: bookFiles.columns.map((column) => (column.name === 'select' ? { ...column, isVisible: true } : column)),
         isScanningFolders,
         isSmallScreen: dimensionsState.isSmallScreen
       };
@@ -52,6 +56,13 @@ function createMapDispatchToProps(dispatch, props) {
     },
 
     fetchUnmappedFiles() {
+      dispatch(fetchBookFiles({ unmapped: true }));
+    },
+
+    onLocalRecordingCreated(book) {
+      dispatch(updateItem({ section: 'books', ...book }));
+      dispatch(fetchBooks({ authorId: book.authorId }));
+      dispatch(fetchAuthor({ id: book.authorId }));
       dispatch(fetchBookFiles({ unmapped: true }));
     },
 

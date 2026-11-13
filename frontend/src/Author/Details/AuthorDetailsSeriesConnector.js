@@ -45,7 +45,8 @@ function createMapStateToProps() {
         sortedBooks = booksInSeries.sort((a, b) => {
           const apos = positionMap[a.id] || '';
           const bpos = positionMap[b.id] || '';
-          return apos.localeCompare(bpos, undefined, { numeric: true, sensivity: 'base' });
+          const comparison = apos.localeCompare(bpos, undefined, { numeric: true, sensitivity: 'base' });
+          return sortDir === 'desc' ? -comparison : comparison;
         });
       } else {
         sortedBooks = _.orderBy(booksInSeries, series.sortKey, sortDir);

@@ -15,7 +15,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaFileDeletionService
     [TestFixture]
     public class DeleteTrackFileFixture : CoreTest<Core.MediaFiles.MediaFileDeletionService>
     {
-        private static readonly string RootFolder = @"C:\Test\Music";
+        private static readonly string RootFolder = @"C:\Test\Music".AsOsAgnostic();
         private Author _author;
         private BookFile _trackFile;
 
@@ -27,7 +27,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaFileDeletionService
                                      .Build();
 
             _trackFile = Builder<BookFile>.CreateNew()
-                                               .With(f => f.Path = "/Author Name - Track01")
+                                               .With(f => f.Path = Path.Combine(_author.Path, "Track01.mp3"))
                                                .Build();
 
             Mocker.GetMock<IDiskProvider>()
@@ -37,6 +37,8 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaFileDeletionService
             Mocker.GetMock<IDiskProvider>()
                   .Setup(s => s.GetParentFolder(_trackFile.Path))
                   .Returns(_author.Path);
+
+            GivenNonCalibreRootFolder();
         }
 
         private void GivenRootFolderExists()
@@ -64,7 +66,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaFileDeletionService
         {
             Mocker.GetMock<IRootFolderService>()
                 .Setup(x => x.GetBestRootFolder(It.IsAny<string>()))
-                .Returns(new RootFolder());
+                .Returns(new RootFolder { Path = RootFolder });
         }
 
         [Test]
@@ -92,6 +94,19 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaFileDeletionService
 
             Mocker.GetMock<IMediaFileService>().Verify(v => v.Delete(_trackFile, DeleteMediaFileReason.Manual), Times.Once());
             Mocker.GetMock<IRecycleBinProvider>().Verify(v => v.DeleteFile(_trackFile.Path, It.IsAny<string>()), Times.Never());
+        }
+
+        [Test]
+        public void should_delete_actual_file_even_when_registered_author_folder_is_missing()
+        {
+            GivenRootFolderExists();
+            GivenRootFolderHasFolders();
+            Mocker.GetMock<IDiskProvider>().Setup(x => x.FolderExists(_author.Path)).Returns(false);
+            Mocker.GetMock<IDiskProvider>().Setup(x => x.FileExists(_trackFile.Path)).Returns(true);
+
+            Subject.DeleteTrackFile(_author, _trackFile);
+
+            Mocker.GetMock<IRecycleBinProvider>().Verify(x => x.DeleteFile(_trackFile.Path, "Author Name"), Times.Once());
         }
 
         [Test]

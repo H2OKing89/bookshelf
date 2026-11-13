@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
+using NzbDrone.Core.Books;
 using NzbDrone.Core.MediaFiles.BookImport.Identification;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Test.Common;
 
 namespace NzbDrone.Core.Test.MediaFiles.BookImport.Identification
@@ -9,6 +12,29 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport.Identification
     [TestFixture]
     public class DistanceCalculatorFixture : TestBase
     {
+        [TestCase(-7, 0, 1.0)]
+        [TestCase(0, 0, 0.0)]
+        [TestCase(-2, 1, 1.0)]
+        public void should_keep_release_year_mismatch_penalties_for_current_and_future_editions(int localOffset, int remoteOffset, double expected)
+        {
+            var year = DateTime.Now.Year;
+            var metadata = new AuthorMetadata { Name = "Example Author" };
+            var book = new Book { Title = "Book", AuthorMetadata = metadata, SeriesLinks = new List<SeriesBookLink>() };
+            var edition = new Edition { Title = "Book", Book = book, ReleaseDate = new DateTime(year + remoteOffset, 1, 1) };
+            var tracks = new List<LocalBook>
+            {
+                new LocalBook
+                {
+                    Path = "/library/book.m4b",
+                    FileTrackInfo = new ParsedTrackInfo { BookTitle = "Book", Authors = new List<string> { "Example Author" }, Year = (uint)(year + localOffset) }
+                }
+            };
+
+            var distance = DistanceCalculator.BookDistance(tracks, edition);
+
+            distance.Penalties["year"].Should().ContainSingle().Which.Should().Be(expected);
+        }
+
         [Test]
         public void should_reverse_single_reversed_author()
         {

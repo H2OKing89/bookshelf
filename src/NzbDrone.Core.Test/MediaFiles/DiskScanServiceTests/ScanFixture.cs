@@ -114,6 +114,21 @@ namespace NzbDrone.Core.Test.MediaFiles.DiskScanServiceTests
                 .Returns(files.Select(x => DiskProvider.GetFileInfo(x)).ToList());
         }
 
+        [TestCase("opus", false)]
+        [TestCase("OPUS", false)]
+        [TestCase("wv", true)]
+        [TestCase("WV", true)]
+        public void should_include_supported_opus_and_wavpack_files_in_scans(string extension, bool lossless)
+        {
+            GivenAuthorFolder();
+            var path = Path.Combine(_author.Path, "Book." + extension);
+            GivenFiles(new[] { path });
+
+            Subject.GetBookFiles(_author.Path).Should().ContainSingle(file => file.FullName == path);
+            MediaFileExtensions.AudioExtensions.Contains("." + extension).Should().BeTrue();
+            MediaFileExtensions.GetQualityForExtension("." + extension).Should().Be(lossless ? Quality.FLAC : Quality.MP3);
+        }
+
         private void GivenKnownFiles(IEnumerable<string> files, DateTimeOffset? lastWrite = null)
         {
             if (lastWrite == null)
@@ -578,6 +593,16 @@ namespace NzbDrone.Core.Test.MediaFiles.DiskScanServiceTests
                                           l[0].Quality.Equals(localTrack.Quality) &&
                                           l[0].MediaInfo.AudioFormat == localTrack.FileTrackInfo.MediaInfo.AudioFormat)),
                         Times.Once());
+        }
+
+        [Test]
+        public void should_exclude_prepared_import_files_from_library_scans()
+        {
+            var root = @"C:\Test\Books".AsOsAgnostic();
+            var ready = Path.Combine(root, "book.mp3");
+            var staging = Path.Combine(root, ".bookshelf-import-abc123.mp3");
+
+            Subject.FilterPaths(root, new[] { ready, staging }).Should().ContainSingle().Which.Should().Be(ready);
         }
     }
 }

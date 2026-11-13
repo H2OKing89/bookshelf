@@ -184,7 +184,8 @@ namespace NzbDrone.Core.Datastore
             return $"INSERT INTO {_table} ({sbColumnList.ToString()}) VALUES ({sbParameterList.ToString()}); SELECT last_insert_rowid() id";
         }
 
-        private TModel Insert(IDbConnection connection, IDbTransaction transaction, TModel model)
+        // Used by aggregate repositories that commit several models atomically.
+        internal TModel Insert(IDbConnection connection, IDbTransaction transaction, TModel model)
         {
             SqlBuilderExtensions.LogQuery(_insertSql, model);
 
@@ -242,6 +243,14 @@ namespace NzbDrone.Core.Datastore
             ModelUpdated(model);
 
             return model;
+        }
+
+        protected void Update(IDbConnection connection, IDbTransaction transaction, TModel model)
+        {
+            if (connection.Execute(_updateSql, model, transaction) != 1)
+            {
+                throw new InvalidOperationException($"Expected to update one {_table} record with ID {model.Id}");
+            }
         }
 
         public void UpdateMany(IList<TModel> models)

@@ -37,7 +37,7 @@ namespace NzbDrone.Core.MediaFiles
         IExecute<RescanFoldersCommand>
     {
         public static readonly Regex ExcludedSubFoldersRegex = new Regex(@"(?:\\|\/|^)(?:extras|@eadir|extrafanart|plex versions|\.[^\\/]+)(?:\\|\/)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        public static readonly Regex ExcludedFilesRegex = new Regex(@"^\._|^Thumbs\.db$|^\.DS_store$|\.partial~$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public static readonly Regex ExcludedFilesRegex = new Regex(@"^\._|^\.bookshelf-import-|^Thumbs\.db$|^\.DS_store$|\.partial~$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private readonly IConfigService _configService;
         private readonly IDiskProvider _diskProvider;

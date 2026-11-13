@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using FluentAssertions;
 using Moq;
@@ -37,7 +38,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaInfo
             };
 
             Mocker.GetMock<IMediaFileService>().Setup(service => service.GetFiles()).Returns(new List<BookFile> { _file });
-            Mocker.GetMock<IMediaInfoProbe>().Setup(probe => probe.Read(_file.Path)).Returns(_probedMediaInfo);
+            Mocker.GetMock<IAudioTagService>().Setup(probe => probe.ReadAudioTag(_file.Path)).Returns(new AudioTag { MediaInfo = _probedMediaInfo });
         }
 
         [Test]
@@ -87,7 +88,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaInfo
         [Test]
         public void should_retain_previous_metadata_when_file_cannot_be_probed()
         {
-            Mocker.GetMock<IMediaInfoProbe>().Setup(probe => probe.Read(_file.Path)).Returns((MediaInfoModel)null);
+            Mocker.GetMock<IAudioTagService>().Setup(probe => probe.ReadAudioTag(_file.Path)).Returns(new AudioTag { MediaInfo = new MediaInfoModel { Source = "TagLib", AudioBitrate = 32 } });
 
             Subject.Execute(new RefreshMediaInfoCommand());
 
@@ -96,11 +97,35 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaInfo
         }
 
         [Test]
+        public void should_preserve_fresh_taglib_measurements_when_native_probe_is_partial()
+        {
+            _file.Path = Path.Combine(TestContext.CurrentContext.TestDirectory, "Files", "Media", "nin.mp3");
+            var expected = new AudioTag(_file.Path).MediaInfo;
+            var partial = new MediaInfoModel
+            {
+                AudioFormat = "MPEG Audio",
+                Source = "MediaInfo",
+                AudioStreams = new List<AudioStreamInfo> { new AudioStreamInfo { AudioFormat = "MPEG Audio" } }
+            };
+            Mocker.GetMock<IMediaInfoProbe>().Setup(probe => probe.Read(_file.Path)).Returns(partial);
+            Mocker.SetConstant<IAudioTagService>(Mocker.Resolve<AudioTagService>());
+
+            Subject.Execute(new RefreshMediaInfoCommand());
+
+            _file.MediaInfo.Source.Should().Be("MediaInfo");
+            _file.MediaInfo.AudioBitrate.Should().Be(expected.AudioBitrate).And.BeGreaterThan(0);
+            _file.MediaInfo.AudioChannels.Should().Be(expected.AudioChannels);
+            _file.MediaInfo.AudioSampleRate.Should().Be(expected.AudioSampleRate);
+            _file.MediaInfo.AudioStreams.Single().AudioBitrate.Should().Be(expected.AudioBitrate);
+            Mocker.GetMock<IMediaFileService>().Verify(service => service.UpdateMediaInfo(It.Is<List<BookFile>>(files => files.Count == 1 && files[0] == _file)), Times.Once());
+        }
+
+        [Test]
         public void should_continue_after_one_probe_fails()
         {
             var unreadable = new BookFile { Id = 11, Path = "/library/unreadable.mp3", MediaInfo = _previousMediaInfo };
             Mocker.GetMock<IMediaFileService>().Setup(service => service.GetFiles()).Returns(new List<BookFile> { unreadable, _file });
-            Mocker.GetMock<IMediaInfoProbe>().Setup(probe => probe.Read(unreadable.Path)).Throws(new InvalidOperationException("Optional probe failed"));
+            Mocker.GetMock<IAudioTagService>().Setup(probe => probe.ReadAudioTag(unreadable.Path)).Throws(new InvalidOperationException("Optional probe failed"));
 
             Subject.Execute(new RefreshMediaInfoCommand());
 
@@ -119,15 +144,19 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaInfo
             Subject.Execute(new RefreshMediaInfoCommand());
 
             ebook.MediaInfo.Should().BeSameAs(_previousMediaInfo);
-            Mocker.GetMock<IMediaInfoProbe>().Verify(probe => probe.Read(It.IsAny<string>()), Times.Never());
+            Mocker.GetMock<IAudioTagService>().Verify(probe => probe.ReadAudioTag(It.IsAny<string>()), Times.Never());
             Mocker.GetMock<IMediaFileService>().Verify(service => service.UpdateMediaInfo(It.IsAny<List<BookFile>>()), Times.Never());
         }
 
-        [Test]
-        public void should_accept_case_insensitive_audio_extensions()
+        [TestCase("M4B")]
+        [TestCase("opus")]
+        [TestCase("OPUS")]
+        [TestCase("wv")]
+        [TestCase("WV")]
+        public void should_refresh_supported_audio_extensions(string extension)
         {
-            _file.Path = "/library/BOOK.M4B";
-            Mocker.GetMock<IMediaInfoProbe>().Setup(probe => probe.Read(_file.Path)).Returns(_probedMediaInfo);
+            _file.Path = "/library/BOOK." + extension;
+            Mocker.GetMock<IAudioTagService>().Setup(probe => probe.ReadAudioTag(_file.Path)).Returns(new AudioTag { MediaInfo = _probedMediaInfo });
 
             Subject.Execute(new RefreshMediaInfoCommand());
 
@@ -140,7 +169,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaInfo
             var files = Enumerable.Range(1, 205).Select(id => new BookFile { Id = id, Path = $"/library/{id}.m4b" }).ToList();
             var batches = new List<List<BookFile>>();
             Mocker.GetMock<IMediaFileService>().Setup(service => service.GetFiles()).Returns(files);
-            Mocker.GetMock<IMediaInfoProbe>().Setup(probe => probe.Read(It.IsAny<string>())).Returns(_probedMediaInfo);
+            Mocker.GetMock<IAudioTagService>().Setup(probe => probe.ReadAudioTag(It.IsAny<string>())).Returns(new AudioTag { MediaInfo = _probedMediaInfo });
             Mocker.GetMock<IMediaFileService>().Setup(service => service.UpdateMediaInfo(It.IsAny<List<BookFile>>()))
                 .Callback<List<BookFile>>(batch => batches.Add(batch));
 
@@ -164,7 +193,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaInfo
             Mocker.GetMock<IMediaFileService>().Verify(service => service.GetFiles(), Times.Never());
             Mocker.GetMock<IMediaFileService>().Verify(service => service.GetFilesByAuthor(It.IsAny<int>()), Times.Never());
             Mocker.GetMock<IMediaFileService>().Verify(service => service.GetFilesByBook(It.IsAny<int>()), Times.Never());
-            Mocker.GetMock<IMediaInfoProbe>().Verify(probe => probe.Read(It.IsAny<string>()), Times.Never());
+            Mocker.GetMock<IAudioTagService>().Verify(probe => probe.ReadAudioTag(It.IsAny<string>()), Times.Never());
         }
 
         [Test]

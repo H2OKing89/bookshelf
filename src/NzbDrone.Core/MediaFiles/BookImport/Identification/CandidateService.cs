@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NLog;
+using NzbDrone.Common;
+using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Configuration;
@@ -51,7 +53,22 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
 
+            var protectedEditions = GetProtectedLocalEditions(localEdition, out var allFilesProtected);
             var asin = GetRecordingAsin(localEdition, out var conflict);
+            if (protectedEditions.Any())
+            {
+                // A user-confirmed local recording is an identity, not a catalog search hint.
+                // New or conflicting ASIN tags and mixed recording groups need manual review.
+                if (!allFilesProtected || protectedEditions.Count != 1 || asin != null || conflict ||
+                    !SatisfiesOverride(protectedEditions[0], idOverrides))
+                {
+                    _logger.Debug("Preserving the existing local recording; changed identifiers or mixed files require review");
+                    return new List<CandidateEdition>();
+                }
+
+                return GetDbCandidatesByEdition(protectedEditions, includeExisting);
+            }
+
             if (conflict)
             {
                 _logger.Debug("Conflicting recording ASINs; automatic identification requires an unambiguous recording");
@@ -141,10 +158,35 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
                 }
             }
 
+            // A confirmed local recording identifies its linked files, not every performance
+            // with the same title and author. New files need an explicit recording selection.
+            candidateReleases = candidateReleases.Where(candidate => CanMatchUnlinkedFiles(candidate.Edition, idOverrides)).ToList();
+
             watch.Stop();
             _logger.Debug($"Getting {candidateReleases.Count} candidates from tags for {localEdition.LocalBooks.Count} tracks took {watch.ElapsedMilliseconds}ms");
 
             return candidateReleases;
+        }
+
+        private List<Edition> GetProtectedLocalEditions(LocalEdition localEdition, out bool allFilesProtected)
+        {
+            var paths = localEdition.LocalBooks.Select(file => file.Path).Distinct(PathEqualityComparer.Instance).ToList();
+            var knownFiles = paths.Select(path => _mediaFileService.GetFileWithPath(path)).Where(file => file != null).ToList();
+            if (OsInfo.IsWindows)
+            {
+                // Exact indexed lookups cover canonical paths. Retain platform path equality
+                // for Windows paths whose casing or separators differ from the stored path.
+                var unmatchedPaths = paths.Where(path => !knownFiles.Any(file => PathEqualityComparer.Instance.Equals(path, file.Path))).ToList();
+                if (unmatchedPaths.Any())
+                {
+                    knownFiles.AddRange(_mediaFileService.GetFileWithPath(unmatchedPaths) ?? new List<BookFile>());
+                }
+            }
+
+            var localFiles = knownFiles.Where(file => LocalRecordingId.IsLocal(file.Edition?.Value?.ForeignEditionId) ||
+                LocalRecordingId.IsLocal(file.Edition?.Value?.Book?.Value?.ForeignBookId)).ToList();
+            allFilesProtected = paths.All(path => localFiles.Any(file => PathEqualityComparer.Instance.Equals(path, file.Path)));
+            return localFiles.Select(file => file.Edition.Value).DistinctBy(edition => edition.ForeignEditionId).ToList();
         }
 
         private List<CandidateEdition> GetDbCandidatesByEdition(List<Edition> editions, bool includeExisting)
@@ -229,6 +271,12 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
 
         public IEnumerable<CandidateEdition> GetRemoteCandidates(LocalEdition localEdition, IdentificationOverrides idOverrides)
         {
+            if (GetProtectedLocalEditions(localEdition, out _).Any())
+            {
+                // Even a closer remote title must never replace a confirmed local recording.
+                yield break;
+            }
+
             // TODO handle edition override
 
             // Gets candidate book releases from the metadata server.
@@ -458,7 +506,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
                 {
                     edition.Book = book;
 
-                    if (!seenCandidates.Contains(edition.ForeignEditionId) && SatisfiesOverride(edition, idOverrides))
+                    if (!seenCandidates.Contains(edition.ForeignEditionId) && SatisfiesOverride(edition, idOverrides) && CanMatchUnlinkedFiles(edition, idOverrides))
                     {
                         seenCandidates.Add(edition.ForeignEditionId);
                         candidates.Add(new CandidateEdition
@@ -471,6 +519,16 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Identification
             }
 
             return candidates;
+        }
+
+        private bool CanMatchUnlinkedFiles(Edition edition, IdentificationOverrides idOverrides)
+        {
+            if (!LocalRecordingId.IsLocal(edition.ForeignEditionId) && !LocalRecordingId.IsLocal(edition.Book?.Value?.ForeignBookId))
+            {
+                return true;
+            }
+
+            return (idOverrides?.Book != null || idOverrides?.Edition != null) && SatisfiesOverride(edition, idOverrides);
         }
 
         private bool SatisfiesOverride(Edition edition, IdentificationOverrides idOverride)

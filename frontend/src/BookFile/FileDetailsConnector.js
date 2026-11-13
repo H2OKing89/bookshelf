@@ -44,9 +44,9 @@ class FileDetailsConnector extends Component {
     } = this.props;
 
     const item = _.find(items, { id });
-    const errorMessage = getErrorMessage(error, 'Unable to load manual import items');
+    const errorMessage = getErrorMessage(error, 'Unable to load file details');
 
-    if (isFetching || !item.audioTags) {
+    if (isFetching) {
       return (
         <LoadingIndicator />
       );
@@ -54,6 +54,14 @@ class FileDetailsConnector extends Component {
       return (
         <div>{errorMessage}</div>
       );
+    }
+
+    if (!item) {
+      return <div>This file is no longer available.</div>;
+    }
+
+    if (!item.audioTags) {
+      return <div>No audio tags are available for this file.</div>;
     }
 
     return (

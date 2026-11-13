@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using FizzWare.NBuilder;
 using Moq;
@@ -6,7 +7,9 @@ using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Test.Framework;
+using NzbDrone.Test.Common;
 
 namespace NzbDrone.Core.Test.MediaFiles.TrackFileMovingServiceTests
 {
@@ -60,6 +63,18 @@ namespace NzbDrone.Core.Test.MediaFiles.TrackFileMovingServiceTests
             Subject.Add(_trackFiles[0]);
 
             VerifyEventPublished<BookFileAddedEvent>(Times.Once());
+        }
+
+        [Test]
+        public void should_not_report_database_failure_when_post_commit_notification_fails()
+        {
+            Mocker.GetMock<IEventAggregator>().Setup(x => x.PublishEvent(It.IsAny<BookFileAddedEvent>()))
+                .Throws(new IOException("notification failed"));
+
+            Assert.DoesNotThrow(() => Subject.ImportFiles(new List<BookFile> { _trackFiles[0] }, new List<BookFile>(), new List<BookFile>()));
+
+            Mocker.GetMock<IMediaFileRepository>().Verify(x => x.ImportFiles(It.IsAny<List<BookFile>>(), It.IsAny<List<BookFile>>(), It.IsAny<List<BookFile>>()), Times.Once());
+            ExceptionVerification.ExpectedWarns(1);
         }
     }
 }

@@ -47,16 +47,19 @@ namespace NzbDrone.Core.Books
                                 IHandle<AuthorDeletedEvent>
     {
         private readonly IBookRepository _bookRepository;
+        private readonly IAuthorRepository _authorRepository;
         private readonly IEditionService _editionService;
         private readonly IEventAggregator _eventAggregator;
         private readonly Logger _logger;
 
         public BookService(IBookRepository bookRepository,
+                           IAuthorRepository authorRepository,
                            IEditionService editionService,
                            IEventAggregator eventAggregator,
                            Logger logger)
         {
             _bookRepository = bookRepository;
+            _authorRepository = authorRepository;
             _editionService = editionService;
             _eventAggregator = eventAggregator;
             _logger = logger;
@@ -312,6 +315,13 @@ namespace NzbDrone.Core.Books
 
         public void Handle(AuthorDeletedEvent message)
         {
+            if (_authorRepository.GetAuthorsByMetadataId(new[] { message.Author.AuthorMetadataId })
+                .Any(author => author.Id != message.Author.Id))
+            {
+                _logger.Debug("Preserving books and editions still owned by another author profile with metadata {0}", message.Author.AuthorMetadataId);
+                return;
+            }
+
             var books = GetBooksByAuthorMetadataId(message.Author.AuthorMetadataId);
             DeleteMany(books);
         }

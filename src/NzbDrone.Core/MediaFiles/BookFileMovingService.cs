@@ -3,6 +3,7 @@ using System.IO;
 using NLog;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.EnsureThat;
+using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.MediaFiles.BookImport;
@@ -18,6 +19,7 @@ namespace NzbDrone.Core.MediaFiles
         BookFile MoveBookFile(BookFile bookFile, Author author);
         BookFile MoveBookFile(BookFile bookFile, LocalBook localBook);
         BookFile CopyBookFile(BookFile bookFile, LocalBook localBook);
+        BookFileMoveResult StageBookFile(BookFile bookFile, LocalBook localBook);
     }
 
     public class BookFileMovingService : IMoveBookFiles
@@ -96,6 +98,58 @@ namespace NzbDrone.Core.MediaFiles
 
             _logger.Debug("Copying book file: {0} to {1}", bookFile.Path, filePath);
             return TransferFile(bookFile, localBook.Author, localBook.Book, filePath, TransferMode.Copy);
+        }
+
+        public BookFileMoveResult StageBookFile(BookFile bookFile, LocalBook localBook)
+        {
+            var source = bookFile.Path;
+            var newFileName = _buildFileNames.BuildBookFileName(localBook.Author, localBook.Edition, bookFile);
+            var destination = _buildFileNames.BuildBookFilePath(localBook.Author, localBook.Edition, newFileName, Path.GetExtension(localBook.Path));
+            if (source.PathEquals(destination))
+            {
+                throw new SameFilenameException("File not imported, source and destination are the same", source);
+            }
+
+            EnsureTrackFolder(bookFile, localBook, destination);
+            var staging = Path.Combine(Path.GetDirectoryName(destination), $".bookshelf-import-{Guid.NewGuid():N}{Path.GetExtension(destination)}");
+            try
+            {
+                // Tagging a hardlink would also modify the download/seeding copy. Always
+                // prepare an independent, verified copy before replacing library media.
+                TransferFile(bookFile, localBook.Author, localBook.Book, staging, TransferMode.Copy);
+                return new BookFileMoveResult
+                {
+                    BookFile = bookFile,
+                    SourcePath = source,
+                    StagingPath = staging
+                };
+            }
+            catch
+            {
+                bookFile.Path = source;
+                try
+                {
+                    if (_diskProvider.FileExists(staging))
+                    {
+                        _diskProvider.DeleteFile(staging);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Warn(ex, "Unable to remove failed import staging file {0}", staging);
+                }
+
+                throw;
+            }
+            finally
+            {
+                // The prepared file is tagged using StagingPath; its eventual library
+                // identity is the destination, never the temporary filename.
+                if (bookFile.Path == staging)
+                {
+                    bookFile.Path = destination;
+                }
+            }
         }
 
         private BookFile TransferFile(BookFile bookFile, Author author, Book book, string destinationFilePath, TransferMode mode)

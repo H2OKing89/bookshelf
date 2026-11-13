@@ -275,6 +275,11 @@ namespace NzbDrone.Core.Books
 
         protected override void ProcessChildren(Author entity, SortedChildren children)
         {
+            // Local recordings are absent from remote catalogs by design.
+            var localRecordings = children.Deleted.Where(book => LocalRecordingId.IsLocal(book.ForeignBookId)).ToList();
+            children.Deleted.RemoveAll(book => LocalRecordingId.IsLocal(book.ForeignBookId));
+            children.UpToDate.AddRange(localRecordings);
+
             foreach (var book in children.Added)
             {
                 book.Monitored = _monitorNewBookService.ShouldMonitorNewBook(book, children.UpToDate, entity.MonitorNewItems);

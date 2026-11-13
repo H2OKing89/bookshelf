@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
+import BookTitleLink from 'Book/BookTitleLink';
 import Alert from 'Components/Alert';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import PageContent from 'Components/Page/PageContent';
@@ -16,6 +17,7 @@ import translate from 'Utilities/String/translate';
 import getSelectedIds from 'Utilities/Table/getSelectedIds';
 import selectAll from 'Utilities/Table/selectAll';
 import toggleSelected from 'Utilities/Table/toggleSelected';
+import CreateLocalRecordingModal from './CreateLocalRecordingModal';
 import UnmappedFilesTableHeader from './UnmappedFilesTableHeader';
 import UnmappedFilesTableRow from './UnmappedFilesTableRow';
 
@@ -32,7 +34,9 @@ class UnmappedFilesTable extends Component {
       allSelected: false,
       allUnselected: false,
       lastToggled: null,
-      selectedState: {}
+      selectedState: {},
+      localRecordingFiles: null,
+      createdRecording: null
     };
   }
 
@@ -134,6 +138,21 @@ class UnmappedFilesTable extends Component {
     this.props.deleteUnmappedFiles(selectedIds);
   };
 
+  onCreateLocalRecordingPress = () => {
+    const selected = new Set(this.getSelectedIds());
+    this.setState({ localRecordingFiles: this.props.items.filter((item) => selected.has(item.id)) });
+  };
+
+  onLocalRecordingModalClose = () => {
+    this.setState({ localRecordingFiles: null });
+  };
+
+  onLocalRecordingCreated = (book) => {
+    this.setState({ localRecordingFiles: null, createdRecording: book });
+    this.onSelectAllChange({ value: false });
+    this.props.onLocalRecordingCreated(book);
+  };
+
   rowRenderer = ({ key, rowIndex, style }) => {
     const {
       items,
@@ -187,7 +206,9 @@ class UnmappedFilesTable extends Component {
       scroller,
       allSelected,
       allUnselected,
-      selectedState
+      selectedState,
+      localRecordingFiles,
+      createdRecording
     } = this.state;
 
     const selectedTrackFileIds = this.getSelectedIds();
@@ -196,6 +217,12 @@ class UnmappedFilesTable extends Component {
       <PageContent title={translate('UnmappedFiles')}>
         <PageToolbar>
           <PageToolbarSection>
+            <PageToolbarButton
+              label="Create local recording"
+              iconName={icons.BOOK}
+              isDisabled={selectedTrackFileIds.length === 0 || isDeleting || isFetching}
+              onPress={this.onCreateLocalRecordingPress}
+            />
             <PageToolbarButton
               label={translate('AddMissing')}
               iconName={icons.ADD_MISSING_AUTHORS}
@@ -230,6 +257,12 @@ class UnmappedFilesTable extends Component {
         <PageContentBody
           registerScroller={this.setScrollerRef}
         >
+          {
+            createdRecording &&
+              <Alert kind={kinds.SUCCESS}>
+                Created <BookTitleLink {...createdRecording} />.
+              </Alert>
+          }
           {
             isFetching && !isPopulated &&
               <LoadingIndicator />
@@ -269,6 +302,12 @@ class UnmappedFilesTable extends Component {
               />
           }
         </PageContentBody>
+        <CreateLocalRecordingModal
+          isOpen={localRecordingFiles !== null}
+          files={localRecordingFiles || []}
+          onModalClose={this.onLocalRecordingModalClose}
+          onCreated={this.onLocalRecordingCreated}
+        />
       </PageContent>
     );
   }
@@ -289,7 +328,8 @@ UnmappedFilesTable.propTypes = {
   deleteUnmappedFile: PropTypes.func.isRequired,
   deleteUnmappedFiles: PropTypes.func.isRequired,
   isScanningFolders: PropTypes.bool.isRequired,
-  onAddMissingAuthorsPress: PropTypes.func.isRequired
+  onAddMissingAuthorsPress: PropTypes.func.isRequired,
+  onLocalRecordingCreated: PropTypes.func.isRequired
 };
 
 export default UnmappedFilesTable;

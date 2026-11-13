@@ -28,7 +28,8 @@ namespace NzbDrone.Core.Test.MediaFiles.AudioTagServiceFixture
         {
             private static readonly string[] MediaFiles = new[] { "nin.mp2", "nin.mp3", "nin.flac", "nin.m4a", "nin.wma", "nin.ape", "nin.opus" };
 
-            private static readonly string[] SkipProperties = new[] { "IsValid", "Duration", "Quality", "MediaInfo", "ImageFile", "BookAuthors" };
+            // Narration/language are read for local recording previews, not written by the retagger.
+            private static readonly string[] SkipProperties = new[] { "IsValid", "Duration", "Quality", "MediaInfo", "ImageFile", "BookAuthors", "Narrators", "Language" };
             private static readonly Dictionary<string, string[]> SkipPropertiesByFile = new Dictionary<string, string[]>
             {
                 { "nin.mp2", new[] { "OriginalReleaseDate" } }
@@ -178,6 +179,42 @@ namespace NzbDrone.Core.Test.MediaFiles.AudioTagServiceFixture
             var tags = Subject.ReadTags(path);
 
             tags.Duration.Should().BeCloseTo(new TimeSpan(0, 0, 1, 25, 130), 100);
+        }
+
+        [TestCase("nin.mp3")]
+        [TestCase("nin.flac")]
+        [TestCase("nin.m4a")]
+        public void should_read_narrator_and_language_tags_without_modifying_the_file(string filename)
+        {
+            GivenFileCopy(filename);
+            var narrators = new[] { "Narrator One", "Narrator Two" };
+            using (var file = TagLib.File.Create(_copiedFile))
+            {
+                file.Tag.Composers = narrators;
+                file.Tag.Performers = new[] { "A different performer" };
+                if (file.TagTypesOnDisk.HasFlag(TagLib.TagTypes.Id3v2))
+                {
+                    ((TagLib.Id3v2.Tag)file.GetTag(TagLib.TagTypes.Id3v2)).SetTextFrame("TLAN", "eng");
+                }
+                else if (file.TagTypesOnDisk.HasFlag(TagLib.TagTypes.Xiph))
+                {
+                    ((TagLib.Ogg.XiphComment)file.GetTag(TagLib.TagTypes.Xiph)).SetField("LANGUAGE", "eng");
+                }
+                else
+                {
+                    ((TagLib.Mpeg4.AppleTag)file.GetTag(TagLib.TagTypes.Apple)).SetDashBox("com.apple.iTunes", "LANGUAGE", "eng");
+                }
+
+                file.Save();
+            }
+
+            var original = File.ReadAllBytes(_copiedFile);
+            var tags = Subject.ReadAudioTag(_copiedFile);
+
+            tags.Narrators.Should().Equal(narrators);
+            tags.Performers.Should().Equal("A different performer");
+            tags.Language.Should().Be("eng");
+            File.ReadAllBytes(_copiedFile).Should().Equal(original);
         }
 
         [Test]

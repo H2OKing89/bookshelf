@@ -25,6 +25,7 @@ namespace NzbDrone.Core.MediaFiles
                 { ".flac", Quality.FLAC },
                 { ".ape", Quality.FLAC },
                 { ".wavpack", Quality.FLAC },
+                { ".wv", Quality.FLAC },
                 { ".wav", Quality.FLAC },
                 { ".alac", Quality.FLAC },
                 { ".mp2", Quality.MP3 },
@@ -36,6 +37,7 @@ namespace NzbDrone.Core.MediaFiles
                 { ".aac", Quality.MP3 },
                 { ".mp4a", Quality.MP3 },
                 { ".ogg", Quality.MP3 },
+                { ".opus", Quality.MP3 },
                 { ".oga", Quality.MP3 },
                 { ".vorbis", Quality.MP3 },
             };

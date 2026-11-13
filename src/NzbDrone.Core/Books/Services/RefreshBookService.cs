@@ -167,7 +167,7 @@ namespace NzbDrone.Core.Books
         protected override bool ShouldDelete(Book local)
         {
             // Catalog omissions and regional availability are not deletion signals.
-            if (AudiobookId.IsNative(local.ForeignBookId))
+            if (AudiobookId.IsNative(local.ForeignBookId) || LocalRecordingId.IsLocal(local.ForeignBookId))
             {
                 return false;
             }
@@ -185,7 +185,8 @@ namespace NzbDrone.Core.Books
         protected override bool IsMerge(Book local, Book remote)
         {
             if (local.ForeignBookId != remote.ForeignBookId &&
-                (AudiobookId.IsNative(local.ForeignBookId) || AudiobookId.IsNative(remote.ForeignBookId)))
+                (AudiobookId.IsNative(local.ForeignBookId) || AudiobookId.IsNative(remote.ForeignBookId) ||
+                    LocalRecordingId.IsLocal(local.ForeignBookId) || LocalRecordingId.IsLocal(remote.ForeignBookId)))
             {
                 throw new InvalidOperationException("Metadata refresh cannot replace an audiobook's recording identity.");
             }
@@ -378,11 +379,17 @@ namespace NzbDrone.Core.Books
 
         public bool RefreshBookInfo(Book book, List<Book> remoteBooks, Author remoteData, bool forceUpdateFileTags)
         {
-            return RefreshEntityInfo(book, remoteBooks, remoteData, true, forceUpdateFileTags, null);
+            return !LocalRecordingId.IsLocal(book.ForeignBookId) &&
+                RefreshEntityInfo(book, remoteBooks, remoteData, true, forceUpdateFileTags, null);
         }
 
         public bool RefreshBookInfo(Book book)
         {
+            if (LocalRecordingId.IsLocal(book.ForeignBookId))
+            {
+                return false;
+            }
+
             var data = GetSkyhookData(book);
 
             if (data == null)

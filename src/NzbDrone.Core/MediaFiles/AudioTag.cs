@@ -23,6 +23,8 @@ namespace NzbDrone.Core.MediaFiles
         public string Title { get; set; }
         public string[] Performers { get; set; }
         public string[] BookAuthors { get; set; }
+        public string[] Narrators { get; set; }
+        public string Language { get; set; }
         public uint Track { get; set; }
         public uint TrackCount { get; set; }
         public string Book { get; set; }
@@ -69,6 +71,7 @@ namespace NzbDrone.Core.MediaFiles
 
                 Title = tag.Title ?? tag.TitleSort;
                 Performers = tag.Performers ?? tag.PerformersSort;
+                Narrators = tag.Composers ?? Array.Empty<string>();
 
                 var authors = new List<string>();
 
@@ -110,6 +113,7 @@ namespace NzbDrone.Core.MediaFiles
                 {
                     var id3tag = (TagLib.Id3v2.Tag)file.GetTag(TagTypes.Id3v2);
                     Media = id3tag.GetTextAsString("TMED");
+                    Language = id3tag.GetTextAsString("TLAN");
                     Date = ReadId3Date(id3tag, "TDRC");
                     OriginalReleaseDate = ReadId3Date(id3tag, "TDOR");
                     _embeddedAsins.AddRange(id3tag.GetFrames<UserTextInformationFrame>()
@@ -122,6 +126,7 @@ namespace NzbDrone.Core.MediaFiles
                     // https://picard.musicbrainz.org/docs/mappings/
                     var flactag = (TagLib.Ogg.XiphComment)file.GetTag(TagLib.TagTypes.Xiph);
                     Media = flactag.GetField("MEDIA").ExclusiveOrDefault();
+                    Language = flactag.GetField("LANGUAGE").FirstOrDefault();
                     Date = DateTime.TryParse(flactag.GetField("DATE").ExclusiveOrDefault(), out tempDate) ? tempDate : default(DateTime?);
                     OriginalReleaseDate = DateTime.TryParse(flactag.GetField("ORIGINALDATE").ExclusiveOrDefault(), out tempDate) ? tempDate : default(DateTime?);
                     Publisher = flactag.GetField("LABEL").ExclusiveOrDefault();
@@ -131,6 +136,7 @@ namespace NzbDrone.Core.MediaFiles
                 {
                     var apetag = (TagLib.Ape.Tag)file.GetTag(TagTypes.Ape);
                     Media = apetag.GetItem("Media")?.ToString();
+                    Language = apetag.GetItem("Language")?.ToString();
                     Date = DateTime.TryParse(apetag.GetItem("Year")?.ToString(), out tempDate) ? tempDate : default(DateTime?);
                     OriginalReleaseDate = DateTime.TryParse(apetag.GetItem("Original Date")?.ToString(), out tempDate) ? tempDate : default(DateTime?);
                     Publisher = apetag.GetItem("Label")?.ToString();
@@ -140,6 +146,7 @@ namespace NzbDrone.Core.MediaFiles
                 {
                     var asftag = (TagLib.Asf.Tag)file.GetTag(TagTypes.Asf);
                     Media = asftag.GetDescriptorString("WM/Media");
+                    Language = asftag.GetDescriptorString("WM/Language");
                     Date = DateTime.TryParse(asftag.GetDescriptorString("WM/Year"), out tempDate) ? tempDate : default(DateTime?);
                     OriginalReleaseDate = DateTime.TryParse(asftag.GetDescriptorString("WM/OriginalReleaseTime"), out tempDate) ? tempDate : default(DateTime?);
                     Publisher = asftag.GetDescriptorString("WM/Publisher");
@@ -149,6 +156,7 @@ namespace NzbDrone.Core.MediaFiles
                 {
                     var appletag = (TagLib.Mpeg4.AppleTag)file.GetTag(TagTypes.Apple);
                     Media = appletag.GetDashBox("com.apple.iTunes", "MEDIA");
+                    Language = appletag.GetDashBox("com.apple.iTunes", "LANGUAGE");
                     Date = DateTime.TryParse(appletag.DataBoxes(FixAppleId("day")).FirstOrDefault()?.Text, out tempDate) ? tempDate : default(DateTime?);
                     OriginalReleaseDate = DateTime.TryParse(appletag.GetDashBox("com.apple.iTunes", "Original Date"), out tempDate) ? tempDate : default(DateTime?);
 

@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using NLog;
 using NzbDrone.Common.Disk;
@@ -12,6 +15,9 @@ namespace NzbDrone.Core.MediaFiles
     public interface IUpgradeMediaFiles
     {
         BookFileMoveResult UpgradeBookFile(BookFile bookFile, LocalBook localBook, bool copyOnly = false);
+        void CommitUpgrade(List<BookFileMoveResult> replacements);
+        void AbortUpgrade(List<BookFileMoveResult> replacements);
+        void FinalizeUpgrade(List<BookFileMoveResult> replacements);
     }
 
     public class UpgradeMediaFileService : IUpgradeMediaFiles
@@ -46,75 +52,227 @@ namespace NzbDrone.Core.MediaFiles
 
         public BookFileMoveResult UpgradeBookFile(BookFile bookFile, LocalBook localBook, bool copyOnly = false)
         {
-            var moveFileResult = new BookFileMoveResult();
-            var existingFiles = localBook.Book.BookFiles.Value;
-
+            var existingFiles = localBook.Book.BookFiles.Value.ToList();
             var rootFolderPath = _diskProvider.GetParentFolder(localBook.Author.Path);
             var rootFolder = _rootFolderService.GetBestRootFolder(rootFolderPath);
-            var isCalibre = rootFolder.IsCalibreLibrary && rootFolder.CalibreSettings != null;
-
-            var settings = rootFolder.CalibreSettings;
-
-            // If there are existing book files and the root folder is missing, throw, so the old file isn't left behind during the import process.
-            if (existingFiles.Any() && !_diskProvider.FolderExists(rootFolderPath))
+            if (rootFolder == null || !_diskProvider.FolderExists(rootFolder.Path))
             {
                 throw new RootFolderNotFoundException($"Root folder '{rootFolderPath}' was not found.");
             }
 
-            foreach (var file in existingFiles)
+            var isCalibre = rootFolder.IsCalibreLibrary && rootFolder.CalibreSettings != null;
+            BookFileMoveResult result;
+            if (isCalibre)
             {
-                var bookFilePath = file.Path;
-                var subfolder = rootFolderPath.GetRelativePath(_diskProvider.GetParentFolder(bookFilePath));
-
-                bookFile.CalibreId = file.CalibreId;
-
-                if (_diskProvider.FileExists(bookFilePath))
+                result = new BookFileMoveResult
                 {
-                    _logger.Debug("Removing existing book file: {0} CalibreId: {1}", file, file.CalibreId);
+                    BookFile = bookFile,
+                    SourcePath = bookFile.Path,
+                    CopyOnly = copyOnly,
+                    OldFiles = existingFiles,
+                    CalibreSettings = rootFolder.CalibreSettings
+                };
 
-                    if (!isCalibre)
+                // A new Calibre entry leaves every old format intact if conversion fails.
+                // Reusing its ID would replace the original format before conversion finishes.
+                bookFile.CalibreId = 0;
+                try
+                {
+                    result.BookFile = _calibre.AddAndConvert(bookFile, rootFolder.CalibreSettings);
+                    return result;
+                }
+                catch
+                {
+                    AbortUpgrade(new List<BookFileMoveResult> { result });
+                    throw;
+                }
+            }
+
+            result = _bookFileMover.StageBookFile(bookFile, localBook);
+            result.CopyOnly = copyOnly;
+            result.OldFiles = existingFiles;
+            var destination = bookFile.Path;
+            try
+            {
+                if (_diskProvider.FileExists(destination) && !existingFiles.Any(file => file.Path.PathEquals(destination)))
+                {
+                    throw new DestinationAlreadyExistsException($"Import destination already exists: {destination}");
+                }
+
+                bookFile.Path = result.StagingPath;
+                _metadataTagService.WriteTags(bookFile, true);
+                return result;
+            }
+            catch
+            {
+                AbortUpgrade(new List<BookFileMoveResult> { result });
+                throw;
+            }
+            finally
+            {
+                bookFile.Path = destination;
+            }
+        }
+
+        public void CommitUpgrade(List<BookFileMoveResult> replacements)
+        {
+            if (!replacements.Any())
+            {
+                return;
+            }
+
+            var pending = replacements.Where(result => !result.Committed).ToList();
+            var diskReplacements = pending.Where(result => result.CalibreSettings == null).ToList();
+            var oldFiles = pending.SelectMany(result => result.OldFiles).DistinctBy(file => file.Id).ToList();
+            var incomingParts = pending.Select(result => result.BookFile.Part).ToHashSet();
+            var oldDuration = oldFiles.All(file => file.MediaInfo?.DurationSeconds > 0)
+                ? oldFiles.Sum(file => file.MediaInfo.DurationSeconds.Value) : 0;
+            var newDuration = pending.All(result => result.BookFile.MediaInfo?.DurationSeconds > 0)
+                ? pending.Sum(result => result.BookFile.MediaInfo.DurationSeconds.Value) : 0;
+            if (oldFiles.Count > pending.Count && !(oldDuration > 0 && newDuration >= oldDuration * 0.95))
+            {
+                // A single arriving disc/part does not prove that the whole old recording
+                // is being replaced. Retire only represented parts unless runtime confirms
+                // a complete consolidation (for example several MP3s into one M4B).
+                oldFiles = oldFiles.Where(file => incomingParts.Contains(file.Part) ||
+                    pending.Any(result => result.BookFile.Path.PathEquals(file.Path))).ToList();
+            }
+
+            foreach (var replacement in pending)
+            {
+                replacement.OldFiles.RemoveAll(file => !oldFiles.Any(old => old.Id == file.Id));
+            }
+
+            try
+            {
+                // Validate the whole release before changing any library path. In particular,
+                // two parts must never publish to the same destination.
+                var destinations = new HashSet<string>(NzbDrone.Common.PathEqualityComparer.Instance);
+                foreach (var replacement in diskReplacements)
+                {
+                    var destination = replacement.BookFile.Path;
+                    if (pending.Any(result => result.SourcePath.PathEquals(destination)))
                     {
-                        _recycleBinProvider.DeleteFile(bookFilePath, subfolder);
+                        throw new SameFilenameException("Import destination is also a source file in this batch", destination);
                     }
-                    else
+
+                    if (!destinations.Add(destination) ||
+                        (_diskProvider.FileExists(destination) && !oldFiles.Any(file => file.Path.PathEquals(destination))))
                     {
-                        var existing = _calibre.GetBook(file.CalibreId, settings);
-                        var existingFormats = existing.Formats.Keys;
-                        _logger.Debug($"Removing existing formats {existingFormats.ConcatToString()} from calibre");
-                        _calibre.RemoveFormats(file.CalibreId, existingFormats, settings);
+                        throw new DestinationAlreadyExistsException($"Import destination already exists: {destination}");
                     }
                 }
 
-                moveFileResult.OldFiles.Add(file);
-                _mediaFileService.Delete(file, DeleteMediaFileReason.Upgrade);
+                foreach (var replacement in diskReplacements)
+                {
+                    var destination = replacement.BookFile.Path;
+                    if (_diskProvider.FileExists(destination))
+                    {
+                        var backup = destination + $".bookshelf-backup-{Guid.NewGuid():N}";
+                        _diskProvider.MoveFile(destination, backup);
+                        replacement.BackupPath = backup;
+                    }
+
+                    _diskProvider.MoveFile(replacement.StagingPath, destination);
+                    replacement.Published = true;
+                }
+            }
+            catch
+            {
+                AbortUpgrade(pending);
+                throw;
+            }
+        }
+
+        public void FinalizeUpgrade(List<BookFileMoveResult> replacements)
+        {
+            var pending = replacements.Where(result => !result.Committed && !result.Aborted).ToList();
+            var oldFiles = pending.SelectMany(result => result.OldFiles).DistinctBy(file => file.Id).ToList();
+            var backups = pending.Where(result => result.BackupPath.IsNotNullOrWhiteSpace())
+                .ToDictionary(result => result.BookFile.Path, result => result.BackupPath, NzbDrone.Common.PathEqualityComparer.Instance);
+
+            // The complete replacement is now readable at its final paths. Keep failures in
+            // optional retirement/source cleanup from turning a successful import into a retry.
+            foreach (var replacement in pending)
+            {
+                replacement.Committed = true;
             }
 
-            if (!isCalibre)
+            foreach (var file in oldFiles)
             {
-                if (copyOnly)
+                var calibreReplacement = pending.FirstOrDefault(result => result.CalibreSettings != null && result.OldFiles.Any(old => old.Id == file.Id));
+                if (calibreReplacement != null)
                 {
-                    moveFileResult.BookFile = _bookFileMover.CopyBookFile(bookFile, localBook);
+                    if (file.CalibreId > 0)
+                    {
+                        TryCleanup(() => _calibre.DeleteBook(file, calibreReplacement.CalibreSettings), file.Path);
+                    }
                 }
                 else
                 {
-                    moveFileResult.BookFile = _bookFileMover.MoveBookFile(bookFile, localBook);
+                    var path = backups.TryGetValue(file.Path, out var backup) ? backup : file.Path;
+                    if (_diskProvider.FileExists(path))
+                    {
+                        var root = _rootFolderService.GetBestRootFolder(file.Path);
+                        var subfolder = root?.Path.GetRelativePath(Path.GetDirectoryName(file.Path)) ?? string.Empty;
+                        TryCleanup(() => _recycleBinProvider.DeleteFile(path, subfolder), path);
+                    }
                 }
-
-                _metadataTagService.WriteTags(bookFile, true);
             }
-            else
+
+            foreach (var replacement in pending.Where(result => !result.CopyOnly))
             {
-                var source = bookFile.Path;
-
-                moveFileResult.BookFile = _calibre.AddAndConvert(bookFile, settings);
-
-                if (!copyOnly)
+                // The source is retained through copy, tagging, publication and old-file
+                // retirement. Cleanup failure simply leaves an extra recoverable copy.
+                if (_diskProvider.FileExists(replacement.SourcePath))
                 {
-                    _diskProvider.DeleteFile(source);
+                    TryCleanup(() => _diskProvider.DeleteFile(replacement.SourcePath), replacement.SourcePath);
                 }
             }
+        }
 
-            return moveFileResult;
+        public void AbortUpgrade(List<BookFileMoveResult> replacements)
+        {
+            foreach (var replacement in replacements.Where(result => !result.Committed && !result.Aborted).Reverse())
+            {
+                replacement.Aborted = true;
+                if (replacement.CalibreSettings != null)
+                {
+                    if (replacement.BookFile.CalibreId > 0)
+                    {
+                        TryCleanup(() => _calibre.DeleteBook(replacement.BookFile, replacement.CalibreSettings), replacement.SourcePath);
+                    }
+                }
+                else
+                {
+                    if (replacement.Published && _diskProvider.FileExists(replacement.BookFile.Path))
+                    {
+                        TryCleanup(() => _diskProvider.DeleteFile(replacement.BookFile.Path), replacement.BookFile.Path);
+                    }
+
+                    if (replacement.BackupPath.IsNotNullOrWhiteSpace() && _diskProvider.FileExists(replacement.BackupPath))
+                    {
+                        TryCleanup(() => _diskProvider.MoveFile(replacement.BackupPath, replacement.BookFile.Path), replacement.BackupPath);
+                    }
+
+                    if (replacement.StagingPath.IsNotNullOrWhiteSpace() && _diskProvider.FileExists(replacement.StagingPath))
+                    {
+                        TryCleanup(() => _diskProvider.DeleteFile(replacement.StagingPath), replacement.StagingPath);
+                    }
+                }
+            }
+        }
+
+        private void TryCleanup(Action cleanup, string path)
+        {
+            try
+            {
+                cleanup();
+            }
+            catch (Exception ex)
+            {
+                _logger.Warn(ex, "Unable to finish import cleanup for {0}; retaining the recoverable copy", path);
+            }
         }
     }
 }

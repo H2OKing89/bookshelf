@@ -16,6 +16,7 @@ namespace NzbDrone.Core.MediaFiles
     {
         BookFile Add(BookFile bookFile);
         void AddMany(List<BookFile> bookFiles);
+        void ImportFiles(List<BookFile> added, List<BookFile> updated, List<BookFile> replaced);
         void Update(BookFile bookFile);
         void Update(List<BookFile> bookFiles);
         void Delete(BookFile bookFile, DeleteMediaFileReason reason);
@@ -70,6 +71,34 @@ namespace NzbDrone.Core.MediaFiles
         public void Update(BookFile bookFile)
         {
             _mediaFileRepository.Update(bookFile);
+        }
+
+        public void ImportFiles(List<BookFile> added, List<BookFile> updated, List<BookFile> replaced)
+        {
+            _mediaFileRepository.ImportFiles(added, updated, replaced);
+            foreach (var file in replaced.Where(file => file.EditionId > 0))
+            {
+                try
+                {
+                    _eventAggregator.PublishEvent(new BookFileDeletedEvent(file, DeleteMediaFileReason.Upgrade));
+                }
+                catch (Exception ex)
+                {
+                    _logger.Warn(ex, "Replacement saved, but unable to publish old-file deletion notification for {0}", file.Id);
+                }
+            }
+
+            foreach (var file in added)
+            {
+                try
+                {
+                    _eventAggregator.PublishEvent(new BookFileAddedEvent(file));
+                }
+                catch (Exception ex)
+                {
+                    _logger.Warn(ex, "Replacement saved, but unable to publish new-file notification for {0}", file.Id);
+                }
+            }
         }
 
         public void Update(List<BookFile> bookFiles)

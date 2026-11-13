@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -265,19 +266,251 @@ namespace NzbDrone.Core.Test.MediaFiles
                   .Verify(v => v.UpgradeBookFile(It.IsAny<BookFile>(), _approvedDecisions.First().Item, false), Times.Once());
         }
 
-        [Test]
-        public void should_delete_existing_trackfiles_with_the_same_path()
+        private ImportDecision<LocalBook> AudioPart(string name, int disc, int part, long size = 100)
         {
-            Mocker.GetMock<IMediaFileService>()
-                .Setup(s => s.GetFileWithPath(It.IsAny<string>()))
-                .Returns(Builder<BookFile>.CreateNew().Build());
+            var original = _approvedDecisions.First().Item;
+            return new ImportDecision<LocalBook>(new LocalBook
+            {
+                Author = original.Author,
+                Book = original.Book,
+                Edition = original.Edition,
+                ExistingFile = true,
+                Path = Path.Combine(original.Author.Path, name + ".mp3"),
+                Part = part,
+                Size = size,
+                Quality = original.Quality,
+                FileTrackInfo = new ParsedTrackInfo { DiscNumber = disc, TrackNumbers = new[] { part } }
+            });
+        }
 
+        [Test]
+        public void should_import_disc_track_resets_as_distinct_ordered_parts()
+        {
+            var decisions = new List<ImportDecision<LocalBook>>
+            {
+                AudioPart("Disc B track 2", 2, 2, 400),
+                AudioPart("Disc A track 2", 1, 2, 300),
+                AudioPart("Disc B track 1", 2, 1, 200),
+                AudioPart("Disc A track 1", 1, 1, 100)
+            };
+            List<BookFile> imported = null;
+            Mocker.GetMock<IMediaFileService>().Setup(service => service.AddMany(It.IsAny<List<BookFile>>()))
+                .Callback<List<BookFile>>(files => imported = files);
+
+            Subject.Import(decisions, false).Should().OnlyContain(result => result.Result == ImportResultType.Imported);
+
+            imported.OrderBy(file => file.Part).Select(file => Path.GetFileName(file.Path)).Should().Equal(
+                "Disc A track 1.mp3", "Disc A track 2.mp3", "Disc B track 1.mp3", "Disc B track 2.mp3");
+            imported.Select(file => file.Part).Should().BeEquivalentTo(new[] { 1, 2, 3, 4 });
+            imported.Should().OnlyContain(file => file.PartCount == 4);
+        }
+
+        [Test]
+        public void should_keep_alternative_files_for_one_disc_track_in_quality_order()
+        {
+            var decisions = new List<ImportDecision<LocalBook>>
+            {
+                AudioPart("Disc 1 smaller", 1, 1, 100),
+                AudioPart("Disc 2", 2, 1, 200),
+                AudioPart("Disc 1 larger", 1, 1, 300)
+            };
+
+            var results = Subject.Import(decisions, false);
+
+            results.Count(result => result.Result == ImportResultType.Imported).Should().Be(2);
+            results.Where(result => result.Result == ImportResultType.Imported).Select(result => result.ImportDecision.Item.Path)
+                .Should().BeEquivalentTo(new[] { decisions[1].Item.Path, decisions[2].Item.Path });
+            decisions[0].Item.Part.Should().Be(decisions[2].Item.Part);
+            decisions[1].Item.Part.Should().Be(2);
+        }
+
+        [Test]
+        public void should_preserve_existing_single_disc_and_global_track_numbers()
+        {
+            var decisions = new List<ImportDecision<LocalBook>>
+            {
+                AudioPart("Disc 1 track 3", 1, 3),
+                AudioPart("Disc 1 track 7", 1, 7),
+                AudioPart("Disc 2 track 8", 2, 8)
+            };
+
+            Subject.Import(decisions, false).Should().OnlyContain(result => result.Result == ImportResultType.Imported);
+
+            decisions.Select(decision => decision.Item.Part).Should().Equal(3, 7, 8);
+        }
+
+        [Test]
+        public void should_number_untagged_parts_in_natural_filename_order()
+        {
+            var decisions = new List<ImportDecision<LocalBook>> { AudioPart("Track 10", 0, 0), AudioPart("Track 2", 0, 0) };
+
+            Subject.Import(decisions, false).Should().OnlyContain(result => result.Result == ImportResultType.Imported);
+
+            decisions.Select(decision => decision.Item.Part).Should().Equal(2, 1);
+        }
+
+        [Test]
+        public void should_respect_disc_order_for_untagged_track_numbers()
+        {
+            var decisions = new List<ImportDecision<LocalBook>> { AudioPart("A second disc", 2, 0), AudioPart("Z first disc", 1, 0) };
+
+            Subject.Import(decisions, false).Should().OnlyContain(result => result.Result == ImportResultType.Imported);
+
+            decisions.Select(decision => decision.Item.Part).Should().Equal(2, 1);
+        }
+
+        [Test]
+        public void should_update_same_path_recording_link_without_replacing_file_identity_or_provenance()
+        {
             var track = _approvedDecisions.First();
             track.Item.ExistingFile = true;
-            Subject.Import(new List<ImportDecision<LocalBook>> { track }, false);
+            track.Item.Size = 123456;
+            track.Item.Modified = new DateTime(2026, 11, 12, 0, 0, 0, DateTimeKind.Utc);
+            track.Item.ReleaseGroup = "Replacement guess";
+            track.Item.FileTrackInfo.MediaInfo = new MediaInfoModel { AudioFormat = "AAC", AudioBitrate = 128 };
+            var previous = new BookFile
+            {
+                Id = 42,
+                Path = track.Item.Path,
+                EditionId = 999,
+                DateAdded = new DateTime(2020, 1, 2, 0, 0, 0, DateTimeKind.Utc),
+                OriginalFilePath = "/downloads/original.mp3",
+                SceneName = "Original scene name",
+                ReleaseGroup = "Original release group",
+                IndexerFlags = IndexerFlags.Freeleech,
+                CalibreId = 77,
+                LastRemoteSearchTime = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            };
+            Mocker.GetMock<IMediaFileService>().Setup(service => service.GetFileWithPath(track.Item.Path)).Returns(previous);
+            List<BookFile> updated = null;
+            Mocker.GetMock<IMediaFileService>().Setup(service => service.Update(It.IsAny<List<BookFile>>()))
+                .Callback<List<BookFile>>(files => updated = files);
 
-            Mocker.GetMock<IMediaFileService>()
-                .Verify(v => v.Delete(It.IsAny<BookFile>(), DeleteMediaFileReason.ManualOverride), Times.Once());
+            Subject.Import(_approvedDecisions, false).Should().ContainSingle(result => result.Result == ImportResultType.Imported);
+
+            var result = updated.Should().ContainSingle().Which;
+            result.Id.Should().Be(previous.Id);
+            result.DateAdded.Should().Be(previous.DateAdded);
+            result.OriginalFilePath.Should().Be(previous.OriginalFilePath);
+            result.SceneName.Should().Be(previous.SceneName);
+            result.ReleaseGroup.Should().Be(previous.ReleaseGroup);
+            result.IndexerFlags.Should().Be(previous.IndexerFlags);
+            result.CalibreId.Should().Be(previous.CalibreId);
+            result.LastRemoteSearchTime.Should().Be(previous.LastRemoteSearchTime);
+            result.EditionId.Should().Be(track.Item.Edition.Id);
+            result.Size.Should().Be(track.Item.Size);
+            result.Modified.Should().Be(track.Item.Modified);
+            result.MediaInfo.Should().BeSameAs(track.Item.FileTrackInfo.MediaInfo);
+            Mocker.GetMock<IMediaFileService>().Verify(service => service.Delete(It.IsAny<BookFile>(), It.IsAny<DeleteMediaFileReason>()), Times.Never());
+            Mocker.GetMock<IMediaFileService>().Verify(service => service.AddMany(It.IsAny<List<BookFile>>()), Times.Never());
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.Is<TrackImportedEvent>(e => e.ImportedBook.Id == 42 && !e.NewDownload)), Times.Once());
+        }
+
+        [Test]
+        public void should_leave_previous_file_row_intact_when_same_path_tag_update_fails()
+        {
+            var track = _approvedDecisions.First();
+            track.Item.ExistingFile = true;
+            var previous = new BookFile { Id = 42, Path = track.Item.Path, EditionId = 999 };
+            Mocker.GetMock<IMediaFileService>().Setup(service => service.GetFileWithPath(track.Item.Path)).Returns(previous);
+            Mocker.GetMock<IMetadataTagService>().Setup(service => service.WriteTags(It.IsAny<BookFile>(), false, false))
+                .Throws(new IOException("Simulated tag update failure"));
+
+            Subject.Import(_approvedDecisions, false).Should().OnlyContain(result => result.Result != ImportResultType.Imported);
+
+            previous.EditionId.Should().Be(999);
+            Mocker.GetMock<IMediaFileService>().Verify(service => service.Delete(It.IsAny<BookFile>(), It.IsAny<DeleteMediaFileReason>()), Times.Never());
+            Mocker.GetMock<IMediaFileService>().Verify(service => service.Update(It.IsAny<List<BookFile>>()), Times.Never());
+            Mocker.GetMock<IMediaFileService>().Verify(service => service.AddMany(It.IsAny<List<BookFile>>()), Times.Never());
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        private LocalBook NewDownloadPart(int part, string filename)
+        {
+            var template = _approvedDecisions.First().Item;
+            return new LocalBook
+            {
+                Author = template.Author,
+                Book = template.Book,
+                Edition = template.Edition,
+                Part = part,
+                Path = Path.Combine(template.Author.Path, filename),
+                Quality = template.Quality,
+                FileTrackInfo = new ParsedTrackInfo(),
+                ExistingFile = false
+            };
+        }
+
+        [Test]
+        public void should_abort_prepared_parts_when_another_part_fails()
+        {
+            var first = NewDownloadPart(1, "part1.mp3");
+            var second = NewDownloadPart(2, "part2.mp3");
+            Mocker.GetMock<IUpgradeMediaFiles>()
+                .Setup(x => x.UpgradeBookFile(It.IsAny<BookFile>(), first, false))
+                .Returns<BookFile, LocalBook, bool>((file, _, _) => new BookFileMoveResult { BookFile = file });
+            Mocker.GetMock<IUpgradeMediaFiles>()
+                .Setup(x => x.UpgradeBookFile(It.IsAny<BookFile>(), second, false))
+                .Throws(new IOException("tag write failed"));
+
+            var results = Subject.Import(new List<ImportDecision<LocalBook>> { new (first), new (second) }, true);
+
+            results.Should().OnlyContain(result => result.Result != ImportResultType.Imported);
+            Mocker.GetMock<IUpgradeMediaFiles>().Verify(x => x.CommitUpgrade(It.IsAny<List<BookFileMoveResult>>()), Times.Never());
+            Mocker.GetMock<IUpgradeMediaFiles>().Verify(x => x.AbortUpgrade(It.Is<List<BookFileMoveResult>>(items => items.Count == 1)), Times.Once());
+            Mocker.GetMock<IMediaFileService>().Verify(x => x.AddMany(It.IsAny<List<BookFile>>()), Times.Never());
+            Mocker.GetMock<IEventAggregator>().Verify(x => x.PublishEvent(It.IsAny<TrackImportedEvent>()), Times.Never());
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
+        public void should_allow_alternative_candidate_after_first_candidate_fails()
+        {
+            var first = NewDownloadPart(1, "first.mp3");
+            first.Size = 200;
+            var alternative = NewDownloadPart(1, "alternative.mp3");
+            alternative.Size = 100;
+            Mocker.GetMock<IUpgradeMediaFiles>()
+                .Setup(x => x.UpgradeBookFile(It.IsAny<BookFile>(), first, false))
+                .Throws(new IOException("copy failed"));
+            Mocker.GetMock<IUpgradeMediaFiles>()
+                .Setup(x => x.UpgradeBookFile(It.IsAny<BookFile>(), alternative, false))
+                .Returns<BookFile, LocalBook, bool>((file, _, _) => new BookFileMoveResult { BookFile = file });
+
+            var results = Subject.Import(new List<ImportDecision<LocalBook>> { new (first), new (alternative) }, true);
+
+            results.Should().ContainSingle(result => result.Result == ImportResultType.Imported);
+            Mocker.GetMock<IUpgradeMediaFiles>().Verify(x => x.CommitUpgrade(It.Is<List<BookFileMoveResult>>(items => items.Count == 1)), Times.Once());
+            Mocker.GetMock<IUpgradeMediaFiles>().Verify(x => x.AbortUpgrade(It.IsAny<List<BookFileMoveResult>>()), Times.Never());
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
+        public void should_not_persist_or_publish_import_when_replacement_commit_fails()
+        {
+            Mocker.GetMock<IUpgradeMediaFiles>().Setup(x => x.CommitUpgrade(It.IsAny<List<BookFileMoveResult>>()))
+                .Throws(new IOException("destination appeared"));
+
+            var results = Subject.Import(_approvedDecisions, true);
+
+            results.Should().OnlyContain(result => result.Result != ImportResultType.Imported);
+            Mocker.GetMock<IUpgradeMediaFiles>().Verify(x => x.AbortUpgrade(It.IsAny<List<BookFileMoveResult>>()), Times.Once());
+            Mocker.GetMock<IMediaFileService>().Verify(x => x.AddMany(It.IsAny<List<BookFile>>()), Times.Never());
+            Mocker.GetMock<IEventAggregator>().Verify(x => x.PublishEvent(It.IsAny<TrackImportedEvent>()), Times.Never());
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
+        public void should_abort_published_replacements_if_database_transaction_fails()
+        {
+            Mocker.GetMock<IMediaFileService>().Setup(x => x.ImportFiles(It.IsAny<List<BookFile>>(), It.IsAny<List<BookFile>>(), It.IsAny<List<BookFile>>()))
+                .Throws(new IOException("database save failed"));
+
+            Assert.Throws<IOException>(() => Subject.Import(_approvedDecisions, true));
+
+            Mocker.GetMock<IUpgradeMediaFiles>().Verify(x => x.AbortUpgrade(It.IsAny<List<BookFileMoveResult>>()), Times.Once());
+            Mocker.GetMock<IUpgradeMediaFiles>().Verify(x => x.FinalizeUpgrade(It.IsAny<List<BookFileMoveResult>>()), Times.Never());
+            Mocker.GetMock<IEventAggregator>().Verify(x => x.PublishEvent(It.IsAny<TrackImportedEvent>()), Times.Never());
         }
     }
 }

@@ -40,6 +40,16 @@ namespace NzbDrone.Integration.Test.ApiTests
         }
 
         [Test]
+        public void should_identify_local_recordings_without_an_audible_id()
+        {
+            var book = new Book { Title = "Kaiju", ForeignBookId = LocalRecordingId.NewId() };
+            book.Editions = new List<Edition> { new Edition { Title = "Kaiju", ForeignEditionId = book.ForeignBookId, Monitored = true, Book = book } };
+            var resource = book.ToResource();
+            resource.MetadataLabels.Should().Contain("Local recording");
+            resource.ForeignBookId.Should().StartWith("local:recording:");
+        }
+
+        [Test]
         public void should_return_an_empty_warning_list_when_no_review_is_needed()
         {
             var book = new Book { Title = "Main", ReleaseDate = new DateTime(2020, 1, 1) };

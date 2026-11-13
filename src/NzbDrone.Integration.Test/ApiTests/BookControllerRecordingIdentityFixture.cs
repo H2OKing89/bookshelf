@@ -33,6 +33,7 @@ namespace NzbDrone.Integration.Test.ApiTests
 
         [TestCase("audible:us:B0F14RPXHR")]
         [TestCase("audible:uk:B0F14RFHS6")]
+        [TestCase("local:recording:confirmed")]
         public void changing_audiobook_monitoring_should_not_reassign_any_file_identity(string identity)
         {
             var book = GivenBook(identity);

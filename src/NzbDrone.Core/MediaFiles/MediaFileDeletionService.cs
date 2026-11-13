@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net;
 using NLog;
 using NzbDrone.Common.Disk;
@@ -61,30 +64,22 @@ namespace NzbDrone.Core.MediaFiles
         public void DeleteTrackFile(Author author, BookFile bookFile)
         {
             var fullPath = bookFile.Path;
-            var rootFolder = _diskProvider.GetParentFolder(author.Path);
+            var rootFolder = _rootFolderService.GetBestRootFolder(fullPath)?.Path;
 
-            if (!_diskProvider.FolderExists(rootFolder))
+            if (rootFolder.IsNullOrWhiteSpace() || !_diskProvider.FolderExists(rootFolder))
             {
                 _logger.Warn("Author's root folder ({0}) doesn't exist.", rootFolder);
                 throw new NzbDroneClientException(HttpStatusCode.Conflict, "Author's root folder ({0}) doesn't exist.", rootFolder);
             }
 
-            if (_diskProvider.GetDirectories(rootFolder).Empty())
+            if (_diskProvider.GetDirectories(rootFolder).Empty() && !_diskProvider.FileExists(fullPath))
             {
                 _logger.Warn("Author's root folder ({0}) is empty.", rootFolder);
                 throw new NzbDroneClientException(HttpStatusCode.Conflict, "Author's root folder ({0}) is empty.", rootFolder);
             }
 
-            if (_diskProvider.FolderExists(author.Path))
-            {
-                var subfolder = _diskProvider.GetParentFolder(author.Path).GetRelativePath(_diskProvider.GetParentFolder(fullPath));
-                DeleteTrackFile(bookFile, subfolder);
-            }
-            else
-            {
-                // delete from db even if the author folder is missing
-                _mediaFileService.Delete(bookFile, DeleteMediaFileReason.Manual);
-            }
+            var subfolder = rootFolder.GetRelativePath(_diskProvider.GetParentFolder(fullPath));
+            DeleteTrackFile(bookFile, subfolder);
         }
 
         public void DeleteTrackFile(BookFile bookFile, string subfolder = "")
@@ -129,19 +124,52 @@ namespace NzbDrone.Core.MediaFiles
         [EventHandleOrder(EventHandleOrder.First)]
         public void Handle(AuthorDeletedEvent message)
         {
-            if (message.DeleteFiles)
+            if (!message.DeleteFiles)
             {
-                var author = message.Author;
+                return;
+            }
 
-                var rootFolder = _rootFolderService.GetBestRootFolder(message.Author.Path);
-                var isCalibre = rootFolder.IsCalibreLibrary && rootFolder.CalibreSettings != null;
+            var author = message.Author;
+            if (_authorService.GetAllAuthors().Any(other => other.Id != author.Id && other.AuthorMetadataId == author.AuthorMetadataId))
+            {
+                _logger.Warn("Author metadata is still used by another library profile, preserving its files: {0}", author);
+                return;
+            }
 
+            // Capture ownership before the synchronous book-deletion handler removes the
+            // catalog rows. Author.Path is an organizational preference, not file ownership.
+            var files = _mediaFileService.GetFilesByAuthorMetadataId(author.AuthorMetadataId);
+            var ownedIds = files.Select(file => file.Id).ToHashSet();
+            var otherPaths = _mediaFileService.GetFileWithPath(files.Select(file => file.Path).ToList())
+                .Where(file => !ownedIds.Contains(file.Id))
+                .Select(file => file.Path)
+                .ToHashSet(NzbDrone.Common.PathEqualityComparer.Instance);
+            var deletedCalibreBooks = new HashSet<string>();
+            foreach (var file in files)
+            {
+                var root = _rootFolderService.GetBestRootFolder(file.Path);
+                if (otherPaths.Contains(file.Path) || root == null || !_diskProvider.FolderExists(root.Path))
+                {
+                    _logger.Warn("Preserving book file with shared ownership or an unavailable root: {0}", file.Path);
+                    continue;
+                }
+
+                file.Author = author;
+                var isCalibre = root.IsCalibreLibrary && root.CalibreSettings != null;
                 if (isCalibre)
                 {
-                    // use metadataId instead of authorId so that query works even after author deleted
-                    var books = _mediaFileService.GetFilesByAuthorMetadataId(author.AuthorMetadataId);
-                    _calibre.DeleteBooks(books, rootFolder.CalibreSettings);
+                    if (file.CalibreId > 0 && deletedCalibreBooks.Add($"{root.Path}|{file.CalibreId}"))
+                    {
+                        _calibre.DeleteBook(file, root.CalibreSettings);
+                    }
                 }
+                else if (_diskProvider.FileExists(file.Path))
+                {
+                    var subfolder = root.Path.GetRelativePath(Path.GetDirectoryName(file.Path));
+                    DeleteFile(file, subfolder);
+                }
+
+                _mediaFileService.Delete(file, DeleteMediaFileReason.Manual);
             }
         }
 
@@ -149,42 +177,10 @@ namespace NzbDrone.Core.MediaFiles
         {
             if (message.DeleteFiles)
             {
-                var author = message.Author;
-
-                var rootFolder = _rootFolderService.GetBestRootFolder(message.Author.Path);
-                var isCalibre = rootFolder.IsCalibreLibrary && rootFolder.CalibreSettings != null;
-
-                if (!isCalibre)
-                {
-                    var allAuthors = _authorService.AllAuthorPaths();
-
-                    foreach (var s in allAuthors)
-                    {
-                        if (s.Key == author.Id)
-                        {
-                            continue;
-                        }
-
-                        if (author.Path.IsParentPath(s.Value))
-                        {
-                            _logger.Error("Author path: '{0}' is a parent of another author, not deleting files.", author.Path);
-                            return;
-                        }
-
-                        if (author.Path.PathEquals(s.Value))
-                        {
-                            _logger.Error("Author path: '{0}' is the same as another author, not deleting files.", author.Path);
-                            return;
-                        }
-                    }
-
-                    if (_diskProvider.FolderExists(message.Author.Path))
-                    {
-                        _recycleBinProvider.DeleteFolder(message.Author.Path);
-                    }
-
-                    _eventAggregator.PublishEvent(new DeleteCompletedEvent());
-                }
+                // Never recycle an entire author directory: it can contain other authors'
+                // recordings, unmapped files, or user sidecars. Empty-folder cleanup remains
+                // governed by DeleteEmptyFolders during individual file deletion.
+                _eventAggregator.PublishEvent(new DeleteCompletedEvent());
             }
         }
 
@@ -210,14 +206,26 @@ namespace NzbDrone.Core.MediaFiles
 
             if (_configService.DeleteEmptyFolders)
             {
-                var author = message.BookFile.Author.Value;
-                var bookFolder = message.BookFile.Path.GetParentPath();
-
-                if (_diskProvider.GetFiles(author.Path, true).Empty())
+                var author = message.BookFile.Author?.Value;
+                if (author == null)
                 {
-                    _diskProvider.DeleteFolder(author.Path, true);
+                    return;
                 }
-                else if (_diskProvider.GetFiles(bookFolder, true).Empty())
+
+                var bookFolder = message.BookFile.Path.GetParentPath();
+                var root = _rootFolderService.GetBestRootFolder(message.BookFile.Path);
+                var otherAuthorPaths = _authorService.AllAuthorPaths()
+                    .Where(item => item.Key != author.Id).Select(item => item.Value).ToList();
+
+                if (root != null && !root.Path.PathEquals(author.Path) &&
+                    !otherAuthorPaths.Any(path => author.Path.PathEquals(path) || author.Path.IsParentPath(path)) &&
+                    _diskProvider.FolderExists(author.Path) && _diskProvider.FolderEmpty(author.Path))
+                {
+                    _diskProvider.DeleteFolder(author.Path, false);
+                }
+                else if (root != null && !root.Path.PathEquals(bookFolder) &&
+                         !otherAuthorPaths.Any(path => bookFolder.PathEquals(path) || bookFolder.IsParentPath(path)) &&
+                         _diskProvider.FolderExists(bookFolder) && _diskProvider.GetFiles(bookFolder, true).Empty())
                 {
                     _diskProvider.RemoveEmptySubfolders(bookFolder);
                 }

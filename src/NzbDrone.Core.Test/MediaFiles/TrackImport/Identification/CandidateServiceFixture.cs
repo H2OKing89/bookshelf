@@ -1,10 +1,12 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.BookImport;
 using NzbDrone.Core.MediaFiles.BookImport.Identification;
 using NzbDrone.Core.MetadataSource;
@@ -19,11 +21,12 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport.Identification
     {
         private static LocalEdition AudioBook(string asin, string title = "English title", string album = "日本語のアルバム")
         {
+            var filename = string.Concat(title.Select(character => char.IsLetterOrDigit(character) ? character : '_'));
             return new LocalEdition(new List<LocalBook>
             {
                 new LocalBook
                 {
-                    Path = $"{title} [{asin}].m4b",
+                    Path = Path.Combine(Path.GetTempPath(), "bookshelf-candidate-fixture", $"{filename} [{asin}].m4b"),
                     FileTrackInfo = new ParsedTrackInfo
                     {
                         Title = title,
@@ -41,6 +44,148 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport.Identification
             var edition = new Edition { Id = 3671, BookId = book.Id, Book = book, Asin = asin, AudibleRegion = region, Title = title, ForeignEditionId = book.ForeignBookId, Language = "eng" };
             book.Editions = new List<Edition> { edition };
             return edition;
+        }
+
+        private (LocalEdition Local, Edition Recording) GivenProtectedLocalRecording()
+        {
+            var edition = Recording(null, "User-confirmed local title");
+            edition.ForeignEditionId = "local:recording:01a2781fd6c14f41821ad36307456f47";
+            edition.Book.Value.ForeignBookId = edition.ForeignEditionId;
+            var local = AudioBook(null, "Recording", "A closer Audible catalog title");
+            var file = new BookFile { Id = 900, Path = local.LocalBooks[0].Path, EditionId = edition.Id, Edition = edition };
+            Mocker.GetMock<IMediaFileService>().Setup(service => service.GetFileWithPath(file.Path)).Returns(file);
+            return (local, edition);
+        }
+
+        private Edition GivenUnlinkedLocalCandidate(string title)
+        {
+            var recording = Recording(null, title);
+            recording.ForeignEditionId = "local:recording:01a2781fd6c14f41821ad36307456f47";
+            recording.Book.Value.ForeignBookId = recording.ForeignEditionId;
+            var book = recording.Book.Value;
+            Mocker.GetMock<IAuthorService>().Setup(service => service.GetCandidates(It.IsAny<string>())).Returns(new List<Author> { book.Author.Value });
+            Mocker.GetMock<IBookService>().Setup(service => service.GetCandidates(It.IsAny<int>(), It.IsAny<string>())).Returns(new List<Book> { book });
+            Mocker.GetMock<IEditionService>().Setup(service => service.GetEditionsByBook(book.Id)).Returns(new List<Edition> { recording });
+            Mocker.GetMock<IEditionService>().Setup(service => service.GetCandidates(It.IsAny<int>(), It.IsAny<string>())).Returns(new List<Edition> { recording });
+            return recording;
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void should_not_match_an_unlinked_performance_to_a_local_recording_by_title_and_author(bool authorOverride)
+        {
+            var recording = GivenUnlinkedLocalCandidate("A shared title");
+            var local = AudioBook(null, recording.Title, recording.Title);
+            var overrides = authorOverride ? new IdentificationOverrides { Author = recording.Book.Value.Author.Value } : null;
+
+            Subject.GetDbCandidatesFromTags(local, overrides, false).Should().BeEmpty();
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void should_allow_explicit_local_recording_selection_for_unlinked_files(bool bookOverride)
+        {
+            var recording = GivenUnlinkedLocalCandidate("A shared title");
+            var local = AudioBook(null, recording.Title, recording.Title);
+            var overrides = bookOverride ? new IdentificationOverrides { Book = recording.Book.Value } : new IdentificationOverrides { Edition = recording };
+
+            Subject.GetDbCandidatesFromTags(local, overrides, false).Should().ContainSingle().Which.Edition.Should().BeSameAs(recording);
+        }
+
+        [Test]
+        public void should_not_reintroduce_an_unlinked_local_recording_from_remote_search()
+        {
+            var recording = GivenUnlinkedLocalCandidate("A shared title");
+            var local = AudioBook(null, recording.Title, recording.Title);
+            Mocker.GetMock<ISearchForNewBook>().Setup(service => service.SearchForNewBook(It.IsAny<string>(), It.IsAny<string>(), true))
+                .Returns(new List<Book> { recording.Book.Value });
+
+            Subject.GetRemoteCandidates(local, null).Should().BeEmpty();
+        }
+
+        [Test]
+        public void should_preserve_a_local_recording_over_a_closer_audible_candidate_during_rescan()
+        {
+            var (local, recording) = GivenProtectedLocalRecording();
+            var audible = Recording("B0CR45YNXY", "A closer Audible catalog title");
+            Mocker.GetMock<IBookService>().Setup(service => service.GetCandidates(It.IsAny<int>(), It.IsAny<string>())).Returns(new List<Book> { audible.Book.Value });
+            Mocker.GetMock<ISearchForNewBook>().Setup(service => service.SearchForNewBook(It.IsAny<string>(), It.IsAny<string>(), true)).Returns(new List<Book> { audible.Book.Value });
+
+            Subject.GetDbCandidatesFromTags(local, null, false).Should().ContainSingle().Which.Edition.Should().BeSameAs(recording);
+            Subject.GetRemoteCandidates(local, null).Should().BeEmpty();
+
+            Mocker.GetMock<IBookService>().Verify(service => service.GetCandidates(It.IsAny<int>(), It.IsAny<string>()), Times.Never());
+            Mocker.GetMock<ISearchForNewBook>().Verify(service => service.SearchForNewBook(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never());
+            Mocker.GetMock<IMediaFileService>().Verify(service => service.GetFileWithPath(local.LocalBooks[0].Path), Times.Exactly(2));
+            Mocker.GetMock<IMediaFileService>().Verify(service => service.GetFileWithPath(It.IsAny<List<string>>()), Times.Never());
+        }
+
+        [Test]
+        public void should_preserve_local_recordings_when_windows_path_casing_changes()
+        {
+            WindowsOnly();
+            var (local, recording) = GivenProtectedLocalRecording();
+            var storedPath = local.LocalBooks[0].Path;
+            local.LocalBooks[0].Path = storedPath.ToUpperInvariant();
+            Mocker.GetMock<IMediaFileService>().Setup(service => service.GetFileWithPath(It.IsAny<List<string>>()))
+                .Returns(new List<BookFile> { new BookFile { Path = storedPath, EditionId = recording.Id, Edition = recording } });
+
+            Subject.GetDbCandidatesFromTags(local, null, false).Should().ContainSingle().Which.Edition.Should().BeSameAs(recording);
+
+            Mocker.GetMock<IMediaFileService>().Verify(service => service.GetFileWithPath(It.Is<List<string>>(paths => paths.Count == 1 && paths[0] == local.LocalBooks[0].Path)), Times.Once());
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void should_require_review_if_asin_tags_are_added_to_a_local_recording(bool conflicting)
+        {
+            var (local, _) = GivenProtectedLocalRecording();
+            local.LocalBooks[0].FileTrackInfo.Asin = "B0CR45YNXY";
+            local.LocalBooks[0].FileTrackInfo.AsinConflict = conflicting;
+            Mocker.GetMock<IEditionService>().Setup(service => service.GetEditionByForeignEditionId("audible:us:B0CR45YNXY"))
+                .Returns(Recording("B0CR45YNXY", "Audible recording"));
+
+            Subject.GetDbCandidatesFromTags(local, null, false).Should().BeEmpty();
+            Subject.GetRemoteCandidates(local, null).Should().BeEmpty();
+
+            Mocker.GetMock<IEditionService>().Verify(service => service.GetEditionByForeignEditionId(It.IsAny<string>()), Times.Never());
+            Mocker.GetMock<ISearchForNewBook>().Verify(service => service.SearchByAsin(It.IsAny<string>()), Times.Never());
+        }
+
+        [Test]
+        public void should_not_combine_a_local_recording_with_unmapped_files_during_rescan()
+        {
+            var (local, _) = GivenProtectedLocalRecording();
+            local.LocalBooks.AddRange(AudioBook(null, "Another recording", "A closer Audible catalog title").LocalBooks);
+
+            Subject.GetDbCandidatesFromTags(local, null, false).Should().BeEmpty();
+            Subject.GetRemoteCandidates(local, null).Should().BeEmpty();
+        }
+
+        [Test]
+        public void should_not_combine_different_confirmed_local_recordings()
+        {
+            var (local, _) = GivenProtectedLocalRecording();
+            var another = AudioBook(null, "Another recording", "A closer Audible catalog title").LocalBooks[0];
+            local.LocalBooks.Add(another);
+            var second = Recording(null, "Another local performance");
+            second.ForeignEditionId = "local:recording:54bd184e86cb4fd5aac03af969f7e2b4";
+            second.Book.Value.ForeignBookId = second.ForeignEditionId;
+            Mocker.GetMock<IMediaFileService>().Setup(service => service.GetFileWithPath(another.Path))
+                .Returns(new BookFile { Path = another.Path, EditionId = second.Id, Edition = second });
+
+            Subject.GetDbCandidatesFromTags(local, null, false).Should().BeEmpty();
+            Subject.GetRemoteCandidates(local, null).Should().BeEmpty();
+        }
+
+        [Test]
+        public void should_not_automatically_apply_a_different_book_override_to_a_local_recording()
+        {
+            var (local, _) = GivenProtectedLocalRecording();
+            var overrides = new IdentificationOverrides { Book = Recording("B0CR45YNXY", "Audible recording").Book.Value };
+
+            Subject.GetDbCandidatesFromTags(local, overrides, false).Should().BeEmpty();
+            Subject.GetRemoteCandidates(local, overrides).Should().BeEmpty();
         }
 
         [TestCase("B0CR45YNXY", "Ascendance of a Bookworm: Part 1 Volume 1", "本好きの下剋上～司書になるためには手段を選んでいられません～第一部「兵士の娘1」")]

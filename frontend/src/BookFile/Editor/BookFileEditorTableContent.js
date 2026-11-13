@@ -9,6 +9,7 @@ import ConfirmModal from 'Components/Modal/ConfirmModal';
 import Table from 'Components/Table/Table';
 import TableBody from 'Components/Table/TableBody';
 import { kinds } from 'Helpers/Props';
+import getRemovedItems from 'Utilities/Object/getRemovedItems';
 import hasDifferentItems from 'Utilities/Object/hasDifferentItems';
 import translate from 'Utilities/String/translate';
 import getSelectedIds from 'Utilities/Table/getSelectedIds';
@@ -38,7 +39,10 @@ class BookFileEditorTableContent extends Component {
   componentDidUpdate(prevProps) {
     if (hasDifferentItems(prevProps.items, this.props.items)) {
       this.setState((state) => {
-        return removeOldSelectedState(state, prevProps.items);
+        return {
+          ...removeOldSelectedState(state, getRemovedItems(prevProps.items, this.props.items)),
+          lastToggled: this.props.items.some((item) => item.id === state.lastToggled) ? state.lastToggled : null
+        };
       });
     }
   }

@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
+using Dapper;
 using NzbDrone.Common;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Datastore;
@@ -20,6 +23,7 @@ namespace NzbDrone.Core.MediaFiles
         BookFile GetFileWithPath(string path);
         void DeleteFilesByBook(int bookId);
         void UnlinkFilesByBook(int bookId);
+        void ImportFiles(List<BookFile> added, List<BookFile> updated, List<BookFile> replaced);
     }
 
     public class MediaFileRepository : BasicRepository<BookFile>, IMediaFileRepository
@@ -66,6 +70,45 @@ namespace NzbDrone.Core.MediaFiles
         public List<BookFile> GetFilesByAuthor(int authorId)
         {
             return Query(Builder().Where<Author>(a => a.Id == authorId));
+        }
+
+        public void ImportFiles(List<BookFile> added, List<BookFile> updated, List<BookFile> replaced)
+        {
+            if (added.Any(file => file.Id != 0) || updated.Any(file => file.Id == 0))
+            {
+                throw new InvalidOperationException("Imported file IDs do not match insert/update intent");
+            }
+
+            using (var connection = _database.OpenConnection())
+            using (var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted))
+            {
+                try
+                {
+                    foreach (var file in replaced)
+                    {
+                        connection.Execute("DELETE FROM \"BookFiles\" WHERE \"Id\" = @Id", new { file.Id }, transaction);
+                    }
+
+                    foreach (var file in updated)
+                    {
+                        Update(connection, transaction, file);
+                    }
+
+                    foreach (var file in added)
+                    {
+                        Insert(connection, transaction, file);
+                    }
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    // Insert assigns IDs before the transaction commits. A rolled-back
+                    // insertion must not look like an existing record to a retry.
+                    added.ForEach(file => file.Id = 0);
+                    throw;
+                }
+            }
         }
 
         public List<BookFile> GetFilesByAuthorMetadataId(int authorMetadataId)

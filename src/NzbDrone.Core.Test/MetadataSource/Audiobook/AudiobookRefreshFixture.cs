@@ -22,6 +22,17 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
     public class AudiobookRefreshFixture : CoreTest<RefreshBookService>
     {
         [Test]
+        public void should_preserve_local_recording_without_contacting_catalog_on_direct_or_author_refresh()
+        {
+            var local = new Book { Id = 7, ForeignBookId = LocalRecordingId.NewId(), Title = "Kaiju: Battlefield Surgeon" };
+            Subject.RefreshBookInfo(local).Should().BeFalse();
+            Subject.RefreshBookInfo(local, new List<Book>(), new Author(), true).Should().BeFalse();
+            Mocker.GetMock<IProvideBookInfo>().Verify(service => service.GetBookInfo(It.IsAny<string>()), Times.Never());
+            Mocker.GetMock<IBookService>().Verify(service => service.DeleteBook(It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never());
+            Mocker.GetMock<IMetadataTagService>().Verify(service => service.SyncTags(It.IsAny<List<Edition>>()), Times.Never());
+        }
+
+        [Test]
         public void should_update_recording_date_and_editions_without_fetching_a_bibliography()
         {
             var resource = new AudnexusBookResource

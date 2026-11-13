@@ -132,7 +132,7 @@ namespace Readarr.Api.V1.BookFiles
 
             _mediaFileService.Update(bookFiles);
 
-            return Accepted(bookFiles.ConvertAll(f => f.ToResource(bookFiles.First().Author.Value, _upgradableSpecification)));
+            return Accepted(bookFiles.ConvertAll(MapToResource));
         }
 
         [RestDeleteById]

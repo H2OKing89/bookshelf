@@ -134,6 +134,51 @@ namespace NzbDrone.Core.Test.MediaFiles
             files.Should().OnlyContain(c => c.EditionId == _book.Id);
         }
 
+        [Test]
+        public void should_replace_same_path_in_a_single_transaction()
+        {
+            var old = Db.All<BookFile>().First();
+            var replacement = new BookFile { Path = old.Path, EditionId = old.EditionId, Quality = new QualityModel(Quality.MP3) };
+
+            Subject.ImportFiles(new List<BookFile> { replacement }, new List<BookFile>(), new List<BookFile> { old });
+
+            Db.All<BookFile>().Should().HaveCount(10);
+            Subject.GetFileWithPath(old.Path).Id.Should().Be(replacement.Id).And.NotBe(old.Id);
+        }
+
+        [Test]
+        public void should_roll_back_old_deletion_and_all_new_inserts_if_any_insert_fails()
+        {
+            var existing = Db.All<BookFile>().ToList();
+            var old = existing[0];
+            var replacement = new BookFile { Path = old.Path, EditionId = old.EditionId, Quality = new QualityModel(Quality.MP3) };
+            var collision = new BookFile { Path = existing[1].Path, Quality = new QualityModel(Quality.MP3) };
+
+            Assert.Catch(() => Subject.ImportFiles(new List<BookFile> { replacement, collision }, new List<BookFile>(), new List<BookFile> { old }));
+
+            Db.All<BookFile>().Select(file => new { file.Id, file.Path }).Should()
+                .BeEquivalentTo(existing.Select(file => new { file.Id, file.Path }));
+            replacement.Id.Should().Be(0);
+            collision.Id.Should().Be(0);
+        }
+
+        [Test]
+        public void should_roll_back_retired_rows_when_an_update_fails()
+        {
+            var existing = Db.All<BookFile>().ToList();
+            var invalidUpdate = new BookFile
+            {
+                Id = existing[2].Id,
+                Path = existing[1].Path,
+                Quality = new QualityModel(Quality.MP3)
+            };
+
+            Assert.Catch(() => Subject.ImportFiles(new List<BookFile>(), new List<BookFile> { invalidUpdate }, new List<BookFile> { existing[0] }));
+
+            Db.All<BookFile>().Select(file => new { file.Id, file.Path }).Should()
+                .BeEquivalentTo(existing.Select(file => new { file.Id, file.Path }));
+        }
+
         private void VerifyData()
         {
             Db.All<Author>().Should().HaveCount(1);

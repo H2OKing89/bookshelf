@@ -3,6 +3,7 @@ using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.MusicTests.BookRepositoryTests
@@ -78,6 +79,32 @@ namespace NzbDrone.Core.Test.MusicTests.BookRepositoryTests
             var book = Subject.FindByTitleInexact(0, title);
 
             book.Should().BeNull();
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void should_preserve_catalog_when_another_author_profile_uses_the_metadata(bool deleteFiles)
+        {
+            var deleted = new Author { Id = 32, AuthorMetadataId = 7 };
+            Mocker.GetMock<IAuthorRepository>().Setup(x => x.GetAuthorsByMetadataId(It.IsAny<IEnumerable<int>>()))
+                .Returns(new List<Author> { new Author { Id = 253, AuthorMetadataId = 7 } });
+
+            Subject.Handle(new AuthorDeletedEvent(deleted, deleteFiles, false));
+
+            Mocker.GetMock<IBookRepository>().Verify(x => x.DeleteMany(It.IsAny<List<Book>>()), Times.Never());
+            VerifyEventPublished<BookDeletedEvent>(Times.Never());
+        }
+
+        [Test]
+        public void should_remove_catalog_when_last_author_profile_is_deleted()
+        {
+            Mocker.GetMock<IAuthorRepository>().Setup(x => x.GetAuthorsByMetadataId(It.IsAny<IEnumerable<int>>()))
+                .Returns(new List<Author>());
+
+            Subject.Handle(new AuthorDeletedEvent(new Author { Id = 32, AuthorMetadataId = 7 }, false, false));
+
+            Mocker.GetMock<IBookRepository>().Verify(x => x.DeleteMany(_books), Times.Once());
+            VerifyEventPublished<BookDeletedEvent>(Times.Exactly(_books.Count));
         }
     }
 }

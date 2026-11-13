@@ -134,21 +134,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                     continue;
                 }
 
-                // if (replaceExisting)
-                // {
-                //     RemoveExistingTrackFiles(author, book);
-                // }
-
-                // Make sure part numbers are populated for audiobooks
-                // If all audio files and all part numbers are zero, set them by filename order
-                if (decisionList.All(b => MediaFileExtensions.AudioExtensions.Contains(Path.GetExtension(b.Item.Path)) && b.Item.Part == 0))
-                {
-                    var part = 1;
-                    foreach (var d in decisionList.OrderBy(x => PadNumbers.Replace(x.Item.Path)))
-                    {
-                        d.Item.Part = part++;
-                    }
-                }
+                PopulateAudioParts(decisionList);
 
                 // set the correct release to be monitored before importing the new files
                 var newRelease = bookDecision.First().Item.Edition;
@@ -171,7 +157,9 @@ namespace NzbDrone.Core.MediaFiles.BookImport
             _logger.Debug("Importing {0} files. Replace existing: {1}", qualifiedImports.Count, replaceExisting);
 
             var filesToAdd = new List<BookFile>(qualifiedImports.Count);
+            var filesToUpdate = new List<BookFile>();
             var trackImportedEvents = new List<TrackImportedEvent>(qualifiedImports.Count);
+            var preparedUpgrades = new Dictionary<ImportDecision<LocalBook>, BookFileMoveResult>();
 
             foreach (var importDecision in qualifiedImports)
             {
@@ -181,7 +169,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                 try
                 {
                     //check if already imported
-                    if (importResults.Where(r => r.ImportDecision.Item.Book.Id == localTrack.Book.Id).Any(r => r.ImportDecision.Item.Part == localTrack.Part))
+                    if (importResults.Where(r => r.Result == ImportResultType.Imported && r.ImportDecision.Item.Book.Id == localTrack.Book.Id).Any(r => r.ImportDecision.Item.Part == localTrack.Part))
                     {
                         importResults.Add(new ImportResult(importDecision, "Book has already been imported"));
                         continue;
@@ -242,16 +230,25 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                         bookFile.SceneName = GetSceneReleaseName(downloadClientItem);
 
                         var moveResult = _bookFileUpgrader.UpgradeBookFile(bookFile, localTrack, copyOnly);
+                        moveResult.BookFile ??= bookFile;
+                        preparedUpgrades.Add(importDecision, moveResult);
                         oldFiles = moveResult.OldFiles;
                     }
                     else
                     {
-                        // Delete existing files from the DB mapped to this path
                         var previousFile = _mediaFileService.GetFileWithPath(bookFile.Path);
 
                         if (previousFile != null)
                         {
-                            _mediaFileService.Delete(previousFile, DeleteMediaFileReason.ManualOverride);
+                            // Re-identification changes the recording link, not the file's identity or
+                            // acquisition history. History entries retain this existing file ID.
+                            bookFile.Id = previousFile.Id;
+                            bookFile.DateAdded = previousFile.DateAdded;
+                            bookFile.OriginalFilePath = previousFile.OriginalFilePath;
+                            bookFile.SceneName = previousFile.SceneName;
+                            bookFile.ReleaseGroup = previousFile.ReleaseGroup;
+                            bookFile.IndexerFlags = previousFile.IndexerFlags;
+                            bookFile.LastRemoteSearchTime = previousFile.LastRemoteSearchTime;
 
                             if (bookFile.CalibreId == 0 && previousFile.CalibreId != 0)
                             {
@@ -262,13 +259,16 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                         _metadataTagService.WriteTags(bookFile, false);
                     }
 
-                    filesToAdd.Add(bookFile);
-                    importResults.Add(new ImportResult(importDecision));
-
-                    if (!localTrack.ExistingFile)
+                    if (bookFile.Id == 0)
                     {
-                        _extraService.ImportTrack(localTrack, bookFile, copyOnly);
+                        filesToAdd.Add(bookFile);
                     }
+                    else
+                    {
+                        filesToUpdate.Add(bookFile);
+                    }
+
+                    importResults.Add(new ImportResult(importDecision));
 
                     allImportedTrackFiles.Add(bookFile);
                     allOldTrackFiles.AddRange(oldFiles);
@@ -316,10 +316,91 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                 }
             }
 
+            foreach (var group in preparedUpgrades.GroupBy(item => item.Key.Item.Book.Id))
+            {
+                var replacements = group.Select(item => item.Value).ToList();
+                var successfulParts = importResults.Where(result => result.Result == ImportResultType.Imported && result.ImportDecision.Item.Book.Id == group.Key)
+                    .Select(result => result.ImportDecision.Item.Part).ToHashSet();
+                var complete = decisions.Where(decision => !decision.Item.ExistingFile && decision.Item.Book?.Id == group.Key)
+                    .All(decision => successfulParts.Contains(decision.Item.Part));
+                string failure = null;
+                if (complete)
+                {
+                    try
+                    {
+                        _bookFileUpgrader.CommitUpgrade(replacements);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Warn(ex, "Unable to publish replacement recording; preserving previous files");
+                        failure = "Failed to publish replacement recording; previous files preserved";
+                    }
+                }
+                else
+                {
+                    failure = "Recording import canceled because another part failed; previous files preserved";
+                }
+
+                if (failure != null)
+                {
+                    _bookFileUpgrader.AbortUpgrade(replacements);
+                    var preparedFiles = replacements.Select(result => result.BookFile).ToHashSet();
+                    filesToAdd.RemoveAll(preparedFiles.Contains);
+                    allImportedTrackFiles.RemoveAll(preparedFiles.Contains);
+                    trackImportedEvents.RemoveAll(item => preparedFiles.Contains(item.ImportedBook));
+                    foreach (var result in importResults.Where(result => result.Result == ImportResultType.Imported && group.Any(item => item.Key == result.ImportDecision)))
+                    {
+                        result.Errors.Add(failure);
+                    }
+
+                    continue;
+                }
+            }
+
+            allOldTrackFiles = trackImportedEvents.SelectMany(item => item.OldFiles).DistinctBy(file => file.Id).ToList();
+
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
-            _mediaFileService.AddMany(filesToAdd);
-            _logger.Debug("Inserted new trackfiles in {0}ms", watch.ElapsedMilliseconds);
+            var successfulUpgrades = preparedUpgrades.Where(item => importResults.Any(result => result.ImportDecision == item.Key && result.Result == ImportResultType.Imported)).ToList();
+            if (successfulUpgrades.Any())
+            {
+                try
+                {
+                    _mediaFileService.ImportFiles(filesToAdd, filesToUpdate, allOldTrackFiles);
+                }
+                catch
+                {
+                    _bookFileUpgrader.AbortUpgrade(successfulUpgrades.Select(item => item.Value).ToList());
+                    throw;
+                }
+
+                _bookFileUpgrader.FinalizeUpgrade(successfulUpgrades.Select(item => item.Value).ToList());
+                foreach (var item in successfulUpgrades)
+                {
+                    try
+                    {
+                        _extraService.ImportTrack(item.Key.Item, item.Value.BookFile, item.Value.CopyOnly);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Warn(ex, "Recording imported, but unable to import extra files for {0}", item.Key.Item.Path);
+                    }
+                }
+            }
+            else
+            {
+                if (filesToAdd.Any())
+                {
+                    _mediaFileService.AddMany(filesToAdd);
+                }
+
+                if (filesToUpdate.Any())
+                {
+                    _mediaFileService.Update(filesToUpdate);
+                }
+            }
+
+            _logger.Debug("Persisted imported trackfiles in {0}ms", watch.ElapsedMilliseconds);
 
             // now that trackfiles have been inserted and ids generated, publish the import events
             foreach (var trackImportedEvent in trackImportedEvents)
@@ -368,6 +449,46 @@ namespace NzbDrone.Core.MediaFiles.BookImport
             }
 
             return importResults;
+        }
+
+        private void PopulateAudioParts(List<ImportDecision<LocalBook>> decisions)
+        {
+            if (!decisions.All(decision => MediaFileExtensions.AudioExtensions.Contains(Path.GetExtension(decision.Item.Path))))
+            {
+                return;
+            }
+
+            var unnumbered = decisions.All(decision => decision.Item.Part == 0);
+            var repeatedAcrossDiscs = decisions.Where(decision => decision.Item.Part > 0)
+                .GroupBy(decision => decision.Item.Part)
+                .Any(group => group.Select(decision => Math.Max(1, decision.Item.FileTrackInfo?.DiscNumber ?? 0)).Distinct().Count() > 1);
+
+            if (!unnumbered && !repeatedAcrossDiscs)
+            {
+                // Preserve valid single-disc numbering, global track numbers, and alternative
+                // files for the same track so the existing quality comparison still applies.
+                return;
+            }
+
+            var parts = decisions.GroupBy(decision => new
+                {
+                    Disc = Math.Max(1, decision.Item.FileTrackInfo?.DiscNumber ?? 0),
+                    decision.Item.Part,
+                    UnnumberedPath = decision.Item.Part == 0 ? decision.Item.Path : null
+                })
+                .OrderBy(group => group.Key.Disc)
+                .ThenBy(group => group.Key.Part == 0 ? int.MaxValue : group.Key.Part)
+                .ThenBy(group => PadNumbers.Replace(group.First().Item.Path))
+                .ToList();
+
+            for (var index = 0; index < parts.Count; index++)
+            {
+                foreach (var decision in parts[index])
+                {
+                    decision.Item.Part = index + 1;
+                    decision.Item.PartCount = parts.Count;
+                }
+            }
         }
 
         private Author EnsureAuthorAdded(List<ImportDecision<LocalBook>> decisions, List<Author> addedAuthors)

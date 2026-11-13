@@ -10,6 +10,7 @@ using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.History;
 using NzbDrone.Core.ImportLists.Exclusions;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.MetadataSource;
 using NzbDrone.Core.Profiles.Metadata;
 using NzbDrone.Core.RootFolders;
@@ -115,6 +116,22 @@ namespace NzbDrone.Core.Test.MusicTests
             Mocker.GetMock<IAuthorService>(MockBehavior.Strict)
                 .Setup(x => x.UpdateAuthor(It.IsAny<Author>()))
                 .Returns((Author a) => a);
+        }
+
+        [Test]
+        public void should_not_report_a_local_recording_as_removed_when_absent_from_remote_catalog()
+        {
+            _books.Add(new Book { Id = 99, ForeignBookId = LocalRecordingId.NewId(), Title = "Kaiju" });
+            var remote = _author.JsonClone();
+            remote.Metadata = _author.Metadata.Value.JsonClone();
+            remote.Books = _remoteBooks;
+            GivenNewAuthorInfo(remote);
+            GivenBooksForRefresh(_books);
+            AllowAuthorUpdate();
+
+            Subject.Execute(new RefreshAuthorCommand(_author.Id));
+
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.Is<BookInfoRefreshedEvent>(message => message.Removed.Count == 0)), Times.Once());
         }
 
         [Test]

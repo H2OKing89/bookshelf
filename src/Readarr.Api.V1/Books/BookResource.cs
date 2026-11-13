@@ -115,7 +115,9 @@ namespace Readarr.Api.V1.Books
                 DisplayTitle = projection.DisplayTitle,
                 Subtitle = selectedEdition?.Subtitle,
                 DisplaySubtitle = projection.Subtitle,
-                MetadataLabels = projection.MetadataLabels,
+                MetadataLabels = projection.MetadataLabels
+                    .Concat(LocalRecordingId.IsLocal(model.ForeignBookId) ? new[] { "Local recording" } : Array.Empty<string>())
+                    .Distinct().ToList(),
                 MetadataWarnings = projection.Warnings,
                 AuthorTitle = authorTitle,
                 SeriesTitle = seriesTitle,

@@ -191,7 +191,7 @@ namespace Readarr.Api.V1.Books
             // Monitoring and metadata edits do not identify local recordings. Native
             // audiobook files retain their explicit recording links until an import
             // or reconciliation verifies the file's ASIN.
-            if (newEdition != null && !AudiobookId.IsNative(model.ForeignBookId))
+            if (newEdition != null && !AudiobookId.IsNative(model.ForeignBookId) && !LocalRecordingId.IsLocal(model.ForeignBookId))
             {
                 var files = _mediaFileService.GetFilesByBook(model.Id);
 

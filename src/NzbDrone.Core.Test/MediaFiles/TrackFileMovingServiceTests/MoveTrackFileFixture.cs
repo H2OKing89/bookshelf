@@ -1,11 +1,13 @@
 using System;
 using System.IO;
 using FizzWare.NBuilder;
+using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.Configuration;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
@@ -118,6 +120,49 @@ namespace NzbDrone.Core.Test.MediaFiles.TrackFileMovingServiceTests
             Mocker.GetMock<IEventAggregator>()
                   .Verify(s => s.PublishEvent<TrackFolderCreatedEvent>(It.Is<TrackFolderCreatedEvent>(p =>
                       p.AuthorFolder.IsNotNullOrWhiteSpace())), Times.Never());
+        }
+
+        [Test]
+        public void should_stage_an_independent_copy_even_when_hardlinks_are_enabled()
+        {
+            var source = _trackFile.Path;
+            Mocker.GetMock<IConfigService>().SetupGet(x => x.CopyUsingHardlinks).Returns(true);
+
+            var result = Subject.StageBookFile(_trackFile, _localtrack);
+
+            result.SourcePath.Should().Be(source);
+            result.StagingPath.Should().NotBe(result.BookFile.Path);
+            Path.GetFileName(result.StagingPath).Should().StartWith(".bookshelf-import-").And.EndWith(".mp3");
+            Mocker.GetMock<IDiskTransferService>().Verify(x => x.TransferFile(source, result.StagingPath, TransferMode.Copy, false), Times.Once());
+        }
+
+        [Test]
+        public void should_reject_same_source_and_destination_before_staging()
+        {
+            Mocker.GetMock<IBuildFileNames>()
+                .Setup(x => x.BuildBookFilePath(It.IsAny<Author>(), It.IsAny<Edition>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(_trackFile.Path);
+
+            Assert.Throws<SameFilenameException>(() => Subject.StageBookFile(_trackFile, _localtrack));
+
+            Mocker.GetMock<IDiskTransferService>().Verify(x => x.TransferFile(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TransferMode>(), It.IsAny<bool>()), Times.Never());
+        }
+
+        [Test]
+        public void should_remove_only_temporary_copy_when_staging_fails()
+        {
+            var source = _trackFile.Path;
+            string staging = null;
+            Mocker.GetMock<IDiskTransferService>()
+                .Setup(x => x.TransferFile(source, It.IsAny<string>(), TransferMode.Copy, false))
+                .Callback<string, string, TransferMode, bool>((_, destination, _, _) => staging = destination)
+                .Throws(new IOException("disk full"));
+
+            Assert.Throws<IOException>(() => Subject.StageBookFile(_trackFile, _localtrack));
+
+            _trackFile.Path.Should().Be(source);
+            Mocker.GetMock<IDiskProvider>().Verify(x => x.DeleteFile(staging), Times.Once());
+            Mocker.GetMock<IDiskProvider>().Verify(x => x.DeleteFile(source), Times.Never());
         }
     }
 }

@@ -1,0 +1,31 @@
+.selectedFiles {
+  margin-bottom: 20px;
+}
+
+.fileList {
+  overflow-y: auto;
+  max-height: 160px;
+}
+
+.filePath {
+  overflow-wrap: anywhere;
+}
+
+.field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.input {
+  composes: input from '~Components/Form/TextInput.css';
+}
+
+.textarea {
+  composes: input from '~Components/Form/TextArea.css';
+
+  min-height: 96px;
+}
+
+.select {
+  composes: select from '~Components/Form/SelectInput.css';
+}
