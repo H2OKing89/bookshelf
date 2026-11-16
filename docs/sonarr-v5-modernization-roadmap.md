@@ -645,3 +645,67 @@ passed on the final implementation.
 No browser-rendering or live-library import was run. RG04's pack-evidence design,
 D05's import-score downgrade check and D13's minimum upgrade-score delta remain
 planned and are not implied by these release group changes.
+
+### Dev deployment and real-file checks — 2026-11-16
+
+The separate dev service on port 8095 now runs a fresh, self-contained linux-x64
+candidate with .NET **10.0.15**, current Release Group changes, the current UI,
+Mono wrappers/native helper and bundled MediaInfo. Both locked restores and both
+publishes passed. A stopped full-profile snapshot and the previous complete
+.NET 6 runtime were retained in the protected local dev deployment directory.
+
+The dev filenames exposed a trailing-ASIN false positive. Group parsing now
+uses the existing `AudiobookId.IsAsin` contract to exclude ASIN/ISBN bracket tags
+while preserving earlier groups. Ten additional regression cases include the
+provided Mushoku Tensei filename ending in `[B0CJWTXLPJ] -H2OKing.m4b`, bare and
+lowercase ASINs, ISBNs and non-identifier ten-character group names. **372 parser
+tests passed, with 18 existing skips.** This supplements the previous day's
+test record; the suites overlap.
+
+Before switching the service, the candidate upgraded a copied dev database with
+scheduled jobs deferred and indexers disabled. Browser checks against that copy
+set `H2OKing` on the actual book's file record, reloaded, cleared it and reloaded
+again. All six browser checks passed without runtime errors. Quality, path and
+recording ID stayed unchanged. Manual-import set/clear previews retained the
+same recording and edition without committing an import. Screenshots and check
+results are retained with the deployment evidence. Media files were read only.
+
+The first switch automatically rolled back because the verification script
+incorrectly required an explicit JSON field for a null group. The serializer
+omits null fields. After correcting the check, deployment passed, including a
+nonblank manual-preview response on the dev service. The running Core/API DLL
+hashes match the tested candidate. Migration 048 applied successfully; all 308
+authors, 4,592 books and 2,305 files, plus every author/book/edition/file ID, were
+preserved. File groups, paths, quality, existing credentials and Forms settings
+match the stopped snapshot. The target media file's size, mtime and inode were
+unchanged. No dev group values were saved by the smoke checks.
+
+Existing null groups are not automatically backfilled from filenames. Use the
+file editor's explicit set/clear action for existing records. Pack attribution
+and the D05/D13 score policies remain separate work.
+
+### Browser login redirect repair — 2026-11-16
+
+The dev upgrade exposed an anonymous-browser regression: requesting `/` returned
+401 with a login `Location` header, so browsers displayed an error rather than
+the login page. The previous copied-profile UI checks used local-auth bypass
+and did not cover this path. ASP.NET Core 10 suppresses cookie redirects on API
+endpoints, and the frontend resource controllers also carry `[ApiController]`.
+The [framework compatibility note](https://learn.microsoft.com/en-us/dotnet/core/compatibility/aspnet-core/10/cookie-authentication-api-endpoints)
+describes the changed behavior and the endpoint-specific override.
+
+[Static resources](../src/Readarr.Http/Frontend/StaticResourceController.cs) and
+[UI initialization](../src/Readarr.Http/Frontend/InitializeJsonController.cs)
+now explicitly allow cookie redirects. API and AJAX requests retain 401 behavior;
+Forms authentication and saved credentials are unchanged.
+
+The new [HTTP redirect fixture](../src/NzbDrone.Host.Test/AuthenticationRedirectFixture.cs)
+covers anonymous root/deep-link/initialization redirects, return URLs, login
+access, authenticated pages and API/AJAX 401 responses at both root and a URL
+subpath. **21 HTTP cases passed**, including the existing request-binding fixture.
+A full Forms sign-in, protected book page and logout were also checked in a real
+browser against an isolated copied profile with copy-only test credentials:
+**seven browser checks passed**. The fixed self-contained candidate was deployed
+to the dev service after a new stopped-profile/runtime backup; dev HTTP checks
+confirmed root/deep-link/initialization 302 responses, login 200 and API 401,
+with file metadata, credentials and authentication configuration preserved.

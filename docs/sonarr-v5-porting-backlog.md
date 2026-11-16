@@ -2252,6 +2252,16 @@ planned work: this batch does not add import-score downgrade rejection or a
 minimum upgrade-score delta. Live browser/import smoke testing and release
 artifact validation remain separate delivery checks.
 
+**2026-11-16 follow-up:** the fresh linux-x64 candidate was checked against a
+copied dev profile, including six real browser set/reload/clear checks, and then
+deployed to the existing dev service with stopped-profile/runtime rollback
+copies. The dev API's manual-preview check preserved recording/edition identity
+without saving group values or importing media. Ten additional parser cases fix
+trailing Audible ASIN/ISBN tags being treated as groups; 372 parser cases passed
+(18 existing skips). See the [dev deployment record](sonarr-v5-modernization-roadmap.md#dev-deployment-and-real-file-checks--2026-11-16)
+for the artifact, upgrade and preservation evidence. Existing null groups are
+not automatically backfilled. A committing live import remains untested.
+
 ## Deliberate exclusions and decisions
 
 - **No TV model transplant.** Season/episode numbering, anime scene mappings,

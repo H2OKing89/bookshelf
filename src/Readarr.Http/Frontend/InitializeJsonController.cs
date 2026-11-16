@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Common;
 using NzbDrone.Common.EnvironmentInfo;
@@ -9,6 +10,7 @@ namespace Readarr.Http.Frontend
 {
     [Authorize(Policy = "UI")]
     [ApiController]
+    [AllowCookieRedirect]
     [ApiExplorerSettings(IgnoreApi = true)]
     public class InitializeJsonController : Controller
     {

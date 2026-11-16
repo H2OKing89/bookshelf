@@ -7,6 +7,7 @@ using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Instrumentation;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.Parser
@@ -682,7 +683,7 @@ namespace NzbDrone.Core.Parser
                     return trailingGroup;
                 }
 
-                // Audio-format, language and hash tags are not groups and must not hide
+                // Audio-format, language, identifier and hash tags must not hide
                 // an explicitly suffixed group earlier in the release title.
                 title = title.Substring(0, trailingMatch.Index).TrimEnd();
                 trailingMatch = TrailingReleaseGroupRegex.Match(title);
@@ -724,6 +725,7 @@ namespace NzbDrone.Core.Parser
         private static bool IsReleaseGroupBracketMetadata(string value)
         {
             return ReleaseGroupBracketTokens.Contains(value) ||
+                   AudiobookId.IsAsin(value.ToUpperInvariant()) ||
                    IsoLanguages.FindByName(value) != null ||
                    (ReleaseGroupLanguageCodeRegex.IsMatch(value) && IsoLanguages.Find(value) != null);
         }

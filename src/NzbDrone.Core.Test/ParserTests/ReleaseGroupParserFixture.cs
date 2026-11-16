@@ -100,6 +100,12 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Author.Book.M4B-Crew [HE-AAC] [FLAC] [English]", "Crew")]
         [TestCase("Author.Book.M4B [AudioCrew] [English]", "AudioCrew")]
         [TestCase("Author.Book.M4B [FRA-Crew]", "FRA-Crew")]
+        [TestCase("Mushoku Tensei - Jobless Reincarnation vol_01 (2023) (Rifujin na Magonote) [B0CJWTXLPJ] -H2OKing.m4b", "H2OKing")]
+        [TestCase("Author.Book.M4B-Crew [B0D2DVNX9D]", "Crew")]
+        [TestCase("Author.Book.M4B-Crew [b0d2dvnx9d].m4b", "Crew")]
+        [TestCase("Author.Book.M4B [AudioCrew] [B0D2DVNX9D] [English]", "AudioCrew")]
+        [TestCase("Author.Book.M4B [AudioGroup]", "AudioGroup")]
+        [TestCase("Author.Book.M4B [H2OKing123]", "H2OKing123")]
         public void should_parse_audiobook_release_groups(string title, string expected)
         {
             Parser.Parser.ParseReleaseGroup(title).Should().Be(expected);
@@ -128,6 +134,10 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Author.Book.M4B [English]")]
         [TestCase("Author.Book.M4B [ENG]")]
         [TestCase("Author.Book.M4B [Unabridged]")]
+        [TestCase("Author.Book.M4B [B0D2DVNX9D]")]
+        [TestCase("Author.Book.M4B [b0d2dvnx9d].m4b")]
+        [TestCase("Author.Book.M4B [123456789X]")]
+        [TestCase("Mushoku Tensei - Jobless Reincarnation vol_01 (2023) (Rifujin na Magonote) [B0CJWTXLPJ].m4b")]
         public void should_not_parse_audio_metadata_as_release_group(string title)
         {
             Parser.Parser.ParseReleaseGroup(title).Should().BeNull();
