@@ -35,7 +35,7 @@ namespace NzbDrone.Core.Organizer
         private readonly ICached<BookFormat[]> _trackFormatCache;
         private readonly Logger _logger;
 
-        private static readonly Regex TitleRegex = new Regex(@"\{(?<prefix>[- ._\[(]*)(?<token>(?:[a-z0-9]+)(?:(?<separator>[- ._]+)(?:[a-z0-9]+))?)(?::(?<customFormat>[a-z0-9]+))?(?<suffix>[- ._)\]]*)\}",
+        private static readonly Regex TitleRegex = new Regex(@"\{(?<prefix>[- ._\[(]*)(?<token>(?:[a-z0-9]+)(?:(?<separator>[- ._]+)(?:[a-z0-9]+))?)(?::(?<customFormat>-?[a-z0-9]+))?(?<suffix>[- ._)\]]*)\}",
                                                              RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         public static readonly Regex PartRegex = new Regex(@"\{(?<prefix>[^{]*?)(?<token1>PartNumber|PartCount)(?::(?<customFormat1>[a-z0-9]+))?(?<separator>.*(?=PartNumber|PartCount))?((?<token2>PartNumber|PartCount)(?::(?<customFormat2>[a-z0-9]+))?)?(?<suffix>[^}]*)\}",
@@ -91,12 +91,13 @@ namespace NzbDrone.Core.Organizer
             }
 
             var pattern = namingConfig.StandardBookFormat;
+            var ellipsisPlaceholder = "{" + Guid.NewGuid().ToString("N") + "}";
 
             var tokenHandlers = new Dictionary<string, Func<TokenMatch, string>>(FileNameBuilderTokenEqualityComparer.Instance);
 
             AddAuthorTokens(tokenHandlers, author);
             AddBookTokens(tokenHandlers, edition);
-            AddBookFileTokens(tokenHandlers, bookFile);
+            AddBookFileTokens(tokenHandlers, bookFile, ellipsisPlaceholder);
             AddQualityTokens(tokenHandlers, author, bookFile);
             AddMediaInfoTokens(tokenHandlers, bookFile);
             AddCustomFormats(tokenHandlers, author, bookFile, customFormats);
@@ -128,6 +129,7 @@ namespace NzbDrone.Core.Organizer
 
                 component = FileNameCleanupRegex.Replace(component, CleanupSeparator);
                 component = TrimSeparatorsRegex.Replace(component, string.Empty);
+                component = component.Replace(ellipsisPlaceholder, "...", StringComparison.OrdinalIgnoreCase);
 
                 if (component.IsNotNullOrWhiteSpace())
                 {
@@ -347,11 +349,13 @@ namespace NzbDrone.Core.Organizer
             }
         }
 
-        private void AddBookFileTokens(Dictionary<string, Func<TokenMatch, string>> tokenHandlers, BookFile bookFile)
+        private void AddBookFileTokens(Dictionary<string, Func<TokenMatch, string>> tokenHandlers, BookFile bookFile, string ellipsisPlaceholder)
         {
             tokenHandlers["{Original Title}"] = m => GetOriginalTitle(bookFile);
             tokenHandlers["{Original Filename}"] = m => GetOriginalFileName(bookFile);
-            tokenHandlers["{Release Group}"] = m => bookFile.ReleaseGroup ?? m.DefaultValue("Readarr");
+            tokenHandlers["{Release Group}"] = m => bookFile.ReleaseGroup == null
+                ? m.DefaultValue("Readarr")
+                : FormatReleaseGroup(bookFile.ReleaseGroup, m.CustomFormat, ellipsisPlaceholder);
 
             if (bookFile.PartCount > 1)
             {
@@ -514,6 +518,39 @@ namespace NzbDrone.Core.Organizer
             }
 
             return string.Empty;
+        }
+
+        private static string FormatReleaseGroup(string releaseGroup, string formatter, string ellipsisPlaceholder)
+        {
+            if (releaseGroup.IsNullOrWhiteSpace())
+            {
+                return string.Empty;
+            }
+
+            if (!int.TryParse(formatter, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var requestedLength) || requestedLength == 0)
+            {
+                return releaseGroup;
+            }
+
+            var maxLength = Math.Abs((long)requestedLength);
+            var characters = StringInfo.ParseCombiningCharacters(releaseGroup);
+
+            if (characters.Length <= maxLength)
+            {
+                return releaseGroup;
+            }
+
+            // Keep the ellipsis intact through filename separator cleanup. Tiny limits
+            // retain the requested number of characters without an ellipsis.
+            var retainedLength = (int)maxLength - (maxLength > 3 ? 3 : 0);
+            if (requestedLength < 0)
+            {
+                var suffix = releaseGroup.Substring(characters[characters.Length - retainedLength]);
+                return maxLength > 3 ? ellipsisPlaceholder + suffix.TrimStart(' ', '.') : suffix;
+            }
+
+            var prefix = releaseGroup.Substring(0, characters[retainedLength]);
+            return maxLength > 3 ? prefix.TrimEnd(' ', '.') + ellipsisPlaceholder : prefix;
         }
 
         private string GetOriginalTitle(BookFile bookFile)

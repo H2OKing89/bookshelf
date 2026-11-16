@@ -359,14 +359,17 @@ namespace NzbDrone.Core.Test.MediaFiles
             decisions.Select(decision => decision.Item.Part).Should().Equal(2, 1);
         }
 
-        [Test]
-        public void should_update_same_path_recording_link_without_replacing_file_identity_or_provenance()
+        [TestCase(null, "Original release group")]
+        [TestCase("Preferred", "Preferred")]
+        [TestCase("", "")]
+        public void should_update_same_path_recording_link_without_replacing_file_identity_or_provenance(string groupOverride, string expectedGroup)
         {
             var track = _approvedDecisions.First();
             track.Item.ExistingFile = true;
             track.Item.Size = 123456;
             track.Item.Modified = new DateTime(2026, 11, 12, 0, 0, 0, DateTimeKind.Utc);
             track.Item.ReleaseGroup = "Replacement guess";
+            track.Item.ReleaseGroupOverride = groupOverride;
             track.Item.FileTrackInfo.MediaInfo = new MediaInfoModel { AudioFormat = "AAC", AudioBitrate = 128 };
             var previous = new BookFile
             {
@@ -393,7 +396,7 @@ namespace NzbDrone.Core.Test.MediaFiles
             result.DateAdded.Should().Be(previous.DateAdded);
             result.OriginalFilePath.Should().Be(previous.OriginalFilePath);
             result.SceneName.Should().Be(previous.SceneName);
-            result.ReleaseGroup.Should().Be(previous.ReleaseGroup);
+            result.ReleaseGroup.Should().Be(expectedGroup);
             result.IndexerFlags.Should().Be(previous.IndexerFlags);
             result.CalibreId.Should().Be(previous.CalibreId);
             result.LastRemoteSearchTime.Should().Be(previous.LastRemoteSearchTime);

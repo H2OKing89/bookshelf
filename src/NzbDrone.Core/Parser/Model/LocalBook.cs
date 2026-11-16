@@ -28,6 +28,9 @@ namespace NzbDrone.Core.Parser.Model
         public bool AdditionalFile { get; set; }
         public bool SceneSource { get; set; }
         public string ReleaseGroup { get; set; }
+
+        // An explicit manual choice, including empty to clear. Never inferred from a filename.
+        public string ReleaseGroupOverride { get; set; }
         public string SceneName { get; set; }
 
         // Carries the "searched remotely but not identified" marker out of identification so it can

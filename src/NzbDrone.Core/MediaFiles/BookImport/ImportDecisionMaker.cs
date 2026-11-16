@@ -42,6 +42,8 @@ namespace NzbDrone.Core.MediaFiles.BookImport
         public bool IncludeExisting { get; set; }
         public bool AddNewAuthors { get; set; }
         public bool KeepAllEditions { get; set; }
+        public Dictionary<string, string> ReleaseGroupOverrides { get; set; }
+        public bool PreserveExistingReleaseGroups { get; set; }
     }
 
     public class ImportDecisionMaker : IMakeImportDecision
@@ -152,6 +154,18 @@ namespace NzbDrone.Core.MediaFiles.BookImport
             var localTracks = trackData.Item1;
             var decisions = trackData.Item2;
 
+            // Apply manual choices before identification/specifications and score calculation.
+            foreach (var localTrack in localTracks)
+            {
+                if (config.ReleaseGroupOverrides != null &&
+                    config.ReleaseGroupOverrides.TryGetValue(localTrack.Path, out var releaseGroup) &&
+                    releaseGroup != null)
+                {
+                    localTrack.ReleaseGroupOverride = releaseGroup.Trim();
+                    localTrack.ReleaseGroup = localTrack.ReleaseGroupOverride;
+                }
+            }
+
             localTracks.ForEach(x => x.ExistingFile = !config.NewDownload);
 
             var releases = _identificationService.Identify(localTracks, idOverrides, config);
@@ -162,6 +176,18 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                 // in case it's a new author
                 EnsureData(release);
                 release.NewDownload = config.NewDownload;
+
+                if (config.PreserveExistingReleaseGroups)
+                {
+                    foreach (var localTrack in release.LocalBooks.Where(x => x.ReleaseGroupOverride == null))
+                    {
+                        var existingFile = _mediaFileService.GetFileWithPath(localTrack.Path);
+                        if (existingFile != null)
+                        {
+                            localTrack.ReleaseGroup = existingFile.ReleaseGroup;
+                        }
+                    }
+                }
 
                 var releaseDecision = GetDecision(release, itemInfo.DownloadClientItem);
 

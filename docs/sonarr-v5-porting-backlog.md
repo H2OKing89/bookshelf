@@ -130,6 +130,22 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [B08](#b08) | P1 | Planned | M | Explain and resolve unmapped or conflicting recording evidence |
 | [B09](#b09) | P2 | Planned | M | Add book-native library diagnostics and collection statistics |
 
+### Release group follow-up index
+
+The [2026-11-15 focused comparison](sonarr-v5-release-group-comparison.md)
+uses Bookshelf `4883fcaa724dd15e57c555cd13d39cbcba379a2f` and the same pinned
+Sonarr v5 donor. These five additional slices supplement the original 87-item
+snapshot. D05 and D13 already cover import-score and upgrade-delta enforcement.
+Execution status for the new slices is tracked here.
+
+| ID | Priority | Execution | Effort | Candidate |
+| --- | --- | --- | --- | --- |
+| [RG01](#rg01) | P1 | Verified | M | Adapt release group parsing with audiobook compatibility fixtures |
+| [RG02](#rg02) | P1 | Verified | M | Carry manual-import group choices through preview and commit |
+| [RG03](#rg03) | P2 | Verified | M | Expose and deliberately correct stored file release groups |
+| [RG04](#rg04) | P2 | Planned | M | Design recording-versus-pack group evidence precedence |
+| [RG05](#rg05) | P2 | Verified | S | Add group-token length formatting and define missing-value behavior |
+
 ## Platform, authentication, storage and delivery
 
 ### P01
@@ -2064,6 +2080,178 @@ Borrow v5 statistics endpoint/service organization and filtering. Show unique re
 
 **Acceptance:** Publisher packs and multi-work memberships never double-count bytes or file duration. Unknown metadata remains unknown, filters and counts agree with library lists, and committed imports/deletions/author reconciliation invalidate the appropriate caches. Query cost is measured on large synthetic libraries and list/detail endpoints do not acquire expensive statistics unintentionally.
 
+## Release group follow-up details — 2026-11-15
+
+These entries come from the [focused release group comparison](sonarr-v5-release-group-comparison.md).
+The current Bookshelf snapshot for this section is
+`4883fcaa724dd15e57c555cd13d39cbcba379a2f`; original numbered entries retain
+their original comparison evidence. D01/B01 apply to every slice below.
+
+### RG01
+
+**Adapt release group parsing with audiobook compatibility fixtures**
+
+- Priority / effort: **P1 / M**.
+- Current Bookshelf state: basic parsing exists; compound names, accented suffixes,
+  trailing bracketed groups, additional repost cleanup and invalid-token checks differ.
+- Approach: selectively adapt; preserve audio extension handling and existing cases.
+- Pinned v5 source: [ReleaseGroupParser.cs](https://github.com/Sonarr/Sonarr/blob/c018578e4b79ee048575c02d7a8aa2b929e4b837/src/NzbDrone.Core/Parser/ReleaseGroupParser.cs).
+- Bookshelf counterpart: [Parser.ParseReleaseGroup](../src/NzbDrone.Core/Parser/Parser.cs#L630).
+
+The isolated source replay matched all 23 active Bookshelf expectations with our
+parser and all 151 donor expectations with its parser. Unmodified donor code
+changes 18 Bookshelf expectations, including `2018-ENTiTLED` instead of
+`ENTiTLED`. This is not a safe class replacement. Keep TV/anime exclusions and
+hardcoded exception names out unless supported by book-release evidence.
+
+**Acceptance:** preserve the 23 existing expectations; add book-shaped compound,
+Latin-1, trailing-bracket and repost cases; reject codec/date/part/hash false
+positives according to an explicit book policy. Exercise MP3/M4B/FLAC/Opus paths
+and release titles. Verify results flow through remote-book and on-disk custom
+formats, history and repack decisions without changing recording identity.
+
+### RG02
+
+**Carry manual-import group choices through preview and commit**
+
+- Priority / effort: **P1 / M**.
+- Current Bookshelf state: visible editor and preview update field exist; initial
+  mapping, override-based score recalculation and final command propagation are incomplete.
+- Approach: repair the existing cross-layer data path before adding UI features.
+- Prerequisites: D01/B01; coordinate with D05 for import-score enforcement.
+- Pinned v5 source: [ManualImportService.cs](https://github.com/Sonarr/Sonarr/blob/c018578e4b79ee048575c02d7a8aa2b929e4b837/src/NzbDrone.Core/MediaFiles/EpisodeImport/Manual/ManualImportService.cs#L144)
+  and [ManualImportFile.cs](https://github.com/Sonarr/Sonarr/blob/c018578e4b79ee048575c02d7a8aa2b929e4b837/src/NzbDrone.Core/MediaFiles/EpisodeImport/Manual/ManualImportFile.cs#L19).
+- Bookshelf counterparts: [manual service](../src/NzbDrone.Core/MediaFiles/BookImport/Manual/ManualImportService.cs#L266),
+  [command file](../src/NzbDrone.Core/MediaFiles/BookImport/Manual/ManualImportFile.cs),
+  [UI submission](../frontend/src/InteractiveImport/Interactive/InteractiveImportModalContentConnector.js#L155).
+
+Initial item mapping never copies the resolved group. Preview updates keep
+nonblank text on the response item without applying that override to the local
+decision or recalculating custom formats. Final UI submission and the command
+file type omit the field; execution constructs a local book without assigning it.
+These are source-traced omissions, not a completed live-import reproduction.
+
+**Acceptance:** detected group appears on first preview; set/change/clear choices
+produce matching score previews and reach the committed file, naming and history.
+Define omitted versus explicitly cleared values. Cover single and bulk selections,
+tracked/untracked downloads, multipart recordings and existing files. Retain
+ordinary re-identification provenance; an explicit correction must not be silently
+overridden by the previous-file preservation rule. Test the final command, not
+only preview responses, and retain staged rollback behavior on failure.
+
+### RG03
+
+**Expose and deliberately correct stored file release groups**
+
+- Priority / effort: **P2 / M**.
+- Current Bookshelf state: database/model storage exists; file resource, property
+  updates and file editor do not expose or edit the group.
+- Approach: additive API field and deliberate file-property correction UI.
+- Prerequisites: D01/B01; reuse RG02's missing/clear semantics.
+- Pinned v5 source: [v5 file resource](https://github.com/Sonarr/Sonarr/blob/c018578e4b79ee048575c02d7a8aa2b929e4b837/src/Sonarr.Api.V5/EpisodeFiles/EpisodeFileResource.cs#L21),
+  [single/bulk property updates](https://github.com/Sonarr/Sonarr/blob/c018578e4b79ee048575c02d7a8aa2b929e4b837/src/Sonarr.Api.V5/EpisodeFiles/EpisodeFileController.cs#L104)
+  and [file card](https://github.com/Sonarr/Sonarr/blob/c018578e4b79ee048575c02d7a8aa2b929e4b837/frontend/src/Episode/Summary/EpisodeFileCard.tsx#L223).
+- Bookshelf counterparts: [file resource](../src/Readarr.Api.V1/BookFiles/BookFileResource.cs),
+  [file controller](../src/Readarr.Api.V1/BookFiles/BookFileController.cs#L126)
+  and [file editor](../frontend/src/BookFile/Editor/BookFileEditorTableContent.js).
+
+**Acceptance:** show the actual persisted group; support setting and clearing
+one or multiple explicit file IDs. Omitted fields preserve current values and
+old quality-only clients remain compatible. Update custom-format displays after
+success; preserve file/recording identity, acquisition provenance and unrelated
+properties. Ordinary rescans must not undo an explicit correction.
+
+### RG04
+
+**Design recording-versus-pack group evidence precedence**
+
+- Priority / effort: **P2 / M**.
+- Current Bookshelf state: unconditional download, folder, filename precedence.
+- Approach: study/adapt only after defining book pack semantics.
+- Prerequisites: B03's pack membership/evidence design; D01/B01.
+- Pinned v5 source: [AggregateReleaseGroup.cs](https://github.com/Sonarr/Sonarr/blob/c018578e4b79ee048575c02d7a8aa2b929e4b837/src/NzbDrone.Core/MediaFiles/EpisodeImport/Aggregation/Aggregators/AggregateReleaseGroup.cs).
+- Bookshelf counterpart: [AggregateReleaseGroup.cs](../src/NzbDrone.Core/MediaFiles/BookImport/Aggregation/Aggregators/AggregateReleaseGroup.cs).
+
+Sonarr lets a season-pack label yield to an individual file's group, then falls
+back to the pack label. A multipart audiobook is not automatically a pack of
+independent recordings. This is a design candidate, not a demonstrated failing
+Bookshelf pack import.
+
+**Acceptance:** define recording-level releaser versus pack uploader authority;
+exercise single recordings, multipart recordings, mixed-group packs, missing
+file labels and conflicting evidence. Retain original source evidence and
+explain the resolved group. Do not overwrite explicit manual choices, merge
+recordings or change ordinary multipart behavior on a season-pack analogy alone.
+
+### RG05
+
+**Add group-token length formatting and define missing-value behavior**
+
+- Priority / effort: **P2 / S**.
+- Current Bookshelf state: group naming token exists; length formatting is ignored
+  and the legacy fallback applies only to null.
+- Approach: adapt length handling; make a separate saved-template fallback decision.
+- Pinned v5 source: [group token](https://github.com/Sonarr/Sonarr/blob/c018578e4b79ee048575c02d7a8aa2b929e4b837/src/NzbDrone.Core/Organizer/FileNameBuilder.cs#L642)
+  and [truncation fixture](https://github.com/Sonarr/Sonarr/blob/c018578e4b79ee048575c02d7a8aa2b929e4b837/src/NzbDrone.Core.Test/OrganizerTests/FileNameBuilderTests/TruncatedReleaseGroupFixture.cs).
+- Bookshelf counterpart: [group token](../src/NzbDrone.Core/Organizer/FileNameBuilder.cs#L354).
+
+**Acceptance:** cover positive/negative length formats, long and accented names,
+null/empty/whitespace values, optional separators and filename limits. Preserve
+the stored full group and existing templates unless a documented compatibility
+decision authorizes a naming change. Verify custom-format scoring is not changed
+by truncating the display token. Do not silently rename the legacy fallback.
+
+### 2026-11-15 release group implementation record
+
+RG01/RG02/RG03/RG05 are implemented and verified locally in the working tree
+based on `4883fcaa724dd15e57c555cd13d39cbcba379a2f`. The source-state paragraphs
+above describe the pre-change audit snapshot. No schema migration is needed:
+the full group was already stored on each book file. No live home/library was
+used or modified.
+
+- **RG01:** selectively extended [group extraction](../src/NzbDrone.Core/Parser/Parser.cs)
+  for hyphenated and Latin-1 names, trailing brackets and repost suffixes.
+  Added negative cases cover audio/language/part/date/hash metadata in suffixes
+  and trailing tags; leading bracketed groups keep their existing behavior.
+  Existing parser expectations and audio extension handling remain covered.
+  Names without a clear release-metadata boundary can still be ambiguous;
+  explicit corrections take precedence over detection.
+- **RG02:** [manual import](../src/NzbDrone.Core/MediaFiles/BookImport/Manual/ManualImportService.cs)
+  returns the resolved group and current custom-format matches/score. A separate
+  nullable `releaseGroupOverride` in preview responses records a deliberate
+  choice; the UI submits only that choice as `releaseGroup` to preview updates
+  and the final command. Null/omitted keeps detection or existing provenance;
+  an empty value explicitly clears. Choices survive repeated aggregation and
+  same-path re-identification without changing file IDs or other acquisition
+  provenance. Existing-file previews use the stored group before specifications
+  and score calculation, so an untouched preview agrees with the saved result.
+  Preview requests also retain the selected edition ID.
+- **RG03:** [file resources and updates](../src/Readarr.Api.V1/BookFiles/BookFileController.cs)
+  expose group and support single/bulk corrections. Omitted/null fields preserve
+  existing values; whitespace is trimmed and empty clears. Group-only requests
+  preserve quality. The file editor displays groups and offers a selected-file
+  set/clear control, with server errors visible. The OpenAPI schema is updated.
+- **RG05:** [naming](../src/NzbDrone.Core/Organizer/FileNameBuilder.cs) supports
+  positive/negative group length formats with bounded, combining-character-safe
+  truncation. Stored group values stay complete. Existing null-to-`Readarr`
+  fallback and empty/whitespace omission remain compatible.
+
+Regression coverage is in [manual-import fixtures](../src/NzbDrone.Core.Test/MediaFiles/ManualImportReleaseGroupFixture.cs),
+[decision-maker fixtures](../src/NzbDrone.Core.Test/MediaFiles/TrackImport/ImportDecisionMakerFixture.cs),
+[aggregation fixtures](../src/NzbDrone.Core.Test/MediaFiles/TrackImport/Aggregation/AggregateReleaseGroupFixture.cs),
+[same-path import fixtures](../src/NzbDrone.Core.Test/MediaFiles/ImportApprovedTracksFixture.cs),
+[file API fixtures](../src/NzbDrone.Integration.Test/ApiTests/BookFileQualityEditorFixture.cs)
+and [preview API fixtures](../src/NzbDrone.Integration.Test/ApiTests/ManualImportReleaseGroupFixture.cs).
+The parser and organizer fixtures cover their respective changes. Local
+validation results are recorded in the roadmap's release group implementation
+section. The frontend payload harness uses actual Babel-transformed source with
+mocked React/Redux/network; it is not a browser-rendering test.
+
+RG04's recording-versus-pack policy remains planned. D05/D13 remain separate
+planned work: this batch does not add import-score downgrade rejection or a
+minimum upgrade-score delta. Live browser/import smoke testing and release
+artifact validation remain separate delivery checks.
+
 ## Deliberate exclusions and decisions
 
 - **No TV model transplant.** Season/episode numbering, anime scene mappings,
@@ -2102,6 +2290,10 @@ all neighboring cases. The detailed entries identify these specific traps:
    analogous donor branch also omits that option, so a wholesale copy is not a fix.
 8. D15/D16: TV runtime, pilot/special fallbacks and video quality units must not
    decide whether a long audiobook is a valid download.
+9. RG01/RG04: the donor group parser changes 18 existing Bookshelf fixture
+   expectations; season-pack provenance also needs book-native semantics. Adapt
+   useful behavior with compatibility fixtures rather than replacing the parser
+   or treating every multipart recording as a pack.
 
 ## Implementation record template
 

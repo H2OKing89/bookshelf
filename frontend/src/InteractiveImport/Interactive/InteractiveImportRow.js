@@ -19,6 +19,7 @@ import SelectIndexerFlagsModal from 'InteractiveImport/IndexerFlags/SelectIndexe
 import SelectQualityModal from 'InteractiveImport/Quality/SelectQualityModal';
 import SelectReleaseGroupModal from 'InteractiveImport/ReleaseGroup/SelectReleaseGroupModal';
 import formatBytes from 'Utilities/Number/formatBytes';
+import formatCustomFormatScore from 'Utilities/Number/formatCustomFormatScore';
 import translate from 'Utilities/String/translate';
 import InteractiveImportRowCellPlaceholder from './InteractiveImportRowCellPlaceholder';
 import styles from './InteractiveImportRow.css';
@@ -181,6 +182,7 @@ class InteractiveImportRow extends Component {
       releaseGroup,
       size,
       customFormats,
+      customFormatScore,
       indexerFlags,
       rejections,
       columns,
@@ -313,7 +315,7 @@ class InteractiveImportRow extends Component {
             customFormats?.length ?
               <Popover
                 anchor={
-                  <Icon name={icons.INTERACTIVE} />
+                  <span><Icon name={icons.INTERACTIVE} /> {formatCustomFormatScore(customFormatScore)}</span>
                 }
                 title={translate('Formats')}
                 body={
@@ -323,7 +325,7 @@ class InteractiveImportRow extends Component {
                 }
                 position={tooltipPositions.LEFT}
               /> :
-              null
+              formatCustomFormatScore(customFormatScore)
           }
         </TableRowCell>
 
@@ -444,6 +446,7 @@ InteractiveImportRow.propTypes = {
   quality: PropTypes.object,
   size: PropTypes.number.isRequired,
   customFormats: PropTypes.arrayOf(PropTypes.object),
+  customFormatScore: PropTypes.number,
   indexerFlags: PropTypes.number.isRequired,
   rejections: PropTypes.arrayOf(PropTypes.object).isRequired,
   columns: PropTypes.arrayOf(PropTypes.object).isRequired,

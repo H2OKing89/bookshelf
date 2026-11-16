@@ -112,7 +112,16 @@ namespace Readarr.Api.V1.BookFiles
         public ActionResult<BookFileResource> SetQuality(BookFileResource bookFileResource)
         {
             var bookFile = _mediaFileService.Get(bookFileResource.Id);
-            bookFile.Quality = bookFileResource.Quality;
+            if (bookFileResource.Quality != null)
+            {
+                bookFile.Quality = bookFileResource.Quality;
+            }
+
+            if (bookFileResource.ReleaseGroup != null)
+            {
+                bookFile.ReleaseGroup = bookFileResource.ReleaseGroup.Trim();
+            }
+
             _mediaFileService.Update(bookFile);
             return Accepted(bookFile.Id);
         }
@@ -127,6 +136,11 @@ namespace Readarr.Api.V1.BookFiles
                 if (resource.Quality != null)
                 {
                     bookFile.Quality = resource.Quality;
+                }
+
+                if (resource.ReleaseGroup != null)
+                {
+                    bookFile.ReleaseGroup = resource.ReleaseGroup.Trim();
                 }
             }
 

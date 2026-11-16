@@ -18,6 +18,7 @@ function BookFileEditorRow(props) {
     size,
     dateAdded,
     quality,
+    releaseGroup,
     qualityCutoffNotMet,
     mediaInfo,
     isSelected,
@@ -59,6 +60,10 @@ function BookFileEditorRow(props) {
         />
       </TableRowCell>
 
+      <TableRowCell>
+        {releaseGroup || '—'}
+      </TableRowCell>
+
       <BookFileActionsCell
         id={id}
         path={path}
@@ -73,6 +78,7 @@ BookFileEditorRow.propTypes = {
   path: PropTypes.string.isRequired,
   size: PropTypes.number.isRequired,
   quality: PropTypes.object.isRequired,
+  releaseGroup: PropTypes.string,
   qualityCutoffNotMet: PropTypes.bool.isRequired,
   mediaInfo: PropTypes.object,
   dateAdded: PropTypes.string.isRequired,

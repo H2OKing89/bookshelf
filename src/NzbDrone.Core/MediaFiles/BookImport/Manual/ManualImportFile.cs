@@ -11,6 +11,9 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
         public int BookId { get; set; }
         public string ForeignEditionId { get; set; }
         public QualityModel Quality { get; set; }
+
+        // Null preserves detection/provenance; empty explicitly clears the group.
+        public string ReleaseGroup { get; set; }
         public int IndexerFlags { get; set; }
         public string DownloadId { get; set; }
         public bool DisableReleaseSwitching { get; set; }

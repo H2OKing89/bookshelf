@@ -12,6 +12,12 @@ rather than missing features. The [full porting backlog](sonarr-v5-porting-backl
 contains source links, current local behavior, dependencies, relative effort and
 acceptance checks. Its index is the implementation tracker.
 
+A [focused release group comparison](sonarr-v5-release-group-comparison.md)
+dated **2026-11-15** adds five separately tracked follow-up slices, RG01-RG05.
+Group matching already exists, but parsing, manual-import round trips, stored-file
+correction, pack evidence policy and naming have concrete gaps. These supplement
+the original 87-item comparison; they do not replace its pinned baseline.
+
 ## Scope and pinned sources
 
 Reviewed **2026-11-13, America/Chicago**. The only upstream comparison target is
@@ -159,6 +165,13 @@ failover, blocked-state recovery, manual-intervention notifications, score
 thresholds, language rules, disk checks and qBittorrent seed semantics. D15/D16
 need a book-native duration/size policy; B04 adds audio-specific scoring after
 those evidence and upgrade rules are sound.
+
+The release group audit adds RG02 (manual-import group preservation and score
+preview) and RG01 (selective parser improvements) to this phase. Keep D05/D13 as
+the score-enforcement work. RG03 adds stored-file visibility/correction; RG05
+covers naming compatibility. RG04's pack-specific group precedence belongs with
+B03's book-native pack design. Do not copy Sonarr's parser wholesale: it changes
+18 of the 23 existing Bookshelf group-parser fixture expectations.
 
 Exit: completion means the intended recording/parts committed successfully;
 failed or ambiguous adds do not cause duplicate downloads; retries and removal
@@ -595,3 +608,40 @@ review changed donor paths against the port record. Re-evaluate affected items
 and their tests; do not infer that an upstream merge or newer version preserves
 book-specific behavior. An observed donor defect should remain an adaptation
 note until its corrected behavior is independently validated.
+
+## Release group implementation — 2026-11-15
+
+RG01/RG02/RG03/RG05 are verified locally in the working tree based on
+`4883fcaa724dd15e57c555cd13d39cbcba379a2f`; see the
+[implementation record](sonarr-v5-porting-backlog.md#2026-11-15-release-group-implementation-record).
+This implements selective parser improvements, manual-import choices through
+preview and final command, stored-file visibility/correction, and optional group
+token truncation. Explicitly clearing a group is distinct from leaving it
+untouched. Ordinary same-path re-identification still preserves file identity
+and acquisition provenance. Existing group custom-format IDs, profiles and
+expressions require no migration.
+
+Validation:
+
+- **665 focused Core tests passed, 19 existing skips**, covering all parser and
+  organizer fixtures plus manual import, aggregation, decisions and staged import
+  preservation. All 23 original group-parser cases remain covered, alongside 57
+  added cases.
+- **25 API/recording-identity cases passed**, including group-only single/bulk
+  file updates and manual-preview group, override and score serialization.
+- **14 frontend payload/selection checks passed** against actual Babel-transformed
+  source with mocked React/Redux/network. They cover untouched versus explicit
+  set/clear, selected edition preservation and group-only file updates.
+- Webpack compiled successfully with `--no-cache`; focused ESLint and CSS
+  stylelint passed. The initial cached build failed with stale webpack dependency
+  template errors; the clean-cache build resolved them without source changes.
+
+A broader Core run encountered legacy live-provider tests: the invalid-author
+fixture requested `api.bookinfo.pro` and timed out after 100 seconds. The
+provider-dependent runs were stopped; these results do not claim a passing full
+Core suite. The complete parser/organizer and focused import/API checks above
+passed on the final implementation.
+
+No browser-rendering or live-library import was run. RG04's pack-evidence design,
+D05's import-score downgrade check and D13's minimum upgrade-score delta remain
+planned and are not implied by these release group changes.

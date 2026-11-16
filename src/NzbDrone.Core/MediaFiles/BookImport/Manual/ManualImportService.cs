@@ -122,7 +122,8 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
                     SingleRelease = false,
                     IncludeExisting = !replaceExistingFiles,
                     AddNewAuthors = false,
-                    KeepAllEditions = true
+                    KeepAllEditions = true,
+                    PreserveExistingReleaseGroups = true
                 };
 
                 var decision = _importDecisionMaker.GetImportDecisions(files, null, null, config);
@@ -168,7 +169,8 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
                 SingleRelease = false,
                 IncludeExisting = !replaceExistingFiles,
                 AddNewAuthors = false,
-                KeepAllEditions = true
+                KeepAllEditions = true,
+                PreserveExistingReleaseGroups = true
             };
 
             var decisions = _importDecisionMaker.GetImportDecisions(authorFiles, idOverrides, itemInfo, config);
@@ -214,7 +216,10 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
                     NewDownload = true,
                     SingleRelease = true,
                     IncludeExisting = !replaceExistingFiles,
-                    AddNewAuthors = false
+                    AddNewAuthors = false,
+                    PreserveExistingReleaseGroups = true,
+                    ReleaseGroupOverrides = group.Where(x => x.ReleaseGroupOverride != null)
+                        .ToDictionary(x => x.Path, x => x.ReleaseGroupOverride, PathEqualityComparer.Instance)
                 };
                 var decisions = _importDecisionMaker.GetImportDecisions(files, idOverride, null, config);
 
@@ -245,10 +250,11 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
                         item.Quality = decision.Item.Quality;
                     }
 
-                    if (item.ReleaseGroup.IsNullOrWhiteSpace())
-                    {
-                        item.ReleaseGroup = decision.Item.ReleaseGroup;
-                    }
+                    item.ReleaseGroup = decision.Item.ReleaseGroup;
+                    item.ReleaseGroupOverride = decision.Item.ReleaseGroupOverride;
+                    item.CustomFormats = decision.Item.Author == null
+                        ? new List<CustomFormat>()
+                        : _formatCalculator.ParseCustomFormat(decision.Item);
 
                     item.Rejections = decision.Rejections;
                     item.Size = decision.Item.Size;
@@ -286,6 +292,8 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
             }
 
             item.Quality = decision.Item.Quality;
+            item.ReleaseGroup = decision.Item.ReleaseGroup;
+            item.ReleaseGroupOverride = decision.Item.ReleaseGroupOverride;
             item.IndexerFlags = (int)decision.Item.IndexerFlags;
             item.Size = _diskProvider.GetFileSize(decision.Item.Path);
             item.Rejections = decision.Rejections;
@@ -346,6 +354,8 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
                         Size = fileInfo.Length,
                         Modified = fileInfo.LastWriteTimeUtc,
                         Quality = file.Quality,
+                        ReleaseGroup = file.ReleaseGroup?.Trim() ?? DetectReleaseGroup(file, fileTrackInfo),
+                        ReleaseGroupOverride = file.ReleaseGroup?.Trim(),
                         IndexerFlags = (IndexerFlags)file.IndexerFlags,
                         Author = author,
                         Book = book,
@@ -413,6 +423,29 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
                     _eventAggregator.PublishEvent(new DownloadCompletedEvent(trackedDownload, imported.First().ImportDecision.Item.Author.Id));
                 }
             }
+        }
+
+        private string DetectReleaseGroup(ManualImportFile file, ParsedTrackInfo fileInfo)
+        {
+            var trackedDownload = file.DownloadId.IsNullOrWhiteSpace() ? null : _trackedDownloadService.Find(file.DownloadId);
+            var group = trackedDownload?.RemoteBook?.ParsedBookInfo?.ReleaseGroup;
+
+            if (group.IsNullOrWhiteSpace() && trackedDownload?.DownloadItem?.Title.IsNotNullOrWhiteSpace() == true)
+            {
+                group = Parser.Parser.ParseReleaseGroup(trackedDownload.DownloadItem.Title);
+            }
+
+            if (group.IsNullOrWhiteSpace())
+            {
+                group = Parser.Parser.ParseReleaseGroup(Path.GetFileName(Path.GetDirectoryName(file.Path)) ?? string.Empty);
+            }
+
+            if (group.IsNullOrWhiteSpace())
+            {
+                group = fileInfo.ReleaseGroup;
+            }
+
+            return group.IsNullOrWhiteSpace() ? Parser.Parser.ParseReleaseGroup(Path.GetFileName(file.Path)) : group;
         }
     }
 }

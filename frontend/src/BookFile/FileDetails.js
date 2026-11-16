@@ -33,6 +33,7 @@ function FileDetails(props) {
 
   const {
     filename,
+    releaseGroup,
     audioTags,
     rejections
   } = props;
@@ -47,6 +48,13 @@ function FileDetails(props) {
                 title={translate('Filename')}
                 data={filename}
                 descriptionClassName={styles.filename}
+              />
+          }
+          {
+            releaseGroup &&
+              <DescriptionListItem
+                title={translate('ReleaseGroup')}
+                data={releaseGroup}
               />
           }
           {
@@ -234,6 +242,7 @@ function FileDetails(props) {
 
 FileDetails.propTypes = {
   filename: PropTypes.string,
+  releaseGroup: PropTypes.string,
   audioTags: PropTypes.object.isRequired,
   rejections: PropTypes.arrayOf(PropTypes.object)
 };

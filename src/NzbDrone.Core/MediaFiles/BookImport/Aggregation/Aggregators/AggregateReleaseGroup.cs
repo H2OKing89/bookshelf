@@ -7,6 +7,13 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Aggregation.Aggregators
     {
         public LocalBook Aggregate(LocalBook localTrack, bool otherFiles)
         {
+            if (localTrack.ReleaseGroupOverride != null)
+            {
+                localTrack.ReleaseGroupOverride = localTrack.ReleaseGroupOverride.Trim();
+                localTrack.ReleaseGroup = localTrack.ReleaseGroupOverride;
+                return localTrack;
+            }
+
             var releaseGroup = localTrack.DownloadClientBookInfo?.ReleaseGroup;
 
             if (releaseGroup.IsNullOrWhiteSpace())

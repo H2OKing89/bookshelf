@@ -65,5 +65,72 @@ namespace NzbDrone.Core.Test.ParserTests
         {
             Parser.Parser.ParseReleaseGroup(title).Should().Be(expected);
         }
+
+        [TestCase("Author.Book.M4B-Team-One", "Team-One")]
+        [TestCase("Author.Book.M4B-Team-One.m4b", "Team-One")]
+        [TestCase("Author.Book.MP3-Team-One.mp3", "Team-One")]
+        [TestCase("Author.Book.FLAC-Team-One.flac", "Team-One")]
+        [TestCase("Author.Book.OPUS-Team-One.opus", "Team-One")]
+        [TestCase("Author.Book.M4B-Báleygr", "Báleygr")]
+        [TestCase("Author.Book.M4B-Hveðrungr", "Hveðrungr")]
+        [TestCase("Author.Book.M4B [AudioCrew]", "AudioCrew")]
+        [TestCase("Author.Book.M4B [Audio-Crew].m4b", "Audio-Crew")]
+        [TestCase("Author.Book.M4B-Crew-RePACKPOST", "Crew")]
+        [TestCase("Author.Book.M4B-Crew-AlteZachen", "Crew")]
+        [TestCase("Author.Book.M4B-Crew-[N-Z-B]-xpost", "Crew")]
+        [TestCase("Author.Book.M4B-Crew [rarbg]", "Crew")]
+        [TestCase("Author.Book.M4B-Crew [publichd]", "Crew")]
+        [TestCase("Author.Book.M4B-Crew [eztv]", "Crew")]
+        [TestCase("Author.Book.M4B-2026-Crew", "Crew")]
+        [TestCase("Author.Book.M4B-MP3-Crew", "Crew")]
+        [TestCase("Author-Book-MP3-Team-One", "Team-One")]
+        [TestCase("Author-Book-WEB-2026-Team-One", "Team-One")]
+        [TestCase("Author.Book.M4B-Crew [FLAC]", "Crew")]
+        [TestCase("Author.Book.M4B-Crew [deadbeef]", "Crew")]
+        [TestCase("Author.Book.M4B-Crew [Part01]", "Crew")]
+        [TestCase("Author.Book.M4B-Crew [HE-AAC]", "Crew")]
+        [TestCase("Author.Book.M4B-Crew-FLAC", "Crew")]
+        [TestCase("Author.Book.M4B-Crew [English]", "Crew")]
+        [TestCase("Author.Book.M4B-Crew [ENG]", "Crew")]
+        [TestCase("Author.Book.M4B-Crew [EN]", "Crew")]
+        [TestCase("Author.Book.M4B-Crew [en-US]", "Crew")]
+        [TestCase("Author.Book.M4B-Crew [French]", "Crew")]
+        [TestCase("Author.Book.M4B-Crew [Unabridged]", "Crew")]
+        [TestCase("Author.Book.M4B-Crew [Multi]", "Crew")]
+        [TestCase("Author.Book.M4B-Crew [HE-AAC] [FLAC] [English]", "Crew")]
+        [TestCase("Author.Book.M4B [AudioCrew] [English]", "AudioCrew")]
+        [TestCase("Author.Book.M4B [FRA-Crew]", "FRA-Crew")]
+        public void should_parse_audiobook_release_groups(string title, string expected)
+        {
+            Parser.Parser.ParseReleaseGroup(title).Should().Be(expected);
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("   ")]
+        [TestCase("Author.Book.HE-AAC")]
+        [TestCase("Author.Book.AAC-LC")]
+        [TestCase("Author.Book.M4B-HE-AACv2")]
+        [TestCase("Author.Book.M4B-xHE-AAC")]
+        [TestCase("Author.Book.M4B-EAC3")]
+        [TestCase("Author.Book.M4B-OPUS")]
+        [TestCase("Author.Book.M4B-FLAC")]
+        [TestCase("Author.Book.M4B-256kbps")]
+        [TestCase("Author.Book.M4B-44kHz")]
+        [TestCase("Author.Book.M4B-24-bit")]
+        [TestCase("Author.Book.M4B-2026-11-15")]
+        [TestCase("Author.Book.M4B-Part01")]
+        [TestCase("Author.Book.M4B-Part-01")]
+        [TestCase("Author.Book.M4B-CD1")]
+        [TestCase("Author.Book.M4B-deadbeef")]
+        [TestCase("Author.Book.M4B [deadbeef]")]
+        [TestCase("Author.Book.M4B [FLAC]")]
+        [TestCase("Author.Book.M4B [English]")]
+        [TestCase("Author.Book.M4B [ENG]")]
+        [TestCase("Author.Book.M4B [Unabridged]")]
+        public void should_not_parse_audio_metadata_as_release_group(string title)
+        {
+            Parser.Parser.ParseReleaseGroup(title).Should().BeNull();
+        }
     }
 }

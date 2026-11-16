@@ -187,7 +187,7 @@ namespace NzbDrone.Core.Parser
         private static readonly Regex SixDigitAirDateRegex = new Regex(@"(?<=[_.-])(?<airdate>(?<!\d)(?<airyear>[1-9]\d{1})(?<airmonth>[0-1][0-9])(?<airday>[0-3][0-9]))(?=[_.-])",
                                                                 RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly RegexReplace CleanReleaseGroupRegex = new RegexReplace(@"^(.*?[-._ ])|(-(RP|1|NZBGeek|Obfuscated|Scrambled|sample|Pre|postbot|xpost|Rakuv[a-z0-9]*|WhiteRev|BUYMORE|AsRequested|AlternativeToRequested|GEROV|Z0iDS3N|Chamele0n|4P|4Planet))+$",
+        private static readonly RegexReplace CleanReleaseGroupRegex = new RegexReplace(@"^(.*?[-._ ])|(-(RP|1|NZBGeek|\[N-Z-B\]|Obfuscated|Scrambled|sample|Pre|postbot|xpost|Rakuv[a-z0-9]*|WhiteRev|BUYMORE|AsRequested|AlternativeToRequested|GEROV|Z0iDS3N|Chamele0n|4P|4Planet|AlteZachen|RePACKPOST))+$",
                                                                 string.Empty,
                                                                 RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
@@ -195,7 +195,32 @@ namespace NzbDrone.Core.Parser
                                                                 string.Empty,
                                                                 RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly Regex ReleaseGroupRegex = new Regex(@"-(?<releasegroup>[a-z0-9]+)(?<!MP3|ALAC|FLAC|WEB)(?:\b|[-._ ])",
+        private static readonly Regex ReleaseGroupRegex = new Regex(@"-(?<releasegroup>[a-zÀ-ÖØ-öø-ÿ0-9]+(?:-[a-zÀ-ÖØ-öø-ÿ0-9]+)*)(?:\b|[-._ ])",
+                                                                RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex TrailingReleaseGroupRegex = new Regex(@"\[(?<releasegroup>[a-zÀ-ÖØ-öø-ÿ0-9]+(?:-[a-zÀ-ÖØ-öø-ÿ0-9]+)?)\]$",
+                                                                RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly RegexReplace ReleaseGroupTrackerSuffixRegex = new RegexReplace(@"\[(?:eztv|ettv|rartv|rarbg|cttv|publichd)\]$",
+                                                                string.Empty,
+                                                                RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly HashSet<string> ReleaseGroupAudioTokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "MP2", "MP3", "M4A", "M4B", "FLAC", "ALAC", "APE", "WAV", "WAVPACK", "WMA",
+            "AAC", "AACv2", "LC", "HE", "USAC", "xHE", "EAC3", "AC3", "OPUS", "OGG", "VORBIS",
+            "WEB", "CBR", "VBR", "ABR", "ATMOS", "LOSSLESS", "MONO", "STEREO", "KBPS", "KHZ", "BIT"
+        };
+
+        private static readonly Regex ReleaseGroupMetadataRegex = new Regex(@"^(?:[0-9]+|[0-9a-f]{8}|[0-9]+(?:kbps|khz|hz|bit)|(?:part|pt|disc|disk|cd|track|chapter|vol(?:ume)?)[0-9]+)$",
+                                                                RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly HashSet<string> ReleaseGroupBracketTokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "ABRIDGED", "UNABRIDGED", "MULTI", "MULTILINGUAL"
+        };
+
+        private static readonly Regex ReleaseGroupLanguageCodeRegex = new Regex(@"^[a-z]{2,3}(?:-[a-z]{2})?$",
                                                                 RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private static readonly Regex AnimeReleaseGroupRegex = new Regex(@"^(?:\[(?<subgroup>(?!\s).+?(?<!\s))\](?:_|-|\s|\.)?)",
@@ -629,9 +654,15 @@ namespace NzbDrone.Core.Parser
 
         public static string ParseReleaseGroup(string title)
         {
+            if (title.IsNullOrWhiteSpace())
+            {
+                return null;
+            }
+
             title = title.Trim();
             title = RemoveFileExtension(title);
             title = WebsitePrefixRegex.Replace(title);
+            title = ReleaseGroupTrackerSuffixRegex.Replace(title).TrimEnd();
 
             var animeMatch = AnimeReleaseGroupRegex.Match(title);
 
@@ -642,21 +673,59 @@ namespace NzbDrone.Core.Parser
 
             title = CleanReleaseGroupRegex.Replace(title);
 
+            var trailingMatch = TrailingReleaseGroupRegex.Match(title);
+            while (trailingMatch.Success)
+            {
+                var trailingGroup = NormalizeReleaseGroup(trailingMatch.Groups["releasegroup"].Value);
+                if (trailingGroup != null && !IsReleaseGroupBracketMetadata(trailingGroup))
+                {
+                    return trailingGroup;
+                }
+
+                // Audio-format, language and hash tags are not groups and must not hide
+                // an explicitly suffixed group earlier in the release title.
+                title = title.Substring(0, trailingMatch.Index).TrimEnd();
+                trailingMatch = TrailingReleaseGroupRegex.Match(title);
+            }
+
             var matches = ReleaseGroupRegex.Matches(title);
 
             if (matches.Count != 0)
             {
-                var group = matches.OfType<Match>().Last().Groups["releasegroup"].Value;
-
-                if (int.TryParse(group, out _))
-                {
-                    return null;
-                }
-
-                return group;
+                return NormalizeReleaseGroup(matches.OfType<Match>().Last().Groups["releasegroup"].Value);
             }
 
             return null;
+        }
+
+        private static string NormalizeReleaseGroup(string group)
+        {
+            var parts = group.Split('-');
+
+            // Format labels can follow an otherwise explicit group, too.
+            // Keep number/hash suffixes excluded rather than guessing that a
+            // title followed by a date or part counter names a release group.
+            parts = parts.Take(parts.Length - parts.Reverse().TakeWhile(ReleaseGroupAudioTokens.Contains).Count()).ToArray();
+
+            // A year or format separates title metadata from the group. Retain
+            // up to two name components after that boundary, including when the
+            // release uses hyphens throughout (for example MP3-Team-One).
+            var metadataIndex = Array.FindLastIndex(parts, IsReleaseGroupMetadata);
+            var groupParts = parts.Skip(Math.Max(metadataIndex + 1, parts.Length - 2)).ToArray();
+
+            return groupParts.Length == 0 ? null : string.Join("-", groupParts);
+        }
+
+        private static bool IsReleaseGroupMetadata(string value)
+        {
+            return ReleaseGroupAudioTokens.Contains(value) || ReleaseGroupMetadataRegex.IsMatch(value);
+        }
+
+        private static bool IsReleaseGroupBracketMetadata(string value)
+        {
+            return ReleaseGroupBracketTokens.Contains(value) ||
+                   IsoLanguages.FindByName(value) != null ||
+                   (ReleaseGroupLanguageCodeRegex.IsMatch(value) && IsoLanguages.Find(value) != null);
         }
 
         public static string RemoveFileExtension(string title)

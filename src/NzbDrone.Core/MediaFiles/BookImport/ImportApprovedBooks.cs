@@ -186,7 +186,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                         Size = localTrack.Size,
                         Modified = localTrack.Modified,
                         DateAdded = DateTime.UtcNow,
-                        ReleaseGroup = localTrack.ReleaseGroup,
+                        ReleaseGroup = localTrack.ReleaseGroupOverride ?? localTrack.ReleaseGroup,
                         Quality = localTrack.Quality,
                         MediaInfo = localTrack.FileTrackInfo.MediaInfo,
                         EditionId = localTrack.Edition.Id,
@@ -246,7 +246,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                             bookFile.DateAdded = previousFile.DateAdded;
                             bookFile.OriginalFilePath = previousFile.OriginalFilePath;
                             bookFile.SceneName = previousFile.SceneName;
-                            bookFile.ReleaseGroup = previousFile.ReleaseGroup;
+                            bookFile.ReleaseGroup = localTrack.ReleaseGroupOverride ?? previousFile.ReleaseGroup;
                             bookFile.IndexerFlags = previousFile.IndexerFlags;
                             bookFile.LastRemoteSearchTime = previousFile.LastRemoteSearchTime;
 

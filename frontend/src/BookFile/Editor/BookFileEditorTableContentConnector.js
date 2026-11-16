@@ -108,6 +108,10 @@ class BookFileEditorTableContentConnector extends Component {
     this.props.dispatchUpdateBookFiles({ bookFileIds, quality });
   };
 
+  onReleaseGroupChange = (bookFileIds, releaseGroup) => {
+    this.props.dispatchUpdateBookFiles({ bookFileIds, releaseGroup });
+  };
+
   //
   // Render
 
@@ -122,6 +126,7 @@ class BookFileEditorTableContentConnector extends Component {
       <BookFileEditorTableContent
         {...otherProps}
         onQualityChange={this.onQualityChange}
+        onReleaseGroupChange={this.onReleaseGroupChange}
       />
     );
   }

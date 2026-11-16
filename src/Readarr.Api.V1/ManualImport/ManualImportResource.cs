@@ -6,6 +6,7 @@ using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
 using Readarr.Api.V1.Author;
 using Readarr.Api.V1.Books;
+using Readarr.Api.V1.CustomFormats;
 using Readarr.Http.REST;
 
 namespace Readarr.Api.V1.ManualImport
@@ -20,6 +21,9 @@ namespace Readarr.Api.V1.ManualImport
         public string ForeignEditionId { get; set; }
         public QualityModel Quality { get; set; }
         public string ReleaseGroup { get; set; }
+        public string ReleaseGroupOverride { get; set; }
+        public List<CustomFormatResource> CustomFormats { get; set; }
+        public int CustomFormatScore { get; set; }
         public int QualityWeight { get; set; }
         public string DownloadId { get; set; }
         public int IndexerFlags { get; set; }
@@ -50,6 +54,9 @@ namespace Readarr.Api.V1.ManualImport
                 ForeignEditionId = model.Edition?.ForeignEditionId ?? model.Book?.Editions.Value.Single(x => x.Monitored).ForeignEditionId,
                 Quality = model.Quality,
                 ReleaseGroup = model.ReleaseGroup,
+                ReleaseGroupOverride = model.ReleaseGroupOverride,
+                CustomFormats = model.CustomFormats.ToResource(false),
+                CustomFormatScore = model.Author?.QualityProfile?.Value?.CalculateCustomFormatScore(model.CustomFormats) ?? 0,
 
                 //QualityWeight
                 DownloadId = model.DownloadId,

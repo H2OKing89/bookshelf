@@ -25,3 +25,17 @@
   padding-bottom: 10px;
   padding-left: 2em;
 }
+
+.releaseGroupEditor {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 10px;
+  gap: 10px;
+}
+
+.releaseGroupInput {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

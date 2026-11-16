@@ -75,6 +75,12 @@ export const defaultState = {
       isVisible: true
     },
     {
+      name: 'releaseGroup',
+      label: 'Release Group',
+      isSortable: true,
+      isVisible: true
+    },
+    {
       name: 'actions',
       columnLabel: 'Actions',
       isVisible: true,
@@ -203,7 +209,8 @@ export const actionHandlers = handleThunks({
   [UPDATE_BOOK_FILES]: function(getState, payload, dispatch) {
     const {
       bookFileIds,
-      quality
+      quality,
+      releaseGroup
     } = payload;
 
     dispatch(set({ section, isSaving: true }));
@@ -214,6 +221,10 @@ export const actionHandlers = handleThunks({
 
     if (quality) {
       requestData.quality = quality;
+    }
+
+    if (releaseGroup != null) {
+      requestData.releaseGroup = releaseGroup;
     }
 
     const promise = createAjaxRequest({
@@ -231,6 +242,7 @@ export const actionHandlers = handleThunks({
           const bookFile = data.find((file) => file.id === id);
 
           props.qualityCutoffNotMet = bookFile.qualityCutoffNotMet;
+          props.releaseGroup = bookFile.releaseGroup;
 
           if (quality) {
             props.quality = quality;

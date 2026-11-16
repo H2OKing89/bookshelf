@@ -68,6 +68,7 @@ class FileDetailsConnector extends Component {
       <FileDetails
         audioTags={item.audioTags}
         filename={item.path}
+        releaseGroup={item.releaseGroup}
       />
     );
 

@@ -9237,6 +9237,10 @@
           },
           "quality": {
             "$ref": "#/components/schemas/QualityModel"
+          },
+          "releaseGroup": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -9270,6 +9274,10 @@
           },
           "quality": {
             "$ref": "#/components/schemas/QualityModel"
+          },
+          "releaseGroup": {
+            "type": "string",
+            "nullable": true
           },
           "qualityWeight": {
             "type": "integer",
@@ -11252,6 +11260,21 @@
           "releaseGroup": {
             "type": "string",
             "nullable": true
+          },
+          "releaseGroupOverride": {
+            "type": "string",
+            "nullable": true
+          },
+          "customFormats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomFormatResource"
+            },
+            "nullable": true
+          },
+          "customFormatScore": {
+            "type": "integer",
+            "format": "int32"
           },
           "qualityWeight": {
             "type": "integer",

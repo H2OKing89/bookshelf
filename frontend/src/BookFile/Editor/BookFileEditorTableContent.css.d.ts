@@ -4,6 +4,8 @@ interface CssExports {
   'actions': string;
   'blankpad': string;
   'filesTable': string;
+  'releaseGroupEditor': string;
+  'releaseGroupInput': string;
   'selectInput': string;
 }
 export const cssExports: CssExports;

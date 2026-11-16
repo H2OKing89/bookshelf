@@ -656,5 +656,88 @@ namespace NzbDrone.Core.Test.OrganizerTests.FileNameBuilderTests
             Subject.BuildBookFileName(_author, _edition, _trackFile)
                    .Should().Be(releaseGroup);
         }
+
+        [TestCase("{ReleaseGroup:12}", "AudioRele...")]
+        [TestCase("{ReleaseGroup:-17}", "...seGroupExample")]
+        [TestCase("{Release Group:12}", "AudioRele...")]
+        [TestCase("{ReleaseGroup:1}", "A")]
+        [TestCase("{ReleaseGroup:-2}", "le")]
+        [TestCase("{ReleaseGroup:3}", "Aud")]
+        [TestCase("{ReleaseGroup:0}", "AudioReleaseGroupExample")]
+        [TestCase("{ReleaseGroup:99}", "AudioReleaseGroupExample")]
+        [TestCase("{ReleaseGroup:-2147483648}", "AudioReleaseGroupExample")]
+        [TestCase("{ReleaseGroup:2147483648}", "AudioReleaseGroupExample")]
+        [TestCase("{ReleaseGroup:invalid}", "AudioReleaseGroupExample")]
+        public void should_format_release_group_length_without_changing_stored_group(string pattern, string expected)
+        {
+            const string group = "AudioReleaseGroupExample";
+            _trackFile.ReleaseGroup = group;
+            _namingConfig.StandardBookFormat = pattern;
+
+            Subject.BuildBookFileName(_author, _edition, _trackFile).Should().Be(expected);
+            _trackFile.ReleaseGroup.Should().Be(group);
+        }
+
+        [TestCase(null, "{Release Group:12}", "Readarr")]
+        [TestCase(null, "{Book Title}{-Release Group:12}", "Hybrid Theory")]
+        [TestCase("", "{Book Title}{ [Release Group:12]}", "Hybrid Theory")]
+        [TestCase("  ", "{Book Title}{ [Release Group:-12]}", "Hybrid Theory")]
+        public void should_preserve_missing_release_group_naming_behavior(string group, string pattern, string expected)
+        {
+            _trackFile.ReleaseGroup = group;
+            _namingConfig.StandardBookFormat = pattern;
+
+            Subject.BuildBookFileName(_author, _edition, _trackFile).Should().Be(expected);
+        }
+
+        [TestCase("{RELEASEGROUP:12}", "AUDIORELE...")]
+        [TestCase("{releasegroup:-17}", "...segroupexample")]
+        public void should_preserve_ellipsis_when_applying_token_case(string pattern, string expected)
+        {
+            _trackFile.ReleaseGroup = "AudioReleaseGroupExample";
+            _namingConfig.StandardBookFormat = pattern;
+
+            Subject.BuildBookFileName(_author, _edition, _trackFile).Should().Be(expected);
+        }
+
+        [TestCase("{ReleaseGroup:5}", "Bá...")]
+        [TestCase("{ReleaseGroup:-5}", "...ra")]
+        public void should_truncate_accented_groups_without_splitting_text_elements(string pattern, string expected)
+        {
+            _trackFile.ReleaseGroup = "BáleygrÁstra";
+            _namingConfig.StandardBookFormat = pattern;
+
+            Subject.BuildBookFileName(_author, _edition, _trackFile).Should().Be(expected);
+        }
+
+        [Test]
+        public void should_bound_a_long_group_when_a_length_is_requested()
+        {
+            _trackFile.ReleaseGroup = new string('a', 300);
+            _namingConfig.StandardBookFormat = "{ReleaseGroup:200}";
+
+            Subject.BuildBookFileName(_author, _edition, _trackFile).Should().HaveLength(200).And.EndWith("...");
+        }
+
+        [Test]
+        public void should_keep_a_combining_sequence_together_when_truncating()
+        {
+            _trackFile.ReleaseGroup = "Ba\u0301leygr";
+            _namingConfig.StandardBookFormat = "{ReleaseGroup:5}";
+
+            Subject.BuildBookFileName(_author, _edition, _trackFile).Should().Be("Ba\u0301...");
+        }
+
+        [TestCase("{Book Title}", "The {ellipsis} Example")]
+        [TestCase("{ReleaseGroup}", "Crew{ellipsis}Example")]
+        [TestCase("{Book Title}{-ReleaseGroup:8}", "The {ellipsis} Example-Crew{...")]
+        public void should_not_replace_literal_ellipsis_markers_in_metadata(string pattern, string expected)
+        {
+            _edition.Title = "The {ellipsis} Example";
+            _trackFile.ReleaseGroup = "Crew{ellipsis}Example";
+            _namingConfig.StandardBookFormat = pattern;
+
+            Subject.BuildBookFileName(_author, _edition, _trackFile).Should().Be(expected);
+        }
     }
 }

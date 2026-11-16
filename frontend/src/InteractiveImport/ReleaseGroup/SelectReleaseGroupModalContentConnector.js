@@ -23,7 +23,8 @@ class SelectReleaseGroupModalContentConnector extends Component {
 
     dispatchUpdateInteractiveImportItems({
       ids,
-      releaseGroup
+      releaseGroup,
+      releaseGroupOverride: releaseGroup
     });
 
     dispatchSaveInteractiveImportItems({ ids });

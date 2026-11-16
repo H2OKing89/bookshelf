@@ -380,5 +380,81 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport
 
             ExceptionVerification.ExpectedErrors(1);
         }
+
+        [TestCase("  Chosen-Crew  ", "Chosen-Crew")]
+        [TestCase("", "")]
+        [TestCase("   ", "")]
+        [TestCase(null, "Detected-Crew")]
+        public void should_apply_release_group_override_before_track_specifications(string chosenGroup, string expectedGroup)
+        {
+            GivenDetectedReleaseGroup("Detected-Crew");
+            _idConfig.ReleaseGroupOverrides = new Dictionary<string, string>
+            {
+                [_fileInfos.Single().FullName] = chosenGroup
+            };
+
+            string observedGroup = null;
+            _pass1.Setup(c => c.IsSatisfiedBy(It.IsAny<LocalBook>(), It.IsAny<DownloadClientItem>()))
+                .Callback<LocalBook, DownloadClientItem>((track, download) => observedGroup = track.ReleaseGroup)
+                .Returns(Decision.Accept());
+            GivenSpecifications(_pass1);
+
+            var result = Subject.GetImportDecisions(_fileInfos, _idOverrides, null, _idConfig);
+
+            observedGroup.Should().Be(expectedGroup);
+            result.Single().Item.ReleaseGroup.Should().Be(expectedGroup);
+            result.Single().Item.ReleaseGroupOverride.Should().Be(chosenGroup?.Trim());
+        }
+
+        [Test]
+        public void should_preserve_detected_release_group_when_overrides_are_omitted()
+        {
+            GivenDetectedReleaseGroup("Detected-Crew");
+            GivenSpecifications(_pass1);
+
+            var result = Subject.GetImportDecisions(_fileInfos, _idOverrides, null, _idConfig);
+
+            result.Single().Item.ReleaseGroup.Should().Be("Detected-Crew");
+            result.Single().Item.ReleaseGroupOverride.Should().BeNull();
+        }
+
+        [Test]
+        public void should_apply_release_group_overrides_only_to_the_selected_file_paths()
+        {
+            GivenAudioFiles(new[]
+            {
+                @"C:\Test\Unsorted\Book.Part01.m4b".AsOsAgnostic(),
+                @"C:\Test\Unsorted\Book.Part02.m4b".AsOsAgnostic()
+            });
+            GivenDetectedReleaseGroup("Detected-Crew");
+            _idConfig.ReleaseGroupOverrides = new Dictionary<string, string>
+            {
+                [_fileInfos[0].FullName] = "Chosen-Crew"
+            };
+
+            var observedGroups = new Dictionary<string, string>();
+            _pass1.Setup(c => c.IsSatisfiedBy(It.IsAny<LocalBook>(), It.IsAny<DownloadClientItem>()))
+                .Callback<LocalBook, DownloadClientItem>((track, download) => observedGroups[track.Path] = track.ReleaseGroup)
+                .Returns(Decision.Accept());
+            GivenSpecifications(_pass1);
+
+            var results = Subject.GetImportDecisions(_fileInfos, _idOverrides, null, _idConfig);
+
+            observedGroups[_fileInfos[0].FullName].Should().Be("Chosen-Crew");
+            observedGroups[_fileInfos[1].FullName].Should().Be("Detected-Crew");
+            results.Single(x => x.Item.Path == _fileInfos[0].FullName).Item.ReleaseGroupOverride.Should().Be("Chosen-Crew");
+            results.Single(x => x.Item.Path == _fileInfos[1].FullName).Item.ReleaseGroupOverride.Should().BeNull();
+        }
+
+        private void GivenDetectedReleaseGroup(string releaseGroup)
+        {
+            Mocker.GetMock<IAugmentingService>()
+                .Setup(s => s.Augment(It.IsAny<LocalBook>(), It.IsAny<bool>()))
+                .Callback<LocalBook, bool>((track, otherFiles) =>
+                {
+                    track.Book = _localTrack.Book;
+                    track.ReleaseGroup = releaseGroup;
+                });
+        }
     }
 }

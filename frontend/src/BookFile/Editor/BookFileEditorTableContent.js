@@ -3,12 +3,14 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Alert from 'Components/Alert';
 import SelectInput from 'Components/Form/SelectInput';
+import TextInput from 'Components/Form/TextInput';
 import SpinnerButton from 'Components/Link/SpinnerButton';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import ConfirmModal from 'Components/Modal/ConfirmModal';
 import Table from 'Components/Table/Table';
 import TableBody from 'Components/Table/TableBody';
 import { kinds } from 'Helpers/Props';
+import getErrorMessage from 'Utilities/Object/getErrorMessage';
 import getRemovedItems from 'Utilities/Object/getRemovedItems';
 import hasDifferentItems from 'Utilities/Object/hasDifferentItems';
 import translate from 'Utilities/String/translate';
@@ -32,6 +34,7 @@ class BookFileEditorTableContent extends Component {
       allUnselected: false,
       lastToggled: null,
       selectedState: {},
+      releaseGroup: '',
       isConfirmDeleteModalOpen: false
     };
   }
@@ -55,16 +58,31 @@ class BookFileEditorTableContent extends Component {
     return ids;
   };
 
+  getSelectedReleaseGroup = (selectedState) => {
+    const selectedGroups = this.props.items
+      .filter((item) => selectedState[item.id])
+      .map((item) => item.releaseGroup || '');
+
+    return selectedGroups.length && selectedGroups.every((group) => group === selectedGroups[0]) ?
+      selectedGroups[0] : '';
+  };
+
   //
   // Listeners
 
   onSelectAllChange = ({ value }) => {
-    this.setState(selectAll(this.state.selectedState, value));
+    const selectedState = {};
+    this.props.items.forEach((item) => {
+      selectedState[item.id] = false;
+    });
+    const selection = selectAll(selectedState, value);
+    this.setState({ ...selection, releaseGroup: this.getSelectedReleaseGroup(selection.selectedState) });
   };
 
   onSelectedChange = ({ id, value, shiftKey = false }) => {
     this.setState((state) => {
-      return toggleSelected(state, this.props.items, id, value, shiftKey);
+      const selection = toggleSelected(state, this.props.items, id, value, shiftKey);
+      return { ...selection, releaseGroup: this.getSelectedReleaseGroup(selection.selectedState) };
     });
   };
 
@@ -91,12 +109,25 @@ class BookFileEditorTableContent extends Component {
     this.props.onQualityChange(selectedIds, parseInt(value));
   };
 
+  onReleaseGroupChange = ({ value }) => {
+    this.setState({ releaseGroup: value });
+  };
+
+  onSetReleaseGroupPress = () => {
+    const ids = this.getSelectedIds();
+    if (ids.length) {
+      this.props.onReleaseGroupChange(ids, this.state.releaseGroup);
+    }
+  };
+
   //
   // Render
 
   render() {
     const {
       isDeleting,
+      isSaving,
+      saveError,
       isFetching,
       isPopulated,
       error,
@@ -110,6 +141,7 @@ class BookFileEditorTableContent extends Component {
       allSelected,
       allUnselected,
       selectedState,
+      releaseGroup,
       isConfirmDeleteModalOpen
     } = this.state;
 
@@ -136,6 +168,13 @@ class BookFileEditorTableContent extends Component {
           !isFetching && error ?
             <Alert kind={kinds.DANGER}>{error}</Alert> :
             null
+        }
+
+        {
+          saveError ?
+            <Alert kind={kinds.DANGER}>
+              {getErrorMessage(saveError, 'Unable to save file properties.')}
+            </Alert> : null
         }
 
         {
@@ -195,10 +234,34 @@ class BookFileEditorTableContent extends Component {
                   name="quality"
                   value="selectQuality"
                   values={qualityOptions}
-                  isDisabled={!hasSelectedFiles}
+                  isDisabled={!hasSelectedFiles || isSaving}
                   onChange={this.onQualityChange}
                 />
               </div>
+            </div>
+          ) : null
+        }
+
+        {
+          isPopulated && items.length ? (
+            <div className={styles.releaseGroupEditor}>
+              <label className={styles.releaseGroupInput}>
+                {translate('ReleaseGroup')}
+                <TextInput
+                  name="releaseGroup"
+                  value={releaseGroup}
+                  readOnly={!hasSelectedFiles || isSaving}
+                  onChange={this.onReleaseGroupChange}
+                />
+              </label>
+              <SpinnerButton
+                isSpinning={isSaving}
+                isDisabled={!hasSelectedFiles}
+                onPress={this.onSetReleaseGroupPress}
+              >
+                Set Release Group
+              </SpinnerButton>
+              <span>Leave blank to clear the group for selected files.</span>
             </div>
           ) : null
         }
@@ -219,6 +282,8 @@ class BookFileEditorTableContent extends Component {
 
 BookFileEditorTableContent.propTypes = {
   isDeleting: PropTypes.bool.isRequired,
+  isSaving: PropTypes.bool.isRequired,
+  saveError: PropTypes.object,
   isFetching: PropTypes.bool.isRequired,
   isPopulated: PropTypes.bool.isRequired,
   error: PropTypes.object,
@@ -226,6 +291,7 @@ BookFileEditorTableContent.propTypes = {
   qualities: PropTypes.arrayOf(PropTypes.object).isRequired,
   onDeletePress: PropTypes.func.isRequired,
   onQualityChange: PropTypes.func.isRequired,
+  onReleaseGroupChange: PropTypes.func.isRequired,
   dispatchDeleteBookFile: PropTypes.func.isRequired
 };
 
