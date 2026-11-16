@@ -1061,6 +1061,8 @@
   "TotalSpace": "Total Space",
   "TrackNumber": "Track Number",
   "TrackTitle": "Track Title",
+  "TrustedReverseProxies": "Trusted Reverse Proxies",
+  "TrustedReverseProxiesHelpText": "Comma-separated IP addresses or CIDR networks of reverse proxies allowed to supply forwarded headers. Leave empty to trust loopback proxies only. Use exact proxy addresses instead of an entire LAN.",
   "UILanguage": "UI Language",
   "UILanguageHelpText": "Language that Readarr will use for UI",
   "UILanguageHelpTextWarning": "Browser Reload Required",

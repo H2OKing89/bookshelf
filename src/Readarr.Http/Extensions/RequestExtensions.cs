@@ -73,12 +73,12 @@ namespace Readarr.Http.Extensions
 
         public static string GetRemoteIP(this HttpRequest request)
         {
-            if (request == null)
+            var remoteIP = request?.HttpContext?.Connection?.RemoteIpAddress;
+
+            if (remoteIP == null)
             {
                 return "Unknown";
             }
-
-            var remoteIP = request.HttpContext.Connection.RemoteIpAddress;
 
             if (remoteIP.IsIPv4MappedToIPv6)
             {

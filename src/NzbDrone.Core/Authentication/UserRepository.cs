@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Dapper;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Messaging.Events;
 
@@ -9,6 +10,7 @@ namespace NzbDrone.Core.Authentication
     {
         User FindUser(string username);
         User FindUser(Guid identifier);
+        bool TryUpdateCredentials(User original, User updated, bool updateUsername, bool updatePassword);
     }
 
     public class UserRepository : BasicRepository<User>, IUserRepository
@@ -26,6 +28,61 @@ namespace NzbDrone.Core.Authentication
         public User FindUser(Guid identifier)
         {
             return Query(x => x.Identifier == identifier).SingleOrDefault();
+        }
+
+        public bool TryUpdateCredentials(User original, User updated, bool updateUsername, bool updatePassword)
+        {
+            if (!updateUsername && !updatePassword)
+            {
+                throw new ArgumentException("A credential field must be selected for update");
+            }
+
+            var fields = updateUsername ? "\"Username\" = @Username" : string.Empty;
+
+            if (updatePassword)
+            {
+                fields += (updateUsername ? ", " : string.Empty) +
+                    "\"Password\" = @Password, \"Salt\" = @Salt, \"Iterations\" = @Iterations";
+            }
+
+            var sql = $"UPDATE \"Users\" SET {fields} WHERE \"Id\" = @Id AND \"Identifier\" = @Identifier AND \"Username\" = @OriginalUsername";
+
+            if (updatePassword)
+            {
+                sql += " AND \"Password\" = @OriginalPassword AND COALESCE(\"Salt\", '') = @OriginalSalt AND COALESCE(\"Iterations\", 0) = @OriginalIterations";
+            }
+
+            int affected;
+            using (var connection = _database.OpenConnection())
+            {
+                // Credential parameters must never enter SQL traces or exception diagnostic data.
+                affected = connection.Execute(sql, new
+                {
+                    original.Id,
+                    original.Identifier,
+                    OriginalUsername = original.Username,
+                    OriginalPassword = original.Password,
+                    OriginalSalt = original.Salt ?? string.Empty,
+                    OriginalIterations = original.Iterations,
+                    updated.Username,
+                    updated.Password,
+                    updated.Salt,
+                    updated.Iterations
+                });
+            }
+
+            if (affected == 0)
+            {
+                return false;
+            }
+
+            if (affected != 1)
+            {
+                throw new InvalidOperationException("Expected to update one user record");
+            }
+
+            ModelUpdated(updated);
+            return true;
         }
     }
 }

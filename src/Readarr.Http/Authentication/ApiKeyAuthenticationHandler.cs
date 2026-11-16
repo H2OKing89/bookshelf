@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
@@ -23,7 +26,7 @@ namespace Readarr.Http.Authentication
 
     public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthenticationOptions>
     {
-        private readonly string _apiKey;
+        private readonly IConfigFileProvider _configFileProvider;
 
         public ApiKeyAuthenticationHandler(IOptionsMonitor<ApiKeyAuthenticationOptions> options,
             ILoggerFactory logger,
@@ -32,7 +35,7 @@ namespace Readarr.Http.Authentication
             IConfigFileProvider config)
             : base(options, logger, encoder, clock)
         {
-            _apiKey = config.ApiKey;
+            _configFileProvider = config;
         }
 
         private string ParseApiKey()
@@ -61,7 +64,13 @@ namespace Readarr.Http.Authentication
                 return Task.FromResult(AuthenticateResult.NoResult());
             }
 
-            if (_apiKey == providedApiKey)
+            var apiKey = _configFileProvider.ApiKey;
+
+            // Compare exact UTF-16 code units, retaining ordinal string semantics
+            // without an encoding fallback that could make distinct keys equal.
+            if (!string.IsNullOrWhiteSpace(apiKey) && CryptographicOperations.FixedTimeEquals(
+                    MemoryMarshal.AsBytes(apiKey.AsSpan()),
+                    MemoryMarshal.AsBytes(providedApiKey.AsSpan())))
             {
                 var claims = new List<Claim>
                 {

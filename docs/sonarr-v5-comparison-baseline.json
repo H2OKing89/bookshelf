@@ -1,0 +1,40 @@
+{
+  "reviewDate": "2026-11-13",
+  "timezone": "America/Chicago",
+  "bookshelf": {
+    "repository": "https://github.com/H2OKing89/bookshelf",
+    "commit": "38f48b1716fb51adb648c087c33ebe1fa620438e",
+    "trackedFiles": 4371,
+    "csharpFiles": 2260,
+    "frontendTs": 415,
+    "frontendJs": 995,
+    "testFixtures": 390,
+    "sourceMigrationFiles": 64
+  },
+  "sonarrV5": {
+    "tag": "v5.0.0.2941",
+    "commit": "c018578e4b79ee048575c02d7a8aa2b929e4b837",
+    "prerelease": true,
+    "trackedFiles": 4628,
+    "csharpFiles": 2998,
+    "frontendTs": 930,
+    "frontendJs": 16,
+    "testFixtures": 551,
+    "sourceMigrationFiles": 285
+  },
+  "sharedPathComparison": {
+    "sharedNormalizedPaths": 1739,
+    "identicalTextFiles": 648,
+    "namespaceOnlyTextFiles": 24,
+    "differentTextFiles": 1035,
+    "note": "Matching paths and normalized names only; not a Git ancestry comparison or portability claim."
+  },
+  "scope": "Bookshelf versus Sonarr v5 only, per user clarification.",
+  "backlogCounts": {
+    "P": 26,
+    "D": 30,
+    "U": 22,
+    "B": 9,
+    "total": 87
+  }
+}

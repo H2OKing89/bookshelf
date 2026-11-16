@@ -63,7 +63,7 @@ namespace NzbDrone.Common.Instrumentation
         {
             var target = new DebuggerTarget();
             target.Name = "debuggerLogger";
-            target.Layout = "[${level}] [${threadid}] ${logger}: ${message} ${onexception:inner=${newline}${newline}[v${assembly-version}] ${exception:format=ToString}${newline}${exception:format=Data}${newline}}";
+            target.Layout = new CleansedLayout("[${level}] [${threadid}] ${logger}: ${message} ${onexception:inner=${newline}${newline}[v${assembly-version}] ${exception:format=ToString}${newline}${exception:format=Data}${newline}}");
 
             var loggingRule = new LoggingRule("*", LogLevel.Trace, target);
             LogManager.Configuration.AddTarget("debugger", target);
@@ -88,7 +88,7 @@ namespace NzbDrone.Common.Instrumentation
             var coloredConsoleTarget = new ColoredConsoleTarget();
 
             coloredConsoleTarget.Name = "consoleLogger";
-            coloredConsoleTarget.Layout = "[${level}] ${logger}: ${message} ${onexception:inner=${newline}${newline}[v${assembly-version}] ${exception:format=ToString}${newline}${exception:format=Data}${newline}}";
+            coloredConsoleTarget.Layout = new CleansedLayout("[${level}] ${logger}: ${message} ${onexception:inner=${newline}${newline}[v${assembly-version}] ${exception:format=ToString}${newline}${exception:format=Data}${newline}}");
 
             var loggingRule = new LoggingRule("*", level, coloredConsoleTarget);
 
@@ -137,7 +137,7 @@ namespace NzbDrone.Common.Instrumentation
             fileTarget.ConcurrentWrites = false;
             fileTarget.ConcurrentWriteAttemptDelay = 50;
             fileTarget.ConcurrentWriteAttempts = 100;
-            fileTarget.Layout = FILE_LOG_LAYOUT;
+            fileTarget.Layout = new CleansedLayout(FILE_LOG_LAYOUT);
 
             var loggingRule = new LoggingRule("*", LogLevel.Trace, fileTarget);
 

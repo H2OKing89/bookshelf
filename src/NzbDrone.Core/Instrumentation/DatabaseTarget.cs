@@ -64,29 +64,27 @@ namespace NzbDrone.Core.Instrumentation
                     Level = logEvent.Level.Name
                 };
 
-                if (log.Logger.StartsWith("NzbDrone."))
+                if (log.Logger?.StartsWith("NzbDrone.") == true)
                 {
                     log.Logger = log.Logger.Remove(0, 9);
                 }
 
-                var message = logEvent.FormattedMessage;
-
                 if (logEvent.Exception != null)
                 {
-                    if (string.IsNullOrWhiteSpace(message))
-                    {
-                        message = logEvent.Exception.Message;
-                    }
-                    else
-                    {
-                        message += ": " + logEvent.Exception.Message;
-                    }
-
-                    log.Exception = CleanseLogMessage.Cleanse(logEvent.Exception.ToString());
+                    log.Exception = CleanseLogMessage.Cleanse(logEvent, entry => entry.Exception.ToString());
                     log.ExceptionType = logEvent.Exception.GetType().ToString();
                 }
 
-                log.Message = CleanseLogMessage.Cleanse(message);
+                log.Message = CleanseLogMessage.Cleanse(logEvent, entry =>
+                {
+                    var message = entry.FormattedMessage;
+                    if (entry.Exception == null)
+                    {
+                        return message;
+                    }
+
+                    return string.IsNullOrWhiteSpace(message) ? entry.Exception.Message : message + ": " + entry.Exception.Message;
+                });
 
                 var connectionInfo = _connectionStringFactory.LogDbConnection;
 

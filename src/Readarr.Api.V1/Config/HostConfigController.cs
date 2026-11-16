@@ -1,10 +1,14 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Common.Network;
 using NzbDrone.Core.Authentication;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Update;
@@ -19,6 +23,8 @@ namespace Readarr.Api.V1.Config
     [V1ApiController("config/host")]
     public class HostConfigController : RestController<HostConfigResource>
     {
+        private const string PrivateValue = "********";
+
         private readonly IConfigFileProvider _configFileProvider;
         private readonly IConfigService _configService;
         private readonly IUserService _userService;
@@ -38,13 +44,22 @@ namespace Readarr.Api.V1.Config
 
             SharedValidator.RuleFor(c => c.Port).ValidPort();
 
+            SharedValidator.RuleFor(c => c.TrustedNetworks)
+                .Must(IPNetworkParser.IsValidList)
+                .WithMessage("Enter comma-separated IP addresses or CIDR networks, such as 192.0.2.10 or 192.0.2.0/24")
+                .When(c => c.TrustedNetworks != null);
+
             SharedValidator.RuleFor(c => c.UrlBase).ValidUrlBase();
             SharedValidator.RuleFor(c => c.InstanceName).ContainsReadarr().When(c => c.InstanceName.IsNotNullOrWhiteSpace());
 
             SharedValidator.RuleFor(c => c.Username).NotEmpty().When(c => c.AuthenticationMethod == AuthenticationType.Basic ||
                                                                           c.AuthenticationMethod == AuthenticationType.Forms);
-            SharedValidator.RuleFor(c => c.Password).NotEmpty().When(c => c.AuthenticationMethod == AuthenticationType.Basic ||
-                                                                          c.AuthenticationMethod == AuthenticationType.Forms);
+            SharedValidator.RuleFor(c => c.Password).NotEmpty()
+                .When(c => (c.AuthenticationMethod == AuthenticationType.Basic || c.AuthenticationMethod == AuthenticationType.Forms) &&
+                           (c.Password != null || _userService.FindUser() == null));
+
+            SharedValidator.RuleFor(c => c.Password).NotEqual(PrivateValue)
+                .When(c => _userService.FindUser() == null);
 
             SharedValidator.RuleFor(c => c.PasswordConfirmation)
                 .Must((resource, p) => IsMatchingPassword(resource)).WithMessage("Must match Password");
@@ -87,17 +102,19 @@ namespace Readarr.Api.V1.Config
         {
             var user = _userService.FindUser();
 
-            if (user != null && user.Password == resource.Password)
+            if (IsUnchangedPassword(resource.Password, user))
             {
                 return true;
             }
 
-            if (resource.Password == resource.PasswordConfirmation)
-            {
-                return true;
-            }
+            return resource.Password != PrivateValue && resource.Password == resource.PasswordConfirmation;
+        }
 
-            return false;
+        private static bool IsUnchangedPassword(string password, User user)
+        {
+            return user != null && (password == null || password == PrivateValue ||
+                (user.Password != null && password.Length == user.Password.Length &&
+                 CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(password), Encoding.UTF8.GetBytes(user.Password))));
         }
 
         protected override HostConfigResource GetResourceById(int id)
@@ -114,7 +131,7 @@ namespace Readarr.Api.V1.Config
             var user = _userService.FindUser();
 
             resource.Username = user?.Username ?? string.Empty;
-            resource.Password = user?.Password ?? string.Empty;
+            resource.Password = user?.Password.IsNotNullOrWhiteSpace() == true ? PrivateValue : string.Empty;
             resource.PasswordConfirmation = string.Empty;
 
             return resource;
@@ -123,16 +140,47 @@ namespace Readarr.Api.V1.Config
         [RestPutById]
         public ActionResult<HostConfigResource> SaveHostConfig(HostConfigResource resource)
         {
+            if (resource.TrustedNetworks != null)
+            {
+                if (!IPNetworkParser.IsValidList(resource.TrustedNetworks))
+                {
+                    throw new ValidationException(new[]
+                    {
+                        new ValidationFailure(nameof(resource.TrustedNetworks),
+                            "Enter comma-separated IP addresses or CIDR networks, such as 192.0.2.10 or 192.0.2.0/24")
+                    });
+                }
+
+                resource.TrustedNetworks = IPNetworkParser.NormalizeList(resource.TrustedNetworks);
+            }
+
+            var unchangedPassword = IsUnchangedPassword(resource.Password, _userService.FindUser());
+            if (!unchangedPassword && resource.Password.IsNotNullOrWhiteSpace() && resource.Password != PrivateValue &&
+                resource.Password != resource.PasswordConfirmation)
+            {
+                throw new ValidationException(new[] { new ValidationFailure(nameof(resource.PasswordConfirmation), "Must match Password") });
+            }
+
             var dictionary = resource.GetType()
                                      .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                                     .Where(prop => prop.Name != nameof(HostConfigResource.Password) &&
+                                                    prop.Name != nameof(HostConfigResource.PasswordConfirmation) &&
+                                                    (prop.Name != nameof(HostConfigResource.TrustedNetworks) || resource.TrustedNetworks != null))
                                      .ToDictionary(prop => prop.Name, prop => prop.GetValue(resource, null));
 
             _configFileProvider.SaveConfigDictionary(dictionary);
             _configService.SaveConfigDictionary(dictionary);
 
-            if (resource.Username.IsNotNullOrWhiteSpace() && resource.Password.IsNotNullOrWhiteSpace())
+            if (resource.Username.IsNotNullOrWhiteSpace())
             {
-                _userService.Upsert(resource.Username, resource.Password);
+                if (unchangedPassword)
+                {
+                    _userService.Upsert(resource.Username, null);
+                }
+                else if (resource.Password.IsNotNullOrWhiteSpace() && resource.Password != PrivateValue)
+                {
+                    _userService.Upsert(resource.Username, resource.Password);
+                }
             }
 
             return Accepted(resource.Id);

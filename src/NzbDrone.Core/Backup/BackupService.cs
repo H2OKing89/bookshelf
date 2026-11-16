@@ -5,6 +5,8 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using ICSharpCode.SharpZipLib.Checksum;
+using ICSharpCode.SharpZipLib.Zip;
 using NLog;
 using NzbDrone.Common;
 using NzbDrone.Common.Disk;
@@ -36,6 +38,8 @@ namespace NzbDrone.Core.Backup
         private readonly IArchiveService _archiveService;
         private readonly IConfigService _configService;
         private readonly Logger _logger;
+        private readonly IBackupRestoreValidator _restoreValidator;
+        private static readonly object RestoreLock = new object();
 
         private string _backupTempFolder;
 
@@ -48,6 +52,7 @@ namespace NzbDrone.Core.Backup
                              IAppFolderInfo appFolderInfo,
                              IArchiveService archiveService,
                              IConfigService configService,
+                             IBackupRestoreValidator restoreValidator,
                              Logger logger)
         {
             _maindDb = maindDb;
@@ -58,6 +63,7 @@ namespace NzbDrone.Core.Backup
             _archiveService = archiveService;
             _configService = configService;
             _logger = logger;
+            _restoreValidator = restoreValidator;
 
             _backupTempFolder = Path.Combine(_appFolderInfo.TempFolder, "readarr_backup");
         }
@@ -128,41 +134,232 @@ namespace NzbDrone.Core.Backup
 
         public void Restore(string backupFileName)
         {
-            if (backupFileName.EndsWith(".zip"))
+            // A restore publishes a config/pending-database pair. Other restores in this
+            // process must not interleave their snapshots, replacement or rollback.
+            lock (RestoreLock)
             {
-                var restoredFile = false;
-                var temporaryPath = Path.Combine(_appFolderInfo.TempFolder, "readarr_backup_restore");
+                RestoreInternal(backupFileName);
+            }
+        }
 
-                _archiveService.Extract(backupFileName, temporaryPath);
-
-                foreach (var file in _diskProvider.GetFiles(temporaryPath, false))
+        private void RestoreInternal(string backupFileName)
+        {
+            // Keep all staging/preimages private and on the destination filesystem.
+            // Never consume or delete another instance's old shared temp directory.
+            var workspace = Path.Combine(_appFolderInfo.GetAppDataPath(), ".readarr-restore-" + Guid.NewGuid().ToString("N"));
+            var retainWorkspace = false;
+            try
+            {
+                _diskProvider.EnsureFolder(workspace);
+                if (OsInfo.IsNotWindows)
                 {
-                    var fileName = Path.GetFileName(file);
+                    _diskProvider.SetPermissions(workspace, "700", null);
+                }
 
-                    if (fileName.Equals("Config.xml", StringComparison.InvariantCultureIgnoreCase))
+                var payloads = new List<RestorePayload>();
+                var extension = Path.GetExtension(backupFileName);
+                if (extension.Equals(".zip", StringComparison.OrdinalIgnoreCase))
+                {
+                    ExtractRestorePayloads(backupFileName, workspace, payloads);
+                }
+                else
+                {
+                    var config = extension.Equals(".xml", StringComparison.OrdinalIgnoreCase);
+                    var copy = Path.Combine(workspace, config ? "config.xml" : "readarr.db");
+                    var limit = config ? BackupRestoreValidator.MaximumConfigBytes : BackupRestoreValidator.MaximumDatabaseBytes;
+                    if (_diskProvider.GetFileSize(backupFileName) > limit)
                     {
-                        _diskProvider.MoveFile(file, _appFolderInfo.GetConfigPath(), true);
-                        restoredFile = true;
+                        throw InvalidBackup("Backup payload exceeds its restore size limit");
                     }
 
-                    if (fileName.Equals("readarr.db", StringComparison.InvariantCultureIgnoreCase))
+                    _diskProvider.CopyFile(backupFileName, copy);
+                    payloads.Add(new RestorePayload(copy, config ? _appFolderInfo.GetConfigPath() : _appFolderInfo.GetDatabaseRestore(), config));
+                }
+
+                foreach (var payload in payloads)
+                {
+                    if (payload.IsConfig)
                     {
-                        _diskProvider.MoveFile(file, _appFolderInfo.GetDatabaseRestore(), true);
-                        restoredFile = true;
+                        _restoreValidator.ValidateConfig(payload.Source);
+                    }
+                    else
+                    {
+                        if (_maindDb.DatabaseType != DatabaseType.SQLite)
+                        {
+                            throw InvalidBackup("SQLite database backups cannot be restored while using PostgreSQL");
+                        }
+
+                        _restoreValidator.ValidateDatabase(payload.Source);
                     }
                 }
 
-                if (!restoredFile)
+                // Every payload is valid before any destination can be replaced. Keep
+                // preimages until the entire publication succeeds, including an existing
+                // pending restore. MoveFile(overwrite) can delete before a failing move.
+                foreach (var payload in payloads)
                 {
-                    throw new RestoreBackupFailedException(HttpStatusCode.NotFound, "Unable to restore database file from backup");
+                    payload.HadOriginal = _diskProvider.FileExists(payload.Destination);
+                    if (payload.HadOriginal)
+                    {
+                        payload.Previous = Path.Combine(workspace, "previous-" + Path.GetFileName(payload.Destination));
+                        _diskProvider.CopyFile(payload.Destination, payload.Previous);
+                    }
                 }
 
-                _diskProvider.DeleteFolder(temporaryPath, true);
+                try
+                {
+                    foreach (var payload in payloads.OrderBy(payload => payload.IsConfig))
+                    {
+                        payload.Attempted = true;
+                        _diskProvider.MoveFile(payload.Source, payload.Destination, true);
+                    }
+                }
+                catch
+                {
+                    foreach (var payload in payloads.Where(payload => payload.Attempted).Reverse())
+                    {
+                        try
+                        {
+                            if (payload.HadOriginal)
+                            {
+                                _diskProvider.CopyFile(payload.Previous, payload.Destination, true);
+                            }
+                            else
+                            {
+                                _diskProvider.DeleteFile(payload.Destination);
+                            }
+                        }
+                        catch (Exception rollbackError)
+                        {
+                            retainWorkspace = true;
+                            _logger.Error(rollbackError, "Unable to roll back restore file; recovery files retained in {0}", workspace);
+                        }
+                    }
 
-                return;
+                    if (retainWorkspace)
+                    {
+                        throw new RestoreBackupFailedException(HttpStatusCode.InternalServerError,
+                            "Restore failed and could not be fully rolled back; recovery files were retained in a private restore directory");
+                    }
+
+                    throw;
+                }
+            }
+            finally
+            {
+                if (!retainWorkspace && _diskProvider.FolderExists(workspace))
+                {
+                    _diskProvider.DeleteFolder(workspace, true);
+                }
+            }
+        }
+
+        private void ExtractRestorePayloads(string backupFileName, string workspace, List<RestorePayload> payloads)
+        {
+            try
+            {
+                using var stream = _diskProvider.OpenReadStream(backupFileName);
+                BackupArchivePreflight.Validate(stream);
+                using var archive = new ZipFile(stream);
+                if (archive.Count > 64)
+                {
+                    throw InvalidBackup("Backup archive contains too many entries");
+                }
+
+                var entries = new List<ZipEntry>();
+                var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (ZipEntry entry in archive)
+                {
+                    var name = entry.Name;
+                    var mode = (entry.ExternalFileAttributes >> 16) & 0xF000;
+                    if (string.IsNullOrWhiteSpace(name) || name.Length > 255 || name.Any(char.IsControl) ||
+                        name.IndexOfAny(new[] { '/', '\\', ':' }) >= 0 || name == "." || name == ".." ||
+                        !entry.IsFile || entry.IsCrypted || !names.Add(name) ||
+                        ((entry.HostSystem == 3 || entry.HostSystem == 19) && mode != 0 && mode != 0x8000) ||
+                        entry.Size < 0 || entry.Size > BackupRestoreValidator.MaximumDatabaseBytes)
+                    {
+                        throw InvalidBackup("Backup archive contains unsafe, duplicate or unsupported entries");
+                    }
+
+                    var config = name.Equals("config.xml", StringComparison.OrdinalIgnoreCase);
+                    var database = name.Equals("readarr.db", StringComparison.OrdinalIgnoreCase);
+                    if (config || database)
+                    {
+                        if (config && entry.Size > BackupRestoreValidator.MaximumConfigBytes)
+                        {
+                            throw InvalidBackup("Backup config exceeds its restore size limit");
+                        }
+
+                        entries.Add(entry);
+                    }
+                }
+
+                if (entries.Count == 0)
+                {
+                    throw new RestoreBackupFailedException(HttpStatusCode.NotFound, "Unable to find config or database files in backup");
+                }
+
+                // Preflight every name/duplicate/size before decompressing anything.
+                foreach (var entry in entries)
+                {
+                    var config = entry.Name.Equals("config.xml", StringComparison.OrdinalIgnoreCase);
+                    var destination = Path.Combine(workspace, config ? "config.xml" : "readarr.db");
+                    var limit = config ? BackupRestoreValidator.MaximumConfigBytes : BackupRestoreValidator.MaximumDatabaseBytes;
+                    using var input = archive.GetInputStream(entry);
+                    using var output = _diskProvider.OpenWriteStream(destination);
+                    var crc = new Crc32();
+                    var buffer = new byte[81920];
+                    long length = 0;
+                    int count;
+                    while ((count = input.Read(buffer, 0, buffer.Length)) != 0)
+                    {
+                        length += count;
+                        if (length > limit || length > entry.Size)
+                        {
+                            throw InvalidBackup("Backup payload exceeds its declared or supported size");
+                        }
+
+                        crc.Update(new ArraySegment<byte>(buffer, 0, count));
+                        output.Write(buffer, 0, count);
+                    }
+
+                    if (length != entry.Size || crc.Value != entry.Crc)
+                    {
+                        throw InvalidBackup("Backup archive payload failed its integrity check");
+                    }
+
+                    payloads.Add(new RestorePayload(
+                        destination,
+                        config ? _appFolderInfo.GetConfigPath() : _appFolderInfo.GetDatabaseRestore(),
+                        config));
+                }
+            }
+            catch (ZipException)
+            {
+                throw InvalidBackup("Backup archive is not a valid supported ZIP file");
+            }
+        }
+
+        private static RestoreBackupFailedException InvalidBackup(string message)
+        {
+            return new RestoreBackupFailedException(HttpStatusCode.BadRequest, message);
+        }
+
+        private sealed class RestorePayload
+        {
+            public RestorePayload(string source, string destination, bool isConfig)
+            {
+                Source = source;
+                Destination = destination;
+                IsConfig = isConfig;
             }
 
-            _diskProvider.MoveFile(backupFileName, _appFolderInfo.GetDatabaseRestore(), true);
+            public string Source { get; }
+            public string Destination { get; }
+            public bool IsConfig { get; }
+            public bool HadOriginal { get; set; }
+            public bool Attempted { get; set; }
+            public string Previous { get; set; }
         }
 
         public string GetBackupFolder()

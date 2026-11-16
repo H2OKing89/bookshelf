@@ -1,7 +1,10 @@
 using System;
+using System.Security.Cryptography;
+using System.Text;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Core.Datastore;
 
 namespace NzbDrone.Core.Authentication
 {
@@ -17,6 +20,11 @@ namespace NzbDrone.Core.Authentication
 
     public class UserService : IUserService
     {
+        private const int PasswordIterations = 220000;
+        private const int MaximumPasswordIterations = 1000000;
+        private const int SaltSize = 16;
+        private const int PasswordSize = 32;
+
         private readonly IUserRepository _repo;
         private readonly IAppFolderInfo _appFolderInfo;
         private readonly IDiskProvider _diskProvider;
@@ -30,12 +38,15 @@ namespace NzbDrone.Core.Authentication
 
         public User Add(string username, string password)
         {
-            return _repo.Insert(new User
+            var user = new User
             {
                 Identifier = Guid.NewGuid(),
-                Username = username.ToLowerInvariant(),
-                Password = password.SHA256Hash()
-            });
+                Username = username.ToLowerInvariant()
+            };
+
+            SetPassword(user, password);
+
+            return _repo.Insert(user);
         }
 
         public User Update(User user)
@@ -49,17 +60,26 @@ namespace NzbDrone.Core.Authentication
 
             if (user == null)
             {
-                return Add(username, password);
+                return password == null ? null : Add(username, password);
             }
 
-            if (user.Password != password)
+            var updated = CopyUser(user);
+
+            // Older settings clients round-trip the stored SHA-256 digest.
+            var updatePassword = password != null && !(IsLegacyPassword(user) && IsMatchingHash(user.Password, password));
+            if (updatePassword)
             {
-                user.Password = password.SHA256Hash();
+                SetPassword(updated, password);
             }
 
-            user.Username = username.ToLowerInvariant();
+            updated.Username = username.ToLowerInvariant();
 
-            return Update(user);
+            if (!_repo.TryUpdateCredentials(user, updated, true, updatePassword))
+            {
+                throw new ModelConflictException(typeof(User), user.Id, "Account changed while saving; reload settings and try again");
+            }
+
+            return updated;
         }
 
         public User FindUser()
@@ -74,16 +94,32 @@ namespace NzbDrone.Core.Authentication
                 return null;
             }
 
-            var user = _repo.FindUser(username.ToLowerInvariant());
-
-            if (user == null)
+            for (var attempt = 0; attempt < 2; attempt++)
             {
-                return null;
-            }
+                var user = _repo.FindUser(username.ToLowerInvariant());
+                if (user == null)
+                {
+                    return null;
+                }
 
-            if (user.Password == password.SHA256Hash())
-            {
-                return user;
+                var legacy = IsLegacyPassword(user);
+                if (legacy ? !IsMatchingHash(user.Password, password.SHA256Hash()) : !VerifyPassword(user, password))
+                {
+                    return null;
+                }
+
+                if (!legacy && user.Iterations >= PasswordIterations)
+                {
+                    return user;
+                }
+
+                var updated = CopyUser(user);
+                SetPassword(updated, password);
+
+                if (_repo.TryUpdateCredentials(user, updated, false, true))
+                {
+                    return updated;
+                }
             }
 
             return null;
@@ -92,6 +128,66 @@ namespace NzbDrone.Core.Authentication
         public User FindUser(Guid identifier)
         {
             return _repo.FindUser(identifier);
+        }
+
+        private static bool IsLegacyPassword(User user)
+        {
+            return string.IsNullOrEmpty(user.Salt) && user.Iterations == 0 && user.Password?.Length == 64;
+        }
+
+        private static User CopyUser(User user)
+        {
+            return new User
+            {
+                Id = user.Id,
+                Identifier = user.Identifier,
+                Username = user.Username,
+                Password = user.Password,
+                Salt = user.Salt,
+                Iterations = user.Iterations
+            };
+        }
+
+        private static void SetPassword(User user, string password)
+        {
+            var salt = RandomNumberGenerator.GetBytes(SaltSize);
+            var hash = Convert.ToBase64String(DerivePassword(password, salt, PasswordIterations));
+
+            user.Salt = Convert.ToBase64String(salt);
+            user.Iterations = PasswordIterations;
+            user.Password = hash;
+        }
+
+        private static byte[] DerivePassword(string password, byte[] salt, int iterations)
+        {
+            return Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA512, PasswordSize);
+        }
+
+        private static bool VerifyPassword(User user, string password)
+        {
+            // Bound corrupt database metadata before decoding or performing expensive derivation.
+            if (user.Iterations <= 0 || user.Iterations > MaximumPasswordIterations ||
+                user.Salt?.Length != 24 || user.Password?.Length != 44)
+            {
+                return false;
+            }
+
+            var salt = new byte[SaltSize];
+            var storedPassword = new byte[PasswordSize];
+
+            if (!Convert.TryFromBase64String(user.Salt, salt, out var saltLength) || saltLength != SaltSize ||
+                !Convert.TryFromBase64String(user.Password, storedPassword, out var passwordLength) || passwordLength != PasswordSize)
+            {
+                return false;
+            }
+
+            return CryptographicOperations.FixedTimeEquals(storedPassword, DerivePassword(password, salt, user.Iterations));
+        }
+
+        private static bool IsMatchingHash(string storedHash, string hash)
+        {
+            return storedHash != null && hash != null && storedHash.Length == hash.Length &&
+                CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(storedHash), Encoding.UTF8.GetBytes(hash));
         }
     }
 }

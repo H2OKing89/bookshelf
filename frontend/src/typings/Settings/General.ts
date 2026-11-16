@@ -7,6 +7,7 @@ export type UpdateMechanism =
 
 export default interface General {
   bindAddress: string;
+  trustedNetworks: string;
   port: number;
   sslPort: number;
   enableSsl: boolean;

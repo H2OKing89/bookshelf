@@ -9,6 +9,7 @@ using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Instrumentation;
 using NzbDrone.Common.Serializer;
+using NzbDrone.Core.Authentication;
 
 namespace NzbDrone.Core.Datastore
 {
@@ -134,7 +135,12 @@ namespace NzbDrone.Core.Datastore
 
             foreach (var p in parameters.ToDictionary())
             {
-                var val = (p.Value is string) ? string.Format("\"{0}\"", p.Value) : p.Value;
+                var redact = paramsObject is User &&
+                    (p.Key.Equals(nameof(User.Password), StringComparison.OrdinalIgnoreCase) ||
+                     p.Key.Equals(nameof(User.Salt), StringComparison.OrdinalIgnoreCase) ||
+                     p.Key.Equals(nameof(User.Iterations), StringComparison.OrdinalIgnoreCase));
+                var value = redact ? "(removed)" : p.Value;
+                var val = (value is string) ? string.Format("\"{0}\"", value) : value;
                 sb.AppendFormat("{0} = [{1}]", p.Key, val.ToJson() ?? "NULL").AppendLine();
             }
 

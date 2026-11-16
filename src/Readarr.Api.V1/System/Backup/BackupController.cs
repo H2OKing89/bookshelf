@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -105,18 +106,36 @@ namespace Readarr.Api.V1.System.Backup
             var file = files.First();
             var extension = Path.GetExtension(file.FileName);
 
-            if (!ValidExtensions.Contains(extension))
+            if (!ValidExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
             {
                 throw new UnsupportedMediaTypeException($"Invalid extension, must be one of: {ValidExtensions.Join(", ")}");
             }
 
-            var path = Path.Combine(_appFolderInfo.TempFolder, $"readarr_backup_restore{extension}");
+            var uploadFolder = Path.Combine(_appFolderInfo.TempFolder, $"readarr_backup_upload_{Guid.NewGuid():N}");
+            var path = Path.Combine(uploadFolder, "input" + extension.ToLowerInvariant());
 
-            _diskProvider.SaveStream(file.OpenReadStream(), path);
-            _backupService.Restore(path);
+            try
+            {
+                _diskProvider.EnsureFolder(uploadFolder);
+                if (OsInfo.IsNotWindows)
+                {
+                    _diskProvider.SetPermissions(uploadFolder, "700", null);
+                }
 
-            // Cleanup restored file
-            _diskProvider.DeleteFile(path);
+                using (var stream = file.OpenReadStream())
+                {
+                    _diskProvider.SaveStream(stream, path);
+                }
+
+                _backupService.Restore(path);
+            }
+            finally
+            {
+                if (_diskProvider.FolderExists(uploadFolder))
+                {
+                    _diskProvider.DeleteFolder(uploadFolder, true);
+                }
+            }
 
             return new
             {

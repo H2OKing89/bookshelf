@@ -18,6 +18,7 @@ function HostSettings(props) {
 
   const {
     bindAddress,
+    trustedNetworks,
     port,
     urlBase,
     instanceName,
@@ -63,6 +64,24 @@ function HostSettings(props) {
           helpTextWarning={translate('PortHelpTextWarning')}
           onChange={onInputChange}
           {...port}
+        />
+      </FormGroup>
+
+      <FormGroup
+        advancedSettings={advancedSettings}
+        isAdvanced={true}
+      >
+        <FormLabel>
+          {translate('TrustedReverseProxies')}
+        </FormLabel>
+
+        <FormInputGroup
+          type={inputTypes.TEXT}
+          name="trustedNetworks"
+          helpText={translate('TrustedReverseProxiesHelpText')}
+          helpTextWarning={translate('RestartRequiredHelpTextWarning')}
+          onChange={onInputChange}
+          {...trustedNetworks}
         />
       </FormGroup>
 

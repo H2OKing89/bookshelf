@@ -20,6 +20,12 @@ namespace NzbDrone.Core.Test.Instrumentation
 
         protected override MigrationType MigrationType => MigrationType.Log;
 
+        [OneTimeSetUp]
+        public void InitializeLogger()
+        {
+            NzbDroneLogger.GetLogger(typeof(DatabaseTargetFixture));
+        }
+
         [SetUp]
         public void Setup()
         {

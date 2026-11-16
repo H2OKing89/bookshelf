@@ -255,14 +255,21 @@ namespace NzbDrone.Core.Datastore
 
         public void UpdateMany(IList<TModel> models)
         {
+            if (models.Count == 0)
+            {
+                return;
+            }
+
             if (models.Any(x => x.Id == 0))
             {
                 throw new InvalidOperationException("Can't update model with ID 0");
             }
 
             using (var conn = _database.OpenConnection())
+            using (var tran = conn.BeginTransaction(IsolationLevel.ReadCommitted))
             {
-                UpdateFields(conn, null, models, _properties);
+                UpdateFields(conn, tran, models, _properties);
+                tran.Commit();
             }
         }
 
@@ -358,6 +365,11 @@ namespace NzbDrone.Core.Datastore
 
         public void SetFields(IList<TModel> models, params Expression<Func<TModel, object>>[] properties)
         {
+            if (models.Count == 0)
+            {
+                return;
+            }
+
             if (models.Any(x => x.Id == 0))
             {
                 throw new InvalidOperationException("Attempted to update model without ID");
@@ -366,8 +378,10 @@ namespace NzbDrone.Core.Datastore
             var propertiesToUpdate = properties.Select(x => x.GetMemberName()).ToList();
 
             using (var conn = _database.OpenConnection())
+            using (var tran = conn.BeginTransaction(IsolationLevel.ReadCommitted))
             {
-                UpdateFields(conn, null, models, propertiesToUpdate);
+                UpdateFields(conn, tran, models, propertiesToUpdate);
+                tran.Commit();
             }
 
             foreach (var model in models)
@@ -400,16 +414,7 @@ namespace NzbDrone.Core.Datastore
         {
             var sql = propertiesToUpdate == _properties ? _updateSql : GetUpdateSql(propertiesToUpdate);
 
-            SqlBuilderExtensions.LogQuery(sql, model);
-
-            try
-            {
-                connection.Execute(sql, model, transaction: transaction);
-            }
-            catch (Exception e)
-            {
-                e.Data.Add("SQL", SqlBuilderExtensions.GetSqlLogString(sql, model));
-            }
+            ExecuteUpdate(connection, transaction, model, sql);
         }
 
         private void UpdateFields(IDbConnection connection, IDbTransaction transaction, IList<TModel> models, List<PropertyInfo> propertiesToUpdate)
@@ -418,16 +423,25 @@ namespace NzbDrone.Core.Datastore
 
             foreach (var model in models)
             {
-                SqlBuilderExtensions.LogQuery(sql, model);
+                // Validate each row inside the transaction so a concurrent deletion
+                // cannot turn a bulk save into a silently partial update.
+                ExecuteUpdate(connection, transaction, model, sql);
+            }
+        }
+
+        private void ExecuteUpdate(IDbConnection connection, IDbTransaction transaction, TModel model, string sql)
+        {
+            SqlBuilderExtensions.LogQuery(sql, model);
+
+            var affected = connection.Execute(sql, model, transaction: transaction);
+            if (affected == 0)
+            {
+                throw new ModelNotFoundException(typeof(TModel), model.Id);
             }
 
-            try
+            if (affected != 1)
             {
-                connection.Execute(sql, models, transaction: transaction);
-            }
-            catch (Exception e)
-            {
-                e.Data.Add("SQL", SqlBuilderExtensions.GetSqlLogString(sql, models));
+                throw new InvalidOperationException($"Expected to update one {_table} record with ID {model.Id}");
             }
         }
 

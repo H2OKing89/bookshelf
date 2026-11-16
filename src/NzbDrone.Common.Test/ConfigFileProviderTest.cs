@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
+using System.Xml.Linq;
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework;
@@ -192,6 +195,98 @@ namespace NzbDrone.Common.Test
 
             Subject.Port.Should().Be(port);
             Subject.SslPort.Should().Be(sslPort);
+        }
+
+        [Test]
+        public void trusted_networks_should_default_to_empty_without_changing_server_defaults()
+        {
+            Subject.TrustedNetworks.Should().BeEmpty();
+            XDocument.Parse(_configFileContents).Root.Element("TrustedNetworks").Value.Should().BeEmpty();
+            Subject.Port.Should().Be(8787);
+            Subject.EnableSsl.Should().BeFalse();
+            Subject.AuthenticationMethod.Should().Be(AuthenticationType.None);
+        }
+
+        [Test]
+        public void trusted_networks_should_read_the_saved_xml_value()
+        {
+            _configFileContents = "<Config><TrustedNetworks> 192.0.2.10, 2001:db8::10 </TrustedNetworks></Config>";
+
+            Subject.TrustedNetworks.Should().Be("192.0.2.10, 2001:db8::10");
+        }
+
+        [Test]
+        public void saving_trusted_networks_should_preserve_api_key_and_other_saved_values()
+        {
+            const string apiKey = "0123456789abcdef0123456789abcdef";
+            _configFileContents = "<Config><ApiKey>" + apiKey + "</ApiKey><Port>20555</Port>" +
+                "<EnableSsl>False</EnableSsl><LaunchBrowser>False</LaunchBrowser><AuthenticationMethod>Forms</AuthenticationMethod></Config>";
+
+            Subject.SaveConfigDictionary(new Dictionary<string, object>
+            {
+                { "TrustedNetworks", "192.0.2.10,2001:db8::10" }
+            });
+
+            Subject.TrustedNetworks.Should().Be("192.0.2.10,2001:db8::10");
+            Subject.ApiKey.Should().Be(apiKey);
+            Subject.Port.Should().Be(20555);
+            Subject.EnableSsl.Should().BeFalse();
+            Subject.LaunchBrowser.Should().BeFalse();
+            Subject.AuthenticationMethod.Should().Be(AuthenticationType.Forms);
+            var saved = XDocument.Parse(_configFileContents).Root;
+            saved.Element("ApiKey").Value.Should().Be(apiKey);
+            saved.Element("TrustedNetworks").Value.Should().Be("192.0.2.10,2001:db8::10");
+        }
+
+        [Test]
+        public void omitted_trusted_networks_should_be_preserved_and_explicit_empty_should_clear()
+        {
+            _configFileContents = "<Config><TrustedNetworks>192.0.2.10</TrustedNetworks></Config>";
+
+            Subject.SaveConfigDictionary(new Dictionary<string, object> { { "Port", 20555 } });
+
+            Subject.TrustedNetworks.Should().Be("192.0.2.10");
+
+            Subject.SaveConfigDictionary(new Dictionary<string, object> { { "TrustedNetworks", string.Empty } });
+
+            Subject.TrustedNetworks.Should().BeEmpty();
+            XDocument.Parse(_configFileContents).Root.Element("TrustedNetworks").Value.Should().BeEmpty();
+            Subject.Port.Should().Be(20555);
+        }
+
+        [Test]
+        [NonParallelizable]
+        public void trusted_networks_environment_option_should_override_xml_without_rewriting_it()
+        {
+            const string environmentKey = "Readarr__Server__TrustedNetworks";
+            var previousValue = Environment.GetEnvironmentVariable(environmentKey);
+            try
+            {
+                Environment.SetEnvironmentVariable(environmentKey, "198.51.100.20,2001:db8::10");
+                var serverOptions = new ServerOptions();
+                new ConfigurationBuilder().AddEnvironmentVariables().Build()
+                    .GetSection("Readarr:Server").Bind(serverOptions);
+                Mocker.GetMock<IOptions<ServerOptions>>().Setup(options => options.Value).Returns(serverOptions);
+                _configFileContents = "<Config><TrustedNetworks>192.0.2.10</TrustedNetworks></Config>";
+
+                Subject.TrustedNetworks.Should().Be("198.51.100.20,2001:db8::10");
+                XDocument.Parse(_configFileContents).Root.Element("TrustedNetworks").Value.Should().Be("192.0.2.10");
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(environmentKey, previousValue);
+            }
+        }
+
+        [Test]
+        public void explicit_empty_trusted_networks_option_should_override_saved_xml()
+        {
+            Mocker.GetMock<IOptions<ServerOptions>>().Setup(options => options.Value)
+                .Returns(new ServerOptions { TrustedNetworks = string.Empty });
+            _configFileContents = "<Config><TrustedNetworks>192.0.2.10</TrustedNetworks></Config>";
+
+            Subject.TrustedNetworks.Should().BeEmpty();
+            XDocument.Parse(_configFileContents).Root.Element("TrustedNetworks").Value.Should().Be("192.0.2.10");
         }
 
         [Test]

@@ -97,6 +97,7 @@ namespace NzbDrone.Core.Instrumentation
         private void SetSyslogParameters(string syslogServer, int syslogPort, LogLevel minimumLogLevel)
         {
             var syslogTarget = new SyslogTarget();
+            syslogTarget.Layout = new CleansedLayout(syslogTarget.Layout);
 
             syslogTarget.Name = "syslogTarget";
             syslogTarget.MessageSend.Protocol = ProtocolType.Udp;

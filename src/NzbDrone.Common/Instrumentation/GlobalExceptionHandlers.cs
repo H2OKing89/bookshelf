@@ -16,8 +16,9 @@ namespace NzbDrone.Common.Instrumentation
         private static void HandleTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
             var exception = e.Exception;
+            var exceptionText = CleanseException(exception);
 
-            Console.WriteLine("Task Error: {0}", exception);
+            Console.WriteLine("Task Error: {0}", exceptionText);
             Logger.Error(exception, "Task Error");
         }
 
@@ -30,15 +31,23 @@ namespace NzbDrone.Common.Instrumentation
                 return;
             }
 
+            var exceptionText = CleanseException(exception);
+
             if (exception is NullReferenceException &&
-                exception.ToString().Contains("Microsoft.AspNet.SignalR.Transports.TransportHeartbeat.ProcessServerCommand"))
+                exceptionText?.Contains("Microsoft.AspNet.SignalR.Transports.TransportHeartbeat.ProcessServerCommand") == true)
             {
                 Logger.Warn("SignalR Heartbeat interrupted");
                 return;
             }
 
-            Console.WriteLine("EPIC FAIL: {0}", exception);
+            Console.WriteLine("EPIC FAIL: {0}", exceptionText);
             Logger.Fatal(exception, "EPIC FAIL.");
+        }
+
+        private static string CleanseException(Exception exception)
+        {
+            var logEvent = new LogEventInfo { Exception = exception };
+            return CleanseLogMessage.Cleanse(logEvent, entry => entry.Exception.ToString());
         }
     }
 }

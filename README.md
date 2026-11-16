@@ -23,6 +23,10 @@ server with `dotnet build src/NzbDrone.Console/Readarr.Console.csproj`. Serve th
 built UI from the server output's `UI` directory, then run the generated Readarr
 executable with `-nobrowser -data=/path/to/config`.
 
+For reverse proxy deployments, configure the
+[trusted proxy addresses](docs/trusted-proxies.md) before upgrading. Changes to
+this setting require a server restart.
+
 ## Catalog settings
 
 Under **Settings → Metadata → Audiobook Catalog**, select an Audible marketplace
@@ -182,6 +186,13 @@ validated synchronously. The default remains `doRefresh=true`.
 ## Support
 
 File an issue or start a discussion in the repository.
+
+## Development roadmap
+
+The [Sonarr v5 modernization roadmap](docs/sonarr-v5-modernization-roadmap.md)
+compares this fork with a pinned Sonarr v5 source revision. Its
+[porting backlog](docs/sonarr-v5-porting-backlog.md) tracks reusable platform and
+UI improvements, book-specific adaptations, dependencies and validation gates.
 
 ## License
 

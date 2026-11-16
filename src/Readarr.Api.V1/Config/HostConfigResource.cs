@@ -10,6 +10,7 @@ namespace Readarr.Api.V1.Config
     public class HostConfigResource : RestResource
     {
         public string BindAddress { get; set; }
+        public string TrustedNetworks { get; set; }
         public int Port { get; set; }
         public int SslPort { get; set; }
         public bool EnableSsl { get; set; }
@@ -54,6 +55,7 @@ namespace Readarr.Api.V1.Config
             return new HostConfigResource
             {
                 BindAddress = model.BindAddress,
+                TrustedNetworks = model.TrustedNetworks,
                 Port = model.Port,
                 SslPort = model.SslPort,
                 EnableSsl = model.EnableSsl,
@@ -86,7 +88,8 @@ namespace Readarr.Api.V1.Config
                 BackupFolder = configService.BackupFolder,
                 BackupInterval = configService.BackupInterval,
                 BackupRetention = configService.BackupRetention,
-                ApplicationUrl = configService.ApplicationUrl
+                ApplicationUrl = configService.ApplicationUrl,
+                TrustCgnatIpAddresses = model.TrustCgnatIpAddresses
             };
         }
     }

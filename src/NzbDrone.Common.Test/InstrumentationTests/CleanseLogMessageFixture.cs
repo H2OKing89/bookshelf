@@ -147,5 +147,43 @@ namespace NzbDrone.Common.Test.InstrumentationTests
 
             cleansedMessage.Should().Be(message);
         }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase(" \t\r\n ")]
+        [TestCase("Imported 7 audiobook tracks in 3 seconds; no missing files.")]
+        [TestCase("get_token=keep-token;usetoken=keep-flag;mypass=keep-password")]
+        [TestCase("https://catalog.example/books?title=An%20Audiobook&offset=3&limit=10")]
+        public void should_preserve_ordinary_messages_exactly(string message)
+        {
+            CleanseLogMessage.Cleanse(message).Should().Be(message);
+        }
+
+        [TestCase("GET https://catalog.example/books?key=first-secret&offset=3", "GET https://catalog.example/books?key=(removed)&offset=3")]
+        [TestCase("https://catalog.example/books?authkey=first-secret&format=json", "https://catalog.example/books?authkey=(removed)&format=json")]
+        [TestCase("https://catalog.example/books?passkey=first-secret&format=json", "https://catalog.example/books?passkey=(removed)&format=json")]
+        [TestCase("https://catalog.example/books?access-token=first-secret&offset=3", "https://catalog.example/books?access-token=(removed)&offset=3")]
+        [TestCase("/readarr/signalr/messages?access_token=first-secret&negotiateVersion=1", "/readarr/signalr/messages?access_token=(removed)&negotiateVersion=1")]
+        [TestCase("https://catalog.example/books?APIKEY=first-secret&TOKEN=second-secret&limit=2", "https://catalog.example/books?APIKEY=(removed)&TOKEN=(removed)&limit=2")]
+        [TestCase("{\"token\": \"first-secret\",\"tokenSecret\": \"second-secret\",\"method\": \"GET\"}", "{\"token\": \"(removed)\",\"tokenSecret\": \"(removed)\",\"method\": \"GET\"}")]
+        [TestCase("https://notify.example/api/v1/notification/readarr/first-secret", "https://notify.example/api/v1/notification/readarr/(removed)")]
+        [TestCase("https://discord.com/api/webhooks/first-secret/second-longer-secret", "https://discord.com/api/webhooks/(removed)/(removed)")]
+        [TestCase("https://iptorrents.com/torrents/rss?u=first-secret;tp=second-longer-secret;l5;download", "https://iptorrents.com/torrents/rss?u=(removed);tp=(removed);l5;download")]
+        [TestCase("https://tracker.example/0123456789abcdef0123456789abcdef/announce?left=3", "https://tracker.example/(removed)/announce?left=3")]
+        [TestCase("magnet:?xt=urn:btih:keep-this-infohash&tr=https://tracker.example/announce/0123456789abcdef0123456789abcdef", "magnet:?xt=urn:btih:keep-this-infohash&tr=https://tracker.example/announce/(removed)")]
+        [TestCase("Auth-Logout ip 198.51.100.42", "Auth-Logout ip 198.*.*.42")]
+        public void should_replace_only_secret_captures_and_preserve_surrounding_context(string message, string expected)
+        {
+            CleanseLogMessage.Cleanse(message).Should().Be(expected);
+        }
+
+        [TestCase("User 'reader@example.test' is not authorized", "User '(removed)@example.test' is not authorized")]
+        [TestCase("Sending mail to First.Last+tag_2@sub.example.test failed", "Sending mail to (removed)@sub.example.test failed")]
+        [TestCase("Contact first@example.test and second@other.example.test", "Contact (removed)@example.test and (removed)@other.example.test")]
+        [TestCase("Auth-Logout ip 198.51.100.42 username 'reader@example.test'", "Auth-Logout ip 198.*.*.42 username '(removed)@example.test'")]
+        public void should_redact_email_local_parts_without_changing_domains_or_other_context(string message, string expected)
+        {
+            CleanseLogMessage.Cleanse(message).Should().Be(expected);
+        }
     }
 }

@@ -20,6 +20,7 @@ import UpdateSettings from './UpdateSettings';
 const requiresRestartKeys = [
   'bindAddress',
   'port',
+  'trustedNetworks',
   'urlBase',
   'enableSsl',
   'sslPort',
