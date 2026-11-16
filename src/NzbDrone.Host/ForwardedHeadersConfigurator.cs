@@ -29,8 +29,8 @@ namespace NzbDrone.Host
             {
                 if (IPNetworkParser.TryParse(entry, out var address, out var prefixLength))
                 {
-                    // Retain framework loopback trust and use the .NET 6 network API.
-                    options.KnownNetworks.Add(new IPNetwork(address, prefixLength));
+                    // Retain framework loopback trust while adding explicit proxy ranges.
+                    options.KnownIPNetworks.Add(new System.Net.IPNetwork(address, prefixLength));
                     Logger.Info("Trusting forwarded headers from {0}/{1}", address, prefixLength);
                 }
                 else
@@ -42,8 +42,8 @@ namespace NzbDrone.Host
 
         public static IApplicationBuilder UseTrustedForwardedHeaders(this IApplicationBuilder app)
         {
-            // .NET 6 accepts values without a transport peer, and can erase an empty
-            // XFF header when applying only host/scheme. Retain that evidence for auth.
+            // Retain unresolved peer and empty-client-header evidence for auth,
+            // even when the middleware could apply only the forwarded host/scheme.
             return app.UseWhen(context => context.Connection.RemoteIpAddress != null &&
                 (!context.Request.Headers.ContainsKey(ForwardedHeadersDefaults.XForwardedForHeaderName) ||
                  context.Request.Headers.GetCommaSeparatedValues(ForwardedHeadersDefaults.XForwardedForHeaderName)

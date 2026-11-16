@@ -156,8 +156,8 @@ digest. It is a dated dependency snapshot, not a release SBOM or artifact
 reachability claim. The native runtime, OS packages and every embedded codec
 are outside the NuGet inventory scope.
 
-CI installs SDK 10 and the legacy .NET 6 test runtime into one tool root,
-checks both Core/ASP.NET runtime versions, and enforces locked restores before
+CI installs the .NET 10 SDK selected by `global.json`, checks both Core/ASP.NET
+10 runtimes, and enforces locked restores before
 and during build. The test wrapper propagates nonzero runner statuses; six
 isolated fake-runner cases cover ordinary and coverage invocations. Legacy
 `--enable-extra-platforms-in-sdk` fails explicitly rather than modifying an

@@ -397,8 +397,11 @@ namespace NzbDrone.Mono.Disk
                             srcStream.Position = srcInfo.Length - checkLength;
                             dstStream.Position = dstInfo.Length - checkLength;
 
-                            srcStream.Read(srcData, 0, checkLength);
-                            dstStream.Read(dstData, 0, checkLength);
+                            if (srcStream.ReadAtLeast(srcData, checkLength, false) != checkLength ||
+                                dstStream.ReadAtLeast(dstData, checkLength, false) != checkLength)
+                            {
+                                throw;
+                            }
                         }
 
                         for (var i = 0; i < checkLength; i++)

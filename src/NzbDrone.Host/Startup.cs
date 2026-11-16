@@ -186,6 +186,7 @@ namespace NzbDrone.Host
                 .Build();
             });
 
+            services.AddSingleton(TimeProvider.System);
             services.AddAppAuthentication();
         }
 

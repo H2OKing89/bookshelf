@@ -30,7 +30,7 @@ namespace NzbDrone.Integration.Test.Authentication
         private static readonly DateTimeOffset Now = new DateTimeOffset(2026, 11, 15, 12, 0, 0, TimeSpan.Zero);
         private Mock<AppAuthenticationService> _authentication;
         private Mock<AspNetAuthenticationService> _cookies;
-        private Mock<ISystemClock> _clock;
+        private Mock<TimeProvider> _clock;
         private DefaultHttpContext _context;
 
         [SetUp]
@@ -38,8 +38,8 @@ namespace NzbDrone.Integration.Test.Authentication
         {
             _authentication = new Mock<AppAuthenticationService>();
             _cookies = new Mock<AspNetAuthenticationService>();
-            _clock = new Mock<ISystemClock>();
-            _clock.SetupGet(clock => clock.UtcNow).Returns(Now);
+            _clock = new Mock<TimeProvider>();
+            _clock.Setup(clock => clock.GetUtcNow()).Returns(Now);
             _context = CreateContext();
             Mocker.GetMock<IConfigFileProvider>().SetupGet(config => config.UrlBase).Returns("/bookshelf");
         }
@@ -152,7 +152,7 @@ namespace NzbDrone.Integration.Test.Authentication
             _context.Response.StatusCode.Should().Be(401);
             _context.Response.Headers["Retry-After"].ToString().Should().Be("91");
             _context.Response.Headers["WWW-Authenticate"].ToString().Should().StartWith("Basic realm=\"");
-            _clock.SetupGet(clock => clock.UtcNow).Returns(Now.AddSeconds(30));
+            _clock.Setup(clock => clock.GetUtcNow()).Returns(Now.AddSeconds(30));
             var laterContext = CreateContext();
             var later = await CreateBasicHandler(laterContext);
 
@@ -211,13 +211,12 @@ namespace NzbDrone.Integration.Test.Authentication
         private async Task<BasicAuthenticationHandler> CreateBasicHandler(HttpContext context)
         {
             var options = new Mock<IOptionsMonitor<AuthenticationSchemeOptions>>();
-            options.Setup(monitor => monitor.Get("Basic")).Returns(new AuthenticationSchemeOptions());
+            options.Setup(monitor => monitor.Get("Basic")).Returns(new AuthenticationSchemeOptions { TimeProvider = _clock.Object });
             var handler = new BasicAuthenticationHandler(
                 _authentication.Object,
                 options.Object,
                 NullLoggerFactory.Instance,
-                UrlEncoder.Default,
-                _clock.Object);
+                UrlEncoder.Default);
             await handler.InitializeAsync(new AuthenticationScheme("Basic", null, typeof(BasicAuthenticationHandler)), context);
             return handler;
         }

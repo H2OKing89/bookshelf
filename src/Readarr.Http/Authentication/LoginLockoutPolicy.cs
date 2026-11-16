@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Microsoft.AspNetCore.Authentication;
 using NzbDrone.Core.Authentication;
 
 namespace Readarr.Http.Authentication
@@ -33,12 +32,12 @@ namespace Readarr.Http.Authentication
         private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(5);
         private readonly object _entriesGate = new object();
         private readonly Dictionary<string, AttemptState> _entries = new Dictionary<string, AttemptState>(StringComparer.Ordinal);
-        private readonly ISystemClock _clock;
+        private readonly TimeProvider _timeProvider;
         private DateTime? _capacityLockedUntilUtc;
 
-        public LoginLockoutPolicy(ISystemClock clock)
+        public LoginLockoutPolicy(TimeProvider timeProvider)
         {
-            _clock = clock;
+            _timeProvider = timeProvider;
         }
 
         public LoginAttemptResult Authenticate(string clientAddress, Func<User> authenticate)
@@ -56,7 +55,7 @@ namespace Readarr.Http.Authentication
                 // for the same address and let parallel attempts bypass the limit.
                 lock (state.Gate)
                 {
-                    var now = _clock.UtcNow.UtcDateTime;
+                    var now = _timeProvider.GetUtcNow().UtcDateTime;
                     ResetExpired(state, now);
                     if (state.LockedUntilUtc > now)
                     {
@@ -72,7 +71,7 @@ namespace Readarr.Http.Authentication
                         return new LoginAttemptResult(user, false);
                     }
 
-                    now = _clock.UtcNow.UtcDateTime;
+                    now = _timeProvider.GetUtcNow().UtcDateTime;
                     state.FailedAttempts++;
                     var expires = now + LockoutDuration;
                     if (state.FailedAttempts >= MaximumFailedAttempts)
@@ -105,7 +104,7 @@ namespace Readarr.Http.Authentication
             {
                 lock (state.Gate)
                 {
-                    var now = _clock.UtcNow.UtcDateTime;
+                    var now = _timeProvider.GetUtcNow().UtcDateTime;
                     ResetExpired(state, now);
                     return state.LockedUntilUtc > now ? state.LockedUntilUtc : null;
                 }
@@ -120,7 +119,7 @@ namespace Readarr.Http.Authentication
         {
             lock (_entriesGate)
             {
-                var now = _clock.UtcNow.UtcDateTime;
+                var now = _timeProvider.GetUtcNow().UtcDateTime;
                 foreach (var key in _entries.Where(pair => pair.Value.Users == 0 && Volatile.Read(ref pair.Value.ExpiresAtTicks) <= now.Ticks)
                     .Select(pair => pair.Key).ToArray())
                 {
@@ -164,7 +163,7 @@ namespace Readarr.Http.Authentication
             lock (_entriesGate)
             {
                 state.Users--;
-                if (state.Users == 0 && (state.FailedAttempts == 0 || Volatile.Read(ref state.ExpiresAtTicks) <= _clock.UtcNow.UtcDateTime.Ticks))
+                if (state.Users == 0 && (state.FailedAttempts == 0 || Volatile.Read(ref state.ExpiresAtTicks) <= _timeProvider.GetUtcNow().UtcDateTime.Ticks))
                 {
                     _entries.Remove(clientAddress);
                     _capacityLockedUntilUtc = null;

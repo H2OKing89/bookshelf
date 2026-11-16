@@ -31,9 +31,8 @@ namespace Readarr.Http.Authentication
         public ApiKeyAuthenticationHandler(IOptionsMonitor<ApiKeyAuthenticationOptions> options,
             ILoggerFactory logger,
             UrlEncoder encoder,
-            ISystemClock clock,
             IConfigFileProvider config)
-            : base(options, logger, encoder, clock)
+            : base(options, logger, encoder)
         {
             _configFileProvider = config;
         }

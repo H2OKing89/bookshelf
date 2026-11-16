@@ -15,10 +15,13 @@ namespace NzbDrone.Core.Instrumentation
 {
     public class DatabaseTarget : TargetWithLayout, IHandle<ApplicationShutdownRequested>
     {
+        private const string TARGET_NAME = "DbLogger";
         private const string INSERT_COMMAND = "INSERT INTO \"Logs\" (\"Message\",\"Time\",\"Logger\",\"Exception\",\"ExceptionType\",\"Level\") " +
                                       "VALUES(@Message,@Time,@Logger,@Exception,@ExceptionType,@Level)";
 
         private readonly IConnectionStringFactory _connectionStringFactory;
+        private LoggingConfiguration _registeredConfiguration;
+        private SlowRunningAsyncTargetWrapper _registeredTarget;
 
         public DatabaseTarget(IConnectionStringFactory connectionStringFactory)
         {
@@ -27,28 +30,69 @@ namespace NzbDrone.Core.Instrumentation
 
         public void Register()
         {
-            var target = new SlowRunningAsyncTargetWrapper(this) { TimeToSleepBetweenBatches = 500 };
+            var configuration = LogManager.Configuration;
+            if (configuration == null)
+            {
+                return;
+            }
 
-            Rule = new LoggingRule("*", LogLevel.Info, target);
+            if (!ReferenceEquals(_registeredConfiguration, configuration))
+            {
+                RemoveRegistration();
+                _registeredConfiguration = configuration;
+                _registeredTarget = new SlowRunningAsyncTargetWrapper(this) { TimeToSleepBetweenBatches = 500 };
+                Rule = new LoggingRule("*", LogLevel.Info, _registeredTarget);
+            }
 
-            LogManager.Configuration.AddTarget("DbLogger", target);
-            LogManager.Configuration.LoggingRules.Add(Rule);
-            LogManager.ConfigurationReloaded += OnLogManagerOnConfigurationReloaded;
+            if (configuration.FindTargetByName(TARGET_NAME) == null)
+            {
+                configuration.AddTarget(TARGET_NAME, _registeredTarget);
+            }
+
+            if (!configuration.LoggingRules.Contains(Rule))
+            {
+                configuration.LoggingRules.Add(Rule);
+            }
+
+            LogManager.ConfigurationChanged -= OnLogManagerOnConfigurationChanged;
+            LogManager.ConfigurationChanged += OnLogManagerOnConfigurationChanged;
             LogManager.ReconfigExistingLoggers();
         }
 
         public void UnRegister()
         {
-            LogManager.ConfigurationReloaded -= OnLogManagerOnConfigurationReloaded;
-            LogManager.Configuration.RemoveTarget("DbLogger");
-            LogManager.Configuration.LoggingRules.Remove(Rule);
+            LogManager.ConfigurationChanged -= OnLogManagerOnConfigurationChanged;
+            var target = _registeredTarget;
+            RemoveRegistration();
             LogManager.ReconfigExistingLoggers();
+            target?.Dispose();
             Dispose();
         }
 
-        private void OnLogManagerOnConfigurationReloaded(object sender, LoggingConfigurationReloadedEventArgs args)
+        private void RemoveRegistration()
         {
-            Register();
+            if (_registeredConfiguration == null)
+            {
+                return;
+            }
+
+            _registeredConfiguration.LoggingRules.Remove(Rule);
+            if (ReferenceEquals(_registeredConfiguration.FindTargetByName(TARGET_NAME), _registeredTarget))
+            {
+                _registeredConfiguration.RemoveTarget(TARGET_NAME);
+            }
+
+            _registeredConfiguration = null;
+            _registeredTarget = null;
+            Rule = null;
+        }
+
+        private void OnLogManagerOnConfigurationChanged(object sender, LoggingConfigurationChangedEventArgs args)
+        {
+            if (args.ActivatedConfiguration != null)
+            {
+                Register();
+            }
         }
 
         public LoggingRule Rule { get; set; }
@@ -148,10 +192,7 @@ namespace NzbDrone.Core.Instrumentation
 
         public void Handle(ApplicationShutdownRequested message)
         {
-            if (LogManager.Configuration != null && LogManager.Configuration.LoggingRules.Contains(Rule))
-            {
-                UnRegister();
-            }
+            UnRegister();
         }
     }
 }

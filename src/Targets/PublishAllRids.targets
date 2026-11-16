@@ -23,7 +23,7 @@
 
       <!-- Transform RuntimeIdentifierForPublish items to project items to pass to MSBuild task -->
       <ProjectToPublish Include="@(Renamed->'$(MSBuildProjectFullPath)')">
-        <AdditionalProperties>RuntimeIdentifier=%(Renamed.Runtime);TargetFramework=%(Renamed.Framework)</AdditionalProperties>
+        <AdditionalProperties>RuntimeIdentifier=%(Renamed.Runtime);TargetFramework=%(Renamed.Framework);SelfContained=$([System.String]::Copy('$(OutputType)').EndsWith('Exe'))</AdditionalProperties>
       </ProjectToPublish>
     </ItemGroup>
 

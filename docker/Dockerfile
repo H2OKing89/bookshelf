@@ -1,4 +1,4 @@
-FROM alpine:3.21 AS mediainfo
+FROM alpine:3.24.4 AS mediainfo
 
 RUN apk add --no-cache bash build-base cmake curl xz
 WORKDIR /src
@@ -7,7 +7,7 @@ COPY scripts/mediainfo-licenses/ scripts/mediainfo-licenses/
 COPY docker/mediainfo.Dockerfile docker/mediainfo.Dockerfile
 RUN scripts/build-mediainfo.sh --output /bundle
 
-FROM ghcr.io/linuxserver/baseimage-alpine:3.21
+FROM ghcr.io/linuxserver/baseimage-alpine:3.24
 
 ARG TARGETPLATFORM
 
@@ -31,15 +31,15 @@ LABEL maintainer="pennydreadful"
 ENV METADATA_URL=${METADATA_URL}
 ENV HARDCOVER=${HARDCOVER}
 
-RUN mkdir -p /app/readarr
+RUN mkdir -p /app/readarr/bin
 
 RUN --mount=type=bind,source=_output,target=_output \
     case "$TARGETPLATFORM" in \
-    "linux/amd64") cp -r /_output/net6.0/linux-musl-x64 /app/readarr/bin ;; \
-    "linux/arm64") cp -r /_output/net6.0/linux-musl-arm64 /app/readarr/bin ;; \
-    "darwin/amd64") cp -r /_output/net6.0/osx-x64 /app/readarr/bin ;; \
-    "darwin/arm64") cp -r /_output/net6.0/osx-arm64 /app/readarr/bin ;; \
-    "windows/amd64") cp -r /_output/net6.0/win-x64 /app/readarr/bin ;; \
+    "linux/amd64") cp -a /_output/net10.0/linux-musl-x64/publish/. /app/readarr/bin/ ;; \
+    "linux/arm64") cp -a /_output/net10.0/linux-musl-arm64/publish/. /app/readarr/bin/ ;; \
+    "darwin/amd64") cp -a /_output/net10.0/osx-x64/publish/. /app/readarr/bin/ ;; \
+    "darwin/arm64") cp -a /_output/net10.0/osx-arm64/publish/. /app/readarr/bin/ ;; \
+    "windows/amd64") cp -a /_output/net10.0/win-x64/publish/. /app/readarr/bin/ ;; \
     *) echo "Unknown platform: $TARGETPLATFORM" && exit 1 ;; \
     esac; \
     cp -r /_output/UI /app/readarr/bin/UI

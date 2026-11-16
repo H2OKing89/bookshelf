@@ -235,7 +235,6 @@ namespace NzbDrone.Integration.Test.Authentication
                 options.Object,
                 _loggerFactory,
                 UrlEncoder.Default,
-                new SystemClock(),
                 Mocker.GetMock<IConfigFileProvider>().Object);
             await handler.InitializeAsync(new AuthenticationScheme(scheme, null, typeof(ApiKeyAuthenticationHandler)), context);
             return handler;

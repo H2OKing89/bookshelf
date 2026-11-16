@@ -296,15 +296,25 @@ namespace NzbDrone.Core.Datastore
             }
             else
             {
-                // Static method
-                // Must be Enumerable.Contains(source, item)
-                if (body.Method.DeclaringType != typeof(Enumerable) || body.Arguments.Count != 2)
+                // C# 14 can bind array.Contains to MemoryExtensions through a span conversion.
+                // SQL cannot preserve a custom equality comparer.
+                if (body.Method.DeclaringType == typeof(MemoryExtensions)
+                    && body.Method.Name == nameof(MemoryExtensions.Contains)
+                    && (body.Arguments.Count is 2 || (body.Arguments.Count is 3 && body.Arguments[2] is ConstantExpression { Value: null }))
+                    && TryUnwrapSpanImplicitCast(body.Arguments[0], out var unwrappedSpanArg))
+                {
+                    list = unwrappedSpanArg;
+                    item = body.Arguments[1];
+                }
+                else if (body.Method.DeclaringType == typeof(Enumerable) && body.Arguments.Count == 2)
+                {
+                    list = body.Arguments[0];
+                    item = body.Arguments[1];
+                }
+                else
                 {
                     throw new NotSupportedException("Unexpected form of Enumerable.Contains");
                 }
-
-                list = body.Arguments[0];
-                item = body.Arguments[1];
             }
 
             _sb.Append('(');

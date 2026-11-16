@@ -139,10 +139,46 @@ namespace NzbDrone.Core.Test.HealthCheck.Checks
             AssertImageWasNotRemoved();
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void should_delete_invalid_headers_when_reads_are_partial_or_the_file_is_truncated(bool truncated)
+        {
+            var imagePath = "C:\\Music\\Book\\image.jpg".AsOsAgnostic();
+            var source = Path.Combine(TempFolder, "header.jpg");
+            File.WriteAllText(source, truncated ? "image" : "<html>not an image");
+            _metadata.First().LastUpdated = new DateTime(2014, 12, 29);
+            _metadata.First().RelativePath = "Book\\image.jpg".AsOsAgnostic();
+            _metadata.First().Type = MetadataType.BookImage;
+            Mocker.GetMock<IDiskProvider>().Setup(provider => provider.OpenReadStream(imagePath))
+                .Returns(new PartialReadFileStream(source, truncated));
+
+            Subject.Clean();
+
+            Mocker.GetMock<IDiskProvider>().Verify(provider => provider.DeleteFile(imagePath), Times.Once());
+            Mocker.GetMock<IMetadataFileService>().Verify(service => service.Delete(_metadata.First().Id), Times.Once());
+        }
+
         private void AssertImageWasNotRemoved()
         {
             Mocker.GetMock<IDiskProvider>().Verify(c => c.DeleteFile(It.IsAny<string>()), Times.Never());
             Mocker.GetMock<IMetadataFileService>().Verify(c => c.Delete(It.IsAny<int>()), Times.Never());
+        }
+
+        private sealed class PartialReadFileStream : FileStream
+        {
+            private readonly bool _reportLongerLength;
+
+            public PartialReadFileStream(string path, bool reportLongerLength)
+                : base(path, FileMode.Open, FileAccess.Read)
+            {
+                _reportLongerLength = reportLongerLength;
+            }
+
+            public override long Length => _reportLongerLength ? base.Length + 10 : base.Length;
+
+            public override int Read(byte[] buffer, int offset, int count) => base.Read(buffer, offset, Math.Min(2, count));
+
+            public override int Read(Span<byte> buffer) => base.Read(buffer.Slice(0, Math.Min(2, buffer.Length)));
         }
     }
 }

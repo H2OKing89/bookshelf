@@ -1,13 +1,13 @@
 [tools]
-# Build SDK baseline matches global.json; the application still targets net6.0.
-dotnet = "10.0.403"
+# Build SDK baseline matches global.json.
+dotnet = "10.0.404"
 node = "20.19.4"
 
 [env]
 DOTNET_CLI_TELEMETRY_OPTOUT = "1"
 TESTSFOLDER = "_tests"
 OUTPUTFOLDER = "_output"
-TEST_DIR ="./_tests/net6.0/linux-x64"
+TEST_DIR ="./_tests/net10.0/linux-x64"
 
 [settings]
 experimental = true

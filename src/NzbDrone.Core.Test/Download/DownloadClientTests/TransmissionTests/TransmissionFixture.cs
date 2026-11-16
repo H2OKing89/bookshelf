@@ -289,24 +289,39 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.TransmissionTests
             item.RemainingTime.Should().NotHaveValue();
         }
 
+        [TestCase(0L)]
         [TestCase(2147483648)] // 2038-01-19T03:14:08Z > int.MaxValue as unix timestamp can be either an int or a long
+        [TestCase(long.MaxValue / TimeSpan.TicksPerSecond)]
         public void should_support_long_values_for_eta_in_seconds(long eta)
         {
             _downloading.Eta = eta;
 
             PrepareClientToReturnDownloadingItem();
             var item = Subject.GetItems().Single();
-            item.RemainingTime.Should().Be(TimeSpan.FromSeconds(eta));
+            item.RemainingTime.Should().Be(TimeSpan.FromTicks(eta * TimeSpan.TicksPerSecond));
         }
 
         [TestCase(2147483648000)] // works with milliseconds format too
+        [TestCase((long.MaxValue / TimeSpan.TicksPerSecond) + 1)]
+        [TestCase(long.MaxValue / TimeSpan.TicksPerMillisecond)]
         public void should_support_long_values_for_eta_in_milliseconds(long eta)
         {
             _downloading.Eta = eta;
 
             PrepareClientToReturnDownloadingItem();
             var item = Subject.GetItems().Single();
-            item.RemainingTime.Should().Be(TimeSpan.FromMilliseconds(eta));
+            item.RemainingTime.Should().Be(TimeSpan.FromTicks(eta * TimeSpan.TicksPerMillisecond));
+        }
+
+        [TestCase((long.MaxValue / TimeSpan.TicksPerMillisecond) + 1)]
+        [TestCase(long.MaxValue)]
+        public void should_ignore_unrepresentable_eta(long eta)
+        {
+            _downloading.Eta = eta;
+
+            PrepareClientToReturnDownloadingItem();
+            var item = Subject.GetItems().Single();
+            item.RemainingTime.Should().NotHaveValue();
         }
 
         [Test]

@@ -1,7 +1,10 @@
 using System;
+using System.Linq;
 using System.Threading;
 using FluentAssertions;
 using NLog;
+using NLog.Config;
+using NLog.Targets;
 using NUnit.Framework;
 using NzbDrone.Common.Instrumentation;
 using NzbDrone.Core.Datastore.Migration.Framework;
@@ -13,6 +16,7 @@ using NzbDrone.Test.Common;
 namespace NzbDrone.Core.Test.Instrumentation
 {
     [TestFixture]
+    [NonParallelizable]
     public class DatabaseTargetFixture : DbTest<DatabaseTarget, Log>
     {
         private static string _uniqueMessage;
@@ -113,10 +117,133 @@ namespace NzbDrone.Core.Test.Instrumentation
             epFile.Path.Should().BeNull();
         }
 
+        [Test]
+        public void replacing_configuration_repeatedly_should_register_one_database_target_and_preserve_cleansing()
+        {
+            var original = LogManager.Configuration;
+            var first = new LoggingConfiguration();
+            var second = new LoggingConfiguration();
+            try
+            {
+                var iteration = 0;
+                foreach (var configuration in new[] { first, original, second, first, original })
+                {
+                    var previous = LogManager.Configuration;
+                    LogManager.Configuration = configuration;
+                    ShouldHaveNoDatabaseRule(previous);
+                    previous.FindTargetByName("DbLogger").Should().BeNull();
+                    ShouldHaveOneDatabaseRule(configuration);
+
+                    var target = configuration.FindTargetByName("DbLogger");
+                    var rule = Subject.Rule;
+                    Subject.Register();
+                    Subject.Register();
+                    configuration.FindTargetByName("DbLogger").Should().BeSameAs(target);
+                    Subject.Rule.Should().BeSameAs(rule);
+                    ShouldHaveOneDatabaseRule(configuration);
+
+                    var message = _uniqueMessage + " reload " + iteration++;
+                    _logger.Info("{0} ?apikey=synthetic-reload-secret", message);
+                    LogManager.Flush(TimeSpan.FromSeconds(5));
+
+                    AllStoredModels.Where(log => log.Message.StartsWith(message, StringComparison.Ordinal))
+                        .Should().ContainSingle().Which.Message.Should().Be(message + " ?apikey=(removed)");
+                }
+            }
+            finally
+            {
+                LogManager.Configuration = original;
+            }
+        }
+
+        [Test]
+        public void unregister_should_remove_owned_rules_from_all_visited_configurations_and_stop_reregistration()
+        {
+            var original = LogManager.Configuration;
+            var first = new LoggingConfiguration();
+            var second = new LoggingConfiguration();
+            try
+            {
+                LogManager.Configuration = first;
+                LogManager.Configuration = original;
+                LogManager.Configuration = second;
+                Subject.UnRegister();
+                Subject.UnRegister();
+
+                foreach (var configuration in new[] { original, first, second })
+                {
+                    ShouldHaveNoDatabaseRule(configuration);
+                    configuration.FindTargetByName("DbLogger").Should().BeNull();
+                }
+
+                LogManager.Configuration = first;
+                ShouldHaveNoDatabaseRule(first);
+                first.FindTargetByName("DbLogger").Should().BeNull();
+            }
+            finally
+            {
+                LogManager.Configuration = original;
+            }
+        }
+
+        [Test]
+        public void unregister_should_preserve_an_unrelated_target_with_the_database_alias()
+        {
+            var original = LogManager.Configuration;
+            var configuration = new LoggingConfiguration();
+            var unrelatedTarget = new MemoryTarget();
+            var unrelatedRule = new LoggingRule("*", LogLevel.Info, unrelatedTarget);
+            configuration.AddTarget("DbLogger", unrelatedTarget);
+            configuration.LoggingRules.Add(unrelatedRule);
+
+            try
+            {
+                LogManager.Configuration = configuration;
+                Subject.Register();
+                configuration.FindTargetByName("DbLogger").Should().BeSameAs(unrelatedTarget);
+                ShouldHaveOneDatabaseRule(configuration);
+
+                _logger.Info("{0} ?apikey=synthetic-reload-secret", _uniqueMessage);
+                LogManager.Flush(TimeSpan.FromSeconds(5));
+                StoredModel.Message.Should().Be(_uniqueMessage + " ?apikey=(removed)");
+
+                Subject.UnRegister();
+                ShouldHaveNoDatabaseRule(configuration);
+                configuration.FindTargetByName("DbLogger").Should().BeSameAs(unrelatedTarget);
+                configuration.LoggingRules.Should().ContainSingle().Which.Should().BeSameAs(unrelatedRule);
+
+                _logger.Info("{0} after unregister", _uniqueMessage);
+                LogManager.Flush(TimeSpan.FromSeconds(5));
+                unrelatedTarget.Logs.Should().ContainSingle(message => message.Contains(_uniqueMessage + " after unregister"));
+                AllStoredModels.Should().ContainSingle();
+            }
+            finally
+            {
+                LogManager.Configuration = original;
+            }
+        }
+
         [TearDown]
         public void Teardown()
         {
             Mocker.Resolve<DatabaseTarget>().UnRegister();
+        }
+
+        private void ShouldHaveOneDatabaseRule(LoggingConfiguration configuration)
+        {
+            var target = configuration.LoggingRules.SelectMany(rule => rule.Targets)
+                .OfType<SlowRunningAsyncTargetWrapper>()
+                .Where(wrapper => ReferenceEquals(wrapper.WrappedTarget, Subject))
+                .Should().ContainSingle().Which;
+            configuration.AllTargets.Count(candidate => ReferenceEquals(candidate, target)).Should().Be(1);
+            configuration.LoggingRules.Count(rule => ReferenceEquals(rule, Subject.Rule)).Should().Be(1);
+        }
+
+        private void ShouldHaveNoDatabaseRule(LoggingConfiguration configuration)
+        {
+            configuration.LoggingRules.SelectMany(rule => rule.Targets)
+                .OfType<SlowRunningAsyncTargetWrapper>()
+                .Should().NotContain(wrapper => ReferenceEquals(wrapper.WrappedTarget, Subject));
         }
 
         private void VerifyLog(Log logItem, LogLevel level)

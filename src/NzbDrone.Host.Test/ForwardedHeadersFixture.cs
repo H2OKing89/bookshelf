@@ -53,9 +53,9 @@ namespace NzbDrone.App.Test
                 options.ForwardedHeaders.Should().Be(ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost);
                 options.ForwardLimit.Should().BeNull();
                 options.KnownProxies.Should().Contain(IPAddress.IPv6Loopback);
-                options.KnownNetworks.Should().Contain(network => network.Contains(IPAddress.Parse("127.0.0.1")));
-                options.KnownNetworks.Should().Contain(network => network.Contains(IPAddress.Parse("192.0.2.20")));
-                options.KnownNetworks.Should().NotContain(network => network.Contains(IPAddress.Parse("192.0.2.21")));
+                options.KnownIPNetworks.Should().Contain(network => network.Contains(IPAddress.Parse("127.0.0.1")));
+                options.KnownIPNetworks.Should().Contain(network => network.Contains(IPAddress.Parse("192.0.2.20")));
+                options.KnownIPNetworks.Should().NotContain(network => network.Contains(IPAddress.Parse("192.0.2.21")));
             }
         }
 
@@ -66,10 +66,10 @@ namespace NzbDrone.App.Test
 
             ForwardedHeadersConfigurator.Configure(options, Config("bad, 192.0.2.20, 192.0.2.5/24").Object);
 
-            options.KnownNetworks.Should().Contain(network => network.Contains(IPAddress.Loopback));
+            options.KnownIPNetworks.Should().Contain(network => network.Contains(IPAddress.Loopback));
             options.KnownProxies.Should().Contain(IPAddress.IPv6Loopback);
-            options.KnownNetworks.Should().Contain(network => network.Contains(IPAddress.Parse("192.0.2.20")));
-            options.KnownNetworks.Should().NotContain(network => network.Contains(IPAddress.Parse("192.0.2.5")));
+            options.KnownIPNetworks.Should().Contain(network => network.Contains(IPAddress.Parse("192.0.2.20")));
+            options.KnownIPNetworks.Should().NotContain(network => network.Contains(IPAddress.Parse("192.0.2.5")));
             ExceptionVerification.ExpectedWarns(2);
         }
 

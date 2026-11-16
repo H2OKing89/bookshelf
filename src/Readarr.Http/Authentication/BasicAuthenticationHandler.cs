@@ -21,9 +21,8 @@ namespace Readarr.Http.Authentication
         public BasicAuthenticationHandler(IAuthenticationService authService,
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
-            UrlEncoder encoder,
-            ISystemClock clock)
-            : base(options, logger, encoder, clock)
+            UrlEncoder encoder)
+            : base(options, logger, encoder)
         {
             _authService = authService;
         }
@@ -86,11 +85,11 @@ namespace Readarr.Http.Authentication
 
         protected override Task HandleChallengeAsync(AuthenticationProperties properties)
         {
-            Response.Headers.Add("WWW-Authenticate", $"Basic realm=\"{BuildInfo.AppName}\"");
+            Response.Headers.WWWAuthenticate = $"Basic realm=\"{BuildInfo.AppName}\"";
             var lockoutEnd = _authService.GetLockoutEndTime(Request);
             if (lockoutEnd.HasValue)
             {
-                var seconds = Math.Max(1, Math.Ceiling((lockoutEnd.Value.ToUniversalTime() - Clock.UtcNow.UtcDateTime).TotalSeconds));
+                var seconds = Math.Max(1, Math.Ceiling((lockoutEnd.Value.ToUniversalTime() - TimeProvider.GetUtcNow().UtcDateTime).TotalSeconds));
                 Response.Headers["Retry-After"] = seconds.ToString(CultureInfo.InvariantCulture);
             }
 

@@ -175,6 +175,47 @@ namespace NzbDrone.Core.Test.Datastore
         }
 
         [Test]
+        public void where_in_integer_array()
+        {
+            var allowed = new[] { 1, 2, 3 };
+            _subject = Where(x => allowed.Contains(x.Id));
+
+            _subject.ToString().Should().Be("(\"Authors\".\"Id\" IN (1, 2, 3))");
+            _subject.Parameters.ParameterNames.Should().BeEmpty();
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void where_in_string_array(bool explicitEnumerable)
+        {
+            var allowed = new[] { "first", "second", "third" };
+            _subject = explicitEnumerable
+                ? Where(x => Enumerable.Contains(allowed, x.CleanName))
+                : Where(x => allowed.Contains(x.CleanName));
+
+            _subject.ToString().Should().Be("(\"Authors\".\"CleanName\" IN @Clause1_P1)");
+            _subject.Parameters.Get<string[]>("Clause1_P1").Should().Equal(allowed);
+        }
+
+        [Test]
+        public void where_in_array_with_null_comparer()
+        {
+            var allowed = new[] { "first", "second", "third" };
+            _subject = Where(x => allowed.Contains(x.CleanName, null));
+
+            _subject.ToString().Should().Be("(\"Authors\".\"CleanName\" IN @Clause1_P1)");
+            _subject.Parameters.Get<string[]>("Clause1_P1").Should().Equal(allowed);
+        }
+
+        [Test]
+        public void should_reject_contains_with_custom_comparer()
+        {
+            var allowed = new[] { "first", "second", "third" };
+
+            Assert.Throws<NotSupportedException>(() => Where(x => allowed.Contains(x.CleanName, StringComparer.OrdinalIgnoreCase)));
+        }
+
+        [Test]
         public void enum_as_int()
         {
             _subject = WhereMetadata(x => x.Status == AuthorStatusType.Continuing);
@@ -198,6 +239,7 @@ namespace NzbDrone.Core.Test.Datastore
             _subject = WhereMetadata(x => allowed.Contains(x.Status));
 
             _subject.ToString().Should().Be($"(\"AuthorMetadata\".\"Status\" IN @Clause1_P1)");
+            _subject.Parameters.Get<AuthorStatusType[]>("Clause1_P1").Should().Equal(allowed);
         }
     }
 }

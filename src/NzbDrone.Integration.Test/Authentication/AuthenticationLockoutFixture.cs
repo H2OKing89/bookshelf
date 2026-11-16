@@ -1,7 +1,6 @@
 using System;
 using System.Net;
 using FluentAssertions;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Moq;
 using NUnit.Framework;
@@ -30,7 +29,7 @@ namespace NzbDrone.Integration.Test.Authentication
             _user = new User { Id = 7, Identifier = Guid.NewGuid(), Username = "reader" };
             _users.Setup(service => service.FindUser(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns<string, string>((username, password) => password == "correct password" ? _user : null);
-            _policy = new LoginLockoutPolicy(new SystemClock());
+            _policy = new LoginLockoutPolicy(TimeProvider.System);
         }
 
         [TestCase(AuthenticationType.Forms)]

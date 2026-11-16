@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using DryIoc;
 using FluentAssertions;
-using Microsoft.AspNetCore.Authentication;
 using NUnit.Framework;
 using NzbDrone.Common.Composition.Extensions;
 using NzbDrone.Core.Authentication;
@@ -18,13 +17,13 @@ namespace NzbDrone.Integration.Test.Authentication
     public class LoginLockoutPolicyFixture : TestBase
     {
         private const string Address = "192.0.2.1";
-        private TestClock _clock;
+        private TestTimeProvider _clock;
         private LoginLockoutPolicy _policy;
 
         [SetUp]
         public void Setup()
         {
-            _clock = new TestClock();
+            _clock = new TestTimeProvider();
             _policy = new LoginLockoutPolicy(_clock);
         }
 
@@ -283,7 +282,7 @@ namespace NzbDrone.Integration.Test.Authentication
         {
             using var container = new Container(rules => rules.WithNzbDroneRules())
                 .AutoAddServices(new List<string> { "Readarr.Http" });
-            container.RegisterInstance<ISystemClock>(_clock);
+            container.RegisterInstance<TimeProvider>(_clock);
             using var firstScope = container.OpenScope();
             using var secondScope = container.OpenScope();
             var first = firstScope.Resolve<ILoginLockoutPolicy>();
@@ -316,9 +315,11 @@ namespace NzbDrone.Integration.Test.Authentication
 
         private static string Source(int index) => $"198.18.{index / 256}.{index % 256}";
 
-        private sealed class TestClock : ISystemClock
+        private sealed class TestTimeProvider : TimeProvider
         {
             public DateTimeOffset UtcNow { get; private set; } = new DateTimeOffset(2026, 11, 15, 12, 0, 0, TimeSpan.Zero);
+
+            public override DateTimeOffset GetUtcNow() => UtcNow;
 
             public void Advance(TimeSpan amount)
             {

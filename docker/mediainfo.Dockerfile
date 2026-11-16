@@ -1,4 +1,4 @@
-FROM alpine:3.21 AS build
+FROM alpine:3.24.4 AS build
 
 RUN apk add --no-cache bash build-base cmake curl xz
 WORKDIR /src

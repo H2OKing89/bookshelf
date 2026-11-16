@@ -31,7 +31,7 @@ The application runtime `linux-x64` uses the same fully static `linux-musl-x64` 
 
 Then use the usual `dotnet build` or `dotnet test` command. MSBuild copies the prepared helper bundle into application and test output directories. Bundles are cached under `_cache/mediainfo/bundles/linux-musl-x64/` and `_cache/mediainfo/bundles/linux-musl-arm64/`; binaries and downloaded sources are not committed. Cache reuse verifies all bundle checksums and the build recipe identity. Set `MEDIAINFO_BUILD_JOBS` to control compiler parallelism (default: 4).
 
-`./build.sh --backend --runtime linux-x64 --framework net6.0` prepares the matching helper bundle before compiling and publishing Bookshelf. Without a runtime argument, the build prepares all three supported application runtimes: `linux-x64`, `linux-musl-x64`, and `linux-musl-arm64`, sharing the x64 helper between the first two. Cross-building the helpers requires Docker Buildx and a matching native builder or QEMU support for ARM64. The script rejects unsupported runtime identifiers.
+`./build.sh --backend --runtime linux-x64 --framework net10.0` prepares the matching helper bundle before compiling and publishing Bookshelf. Without a runtime argument, the build prepares all three supported application runtimes: `linux-x64`, `linux-musl-x64`, and `linux-musl-arm64`, sharing the x64 helper between the first two. Cross-building the helpers requires Docker Buildx and a matching native builder or QEMU support for ARM64. The script rejects unsupported runtime identifiers.
 
 An existing cached bundle can also be copied to an isolated development runtime:
 

@@ -18,9 +18,9 @@ narrators, and ASINs, with two optional audiobook presets. See
 
 ## Run locally
 
-Use the build SDK selected by [global.json](global.json) (10.0.403 baseline).
-The application still targets .NET 6; updating the SDK does not upgrade its
-packaged runtime. See the [dependency audit](docs/dependency-audit.md) for
+Use the .NET 10 SDK selected by [global.json](global.json) (10.0.404 baseline).
+The application targets .NET 10, with runtime 10.0.15 bundled in self-contained
+release packages. See the [dependency audit](docs/dependency-audit.md) for
 package updates, native requirements and remaining release gates.
 
 The server listens on port 8787. Build the frontend with `yarn build` and the

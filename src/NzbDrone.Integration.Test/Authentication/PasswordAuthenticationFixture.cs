@@ -161,7 +161,7 @@ namespace NzbDrone.Integration.Test.Authentication
                 Mocker.GetMock<IAppFolderInfo>().Object,
                 Mocker.GetMock<IDiskProvider>().Object);
 
-            return new ReadarrAuthenticationService(config.Object, users, new LoginLockoutPolicy(new SystemClock()));
+            return new ReadarrAuthenticationService(config.Object, users, new LoginLockoutPolicy(TimeProvider.System));
         }
 
         private AuthenticationController CreateFormsController(HttpContext context)
@@ -189,8 +189,7 @@ namespace NzbDrone.Integration.Test.Authentication
                 CreateAuthenticationService(AuthenticationType.Basic),
                 options.Object,
                 NullLoggerFactory.Instance,
-                UrlEncoder.Default,
-                new SystemClock());
+                UrlEncoder.Default);
             await handler.InitializeAsync(new AuthenticationScheme("Basic", null, typeof(BasicAuthenticationHandler)), context);
 
             return await handler.AuthenticateAsync();

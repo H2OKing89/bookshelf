@@ -27,7 +27,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      # mise owns Node; setup-dotnet installs both .NET versions into one root.
+      # mise owns Node; setup-dotnet installs the SDK selected by global.json.
       MISE_ENABLE_TOOLS: node
       RestoreLockedMode: 'true'
     steps:
@@ -39,12 +39,10 @@ jobs:
         with:
           install_args: node
 
-      - name: Set up build SDK and legacy test runtime
+      - name: Set up build SDK and runtime
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
-          # SDK 6 supplies runtime 6.0.36; global.json still selects SDK 10.
-          dotnet-version: '6.0.428'
         env:
           DOTNET_INSTALL_DIR: ${{ runner.temp }}/bookshelf-dotnet
 
@@ -54,8 +52,8 @@ jobs:
         run: |
           echo "SDK_PATH=$DOTNET_ROOT/sdk/$(dotnet --version)" >> "$GITHUB_ENV"
           echo "DATE=$(date --rfc-3339=date)" >> "$GITHUB_ENV"
-          dotnet --list-runtimes | grep -F 'Microsoft.NETCore.App 6.0.36 '
-          dotnet --list-runtimes | grep -F 'Microsoft.AspNetCore.App 6.0.36 '
+          dotnet --list-runtimes | grep -F 'Microsoft.NETCore.App 10.0.'
+          dotnet --list-runtimes | grep -F 'Microsoft.AspNetCore.App 10.0.'
 
       - name: Cache NuGet packages
         uses: actions/cache@v4
@@ -124,7 +122,7 @@ jobs:
       - name: Prepare tests
         run: |
           mkdir -p _tests/bin
-          cp _output/net6.0/linux-x64/publish/Readarr _tests/bin/
+          cp _output/net10.0/linux-x64/publish/Readarr _tests/bin/
           chmod +x _tests/bin/Readarr
           find _tests -name "Readarr.Test.Dummy" -exec chmod a+x {} \;
 

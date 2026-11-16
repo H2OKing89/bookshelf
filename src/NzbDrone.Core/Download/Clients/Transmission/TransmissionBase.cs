@@ -76,12 +76,13 @@ namespace NzbDrone.Core.Download.Clients.Transmission
 
                 if (torrent.Eta >= 0)
                 {
-                    try
+                    if (torrent.Eta <= TimeSpan.MaxValue.Ticks / TimeSpan.TicksPerSecond)
                     {
                         item.RemainingTime = TimeSpan.FromSeconds(torrent.Eta);
                     }
-                    catch (OverflowException)
+                    else if (torrent.Eta <= TimeSpan.MaxValue.Ticks / TimeSpan.TicksPerMillisecond)
                     {
+                        // Preserve support for clients reporting very large ETAs in milliseconds.
                         item.RemainingTime = TimeSpan.FromMilliseconds(torrent.Eta);
                     }
                 }
