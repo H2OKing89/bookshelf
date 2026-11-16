@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
@@ -34,19 +35,33 @@ namespace Readarr.Http.Authentication
                 return Task.FromResult(AuthenticateResult.Fail("Authorization header missing."));
             }
 
-            // Get authorization key
             var authorizationHeader = Request.Headers["Authorization"].ToString();
-            var authHeaderRegex = new Regex(@"Basic (.*)");
-
-            if (!authHeaderRegex.IsMatch(authorizationHeader))
+            if (authorizationHeader.Length > 8192 ||
+                !AuthenticationHeaderValue.TryParse(authorizationHeader, out var header) ||
+                !string.Equals(header.Scheme, "Basic", StringComparison.OrdinalIgnoreCase) ||
+                string.IsNullOrWhiteSpace(header.Parameter))
             {
                 return Task.FromResult(AuthenticateResult.Fail("Authorization code not formatted properly."));
             }
 
-            var authBase64 = Encoding.UTF8.GetString(Convert.FromBase64String(authHeaderRegex.Replace(authorizationHeader, "$1")));
-            var authSplit = authBase64.Split(':', 2);
-            var authUsername = authSplit[0];
-            var authPassword = authSplit.Length > 1 ? authSplit[1] : throw new Exception("Unable to get password");
+            string credentials;
+            try
+            {
+                credentials = new UTF8Encoding(false, true).GetString(Convert.FromBase64String(header.Parameter));
+            }
+            catch (Exception e) when (e is FormatException || e is DecoderFallbackException)
+            {
+                return Task.FromResult(AuthenticateResult.Fail("Authorization code not formatted properly."));
+            }
+
+            var separator = credentials.IndexOf(':');
+            if (separator < 0)
+            {
+                return Task.FromResult(AuthenticateResult.Fail("Authorization code not formatted properly."));
+            }
+
+            var authUsername = credentials.Substring(0, separator);
+            var authPassword = credentials.Substring(separator + 1);
 
             var user = _authService.Login(Request, authUsername, authPassword);
 
@@ -72,6 +87,13 @@ namespace Readarr.Http.Authentication
         protected override Task HandleChallengeAsync(AuthenticationProperties properties)
         {
             Response.Headers.Add("WWW-Authenticate", $"Basic realm=\"{BuildInfo.AppName}\"");
+            var lockoutEnd = _authService.GetLockoutEndTime(Request);
+            if (lockoutEnd.HasValue)
+            {
+                var seconds = Math.Max(1, Math.Ceiling((lockoutEnd.Value.ToUniversalTime() - Clock.UtcNow.UtcDateTime).TotalSeconds));
+                Response.Headers["Retry-After"] = seconds.ToString(CultureInfo.InvariantCulture);
+            }
+
             Response.StatusCode = 401;
             return Task.CompletedTask;
         }

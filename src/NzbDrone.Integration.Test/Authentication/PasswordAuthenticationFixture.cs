@@ -71,7 +71,7 @@ namespace NzbDrone.Integration.Test.Authentication
 
             var result = await controller.Login(new LoginResource { Username = "Reader", Password = "wrong password" }, "/books");
 
-            result.Should().BeOfType<RedirectResult>().Subject.Url.Should().Be("~/login?returnUrl=/books&loginFailed=true");
+            result.Should().BeOfType<RedirectResult>().Subject.Url.Should().Be("~/login?returnUrl=%2Fbooks&loginFailed=true");
             cookies.Verify(
                 service => service.SignInAsync(
                     It.IsAny<HttpContext>(),
@@ -161,7 +161,7 @@ namespace NzbDrone.Integration.Test.Authentication
                 Mocker.GetMock<IAppFolderInfo>().Object,
                 Mocker.GetMock<IDiskProvider>().Object);
 
-            return new ReadarrAuthenticationService(config.Object, users);
+            return new ReadarrAuthenticationService(config.Object, users, new LoginLockoutPolicy(new SystemClock()));
         }
 
         private AuthenticationController CreateFormsController(HttpContext context)

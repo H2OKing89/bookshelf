@@ -272,7 +272,8 @@ the configuration file and user database.
 
 That batch is followed by **P03**, the proxy/auth boundary unit recorded below.
 P03 was followed by **P05**, current API-key validation, then P06 and P07,
-recorded below. The next code item is **P08**, bounded login-attempt lockout.
+recorded below and followed by P08. The next code item is **P09**, beginning
+with runtime-independent dependency security updates.
 P25 and supported runtime work follow the agreed phase order; D03/D04/D05 remain
 near the front of the acquisition queue. This does not require the entire UI rewrite.
 
@@ -415,7 +416,38 @@ Recovery covers synchronous failures on local application-owned files. It does
 not make multi-file restoration power-loss atomic or automatically undo a later
 migration failure; retained recovery copies support manual recovery. No live
 development or production home, backup, credentials or media was changed.
-P09 remains the deployment blocker; the next code item is **P08**.
+P09 remains the deployment blocker; this batch was followed by **P08**.
+
+### 2026-11-15 bounded password login lockout
+
+P08 is **Verified** locally, following foundation commit `a80a97d6c`. Five failed
+Forms/Basic password checks from a resolved client address cause a five-minute
+lockout. Attempts during lockout skip password verification and do not extend
+it. Success clears failures; inactive failure sequences expire. Per-source
+serialization and pinned entries close concurrent counter races without holding
+a global lock while hashing. Tracking is capped at 4,096 addresses; at capacity,
+new sources fail closed until space opens, preserving active tracked lockouts.
+Counters are in memory and reset on restart. Existing API keys, cookies, None
+and External behavior remain available.
+
+Forms feedback uses an encoded UTC `lockedUntil` timestamp and independently
+encoded return URL. The login page announces lockout and re-enables submission
+at expiry, including after browser history restoration. Basic remains HTTP 401
+with `Retry-After`; malformed headers fail safely. P03's trusted-proxy resolution
+attributes failures, with no use of raw forwarded addresses. The
+[P08 record](sonarr-v5-porting-backlog.md#p08) links implementation and fixtures.
+
+Validation passed **225 authentication/API tests**, **39 frontend tests**,
+**50 packaged checks**, and **nine isolated Chromium checks** of built login HTML.
+These include trusted-proxy client separation, spoofed forwarded headers,
+Forms/Basic behavior, unchanged API access, capacity/concurrency and clock-based
+expiry, plus phone keyboard/status/history behavior. Production frontend build
+and self-contained linux-x64 publish passed. All owned processes were stopped;
+no running development/production server, home, key or media was changed.
+
+P09 is next. Its security-compatible dependency slice can proceed on the current
+runtime; broader framework/database/native upgrades retain their P01/P12/P13
+requirements. Existing dependency advisories continue to block deployment.
 
 ### Dependency advisory deployment blocker
 

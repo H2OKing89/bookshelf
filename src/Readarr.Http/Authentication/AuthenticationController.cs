@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -7,6 +8,7 @@ using System.Xml;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using NLog;
 using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Common.Extensions;
@@ -39,7 +41,21 @@ namespace Readarr.Http.Authentication
 
             if (user == null)
             {
-                return Redirect($"~/login?returnUrl={returnUrl}&loginFailed=true");
+                var parameters = new Dictionary<string, string>
+                {
+                    { "returnUrl", returnUrl ?? string.Empty }
+                };
+                var lockoutEnd = _authService.GetLockoutEndTime(HttpContext.Request);
+                if (lockoutEnd.HasValue)
+                {
+                    parameters.Add("lockedUntil", lockoutEnd.Value.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture));
+                }
+                else
+                {
+                    parameters.Add("loginFailed", "true");
+                }
+
+                return Redirect(QueryHelpers.AddQueryString("~/login", parameters));
             }
 
             var claims = new List<Claim>

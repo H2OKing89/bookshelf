@@ -147,6 +147,11 @@
         text-decoration: none;
       }
 
+      .button:disabled {
+        cursor: not-allowed;
+        opacity: 0.65;
+      }
+
       .copy {
         margin-top: 15px;
         text-align: center;
@@ -260,11 +265,12 @@
                   >Forgot your password?</a
                 >
               </div>
-              <button type="submit" class="button">Login</button>
+              <button id="login-button" type="submit" class="button">Login</button>
 
-              <div id="login-failed" class="login-failed hidden">
+              <div id="login-failed" class="login-failed hidden" role="alert">
                 Incorrect Username or Password
               </div>
+              <div id="login-lockout" class="login-failed hidden" role="status" aria-live="polite" aria-atomic="true"></div>
             </form>
           </div>
         </div>
@@ -280,16 +286,46 @@
   </body>
 
   <script type="text/javascript">
-    var yearSpan = document.getElementById("year");
-    yearSpan.innerHTML = "2017-" + new Date().getFullYear();
+    (function () {
+      var yearSpan = document.getElementById("year");
+      yearSpan.textContent = "2017-" + new Date().getFullYear();
+      document.getElementById("copy").classList.remove("hidden");
 
-    var copyDiv = document.getElementById("copy");
-    copyDiv.classList.remove("hidden");
-
-    if (window.location.search.indexOf("loginFailed=true") > -1) {
+      var parameters = new URLSearchParams(window.location.search);
       var loginFailedDiv = document.getElementById("login-failed");
+      var lockoutDiv = document.getElementById("login-lockout");
+      var loginButton = document.getElementById("login-button");
+      var end = Date.parse(parameters.get("lockedUntil"));
+      var remaining = end - Date.now();
+      var timer;
 
-      loginFailedDiv.classList.remove("hidden");
-    }
+      if (Number.isFinite(end) && remaining > 0) {
+        loginButton.disabled = true;
+        lockoutDiv.textContent = "Too many login attempts. Try again after " + new Date(end).toLocaleTimeString() + ".";
+        lockoutDiv.classList.remove("hidden");
+
+        var release = function () {
+          var delay = end - Date.now();
+          if (delay > 0) {
+            timer = window.setTimeout(release, Math.min(delay, 2147483647));
+            return;
+          }
+
+          loginButton.disabled = false;
+          lockoutDiv.textContent = "You can try signing in again.";
+        };
+
+        timer = window.setTimeout(release, Math.min(remaining, 2147483647));
+        window.addEventListener("pagehide", function () {
+          window.clearTimeout(timer);
+        });
+        window.addEventListener("pageshow", function () {
+          window.clearTimeout(timer);
+          release();
+        });
+      } else if (parameters.get("loginFailed") === "true") {
+        loginFailedDiv.classList.remove("hidden");
+      }
+    })();
   </script>
 </html>

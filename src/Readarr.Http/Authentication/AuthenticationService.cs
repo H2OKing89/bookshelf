@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Http;
 using NLog;
 using NzbDrone.Core.Authentication;
@@ -10,6 +11,7 @@ namespace Readarr.Http.Authentication
     {
         void LogUnauthorized(HttpRequest context);
         User Login(HttpRequest request, string username, string password);
+        DateTime? GetLockoutEndTime(HttpRequest request);
         void Logout(HttpContext context);
     }
 
@@ -17,23 +19,40 @@ namespace Readarr.Http.Authentication
     {
         private static readonly Logger _authLogger = LogManager.GetLogger("Auth");
         private readonly IUserService _userService;
+        private readonly IConfigFileProvider _configFileProvider;
+        private readonly ILoginLockoutPolicy _loginLockoutPolicy;
 
-        private static AuthenticationType AUTH_METHOD;
-
-        public AuthenticationService(IConfigFileProvider configFileProvider, IUserService userService)
+        public AuthenticationService(IConfigFileProvider configFileProvider, IUserService userService, ILoginLockoutPolicy loginLockoutPolicy)
         {
             _userService = userService;
-            AUTH_METHOD = configFileProvider.AuthenticationMethod;
+            _configFileProvider = configFileProvider;
+            _loginLockoutPolicy = loginLockoutPolicy;
         }
 
         public User Login(HttpRequest request, string username, string password)
         {
-            if (AUTH_METHOD == AuthenticationType.None)
+            var method = _configFileProvider.AuthenticationMethod;
+            if (method == AuthenticationType.None)
             {
                 return null;
             }
 
-            var user = _userService.FindUser(username, password);
+            User user;
+            if (method == AuthenticationType.Forms || method == AuthenticationType.Basic)
+            {
+                var attempt = _loginLockoutPolicy.Authenticate(request.GetRemoteIP(), () => _userService.FindUser(username, password));
+                if (attempt.IsBlocked)
+                {
+                    _authLogger.Warn("Auth-Lockout ip {0} username '{1}'", request.GetRemoteIP(), username);
+                    return null;
+                }
+
+                user = attempt.User;
+            }
+            else
+            {
+                user = _userService.FindUser(username, password);
+            }
 
             if (user != null)
             {
@@ -47,9 +66,17 @@ namespace Readarr.Http.Authentication
             return null;
         }
 
+        public DateTime? GetLockoutEndTime(HttpRequest request)
+        {
+            var method = _configFileProvider.AuthenticationMethod;
+            return method == AuthenticationType.Forms || method == AuthenticationType.Basic
+                ? _loginLockoutPolicy.GetLockoutEndTime(request.GetRemoteIP())
+                : null;
+        }
+
         public void Logout(HttpContext context)
         {
-            if (AUTH_METHOD == AuthenticationType.None)
+            if (_configFileProvider.AuthenticationMethod == AuthenticationType.None)
             {
                 return;
             }

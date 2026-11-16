@@ -49,7 +49,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P05](#p05) | P1 | Verified | S | Read the current API key and compare it in fixed time |
 | [P06](#p06) | P1 | Verified | M | Bound log-cleansing regex work and fail closed on timeout |
 | [P07](#p07) | P1 | Verified | M | Validate every restore payload before replacing config/database files |
-| [P08](#p08) | P1 | Planned | M | Add bounded login-attempt lockout |
+| [P08](#p08) | P1 | Verified | M | Add bounded login-attempt lockout |
 | [P09](#p09) | P1 | Planned | L | Refresh managed/native packages as a staged compatibility change |
 | [P10](#p10) | P1 | Planned | L | Carry cancellation through the HTTP client stack |
 | [P11](#p11) | P1 | Planned | M | Use per-connection Happy Eyeballs and expire pooled connections |
@@ -587,7 +587,7 @@ matching database/configuration/runtime backup, and treat retained recovery
 copies as private application data. No live development or production home,
 backup, credentials or media was changed. P09 dependency advisories remain a
 deployment blocker. P07 is **Verified** locally on this uncommitted working
-tree; the next code item is [P08](#p08).
+tree; that batch was followed by [P08](#p08).
 
 ### P08
 
@@ -607,6 +607,67 @@ tree; the next code item is [P08](#p08).
 **Book/audio caution:** library appliances often share one reverse-proxy/NAT address; count resolved clients correctly to avoid one user's failures blocking everyone.
 
 **Acceptance:** failures at the threshold block the correct source, successful authentication clears counts, expiry reopens access, parallel attempts behave predictably, spoofed XFF cannot evade/change attribution, and shared proxies do not collapse configured clients accidentally. Check Forms/Basic/External/API-key modes separately.
+
+**2026-11-15 implementation record:** the earlier foundation is committed as
+`a80a97d6c`. [LoginLockoutPolicy](../src/Readarr.Http/Authentication/LoginLockoutPolicy.cs)
+now shares bounded in-memory counters across application scopes. Five failed
+password checks from one resolved client address lock that source for five
+minutes. Blocked attempts do not extend the deadline or check passwords;
+success clears the failure count, and five minutes of inactivity expires an
+incomplete failure sequence. Entries remain pinned while callers wait for a
+per-address verification gate, so concurrent attempts cannot create a second
+counter or overshoot the threshold. Password hashing does not hold the global
+bookkeeping lock.
+
+Tracking is capped at 4,096 addresses. Expired idle entries are removed; active
+lockouts are not evicted to admit new addresses. At capacity, untracked sources
+are denied with fixed retry feedback while tracked sources retain their own
+state. Space becoming available reopens admission; continued pressure can keep
+new sources unavailable. This is process-local protection, not persistent,
+distributed or comprehensive denial-of-service protection. Restart clears it.
+
+[AuthenticationService](../src/Readarr.Http/Authentication/AuthenticationService.cs)
+applies the policy to Forms and Basic password authentication, using P03's
+resolved connection address and IPv4-mapped normalization. It never trusts a
+raw forwarded header. API keys, existing cookies, None and External retain
+their existing authentication behavior; the External login path does not gain
+password throttling. Authentication mode is read per call rather than kept in a
+static constructor snapshot. Existing password derivation/migration is unchanged.
+
+The [Forms controller](../src/Readarr.Http/Authentication/AuthenticationController.cs)
+returns an encoded `lockedUntil` UTC timestamp for lockout feedback and encodes
+`returnUrl` independently, preventing nested query injection. Ordinary failure
+continues to use `loginFailed=true`. The [login page](../frontend/src/login.html)
+shows an accessible lockout status, disables submission until expiry and resumes
+after browser history restoration; the server remains authoritative.
+[Basic authentication](../src/Readarr.Http/Authentication/BasicAuthenticationHandler.cs)
+keeps HTTP 401 and its challenge and adds `Retry-After` when locked. Malformed,
+invalid UTF-8, missing-colon and oversized (over 8 KiB) authorization headers
+fail authentication instead of throwing an HTTP 500. Password colons and
+case-insensitive Basic schemes remain supported.
+
+Validation passed **225 authentication/API cases**, including **43 new cases**
+in [policy](../src/NzbDrone.Integration.Test/Authentication/LoginLockoutPolicyFixture.cs),
+[service](../src/NzbDrone.Integration.Test/Authentication/AuthenticationLockoutFixture.cs)
+and [presentation](../src/NzbDrone.Integration.Test/Authentication/LoginLockoutPresentationFixture.cs)
+fixtures. These cover fake-clock expiry, capacity pressure, concurrency, shared
+DI state, source normalization, modes and safe response handling. All **39
+frontend cases** passed, including [seven login-page cases](../frontend/test/loginLockout.test.mjs);
+the production webpack/type build passed with its existing configuration warnings.
+The self-contained linux-x64 candidate passed **50 packaged checks**, including
+real Forms/Basic thresholds, correct-password rejection while locked, client
+isolation through a trusted HTTPS proxy, rotating untrusted forwarded headers,
+secure cookies, API-key availability and restart reset. Real five-minute expiry
+was covered with the injected clock rather than a five-minute package wait.
+**Nine isolated Chromium checks** of built login HTML covered phone layout,
+Enter while disabled, accessible status, expiry/history restoration and ordinary
+failure display. No failures or skips occurred in these focused suites.
+
+P08 is **Verified** locally. All owned test servers were stopped; no live
+development/production home, server, key, user or media was changed. P09 remains
+the next item and the current dependency-advisory deployment blocker. Its
+runtime-independent security work precedes the larger P01/P12/P13 upgrades;
+this does not mark those runtime/native-platform gates complete.
 
 ### P09
 
