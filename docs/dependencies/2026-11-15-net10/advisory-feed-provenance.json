@@ -1,0 +1,30 @@
+[
+  {
+    "url": "https://api.nuget.org/v3/vulnerabilities/index.json",
+    "retrievedUtc": "2026-11-16T04:47:32.922807+00:00",
+    "wireSha256": "71afb5422634969a02002e2aa03d45e0400e97e28d306aa4bcaca300ee302202",
+    "sha256": "487d2d7235489ffcf1f743c8784a2f4c47936b5df161b19c7ce5edf42283cbe8",
+    "contentEncoding": "gzip",
+    "file": "vulnerability-index.json"
+  },
+  {
+    "url": "https://api.nuget.org/v3-vulnerabilities/2026.11.14.05.29.55/vulnerability.base.json",
+    "retrievedUtc": "2026-11-16T04:47:33.048999+00:00",
+    "wireSha256": "84e9938010713e92d67961adce10c5f8a24cb9b9d0807df849e98094198ffdac",
+    "sha256": "290f263aff7519b36e1beb86c315334f3dadb4783152b91c360d17164c4a628b",
+    "contentEncoding": "gzip",
+    "file": "vulnerability-base.json",
+    "feedUpdatedUtc": "2026-11-14T05:29:55.8176483Z",
+    "packageIds": 664
+  },
+  {
+    "url": "https://api.nuget.org/v3-vulnerabilities/2026.11.14.05.29.55/2026.11.14.05.29.55/vulnerability.update.json",
+    "retrievedUtc": "2026-11-16T04:47:33.033838+00:00",
+    "wireSha256": "ca1436826f77887edb26d32b6a5853d0c83578cab2d0892484d8d99f95e138f1",
+    "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "contentEncoding": "gzip",
+    "file": "vulnerability-update.json",
+    "feedUpdatedUtc": "2026-11-14T05:29:55.8176483Z",
+    "packageIds": 0
+  }
+]

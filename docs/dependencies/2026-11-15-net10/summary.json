@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-15",
+  "head": "2b0edf8ef0df8fd1ed01259ddb1c63bc1c031f4e",
+  "dependencySnapshotVersion": "2026-11-15",
+  "workingTreeDirty": false,
+  "lockManifestSha256": "898db31a9a06a070d74699842860a27fec1e7e04ac946ae269b8f3ae6b3ba1e2",
+  "lockfiles": 25,
+  "packageIds": 145,
+  "components": 145,
+  "affectedPackageIds": 0,
+  "uniqueAdvisories": 0
+}

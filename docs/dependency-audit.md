@@ -1,5 +1,16 @@
 # Dependency security maintenance
 
+**Current runtime (2026-11-15):** application and test targets now use .NET 10,
+SDK **10.0.404** and packaged runtime **10.0.15**, implemented in `d572aaa2b`
+with API-binding correction `2b0edf8ef`. The
+[current runtime-alignment record](#net-10-runtime-alignment-2026-11-15) and
+[new inventory](dependencies/2026-11-15-net10/summary.json) supersede the earlier
+runtime/version statements for current builds. Earlier sections retain the
+original P09 .NET 6 security-slice evidence; the two dated inventories remain
+separate. P01 and P09 are still **In progress** for the bounded gates below.
+
+## Earlier 2026-11-15 security-maintenance snapshot
+
 This record covers the **2026-11-15** security-maintenance slice of
 [P09](sonarr-v5-porting-backlog.md#p09). It keeps the current target compatible
 while the larger .NET 10 runtime transition remains in P01. Its SDK prerequisite
@@ -135,6 +146,120 @@ This slice advances the SDK prerequisite but does not make the unsupported
 migration, P12/P13 database/native changes, P21/P22 complete artifact/platform
 gates and P25 release identity remain separate work. Keep P09 **In progress**
 until its broader framework-aligned refresh and acceptance requirements are met.
+
+## .NET 10 runtime alignment, 2026-11-15
+
+Implementation `d572aaa2b` moves all **25** executable, library, test and Windows
+GUI targets to .NET 10 and aligns active build, test, publish and package paths.
+`global.json` and mise select SDK **10.0.404** with latest-patch roll-forward and
+prereleases disabled; self-contained executable artifacts bundle runtime
+**10.0.15**. Microsoft's [official release metadata](https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json)
+records the 2026-11-10 update as a security release, superseding the earlier
+10.0.403 SDK/10.0.14 runtime baseline. The comparison donor remains Sonarr
+v5.0.0.2941 at `c018578e4b79ee048575c02d7a8aa2b929e4b837`.
+
+| Change | Current version or behavior |
+| --- | --- |
+| Applicable Microsoft Extensions, SignalR and System packages | 10.0.15, aligned with the new framework |
+| Framework-provided assemblies | Redundant package references removed; framework assemblies supply them |
+| SourceLink | SDK-provided support replaces the separate package |
+| MailKit / MimeKit | 4.18.2 |
+| NLog / NLog.Extensions.Logging | 5.5.1 / 5.5.0, retaining database-log cleansing across configuration changes |
+| Microsoft.NET.Test.Sdk / NUnit3TestAdapter | 18.12.0 / 6.3.1 |
+| NunitXml.TestLogger / coverlet.collector | 8.1.0 / 10.1.1 |
+| NUnit | 3.14.0 retained; no NUnit 4 migration |
+| Raster / PDF | Magick.NET 15.1.0 / PdfPig 0.1.16 retained; Six Labors packages remain absent |
+| MediaInfo helper build / application image | Alpine 3.24.4 / LinuxServer Alpine 3.24 |
+
+The old Alpine 3.21 base reached normal support end on 2026-11-01; Alpine's
+[release table](https://www.alpinelinux.org/releases/) identifies 3.24 as supported
+through 2028-06-01. Microsoft's [.NET 10 supported-OS table](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md)
+includes Alpine 3.24 on x64/ARM64. The helper recipe change invalidates both
+cached helper architectures. Fresh bundles retain MediaInfo 26.10, source locks,
+checksums and notices; glibc-x64 and musl-x64 share the static x64 helper.
+
+Compatibility changes replace ISystemClock with TimeProvider, obsolete PFX
+constructors with X509CertificateLoader while preserving password/storage flags,
+and obsolete proxy networks with System.Net.IPNetwork without broadening trust.
+C# 14 array Contains expression lowering remains supported in both SQL dialects,
+Transmission ETAs are bounded before TimeSpan construction, and stream checks
+handle partial reads. No Bookshelf database migration is added.
+
+Packaged backup-command HTTP checks exposed a separate framework compatibility
+change: ASP.NET Core 7 and later infer registered complex action parameters from
+DI. Bookshelf's DryIoc registrations include API resource classes. Correction
+`2b0edf8ef` sets `DisableImplicitFromServicesParameters` so JSON bodies retain
+their existing contract, following Microsoft's
+[documented compatibility action](https://learn.microsoft.com/en-us/aspnet/core/breaking-changes/7/api-controller-action-parameters-di?view=aspnetcore-10.0).
+Five hosted HTTP regression cases cover body binding and explicit service
+parameters. This is a request-binding fix, not a database or credential change.
+
+The [2026-11-15-net10 summary](dependencies/2026-11-15-net10/summary.json) was
+generated from clean `2b0edf8ef` and records **145 package IDs / 145 exact
+components / 25 lockfiles / zero affected package IDs or matching advisories**.
+The [CycloneDX 1.6 inventory](dependencies/2026-11-15-net10/inventory.cdx.json),
+[lock hashes](dependencies/2026-11-15-net10/lock-sha256.json),
+[zero-match report](dependencies/2026-11-15-net10/matched-vulnerabilities.json)
+and [advisory-feed provenance](dependencies/2026-11-15-net10/advisory-feed-provenance.json)
+retain the captured feed identity and source/lock evidence. The earlier
+`2026-11-15` snapshot is unchanged. Both snapshots include build/test/RID
+dependencies; neither asserts final artifact reachability or audits every native
+codec and OS package.
+
+Validation of the final implementation and matching delivery candidates:
+
+- All 25 projects passed a clean locked restore and strict transitive NuGet
+  audit, with warnings treated as errors, auditing at low severity and above,
+  and no advisory suppression or audit-warning exception.
+- Both solution configurations built without warnings. The Windows GUI was
+  cross-compiled from Linux; Windows execution was not tested.
+- Canonical locked `./build.sh --backend` and packaging passed for `linux-x64`,
+  `linux-musl-x64` and `linux-musl-arm64`, including self-contained runtime
+  10.0.15, actual updaters, expected native architectures, bundled MediaInfo and
+  matching dependency notices. Libraries/tests remain framework-dependent.
+- Offline suites: **4,551 passed / 103 not-executed TRX records**: Core 3,460,
+  Common 691, API/authentication 273, Host 49, Mono 52, Libraries 1, Update 17
+  and API-unit 8, including five hosted body-binding cases in the Host suite.
+  Not-executed records comprise Core 55, Common 38, Host 4 and Mono 6; runner
+  console summaries report 99 skips. No cause is assigned to that reporting
+  difference.
+  Eight coverage cases produced real XML reports; six fake-runner shell cases
+  preserved ordinary/coverage exit statuses.
+- Current and genuine legacy packaged backup restoration: **51/51**. A genuine
+  P09 .NET 6 baseline then upgraded to .NET 10 in the **same disposable home**:
+  **24/24**, preserving authors/books/recordings, two recording parts and
+  narrators, user identities and credential encodings, config/API key, roots,
+  history and media hashes. Packaged lockout: **50/50**.
+- Delivered native probes: glibc-x64 **35**, musl-x64 **55**. Exact-image Docker
+  validation: **54/54**, using the actual repository Dockerfile and S6 service,
+  with healthy HTTP on 10.0.15, raster/PDF/EPUB/audio/Calibre adapters, native
+  SQLite integrity, MediaInfo child execution, notices and graceful exit 0.
+- ARM64 native probing: **33 passed** under explicit QEMU. Default-environment
+  HTTP startup failed twice on unchanged candidates: target signal 11, then a
+  managed AccessViolation during Dapper DynamicClass parameter setup for
+  InsertMissingQualityDefinitions followed by QEMU target signal 6. Both failed
+  results are retained. A private compatibility experiment with
+  `DOTNET_TieredCompilation=0` and `DOTNET_EnableWriteXorExecute=0` passed
+  **53/53**, including the 33 native checks, HTTP on runtime 10.0.15, preserved
+  API key and graceful shutdown. Candidate hashes remained unchanged and owned
+  containers were removed. These flags are not shipped; default ARM64 HTTP
+  startup is not a passing gate.
+
+Microsoft's [.NET 10 support notes](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md#notes)
+exclude QEMU for running .NET applications. The emulated results do not identify
+the failures' cause or establish default behavior on native ARM64 hardware.
+The next acceptance check requires default startup on a **native ARM64 runner**.
+
+P01's implementation and x64/musl-x64 acceptance are complete. It remains
+**In progress** solely for default ARM64 startup acceptance on that runner. P09
+remains **In progress** for its broader managed/database/native compatibility
+surface. Migration-engine and SQLite provider/engine changes remain P12/P13;
+complete integration/platform coverage and release/source identity remain
+P21/P22/P25. Windows/macOS execution and the missing Intel macOS image asset
+are still P22 gates. Legacy Azure jobs are manual-only/default-off; local
+canonical-build evidence does not assert remote GitHub/Azure CI execution.
+All validation used private copies and synthetic data; no live development or
+production home, service, credentials or media was changed.
 
 ## Reproducing the dependency gates
 

@@ -484,15 +484,71 @@ the SDK path from the selected executable. Locked restores and six test-wrapper
 status regressions protect the dependency gate. This does not upgrade the
 application from net6.0 or complete P01's runtime acceptance.
 
+### 2026-11-15 .NET 10 runtime and framework alignment
+
+P01's runtime implementation is committed as `d572aaa2b`, with the packaged
+API-body-binding correction in `2b0edf8ef`. All 25 projects now target .NET 10;
+SDK **10.0.404**, runtime **10.0.15**, active output paths, explicit executable
+self-contained publishing and the canonical Linux packaging move together.
+The previous .NET 6/SDK-only statements above describe earlier dated snapshots.
+The Sonarr donor remains the same pinned v5 revision. The
+[dependency audit](dependency-audit.md#net-10-runtime-alignment-2026-11-15)
+records current versions, primary compatibility sources and the new clean-source
+inventory: **145 package IDs / 145 exact components / 25 locks / zero matching
+NuGet advisories**, with no advisory suppressions.
+
+TimeProvider, modern PFX loading, explicit proxy-network trust, SQL array
+expression lowering, stream reads and log-target lifecycle have compatibility
+coverage. The hosted HTTP tests retain JSON request-body binding when DryIoc
+also registers API resource types. No database migration is introduced. Existing
+password formats, API keys, defaults, recording/part identities and media
+ownership remain upgrade constraints.
+
+Both solution configurations built without warnings, all locks passed clean
+locked restore/audit, and the canonical locked backend build produced all three
+Linux packages with runtime/updaters, native dependencies, notices and bundled
+MediaInfo. Offline suites passed **4,551 cases**, with **103 not-executed TRX
+records** (runner console summaries report 99 skips), including five hosted
+binding cases. Eight real coverage cases and six shell exit-status cases also
+passed. Genuine same-home .NET 6-to-10 preservation passed **24/24**;
+current/genuine-legacy restoration passed **51/51**, and packaged lockout **50/50**.
+Native probes passed **35** glibc-x64 and **55** musl-x64 checks. The actual
+Dockerfile uses Alpine **3.24.4** helper builds and LinuxServer Alpine **3.24**;
+its x64 S6/API/native-format/shutdown probe passed **54/54** checks.
+
+ARM64 native probing passed **33** checks under explicit QEMU. Default HTTP
+startup failed twice with unchanged candidates: target signal 11, then a managed
+AccessViolation during Dapper DynamicClass parameter setup for
+InsertMissingQualityDefinitions followed by QEMU target signal 6. Both failures
+are retained. A private compatibility experiment with
+`DOTNET_TieredCompilation=0` and `DOTNET_EnableWriteXorExecute=0` passed **53/53**
+checks, including the 33 native checks, HTTP on runtime 10.0.15, preserved API
+key and graceful shutdown. Candidate hashes remained unchanged and owned
+containers were removed. These flags are not shipped.
+
+Microsoft's [.NET 10 support notes](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md#notes)
+exclude QEMU for running .NET applications. These results do not identify the
+failures' cause or establish default native ARM64 behavior. P01's implementation
+and x64/musl-x64 acceptance are complete; it remains **In progress** solely for
+default ARM64 startup acceptance on a **native ARM64 runner**. That runner is the
+next step before closing P01.
+
+Windows GUI compilation is not Windows execution; macOS/Windows runtime checks,
+the missing Intel macOS image asset and the full matrix remain P22. Legacy Azure
+is manual-only/default-off, and actual remote CI was not run. No live home,
+server, credentials or media was changed.
+
 ### Remaining deployment gates
 
 The 2026-11-14 package-advisory findings were addressed by the 2026-11-15
 security slice above; their dated evidence remains in the P09 backlog record.
-The current 25-project audit has zero reported package vulnerabilities without
-suppressions or warning exceptions. P09 remains **In progress** for its broader
-framework-aligned refresh. The unsupported .NET 6 runtime still requires P01;
-P12/P13/P21/P22 platform/database/artifact acceptance and P25 release identity
-remain open. These local commits have not been deployed or published.
+The new .NET 10 snapshot also has zero matching advisories across 25 projects,
+without suppressions or warning exceptions. P01 awaits default HTTP startup
+acceptance on a native ARM64 runner. P09 remains **In progress** for its broader
+managed/database/native compatibility work. P12/P13 migration-engine/SQLite
+changes, P21/P22 complete
+artifact/platform acceptance and P25 release identity remain open. These local
+commits have not been deployed or published.
 
 ## Porting and validation procedure
 
