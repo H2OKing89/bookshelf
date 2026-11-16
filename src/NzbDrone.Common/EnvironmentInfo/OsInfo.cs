@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using NLog;
@@ -25,22 +24,25 @@ namespace NzbDrone.Common.EnvironmentInfo
 
         static OsInfo()
         {
-            var platform = Environment.OSVersion.Platform;
-
-            switch (platform)
+            if (OperatingSystem.IsWindows())
             {
-                case PlatformID.Win32NT:
-                    {
-                        Os = Os.Windows;
-                        break;
-                    }
-
-                case PlatformID.MacOSX:
-                case PlatformID.Unix:
-                    {
-                        Os = GetPosixFlavour();
-                        break;
-                    }
+                Os = Os.Windows;
+            }
+            else if (OperatingSystem.IsMacOS())
+            {
+                Os = Os.Osx;
+            }
+            else if (OperatingSystem.IsFreeBSD())
+            {
+                Os = Os.Bsd;
+            }
+            else
+            {
+#if ISMUSL
+                Os = Os.LinuxMusl;
+#else
+                Os = Os.Linux;
+#endif
             }
         }
 
@@ -83,46 +85,6 @@ namespace NzbDrone.Common.EnvironmentInfo
             {
                 IsDocker = true;
             }
-        }
-
-        private static Os GetPosixFlavour()
-        {
-            var output = RunAndCapture("uname", "-s");
-
-            if (output.StartsWith("Darwin"))
-            {
-                return Os.Osx;
-            }
-            else if (output.Contains("BSD"))
-            {
-                return Os.Bsd;
-            }
-            else
-            {
-#if ISMUSL
-                return Os.LinuxMusl;
-#else
-                return Os.Linux;
-#endif
-            }
-        }
-
-        private static string RunAndCapture(string filename, string args)
-        {
-            var p = new Process();
-            p.StartInfo.FileName = filename;
-            p.StartInfo.Arguments = args;
-            p.StartInfo.UseShellExecute = false;
-            p.StartInfo.CreateNoWindow = true;
-            p.StartInfo.RedirectStandardOutput = true;
-
-            p.Start();
-
-            // To avoid deadlocks, always read the output stream first and then wait.
-            var output = p.StandardOutput.ReadToEnd();
-            p.WaitForExit(1000);
-
-            return output;
         }
     }
 
