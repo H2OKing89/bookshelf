@@ -449,22 +449,50 @@ P09 is next. Its security-compatible dependency slice can proceed on the current
 runtime; broader framework/database/native upgrades retain their P01/P12/P13
 requirements. Existing dependency advisories continue to block deployment.
 
-### Dependency advisory deployment blocker
+### 2026-11-15 dependency security maintenance
 
-P09 remains **Planned**. The existing [package inventory](../src/Directory.Packages.props)
-contains MailKit 4.8.0, affected by the [STARTTLS advisory fixed in 4.16.0](https://github.com/jstedfast/MailKit/security/advisories/GHSA-9j88-vvj5-vhgr),
-and ImageSharp 3.1.11. Six Labors documents security fixes in ImageSharp 3.2.0 and
-a [valid license-key requirement for that update](https://sixlabors.com/posts/security-support-and-license-enforcement/).
-These versions identify the relevant fixes, not completion of the wider P09 audit.
-No packages have been upgraded and no audit suppression has been committed.
-The current dependency advisories prevent deployment of this batch.
+P09 is **In progress**. Its runtime-independent security slice replaces the
+Six Labors dependency path with bundled Magick.NET 15.1.0 and PdfPig 0.1.16,
+preserving raster resizing and PDF metadata without a license key. Mail and
+cryptography/token packages receive compatible security updates; old dependency
+edges are removed and remaining vulnerable transitive versions are centrally
+pinned. Restore now audits all dependencies at low severity and above without
+suppressions.
 
-Isolated validation uses a command-line-only exception to treating NU1902/NU1903
-as errors, with package auditing enabled and advisory warnings visible. This
-permits test execution; it does not resolve the advisories or authorize deployment.
-The linux-x64 artifact was tested as recorded above. Supported ARM work-factor
-evidence and the remaining artifact gates must be recorded before those
-acceptance gates are closed.
+The dated [dependency audit](dependency-audit.md) records the baseline nine
+affected package IDs / 16 advisories, final zero-match result for the captured
+NuGet feed, exact inventory scope, notices and validation: 691 Common and 3,439 Core tests (35/55 existing skips), 267 API tests,
+64 focused media cases, 22 published-codec checks on glibc x64, 40 each on musl
+x64/ARM64, and 50 authentication/51 restore package checks.
+SDK 10.0.403 now enforces the NuGet audit policy through the repository SDK
+configuration and CI; application targets remain net6.0. Full .NET 10 runtime,
+database/native-platform and release acceptance remain in
+P01/P12/P13/P21/P22/P25. No running development/production server, home or media
+was changed. The earlier package-advisory blocker is resolved for the captured
+inventory; remaining runtime and release gates still apply.
+
+The three Linux self-contained candidates were published and exercised in
+private homes. ARM64 MediaInfo 26.10 was built from the pinned sources and
+verified directly with version and WAV JSON under QEMU. Startup OS detection
+now follows v5's .NET API approach (commit `698a8d594`), eliminating an external
+`uname` dependency. Full ARM child-process/import acceptance, Windows/macOS
+execution and the missing Intel macOS image asset remain platform gates.
+
+P01 is **In progress** for its SDK prerequisite. SDK 10.0.403 is selected by
+`global.json` and mise; CI installs it alongside the old test runtime and derives
+the SDK path from the selected executable. Locked restores and six test-wrapper
+status regressions protect the dependency gate. This does not upgrade the
+application from net6.0 or complete P01's runtime acceptance.
+
+### Remaining deployment gates
+
+The 2026-11-14 package-advisory findings were addressed by the 2026-11-15
+security slice above; their dated evidence remains in the P09 backlog record.
+The current 25-project audit has zero reported package vulnerabilities without
+suppressions or warning exceptions. P09 remains **In progress** for its broader
+framework-aligned refresh. The unsupported .NET 6 runtime still requires P01;
+P12/P13/P21/P22 platform/database/artifact acceptance and P25 release identity
+remain open. These local commits have not been deployed or published.
 
 ## Porting and validation procedure
 

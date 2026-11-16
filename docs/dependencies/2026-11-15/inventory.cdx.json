@@ -1,0 +1,4953 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "application",
+      "bom-ref": "bookshelf-dependency-snapshot-2026-11-15",
+      "name": "Bookshelf dependency snapshot",
+      "version": "2026-11-15",
+      "description": "Inventory of locked working-tree dependency manifests; not a built release artifact"
+    },
+    "properties": [
+      {
+        "name": "bookshelf:inventory:scope",
+        "value": "Aggregate locked dependencies including build/test/RID variants; not artifact reachability"
+      },
+      {
+        "name": "bookshelf:audit:date",
+        "value": "2026-11-15"
+      },
+      {
+        "name": "bookshelf:source:baseCommit",
+        "value": "698a8d594aa74dc1b6ebbe8646369fa9e4ec400f"
+      },
+      {
+        "name": "bookshelf:source:workingTreeDirty",
+        "value": "true"
+      },
+      {
+        "name": "bookshelf:inventory:lockManifestSha256",
+        "value": "7021fa7b12c8a408c17c8e2f960d253784412f2b5e5589deadb72f07a1503edb"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/autofixture@4.17.0",
+      "name": "AutoFixture",
+      "version": "4.17.0",
+      "purl": "pkg:nuget/autofixture@4.17.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "79f311086dc4a5ce100c42f07664067fafdc6905257915cf4429cb02ae602cca53b8e4dc390595d76bc427caa8ebbf118fdeff4e38f11d8bbfdf8ac691775500"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/bouncycastle.cryptography@2.6.2",
+      "name": "BouncyCastle.Cryptography",
+      "version": "2.6.2",
+      "purl": "pkg:nuget/bouncycastle.cryptography@2.6.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ee858e72f9e7b6630a3730cbb1dc4062a029b7e023a51a4fd824a18cc7c86b7ba6678d9440cbc7d2d975a8096260f3583babd375c18caa746b08f9ac7f34c8d7"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/castle.core@4.4.1",
+      "name": "Castle.Core",
+      "version": "4.4.1",
+      "purl": "pkg:nuget/castle.core@4.4.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "cda9db8d60b4634e606f1e1e19793357270e42a54e1557828d5b034b2b9aa3d3f89ad375c375b1c53a35f773460bb8f7a36bb700946cc1aa02ea111b9c60029d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/coverlet.collector@3.0.4-preview.27.ge7cb7c3b40",
+      "name": "coverlet.collector",
+      "version": "3.0.4-preview.27.ge7cb7c3b40",
+      "purl": "pkg:nuget/coverlet.collector@3.0.4-preview.27.ge7cb7c3b40",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ededda86a462f97b290fbeafa1c7c49607410834a8bdfe257ab2742c4ef1457ded19f900b5ec28ea5cf547ab45863ea78ca1e9e71df84c9b1b00ca70b0282d27"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/coverlet.core@3.0.4-preview.27.ge7cb7c3b40",
+      "name": "coverlet.core",
+      "version": "3.0.4-preview.27.ge7cb7c3b40",
+      "purl": "pkg:nuget/coverlet.core@3.0.4-preview.27.ge7cb7c3b40",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "0641a92e5d47a725b027130c90a5c904cef8dc27e05db872da7c298ce17361c72e02cdcc87346dd09229a530e36778b0df815fd3a04c28b2b56d266bb88091a8"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/dapper@2.0.151",
+      "name": "Dapper",
+      "version": "2.0.151",
+      "purl": "pkg:nuget/dapper@2.0.151",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "98c719831d658a6d3f8b53b3bbe9609c13381b03481e90aec55e81576a2fb047d9017440ab88dbe91221c460dc563b665cc2cfa5da7ce631cf7438c130cc1e8f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/diacritical.net@1.0.4",
+      "name": "Diacritical.Net",
+      "version": "1.0.4",
+      "purl": "pkg:nuget/diacritical.net@1.0.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d15b4f0baa929bcfd6543a2e7d4bda126e8bf56f8e124fa24cefdd40bee41e713865db35753af700e8c01a610722f80f9fb04f1e23a88b71e6b20977a5ee6b6a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/dryioc.dll@5.4.3",
+      "name": "DryIoc.dll",
+      "version": "5.4.3",
+      "purl": "pkg:nuget/dryioc.dll@5.4.3",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ca15ce1b748ec5e598c41016b243510c3f1fcf0e61ae211ac2fe1537858a6851cebae6e2a29e24c5edab9164c4c829d3811560c555124020c106466ac0f9b589"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/dryioc.microsoft.dependencyinjection@6.2.0",
+      "name": "DryIoc.Microsoft.DependencyInjection",
+      "version": "6.2.0",
+      "purl": "pkg:nuget/dryioc.microsoft.dependencyinjection@6.2.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "bd1d02519fc7ff559a981f550c7c8183c9d3c6a18053cfe1268e0c74342bc1f76c9b513677d1eb24d0c9a3e57c800834197a42d6f807bfb25e9e97a14f48b26f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/dynamitey@3.0.3",
+      "name": "Dynamitey",
+      "version": "3.0.3",
+      "purl": "pkg:nuget/dynamitey@3.0.3",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "a1c178ad12a09e60646e593c46b8113fd631c5e241be86a808d2d782650c8100a3651c36bfa46dab1b792a78bafd3b5bbc809e59537d5ffebd1b98e5b541276d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/equ@2.3.0",
+      "name": "Equ",
+      "version": "2.3.0",
+      "purl": "pkg:nuget/equ@2.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "be6bbc34619dcba47c5042310c9f08af81d6c6e1ef1d63bbd1f2f9d47dbda05f9d17fd9b363552d6e783627fd96453cfb2b88bff911edc30d7bb93a14d04390b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/fare@2.1.1",
+      "name": "Fare",
+      "version": "2.1.1",
+      "purl": "pkg:nuget/fare@2.1.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "1da23ca6ea80eba614efff5c2b84a06ecd6d6944cfd52b1ae104f63c8cea27b1af01b3754209236d1b231fe1526cc87530976f4b4088c1034bb454fe285e8aa4"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/fluentassertions@5.10.3",
+      "name": "FluentAssertions",
+      "version": "5.10.3",
+      "purl": "pkg:nuget/fluentassertions@5.10.3",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "8153c4569d612d5a9cbfeed0db08837fb92a08d9fbf9b41c4348db27699c453e82791a19975b4d92abf348886f7a4ca5743a6d93bee3d5bd373174d3448aaaa6"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/fluentvalidation@9.5.4",
+      "name": "FluentValidation",
+      "version": "9.5.4",
+      "purl": "pkg:nuget/fluentvalidation@9.5.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "767033e0f52d4926bef041960d498466e8ce6bdaefcf1967e0182891965f3b619b723d3ad764cc212538be4bcbeb4a88cb90c8fec0c5f4ecb588c5ebeec256dc"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/ical.net@4.3.1",
+      "name": "Ical.Net",
+      "version": "4.3.1",
+      "purl": "pkg:nuget/ical.net@4.3.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6501cd240cb6e97796d0e9d5471c875b5c4d5a42ddb9e2089cf0a8efab1d3420b44abf1d01f0733770c0a565a4dabd27c02534a09206b2b147742710bb94566a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/impromptuinterface@8.1.0",
+      "name": "ImpromptuInterface",
+      "version": "8.1.0",
+      "purl": "pkg:nuget/impromptuinterface@8.1.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "f735a447fbd3593dc1a4861445d279e917b2e997ada486def1c6cd80f90c9ed5fed2bab509b151cc1b89f5daf529ff3ea4840b6a9b7b4c11c20602729bfbfe82"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/ipaddressrange@6.1.0",
+      "name": "IPAddressRange",
+      "version": "6.1.0",
+      "purl": "pkg:nuget/ipaddressrange@6.1.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "aa2ac6323083eb8ab94c856ef55b02c3b787000d5b22ebf3ff8b1a6dd87621672c5030db4388c6e52ba6ead3cc44906a4dc6f8373309dfb1a8b6095f456cc8b3"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/lazycache@2.4.0",
+      "name": "LazyCache",
+      "version": "2.4.0",
+      "purl": "pkg:nuget/lazycache@2.4.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "4c78a0d7bbea7b93c4b37c2f4ea16b373a2bcf69c3e10cfd17d0b7625032754ebbdc2a2000ef33d6ef0d3490fac79d88ee80c243f37f1f024864c047f18fd08b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/magick.net-q8-anycpu@15.1.0",
+      "name": "Magick.NET-Q8-AnyCPU",
+      "version": "15.1.0",
+      "purl": "pkg:nuget/magick.net-q8-anycpu@15.1.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "9c726951f1248620eee57240ca61d64010a29d54090014cada3ea1687aaceb9d143d43fd88432a37bdd536ef26f98ca8c84a79806c0eeb986a8af860cf3a5f9d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/magick.net.core@15.1.0",
+      "name": "Magick.NET.Core",
+      "version": "15.1.0",
+      "purl": "pkg:nuget/magick.net.core@15.1.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "58869e991378b49bf0e413547ec3bcfd5dcba2357914e0a88d0fec438aee5e67b5a367eb4587dcbc73e1295e44e936d8a0475512fb465fef166eeb741769491e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/mailkit@4.17.0",
+      "name": "MailKit",
+      "version": "4.17.0",
+      "purl": "pkg:nuget/mailkit@4.17.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d6750054bc4cf5f853ffbf307bafc01ac09eb27a67e5d44d2cb791a8e7ebe765a793cee9cd5c28e58313332aa79a85eb61cee98868666b288c03f3a00e5b888e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.aspnetcore.connections.abstractions@6.0.35",
+      "name": "Microsoft.AspNetCore.Connections.Abstractions",
+      "version": "6.0.35",
+      "purl": "pkg:nuget/microsoft.aspnetcore.connections.abstractions@6.0.35",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "635f8ce71fa4806b2fa2475bc7ef81ec21ebbb9cb3769a262bcdda5cb47ba01b09d3ae64b08446fcff282ffbb82898695c7d29aa52087e99c6bfab63299e02aa"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.aspnetcore.http.connections.client@6.0.35",
+      "name": "Microsoft.AspNetCore.Http.Connections.Client",
+      "version": "6.0.35",
+      "purl": "pkg:nuget/microsoft.aspnetcore.http.connections.client@6.0.35",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d53581da0f44a44013f989718fb4e9c95a3aedd07fff45ad33807a601e742714b871a4886ad6527f3abf9a5a6c04b5870764972c1cb8c6daae57966c70091cb3"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.aspnetcore.http.connections.common@6.0.35",
+      "name": "Microsoft.AspNetCore.Http.Connections.Common",
+      "version": "6.0.35",
+      "purl": "pkg:nuget/microsoft.aspnetcore.http.connections.common@6.0.35",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "f520f0c718a3bd5df584b7f12512aa1c874c5262046133c28dd02ade22c91ad8e983da6ca56f56e7efecfecef73ac4f4f23d9b1aaec4825bac486685d0c42438"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.aspnetcore.signalr.client.core@6.0.35",
+      "name": "Microsoft.AspNetCore.SignalR.Client.Core",
+      "version": "6.0.35",
+      "purl": "pkg:nuget/microsoft.aspnetcore.signalr.client.core@6.0.35",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "79183950a4d4f08e74dea5f6285c5fe3144d3c8c838048cb95e814806cf249c998e2b9102e23dd1a95847b8ad44c62d91c3633a7b895564aaec160f7b2def58d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.aspnetcore.signalr.client@6.0.35",
+      "name": "Microsoft.AspNetCore.SignalR.Client",
+      "version": "6.0.35",
+      "purl": "pkg:nuget/microsoft.aspnetcore.signalr.client@6.0.35",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "3f38844780f0c0029471bcae907905fcc159ba8490c89c5652c452cf0666258bdb45a167e786aed83b9d36c5759f664cd1a42430cf7f6aad2f15b868248dca44"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.aspnetcore.signalr.common@6.0.35",
+      "name": "Microsoft.AspNetCore.SignalR.Common",
+      "version": "6.0.35",
+      "purl": "pkg:nuget/microsoft.aspnetcore.signalr.common@6.0.35",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "794d8c962e64c3118e1709bbe986591a70317cfb7f20d51f8bae07802714da06d23b889fb436e27c80d09675b87c98edc1ce43f04ad034c4e8edc2d1a721b8a9"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.aspnetcore.signalr.protocols.json@6.0.35",
+      "name": "Microsoft.AspNetCore.SignalR.Protocols.Json",
+      "version": "6.0.35",
+      "purl": "pkg:nuget/microsoft.aspnetcore.signalr.protocols.json@6.0.35",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "51b8e53f92406f7c8d1bc6dde49f2a72f1a31899142a8d06c7faacc70aeb25258369a59c9856db023804b3598b3063a7963843537c932a2daa2f3508826d48da"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.bcl.asyncinterfaces@6.0.0",
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.bcl.asyncinterfaces@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "51c4a33ecb2df837c07491950ecbb7e3a157d1c8b46a1fa5c37591b67d7c354c04a91b7bd0768e43b948ef6bf2dfed4bc6da88dd3e465b0577f6b412ac2cc07a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.bcl.timeprovider@8.0.0",
+      "name": "Microsoft.Bcl.TimeProvider",
+      "version": "8.0.0",
+      "purl": "pkg:nuget/microsoft.bcl.timeprovider@8.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "7f92abe497a901b886a3bb839a182f32a867b70c6a5cd9fafc8a53052488e1cb878609c91ab2f115184c8d5a5190b3e9eb32573b4fc6d25de3f69f73489c5afb"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.build.tasks.git@1.1.1",
+      "name": "Microsoft.Build.Tasks.Git",
+      "version": "1.1.1",
+      "purl": "pkg:nuget/microsoft.build.tasks.git@1.1.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "013dc79604e3b2a1e75a904748d791d0ac5b2d90fb6f3b656558fb23cbe07981bd498a9b7851a1d1333f295b42e9f839de7ad61e5dd57d916f6f9062405718e9"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.codecoverage@17.10.0",
+      "name": "Microsoft.CodeCoverage",
+      "version": "17.10.0",
+      "purl": "pkg:nuget/microsoft.codecoverage@17.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "c82ee84a59d1e785cee643ae1e554e2adc6898d34dd415975fc94ad46da368f5d3f6c52893b9023a80383e0b34ab215a0ad32b36ca6bced60c7a8106a829b8b8"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.csharp@4.5.0",
+      "name": "Microsoft.CSharp",
+      "version": "4.5.0",
+      "purl": "pkg:nuget/microsoft.csharp@4.5.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "91a8fa59be2aa0cb87dc7c92149871c107def11fec26c3499c036bbeff167453cca0d6ca63986d7cdb1cbfe2c70aee62a73fb8f66d9ef96417a4b5ebf5761e99"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.csharp@4.7.0",
+      "name": "Microsoft.CSharp",
+      "version": "4.7.0",
+      "purl": "pkg:nuget/microsoft.csharp@4.7.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "a538fe0f7b895b2377332ef48b61eaa3e3978b1ab73acd83d67276c7dd85168eac93c7d84b59b558b353b340dcd6e3da5621f462f104c2fcdd750ef2e2b85798"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.data.sqlclient.sni.runtime@2.1.1",
+      "name": "Microsoft.Data.SqlClient.SNI.runtime",
+      "version": "2.1.1",
+      "purl": "pkg:nuget/microsoft.data.sqlclient.sni.runtime@2.1.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "2701835a4c99826ed201326614b7d3d86e2d7a29af35b36dab796c4bd6b90f3be11199d0ad98d985ebc2534bddc7c32385e2c7a06e6fa1cb8ed3742d8a8150c5"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.data.sqlclient@2.1.7",
+      "name": "Microsoft.Data.SqlClient",
+      "version": "2.1.7",
+      "purl": "pkg:nuget/microsoft.data.sqlclient@2.1.7",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "7527657173eccde3a38c35fd6b46ee305818a8aac8e5b4f1752817dc9c826be38bf34354b2d252c4e26bd23f683a7f26a4fe4f8167910b66d57ff65fd828effa"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.dotnet.platformabstractions@2.1.0",
+      "name": "Microsoft.DotNet.PlatformAbstractions",
+      "version": "2.1.0",
+      "purl": "pkg:nuget/microsoft.dotnet.platformabstractions@2.1.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "f4a3c3c2f6ff84b1155d8aee547559f0191e6c2f23d7b0e63dbe7a2e7a9117be07a923cb8c292b9455233ad16940f0360de0030514c8fdeebd6827d105fae1c7"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.caching.abstractions@6.0.0",
+      "name": "Microsoft.Extensions.Caching.Abstractions",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.caching.abstractions@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6dccf9b121496e06a71f4f98adfbc88c90c870a356ed32f4ec2e1dd5e4e65f2ff03ade768b3e0b5688096faa5aceced6d3eef88f46295c512bbe9fbe02ae41b3"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.caching.memory@6.0.2",
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "version": "6.0.2",
+      "purl": "pkg:nuget/microsoft.extensions.caching.memory@6.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "00d8e437d4e20595e6e5cbe3ddb6f741b7b3073aa4ba90b3c7080d7f8e9de15e13a11047704a7720481b73aeccdd9a951d0c5a260127719fdfaddab39e955623"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+      "name": "Microsoft.Extensions.Configuration.Abstractions",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "a96cd5f68f99456abea469bed5d17e47ba938136285ef6f2a3046807140919fa93a6a0ee9f67ad79eae345086ae4f43fd784be96ab68dc5b78818691ca5e2b75"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.configuration.binder@6.0.0",
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.configuration.binder@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6f712b2b3343f0b202ee8d3c40056529f68421812f2c96ed9956c56550515debbd62429f492ccb65f4754947d03c1232f6628b844b498066089a470c35a284d0"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.configuration.commandline@6.0.0",
+      "name": "Microsoft.Extensions.Configuration.CommandLine",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.configuration.commandline@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "de72f5a82919d4ec71d78653ce0a3832694eeedb28ec5f93b4c6406368d402d4cbc80703a7e1038e4dd1a9a7e82a235a78fc8fbef965784701c61ddbd87ce5d6"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.configuration.environmentvariables@6.0.1",
+      "name": "Microsoft.Extensions.Configuration.EnvironmentVariables",
+      "version": "6.0.1",
+      "purl": "pkg:nuget/microsoft.extensions.configuration.environmentvariables@6.0.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "a67c975752c53ac6231af7ae0b4ef1a746072321aaee346ae4d71be73aeb22278c2d657080cc98c5c387d234e705e7434f81a1d508a74aab23ab3722787935a2"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.configuration.fileextensions@6.0.0",
+      "name": "Microsoft.Extensions.Configuration.FileExtensions",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.configuration.fileextensions@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "5780ed876718319a70dc7846c3d5d40c88a3a48ea037edb62c3b74021b9f2203a9a4251fa565f8e3cdce98df9d1574499092dcf13bf443c40afb58a7813dbe29"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.configuration.json@6.0.0",
+      "name": "Microsoft.Extensions.Configuration.Json",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.configuration.json@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "18919eaf2e90cad0b34bf07127dea49601bd8a7dee1f6e8a71405b8951bf7283435c246ae8b195565513e2f5eadf828fb8cf91d9abfe2de61d5fd87821938252"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.configuration.usersecrets@6.0.1",
+      "name": "Microsoft.Extensions.Configuration.UserSecrets",
+      "version": "6.0.1",
+      "purl": "pkg:nuget/microsoft.extensions.configuration.usersecrets@6.0.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "172f32af857aa1b8bb671bca608d62f398eab7032af2dab2c50559a514a481e03c7a7ab2fcabc120c75cb8d7739e5c503196bbda6bdb1ea6fbbdb8383f2c7de7"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.configuration@6.0.1",
+      "name": "Microsoft.Extensions.Configuration",
+      "version": "6.0.1",
+      "purl": "pkg:nuget/microsoft.extensions.configuration@6.0.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "054c8553db7e1f395213bae2e01f8040dd81813807bffb8cf36b39664814d41029cb35b3225e3c9c3b06e70475b74a6788dbaec930731b7a825bcd79dbf36d4b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "c65ce2d886111091f7fe6ebe954ad096e8f35fcc038ad9b84069d4bba9145d340058fb9963c8beb6270525bcdfa9a7ad2c0e8a47facee84c3f1ee603f9bc627e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "version": "7.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "8778ff41f9853784b4c380b603a5fb6ab5e28ff33f395c37b901d2385c67343e03c80cced45f5e317ec4b62ee553f3a44ad8441345b346c7d3fc39b1f3a8f30b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.dependencyinjection@6.0.1",
+      "name": "Microsoft.Extensions.DependencyInjection",
+      "version": "6.0.1",
+      "purl": "pkg:nuget/microsoft.extensions.dependencyinjection@6.0.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "bd65cf8371c9408a59904367d4a5aaf127dba95ba3543ed2eef200c855d7a8ae7191fd55868faf1b46cb0421f1537ea50f570b2ed986a5f61fd01dcc6058bdb5"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.dependencymodel@2.1.0",
+      "name": "Microsoft.Extensions.DependencyModel",
+      "version": "2.1.0",
+      "purl": "pkg:nuget/microsoft.extensions.dependencymodel@2.1.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "9d2d972aa8bed40d6e9a760d2d7d856e6fd79f30b1b398becd7549dd50baafdb76cf4359afd14b9c9378550a4a8a075c587fe21536ccb97e8ce964097138d522"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.features@6.0.35",
+      "name": "Microsoft.Extensions.Features",
+      "version": "6.0.35",
+      "purl": "pkg:nuget/microsoft.extensions.features@6.0.35",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "237e35c63fd8b6cf8d4a53e31dc69235b676485b9b5e91c815ac2bd75fe0c6ddfae5b19fb2f3f1250668e5ed02e2bc97cd512d74b324baf552eef6197f29f332"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.fileproviders.abstractions@6.0.0",
+      "name": "Microsoft.Extensions.FileProviders.Abstractions",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.fileproviders.abstractions@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d29778fdf868d200b5dab42cc1a190c5b537e23392d533d2f2564fa641421faf29a508c73476257bd891b8779ebf52e1ac9f7860fbf371177c52622e164db743"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.fileproviders.physical@6.0.0",
+      "name": "Microsoft.Extensions.FileProviders.Physical",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.fileproviders.physical@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "42f90bee5d2733cb9db7781fcaed15c3c6db0976e5c5a28e97b736a017e01b2e0b09445168bf575995f515626b41ce37a0ca24567795c47dfc8b3f9b635b1b86"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.filesystemglobbing@6.0.0",
+      "name": "Microsoft.Extensions.FileSystemGlobbing",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.filesystemglobbing@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "8a9f239cbd5a3e268f78a20d0aa69311bbc1143995c7d757404059d873814573c3d5e69b18da8ffdb2a5b08729ed4da51b1897779c4886815c998f273381dd8b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.hosting.abstractions@6.0.0",
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.hosting.abstractions@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "19c4f99760985cbe926b6eca0928744e2c6c45f003520b61fa88d0483e449338ac671986161ec2c3391c62e1b0be65cb8ebdbbb9644dac9dafbae123321534e5"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.hosting.windowsservices@6.0.2",
+      "name": "Microsoft.Extensions.Hosting.WindowsServices",
+      "version": "6.0.2",
+      "purl": "pkg:nuget/microsoft.extensions.hosting.windowsservices@6.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d2112bd3f12f19c2146008cac53debe9d3f372a69baf0a31032444e9f9baca5d1205e9062d2d0486d289baa1a9f2b22dc6126b2c834918681ef6cdae4551e490"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.hosting@6.0.1",
+      "name": "Microsoft.Extensions.Hosting",
+      "version": "6.0.1",
+      "purl": "pkg:nuget/microsoft.extensions.hosting@6.0.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "85b9a2cdcf4a3d639a70b53c67c60c6811ba296759169a5ccd857f2b09cf194ffcc5e6d6c50c5d0de2662ce820f7af29adbee0da84209e9e8954b5fa9606f2f2"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.0",
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "fc78205816d3c32f1381e6c6497e43059db89dd8738bddec1d4043bcfd48c5b643ec50e8918cdd02bebebdb5868f0d9701f476109d6c7ca528b698c79c558fc4"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.4",
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "version": "6.0.4",
+      "purl": "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "2b5e30620c0e7ca5442eb521e5e06a942f16be8f6fbe14b766122f72cc15dae4bfb9b91344f490b0de79ec4662614492a193718b31be6a5378c23b5dc8b75ccb"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.logging.configuration@6.0.0",
+      "name": "Microsoft.Extensions.Logging.Configuration",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.logging.configuration@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "643b248da8260406eff8af2b616f558633e99616ce13adf1503d038aec9d649c2dd79751ca8aa27189252ddf3acf37a29ed51cec0a6d0e41e7f98861624628f0"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.logging.console@6.0.0",
+      "name": "Microsoft.Extensions.Logging.Console",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.logging.console@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "82ca8acce11db2fab6f108971716a09a7d68441f46788e468180a4a326d9b500342146fb40fc1fd5698ddc0c0978d22c69d4ef2054028952b439522029f3811a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.logging.debug@6.0.0",
+      "name": "Microsoft.Extensions.Logging.Debug",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.logging.debug@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "33d83f262c6c7926404c913db5c327f6ece80f8f836d28258af16a571f1891127b5553e69ef0846ce6740006b1b0bd442b2238733d3b0d738e244c7136c50e1f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.logging.eventlog@6.0.0",
+      "name": "Microsoft.Extensions.Logging.EventLog",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.logging.eventlog@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ae5a3447194c7745ad2c6dc21c8d2a393a7a7c59fb32f42396b0a3b9c037d51aa688c14266417c08735b7bc3bbb5b048cb2a0b19607585ef426da0398b21ed86"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.logging.eventsource@6.0.0",
+      "name": "Microsoft.Extensions.Logging.EventSource",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.logging.eventsource@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "05e0f2caab7b9e49bf9ebf86764f8bf27d6d513feedf75646d700e7ac81848db310ccf6127534e046a197e3f6b09b783dbef66c84948e893955459a7ce079640"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.logging@6.0.0",
+      "name": "Microsoft.Extensions.Logging",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.logging@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "7886f28f8d100e0d4d0f3d07056d12e5fdf0acb5672969c327f26d67ec890c59c38fdd15a0fba83e616479a5ebb6efb470a9b9191030a037fe7415972b44d476"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.options.configurationextensions@6.0.0",
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.options.configurationextensions@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6d758835b4e7d2f0b415873d19a4132126f18502c032bbed6eebc3f4de897a511a212fcfafadb05028a7aeae5b7f5591046733b75bf8c0387116d54535c31d51"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.options@6.0.0",
+      "name": "Microsoft.Extensions.Options",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.options@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "7735cdd3e5750328ce7b6c5c27ce906e8db7dca1ee2c46349e37ff3f62b0f127c953e778e47352d9cb49767127ad66ccf587b678581a0b9323f68b51314e88b1"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.extensions.primitives@6.0.0",
+      "name": "Microsoft.Extensions.Primitives",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.extensions.primitives@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "f7e3e7ce64057c414d47d2766834df2461aea528478ceb86c38554bfe241d38e1b8921eb9e6088303fa624799bd87ed8af2adf0445c3babc50e3b80965d08a35"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.identity.client@4.21.1",
+      "name": "Microsoft.Identity.Client",
+      "version": "4.21.1",
+      "purl": "pkg:nuget/microsoft.identity.client@4.21.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "bf272093b4bf1c06c769468ae1389dd5fb161ec5dd15144fd8a6af008387095576ef3bee41f6008d798cbdcb6eb85e1e832752ba61b9f02c0f6686f781679881"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.identitymodel.abstractions@6.35.0",
+      "name": "Microsoft.IdentityModel.Abstractions",
+      "version": "6.35.0",
+      "purl": "pkg:nuget/microsoft.identitymodel.abstractions@6.35.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "c6e47c13845df7a338d429d448288e2760c187ecfecd04a6cab607758843e8ae1f5c17101959d108543479f44e518a4ffa9d330b504b2abd0946956eba34d94a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.identitymodel.jsonwebtokens@6.35.0",
+      "name": "Microsoft.IdentityModel.JsonWebTokens",
+      "version": "6.35.0",
+      "purl": "pkg:nuget/microsoft.identitymodel.jsonwebtokens@6.35.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "f70c5a8b784a81951be3f36375129f41dd1026fb5728396f9863180026c40bc0c56a270c14216140566af59113d6424bc196a17f695f6391ad729b31f336336e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.identitymodel.logging@6.35.0",
+      "name": "Microsoft.IdentityModel.Logging",
+      "version": "6.35.0",
+      "purl": "pkg:nuget/microsoft.identitymodel.logging@6.35.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "8de3eb49f1809aa4fcd490c235263e7f1556a06b892adf5ee9e27ebd3efeaae552e799d697ffe31a35109f8785b552ade2bb797576a5799747441f49f40259ed"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.identitymodel.protocols.openidconnect@6.8.0",
+      "name": "Microsoft.IdentityModel.Protocols.OpenIdConnect",
+      "version": "6.8.0",
+      "purl": "pkg:nuget/microsoft.identitymodel.protocols.openidconnect@6.8.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "5ff3e25799779d862ca1db6b34cacd4085650e61e98d0439c38f04fa8fc3e47e1eb36fb89e213241fde5d37721bd919637305185f4acb5a5ebdb9fd87b801e63"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.identitymodel.protocols@6.8.0",
+      "name": "Microsoft.IdentityModel.Protocols",
+      "version": "6.8.0",
+      "purl": "pkg:nuget/microsoft.identitymodel.protocols@6.8.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "389671e673dd887f8c124c0291b26b4c05223bf6332ded154acc0d943c49b090fd6e13887571ee7e1eb9d297e6e7d607d4335ebe9dff6d7cee90aac6e7b800d7"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.identitymodel.tokens@6.35.0",
+      "name": "Microsoft.IdentityModel.Tokens",
+      "version": "6.35.0",
+      "purl": "pkg:nuget/microsoft.identitymodel.tokens@6.35.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "44dee5be9eecdc1a2e720d4d68d01ba836f1b652e3e5079bfb8b924b54de2b9152055338d0fe0329a4ca0a14f8dec1f229f87b574ce4acca61e83747bf20386e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.net.test.sdk@17.10.0",
+      "name": "Microsoft.NET.Test.Sdk",
+      "version": "17.10.0",
+      "purl": "pkg:nuget/microsoft.net.test.sdk@17.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d3fd877800a4687118537c1cf37625703d858b82ccb440898eaaedbf0d253e2f430846b7e7348fb758f87eebccf0d6a08c3a89ba1d496b7e56711b67d549bafc"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.netcore.platforms@1.1.0",
+      "name": "Microsoft.NETCore.Platforms",
+      "version": "1.1.0",
+      "purl": "pkg:nuget/microsoft.netcore.platforms@1.1.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "933d0f116da586aca07a123f77a5ec3c24330fb7dfee050969518f5444d7eb5d5e69d1ac03703cefb19d4a55342d154c0931fff8fde8da20d36a4f92d3c576f8"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+      "name": "Microsoft.NETCore.Platforms",
+      "version": "1.1.1",
+      "purl": "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "4cc06ecc01e94de9c66c6824d12313c32124ca28d8fc469ee191ac14d609bc0aff2c39f592edc4b69dc53f10a1983a791c717793326ea1a6b4f0dd318ea0097d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.netcore.targets@1.1.0",
+      "name": "Microsoft.NETCore.Targets",
+      "version": "1.1.0",
+      "purl": "pkg:nuget/microsoft.netcore.targets@1.1.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "68e640dc159fcfd4578e9cedd2c44924c8c0b1c0149b71e86b851601f71e57d513631830675959b799ceda6c857fefe37ad610a38b933fbcd2f2c258ebb041c6"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.netcore.targets@1.1.3",
+      "name": "Microsoft.NETCore.Targets",
+      "version": "1.1.3",
+      "purl": "pkg:nuget/microsoft.netcore.targets@1.1.3",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "dd6ae68b49090f30a5c000be88175406910a98495ef0540db02b3bedf922388c3ff68600d3b6cbd4464d5f4910d8e30ddf1a70be5d2f02d382618de774336585"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.openapi@1.6.14",
+      "name": "Microsoft.OpenApi",
+      "version": "1.6.14",
+      "purl": "pkg:nuget/microsoft.openapi@1.6.14",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "b536814fcaa3937c4835f112c8e3c4dab21e9653ef07baa956a8968b203f940095bf3fb138689784551fa21731f3634b6e2e5abf32d6d25c7eb3aa00a908a37f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.sourcelink.common@1.1.1",
+      "name": "Microsoft.SourceLink.Common",
+      "version": "1.1.1",
+      "purl": "pkg:nuget/microsoft.sourcelink.common@1.1.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "58c706a562ab9899b3acd7ae6846f6ddb10c9dbb51fef2e6bd9b6400fe6a5aeeef42c639f46a9f44977ae6c16906ccdb77693f6d0f1cb3c7966b040a01a6e456"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.sourcelink.github@1.1.1",
+      "name": "Microsoft.SourceLink.GitHub",
+      "version": "1.1.1",
+      "purl": "pkg:nuget/microsoft.sourcelink.github@1.1.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "21a2469cebff33b5108d1264b3b07aa7ba5b3e73b08ac606388cea0b3e6294615302967792d391fbacc9d766513c89ee94199d01fd52ac67431b6314f20e974f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.testplatform.objectmodel@17.10.0",
+      "name": "Microsoft.TestPlatform.ObjectModel",
+      "version": "17.10.0",
+      "purl": "pkg:nuget/microsoft.testplatform.objectmodel@17.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "2a4c218d07afb838f46814683cb63a38b0211aa6cf50406e28b6da0acd24515c36f6a88e62771d39177898b5496e7f6f199eff885190ffe028265d13bb952676"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.testplatform.testhost@17.10.0",
+      "name": "Microsoft.TestPlatform.TestHost",
+      "version": "17.10.0",
+      "purl": "pkg:nuget/microsoft.testplatform.testhost@17.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "2d6a4c75faa11ef71491e302bcd6093bc4253cb958cfd5cf3dbf996da5c82a17668c0574c2a4d2ad3896e452da7fb451653e740100030ce60c39ed07c43c4d80"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.win32.registry@5.0.0",
+      "name": "Microsoft.Win32.Registry",
+      "version": "5.0.0",
+      "purl": "pkg:nuget/microsoft.win32.registry@5.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "743a0a8b43e70f3df5c80c844df467b6c2c0ad3955015cd4cc222fbc40ec0ecb9cae5df70e5f292091b4e9e3d3253237b46a5ec874bd0aaec5a1cfece0478a72"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/microsoft.win32.systemevents@6.0.0",
+      "name": "Microsoft.Win32.SystemEvents",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/microsoft.win32.systemevents@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "86a4cce7adbc8d2b108aff871a98aadd628197673cbf52997dbcb627a3ebee910f94af7068f76010ee9bf00ffeff19ffc99f6e96ff07baa2bbd4e372dad83aec"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/mimekit@4.17.0",
+      "name": "MimeKit",
+      "version": "4.17.0",
+      "purl": "pkg:nuget/mimekit@4.17.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "87f297b02ade25ff11a51fcf480b656ef62d6459dda7d37c5a7d41b36e3c00bec84f2867f808886396cb4efb7ad2d6cdda6bba83c29a76d04d5b28138e2da5aa"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/mono.cecil@0.11.1",
+      "name": "Mono.Cecil",
+      "version": "0.11.1",
+      "purl": "pkg:nuget/mono.cecil@0.11.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "45605c71cb8c9fc83101ab09c410406fce3caa4b774b6b7fedb11a117b71414e913afd6fd29ee4937f9781ae06fa4f9b29b2c195ad5bb2b52dfbca4071c683c1"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/mono.nat@3.0.1",
+      "name": "Mono.Nat",
+      "version": "3.0.1",
+      "purl": "pkg:nuget/mono.nat@3.0.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "4cb6b3feae22f35cb99d1caa06524ed894bbdc9472075cbaba1720c618b2227dcc308807d6695338f64d5fbb940745d883afbb220a78b4502a7ffbbe527737b7"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/mono.posix.netstandard@5.20.1.34-servarr22",
+      "name": "Mono.Posix.NETStandard",
+      "version": "5.20.1.34-servarr22",
+      "purl": "pkg:nuget/mono.posix.netstandard@5.20.1.34-servarr22",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "4203b17c1aa289c857c10d29f79ea98d4368e87c0935d66c9867c7b8fac96391770ab3e71418c1fef58336d05a63a5afa8dd909a30d7c1073fa3de9af2711131"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/monotorrent@2.0.7",
+      "name": "MonoTorrent",
+      "version": "2.0.7",
+      "purl": "pkg:nuget/monotorrent@2.0.7",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "c4dccaf690fe53bf7fc01d37ced381bfeecfafcadad675a69cbc1c48f550d819082faca289888b5481a810247d193239176c91b1042fe798436c8ec6b23629b4"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/moq@4.17.2",
+      "name": "Moq",
+      "version": "4.17.2",
+      "purl": "pkg:nuget/moq@4.17.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "1f2b543c9dffba4b3652027d8487325e6dd8c69140478389cdb4304c796d6ca1ae9f79452e1107b3dee18a23e3d5d63c8d5fe46ac5de8a14f30f172de997f789"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/nbuilder@6.1.0",
+      "name": "NBuilder",
+      "version": "6.1.0",
+      "purl": "pkg:nuget/nbuilder@6.1.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "36d0ceb73ff2736e2de72362bda1894352c7733a1a6303438c8d383fb28414399b6f687ab8be4e259e44c4ac7ec1cca92b67418518f6a354a22c07e3de473c8f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/netstandard.library@2.0.0",
+      "name": "NETStandard.Library",
+      "version": "2.0.0",
+      "purl": "pkg:nuget/netstandard.library@2.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ee39db454f8bd3c15728cc6a51f971117b55ca65af34ead2f321e0bbdb3a10cf009ebe93ff0217e27674f23feedc0b33fad0ae7e9dd857015212f1533d89813c"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/newtonsoft.json@13.0.3",
+      "name": "Newtonsoft.Json",
+      "version": "13.0.3",
+      "purl": "pkg:nuget/newtonsoft.json@13.0.3",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "1eb0b9057765d3420ff73795fb467ce3c4163c0a02afd3f76c311982e23e8242dc04a00ec62c7fb4b1000070be52f0cd3efe1ad9dd7c94e45e1cc39a80f6becd"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/nlog.extensions.logging@5.2.3",
+      "name": "NLog.Extensions.Logging",
+      "version": "5.2.3",
+      "purl": "pkg:nuget/nlog.extensions.logging@5.2.3",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "4c1f333c65769d5a6f5aae42f332151cf4a69f338732b5e9a63b00c0772e26ad4486cf2c0b49659c0bf962c7f92dffef7b0f5a995ffed3532886d445483cca75"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/nlog.targets.syslog@7.0.0",
+      "name": "NLog.Targets.Syslog",
+      "version": "7.0.0",
+      "purl": "pkg:nuget/nlog.targets.syslog@7.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "c988a2af449b66c5a616892fba07b28a43b86018681730da556e5b103ac2692d7141546cf963038dd001e5e523217a70a149cc3fcf1f30f621beb222d0ba0394"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/nlog@5.1.4",
+      "name": "NLog",
+      "version": "5.1.4",
+      "purl": "pkg:nuget/nlog@5.1.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "2a2d174e121311dfff46b436d728b51c1fd489de29cd3444e582ef12993dd5dd2f0d7a7738fb550af5a0ad8b2aa9ca53c228a915238b4ac53545b95a7b1ac588"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/nodatime@3.2.0",
+      "name": "NodaTime",
+      "version": "3.2.0",
+      "purl": "pkg:nuget/nodatime@3.2.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ca8440de31099fc34cd3fad09bbf33b8334f0370e89cd49976ca2b3148fe765b5cd43fbf2dce61f585c6a9b104668ccc1abdfb940a1891c48cfca8d356a0f4a3"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/npgsql@7.0.10",
+      "name": "Npgsql",
+      "version": "7.0.10",
+      "purl": "pkg:nuget/npgsql@7.0.10",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "b8de7ff896c86be07861e003325b3e02d3fe6d74872de3932047f84665adb80e6a50cfea55d511b0526eac75412e9177becd197fc8ae69f746e2f2f5fc006ed8"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/nunit3testadapter@4.2.1",
+      "name": "NUnit3TestAdapter",
+      "version": "4.2.1",
+      "purl": "pkg:nuget/nunit3testadapter@4.2.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "9201fc54ab2b719660346417469542acced39cdcfd962ddbfec9c7f989a75d436ab1a59ad57c3d110587a5bceae0b8b615b4e34c4fc4e4de4774b357cd9f01a5"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/nunit@3.14.0",
+      "name": "NUnit",
+      "version": "3.14.0",
+      "purl": "pkg:nuget/nunit@3.14.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "47b88fc03ee46ce68fde8db395d5896d678c400bc3283d2e95ddbb42f0373c000b975ba797bc74bf627b7868893988e2995fc1b864f85499abe394634bbcf82c"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/nunitxml.testlogger@3.0.117",
+      "name": "NunitXml.TestLogger",
+      "version": "3.0.117",
+      "purl": "pkg:nuget/nunitxml.testlogger@3.0.117",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "f80128201ef582ee91d905f302cebc30b95c78b828d13f6170bf32586522f94ce8cec0cc2231c62a1a83aa0085c2d3bc51c5c02416853642bda3482d15a2d34b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/pdfpig@0.1.16",
+      "name": "PdfPig",
+      "version": "0.1.16",
+      "purl": "pkg:nuget/pdfpig@0.1.16",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "a9071bb0d318558f8ae442e9b5ac764bcb6134c934fab490ab71ff29d623dcb2dc928f324c2cfccb9288bec2b123202e4cdd1960d9dfb1990cfb412fc53c0754"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/polly.contrib.waitandretry@1.1.1",
+      "name": "Polly.Contrib.WaitAndRetry",
+      "version": "1.1.1",
+      "purl": "pkg:nuget/polly.contrib.waitandretry@1.1.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d4c5102e24a8e0a0e441eea7cd0461214d39966f6395ec57e4156c6eec3448bf36ca767e1b30074312550cf5416e8c55dfb3e8dd21b4efb697f03b92cbc4e468"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/polly.core@8.5.2",
+      "name": "Polly.Core",
+      "version": "8.5.2",
+      "purl": "pkg:nuget/polly.core@8.5.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d4c24a771bf8cf00e6896bd8bd5376e03b2b5947e043817cdefa07f1b85bb4b31d3ee1b2f027d3533b20421bf2ae5d5aee1acce9fff27702d5755508d31a2853"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/polly@8.5.2",
+      "name": "Polly",
+      "version": "8.5.2",
+      "purl": "pkg:nuget/polly@8.5.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "bdb5ec1a0906f3a9c6f933b063e4a6b6b1ab4479871f40d06b1b482f1fff7770f3fe8709f22cd2358cddbd4da012d59afcb0c3f3324bbc3dc7763124765be486"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/restsharp.serializers.systemtextjson@106.15.0",
+      "name": "RestSharp.Serializers.SystemTextJson",
+      "version": "106.15.0",
+      "purl": "pkg:nuget/restsharp.serializers.systemtextjson@106.15.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "117e2da78619e16a0da189935c8cd59d89060569341397a270985cd5c510ed253215441b056b3d990f3afd634f6620bac652909e2e4c5ecf5e709e7fc9288e44"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/restsharp@106.15.0",
+      "name": "RestSharp",
+      "version": "106.15.0",
+      "purl": "pkg:nuget/restsharp@106.15.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "1ccee8851e80b1cc5e74d7a7aeb97ddc34991ba86f76703b3be347c8297fe992937e7f29b10f6b46652971bf5e5abfb5e34be67f1a157a6aa5d1b528786116dc"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/reusabletasks@2.0.0",
+      "name": "ReusableTasks",
+      "version": "2.0.0",
+      "purl": "pkg:nuget/reusabletasks@2.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "1d66fb632edd41f58f8745785f8da8ba73e4af352f2fa801edbc2c857ec4a810c297cefd8814084b44d1ad715728e4ced9d349c5a11f5e701b5fc173bf753b0b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.any.system.collections@4.3.0",
+      "name": "runtime.any.System.Collections",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.any.system.collections@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "db783aaea7ed2a6a2f9f670b786b2e1d4626d050fba5dbad6f4b90309a59dea4efabecc79209ade89eb956d46bcb858319896690c6b8c43002b5a43de1a94d6a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.any.system.globalization@4.3.0",
+      "name": "runtime.any.System.Globalization",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.any.system.globalization@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "b0c0c19da778ae9e2dec6638e3626ec7430252e28be28b67e412ba362d004535d34a944d07367b86931f292be7552103e646099bde98396b2a574247d1ddaebb"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.any.system.io@4.3.0",
+      "name": "runtime.any.System.IO",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.any.system.io@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "483679003d43b72468c58b4472a4371c395cae8acc61765e0aded9846f544bd23956f6be8292160c63247306b95e228bd1c7902916485f6c745c48cb5fb3c3cd"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.any.system.reflection.extensions@4.3.0",
+      "name": "runtime.any.System.Reflection.Extensions",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.any.system.reflection.extensions@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "70f853f95aaee76f9c410ac36a2fd5f7582e6d75270ca351be50671fe84e82d1b21dd0b5eda40853ae0469e870010ca677b909039ad2ad544d7c362b6e19f3c8"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.any.system.reflection.primitives@4.3.0",
+      "name": "runtime.any.System.Reflection.Primitives",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.any.system.reflection.primitives@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "36b9b5a776ab9a9e934dfdb1baf69afa31934e69dc00b585ab6d82a66c11be10dfe9d13d6661f8d046ceb300f81a714bacc452d0a8ba2b1e5a50f98a2bf85906"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.any.system.reflection@4.3.0",
+      "name": "runtime.any.System.Reflection",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.any.system.reflection@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "84b0b7037ac8f238a947977d93bf9fd0c811096ead7b1b00a7431690dfdc8b5f0532d43d287ec4daf0e7fc31f62e4c6cb339692693a7f6acba67affaf6b1fa79"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.any.system.resources.resourcemanager@4.3.0",
+      "name": "runtime.any.System.Resources.ResourceManager",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.any.system.resources.resourcemanager@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "2f16fcf5232f7fcc3da7dfa47812f22fa1fac7f4c499ce9056c2080344f7e88bb2398de436f21dc8675d036aaddf97116a6cf117c2b9a743a9ab81b81e335b85"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.any.system.runtime.handles@4.3.0",
+      "name": "runtime.any.System.Runtime.Handles",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.any.system.runtime.handles@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "186f385fabee7e8133ab1f0f6de04a85e138b2b3a18a6bfec8bb466ff264477636166a2a9ae78b3455385f1f18ebba6516996d41274aef8c74aa5121229bff09"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.any.system.runtime.interopservices@4.3.0",
+      "name": "runtime.any.System.Runtime.InteropServices",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.any.system.runtime.interopservices@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "941a057907f17bfe1eaa33e2e3a1342d4fd868231d36443c078319bbf9a4cdd200661f114353586528f47a0ad029d81dbe53c5b4fe124eda1be34af8a360c103"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.any.system.runtime@4.3.0",
+      "name": "runtime.any.System.Runtime",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.any.system.runtime@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "7d14bbcc981a1bd36489f680c4619c9430e8467f470bb857002979d8eaf4e9afdfc5dcc36a359be70a2fddce9afa055295e911a1ec5f8f04122bdb21e6e9b92d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.any.system.text.encoding.extensions@4.3.0",
+      "name": "runtime.any.System.Text.Encoding.Extensions",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.any.system.text.encoding.extensions@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "34baf198bb1f46b3ae56a3d61beda5ad0667139dcc2d57a8fb0f5ce78115f93528e1cf2b20ba6c0d77d8f293e23b2f641e95071cfd3bba02a6b6c537bd55b926"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.any.system.text.encoding@4.3.0",
+      "name": "runtime.any.System.Text.Encoding",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.any.system.text.encoding@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "fa2848e556971423153c936cb46e0ee1ea3509f6eb0722f146b4104ea393a75b6d2b4914283a8e74149368207620193f42d8c3aecebec78c6e7b3c8c5dd9b41d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.any.system.threading.tasks@4.3.0",
+      "name": "runtime.any.System.Threading.Tasks",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.any.system.threading.tasks@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "3a1040541406e64163d52fa10844374d41c1004b59ddf6c432064c44d74df00d0f8f8c7ee674c42c4a8be7d0d4d138ca544e8823776a2b0e039256f7b334fae7"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.debian.8-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "name": "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.debian.8-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "1dd492a79327252b20d3c28c7d94e1a6e2cf2693f01398415ef1f0a0a5a8b321c77def0c87958a4f4ca510e7fac8dcd7e8d823c5ee1686469f879abb62669ce1"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.fedora.23-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "name": "runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.fedora.23-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "fb21f56b8f7024ccbc66de32c7946126bc4efc30430720220b33708844c8fb54b898f742bb4398e1d8dd7220bb56cb24d25db6c106832eb5f15e4a7edfeedb54"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.fedora.24-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "name": "runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.fedora.24-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "73760d1f519025b7c83c97829ebe1abec7ae812a8faf1c08ab3b6163264337a12e3b234eceafb2d8a4947d17176aec9ad6c1787e81124e0c0ce5ed40f1aac02b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.native.system.security.cryptography.openssl@4.3.0",
+      "name": "runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.native.system.security.cryptography.openssl@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "352d54fbbd349b8285447479a38be8f434a54e69422aefeeeddb44e6c5075483c1fb1a57c5842f801800eb0108782cfa61f9f4679dbfef6598b13a0210f267af"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.native.system@4.3.0",
+      "name": "runtime.native.System",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.native.system@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "73fa96b762e278d6488f58c69d536c1362a5db761ad9a49306e5cc0fa57b93d296afa975e93a9dc2afa1252704a56111f7be773560bc87de8f695358e4b77b27"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.opensuse.13.2-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "name": "runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.opensuse.13.2-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6f7a6d84d831c45703f8f7345921280b4fa67773328514ba68211e7a7bcd13715dc351f2275f19851155249cc8791fcefe3a713dba01f34e47a344f7525ef0f0"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.opensuse.42.1-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "name": "runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.opensuse.42.1-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "29e2f3e070a529ffa7152ee9ffa162fc2ab22d787cd45a621b3726b92f031a2f6552a4a767a12cdb7fe0bf63bed575467eb6cd9af885ec27240696af901a0815"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.osx.10.10-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "name": "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.osx.10.10-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "5fb21d8482f3af844e5ddf262350540903121d24307a55250631752724ca0a35da3869f67c1e04281c506c22b65633b759a5887655d92f75ba4e22159eb857e2"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.rhel.7-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "name": "runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.rhel.7-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "9f214d88293fafe54e888aab78b8b1f3237eab75a06bdf9213c0428247fed81c042a2371e83caf1630a091f57be37fe0af1bfc8c727c8142b85c4430ef2cd162"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.ubuntu.14.04-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "name": "runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.ubuntu.14.04-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "cada1ec02eb01a8acbecaa0202f45fb20a093c96cdabeeb89364aa5ba25c38079b5ac154bc209881fcd032b9e9bcf8849783ab6e5525845da38be435f9254bad"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.ubuntu.16.04-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "name": "runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.ubuntu.16.04-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "23c6cac3623c939f16c7b7cc290267d91f256a66e80808877c7795fe94bae5270a58c308d3ec0990b62510abe05b50ff5ef4a5ff6db5725068476abd40d34cec"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "name": "runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "541e5c9ffececd47f37670bcb6a00831072254b8aad9ea66d8dac09b513d3a3351c86e255617d1eb548c70b8b37a3cd03fc47c51fff4979a8e21b5048be45d12"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.unix.system.diagnostics.debug@4.3.0",
+      "name": "runtime.unix.System.Diagnostics.Debug",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.unix.system.diagnostics.debug@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "595f0a2d11d65545540ddb859ef18c1edd05b04b76c0aeb13e5d448032a568cc762a7678dc0fced06ccff3022ebc00bb9aae13f55d669bdd2bf8f5e42fd14f75"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.unix.system.io.filesystem@4.3.0",
+      "name": "runtime.unix.System.IO.FileSystem",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.unix.system.io.filesystem@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6a3993723aea737be05754c7e780d18a8b216c49e26856ce009d2445e1ae36ca7db8872a6257b4466528ebe425c2a7b7248b384c3c609eab375335f7811275ac"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.unix.system.private.uri@4.3.0",
+      "name": "runtime.unix.System.Private.Uri",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.unix.system.private.uri@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "a285b3a1baf9440ab7e2bf6e6a7d6bfd63d72581b55d6cbd29a9ebc4dbc49c1cdb15d41b306ed8ddb562e10c51ef164c34b3b12cb4c0c97be74a47e3e5ba194a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/runtime.unix.system.runtime.extensions@4.3.0",
+      "name": "runtime.unix.System.Runtime.Extensions",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/runtime.unix.system.runtime.extensions@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "cd0893055a622dfb534195bc185b15d208d88a407558c9043c8c45e4ee91914ad257f3a0bd14536207854216bfd24781a6e4b41d8c1eada191c217e127b763ef"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/selenium.support@3.141.0",
+      "name": "Selenium.Support",
+      "version": "3.141.0",
+      "purl": "pkg:nuget/selenium.support@3.141.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "178b313025c6caa5ad6f0e6ab27889460cdad94b019ec947c0580d036a7b84fc6f261aa0ef79725eefd9b1c27b1527d1beadde26ba2ccacbfddbee2c677bd6b2"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/selenium.webdriver.chromedriver@134.0.6998.16500",
+      "name": "Selenium.WebDriver.ChromeDriver",
+      "version": "134.0.6998.16500",
+      "purl": "pkg:nuget/selenium.webdriver.chromedriver@134.0.6998.16500",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "31bd5a8f2e73998fb25c386952d97dd2ca6f63f39690370f9a716a7b1b4512e74b3dba7bb05711a1016b84d4a23dae5599314c875ac54e9c7dd1a2290d7ad24f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/selenium.webdriver@3.141.0",
+      "name": "Selenium.WebDriver",
+      "version": "3.141.0",
+      "purl": "pkg:nuget/selenium.webdriver@3.141.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "c0fab35ceddfefd0f3a9ab93652ccb30a89a04237467632fecabd63fe86757a10bf3cce1fe92499c5b5d211d57e706b786c4cea45fdb049b38e6bcfb900aec88"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.abstractions@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Abstractions",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.abstractions@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "0ef72c283edc31c8701b74042912e81659c37e02767997d023f7104be16a76ffbe475e19794893c45a0405e953a60ed4b2b4eb8c8772f7ad8347f3b7328f5e94"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.extensions.oracle@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Extensions.Oracle",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.extensions.oracle@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "faf9a9bbcbd2a3b961b9c372f8ec4650793596236006558fdb74e6b7125c6276faf2e0da5b5e3ecd5f186c920c5fe43b4badb92874c3f5585e19502f865d4b89"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.extensions.postgres@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Extensions.Postgres",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.extensions.postgres@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "4c70be8cbf9d3d806e35211c440a218be12c3a8dee38c7a667e6fc4489fdb69e9aaa045321b30647088e7ae963a343cca1eb8257f1b30b2fb2b8bca153228869"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.extensions.sqlanywhere@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Extensions.SqlAnywhere",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.extensions.sqlanywhere@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ff5acc85f1f786b7cfb9b1021582e86b846d193660d8b72bcf0bbaff682695fac051bb9aefa614aa489defc6e117b468560b8683fb05eac1d2813cc6c85fea28"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.extensions.sqlserver@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Extensions.SqlServer",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.extensions.sqlserver@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "e215a7da42e67bf6b5d1d64ce078909329cb59490b07b9c79846e6af9e0b23509ca1c5daae43cb24228ba680ebe3b872b533e2563438346e7ae16e4b7c8bd2b0"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.runner.core@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Runner.Core",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.runner.core@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "63ab352d2d19ab4039ee974659ce967a45f592e8e6b66a8e06e57b1447dff4337bcc0d82348fcc0c0d248728f5157d491591e4cff253158bc34b5025bfd4bf64"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.runner.db2@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Runner.Db2",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.runner.db2@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "37a6e777c598d92a11a5a24667a99d72343c91d357be9f8003a800fd0541c024426a33b64a52b3ea36ca13e4307b950ec6cd7e87c1eba1ab32f1c6bf607bbf50"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.runner.firebird@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Runner.Firebird",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.runner.firebird@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "4daefb3f742b27c03a026bc1a7b783f194d6d9ce0165c28692f12bd49338ea3cc101eb945481db97b610d2489c3bc839fec880354b4b71ea0e43c9e08c41f2a8"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.runner.hana@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Runner.Hana",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.runner.hana@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "024e2c561a05165edcee32256f5f898872ff0cdd56bf55915848aa05a866572529882be159a7d0721a6088ad66a9ce28095224ee428c7c21b6f8761116e13231"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.runner.mysql@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Runner.MySql",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.runner.mysql@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "9c96d36911800d573bcdf2822cfb5d6eed67a4cc000d9f6c0837e616ad2506fe4bd4826cff0cf163d104dc08fd6aec6bf1dbd49010c07c41e84fb3e47cfdff2a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.runner.oracle@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Runner.Oracle",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.runner.oracle@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d4612b7dd5a5125be9216fb1e6213e75b25bf3a07bc5f161ffd130b0d7fb4a081e353e7b92e8ac8b22b6595fb1ececdfdcbe9e6698a615f5ba1f2e1efeecc7e1"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.runner.postgres@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Runner.Postgres",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.runner.postgres@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "beb27cb7c5bc74eb708d4b5ce5ef96ec57401fa8d31abe9b97ae36096b6d7dec21fa3108f25fd899dcbb9ae79263899ab2ee00c83e077122434e0cc4496ad822"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.runner.redshift@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Runner.Redshift",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.runner.redshift@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "a190f770c9f71585b6e9cd8cd6da35c38c0cfeca30d8f717bf35f6c7ad4e5038d067917763d46baade0427abef4f2a825e637814b032963d9ce159e34c3e68fc"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.runner.sqlanywhere@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Runner.SqlAnywhere",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.runner.sqlanywhere@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "64a81797b00c29031c54df8de5fb6c495fac24d1caa3c796d1eb7de556c65fb1163e562d180afc2907f4bed262f0c51b6695fe9b8720134a55d86f594425adb4"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.runner.sqlite@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Runner.SQLite",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.runner.sqlite@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "c05df982cc01519a1dbbe924872a4c077d19e7e6530f5a390cfc58cbe4ff8d6fb92d7c4de49701b74a8c2ad54d15bfcad961e03423e76b26031caf03d969db37"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.runner.sqlserver@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Runner.SqlServer",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.runner.sqlserver@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "22b3a5219347c231534bb64f15a773604e3199a62c0f9a17908cbe68f4d16ed006d451952c6ca0fb9ccc495175784c591a15c3c44525e61a4937b4c7cfdf4bf5"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.runner.sqlserverce@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Runner.SqlServerCe",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.runner.sqlserverce@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "1275651db68d92bd5f75699a1e21292b075a3da59dd57dd801db8227d911f369a631bd9bc8f3ad5423c53e7489c8a44204b11b2e0fdfb2e5805b6936f3a00cc2"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator.runner@3.3.2.9",
+      "name": "Servarr.FluentMigrator.Runner",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator.runner@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "00ab9d639436da98664137d3630c90c32101a7c3b1336136d8e9ca626dc0b5e88fbc727a03f305ce3cdb03c790cfc134678e0af3b033d3c3a2ca1b60f499645d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/servarr.fluentmigrator@3.3.2.9",
+      "name": "Servarr.FluentMigrator",
+      "version": "3.3.2.9",
+      "purl": "pkg:nuget/servarr.fluentmigrator@3.3.2.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "335e1614afc1768f7f9592e36340f1b5ddb368ea48c5ff68ee204c66d2000208e562ff3831f3e809b47dc536cca70c83de44100f863dadcf16504801f15a93fb"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/sharpziplib@1.4.2",
+      "name": "SharpZipLib",
+      "version": "1.4.2",
+      "purl": "pkg:nuget/sharpziplib@1.4.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ca38fedf3833f33817a62882dd9745fe2c9305bcf67c5bccc5914404f51cc198c8bd739fdfb6259be2b9f21a8c7c806de49814fd9daea144baec99932def7bdc"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/stylecop.analyzers@1.1.118",
+      "name": "StyleCop.Analyzers",
+      "version": "1.1.118",
+      "purl": "pkg:nuget/stylecop.analyzers@1.1.118",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "3a7c7aa2f192a9748ad3b9ffd1e33766eb2235d07a70894975a6d08561a0269dd5a28cbd01a2d2fed8a07b26ce240a1ba9bb608136a6a169ddcfbd89b1c641bf"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/swashbuckle.aspnetcore.annotations@6.6.2",
+      "name": "Swashbuckle.AspNetCore.Annotations",
+      "version": "6.6.2",
+      "purl": "pkg:nuget/swashbuckle.aspnetcore.annotations@6.6.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "8ad11843059a9bb153ffca9410c982f810eddfc278c39d8d0e877dc94796a48280ee9335c68f856c64a35d1e90f682ce4d3d4f889fb36157f9223ea9557f7db7"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/swashbuckle.aspnetcore.swagger@6.6.2",
+      "name": "Swashbuckle.AspNetCore.Swagger",
+      "version": "6.6.2",
+      "purl": "pkg:nuget/swashbuckle.aspnetcore.swagger@6.6.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "a2f80f4d2617f3752b4145a24b9bf30dc27c4c45f5300c4180314c2b8e6b0b6e0ca2b1c43d095900795a5e3ff2b61e197fac5c92da54813101bdf7d1415c0328"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/swashbuckle.aspnetcore.swaggergen@6.6.2",
+      "name": "Swashbuckle.AspNetCore.SwaggerGen",
+      "version": "6.6.2",
+      "purl": "pkg:nuget/swashbuckle.aspnetcore.swaggergen@6.6.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "cefe22927e004f5558b8eb030a992d2eae100ead3c7bb52dcdb8abf3a339fd991168b5db08f175d44d7fbd398e883cd14e5d334d920d414daa2cac1370781fac"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.appcontext@4.1.0",
+      "name": "System.AppContext",
+      "version": "4.1.0",
+      "purl": "pkg:nuget/system.appcontext@4.1.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "dd08cee23355ecf74a926400569f5ab40faeb159ca4702372b1d6733027ddd3d0b7107f1ee9280624d272b3e709f5a0fe62aa5859bb2e915ce15d86beeb0f0a3"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.buffers@4.6.0",
+      "name": "System.Buffers",
+      "version": "4.6.0",
+      "purl": "pkg:nuget/system.buffers@4.6.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "94dead662ed0e3acc5cc06d16174c8bdf5dccaf4108319d8ed79ba0bac50f7bf387442f56a68cce92e88c38669b2f7ac00a9d156c338b1cac341a0ea4829648c"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.collections.nongeneric@4.3.0",
+      "name": "System.Collections.NonGeneric",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.collections.nongeneric@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "a6bb632043211949d0aba4673c460ba45b7c02d2dba7dcaadb3c4e4ab63b289259af0db9162f7b23306a63b8aab2c6cceb5124e5bf1fdcc1bfb06d4ddac37928"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.collections.specialized@4.3.0",
+      "name": "System.Collections.Specialized",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.collections.specialized@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "129c7c3e85594748ae3a72490f3a7ba56bdd7cc30e02fa54a3de690b849c1f6989b9790a036638691ddc1bdaadda4947812a27b3558587891c196edc497bebc6"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.collections@4.3.0",
+      "name": "System.Collections",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.collections@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "dc3723f39fd305d5692f966bfa0104054b857b689c3a72da966121f617dc9353d361b6f25ae6608787e69b6cac08b4eba8b430eaddd3813c89f952e9f906fe2f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.componentmodel.annotations@4.4.1",
+      "name": "System.ComponentModel.Annotations",
+      "version": "4.4.1",
+      "purl": "pkg:nuget/system.componentmodel.annotations@4.4.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "4e8898a920a2a2a86db29ab63bf8d82adc930bf4f4bb0587053625cc28ba3d16d248702b37521a4567877df0da9af9ace6cc9ee450d45827cd660b9b429351b0"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.componentmodel.primitives@4.3.0",
+      "name": "System.ComponentModel.Primitives",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.componentmodel.primitives@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "8fc194902a4cf15e1de2f84b208a012c67b2d99e5b0a4315363119b1ec80966e27e5aadcb0939e237ce450ffb3bd9833b1b2d3621e2561e3ff643fe074800faf"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.componentmodel.typeconverter@4.3.0",
+      "name": "System.ComponentModel.TypeConverter",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.componentmodel.typeconverter@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "d7aa50e8ff84761717ccf8842b891b03de7716ed0c346da8bf14d953cd7faac09dd733d1b0a737ba27f9360be5942639f7c93a6c8d0a532296f1f6a795f68342"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.componentmodel@4.3.0",
+      "name": "System.ComponentModel",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.componentmodel@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "5721a7d631916557f19e1f0476f0c28bbd6fddb317aecbbc69824ec2857b48d0cb561884ab03fcea93ccc911ac0ecc615c09b66f7a3d388a9e1137cde6a7decf"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.configuration.configurationmanager@6.0.1",
+      "name": "System.Configuration.ConfigurationManager",
+      "version": "6.0.1",
+      "purl": "pkg:nuget/system.configuration.configurationmanager@6.0.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "8d7c3d32552efe445f114d16c93a6d015b9eba9a88784dffae5d046433257fca5cbc99e2b50f07795129ebdad975a4ad5f04d5ef66e88bf061c3c94e78ef94db"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.data.sqlite.core.servarr@1.0.115.5-18",
+      "name": "System.Data.SQLite.Core.Servarr",
+      "version": "1.0.115.5-18",
+      "purl": "pkg:nuget/system.data.sqlite.core.servarr@1.0.115.5-18",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6ea4a0dd7d38ba01f682a6aeecd1a1dc91d0df37dc86dc14772043b380081008b4d22299788373e9541bf3956430cab3a9008dfa2e7da45fdc3e4a132da7e2b8"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.diagnostics.debug@4.3.0",
+      "name": "System.Diagnostics.Debug",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.diagnostics.debug@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "65485439daa6686e499375dd6fcc62e64232418000e0f9d33651f1d66bbd658deabf810b21d29b9cbfda91b19a2a2d919cd516699b00b37d6bbf315d7b04e3da"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.diagnostics.diagnosticsource@6.0.0",
+      "name": "System.Diagnostics.DiagnosticSource",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/system.diagnostics.diagnosticsource@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "7eb4037efd2b976d3d70a9b5967c138053f3362832d842a4d414b7b80bc7be505529ee5cca61b21cef928fe34bbf9545fc0847b2a3c8514c326b9a15e021cc53"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.diagnostics.eventlog@6.0.0",
+      "name": "System.Diagnostics.EventLog",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/system.diagnostics.eventlog@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "95cc948974ec1132b600bb19ad7fa75ae1d221079ace1a8fa612df691c73746686f77fb49042eaa60107b7058e9507bbfa34859cac1a08080be248de6424099f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.diagnostics.tracesource@4.3.0",
+      "name": "System.Diagnostics.TraceSource",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.diagnostics.tracesource@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "567629d4dc46c7c5b0ef7d72d8b275be97dbfc329534a119f09b21e528104d94442ff62959102b821f6923c0832e6807b296662cbebdec268bbc7f39a90a518b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.drawing.common@6.0.0",
+      "name": "System.Drawing.Common",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/system.drawing.common@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "35fba829488fda7516c0a64deadc06a978a821ed73543d11223dadf7be80f9cccb1ebda7638e78470c17b3a254f47b5cea6c2a2fa0e7fe710bddda557f68ce86"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.dynamic.runtime@4.3.0",
+      "name": "System.Dynamic.Runtime",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.dynamic.runtime@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "48d562d44fef7d6500b3f5982a113dfaa952e8aa8ad185619e54f41d0b6bf2930803c617de5c32dee3cca309c3c1d608481766005ff6868944225755a7ce566a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.formats.asn1@8.0.2",
+      "name": "System.Formats.Asn1",
+      "version": "8.0.2",
+      "purl": "pkg:nuget/system.formats.asn1@8.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "c94b05a8d19aeed6f09b940e3a7391dd54a887c6b46248b7f664db84e9c4add6e0f2155216dacad045deae3dbce8f5dc7a0885d4b904ee52fefaaa8c656e6321"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.globalization.extensions@4.3.0",
+      "name": "System.Globalization.Extensions",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.globalization.extensions@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "1612a6751e8c3c6fa9c68c3ac06b4d01675987b9e820ea5d0f94f04370a9af38081356c10688a6d2f6d1d7e016b168d0994ef35c7810a384d648fea509e89671"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.globalization@4.3.0",
+      "name": "System.Globalization",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.globalization@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "9187557767f63c074519b97316cc04e2190d00d2412919ac7dad97e4b1b601c584d5ceffe2dd2961a7b52fcbdf679c6f1369cafd1f49a6bb53a00eb53921d622"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.identitymodel.tokens.jwt@6.35.0",
+      "name": "System.IdentityModel.Tokens.Jwt",
+      "version": "6.35.0",
+      "purl": "pkg:nuget/system.identitymodel.tokens.jwt@6.35.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "cb118841ddc114aec5e92eb6ffb45d664dc2fe67f0c95c6f87a9e077555830199b275619640f7e2aeeacbb2955b6ca34163234c1b125a49d1ddbb09db322e905"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.io.abstractions.testinghelpers@17.0.24",
+      "name": "System.IO.Abstractions.TestingHelpers",
+      "version": "17.0.24",
+      "purl": "pkg:nuget/system.io.abstractions.testinghelpers@17.0.24",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "3de3d3921e5a16c09649499cde6b3245d252f9a275e436439a18279e3b91ee50527c4c9e3a2dfe09f42aa54dbcfa5a662c7d6d16fd7a2b6383714360ee5cce3c"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.io.abstractions@17.0.24",
+      "name": "System.IO.Abstractions",
+      "version": "17.0.24",
+      "purl": "pkg:nuget/system.io.abstractions@17.0.24",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "840edb69c9ed32266fd587fdc6d8f097f18fdc64f5986f3843184093b8a30140f4a498496955705d2704d77bcca579cdb656910d6e927b265d5a0da3daaae1e3"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.io.filesystem.accesscontrol@5.0.0",
+      "name": "System.IO.FileSystem.AccessControl",
+      "version": "5.0.0",
+      "purl": "pkg:nuget/system.io.filesystem.accesscontrol@5.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "4b11c1de7b8dae9a6d564faf67f17eece1c4a681d420a28c974d9b52660742bd6bfa095b650c6cee946db1fe0434edbd4d59b64c7dc011e7a9d9f25ccbdda863"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.io.filesystem.primitives@4.3.0",
+      "name": "System.IO.FileSystem.Primitives",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.io.filesystem.primitives@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "e9039bd9714b721edb11ce2521c247e3d9c93761d5f8e0b77c70e0b0b56c055064dd8e211409ce046cc9da552eec2c830c5a3d2015a44ac9db913e88070c2233"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.io.filesystem@4.3.0",
+      "name": "System.IO.FileSystem",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.io.filesystem@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "df010c0114e7ba2a3eba59ef8be86444d44e6306b593296f61a86170b9381d2a15765fb1c5315579595839f2f0ac33c898696cd260ea6cc86bcdaf2a9d63d374"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.io.pipelines@6.0.3",
+      "name": "System.IO.Pipelines",
+      "version": "6.0.3",
+      "purl": "pkg:nuget/system.io.pipelines@6.0.3",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "af24e017e885929199635bd14217c2cd7d314dd955de9c9a4d3a91bb61136c4bfe1e557b3bacbb8724144678213485ef72d9790ee67ffc3a64b3a1dd2ff4f183"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.io@4.3.0",
+      "name": "System.IO",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.io@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "dea8da1efc503c3a523982028d4a13b26a2ae6ee902401515084e0793ff882a905d5b6a36d299bd64c12c4403c0079687ea81c28970cf2e76089e44d85a2790a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.linq.expressions@4.3.0",
+      "name": "System.Linq.Expressions",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.linq.expressions@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "3c62a4addda4846e029e5c89c31c306965a24a25853411a5817bc9a5e3b4c425eb67cf4e0eb43ab631164bf90ea99f06c04394013b4ab73a7579182660d7dc96"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.linq@4.3.0",
+      "name": "System.Linq",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.linq@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "e436ea214a6c0e9d1d15fb72b73b8c99cd2878c750c2370ffc45b1b24b08cffc354dc151919df228acf43ea89814c984c0f496c3ea8d56a0fb3c9f3cf49cc76f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.memory@4.6.2",
+      "name": "System.Memory",
+      "version": "4.6.2",
+      "purl": "pkg:nuget/system.memory@4.6.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "12af7da171235a271e9176fc01aab0600ea9f9a9b45eb50c7a7ab9441e8e6082fba18639814cd16acf7e8b6cdc36c44d07be4ca43845b185feb95eb2f3d6b412"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.objectmodel@4.3.0",
+      "name": "System.ObjectModel",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.objectmodel@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "6dd5fef3478abfd6cde8ae0df9defb39a9e42871a7e821fbd756ba7dc3a9310bb615c929fc5b782ff916f56ce71e9c91d0d440bc9badcce30734d9411afc50cd"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.private.uri@4.3.2",
+      "name": "System.Private.Uri",
+      "version": "4.3.2",
+      "purl": "pkg:nuget/system.private.uri@4.3.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "a35fbb4499eedc89373dacd1ed9eed2618cf744d34d04ab62862cb5a1a8924a5e3d38c2b4bc9706f5385b4317d8f35d7003854b993496653dcf7cbb0c2a9a914"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.reflection.emit.ilgeneration@4.3.0",
+      "name": "System.Reflection.Emit.ILGeneration",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.reflection.emit.ilgeneration@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "e7db41b25024f7bdf73572eb509af03591336cc01cbbc937e38398a3ec1f495ca072067d96005d188cc7fe7ae0dcb6215dc7b29f2bd373cb79fc60f8462d3f9e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.reflection.emit.lightweight@4.3.0",
+      "name": "System.Reflection.Emit.Lightweight",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.reflection.emit.lightweight@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "a1a7551c648cb13999b0017ceb8418375b7543366321cb8a5379764bd7193b00dd0ee78d4ebaaad72463ee4a057c81849caa6de8d8e92f7acecd186ce2bc8e80"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.reflection.emit@4.3.0",
+      "name": "System.Reflection.Emit",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.reflection.emit@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "db6f051b48cb708c13549cb3f022c52ae795a902b7e8035acd431a9c66891e43b489c8e2232a4a5bb60b58b2166a1c8891d87933b995d9d25ea6594bc80d522a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.reflection.emit@4.7.0",
+      "name": "System.Reflection.Emit",
+      "version": "4.7.0",
+      "purl": "pkg:nuget/system.reflection.emit@4.7.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "551e2493c5cb29e6d0e0c66e2ae2278bfee887e406166656dea3917751af06affcd36e8ea56e74d52cd3fe8ca9c22425e13bd3f04ae745e87f37363dbbe0bac1"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.reflection.extensions@4.3.0",
+      "name": "System.Reflection.Extensions",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.reflection.extensions@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ac992b243de4048e41ef5d9a46ee03a522221d1b6be9095f65242c6f48581eb0c264e4570858d07e88a9a362da3141e84fd8b507b8fb3277da10a58316615035"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.reflection.metadata@1.6.0",
+      "name": "System.Reflection.Metadata",
+      "version": "1.6.0",
+      "purl": "pkg:nuget/system.reflection.metadata@1.6.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "08e0b56a20098c2a00e46045f9028bdae2ea1017b0e09b029109a81ca6cddd394e64a6b67ca2f3e42a62450283cf446c00e106b152aa383e5ba26b17abfe124d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.reflection.primitives@4.3.0",
+      "name": "System.Reflection.Primitives",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.reflection.primitives@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "e515c8b50cf902ce31376fd8503c5da6c124321bf0ddee9a36f7855d49f81e5fee74d4c23619caa7c953f5f9dcdcc86f18a8756da6a4e42a2fa6e4145c702520"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.reflection.typeextensions@4.7.0",
+      "name": "System.Reflection.TypeExtensions",
+      "version": "4.7.0",
+      "purl": "pkg:nuget/system.reflection.typeextensions@4.7.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "5726e968e41086a13ab221e9a4c92d8df181c35182c2f0aa8ae7ea98ff05d678fb7d350db56df92ce12ddd465312c1027e8f842c097ff68f67271dd4f758bbbc"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.reflection@4.3.0",
+      "name": "System.Reflection",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.reflection@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "28c8801685bb31f2466bd9c314d71fbbe16911d887a56813712d8774ca43bedf6c68adf2fc6e06c29acfcb3aa3147f4d4da18f41e58d1d4fa20e50c82e3f7a69"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.resources.extensions@6.0.0",
+      "name": "System.Resources.Extensions",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/system.resources.extensions@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "a419d5ccd418774387aa1d152eefe18b4cc5393b7217c430b73890066cd7fd9b5539e6b8f89115386bb6f431de48e0346bd485ad88d0a2b06b38bb8a2e170c35"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.resources.resourcemanager@4.3.0",
+      "name": "System.Resources.ResourceManager",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.resources.resourcemanager@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ff3adc3e4916759988e05f7680bfd33ee98ff7c0150eefd6c6bdc248919043e5cdeb06d165cc9f48a5683e8d7b8a56f788eaf470246a2489c6c0d32896a852f0"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.runtime.caching@4.7.0",
+      "name": "System.Runtime.Caching",
+      "version": "4.7.0",
+      "purl": "pkg:nuget/system.runtime.caching@4.7.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "35dbcd4634cfc58bc81215d0b334fd2fdbc985d4285fa010d009618d353ee4da85415b9a7094df84f540bed196340d8e242a91891fe890171980cc08e8ca9c66"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.runtime.compilerservices.unsafe@6.0.0",
+      "name": "System.Runtime.CompilerServices.Unsafe",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/system.runtime.compilerservices.unsafe@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "fe251e3f7b6ad52d1774d368333e42f6dc0b4ab33f4c7faa1251e45d668fbee34eb7ef7d1bbe4dad5d0e4b612a1f1e7030dee9a29623a5cf284e30b5cb5e832e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.runtime.extensions@4.3.0",
+      "name": "System.Runtime.Extensions",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.runtime.extensions@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "82e5b4b8ad1f9f97dc249d6d2555d877bff587917ea5e6b5afb14b48ecff7fcbcf12a6d1d990249ee443bd343c3f3022943bde3b136349faf40877c841f164f2"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.runtime.handles@4.3.0",
+      "name": "System.Runtime.Handles",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.runtime.handles@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "38a89250dec399359e61bde5e7503b11869e34c9efc70136e3d62d673ef2a284f880e6619938c89f8f0a812b30da4da561d2e04ca349c3f6487d2125c0345582"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.runtime.interopservices.runtimeinformation@4.0.0",
+      "name": "System.Runtime.InteropServices.RuntimeInformation",
+      "version": "4.0.0",
+      "purl": "pkg:nuget/system.runtime.interopservices.runtimeinformation@4.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "8563e1271738e774426bc676f4ef751267c67992075f5647d80f0bea561055268ace4bb60df02b49f3046f5fcc618ccf4112597aed1cf5d9987892b15b91609e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.runtime.interopservices@4.3.0",
+      "name": "System.Runtime.InteropServices",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.runtime.interopservices@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "bafd729d7aa230af26a7518cde30ea3c214deba789e70e5736899a2b65c3f93b82ae83532c519e67e58298131c043c9314aa2edcfe9c47a27f42c6aa0e9edf19"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.runtime@4.3.0",
+      "name": "System.Runtime",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.runtime@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "26e7d08b4bcf434c469c0733475dc05058250f2558b782aa9f3d4065a88a679f86202ab4ff5307fe63bf780247b7f9875b5ce328125dee4576e92af175d0218b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.runtime@4.3.1",
+      "name": "System.Runtime",
+      "version": "4.3.1",
+      "purl": "pkg:nuget/system.runtime@4.3.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "69b85fbf57532ba3573a6bb86e01c838dc47c84a858d6f07c173e6a58f609a597e8b1f54368e170dc9b3267ea82e8a1fb7136cb151dd242d69193f63912ca742"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.security.accesscontrol@6.0.0",
+      "name": "System.Security.AccessControl",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/system.security.accesscontrol@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "01400321cd0b20441eecccc2f88d1c974ac04fc46b4c02851e5e77c878c453335521a525845635d6f73679b895273541b8ecee9fa17b14103ef0a01b1934de75"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.security.cryptography.cng@4.5.0",
+      "name": "System.Security.Cryptography.Cng",
+      "version": "4.5.0",
+      "purl": "pkg:nuget/system.security.cryptography.cng@4.5.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "586debec4ca351ef4230f152b3a6edcb976852a4feabda5b23cd2194dce8d9290f919e154ee6641968e9a7bec907cfae68be0314f45d06c018f835f77412bdd8"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.security.cryptography.pkcs@8.0.2",
+      "name": "System.Security.Cryptography.Pkcs",
+      "version": "8.0.2",
+      "purl": "pkg:nuget/system.security.cryptography.pkcs@8.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "55600262ad091b18bdb30dd3a2749257807631f8589399e180eb69f706ebb793453ad51eb45a8790c67295c0b03d7fb5d7b701247e449c8cc8cba5f838a9ff90"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.security.cryptography.protecteddata@6.0.0",
+      "name": "System.Security.Cryptography.ProtectedData",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/system.security.cryptography.protecteddata@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ae9d6030d119a6fc7dbcfd095b4a072f195ff284a2420b67a3bed8e0f2d40634a20d8a03efb63cb971ebd446b95c6e3fa482a1a8077167cbfc39352daa8f4f79"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.security.permissions@6.0.0",
+      "name": "System.Security.Permissions",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/system.security.permissions@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "4ffbae73b0249640e8c66709ecb1a4c97d42712be266e2c26b88e0dcf7a47c9ed25349e21742154d7c1488d54ff434a9ce8bb63e9c49f9e358d887c333dd190a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.security.principal.windows@5.0.0",
+      "name": "System.Security.Principal.Windows",
+      "version": "5.0.0",
+      "purl": "pkg:nuget/system.security.principal.windows@5.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "b743062ee901e5601553d6cedcc1b3be51a7c893e05257307ab5e7d64cc1463c0b2a2c53f7a5d5d14cdae355b8f6055df3310c16ef6f404165bf420eaf2b4808"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.serviceprocess.servicecontroller@6.0.1",
+      "name": "System.ServiceProcess.ServiceController",
+      "version": "6.0.1",
+      "purl": "pkg:nuget/system.serviceprocess.servicecontroller@6.0.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "2c91964947e8119e8d0553c69c3b02303ad3f2c0c8ed027c494cee2505272033ad919882d4b1549ac1aef83aba39dc129da5bd9c43486cbeee49de0f17d62920"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.text.encoding.codepages@8.0.0",
+      "name": "System.Text.Encoding.CodePages",
+      "version": "8.0.0",
+      "purl": "pkg:nuget/system.text.encoding.codepages@8.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "39922c56994519a558f741b649ba6053b1270a838ee69c35b7889cdb5741177ff5a26ac9169006a0d015a4fc8c54e0bdd3f86f824186dd516a475dd88193107e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.text.encoding.extensions@4.3.0",
+      "name": "System.Text.Encoding.Extensions",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.text.encoding.extensions@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "61530ad01b7f038dd19b08b3268676d9e8b69e6ae1a1b81e898c05cc2e1800dfa7b9ef1117a7635c33288345029fe6eb7ab428615c9a4be821cbd3ff31455c9b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.text.encoding@4.3.0",
+      "name": "System.Text.Encoding",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.text.encoding@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "062220f8a59a4833884f37ba8c64329f183ae276803eda861c1c03acb682b62c6c6b96ca891f1da4f38703b81edc2d092508b3244fac7e4cf5c15f8100a01867"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.text.encodings.web@6.0.0",
+      "name": "System.Text.Encodings.Web",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/system.text.encodings.web@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "560f1e0794dac26d4816a8f84d52b5733257f3dae1171268f442ea73f122ab4797cb5dd12b4d1eb9bc94e93244eb2f864178f25798127e27b00d4663420484d3"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.text.json@6.0.10",
+      "name": "System.Text.Json",
+      "version": "6.0.10",
+      "purl": "pkg:nuget/system.text.json@6.0.10",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "3520749038a9c67db2721a7cf0d5d67c54459668b56ecb7fc729cebad6e7a447d1093f4966467b28e985fc8fe134aa367482e23069ea6e59be8f5b2081d2c1f6"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.text.regularexpressions@4.3.1",
+      "name": "System.Text.RegularExpressions",
+      "version": "4.3.1",
+      "purl": "pkg:nuget/system.text.regularexpressions@4.3.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "37490d46b59ee3e9d73969692d3e0b018e5badbf1c68d16552e211a6b68254c0cb62eb4a928975695d3bf6b4232ee4b128c253d92a4142c617f716dc4cc9b3c2"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.threading.channels@6.0.0",
+      "name": "System.Threading.Channels",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/system.threading.channels@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "4d8f3ff7eb48d2635a50c827b4ec716aada775391d5ea2d2c6f3e66aced712a3a5bfd950b41ef02e360677be7a94e68eec3bdbe6bfd65e196e33ed177bceefe5"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.threading.tasks.extensions@4.5.4",
+      "name": "System.Threading.Tasks.Extensions",
+      "version": "4.5.4",
+      "purl": "pkg:nuget/system.threading.tasks.extensions@4.5.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ced793f86f31b86bba992fa6cc3cd85dbcd2eeb7772ba1636fd46266562524f6a6dbf854ec9081641544732c0db91fa86759dc4ef73f72ad1f691af73f4d4e56"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.threading.tasks@4.3.0",
+      "name": "System.Threading.Tasks",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.threading.tasks@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "2db4b128474e52155ef017b307ff6e3861a9a6dfa765fe9ed55172c3abf70cdea5aa2b66d0e4a7dae5cc39db4fd0cdd6e2231ca9c8af9b627a520aa2c309d788"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.threading@4.3.0",
+      "name": "System.Threading",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.threading@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "564512d243817147f75b09b44d26eb7af0c367a06533e6ff1d189aa511568cce4ed0d4b42ef886d2094a9852be8613c37755c5792754d469a52e16f60a856923"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.valuetuple@4.6.1",
+      "name": "System.ValueTuple",
+      "version": "4.6.1",
+      "purl": "pkg:nuget/system.valuetuple@4.6.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "f91253e2a69e92967b0c32e17fe2d38eaf84e3c8e278a898f6e949f81a312a665b94825f2094fc51f71a6bf72542a9d8bd6b3c8ee81f19232ef32952d1c686d3"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.windows.extensions@6.0.0",
+      "name": "System.Windows.Extensions",
+      "version": "6.0.0",
+      "purl": "pkg:nuget/system.windows.extensions@6.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "217a0939722a737f4021ef82211ee4a01b5118c882b7f2cf337948f8f10bb43232f57772792af05c575657d773276030974a5a2d651a9272f1150e47a47654a2"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.xml.readerwriter@4.3.0",
+      "name": "System.Xml.ReaderWriter",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.xml.readerwriter@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "1aba6b03e6744545da47837bfde5bbd63d6b80c9c49c45658228b8f466720234c7eee962327ace5371cd141afa7c40c108908876554dabd8476da0d1eb6d5704"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/system.xml.xmldocument@4.3.0",
+      "name": "System.Xml.XmlDocument",
+      "version": "4.3.0",
+      "purl": "pkg:nuget/system.xml.xmldocument@4.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "949f00c6f917ec6431a42e861427818fc4e1615c90733c76f9ffdc587254f2d8d2ed87c8e82bfa6e89fbd2354482cd828856e698cf1bf63d68655c747522365b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/taglibsharp-lidarr@2.2.0.19",
+      "name": "TagLibSharp-Lidarr",
+      "version": "2.2.0.19",
+      "purl": "pkg:nuget/taglibsharp-lidarr@2.2.0.19",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ee5ff4ff20fdd4d411258b780da772235cae2eaacb8ede74f5bda97833bd02eb61ce6ddc1d3c42935b2ef4b562f4242edf9306f709e8030fe29e0aad73ffa301"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "bookshelf-dependency-snapshot-2026-11-15",
+      "dependsOn": [
+        "pkg:nuget/autofixture@4.17.0",
+        "pkg:nuget/coverlet.collector@3.0.4-preview.27.ge7cb7c3b40",
+        "pkg:nuget/dapper@2.0.151",
+        "pkg:nuget/diacritical.net@1.0.4",
+        "pkg:nuget/dryioc.dll@5.4.3",
+        "pkg:nuget/dryioc.microsoft.dependencyinjection@6.2.0",
+        "pkg:nuget/equ@2.3.0",
+        "pkg:nuget/fluentassertions@5.10.3",
+        "pkg:nuget/fluentvalidation@9.5.4",
+        "pkg:nuget/ical.net@4.3.1",
+        "pkg:nuget/impromptuinterface@8.1.0",
+        "pkg:nuget/ipaddressrange@6.1.0",
+        "pkg:nuget/lazycache@2.4.0",
+        "pkg:nuget/magick.net-q8-anycpu@15.1.0",
+        "pkg:nuget/mailkit@4.17.0",
+        "pkg:nuget/microsoft.aspnetcore.signalr.client@6.0.35",
+        "pkg:nuget/microsoft.data.sqlclient@2.1.7",
+        "pkg:nuget/microsoft.extensions.caching.memory@6.0.2",
+        "pkg:nuget/microsoft.extensions.configuration@6.0.1",
+        "pkg:nuget/microsoft.extensions.dependencyinjection@6.0.1",
+        "pkg:nuget/microsoft.extensions.hosting.windowsservices@6.0.2",
+        "pkg:nuget/microsoft.extensions.logging@6.0.0",
+        "pkg:nuget/microsoft.net.test.sdk@17.10.0",
+        "pkg:nuget/microsoft.sourcelink.github@1.1.1",
+        "pkg:nuget/microsoft.win32.registry@5.0.0",
+        "pkg:nuget/mono.posix.netstandard@5.20.1.34-servarr22",
+        "pkg:nuget/monotorrent@2.0.7",
+        "pkg:nuget/moq@4.17.2",
+        "pkg:nuget/nbuilder@6.1.0",
+        "pkg:nuget/newtonsoft.json@13.0.3",
+        "pkg:nuget/nlog.extensions.logging@5.2.3",
+        "pkg:nuget/nlog.targets.syslog@7.0.0",
+        "pkg:nuget/nlog@5.1.4",
+        "pkg:nuget/npgsql@7.0.10",
+        "pkg:nuget/nunit3testadapter@4.2.1",
+        "pkg:nuget/nunit@3.14.0",
+        "pkg:nuget/nunitxml.testlogger@3.0.117",
+        "pkg:nuget/pdfpig@0.1.16",
+        "pkg:nuget/polly@8.5.2",
+        "pkg:nuget/restsharp.serializers.systemtextjson@106.15.0",
+        "pkg:nuget/restsharp@106.15.0",
+        "pkg:nuget/selenium.support@3.141.0",
+        "pkg:nuget/selenium.webdriver.chromedriver@134.0.6998.16500",
+        "pkg:nuget/servarr.fluentmigrator.runner.postgres@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.sqlite@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner@3.3.2.9",
+        "pkg:nuget/sharpziplib@1.4.2",
+        "pkg:nuget/stylecop.analyzers@1.1.118",
+        "pkg:nuget/swashbuckle.aspnetcore.annotations@6.6.2",
+        "pkg:nuget/swashbuckle.aspnetcore.swaggergen@6.6.2",
+        "pkg:nuget/system.buffers@4.6.0",
+        "pkg:nuget/system.configuration.configurationmanager@6.0.1",
+        "pkg:nuget/system.data.sqlite.core.servarr@1.0.115.5-18",
+        "pkg:nuget/system.io.abstractions.testinghelpers@17.0.24",
+        "pkg:nuget/system.io.abstractions@17.0.24",
+        "pkg:nuget/system.io.filesystem.accesscontrol@5.0.0",
+        "pkg:nuget/system.memory@4.6.2",
+        "pkg:nuget/system.reflection.typeextensions@4.7.0",
+        "pkg:nuget/system.resources.extensions@6.0.0",
+        "pkg:nuget/system.security.principal.windows@5.0.0",
+        "pkg:nuget/system.serviceprocess.servicecontroller@6.0.1",
+        "pkg:nuget/system.text.encoding.codepages@8.0.0",
+        "pkg:nuget/system.text.json@6.0.10",
+        "pkg:nuget/system.valuetuple@4.6.1",
+        "pkg:nuget/taglibsharp-lidarr@2.2.0.19"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/autofixture@4.17.0",
+      "dependsOn": [
+        "pkg:nuget/fare@2.1.1",
+        "pkg:nuget/system.componentmodel.annotations@4.4.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/bouncycastle.cryptography@2.6.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/castle.core@4.4.1",
+      "dependsOn": [
+        "pkg:nuget/netstandard.library@2.0.0",
+        "pkg:nuget/system.collections.specialized@4.3.0",
+        "pkg:nuget/system.componentmodel.typeconverter@4.3.0",
+        "pkg:nuget/system.componentmodel@4.3.0",
+        "pkg:nuget/system.diagnostics.tracesource@4.3.0",
+        "pkg:nuget/system.dynamic.runtime@4.3.0",
+        "pkg:nuget/system.reflection.emit@4.3.0",
+        "pkg:nuget/system.reflection.emit@4.7.0",
+        "pkg:nuget/system.reflection.typeextensions@4.7.0",
+        "pkg:nuget/system.reflection@4.3.0",
+        "pkg:nuget/system.xml.xmldocument@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/coverlet.collector@3.0.4-preview.27.ge7cb7c3b40",
+      "dependsOn": [
+        "pkg:nuget/coverlet.core@3.0.4-preview.27.ge7cb7c3b40",
+        "pkg:nuget/microsoft.testplatform.objectmodel@17.10.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/coverlet.core@3.0.4-preview.27.ge7cb7c3b40",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection@6.0.1",
+        "pkg:nuget/microsoft.extensions.dependencymodel@2.1.0",
+        "pkg:nuget/microsoft.extensions.filesystemglobbing@6.0.0",
+        "pkg:nuget/mono.cecil@0.11.1",
+        "pkg:nuget/newtonsoft.json@13.0.3",
+        "pkg:nuget/system.reflection.metadata@1.6.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/dapper@2.0.151",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/diacritical.net@1.0.4",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/dryioc.dll@5.4.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/dryioc.microsoft.dependencyinjection@6.2.0",
+      "dependsOn": [
+        "pkg:nuget/dryioc.dll@5.4.3",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/dynamitey@3.0.3",
+      "dependsOn": [
+        "pkg:nuget/microsoft.csharp@4.7.0",
+        "pkg:nuget/system.componentmodel@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/equ@2.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/fare@2.1.1",
+      "dependsOn": [
+        "pkg:nuget/netstandard.library@2.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/fluentassertions@5.10.3",
+      "dependsOn": [
+        "pkg:nuget/system.configuration.configurationmanager@6.0.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/fluentvalidation@9.5.4",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/ical.net@4.3.1",
+      "dependsOn": [
+        "pkg:nuget/nodatime@3.2.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/impromptuinterface@8.1.0",
+      "dependsOn": [
+        "pkg:nuget/dynamitey@3.0.3",
+        "pkg:nuget/microsoft.csharp@4.7.0",
+        "pkg:nuget/system.reflection.emit@4.7.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/ipaddressrange@6.1.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/lazycache@2.4.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.caching.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.caching.memory@6.0.2"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/magick.net-q8-anycpu@15.1.0",
+      "dependsOn": [
+        "pkg:nuget/magick.net.core@15.1.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/magick.net.core@15.1.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/mailkit@4.17.0",
+      "dependsOn": [
+        "pkg:nuget/mimekit@4.17.0",
+        "pkg:nuget/system.formats.asn1@8.0.2"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.aspnetcore.connections.abstractions@6.0.35",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.features@6.0.35",
+        "pkg:nuget/system.io.pipelines@6.0.3"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.aspnetcore.http.connections.client@6.0.35",
+      "dependsOn": [
+        "pkg:nuget/microsoft.aspnetcore.http.connections.common@6.0.35",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.4",
+        "pkg:nuget/microsoft.extensions.options@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.aspnetcore.http.connections.common@6.0.35",
+      "dependsOn": [
+        "pkg:nuget/microsoft.aspnetcore.connections.abstractions@6.0.35"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.aspnetcore.signalr.client.core@6.0.35",
+      "dependsOn": [
+        "pkg:nuget/microsoft.aspnetcore.signalr.common@6.0.35",
+        "pkg:nuget/microsoft.aspnetcore.signalr.protocols.json@6.0.35",
+        "pkg:nuget/microsoft.extensions.dependencyinjection@6.0.1",
+        "pkg:nuget/microsoft.extensions.logging@6.0.0",
+        "pkg:nuget/system.threading.channels@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.aspnetcore.signalr.client@6.0.35",
+      "dependsOn": [
+        "pkg:nuget/microsoft.aspnetcore.http.connections.client@6.0.35",
+        "pkg:nuget/microsoft.aspnetcore.signalr.client.core@6.0.35"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.aspnetcore.signalr.common@6.0.35",
+      "dependsOn": [
+        "pkg:nuget/microsoft.aspnetcore.connections.abstractions@6.0.35",
+        "pkg:nuget/microsoft.extensions.options@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.aspnetcore.signalr.protocols.json@6.0.35",
+      "dependsOn": [
+        "pkg:nuget/microsoft.aspnetcore.signalr.common@6.0.35"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.bcl.asyncinterfaces@6.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.bcl.timeprovider@8.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.bcl.asyncinterfaces@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.build.tasks.git@1.1.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.codecoverage@17.10.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.csharp@4.5.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.csharp@4.7.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.data.sqlclient.sni.runtime@2.1.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.data.sqlclient@2.1.7",
+      "dependsOn": [
+        "pkg:nuget/microsoft.data.sqlclient.sni.runtime@2.1.1",
+        "pkg:nuget/microsoft.identity.client@4.21.1",
+        "pkg:nuget/microsoft.identitymodel.jsonwebtokens@6.35.0",
+        "pkg:nuget/microsoft.identitymodel.protocols.openidconnect@6.8.0",
+        "pkg:nuget/microsoft.win32.registry@5.0.0",
+        "pkg:nuget/system.configuration.configurationmanager@6.0.1",
+        "pkg:nuget/system.diagnostics.diagnosticsource@6.0.0",
+        "pkg:nuget/system.runtime.caching@4.7.0",
+        "pkg:nuget/system.security.principal.windows@5.0.0",
+        "pkg:nuget/system.text.encoding.codepages@8.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.dotnet.platformabstractions@2.1.0",
+      "dependsOn": [
+        "pkg:nuget/system.appcontext@4.1.0",
+        "pkg:nuget/system.collections@4.3.0",
+        "pkg:nuget/system.io.filesystem@4.3.0",
+        "pkg:nuget/system.io@4.3.0",
+        "pkg:nuget/system.reflection.typeextensions@4.7.0",
+        "pkg:nuget/system.runtime.extensions@4.3.0",
+        "pkg:nuget/system.runtime.interopservices.runtimeinformation@4.0.0",
+        "pkg:nuget/system.runtime.interopservices@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.caching.abstractions@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.primitives@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.caching.memory@6.0.2",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.caching.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.4",
+        "pkg:nuget/microsoft.extensions.options@6.0.0",
+        "pkg:nuget/microsoft.extensions.primitives@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.primitives@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.configuration.binder@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.configuration.commandline@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.configuration@6.0.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.configuration.environmentvariables@6.0.1",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.configuration@6.0.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.configuration.fileextensions@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.configuration@6.0.1",
+        "pkg:nuget/microsoft.extensions.fileproviders.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.fileproviders.physical@6.0.0",
+        "pkg:nuget/microsoft.extensions.primitives@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.configuration.json@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.configuration.fileextensions@6.0.0",
+        "pkg:nuget/microsoft.extensions.configuration@6.0.1",
+        "pkg:nuget/microsoft.extensions.fileproviders.abstractions@6.0.0",
+        "pkg:nuget/system.text.json@6.0.10"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.configuration.usersecrets@6.0.1",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.configuration.json@6.0.0",
+        "pkg:nuget/microsoft.extensions.fileproviders.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.fileproviders.physical@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.configuration@6.0.1",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.primitives@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.dependencyinjection@6.0.1",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+        "pkg:nuget/system.runtime.compilerservices.unsafe@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.dependencymodel@2.1.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.dotnet.platformabstractions@2.1.0",
+        "pkg:nuget/newtonsoft.json@13.0.3",
+        "pkg:nuget/system.diagnostics.debug@4.3.0",
+        "pkg:nuget/system.dynamic.runtime@4.3.0",
+        "pkg:nuget/system.linq@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.features@6.0.35",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.fileproviders.abstractions@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.primitives@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.fileproviders.physical@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.fileproviders.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.filesystemglobbing@6.0.0",
+        "pkg:nuget/microsoft.extensions.primitives@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.filesystemglobbing@6.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.hosting.abstractions@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+        "pkg:nuget/microsoft.extensions.fileproviders.abstractions@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.hosting.windowsservices@6.0.2",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.hosting@6.0.1",
+        "pkg:nuget/microsoft.extensions.logging.eventlog@6.0.0",
+        "pkg:nuget/system.serviceprocess.servicecontroller@6.0.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.hosting@6.0.1",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.configuration.binder@6.0.0",
+        "pkg:nuget/microsoft.extensions.configuration.commandline@6.0.0",
+        "pkg:nuget/microsoft.extensions.configuration.environmentvariables@6.0.1",
+        "pkg:nuget/microsoft.extensions.configuration.fileextensions@6.0.0",
+        "pkg:nuget/microsoft.extensions.configuration.json@6.0.0",
+        "pkg:nuget/microsoft.extensions.configuration.usersecrets@6.0.1",
+        "pkg:nuget/microsoft.extensions.configuration@6.0.1",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection@6.0.1",
+        "pkg:nuget/microsoft.extensions.fileproviders.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.fileproviders.physical@6.0.0",
+        "pkg:nuget/microsoft.extensions.hosting.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.4",
+        "pkg:nuget/microsoft.extensions.logging.configuration@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging.console@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging.debug@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging.eventlog@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging.eventsource@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging@6.0.0",
+        "pkg:nuget/microsoft.extensions.options@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.4",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.logging.configuration@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.configuration.binder@6.0.0",
+        "pkg:nuget/microsoft.extensions.configuration@6.0.1",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.4",
+        "pkg:nuget/microsoft.extensions.logging@6.0.0",
+        "pkg:nuget/microsoft.extensions.options.configurationextensions@6.0.0",
+        "pkg:nuget/microsoft.extensions.options@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.logging.console@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.4",
+        "pkg:nuget/microsoft.extensions.logging.configuration@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging@6.0.0",
+        "pkg:nuget/microsoft.extensions.options@6.0.0",
+        "pkg:nuget/system.text.json@6.0.10"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.logging.debug@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.4",
+        "pkg:nuget/microsoft.extensions.logging@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.logging.eventlog@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.4",
+        "pkg:nuget/microsoft.extensions.logging@6.0.0",
+        "pkg:nuget/microsoft.extensions.options@6.0.0",
+        "pkg:nuget/system.diagnostics.eventlog@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.logging.eventsource@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.4",
+        "pkg:nuget/microsoft.extensions.logging@6.0.0",
+        "pkg:nuget/microsoft.extensions.options@6.0.0",
+        "pkg:nuget/microsoft.extensions.primitives@6.0.0",
+        "pkg:nuget/system.runtime.compilerservices.unsafe@6.0.0",
+        "pkg:nuget/system.text.json@6.0.10"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.logging@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection@6.0.1",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.4",
+        "pkg:nuget/microsoft.extensions.options@6.0.0",
+        "pkg:nuget/system.diagnostics.diagnosticsource@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.options.configurationextensions@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.configuration.binder@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+        "pkg:nuget/microsoft.extensions.options@6.0.0",
+        "pkg:nuget/microsoft.extensions.primitives@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.options@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection.abstractions@7.0.0",
+        "pkg:nuget/microsoft.extensions.primitives@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.extensions.primitives@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/system.runtime.compilerservices.unsafe@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.identity.client@4.21.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.identitymodel.abstractions@6.35.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.identitymodel.jsonwebtokens@6.35.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.identitymodel.tokens@6.35.0",
+        "pkg:nuget/system.text.encoding@4.3.0",
+        "pkg:nuget/system.text.encodings.web@6.0.0",
+        "pkg:nuget/system.text.json@6.0.10"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.identitymodel.logging@6.35.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.identitymodel.abstractions@6.35.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.identitymodel.protocols.openidconnect@6.8.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.identitymodel.protocols@6.8.0",
+        "pkg:nuget/system.identitymodel.tokens.jwt@6.35.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.identitymodel.protocols@6.8.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.identitymodel.logging@6.35.0",
+        "pkg:nuget/microsoft.identitymodel.tokens@6.35.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.identitymodel.tokens@6.35.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.csharp@4.5.0",
+        "pkg:nuget/microsoft.csharp@4.7.0",
+        "pkg:nuget/microsoft.identitymodel.logging@6.35.0",
+        "pkg:nuget/system.security.cryptography.cng@4.5.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.net.test.sdk@17.10.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.codecoverage@17.10.0",
+        "pkg:nuget/microsoft.testplatform.testhost@17.10.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.netcore.platforms@1.1.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.netcore.targets@1.1.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.netcore.targets@1.1.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.openapi@1.6.14",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.sourcelink.common@1.1.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/microsoft.sourcelink.github@1.1.1",
+      "dependsOn": [
+        "pkg:nuget/microsoft.build.tasks.git@1.1.1",
+        "pkg:nuget/microsoft.sourcelink.common@1.1.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.testplatform.objectmodel@17.10.0",
+      "dependsOn": [
+        "pkg:nuget/system.reflection.metadata@1.6.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.testplatform.testhost@17.10.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.testplatform.objectmodel@17.10.0",
+        "pkg:nuget/newtonsoft.json@13.0.3"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.win32.registry@5.0.0",
+      "dependsOn": [
+        "pkg:nuget/system.security.accesscontrol@6.0.0",
+        "pkg:nuget/system.security.principal.windows@5.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/microsoft.win32.systemevents@6.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/mimekit@4.17.0",
+      "dependsOn": [
+        "pkg:nuget/bouncycastle.cryptography@2.6.2",
+        "pkg:nuget/system.security.cryptography.pkcs@8.0.2",
+        "pkg:nuget/system.text.encoding.codepages@8.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/mono.cecil@0.11.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/mono.nat@3.0.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/mono.posix.netstandard@5.20.1.34-servarr22",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/monotorrent@2.0.7",
+      "dependsOn": [
+        "pkg:nuget/mono.nat@3.0.1",
+        "pkg:nuget/reusabletasks@2.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/moq@4.17.2",
+      "dependsOn": [
+        "pkg:nuget/castle.core@4.4.1",
+        "pkg:nuget/system.threading.tasks.extensions@4.5.4"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/nbuilder@6.1.0",
+      "dependsOn": [
+        "pkg:nuget/netstandard.library@2.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/netstandard.library@2.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/newtonsoft.json@13.0.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/nlog.extensions.logging@5.2.3",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging@6.0.0",
+        "pkg:nuget/nlog@5.1.4"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/nlog.targets.syslog@7.0.0",
+      "dependsOn": [
+        "pkg:nuget/nlog@5.1.4",
+        "pkg:nuget/polly.contrib.waitandretry@1.1.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/nlog@5.1.4",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/nodatime@3.2.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/npgsql@7.0.10",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.4",
+        "pkg:nuget/system.runtime.compilerservices.unsafe@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/nunit3testadapter@4.2.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/nunit@3.14.0",
+      "dependsOn": [
+        "pkg:nuget/netstandard.library@2.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/nunitxml.testlogger@3.0.117",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/pdfpig@0.1.16",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/polly.contrib.waitandretry@1.1.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/polly.core@8.5.2",
+      "dependsOn": [
+        "pkg:nuget/microsoft.bcl.timeprovider@8.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/polly@8.5.2",
+      "dependsOn": [
+        "pkg:nuget/polly.core@8.5.2"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/restsharp.serializers.systemtextjson@106.15.0",
+      "dependsOn": [
+        "pkg:nuget/restsharp@106.15.0",
+        "pkg:nuget/system.text.json@6.0.10"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/restsharp@106.15.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/reusabletasks@2.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.any.system.collections@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/runtime.any.system.globalization@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.any.system.io@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.any.system.reflection.extensions@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.any.system.reflection.primitives@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.any.system.reflection@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.any.system.resources.resourcemanager@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.any.system.runtime.handles@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.any.system.runtime.interopservices@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.any.system.runtime@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.private.uri@4.3.2"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/runtime.any.system.text.encoding.extensions@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.any.system.text.encoding@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.any.system.threading.tasks@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.debian.8-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.fedora.23-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.fedora.24-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.native.system.security.cryptography.openssl@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/runtime.debian.8-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+        "pkg:nuget/runtime.fedora.23-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+        "pkg:nuget/runtime.fedora.24-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+        "pkg:nuget/runtime.opensuse.13.2-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+        "pkg:nuget/runtime.opensuse.42.1-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+        "pkg:nuget/runtime.osx.10.10-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+        "pkg:nuget/runtime.rhel.7-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+        "pkg:nuget/runtime.ubuntu.14.04-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+        "pkg:nuget/runtime.ubuntu.16.04-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+        "pkg:nuget/runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/runtime.native.system@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/runtime.opensuse.13.2-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.opensuse.42.1-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.osx.10.10-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.rhel.7-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.ubuntu.14.04-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.ubuntu.16.04-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.unix.system.diagnostics.debug@4.3.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/runtime.unix.system.io.filesystem@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.buffers@4.6.0",
+        "pkg:nuget/system.collections@4.3.0",
+        "pkg:nuget/system.diagnostics.debug@4.3.0",
+        "pkg:nuget/system.io@4.3.0",
+        "pkg:nuget/system.resources.resourcemanager@4.3.0",
+        "pkg:nuget/system.runtime.extensions@4.3.0",
+        "pkg:nuget/system.runtime.handles@4.3.0",
+        "pkg:nuget/system.runtime.interopservices@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1",
+        "pkg:nuget/system.text.encoding.extensions@4.3.0",
+        "pkg:nuget/system.text.encoding@4.3.0",
+        "pkg:nuget/system.threading.tasks@4.3.0",
+        "pkg:nuget/system.threading@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/runtime.unix.system.private.uri@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/runtime.native.system@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/runtime.unix.system.runtime.extensions@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/runtime.native.system.security.cryptography.openssl@4.3.0",
+        "pkg:nuget/system.private.uri@4.3.2"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/selenium.support@3.141.0",
+      "dependsOn": [
+        "pkg:nuget/selenium.webdriver@3.141.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/selenium.webdriver.chromedriver@134.0.6998.16500",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/selenium.webdriver@3.141.0",
+      "dependsOn": [
+        "pkg:nuget/newtonsoft.json@13.0.3"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.abstractions@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/system.componentmodel.annotations@4.4.1",
+        "pkg:nuget/system.valuetuple@4.6.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.extensions.oracle@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/servarr.fluentmigrator.abstractions@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.extensions.postgres@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/servarr.fluentmigrator.abstractions@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.extensions.sqlanywhere@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/servarr.fluentmigrator.abstractions@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.extensions.sqlserver@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/servarr.fluentmigrator.abstractions@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.runner.core@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.dependencyinjection@6.0.1",
+        "pkg:nuget/microsoft.extensions.logging.abstractions@6.0.4",
+        "pkg:nuget/microsoft.extensions.options@6.0.0",
+        "pkg:nuget/servarr.fluentmigrator.abstractions@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.runner.db2@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/servarr.fluentmigrator.runner.core@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.runner.firebird@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.options@6.0.0",
+        "pkg:nuget/servarr.fluentmigrator.runner.core@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.runner.hana@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/servarr.fluentmigrator.runner.core@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.runner.mysql@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/servarr.fluentmigrator.runner.core@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.runner.oracle@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/servarr.fluentmigrator.extensions.oracle@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.core@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.runner.postgres@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/servarr.fluentmigrator.extensions.postgres@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.core@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.runner.redshift@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/servarr.fluentmigrator.runner.core@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.runner.sqlanywhere@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/servarr.fluentmigrator.extensions.sqlanywhere@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.core@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.runner.sqlite@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/servarr.fluentmigrator.runner.core@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.runner.sqlserver@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/microsoft.data.sqlclient@2.1.7",
+        "pkg:nuget/servarr.fluentmigrator.extensions.sqlserver@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.core@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.runner.sqlserverce@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/servarr.fluentmigrator.runner.sqlserver@3.3.2.9",
+        "pkg:nuget/system.security.permissions@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator.runner@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.configuration.abstractions@6.0.0",
+        "pkg:nuget/microsoft.extensions.logging@6.0.0",
+        "pkg:nuget/servarr.fluentmigrator.runner.core@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.db2@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.firebird@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.hana@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.mysql@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.oracle@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.postgres@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.redshift@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.sqlanywhere@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.sqlite@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.sqlserver@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator.runner.sqlserverce@3.3.2.9",
+        "pkg:nuget/servarr.fluentmigrator@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/servarr.fluentmigrator@3.3.2.9",
+      "dependsOn": [
+        "pkg:nuget/microsoft.extensions.dependencyinjection@6.0.1",
+        "pkg:nuget/microsoft.extensions.options@6.0.0",
+        "pkg:nuget/servarr.fluentmigrator.abstractions@3.3.2.9"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/sharpziplib@1.4.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/stylecop.analyzers@1.1.118",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/swashbuckle.aspnetcore.annotations@6.6.2",
+      "dependsOn": [
+        "pkg:nuget/swashbuckle.aspnetcore.swaggergen@6.6.2"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/swashbuckle.aspnetcore.swagger@6.6.2",
+      "dependsOn": [
+        "pkg:nuget/microsoft.openapi@1.6.14"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/swashbuckle.aspnetcore.swaggergen@6.6.2",
+      "dependsOn": [
+        "pkg:nuget/swashbuckle.aspnetcore.swagger@6.6.2"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.appcontext@4.1.0",
+      "dependsOn": [
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.buffers@4.6.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.collections.nongeneric@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.diagnostics.debug@4.3.0",
+        "pkg:nuget/system.globalization@4.3.0",
+        "pkg:nuget/system.resources.resourcemanager@4.3.0",
+        "pkg:nuget/system.runtime.extensions@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1",
+        "pkg:nuget/system.threading@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.collections.specialized@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.collections.nongeneric@4.3.0",
+        "pkg:nuget/system.globalization.extensions@4.3.0",
+        "pkg:nuget/system.globalization@4.3.0",
+        "pkg:nuget/system.resources.resourcemanager@4.3.0",
+        "pkg:nuget/system.runtime.extensions@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1",
+        "pkg:nuget/system.threading@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.collections@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.any.system.collections@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.componentmodel.annotations@4.4.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.componentmodel.primitives@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.componentmodel@4.3.0",
+        "pkg:nuget/system.resources.resourcemanager@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.componentmodel.typeconverter@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.collections.nongeneric@4.3.0",
+        "pkg:nuget/system.collections.specialized@4.3.0",
+        "pkg:nuget/system.collections@4.3.0",
+        "pkg:nuget/system.componentmodel.primitives@4.3.0",
+        "pkg:nuget/system.componentmodel@4.3.0",
+        "pkg:nuget/system.globalization@4.3.0",
+        "pkg:nuget/system.linq@4.3.0",
+        "pkg:nuget/system.reflection.extensions@4.3.0",
+        "pkg:nuget/system.reflection.primitives@4.3.0",
+        "pkg:nuget/system.reflection.typeextensions@4.7.0",
+        "pkg:nuget/system.reflection@4.3.0",
+        "pkg:nuget/system.resources.resourcemanager@4.3.0",
+        "pkg:nuget/system.runtime.extensions@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1",
+        "pkg:nuget/system.threading@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.componentmodel@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.runtime@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.configuration.configurationmanager@6.0.1",
+      "dependsOn": [
+        "pkg:nuget/system.security.cryptography.protecteddata@6.0.0",
+        "pkg:nuget/system.security.permissions@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.data.sqlite.core.servarr@1.0.115.5-18",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.diagnostics.debug@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.unix.system.diagnostics.debug@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.diagnostics.diagnosticsource@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/system.runtime.compilerservices.unsafe@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.diagnostics.eventlog@6.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.diagnostics.tracesource@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/runtime.native.system@4.3.0",
+        "pkg:nuget/system.collections@4.3.0",
+        "pkg:nuget/system.diagnostics.debug@4.3.0",
+        "pkg:nuget/system.globalization@4.3.0",
+        "pkg:nuget/system.resources.resourcemanager@4.3.0",
+        "pkg:nuget/system.runtime.extensions@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1",
+        "pkg:nuget/system.threading@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.drawing.common@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.win32.systemevents@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.dynamic.runtime@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.collections@4.3.0",
+        "pkg:nuget/system.diagnostics.debug@4.3.0",
+        "pkg:nuget/system.linq.expressions@4.3.0",
+        "pkg:nuget/system.linq@4.3.0",
+        "pkg:nuget/system.objectmodel@4.3.0",
+        "pkg:nuget/system.reflection.emit.ilgeneration@4.3.0",
+        "pkg:nuget/system.reflection.emit@4.3.0",
+        "pkg:nuget/system.reflection.emit@4.7.0",
+        "pkg:nuget/system.reflection.primitives@4.3.0",
+        "pkg:nuget/system.reflection.typeextensions@4.7.0",
+        "pkg:nuget/system.reflection@4.3.0",
+        "pkg:nuget/system.resources.resourcemanager@4.3.0",
+        "pkg:nuget/system.runtime.extensions@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1",
+        "pkg:nuget/system.threading@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.formats.asn1@8.0.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.globalization.extensions@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/system.globalization@4.3.0",
+        "pkg:nuget/system.resources.resourcemanager@4.3.0",
+        "pkg:nuget/system.runtime.extensions@4.3.0",
+        "pkg:nuget/system.runtime.interopservices@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.globalization@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.any.system.globalization@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.identitymodel.tokens.jwt@6.35.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.identitymodel.jsonwebtokens@6.35.0",
+        "pkg:nuget/microsoft.identitymodel.tokens@6.35.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.io.abstractions.testinghelpers@17.0.24",
+      "dependsOn": [
+        "pkg:nuget/system.io.abstractions@17.0.24"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.io.abstractions@17.0.24",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.io.filesystem.accesscontrol@5.0.0",
+      "dependsOn": [
+        "pkg:nuget/system.security.accesscontrol@6.0.0",
+        "pkg:nuget/system.security.principal.windows@5.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.io.filesystem.primitives@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.io.filesystem@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.unix.system.io.filesystem@4.3.0",
+        "pkg:nuget/system.io.filesystem.primitives@4.3.0",
+        "pkg:nuget/system.io@4.3.0",
+        "pkg:nuget/system.runtime.handles@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1",
+        "pkg:nuget/system.text.encoding@4.3.0",
+        "pkg:nuget/system.threading.tasks@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.io.pipelines@6.0.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.io@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.any.system.io@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1",
+        "pkg:nuget/system.text.encoding@4.3.0",
+        "pkg:nuget/system.threading.tasks@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.linq.expressions@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.collections@4.3.0",
+        "pkg:nuget/system.diagnostics.debug@4.3.0",
+        "pkg:nuget/system.globalization@4.3.0",
+        "pkg:nuget/system.io@4.3.0",
+        "pkg:nuget/system.linq@4.3.0",
+        "pkg:nuget/system.objectmodel@4.3.0",
+        "pkg:nuget/system.reflection.emit.ilgeneration@4.3.0",
+        "pkg:nuget/system.reflection.emit.lightweight@4.3.0",
+        "pkg:nuget/system.reflection.emit@4.3.0",
+        "pkg:nuget/system.reflection.emit@4.7.0",
+        "pkg:nuget/system.reflection.extensions@4.3.0",
+        "pkg:nuget/system.reflection.primitives@4.3.0",
+        "pkg:nuget/system.reflection.typeextensions@4.7.0",
+        "pkg:nuget/system.reflection@4.3.0",
+        "pkg:nuget/system.resources.resourcemanager@4.3.0",
+        "pkg:nuget/system.runtime.extensions@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1",
+        "pkg:nuget/system.threading@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.linq@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.collections@4.3.0",
+        "pkg:nuget/system.diagnostics.debug@4.3.0",
+        "pkg:nuget/system.resources.resourcemanager@4.3.0",
+        "pkg:nuget/system.runtime.extensions@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.memory@4.6.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.objectmodel@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.collections@4.3.0",
+        "pkg:nuget/system.diagnostics.debug@4.3.0",
+        "pkg:nuget/system.resources.resourcemanager@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1",
+        "pkg:nuget/system.threading@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.private.uri@4.3.2",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.unix.system.private.uri@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.reflection.emit.ilgeneration@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.reflection.primitives@4.3.0",
+        "pkg:nuget/system.reflection@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.reflection.emit.lightweight@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.reflection.emit.ilgeneration@4.3.0",
+        "pkg:nuget/system.reflection.primitives@4.3.0",
+        "pkg:nuget/system.reflection@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.reflection.emit@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.io@4.3.0",
+        "pkg:nuget/system.reflection.emit.ilgeneration@4.3.0",
+        "pkg:nuget/system.reflection.primitives@4.3.0",
+        "pkg:nuget/system.reflection@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.reflection.emit@4.7.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.reflection.extensions@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.any.system.reflection.extensions@4.3.0",
+        "pkg:nuget/system.reflection@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.reflection.metadata@1.6.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.reflection.primitives@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.any.system.reflection.primitives@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.reflection.typeextensions@4.7.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.reflection@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.any.system.reflection@4.3.0",
+        "pkg:nuget/system.io@4.3.0",
+        "pkg:nuget/system.reflection.primitives@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.resources.extensions@6.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.resources.resourcemanager@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.any.system.resources.resourcemanager@4.3.0",
+        "pkg:nuget/system.globalization@4.3.0",
+        "pkg:nuget/system.reflection@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.runtime.caching@4.7.0",
+      "dependsOn": [
+        "pkg:nuget/system.configuration.configurationmanager@6.0.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.runtime.compilerservices.unsafe@6.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.runtime.extensions@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.unix.system.runtime.extensions@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.runtime.handles@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.any.system.runtime.handles@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.runtime.interopservices.runtimeinformation@4.0.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/runtime.native.system@4.3.0",
+        "pkg:nuget/system.reflection@4.3.0",
+        "pkg:nuget/system.resources.resourcemanager@4.3.0",
+        "pkg:nuget/system.runtime.interopservices@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1",
+        "pkg:nuget/system.threading@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.runtime.interopservices@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.any.system.runtime.interopservices@4.3.0",
+        "pkg:nuget/system.reflection.primitives@4.3.0",
+        "pkg:nuget/system.reflection@4.3.0",
+        "pkg:nuget/system.runtime.handles@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.runtime@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.0",
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.0",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.any.system.runtime@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.runtime@4.3.1",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.any.system.runtime@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.security.accesscontrol@6.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.security.cryptography.cng@4.5.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.security.cryptography.pkcs@8.0.2",
+      "dependsOn": [
+        "pkg:nuget/system.formats.asn1@8.0.2"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.security.cryptography.protecteddata@6.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.security.permissions@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/system.security.accesscontrol@6.0.0",
+        "pkg:nuget/system.windows.extensions@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.security.principal.windows@5.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.serviceprocess.servicecontroller@6.0.1",
+      "dependsOn": [
+        "pkg:nuget/system.diagnostics.eventlog@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.text.encoding.codepages@8.0.0",
+      "dependsOn": [
+        "pkg:nuget/system.runtime.compilerservices.unsafe@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.text.encoding.extensions@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.any.system.text.encoding.extensions@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1",
+        "pkg:nuget/system.text.encoding@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.text.encoding@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.0",
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.0",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.any.system.text.encoding@4.3.0",
+        "pkg:nuget/system.runtime@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.text.encodings.web@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/system.runtime.compilerservices.unsafe@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.text.json@6.0.10",
+      "dependsOn": [
+        "pkg:nuget/system.runtime.compilerservices.unsafe@6.0.0",
+        "pkg:nuget/system.text.encodings.web@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.text.regularexpressions@4.3.1",
+      "dependsOn": [
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.threading.channels@6.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.threading.tasks.extensions@4.5.4",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.threading.tasks@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/microsoft.netcore.platforms@1.1.1",
+        "pkg:nuget/microsoft.netcore.targets@1.1.3",
+        "pkg:nuget/runtime.any.system.threading.tasks@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.threading@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.runtime@4.3.1",
+        "pkg:nuget/system.threading.tasks@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.valuetuple@4.6.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:nuget/system.windows.extensions@6.0.0",
+      "dependsOn": [
+        "pkg:nuget/system.drawing.common@6.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.xml.readerwriter@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.collections@4.3.0",
+        "pkg:nuget/system.diagnostics.debug@4.3.0",
+        "pkg:nuget/system.globalization@4.3.0",
+        "pkg:nuget/system.io.filesystem.primitives@4.3.0",
+        "pkg:nuget/system.io.filesystem@4.3.0",
+        "pkg:nuget/system.io@4.3.0",
+        "pkg:nuget/system.resources.resourcemanager@4.3.0",
+        "pkg:nuget/system.runtime.extensions@4.3.0",
+        "pkg:nuget/system.runtime.interopservices@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1",
+        "pkg:nuget/system.text.encoding.extensions@4.3.0",
+        "pkg:nuget/system.text.encoding@4.3.0",
+        "pkg:nuget/system.text.regularexpressions@4.3.1",
+        "pkg:nuget/system.threading.tasks.extensions@4.5.4",
+        "pkg:nuget/system.threading.tasks@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/system.xml.xmldocument@4.3.0",
+      "dependsOn": [
+        "pkg:nuget/system.collections@4.3.0",
+        "pkg:nuget/system.diagnostics.debug@4.3.0",
+        "pkg:nuget/system.globalization@4.3.0",
+        "pkg:nuget/system.io@4.3.0",
+        "pkg:nuget/system.resources.resourcemanager@4.3.0",
+        "pkg:nuget/system.runtime.extensions@4.3.0",
+        "pkg:nuget/system.runtime@4.3.1",
+        "pkg:nuget/system.text.encoding@4.3.0",
+        "pkg:nuget/system.threading@4.3.0",
+        "pkg:nuget/system.xml.readerwriter@4.3.0"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/taglibsharp-lidarr@2.2.0.19",
+      "dependsOn": []
+    }
+  ]
+}

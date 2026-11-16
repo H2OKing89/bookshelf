@@ -1,0 +1,43 @@
+{
+  "Magick.NET/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/dlemstra/Magick.NET/15.1.0/License.txt",
+    "package": "Magick.NET-Q8-AnyCPU",
+    "version": "15.1.0",
+    "bytes": 11560,
+    "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/dlemstra/Magick.NET",
+      "branch": "main",
+      "commit": "80d8318173db37bd2ee9f3b53c4c736a1267e689"
+    },
+    "packageSha512Base64": "eBN5RobAi01ChlRu0LwolnjK1ZFSUh7mUeosjdQTCRrMPUzUyIUSm5me7f7//9sS4zwr4aU9shl1aOErIEcE/A=="
+  },
+  "Magick.NET/NOTICE.txt": {
+    "source": "https://api.nuget.org/v3-flatcontainer/magick.net-q8-anycpu/15.1.0/magick.net-q8-anycpu.15.1.0.nupkg#Notice.txt",
+    "package": "Magick.NET-Q8-AnyCPU",
+    "version": "15.1.0",
+    "bytes": 431274,
+    "sha256": "d66c427812efbf0fccb98957e47dde3fc47b41b991cb79e7b5f11d5a76185efe",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/dlemstra/Magick.NET",
+      "branch": "main",
+      "commit": "80d8318173db37bd2ee9f3b53c4c736a1267e689"
+    },
+    "packageSha512Base64": "eBN5RobAi01ChlRu0LwolnjK1ZFSUh7mUeosjdQTCRrMPUzUyIUSm5me7f7//9sS4zwr4aU9shl1aOErIEcE/A=="
+  },
+  "PdfPig/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/UglyToad/PdfPig/v0.1.16/LICENSE",
+    "package": "PdfPig",
+    "version": "0.1.16",
+    "bytes": 14227,
+    "sha256": "4c510e162f896ea43b4b1cf1b743641d7c756f1004d0e5eaf0615b28b7ded409",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/UglyToad/PdfPig",
+      "commit": "a7bb35662bbbf405efddad50aedc9bcdcf515afc"
+    },
+    "packageSha512Base64": "clPAR660u7oGMGO0+I4JAq3olrsbIcKO2m3JtAuOow+IbS62Pyfh00GFnG10Ngl2nizTS5+DsCSlndW6sLvNBQ=="
+  }
+}

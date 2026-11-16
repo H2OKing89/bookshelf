@@ -42,7 +42,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 
 | ID | Priority | Execution | Effort | Candidate |
 | --- | --- | --- | --- | --- |
-| [P01](#p01) | P1 | Planned | XL | Move the runtime and SDK together to .NET 10 |
+| [P01](#p01) | P1 | In progress | XL | Move the runtime and SDK together to .NET 10 |
 | [P02](#p02) | P0 | In progress | M | Replace unsalted password hashes with versioned salted derivation |
 | [P03](#p03) | P0 | Verified | M | Restrict forwarded-header trust and local-address auth bypass |
 | [P04](#p04) | P1 | Planned | M | Add optional allowed-host filtering |
@@ -50,7 +50,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P06](#p06) | P1 | Verified | M | Bound log-cleansing regex work and fail closed on timeout |
 | [P07](#p07) | P1 | Verified | M | Validate every restore payload before replacing config/database files |
 | [P08](#p08) | P1 | Verified | M | Add bounded login-attempt lockout |
-| [P09](#p09) | P1 | Planned | L | Refresh managed/native packages as a staged compatibility change |
+| [P09](#p09) | P1 | In progress | L | Refresh managed/native packages as a staged compatibility change |
 | [P10](#p10) | P1 | Planned | L | Carry cancellation through the HTTP client stack |
 | [P11](#p11) | P1 | Planned | M | Use per-connection Happy Eyeballs and expire pooled connections |
 | [P12](#p12) | P1 | Planned | XL | Modernize the migration engine while preserving Bookshelf schema history |
@@ -150,6 +150,22 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 **Book/audio caution:** validate TagLibSharp-Lidarr, PdfSharpCore, EPUB/PDF handling, Calibre integration, SQLite native loading and bundled MediaInfo under the new runtime; a successful CLI start alone is insufficient.
 
 **Acceptance:** clean restore/build/test with the pinned SDK; self-contained linux-x64/linux-musl-x64/linux-musl-arm64 artifacts start in disposable homes; an upgraded copy preserves authors, books, editions, audiobook parts/narrators, root folders, history and credentials; clean Docker startup and shutdown. No test was run in this research.
+
+**2026-11-15 SDK prerequisite record:** P01 is **In progress**. P09 exposed a
+build prerequisite: the repository's SDK 6 setup does not implement the NuGet
+auditing policy used for verification. `global.json` now selects SDK 10.0.403
+with latest-patch roll-forward and prereleases disabled; mise uses the same
+baseline. CI derives its SDK path from the selected `dotnet --version` rather
+than the old hard-coded 6.0.427 location. This makes direct and transitive
+package auditing apply on the normal contributor/CI path.
+
+The application, library, test targets and self-contained payloads still use
+net6.0. This SDK step does not complete the supported .NET 10 runtime migration,
+Docker/native-platform acceptance, saved-home migration proof or remaining
+platform-specific build tooling. The obsolete SDK-patching option now fails
+explicitly. CI separately installs the old test runtime, and the test wrapper
+now preserves failures with six isolated regression cases. P01 remains **In progress**; P09's verified
+security-maintenance slice does not imply complete P01/P12/P13/P21/P22 gates.
 
 ### P02
 
@@ -700,6 +716,43 @@ Isolated P26/P02 tests use only a command-line NU1902/NU1903 warning-as-error
 exception, leaving auditing enabled and advisory warnings visible. No audit
 suppression is committed, and passing those tests does not resolve the security
 or deployment gate. No live development or production installation was changed.
+
+**2026-11-15 security-maintenance record:** P09 is **In progress**, with a
+runtime-independent security slice implemented ahead of the larger P01 runtime
+migration. The SDK prerequisite now uses 10.0.403 through `global.json`, mise and
+CI so the audit policy is enforced consistently; runtime targets stay net6.0. The original 24-lock baseline matched nine package IDs and 16
+advisories. Central transitive pinning and auditing of all dependencies now keep
+those indirect packages visible. The updated graph uses MailKit/MimeKit 4.17.0,
+CodePages 8.0.0, Pkcs 8.0.2, JWT/JsonWebTokens 6.35.0, Uri 4.3.2 and
+RegularExpressions 4.3.1; ImpromptuInterface 8.1.0 and removal of the obsolete
+Runtime.Loader package remove unnecessary legacy dependency edges. No advisory
+suppression or audit-warning exception is part of the change.
+
+Builds no longer require a Six Labors key: ImageSharp and PdfSharpCore are replaced
+with bundled Magick.NET 15.1.0 raster resizing and managed PdfPig 0.1.16 PDF
+metadata. Removing both former libraries also removes their Six Labors
+transitives. Image format/size/resource safeguards and owned-stream PDF handling
+have dedicated regression cases; EPUB parsing and recording/media ownership are
+preserved. Complete upstream notices are included in application output and
+publish packages. The [dated dependency audit](dependency-audit.md) records
+versions, source links, scope, SBOM and the final validation evidence.
+
+Clean locked restores and the 25-project transitive NuGet audit passed with
+zero reported vulnerabilities. The schema-validated CycloneDX snapshot includes
+25 locks, 235 package IDs and 242 exact components. Regression checks passed
+691 Common cases (35 existing skips), 3,439 Core cases (55 existing skips),
+267 API cases, and 64 focused media cases. Published-binary probes passed
+22 checks on glibc x64 and 40 each in musl x64/ARM64 containers; packaged
+authentication and backup/restore checks passed 50 and 51 cases. All three
+Linux publications include matching notices and their proper native libraries.
+The ARM helper was genuinely cross-built and directly tested with version/WAV
+JSON under QEMU; full ARM child-process/media-import acceptance is separate.
+Pinned-v5 runtime OS detection was adapted in commit `698a8d594` to remove
+the unnecessary `uname` child process. This confirms the security-maintenance slice, not
+the remaining P01/P12/P13 framework/database updates or full P21/P22 platform
+matrix. P09 therefore remains **In progress**. Zero package-advisory matches do
+not establish absence of embedded native or OS issues. No live development or
+production home, credentials or media was changed.
 
 ### P10
 

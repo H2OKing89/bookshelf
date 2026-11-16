@@ -17,7 +17,6 @@ on:
       - "src/Readarr.Api.*/openapi.json"
 
 env:
-  DOTNET_VERSION: "6.0.427"
   READARR_VERSION: 0.4.21
   OUTPUT_FOLDER: ./_output
   ARTIFACTS_FOLDER: ./_artifacts
@@ -27,19 +26,36 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # mise owns Node; setup-dotnet installs both .NET versions into one root.
+      MISE_ENABLE_TOOLS: node
+      RestoreLockedMode: 'true'
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
       - uses: jdx/mise-action@v3
+        with:
+          install_args: node
+
+      - name: Set up build SDK and legacy test runtime
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+          # SDK 6 supplies runtime 6.0.36; global.json still selects SDK 10.
+          dotnet-version: '6.0.428'
+        env:
+          DOTNET_INSTALL_DIR: ${{ runner.temp }}/bookshelf-dotnet
 
       - name: Setup Environment Variables
         id: variables
         shell: bash
         run: |
-          echo "SDK_PATH=${{ env.DOTNET_ROOT }}/sdk/${DOTNET_VERSION}" >> "$GITHUB_ENV"
+          echo "SDK_PATH=$DOTNET_ROOT/sdk/$(dotnet --version)" >> "$GITHUB_ENV"
           echo "DATE=$(date --rfc-3339=date)" >> "$GITHUB_ENV"
+          dotnet --list-runtimes | grep -F 'Microsoft.NETCore.App 6.0.36 '
+          dotnet --list-runtimes | grep -F 'Microsoft.AspNetCore.App 6.0.36 '
 
       - name: Cache NuGet packages
         uses: actions/cache@v4
@@ -88,6 +104,16 @@ jobs:
             _cache/mediainfo/downloads
             _cache/mediainfo/bundles
           key: mediainfo-${{ runner.os }}-${{ hashFiles('scripts/build-mediainfo.sh', 'scripts/mediainfo.lock', 'scripts/mediainfo-licenses/*', 'docker/mediainfo.Dockerfile') }}
+
+      - name: Verify test runner failure propagation
+        shell: bash
+        run: bash scripts/test-test-runner.sh
+
+      - name: Restore locked dependencies
+        shell: bash
+        run: |
+          dotnet restore src/Readarr.sln --locked-mode -p:EnableWindowsTargeting=true
+          dotnet restore src/NzbDrone/Readarr.csproj --locked-mode -p:EnableWindowsTargeting=true
 
       - name: Build
         shell: bash
