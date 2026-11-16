@@ -82,6 +82,11 @@ namespace NzbDrone.Host
             {
                 options.ReturnHttpNotAcceptable = true;
             })
+            .ConfigureApiBehaviorOptions(options =>
+            {
+                // DryIoc registers resource types too; API resources must still bind from JSON bodies.
+                options.DisableImplicitFromServicesParameters = true;
+            })
             .AddApplicationPart(typeof(SystemController).Assembly)
             .AddApplicationPart(typeof(StaticResourceController).Assembly)
             .AddJsonOptions(options =>
