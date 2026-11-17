@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Threading;
 using System.Threading.Tasks;
 using NLog;
 using NzbDrone.Common.Cache;
@@ -10,9 +11,13 @@ namespace NzbDrone.Common.TPL
     public interface IRateLimitService
     {
         void WaitAndPulse(string key, TimeSpan interval);
+        void WaitAndPulse(string key, TimeSpan interval, CancellationToken cancellationToken);
         void WaitAndPulse(string key, string subKey, TimeSpan interval);
+        void WaitAndPulse(string key, string subKey, TimeSpan interval, CancellationToken cancellationToken);
         Task WaitAndPulseAsync(string key, TimeSpan interval);
+        Task WaitAndPulseAsync(string key, TimeSpan interval, CancellationToken cancellationToken);
         Task WaitAndPulseAsync(string key, string subKey, TimeSpan interval);
+        Task WaitAndPulseAsync(string key, string subKey, TimeSpan interval, CancellationToken cancellationToken);
     }
 
     public class RateLimitService : IRateLimitService
@@ -31,31 +36,48 @@ namespace NzbDrone.Common.TPL
             WaitAndPulse(key, null, interval);
         }
 
-        public async Task WaitAndPulseAsync(string key, TimeSpan interval)
+        public void WaitAndPulse(string key, TimeSpan interval, CancellationToken cancellationToken)
         {
-            await WaitAndPulseAsync(key, null, interval);
+            WaitAndPulse(key, null, interval, cancellationToken);
+        }
+
+        public Task WaitAndPulseAsync(string key, TimeSpan interval)
+        {
+            return WaitAndPulseAsync(key, null, interval, CancellationToken.None);
+        }
+
+        public Task WaitAndPulseAsync(string key, TimeSpan interval, CancellationToken cancellationToken)
+        {
+            return WaitAndPulseAsync(key, null, interval, cancellationToken);
         }
 
         public void WaitAndPulse(string key, string subKey, TimeSpan interval)
         {
-            var delay = GetDelay(key, subKey, interval);
-
-            if (delay.TotalSeconds > 0.0)
-            {
-                _logger.Trace("Rate Limit triggered, delaying '{0}' for {1:0.000} sec", key, delay.TotalSeconds);
-                System.Threading.Thread.Sleep(delay);
-            }
+            WaitAndPulse(key, subKey, interval, CancellationToken.None);
         }
 
-        public async Task WaitAndPulseAsync(string key, string subKey, TimeSpan interval)
+        public void WaitAndPulse(string key, string subKey, TimeSpan interval, CancellationToken cancellationToken)
         {
+            WaitAndPulseAsync(key, subKey, interval, cancellationToken).GetAwaiter().GetResult();
+        }
+
+        public Task WaitAndPulseAsync(string key, string subKey, TimeSpan interval)
+        {
+            return WaitAndPulseAsync(key, subKey, interval, CancellationToken.None);
+        }
+
+        public async Task WaitAndPulseAsync(string key, string subKey, TimeSpan interval, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
             var delay = GetDelay(key, subKey, interval);
 
             if (delay.TotalSeconds > 0.0)
             {
                 _logger.Trace("Rate Limit triggered, delaying '{0}' for {1:0.000} sec", key, delay.TotalSeconds);
-                await Task.Delay(delay);
+                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
             }
+
+            cancellationToken.ThrowIfCancellationRequested();
         }
 
         private TimeSpan GetDelay(string key, string subKey, TimeSpan interval)

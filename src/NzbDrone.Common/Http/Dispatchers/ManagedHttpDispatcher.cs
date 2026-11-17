@@ -52,9 +52,16 @@ namespace NzbDrone.Common.Http.Dispatchers
             _logger = logger;
         }
 
-        public async Task<HttpResponse> GetResponseAsync(HttpRequest request, CookieContainer cookies)
+        public Task<HttpResponse> GetResponseAsync(HttpRequest request, CookieContainer cookies)
         {
-            var requestMessage = new HttpRequestMessage(request.Method, (Uri)request.Url)
+            return GetResponseAsync(request, cookies, CancellationToken.None);
+        }
+
+        public async Task<HttpResponse> GetResponseAsync(HttpRequest request, CookieContainer cookies, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using var requestMessage = new HttpRequestMessage(request.Method, (Uri)request.Url)
             {
                 Version = HttpVersion.Version20,
                 VersionPolicy = HttpVersionPolicy.RequestVersionOrLower
@@ -88,16 +95,18 @@ namespace NzbDrone.Common.Http.Dispatchers
                 }
             }
 
-            using var cts = new CancellationTokenSource();
+            using var timeout = new CancellationTokenSource();
             if (request.RequestTimeout != TimeSpan.Zero)
             {
-                cts.CancelAfter(request.RequestTimeout);
+                timeout.CancelAfter(request.RequestTimeout);
             }
             else
             {
                 // The default for System.Net.Http.HttpClient
-                cts.CancelAfter(TimeSpan.FromSeconds(100));
+                timeout.CancelAfter(TimeSpan.FromSeconds(100));
             }
+
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
 
             if (request.ContentData != null)
             {
@@ -113,7 +122,7 @@ namespace NzbDrone.Common.Http.Dispatchers
 
             try
             {
-                using var responseMessage = await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                using var responseMessage = await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, linked.Token);
                 {
                     byte[] data = null;
 
@@ -121,17 +130,24 @@ namespace NzbDrone.Common.Http.Dispatchers
                     {
                         if (request.ResponseStream != null && responseMessage.StatusCode == HttpStatusCode.OK)
                         {
-                            await responseMessage.Content.CopyToAsync(request.ResponseStream, null, cts.Token);
+                            await responseMessage.Content.CopyToAsync(request.ResponseStream, null, linked.Token);
                         }
                         else
                         {
-                            data = await responseMessage.Content.ReadAsByteArrayAsync(cts.Token);
+                            data = await responseMessage.Content.ReadAsByteArrayAsync(linked.Token);
                         }
+                    }
+                    catch (OperationCanceledException) when (linked.IsCancellationRequested)
+                    {
+                        throw;
                     }
                     catch (Exception ex)
                     {
+                        linked.Token.ThrowIfCancellationRequested();
                         throw new WebException("Failed to read complete http response", ex, WebExceptionStatus.ReceiveFailure, null);
                     }
+
+                    linked.Token.ThrowIfCancellationRequested();
 
                     var headers = responseMessage.Headers.ToNameValueCollection();
 
@@ -140,9 +156,13 @@ namespace NzbDrone.Common.Http.Dispatchers
                     return new HttpResponse(request, new HttpHeader(headers), data, responseMessage.StatusCode, responseMessage.Version);
                 }
             }
-            catch (OperationCanceledException ex) when (cts.IsCancellationRequested)
+            catch (Exception ex) when (cancellationToken.IsCancellationRequested)
             {
-                throw new WebException("Http request timed out", ex.InnerException, WebExceptionStatus.Timeout, null);
+                throw new OperationCanceledException("Http request cancelled", ex, cancellationToken);
+            }
+            catch (OperationCanceledException ex) when (timeout.IsCancellationRequested)
+            {
+                throw new WebException("Http request timed out", ex, WebExceptionStatus.Timeout, null);
             }
         }
 
@@ -279,34 +299,39 @@ namespace NzbDrone.Common.Http.Dispatchers
 
         private async ValueTask<Stream> onConnect(SocketsHttpConnectionContext context, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             // Until .NET supports an implementation of Happy Eyeballs (https://tools.ietf.org/html/rfc8305#section-2), let's make IPv4 fallback work in a simple way.
             // This issue is being tracked at https://github.com/dotnet/runtime/issues/26177 and expected to be fixed in .NET 6.
             if (useIPv6)
             {
                 try
                 {
-                    var localToken = cancellationToken;
+                    using var quickFailCts = new CancellationTokenSource();
+                    using var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, quickFailCts.Token);
 
                     if (!hasResolvedIPv6Availability)
                     {
                         // to make things move fast, use a very low timeout for the initial ipv6 attempt.
-                        var quickFailCts = new CancellationTokenSource(connection_establish_timeout);
-                        var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, quickFailCts.Token);
-
-                        localToken = linkedTokenSource.Token;
+                        quickFailCts.CancelAfter(connection_establish_timeout);
                     }
 
-                    return await attemptConnection(AddressFamily.InterNetworkV6, context, localToken);
+                    var stream = await attemptConnection(AddressFamily.InterNetworkV6, context, linkedTokenSource.Token);
+                    hasResolvedIPv6Availability = true;
+                    return stream;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
                 }
                 catch
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     // Do not retry IPv6 if a routable IPv4 address is available, otherwise continue to attempt IPv6 connections.
                     var routableIPv4 = HasRoutableIPv4Address();
                     _logger.Info("IPv4 is available: {0}, IPv6 will be {1}", routableIPv4, routableIPv4 ? "disabled" : "left enabled");
                     useIPv6 = !routableIPv4;
-                }
-                finally
-                {
                     hasResolvedIPv6Availability = true;
                 }
             }
