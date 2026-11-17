@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Reflection;
+using FluentMigrator;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Generators;
 using FluentMigrator.Runner.Initialization;
@@ -8,8 +9,6 @@ using FluentMigrator.Runner.Processors;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NLog;
-using NLog.Extensions.Logging;
-using NzbDrone.Common.Instrumentation;
 
 namespace NzbDrone.Core.Datastore.Migration.Framework
 {
@@ -34,19 +33,22 @@ namespace NzbDrone.Core.Datastore.Migration.Framework
         {
             var sw = Stopwatch.StartNew();
 
-            _logger.Info("*** Migrating {0} ***", CleanseLogMessage.Cleanse(connectionString));
+            _logger.Info("*** Migrating {0} {1} database ***", databaseType, migrationContext.MigrationType);
 
-            ServiceProvider serviceProvider;
+            var db = databaseType switch
+            {
+                DatabaseType.SQLite => ProcessorIdConstants.SQLite,
+                DatabaseType.PostgreSQL => ProcessorIdConstants.PostgreSQL,
+                _ => throw new NotSupportedException($"Unknown database type: {databaseType}")
+            };
 
-            var db = databaseType == DatabaseType.SQLite ? "sqlite" : "postgres";
-
-            serviceProvider = new ServiceCollection()
-                .AddLogging(b => b.AddNLog())
+            using var serviceProvider = new ServiceCollection()
+                .AddLogging(b => b.AddProvider(_migrationLoggerProvider))
                 .AddFluentMigratorCore()
                 .Configure<RunnerOptions>(cfg => cfg.IncludeUntaggedMaintenances = true)
                 .ConfigureRunner(
                     builder => builder
-                    .AddPostgres()
+                    .AddNzbDronePostgres()
                     .AddNzbDroneSQLite()
                     .WithGlobalConnectionString(connectionString)
                     .ScanIn(Assembly.GetExecutingAssembly()).For.All())
@@ -70,18 +72,23 @@ namespace NzbDrone.Core.Datastore.Migration.Framework
             {
                 var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
 
+                var previousContext = MigrationContext.Current;
                 MigrationContext.Current = migrationContext;
-
-                if (migrationContext.DesiredVersion.HasValue)
+                try
                 {
-                    runner.MigrateUp(migrationContext.DesiredVersion.Value);
+                    if (migrationContext.DesiredVersion.HasValue)
+                    {
+                        runner.MigrateUp(migrationContext.DesiredVersion.Value);
+                    }
+                    else
+                    {
+                        runner.MigrateUp();
+                    }
                 }
-                else
+                finally
                 {
-                    runner.MigrateUp();
+                    MigrationContext.Current = previousContext;
                 }
-
-                MigrationContext.Current = null;
             }
 
             sw.Stop();

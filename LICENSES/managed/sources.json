@@ -39,5 +39,31 @@
       "commit": "a7bb35662bbbf405efddad50aedc9bcdcf515afc"
     },
     "packageSha512Base64": "clPAR660u7oGMGO0+I4JAq3olrsbIcKO2m3JtAuOow+IbS62Pyfh00GFnG10Ngl2nizTS5+DsCSlndW6sLvNBQ=="
+  },
+  "FluentMigrator/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/fluentmigrator/fluentmigrator/1a4eabcd3275eeb747734addc913580f89e0a22c/LICENSE.txt",
+    "package": "FluentMigrator",
+    "version": "8.0.1",
+    "bytes": 11357,
+    "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/fluentmigrator/fluentmigrator.git",
+      "commit": "1a4eabcd3275eeb747734addc913580f89e0a22c"
+    },
+    "packageSha512Base64": "GcToFZg8MjT+VG7GhA1NRhRbg6XwZipL8Pt0ytAakkqoKrZka2y+F/PkApRNhgI7Pl5IJn/S9miebd7grWXp5w=="
+  },
+  "Npgsql/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/npgsql/npgsql/d3768398c17877b3a916c3c4d87e8e11698991fc/LICENSE",
+    "package": "Npgsql",
+    "version": "10.0.3",
+    "bytes": 903,
+    "sha256": "2e1d9cc6ed4eb7fe6fa82091846c06b4f58571a2c3b54777db6baeca10dd2d74",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/npgsql/npgsql",
+      "commit": "d3768398c17877b3a916c3c4d87e8e11698991fc"
+    },
+    "packageSha512Base64": "9wZYlR6r1uLGnAxBuUPOCmgbS6SDtVKyGkZ0tDGPaBHYbbdEDEajD0VErq+W/dn3gHfJ3WvOdZaNNNybnFCupA=="
   }
 }

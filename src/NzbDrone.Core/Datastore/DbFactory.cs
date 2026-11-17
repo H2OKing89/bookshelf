@@ -123,7 +123,7 @@ namespace NzbDrone.Core.Datastore
                 _restoreDatabaseService.Restore();
                 _migrationController.Migrate(connectionString, migrationContext, databaseType);
             }
-            catch (SQLiteException e)
+            catch (SQLiteException e) when (IsCorruptDatabase(e))
             {
                 var fileName = _connectionStringFactory.GetDatabasePath(connectionString);
 
@@ -179,7 +179,7 @@ namespace NzbDrone.Core.Datastore
             {
                 _migrationController.Migrate(connectionString, migrationContext, databaseType);
             }
-            catch (SQLiteException e)
+            catch (SQLiteException e) when (IsCorruptDatabase(e))
             {
                 var fileName = _connectionStringFactory.GetDatabasePath(connectionString);
 
@@ -203,6 +203,12 @@ namespace NzbDrone.Core.Datastore
             {
                 throw new ReadarrStartupException(e, "Error creating log database");
             }
+        }
+
+        private static bool IsCorruptDatabase(SQLiteException error)
+        {
+            var primaryCode = (SQLiteErrorCode)((int)error.ResultCode & 0xff);
+            return primaryCode == SQLiteErrorCode.Corrupt || primaryCode == SQLiteErrorCode.NotADb;
         }
     }
 }
