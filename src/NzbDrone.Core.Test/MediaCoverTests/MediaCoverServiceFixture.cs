@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using FizzWare.NBuilder;
 using FluentAssertions;
 using Moq;
@@ -12,12 +15,16 @@ using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Common.Http;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Books.Events;
+using NzbDrone.Core.Lifecycle;
 using NzbDrone.Core.MediaCover;
+using NzbDrone.Core.Messaging.Commands;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.MediaCoverTests
 {
     [TestFixture]
+    [NonParallelizable]
     public class MediaCoverServiceFixture : CoreTest<MediaCoverService>
     {
         private Author _author;
@@ -47,7 +54,7 @@ namespace NzbDrone.Core.Test.MediaCoverTests
                 .Build();
 
             _httpResponse = new HttpResponse(null, new HttpHeader(), "");
-            Mocker.GetMock<IHttpClient>().Setup(c => c.Get(It.IsAny<HttpRequest>())).Returns(_httpResponse);
+            Mocker.GetMock<IHttpClient>().Setup(c => c.Get(It.IsAny<HttpRequest>(), It.IsAny<CancellationToken>())).Returns(_httpResponse);
         }
 
         [TestCase(".png")]
@@ -282,7 +289,7 @@ namespace NzbDrone.Core.Test.MediaCoverTests
             Subject.HandleAsync(new AuthorRefreshCompleteEvent(authorWithInvalidCover));
 
             Mocker.GetMock<IHttpClient>()
-                  .Verify(c => c.Get(It.IsAny<HttpRequest>()), Times.Never());
+                  .Verify(c => c.Get(It.IsAny<HttpRequest>(), It.IsAny<CancellationToken>()), Times.Never());
         }
 
         [Test]
@@ -303,7 +310,7 @@ namespace NzbDrone.Core.Test.MediaCoverTests
             Subject.HandleAsync(new AuthorRefreshCompleteEvent(authorWithInvalidCover));
 
             Mocker.GetMock<IHttpClient>()
-                  .Verify(c => c.Get(It.IsAny<HttpRequest>()), Times.Never());
+                  .Verify(c => c.Get(It.IsAny<HttpRequest>(), It.IsAny<CancellationToken>()), Times.Never());
         }
 
         [Test]
@@ -339,7 +346,122 @@ namespace NzbDrone.Core.Test.MediaCoverTests
 
             // Author has one valid cover, so Get is called once for author; book cover is skipped
             Mocker.GetMock<IHttpClient>()
-                  .Verify(c => c.Get(It.IsAny<HttpRequest>()), Times.Once());
+                  .Verify(c => c.Get(It.IsAny<HttpRequest>(), It.IsAny<CancellationToken>()), Times.Once());
+        }
+
+        [Test]
+        public void cancelled_refresh_should_not_start_cover_requests_or_publish_completion()
+        {
+            using var cancellation = new CancellationTokenSource();
+            cancellation.Cancel();
+
+            using (CommandExecutionContext.Begin(cancellation.Token))
+            {
+                Subject.HandleAsync(new AuthorRefreshCompleteEvent(_author));
+            }
+
+            Mocker.GetMock<IHttpClient>().Verify(client => client.Get(It.IsAny<HttpRequest>(), It.IsAny<CancellationToken>()), Times.Never());
+            Mocker.GetMock<IBookService>().Verify(service => service.GetBooksByAuthor(It.IsAny<int>()), Times.Never());
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<MediaCoversUpdatedEvent>()), Times.Never());
+        }
+
+        [Test]
+        public void cancellation_during_headers_should_not_download_or_publish_completion()
+        {
+            using var cancellation = new CancellationTokenSource();
+            Mocker.GetMock<IHttpClient>()
+                .Setup(client => client.Get(It.IsAny<HttpRequest>(), It.IsAny<CancellationToken>()))
+                .Callback<HttpRequest, CancellationToken>((request, token) =>
+                {
+                    cancellation.Cancel();
+                    token.ThrowIfCancellationRequested();
+                });
+
+            using (CommandExecutionContext.Begin(cancellation.Token))
+            {
+                Subject.HandleAsync(new AuthorRefreshCompleteEvent(_author));
+            }
+
+            Mocker.GetMock<IHttpClient>().Verify(client => client.DownloadFile(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never());
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<MediaCoversUpdatedEvent>()), Times.Never());
+        }
+
+        [Test]
+        public async Task shutdown_should_cancel_an_active_cover_download_without_publishing_completion()
+        {
+            using var started = new ManualResetEventSlim();
+            Mocker.GetMock<IHttpClient>()
+                .Setup(client => client.DownloadFile(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Callback<string, string, string, CancellationToken>((url, path, userAgent, token) =>
+                {
+                    started.Set();
+                    token.WaitHandle.WaitOne(TimeSpan.FromSeconds(5)).Should().BeTrue();
+                    token.ThrowIfCancellationRequested();
+                });
+            var work = Task.Run(() => Subject.HandleAsync(new AuthorRefreshCompleteEvent(_author)));
+            try
+            {
+                started.Wait(TimeSpan.FromSeconds(5)).Should().BeTrue();
+                Subject.Handle(new ApplicationShutdownRequested());
+                await work.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+            finally
+            {
+                Subject.Handle(new ApplicationShutdownRequested());
+                await work.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+
+            Mocker.GetMock<IImageResizer>().Verify(resizer => resizer.Resize(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never());
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<MediaCoversUpdatedEvent>()), Times.Never());
+        }
+
+        [Test]
+        public void cancellation_before_resize_slot_acquisition_should_not_release_an_unowned_slot()
+        {
+            var semaphore = (SemaphoreSlim)typeof(MediaCoverService).GetField("_semaphore", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
+            var initialCount = semaphore.CurrentCount;
+            Mocker.GetMock<IDiskProvider>()
+                .Setup(disk => disk.FileSetLastWriteTime(It.IsAny<string>(), It.IsAny<DateTime>()))
+                .Callback(() => Subject.Handle(new ApplicationShutdownRequested()));
+
+            Subject.HandleAsync(new AuthorRefreshCompleteEvent(_author));
+
+            semaphore.CurrentCount.Should().Be(initialCount);
+            Mocker.GetMock<IImageResizer>().Verify(resizer => resizer.Resize(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never());
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<MediaCoversUpdatedEvent>()), Times.Never());
+        }
+
+        [Test]
+        public void cancellation_between_resizes_should_stop_remaining_work_and_restore_the_slot()
+        {
+            using var cancellation = new CancellationTokenSource();
+            var semaphore = (SemaphoreSlim)typeof(MediaCoverService).GetField("_semaphore", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
+            var initialCount = semaphore.CurrentCount;
+            Mocker.GetMock<IImageResizer>()
+                .Setup(resizer => resizer.Resize(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+                .Callback(() => cancellation.Cancel());
+
+            using (CommandExecutionContext.Begin(cancellation.Token))
+            {
+                Subject.HandleAsync(new AuthorRefreshCompleteEvent(_author));
+            }
+
+            semaphore.CurrentCount.Should().Be(initialCount);
+            Mocker.GetMock<IImageResizer>().Verify(resizer => resizer.Resize(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once());
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<MediaCoversUpdatedEvent>()), Times.Never());
+        }
+
+        [Test]
+        public void cancelling_one_explicit_book_request_should_not_cancel_another()
+        {
+            using var cancellation = new CancellationTokenSource();
+            cancellation.Cancel();
+
+            Assert.Throws<OperationCanceledException>(() => Subject.EnsureBookCovers(_book, cancellation.Token));
+            Subject.EnsureBookCovers(_book, CancellationToken.None);
+
+            Mocker.GetMock<IHttpClient>().Verify(client => client.Get(It.IsAny<HttpRequest>(), It.IsAny<CancellationToken>()), Times.Once());
+            Mocker.GetMock<IHttpClient>().Verify(client => client.DownloadFile(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once());
         }
     }
 }

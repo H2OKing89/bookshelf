@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using FizzWare.NBuilder;
 using FluentAssertions;
 using FluentValidation;
@@ -8,6 +10,7 @@ using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Exceptions;
+using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.MetadataSource;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Test.Common;
@@ -49,6 +52,50 @@ namespace NzbDrone.Core.Test.MusicTests
             Mocker.GetMock<IAddAuthorValidator>()
                   .Setup(s => s.Validate(It.IsAny<Author>()))
                   .Returns(new ValidationResult());
+        }
+
+        [Test]
+        public void prepared_author_should_fetch_once_before_saving_with_the_final_options()
+        {
+            var newAuthor = new Author
+            {
+                ForeignAuthorId = "ce09ea31-3d4a-4487-a797-e315175457a0",
+                RootFolderPath = Path.GetTempPath(),
+                MetadataProfileId = 42,
+                Tags = new HashSet<int> { 7 }
+            };
+            GivenValidAuthor(newAuthor.ForeignAuthorId);
+            GivenValidPath();
+            var prepared = Subject.PrepareAuthor(new Author { ForeignAuthorId = newAuthor.ForeignAuthorId });
+            Mocker.GetMock<IAuthorMetadataService>().Verify(service => service.Upsert(It.IsAny<AuthorMetadata>()), Times.Never());
+            Mocker.GetMock<IAuthorService>().Verify(service => service.AddAuthor(It.IsAny<Author>(), It.IsAny<bool>()), Times.Never());
+
+            var added = Subject.AddAuthor(newAuthor, prepared);
+
+            added.MetadataProfileId.Should().Be(42);
+            added.Tags.Should().Equal(7);
+            added.Path.Should().Be(Path.Combine(newAuthor.RootFolderPath, _fakeAuthor.Name));
+            Mocker.GetMock<IProvideAuthorInfo>().Verify(provider => provider.GetAuthorInfo(newAuthor.ForeignAuthorId, false), Times.Once());
+            Mocker.GetMock<IAuthorMetadataService>().Verify(service => service.Upsert(prepared.Metadata.Value), Times.Once());
+        }
+
+        [Test]
+        public void cancelled_author_preparation_should_not_save_metadata_or_author()
+        {
+            using var source = new CancellationTokenSource();
+            var newAuthor = new Author { ForeignAuthorId = "ce09ea31-3d4a-4487-a797-e315175457a0" };
+            Mocker.GetMock<IProvideAuthorInfo>().Setup(provider => provider.GetAuthorInfo(newAuthor.ForeignAuthorId, false))
+                .Returns(() =>
+                {
+                    source.Cancel();
+                    throw new OperationCanceledException(source.Token);
+                });
+            using var scope = CommandExecutionContext.Begin(source.Token);
+
+            Assert.Throws<OperationCanceledException>(() => Subject.PrepareAuthor(newAuthor));
+
+            Mocker.GetMock<IAuthorMetadataService>().Verify(service => service.Upsert(It.IsAny<AuthorMetadata>()), Times.Never());
+            Mocker.GetMock<IAuthorService>().Verify(service => service.AddAuthor(It.IsAny<Author>(), It.IsAny<bool>()), Times.Never());
         }
 
         [Test]

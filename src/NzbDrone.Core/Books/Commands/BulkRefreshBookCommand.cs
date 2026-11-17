@@ -3,7 +3,7 @@ using NzbDrone.Core.Messaging.Commands;
 
 namespace NzbDrone.Core.Books.Commands
 {
-    public class BulkRefreshBookCommand : Command
+    public class BulkRefreshBookCommand : Command, ICancellableCommand
     {
         public BulkRefreshBookCommand()
         {

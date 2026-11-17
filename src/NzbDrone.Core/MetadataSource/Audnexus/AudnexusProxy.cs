@@ -6,6 +6,7 @@ using NzbDrone.Common.Http;
 using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Http;
+using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.MetadataSource.BookInfo;
 
@@ -105,6 +106,8 @@ namespace NzbDrone.Core.MetadataSource.Audnexus
         private T Read<T>(string route, string region, TimeSpan ttl, string queryName = null, string queryValue = null)
             where T : class, new()
         {
+            var cancellationToken = CommandExecutionContext.CancellationToken;
+            cancellationToken.ThrowIfCancellationRequested();
             if (region == null || !Regions.Contains(region))
             {
                 throw new BookInfoException("Choose a supported Audible marketplace in Settings → Metadata.");
@@ -127,7 +130,10 @@ namespace NzbDrone.Core.MetadataSource.Audnexus
                 var request = builder.Build();
                 request.SuppressHttpError = true;
                 request.RequestTimeout = TimeSpan.FromSeconds(15);
-                var response = _httpClient.Get(request, true, ttl);
+                var response = cancellationToken.CanBeCanceled
+                    ? _httpClient.Get(request, true, ttl, cancellationToken)
+                    : _httpClient.Get(request, true, ttl);
+                cancellationToken.ThrowIfCancellationRequested();
                 if (response.StatusCode == HttpStatusCode.NotFound)
                 {
                     return null;
@@ -151,6 +157,10 @@ namespace NzbDrone.Core.MetadataSource.Audnexus
 
                 return Json.Deserialize<T>(response.Content)
                     ?? throw new BookInfoException("Audnexus returned an empty metadata response.");
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (BookInfoException)
             {

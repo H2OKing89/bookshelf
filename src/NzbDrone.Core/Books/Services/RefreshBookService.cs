@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Instrumentation.Extensions;
@@ -21,6 +22,7 @@ namespace NzbDrone.Core.Books
 {
     public interface IRefreshBookService
     {
+        IDisposable PrepareBookInfo(List<Book> books, List<Book> remoteBooks, Author remoteData);
         bool RefreshBookInfo(Book book, List<Book> remoteBooks, Author remoteData, bool forceUpdateFileTags);
         bool RefreshBookInfo(List<Book> books, List<Book> remoteBooks, Author remoteData, bool forceBookRefresh, bool forceUpdateFileTags, DateTime? lastUpdate);
     }
@@ -46,6 +48,7 @@ namespace NzbDrone.Core.Books
         private readonly ICheckIfBookShouldBeRefreshed _checkIfBookShouldBeRefreshed;
         private readonly IMapCoversToLocal _mediaCoverService;
         private readonly Logger _logger;
+        private readonly AsyncLocal<PreparedBookData> _preparedBooks = new AsyncLocal<PreparedBookData>();
 
         public RefreshBookService(IBookService bookService,
                                   IAuthorService authorService,
@@ -86,6 +89,7 @@ namespace NzbDrone.Core.Books
 
         private Author GetSkyhookData(Book book)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             try
             {
                 var tuple = _bookInfo.GetBookInfo(book.ForeignBookId);
@@ -112,6 +116,21 @@ namespace NzbDrone.Core.Books
 
         protected override RemoteData GetRemoteData(Book local, List<Book> remote, Author data)
         {
+            if (_preparedBooks.Value?.Books.TryGetValue(local.ForeignBookId, out var prepared) == true)
+            {
+                if (prepared.Entity != null)
+                {
+                    prepared.Entity.Id = local.Id;
+                }
+
+                return prepared;
+            }
+
+            return ReadRemoteData(local, remote, data);
+        }
+
+        private RemoteData ReadRemoteData(Book local, List<Book> remote, Author data)
+        {
             var result = new RemoteData();
 
             var book = remote.SingleOrDefault(x => x.ForeignBookId == local.ForeignBookId);
@@ -134,6 +153,74 @@ namespace NzbDrone.Core.Books
             }
 
             return result;
+        }
+
+        public IDisposable PrepareBookInfo(List<Book> books, List<Book> remoteBooks, Author remoteData)
+        {
+            var prepared = new PreparedBookData();
+            foreach (var book in books.Where(book => !LocalRecordingId.IsLocal(book.ForeignBookId)))
+            {
+                CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
+                prepared.Books[book.ForeignBookId] = ReadRemoteData(book, remoteBooks, remoteData);
+            }
+
+            foreach (var book in remoteBooks.Concat(prepared.Books.Values.Select(data => data.Entity)).Where(book => book != null))
+            {
+                PrepareParent(book, prepared);
+            }
+
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
+            var scope = new PreparedBookScope(_preparedBooks, _preparedBooks.Value);
+            _preparedBooks.Value = prepared;
+            return scope;
+        }
+
+        protected override IDisposable PrepareRefresh(Book local, Book remote, Author data)
+        {
+            if (_preparedBooks.Value != null || !CommandExecutionContext.CancellationToken.CanBeCanceled)
+            {
+                return null;
+            }
+
+            return PrepareBookInfo(new List<Book> { local }, new List<Book> { remote }, data);
+        }
+
+        private void PrepareParent(Book remote, PreparedBookData prepared)
+        {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
+            var metadata = remote.AuthorMetadata.Value;
+            if (_authorService.FindById(metadata.ForeignAuthorId) == null && !prepared.Parents.ContainsKey(metadata.ForeignAuthorId))
+            {
+                prepared.Parents[metadata.ForeignAuthorId] = _addAuthorService.PrepareAuthor(new Author { Metadata = metadata });
+            }
+        }
+
+        private sealed class PreparedBookData
+        {
+            public Dictionary<string, RemoteData> Books { get; } = new Dictionary<string, RemoteData>(StringComparer.Ordinal);
+            public Dictionary<string, Author> Parents { get; } = new Dictionary<string, Author>(StringComparer.Ordinal);
+        }
+
+        private sealed class PreparedBookScope : IDisposable
+        {
+            private readonly AsyncLocal<PreparedBookData> _storage;
+            private readonly PreparedBookData _previous;
+            private bool _disposed;
+
+            public PreparedBookScope(AsyncLocal<PreparedBookData> storage, PreparedBookData previous)
+            {
+                _storage = storage;
+                _previous = previous;
+            }
+
+            public void Dispose()
+            {
+                if (!_disposed)
+                {
+                    _storage.Value = _previous;
+                    _disposed = true;
+                }
+            }
         }
 
         protected override void EnsureNewParent(Book local, Book remote)
@@ -160,7 +247,14 @@ namespace NzbDrone.Core.Books
                     Tags = oldAuthor.Tags
                 };
                 _logger.Debug($"Adding missing parent author {addAuthor}");
-                _addAuthorService.AddAuthor(addAuthor);
+                if (_preparedBooks.Value?.Parents.TryGetValue(remote.AuthorMetadata.Value.ForeignAuthorId, out var preparedAuthor) == true)
+                {
+                    _addAuthorService.AddAuthor(addAuthor, preparedAuthor);
+                }
+                else
+                {
+                    _addAuthorService.AddAuthor(addAuthor);
+                }
             }
         }
 
@@ -360,10 +454,12 @@ namespace NzbDrone.Core.Books
 
         public bool RefreshBookInfo(List<Book> books, List<Book> remoteBooks, Author remoteData, bool forceBookRefresh, bool forceUpdateFileTags, DateTime? lastUpdate)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             var updated = false;
 
             foreach (var book in books)
             {
+                CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
                 if (forceBookRefresh || _checkIfBookShouldBeRefreshed.ShouldRefresh(book))
                 {
                     updated |= RefreshBookInfo(book, remoteBooks, remoteData, forceUpdateFileTags);
@@ -379,12 +475,14 @@ namespace NzbDrone.Core.Books
 
         public bool RefreshBookInfo(Book book, List<Book> remoteBooks, Author remoteData, bool forceUpdateFileTags)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             return !LocalRecordingId.IsLocal(book.ForeignBookId) &&
                 RefreshEntityInfo(book, remoteBooks, remoteData, true, forceUpdateFileTags, null);
         }
 
         public bool RefreshBookInfo(Book book)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             if (LocalRecordingId.IsLocal(book.ForeignBookId))
             {
                 return false;
@@ -401,18 +499,29 @@ namespace NzbDrone.Core.Books
             // A direct recording refresh must save just this book's links before the
             // normal updated event reloads the book from the database.
             var remote = data.Books.Value.Single();
-            var seriesUpdated = RefreshBookSeries(book, remote);
-            var updated = RefreshBookInfo(book, data.Books, data, false);
-            if (AudiobookId.IsNative(book.ForeignBookId))
+            using var preparedRefresh = CommandExecutionContext.CancellationToken.CanBeCanceled
+                ? PrepareBookInfo(new List<Book> { book }, data.Books, data)
+                : null;
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
+            bool seriesUpdated;
+            bool updated;
+            using (CommandExecutionContext.Begin(CancellationToken.None))
             {
-                // Direct recording refreshes do not raise the author refresh
-                // event that normally downloads covers for the bibliography.
-                _mediaCoverService.EnsureBookCovers(_bookService.GetBook(book.Id) ?? book);
+                seriesUpdated = RefreshBookSeries(book, remote);
+                updated = RefreshBookInfo(book, data.Books, data, false);
             }
 
             if (seriesUpdated && !updated)
             {
                 PublishEntityUpdatedEvent(book);
+            }
+
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
+            if (AudiobookId.IsNative(book.ForeignBookId))
+            {
+                // Direct recording refreshes do not raise the author refresh
+                // event that normally downloads covers for the bibliography.
+                _mediaCoverService.EnsureBookCovers(_bookService.GetBook(book.Id) ?? book);
             }
 
             return updated || seriesUpdated;
@@ -500,6 +609,7 @@ namespace NzbDrone.Core.Books
 
         public void Execute(BulkRefreshBookCommand message)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             var books = _bookService.GetBooks(message.BookIds);
 
             foreach (var book in books)
@@ -510,6 +620,7 @@ namespace NzbDrone.Core.Books
 
         public void Execute(RefreshBookCommand message)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             if (message.BookId.HasValue)
             {
                 var book = _bookService.GetBook(message.BookId.Value);

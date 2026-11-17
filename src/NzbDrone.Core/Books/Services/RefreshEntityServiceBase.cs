@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using NLog;
+using NzbDrone.Core.Messaging.Commands;
 
 namespace NzbDrone.Core.Books
 {
@@ -58,6 +60,11 @@ namespace NzbDrone.Core.Books
 
         protected abstract RemoteData GetRemoteData(TEntity local, List<TEntity> remote, Author data);
 
+        protected virtual IDisposable PrepareRefresh(TEntity local, TEntity remote, Author data)
+        {
+            return null;
+        }
+
         protected virtual void EnsureNewParent(TEntity local, TEntity remote)
         {
         }
@@ -108,18 +115,24 @@ namespace NzbDrone.Core.Books
         {
         }
 
+        protected virtual void CompleteRefresh(TEntity entity)
+        {
+        }
+
         protected virtual void PublishChildrenUpdatedEvent(TEntity entity, List<TChild> newChildren, List<TChild> updateChildren, List<TChild> deleteChildren)
         {
         }
 
         public bool RefreshEntityInfo(TEntity local, List<TEntity> remoteItems, Author remoteData, bool forceChildRefresh, bool forceUpdateFileTags, DateTime? lastUpdate)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             var updated = false;
 
             LogProgress(local);
 
             var data = GetRemoteData(local, remoteItems, remoteData);
             var remote = data.Entity;
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
 
             if (remote == null)
             {
@@ -135,6 +148,13 @@ namespace NzbDrone.Core.Books
                     return false;
                 }
             }
+
+            using var preparedRefresh = PrepareRefresh(local, remote, remoteData);
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
+
+            // Remote retrieval is cancellable. Finish this apply unit once writes
+            // begin so cancellation cannot leave only some of its children saved.
+            using var applyScope = CommandExecutionContext.Begin(CancellationToken.None);
 
             if (data.Metadata != null)
             {
@@ -186,12 +206,15 @@ namespace NzbDrone.Core.Books
             // Do this last so entity only marked as refreshed if refresh of children completed successfully
             _logger.Trace($"Saving {typeof(TEntity).Name} {local}");
             SaveEntity(local);
+            CompleteRefresh(local);
+            applyScope.Dispose();
 
             if (updated)
             {
                 PublishEntityUpdatedEvent(local);
             }
 
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             PublishRefreshCompleteEvent(local);
 
             _logger.Debug($"Finished {typeof(TEntity).Name} refresh for {local}");

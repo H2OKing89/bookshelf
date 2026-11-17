@@ -87,6 +87,7 @@ namespace NzbDrone.Core.Books
 
         private Author GetSkyhookData(string foreignId)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             try
             {
                 return _authorInfo.GetAuthorInfo(foreignId);
@@ -120,6 +121,27 @@ namespace NzbDrone.Core.Books
             }
 
             return !_mediaFileService.GetFilesByAuthor(local.Id).Any();
+        }
+
+        protected override IDisposable PrepareRefresh(Author local, Author remote, Author data)
+        {
+            if (!CommandExecutionContext.CancellationToken.CanBeCanceled)
+            {
+                return null;
+            }
+
+            var remoteBooks = GetRemoteChildren(local, remote);
+            var localBooks = GetLocalChildren(local, remoteBooks);
+            if (local.ForeignAuthorId != remote.ForeignAuthorId)
+            {
+                var target = GetEntityByForeignId(remote);
+                if (target != null)
+                {
+                    localBooks = localBooks.Concat(GetLocalChildren(target, remoteBooks)).DistinctBy(book => book.Id).ToList();
+                }
+            }
+
+            return _refreshBookService.PrepareBookInfo(localBooks, remoteBooks, data);
         }
 
         protected override void LogProgress(Author local)
@@ -301,10 +323,14 @@ namespace NzbDrone.Core.Books
             _eventAggregator.PublishEvent(new AuthorUpdatedEvent(entity));
         }
 
-        protected override void PublishRefreshCompleteEvent(Author entity)
+        protected override void CompleteRefresh(Author entity)
         {
             // little hack - trigger the series update here
             _refreshSeriesService.RefreshSeriesInfo(entity.AuthorMetadataId, entity.Series, entity, false, false, null);
+        }
+
+        protected override void PublishRefreshCompleteEvent(Author entity)
+        {
             _eventAggregator.PublishEvent(new AuthorRefreshCompleteEvent(entity));
         }
 
@@ -361,10 +387,15 @@ namespace NzbDrone.Core.Books
 
             foreach (var author in authors)
             {
+                CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
                 try
                 {
                     var data = GetSkyhookData(author.ForeignAuthorId);
                     updated |= RefreshEntityInfo(author, null, data, true, false, null);
+                }
+                catch (OperationCanceledException) when (CommandExecutionContext.CancellationToken.IsCancellationRequested)
+                {
+                    throw;
                 }
                 catch (Exception e)
                 {
@@ -372,16 +403,19 @@ namespace NzbDrone.Core.Books
                 }
             }
 
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             Rescan(authorIds, isNew, trigger, updated);
         }
 
         public void Execute(BulkRefreshAuthorCommand message)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             RefreshSelectedAuthors(message.AuthorIds, message.AreNewAuthors, message.Trigger);
         }
 
         public void Execute(RefreshAuthorCommand message)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             var trigger = message.Trigger;
             var isNew = message.IsNewAuthor;
 
@@ -404,6 +438,7 @@ namespace NzbDrone.Core.Books
 
                 foreach (var author in authors)
                 {
+                    CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
                     var manualTrigger = message.Trigger == CommandTrigger.Manual;
 
                     if ((updatedGoodreadsAuthors == null && _checkIfAuthorShouldBeRefreshed.ShouldRefresh(author)) ||
@@ -416,6 +451,10 @@ namespace NzbDrone.Core.Books
                             var data = GetSkyhookData(author.ForeignAuthorId);
                             updated |= RefreshEntityInfo(author, null, data, manualTrigger, false, message.LastStartTime);
                         }
+                        catch (OperationCanceledException) when (CommandExecutionContext.CancellationToken.IsCancellationRequested)
+                        {
+                            throw;
+                        }
                         catch (Exception e)
                         {
                             _logger.Error(e, "Couldn't refresh info for {0}", author);
@@ -427,6 +466,7 @@ namespace NzbDrone.Core.Books
                     }
                 }
 
+                CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
                 Rescan(authorIds, isNew, trigger, updated);
             }
         }

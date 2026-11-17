@@ -1,11 +1,13 @@
 using System;
 using System.Net;
+using System.Threading;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Common.Http;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Http;
+using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.MetadataSource.Audnexus;
 using NzbDrone.Core.MetadataSource.BookInfo;
 using NzbDrone.Core.Test.Framework;
@@ -42,6 +44,26 @@ namespace NzbDrone.Core.Test.MetadataSource.Audnexus
             Mocker.GetMock<ICachedHttpResponseService>()
                 .Setup(x => x.Get(It.IsAny<HttpRequest>(), true, TimeSpan.FromDays(1)))
                 .Returns((HttpRequest request, bool cache, TimeSpan ttl) => new HttpResponse(request, headers, body, status));
+        }
+
+        [Test]
+        public void expected_cancellation_should_escape_without_disabling_the_provider()
+        {
+            using var source = new CancellationTokenSource();
+            Mocker.GetMock<ICachedHttpResponseService>()
+                .Setup(client => client.Get(It.IsAny<HttpRequest>(), true, TimeSpan.FromDays(1), source.Token))
+                .Returns(() =>
+                {
+                    source.Cancel();
+                    throw new OperationCanceledException(source.Token);
+                });
+
+            using (CommandExecutionContext.Begin(source.Token))
+            {
+                Assert.Throws<OperationCanceledException>(() => Subject.GetBook(Asin, "us"));
+            }
+
+            Subject.GetBook(Asin, "us").Title.Should().Be("Project Hail Mary");
         }
 
         [Test]

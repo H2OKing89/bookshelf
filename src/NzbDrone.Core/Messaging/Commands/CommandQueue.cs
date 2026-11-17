@@ -51,7 +51,7 @@ namespace NzbDrone.Core.Messaging.Commands
 
             lock (_mutex)
             {
-                rval = _items;
+                rval = new List<CommandModel>(_items);
             }
 
             return rval;
@@ -95,6 +95,37 @@ namespace NzbDrone.Core.Messaging.Commands
             return rval;
         }
 
+        public bool RequestCancellation(int id, out CommandModel command, out bool queued)
+        {
+            lock (_mutex)
+            {
+                command = _items.FirstOrDefault(item => item.Id == id);
+                queued = command?.Status == CommandStatus.Queued;
+                if (command == null || (!queued &&
+                    (command.Status != CommandStatus.Started || command.Body is not ICancellableCommand)))
+                {
+                    return false;
+                }
+
+                command.CancellationState.MarkRequested();
+                if (queued)
+                {
+                    _items.Remove(command);
+                    Monitor.PulseAll(_mutex);
+                }
+
+                return true;
+            }
+        }
+
+        public void SetStatus(CommandModel command, CommandStatus status)
+        {
+            lock (_mutex)
+            {
+                command.Status = status;
+            }
+        }
+
         public List<CommandModel> QueuedOrStarted()
         {
             return All().Where(q => q.Status == CommandStatus.Queued || q.Status == CommandStatus.Started)
@@ -108,7 +139,7 @@ namespace NzbDrone.Core.Messaging.Commands
 
         public IEnumerable<CommandModel> GetConsumingEnumerable(CancellationToken cancellationToken)
         {
-            cancellationToken.Register(PulseAllConsumers);
+            using var registration = cancellationToken.Register(PulseAllConsumers);
 
             while (!cancellationToken.IsCancellationRequested)
             {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
@@ -9,6 +10,7 @@ using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.MetadataSource;
 using NzbDrone.Core.MetadataSource.Audiobook;
@@ -21,6 +23,84 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
     [TestFixture]
     public class AudiobookRefreshFixture : CoreTest<RefreshBookService>
     {
+        [Test]
+        public void author_preparation_should_fetch_fallback_metadata_with_the_original_token_only_once()
+        {
+            var (local, remote) = GivenRecordingRefresh();
+            using var source = new CancellationTokenSource();
+            Mocker.GetMock<IProvideBookInfo>().Setup(provider => provider.GetBookInfo(local.ForeignBookId))
+                .Returns(() =>
+                {
+                    CommandExecutionContext.CancellationToken.Should().Be(source.Token);
+                    return Tuple.Create(remote.AuthorMetadata.Value.ForeignAuthorId, remote, new List<AuthorMetadata>());
+                });
+            using var commandScope = CommandExecutionContext.Begin(source.Token);
+            using (Subject.PrepareBookInfo(new List<Book> { local }, new List<Book>(), remote.Author.Value))
+            using (CommandExecutionContext.Begin(CancellationToken.None))
+            {
+                Subject.RefreshBookInfo(local, new List<Book>(), remote.Author.Value, false).Should().BeTrue();
+            }
+
+            Mocker.GetMock<IProvideBookInfo>().Verify(provider => provider.GetBookInfo(local.ForeignBookId), Times.Once());
+        }
+
+        [Test]
+        public void cancelling_missing_parent_preparation_should_not_save_the_recording_or_series()
+        {
+            var (local, remote) = GivenRecordingRefresh();
+            using var source = new CancellationTokenSource();
+            Mocker.GetMock<IAuthorService>().Setup(service => service.FindById(It.IsAny<string>())).Returns((Author)null);
+            Mocker.GetMock<IAddAuthorService>().Setup(service => service.PrepareAuthor(It.IsAny<Author>()))
+                .Returns(() =>
+                {
+                    CommandExecutionContext.CancellationToken.Should().Be(source.Token);
+                    source.Cancel();
+                    throw new OperationCanceledException(source.Token);
+                });
+            using var scope = CommandExecutionContext.Begin(source.Token);
+
+            Assert.Throws<OperationCanceledException>(() => Subject.RefreshBookInfo(local));
+
+            Mocker.GetMock<IBookService>().Verify(service => service.UpdateMany(It.IsAny<List<Book>>()), Times.Never());
+            Mocker.GetMock<ISeriesService>().Verify(service => service.InsertMany(It.IsAny<IList<Series>>()), Times.Never());
+            Mocker.GetMock<IAddAuthorService>().Verify(service => service.AddAuthor(It.IsAny<Author>(), It.IsAny<Author>(), It.IsAny<bool>()), Times.Never());
+        }
+
+        [Test]
+        public void prepared_missing_parent_should_be_consumed_without_a_second_profile_fetch()
+        {
+            var (local, remote) = GivenRecordingRefresh();
+            var preparedParent = remote.Author.Value;
+            using var source = new CancellationTokenSource();
+            Mocker.GetMock<IAuthorService>().Setup(service => service.FindById(It.IsAny<string>())).Returns((Author)null);
+            Mocker.GetMock<IAddAuthorService>().Setup(service => service.PrepareAuthor(It.IsAny<Author>())).Returns(preparedParent);
+            using var scope = CommandExecutionContext.Begin(source.Token);
+
+            Subject.RefreshBookInfo(local).Should().BeTrue();
+
+            Mocker.GetMock<IAddAuthorService>().Verify(service => service.PrepareAuthor(It.IsAny<Author>()), Times.Once());
+            Mocker.GetMock<IAddAuthorService>().Verify(service => service.AddAuthor(It.IsAny<Author>(), preparedParent, true), Times.Once());
+            Mocker.GetMock<IAddAuthorService>().Verify(service => service.AddAuthor(It.IsAny<Author>(), It.IsAny<bool>()), Times.Never());
+        }
+
+        [Test]
+        public void author_preparation_should_consume_not_found_once_and_discard_the_plan_after_the_scope()
+        {
+            var local = new Book { Id = 7, ForeignBookId = "audible:us:B0H8F9D4GD" };
+            Mocker.GetMock<IProvideBookInfo>().Setup(provider => provider.GetBookInfo(local.ForeignBookId))
+                .Throws(new BookNotFoundException(local.ForeignBookId));
+            using (Subject.PrepareBookInfo(new List<Book> { local }, new List<Book>(), new Author()))
+            {
+                Subject.RefreshBookInfo(local, new List<Book>(), new Author(), false).Should().BeFalse();
+                Mocker.GetMock<IProvideBookInfo>().Verify(provider => provider.GetBookInfo(local.ForeignBookId), Times.Once());
+            }
+
+            Subject.RefreshBookInfo(local, new List<Book>(), new Author(), false).Should().BeFalse();
+
+            Mocker.GetMock<IProvideBookInfo>().Verify(provider => provider.GetBookInfo(local.ForeignBookId), Times.Exactly(2));
+            ExceptionVerification.ExpectedErrors(4);
+        }
+
         [Test]
         public void should_preserve_local_recording_without_contacting_catalog_on_direct_or_author_refresh()
         {

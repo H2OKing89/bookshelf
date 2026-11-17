@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
+using System.Threading;
 using FluentAssertions;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -9,6 +10,7 @@ using NUnit.Framework;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.Http;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.MetadataSource.Audible;
 using NzbDrone.Core.MetadataSource.BookInfo;
 using NzbDrone.Core.Test.Framework;
@@ -47,6 +49,27 @@ namespace NzbDrone.Core.Test.MetadataSource.Audible
                     body.Value<string>("method").Should().Be("GET");
                     return new HttpResponse(request, new HttpHeader(), envelopes[Math.Min(index, envelopes.Length - 1)]);
                 });
+        }
+
+        [Test]
+        public void expected_cancellation_should_stop_pagination_without_disabling_the_provider()
+        {
+            using var source = new CancellationTokenSource();
+            Mocker.GetMock<IHttpClient>().Setup(client => client.Post(It.IsAny<HttpRequest>(), source.Token))
+                .Returns(() =>
+                {
+                    source.Cancel();
+                    throw new OperationCanceledException(source.Token);
+                });
+
+            using (CommandExecutionContext.Begin(source.Token))
+            {
+                Assert.Throws<OperationCanceledException>(() => Subject.GetAuthorBooks("Synthetic Author", "us"));
+            }
+
+            GivenPages("{\"status\":200,\"body\":{\"total_results\":0,\"products\":[]}}");
+            Subject.GetAuthorBooks("Synthetic Author", "us").Should().BeEmpty();
+            _requests.Should().ContainSingle();
         }
 
         [Test]

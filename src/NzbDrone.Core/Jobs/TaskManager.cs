@@ -189,6 +189,11 @@ namespace NzbDrone.Core.Jobs
 
         public void Handle(CommandExecutedEvent message)
         {
+            if (message.Command.Status == CommandStatus.Cancelled)
+            {
+                return;
+            }
+
             var scheduledTask = _scheduledTaskRepository.All().SingleOrDefault(c => c.TypeName == message.Command.Body.GetType().FullName);
 
             if (scheduledTask != null && message.Command.Body.UpdateScheduledTask)

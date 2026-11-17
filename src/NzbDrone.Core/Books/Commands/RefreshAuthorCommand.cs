@@ -2,7 +2,7 @@ using NzbDrone.Core.Messaging.Commands;
 
 namespace NzbDrone.Core.Books.Commands
 {
-    public class RefreshAuthorCommand : Command
+    public class RefreshAuthorCommand : Command, ICancellableCommand
     {
         public int? AuthorId { get; set; }
         public bool IsNewAuthor { get; set; }

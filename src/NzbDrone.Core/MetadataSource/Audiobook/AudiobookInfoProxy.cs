@@ -7,6 +7,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Exceptions;
+using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.MetadataSource.Audible;
 using NzbDrone.Core.MetadataSource.Audnexus;
 using NzbDrone.Core.MetadataSource.BookInfo;
@@ -58,6 +59,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
         public List<object> SearchForNewEntity(string title)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             var books = SearchForNewBook(title, null);
             var authors = books.Select(b => b.Author.Value).DistinctBy(a => a.ForeignAuthorId).ToList();
             if (!books.Any() && !string.IsNullOrWhiteSpace(title) && !title.Contains(':'))
@@ -70,12 +72,14 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
         public List<Author> SearchForNewAuthor(string title)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             var books = SearchForNewBook(title, null);
             return books.Any() ? books.Select(b => b.Author.Value).DistinctBy(a => a.ForeignAuthorId).ToList() : FindAuthors(title);
         }
 
         public List<Book> SearchForNewBook(string title, string author, bool getAllEditions = true)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             if (string.IsNullOrWhiteSpace(title))
             {
                 return new List<Book>();
@@ -129,6 +133,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
         public Tuple<string, Book, List<AuthorMetadata>> GetBookInfo(string id)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             var identity = AudiobookId.Parse(id);
             if (identity.IsName)
             {
@@ -191,6 +196,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
         public Author GetAuthorInfo(string id, bool useCache = true)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             id = _overrides.CanonicalAuthorId(id);
             var identity = AudiobookId.Parse(id);
             var local = _authorService.FindById(id);
@@ -255,6 +261,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             var known = local == null ? new List<Book>() : _bookService.GetBooksByAuthorMetadataId(local.AuthorMetadataId);
             foreach (var book in known)
             {
+                CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
                 book.Editions = _editionService.GetEditionsByBook(book.Id);
             }
 
@@ -475,6 +482,8 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         private T OptionalMetadata<T>(Func<T> lookup, string recordingId, string source, ICached<MetadataLookup<T>> cache)
             where T : class
         {
+            var cancellationToken = CommandExecutionContext.CancellationToken;
+            cancellationToken.ThrowIfCancellationRequested();
             var key = DetailKey(recordingId, source);
             var cached = cache.Find(key);
             if (cached != null)
@@ -485,11 +494,14 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             try
             {
                 var details = lookup();
+                cancellationToken.ThrowIfCancellationRequested();
                 cache.Set(key, new MetadataLookup<T> { Value = details }, TimeSpan.FromDays(1));
                 return details;
             }
             catch (BookInfoException ex)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 // An optional enrichment outage must not discard a successful
                 // author catalog or its stored metadata. Identity checks below
                 // remain strict for every detail response that was received.
@@ -606,6 +618,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
         private void RememberAuthor(AuthorMetadata metadata)
         {
+            CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             var previous = _authors.Find(metadata.ForeignAuthorId) ?? _authorService.FindById(metadata.ForeignAuthorId)?.Metadata.Value;
             PreserveAuthorMetadata(metadata, _authors.Find(metadata.ForeignAuthorId));
             PreserveAuthorMetadata(metadata, _authorService.FindById(metadata.ForeignAuthorId)?.Metadata.Value);

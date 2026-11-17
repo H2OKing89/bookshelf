@@ -10,6 +10,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Http;
 using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.MetadataSource.Audnexus;
 using NzbDrone.Core.MetadataSource.BookInfo;
@@ -46,6 +47,7 @@ namespace NzbDrone.Core.MetadataSource.Audible
             var seen = new HashSet<string>();
             for (var page = 0; page < 20; page++)
             {
+                CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
                 var body = Read("/1.0/catalog/products", region, new Dictionary<string, object>
                 {
                     { "author", name }, { "page", page }, { "num_results", pageSize },
@@ -118,6 +120,8 @@ namespace NzbDrone.Core.MetadataSource.Audible
 
         private JObject Read(string path, string region, Dictionary<string, object> query, bool allowMissing = false)
         {
+            var cancellationToken = CommandExecutionContext.CancellationToken;
+            cancellationToken.ThrowIfCancellationRequested();
             if (!_configService.AudibleRsEnabled || DateTime.UtcNow < _unavailableUntil)
             {
                 throw new BookInfoException("audible-rs is disabled or temporarily unavailable. Check Settings → Metadata.");
@@ -152,7 +156,10 @@ namespace NzbDrone.Core.MetadataSource.Audible
                 request.RequestTimeout = TimeSpan.FromSeconds(30);
                 request.SetContent(new { path, method = "GET", query }.ToJson());
                 request.ContentSummary = "Audible catalog GET";
-                var response = _httpClient.Post(request);
+                var response = cancellationToken.CanBeCanceled
+                    ? _httpClient.Post(request, cancellationToken)
+                    : _httpClient.Post(request);
+                cancellationToken.ThrowIfCancellationRequested();
                 if (response.HasHttpError || response.HasHttpRedirect)
                 {
                     throw new BookInfoException("audible-rs returned HTTP {0}. Check its connection, token, account, and lock state.", (int)response.StatusCode);
@@ -173,6 +180,10 @@ namespace NzbDrone.Core.MetadataSource.Audible
                 }
 
                 return body;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (BookInfoException)
             {

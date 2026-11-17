@@ -1,14 +1,19 @@
 using System;
 using System.Net;
+using System.Threading;
 using NLog;
 using NzbDrone.Common.Http;
+using NzbDrone.Core.Messaging.Commands;
 
 namespace NzbDrone.Core.Http
 {
     public interface ICachedHttpResponseService
     {
         HttpResponse Get(HttpRequest request, bool useCache, TimeSpan ttl);
+        HttpResponse Get(HttpRequest request, bool useCache, TimeSpan ttl, CancellationToken cancellationToken);
         HttpResponse<T> Get<T>(HttpRequest request, bool useCache, TimeSpan ttl)
+            where T : new();
+        HttpResponse<T> Get<T>(HttpRequest request, bool useCache, TimeSpan ttl, CancellationToken cancellationToken)
             where T : new();
     }
 
@@ -29,7 +34,14 @@ namespace NzbDrone.Core.Http
 
         public HttpResponse Get(HttpRequest request, bool useCache, TimeSpan ttl)
         {
+            return Get(request, useCache, ttl, CommandExecutionContext.CancellationToken);
+        }
+
+        public HttpResponse Get(HttpRequest request, bool useCache, TimeSpan ttl, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
             var cached = _repo.FindByUrl(request.Url.ToString());
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (useCache && cached != null && cached.Expiry > DateTime.UtcNow)
             {
@@ -37,7 +49,10 @@ namespace NzbDrone.Core.Http
                 return new HttpResponse(request, new HttpHeader(), cached.Value, (HttpStatusCode)cached.StatusCode);
             }
 
-            var result = _httpClient.Get(request);
+            var result = cancellationToken.CanBeCanceled
+                ? _httpClient.Get(request, cancellationToken)
+                : _httpClient.Get(request);
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (!result.HasHttpError)
             {
@@ -56,6 +71,7 @@ namespace NzbDrone.Core.Http
                 cached.Value = result.Content;
                 cached.StatusCode = (int)result.StatusCode;
 
+                cancellationToken.ThrowIfCancellationRequested();
                 _repo.Upsert(cached);
             }
 
@@ -65,7 +81,14 @@ namespace NzbDrone.Core.Http
         public HttpResponse<T> Get<T>(HttpRequest request, bool useCache, TimeSpan ttl)
             where T : new()
         {
-            var response = Get(request, useCache, ttl);
+            return Get<T>(request, useCache, ttl, CommandExecutionContext.CancellationToken);
+        }
+
+        public HttpResponse<T> Get<T>(HttpRequest request, bool useCache, TimeSpan ttl, CancellationToken cancellationToken)
+            where T : new()
+        {
+            var response = Get(request, useCache, ttl, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             return new HttpResponse<T>(response);
         }
     }

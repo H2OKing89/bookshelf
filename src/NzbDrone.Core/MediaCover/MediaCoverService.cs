@@ -12,6 +12,8 @@ using NzbDrone.Common.Http;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Lifecycle;
+using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 
 namespace NzbDrone.Core.MediaCover
@@ -21,12 +23,14 @@ namespace NzbDrone.Core.MediaCover
         void ConvertToLocalUrls(int entityId, MediaCoverEntity coverEntity, IEnumerable<MediaCover> covers);
         string GetCoverPath(int entityId, MediaCoverEntity coverEntity, MediaCoverTypes coverType, string extension, int? height = null);
         void EnsureBookCovers(Book book);
+        void EnsureBookCovers(Book book, CancellationToken cancellationToken);
     }
 
     public class MediaCoverService :
         IHandleAsync<AuthorRefreshCompleteEvent>,
         IHandleAsync<AuthorDeletedEvent>,
         IHandleAsync<BookDeletedEvent>,
+        IHandle<ApplicationShutdownRequested>,
         IMapCoversToLocal
     {
         private const string USER_AGENT = "Dalvik/2.1.0 (Linux; U; Android 10; SM-G975U Build/QP1A.190711.020)";
@@ -40,6 +44,7 @@ namespace NzbDrone.Core.MediaCover
         private readonly IConfigFileProvider _configFileProvider;
         private readonly IEventAggregator _eventAggregator;
         private readonly Logger _logger;
+        private readonly CancellationTokenSource _shutdown = new CancellationTokenSource();
 
         private readonly string _coverRootFolder;
 
@@ -134,12 +139,14 @@ namespace NzbDrone.Core.MediaCover
             return Path.Combine(_coverRootFolder, "Books", bookId.ToString());
         }
 
-        private void EnsureAuthorCovers(Author author)
+        private void EnsureAuthorCovers(Author author, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var toResize = new List<Tuple<MediaCover, bool>>();
 
             foreach (var cover in author.Metadata.Value.Images)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (cover.CoverType == MediaCoverTypes.Unknown)
                 {
                     continue;
@@ -156,14 +163,18 @@ namespace NzbDrone.Core.MediaCover
 
                 try
                 {
-                    var serverFileHeaders = GetServerHeaders(cover.Url);
+                    var serverFileHeaders = GetServerHeaders(cover.Url, cancellationToken);
 
                     alreadyExists = _coverExistsSpecification.AlreadyExists(serverFileHeaders.LastModified, GetContentLength(serverFileHeaders), fileName);
 
                     if (!alreadyExists)
                     {
-                        DownloadCover(author, cover, serverFileHeaders.LastModified ?? DateTime.Now);
+                        DownloadCover(author, cover, serverFileHeaders.LastModified ?? DateTime.Now, cancellationToken);
                     }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
                 }
                 catch (HttpException e)
                 {
@@ -181,13 +192,14 @@ namespace NzbDrone.Core.MediaCover
                 toResize.Add(Tuple.Create(cover, alreadyExists));
             }
 
+            // A canceled wait did not acquire a slot and must never release one.
+            _semaphore.Wait(cancellationToken);
             try
             {
-                _semaphore.Wait();
-
                 foreach (var tuple in toResize)
                 {
-                    EnsureResizedCovers(author, tuple.Item1, !tuple.Item2);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    EnsureResizedCovers(author, tuple.Item1, !tuple.Item2, cancellationToken);
                 }
             }
             finally
@@ -198,8 +210,21 @@ namespace NzbDrone.Core.MediaCover
 
         public void EnsureBookCovers(Book book)
         {
+            EnsureBookCovers(book, CommandExecutionContext.CancellationToken);
+        }
+
+        public void EnsureBookCovers(Book book, CancellationToken cancellationToken)
+        {
+            using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdown.Token);
+            EnsureBookCoversCore(book, cancellation.Token);
+        }
+
+        private void EnsureBookCoversCore(Book book, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
             foreach (var cover in book.Editions.Value.Single(x => x.Monitored).Images.Where(e => e.CoverType == MediaCoverTypes.Cover))
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (cover.CoverType == MediaCoverTypes.Unknown)
                 {
                     continue;
@@ -216,14 +241,18 @@ namespace NzbDrone.Core.MediaCover
 
                 try
                 {
-                    var serverFileHeaders = GetServerHeaders(cover.Url);
+                    var serverFileHeaders = GetServerHeaders(cover.Url, cancellationToken);
 
                     alreadyExists = _coverExistsSpecification.AlreadyExists(serverFileHeaders.LastModified, GetContentLength(serverFileHeaders), fileName);
 
                     if (!alreadyExists)
                     {
-                        DownloadBookCover(book, cover, serverFileHeaders.LastModified ?? DateTime.Now);
+                        DownloadBookCover(book, cover, serverFileHeaders.LastModified ?? DateTime.Now, cancellationToken);
                     }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
                 }
                 catch (HttpException e)
                 {
@@ -240,12 +269,12 @@ namespace NzbDrone.Core.MediaCover
             }
         }
 
-        private void DownloadCover(Author author, MediaCover cover, DateTime lastModified)
+        private void DownloadCover(Author author, MediaCover cover, DateTime lastModified, CancellationToken cancellationToken)
         {
             var fileName = GetCoverPath(author.Id, MediaCoverEntity.Author, cover.CoverType, cover.Extension);
 
             _logger.Info("Downloading {0} for {1} {2}", cover.CoverType, author, cover.Url);
-            _httpClient.DownloadFile(cover.Url, fileName, USER_AGENT);
+            _httpClient.DownloadFile(cover.Url, fileName, USER_AGENT, cancellationToken);
 
             try
             {
@@ -257,12 +286,12 @@ namespace NzbDrone.Core.MediaCover
             }
         }
 
-        private void DownloadBookCover(Book book, MediaCover cover, DateTime lastModified)
+        private void DownloadBookCover(Book book, MediaCover cover, DateTime lastModified, CancellationToken cancellationToken)
         {
             var fileName = GetCoverPath(book.Id, MediaCoverEntity.Book, cover.CoverType, cover.Extension, null);
 
             _logger.Info("Downloading {0} for {1} {2}", cover.CoverType, book, cover.Url);
-            _httpClient.DownloadFile(cover.Url, fileName, USER_AGENT);
+            _httpClient.DownloadFile(cover.Url, fileName, USER_AGENT, cancellationToken);
 
             try
             {
@@ -274,12 +303,13 @@ namespace NzbDrone.Core.MediaCover
             }
         }
 
-        private void EnsureResizedCovers(Author author, MediaCover cover, bool forceResize, Book book = null)
+        private void EnsureResizedCovers(Author author, MediaCover cover, bool forceResize, CancellationToken cancellationToken)
         {
             var heights = GetDefaultHeights(cover.CoverType);
 
             foreach (var height in heights)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var mainFileName = GetCoverPath(author.Id, MediaCoverEntity.Author, cover.CoverType, cover.Extension);
                 var resizeFileName = GetCoverPath(author.Id, MediaCoverEntity.Author, cover.CoverType, cover.Extension, height);
 
@@ -290,6 +320,10 @@ namespace NzbDrone.Core.MediaCover
                     try
                     {
                         _resizer.Resize(mainFileName, resizeFileName, height);
+                    }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
                     }
                     catch
                     {
@@ -331,7 +365,7 @@ namespace NzbDrone.Core.MediaCover
             };
         }
 
-        private HttpHeader GetServerHeaders(string url)
+        private HttpHeader GetServerHeaders(string url, CancellationToken cancellationToken)
         {
             // Goodreads doesn't allow a HEAD, so request a zero byte range instead
             var request = new HttpRequest(url)
@@ -342,7 +376,9 @@ namespace NzbDrone.Core.MediaCover
             request.Headers.Add("Range", "bytes=0-0");
             request.Headers.Add("User-Agent", USER_AGENT);
 
-            return _httpClient.Get(request).Headers;
+            var response = _httpClient.Get(request, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            return response.Headers;
         }
 
         private long? GetContentLength(HttpHeader headers)
@@ -365,15 +401,32 @@ namespace NzbDrone.Core.MediaCover
 
         public void HandleAsync(AuthorRefreshCompleteEvent message)
         {
-            EnsureAuthorCovers(message.Author);
-
-            var books = _bookService.GetBooksByAuthor(message.Author.Id);
-            foreach (var book in books)
+            using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(CommandExecutionContext.CancellationToken, _shutdown.Token);
+            var cancellationToken = cancellation.Token;
+            try
             {
-                EnsureBookCovers(book);
-            }
+                EnsureAuthorCovers(message.Author, cancellationToken);
 
-            _eventAggregator.PublishEvent(new MediaCoversUpdatedEvent(message.Author));
+                cancellationToken.ThrowIfCancellationRequested();
+                var books = _bookService.GetBooksByAuthor(message.Author.Id);
+                foreach (var book in books)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    EnsureBookCoversCore(book, cancellationToken);
+                }
+
+                cancellationToken.ThrowIfCancellationRequested();
+                _eventAggregator.PublishEvent(new MediaCoversUpdatedEvent(message.Author));
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                _logger.Trace("Stopped cover processing for author {0}", message.Author.Id);
+            }
+        }
+
+        public void Handle(ApplicationShutdownRequested message)
+        {
+            _shutdown.Cancel();
         }
 
         public void HandleAsync(AuthorDeletedEvent message)

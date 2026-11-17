@@ -30,6 +30,7 @@ namespace NzbDrone.Core.Messaging.Commands
         void Start(CommandModel command);
         void Complete(CommandModel command, string message);
         void Fail(CommandModel command, string message, Exception e);
+        void Cancelled(CommandModel command);
         void Requeue();
         void Cancel(int id);
         void CleanCommands();
@@ -225,10 +226,23 @@ namespace NzbDrone.Core.Messaging.Commands
 
         public void Cancel(int id)
         {
-            if (!_commandQueue.RemoveIfQueued(id))
+            if (!_commandQueue.RequestCancellation(id, out var command, out var queued))
             {
                 throw new NzbDroneClientException(HttpStatusCode.Conflict, "Unable to cancel task");
             }
+
+            command.CancellationState.NotifyCancellation();
+            if (queued)
+            {
+                Cancelled(command);
+                command.CancellationState.Finish();
+            }
+        }
+
+        public void Cancelled(CommandModel command)
+        {
+            Update(command, CommandStatus.Cancelled, "Cancelled");
+            _commandQueue.PulseAllConsumers();
         }
 
         public void CleanCommands()
@@ -258,8 +272,10 @@ namespace NzbDrone.Core.Messaging.Commands
             SetMessage(command, message);
 
             command.EndedAt = DateTime.UtcNow;
-            command.Duration = command.EndedAt.Value.Subtract(command.StartedAt.Value);
-            command.Status = status;
+            command.Duration = command.StartedAt.HasValue
+                ? command.EndedAt.Value.Subtract(command.StartedAt.Value)
+                : TimeSpan.Zero;
+            _commandQueue.SetStatus(command, status);
 
             _logger.Trace("Updating command status");
             _repo.End(command);

@@ -16,6 +16,8 @@ namespace NzbDrone.Core.Books
     public interface IAddAuthorService
     {
         Author AddAuthor(Author newAuthor, bool doRefresh = true);
+        Author PrepareAuthor(Author newAuthor);
+        Author AddAuthor(Author newAuthor, Author preparedAuthor, bool doRefresh = true);
         Author AddAuthorFromBook(Author newAuthor, Book book);
         List<Author> AddAuthors(List<Author> newAuthors, bool doRefresh = true);
     }
@@ -49,6 +51,25 @@ namespace NzbDrone.Core.Books
             Ensure.That(newAuthor, () => newAuthor).IsNotNull();
 
             newAuthor = AddSkyhookData(newAuthor);
+            return SaveAuthor(newAuthor, doRefresh);
+        }
+
+        public Author PrepareAuthor(Author newAuthor)
+        {
+            Ensure.That(newAuthor, () => newAuthor).IsNotNull();
+            return AddSkyhookData(newAuthor);
+        }
+
+        public Author AddAuthor(Author newAuthor, Author preparedAuthor, bool doRefresh = true)
+        {
+            Ensure.That(newAuthor, () => newAuthor).IsNotNull();
+            Ensure.That(preparedAuthor, () => preparedAuthor).IsNotNull();
+            preparedAuthor.ApplyChanges(newAuthor);
+            return SaveAuthor(preparedAuthor, doRefresh);
+        }
+
+        private Author SaveAuthor(Author newAuthor, bool doRefresh)
+        {
             newAuthor = SetPropertiesAndValidate(newAuthor);
 
             _logger.Info("Adding Author {0} Path: [{1}]", newAuthor, newAuthor.Path);

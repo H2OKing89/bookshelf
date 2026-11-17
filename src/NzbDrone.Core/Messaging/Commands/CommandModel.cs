@@ -6,6 +6,8 @@ namespace NzbDrone.Core.Messaging.Commands
 {
     public class CommandModel : ModelBase, IMessage
     {
+        internal CommandCancellationState CancellationState { get; } = new CommandCancellationState();
+
         public string Name { get; set; }
         public Command Body { get; set; }
         public CommandPriority Priority { get; set; }

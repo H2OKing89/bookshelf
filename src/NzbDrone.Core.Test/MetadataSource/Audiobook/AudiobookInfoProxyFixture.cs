@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
@@ -8,6 +9,7 @@ using NzbDrone.Common.Cache;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Exceptions;
+using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.MetadataSource.Audible;
 using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.MetadataSource.Audnexus;
@@ -49,6 +51,26 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
                 Narrators = new List<AudnexusContributorResource> { new AudnexusContributorResource { Name = "David Lee Huynh" } },
                 SeriesPrimary = new AudnexusSeriesResource { Asin = "B0H8QJKN8Z", Name = "My Girlfriend Cheated on Me", Position = "1.5" }
             };
+        }
+
+        [Test]
+        public void cancelled_lookup_should_not_poison_optional_recording_metadata_cache()
+        {
+            using var source = new CancellationTokenSource();
+            Mocker.GetMock<IAudnexusProxy>().Setup(proxy => proxy.GetBook(_resources[0].Asin, "us"))
+                .Returns(() =>
+                {
+                    source.Cancel();
+                    throw new OperationCanceledException(source.Token);
+                });
+
+            using (CommandExecutionContext.Begin(source.Token))
+            {
+                Assert.Throws<OperationCanceledException>(() => Subject.GetBookInfo(AudiobookId.ForAsin("us", _resources[0].Asin)));
+            }
+
+            Mocker.GetMock<IAudnexusProxy>().Setup(proxy => proxy.GetBook(_resources[0].Asin, "us")).Returns(_resources[0]);
+            Subject.GetBookInfo(AudiobookId.ForAsin("us", _resources[0].Asin)).Item2.Title.Should().Be(_resources[0].Title);
         }
 
         [Test]

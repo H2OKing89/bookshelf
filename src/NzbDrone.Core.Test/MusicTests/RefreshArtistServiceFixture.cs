@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using FizzWare.NBuilder;
+using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Common.Extensions;
@@ -10,6 +13,7 @@ using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.History;
 using NzbDrone.Core.ImportLists.Exclusions;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.MetadataSource;
 using NzbDrone.Core.Profiles.Metadata;
@@ -116,6 +120,62 @@ namespace NzbDrone.Core.Test.MusicTests
             Mocker.GetMock<IAuthorService>(MockBehavior.Strict)
                 .Setup(x => x.UpdateAuthor(It.IsAny<Author>()))
                 .Returns((Author a) => a);
+        }
+
+        [Test]
+        public void cancellation_during_fallback_preparation_should_leave_the_author_catalog_untouched()
+        {
+            using var source = new CancellationTokenSource();
+            var remote = _author.JsonClone();
+            remote.Metadata = _author.Metadata.Value.JsonClone();
+            remote.Books = _remoteBooks;
+            GivenNewAuthorInfo(remote);
+            GivenBooksForRefresh(_books);
+            Mocker.GetMock<IRefreshBookService>()
+                .Setup(service => service.PrepareBookInfo(It.IsAny<List<Book>>(), It.IsAny<List<Book>>(), remote))
+                .Callback(() =>
+                {
+                    source.Cancel();
+                    source.Token.ThrowIfCancellationRequested();
+                });
+            using var scope = CommandExecutionContext.Begin(source.Token);
+
+            Assert.Throws<OperationCanceledException>(() => Subject.Execute(new RefreshAuthorCommand(_author.Id)));
+
+            Mocker.GetMock<IAuthorMetadataService>().Verify(service => service.UpsertMany(It.IsAny<List<AuthorMetadata>>()), Times.Never());
+            Mocker.GetMock<IAuthorService>().Verify(service => service.UpdateAuthor(It.IsAny<Author>()), Times.Never());
+            Mocker.GetMock<IBookService>().Verify(service => service.InsertMany(It.IsAny<List<Book>>()), Times.Never());
+            VerifyEventNotPublished<AuthorRefreshCompleteEvent>();
+        }
+
+        [Test]
+        public void cancellation_during_apply_should_finish_writes_and_skip_new_cover_work()
+        {
+            using var source = new CancellationTokenSource();
+            var remote = _author.JsonClone();
+            remote.Metadata = _author.Metadata.Value.JsonClone();
+            remote.Books = _remoteBooks;
+            GivenNewAuthorInfo(remote);
+            GivenBooksForRefresh(_books);
+            AllowAuthorUpdate();
+            Mocker.GetMock<IRefreshBookService>()
+                .Setup(service => service.RefreshBookInfo(It.IsAny<List<Book>>(), It.IsAny<List<Book>>(), remote, true, It.IsAny<bool>(), null))
+                .Returns(() =>
+                {
+                    CommandExecutionContext.CancellationToken.CanBeCanceled.Should().BeFalse();
+                    source.Cancel();
+                    return true;
+                });
+            Mocker.GetMock<IEventAggregator>()
+                .Setup(events => events.PublishEvent(It.IsAny<AuthorUpdatedEvent>()))
+                .Callback(() => CommandExecutionContext.CancellationToken.Should().Be(source.Token));
+            using var scope = CommandExecutionContext.Begin(source.Token);
+
+            Assert.Throws<OperationCanceledException>(() => Subject.Execute(new RefreshAuthorCommand(_author.Id)));
+
+            Mocker.GetMock<IAuthorService>().Verify(service => service.UpdateAuthor(_author), Times.Once());
+            VerifyEventPublished<AuthorUpdatedEvent>();
+            VerifyEventNotPublished<AuthorRefreshCompleteEvent>();
         }
 
         [Test]

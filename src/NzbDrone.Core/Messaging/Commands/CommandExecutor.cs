@@ -18,7 +18,8 @@ namespace NzbDrone.Core.Messaging.Commands
         private readonly IManageCommandQueue _commandQueueManager;
         private readonly IEventAggregator _eventAggregator;
 
-        private static CancellationTokenSource _cancellationTokenSource;
+        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        private int _started;
 
         public CommandExecutor(IServiceFactory serviceFactory,
                                IManageCommandQueue commandQueueManager,
@@ -47,7 +48,7 @@ namespace NzbDrone.Core.Messaging.Commands
                     }
                 }
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (_cancellationTokenSource.IsCancellationRequested)
             {
                 _logger.Trace("Stopped one command execution pipeline");
             }
@@ -61,6 +62,8 @@ namespace NzbDrone.Core.Messaging.Commands
             where TCommand : Command
         {
             IExecute<TCommand> handler = null;
+            var cancellationToken = commandModel.CancellationState.Start(_cancellationTokenSource.Token);
+            using var scope = CommandExecutionContext.Begin(cancellationToken);
 
             try
             {
@@ -76,9 +79,15 @@ namespace NzbDrone.Core.Messaging.Commands
                     ProgressMessageContext.CommandModel = commandModel;
                 }
 
+                cancellationToken.ThrowIfCancellationRequested();
                 handler.Execute(command);
 
                 _commandQueueManager.Complete(commandModel, command.CompletionMessage ?? commandModel.Message);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                _commandQueueManager.Cancelled(commandModel);
+                _logger.Trace("Cancelled task {0}", command.Name);
             }
             catch (CommandFailedException ex)
             {
@@ -94,6 +103,7 @@ namespace NzbDrone.Core.Messaging.Commands
             }
             finally
             {
+                commandModel.CancellationState.Finish();
                 BroadcastCommandUpdate(commandModel);
 
                 _eventAggregator.PublishEvent(new CommandExecutedEvent(commandModel));
@@ -120,7 +130,10 @@ namespace NzbDrone.Core.Messaging.Commands
 
         public void Handle(ApplicationStartedEvent message)
         {
-            _cancellationTokenSource = new CancellationTokenSource();
+            if (Interlocked.Exchange(ref _started, 1) != 0)
+            {
+                return;
+            }
 
             for (var i = 0; i < THREAD_LIMIT; i++)
             {
