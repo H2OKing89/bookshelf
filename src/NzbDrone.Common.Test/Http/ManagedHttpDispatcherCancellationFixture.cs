@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +13,7 @@ using NUnit.Framework;
 using NzbDrone.Common.Cache;
 using NzbDrone.Common.Http;
 using NzbDrone.Common.Http.Dispatchers;
+using NzbDrone.Common.Http.HappyEyeballs;
 using NzbDrone.Common.Http.Proxy;
 using NzbDrone.Test.Common;
 
@@ -25,14 +25,10 @@ namespace NzbDrone.Common.Test.Http
     {
         private static readonly TimeSpan Deadline = TimeSpan.FromSeconds(10);
         private TrackingDispatcher _dispatcher;
-        private bool _originalUseIpv6;
-        private bool _originalIpv6Resolved;
 
         [SetUp]
         public void Setup()
         {
-            _originalUseIpv6 = (bool)Ipv6Field("useIPv6").GetValue(null);
-            _originalIpv6Resolved = (bool)Ipv6Field("hasResolvedIPv6Availability").GetValue(null);
             var agent = new Mock<IUserAgentBuilder>();
             agent.Setup(builder => builder.GetUserAgent(It.IsAny<bool>())).Returns("BookshelfCancellationTest/1");
             _dispatcher = new TrackingDispatcher(agent.Object, TestLogger);
@@ -42,8 +38,6 @@ namespace NzbDrone.Common.Test.Http
         public void Cleanup()
         {
             _dispatcher.Dispose();
-            Ipv6Field("useIPv6").SetValue(null, _originalUseIpv6);
-            Ipv6Field("hasResolvedIPv6Availability").SetValue(null, _originalIpv6Resolved);
         }
 
         [Test]
@@ -245,11 +239,6 @@ namespace NzbDrone.Common.Test.Http
             return new SuppliedClientDispatcher(client, agent.Object, TestLogger);
         }
 
-        private static FieldInfo Ipv6Field(string name)
-        {
-            return typeof(ManagedHttpDispatcher).GetField(name, BindingFlags.NonPublic | BindingFlags.Static);
-        }
-
         private static async Task ObserveClosure(NetworkStream stream, TaskCompletionSource<bool> closed, CancellationToken stop)
         {
             try
@@ -281,7 +270,7 @@ namespace NzbDrone.Common.Test.Http
                        Mock.Of<ICertificateValidationService>(),
                        agent,
                        new CacheManager(),
-                       logger)
+                       new HttpHappyEyeballs(logger))
             {
             }
 
@@ -313,7 +302,7 @@ namespace NzbDrone.Common.Test.Http
                        Mock.Of<ICertificateValidationService>(),
                        agent,
                        new CacheManager(),
-                       logger)
+                       new HttpHappyEyeballs(logger))
             {
                 _client = client;
             }
