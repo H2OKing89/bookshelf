@@ -551,6 +551,25 @@ the missing Intel macOS image asset and the full matrix remain P22. Legacy Azure
 is manual-only/default-off, and actual remote CI was not run. No live home,
 server, credentials or media was changed.
 
+### 2026-11-16 reusable local validation
+
+P21's local portion now has a [single documented command](local-validation.md)
+for package, startup/authentication, backup/restore and media checks, plus
+explicit-baseline upgrades and optional native Docker validation. Its fixtures
+and media probe live in the repository instead of depending on private machine
+scripts. Inputs stay unchanged, output homes are new and private, failure and
+interruption propagate, and owned processes/containers are cleaned up.
+
+Fresh artifact preparation exposed a shared-output publication race; commit
+`8b7e07065` serializes backend publication. The locked backend/frontend/package
+build then passed. Results and scope are recorded in the
+[validation guide](local-validation.md#verification-record).
+
+GitHub workflow work is deferred by the billing constraint. P21 is **In
+progress**; PostgreSQL and remaining delivery gates are still pending. P01's
+native ARM64 check and P09/P12/P13/P22/P25 work remain open. This local slice
+does not deploy the running server or use production library data.
+
 ### Remaining deployment gates
 
 The 2026-11-14 package-advisory findings were addressed by the 2026-11-15

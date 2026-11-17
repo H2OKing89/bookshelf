@@ -28,6 +28,10 @@ server with `dotnet build src/NzbDrone.Console/Readarr.Console.csproj`. Serve th
 built UI from the server output's `UI` directory, then run the generated Readarr
 executable with `-nobrowser -data=/path/to/config`.
 
+Run the [local package validation](docs/local-validation.md) checks against a
+complete package to verify startup, backup/restore, upgrades and media handling
+with fresh synthetic data. GitHub Actions is not required.
+
 For reverse proxy deployments, configure the
 [trusted proxy addresses](docs/trusted-proxies.md) before upgrading. Changes to
 this setting require a server restart.

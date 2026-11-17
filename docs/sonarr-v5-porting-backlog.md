@@ -62,7 +62,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P18](#p18) | P2 | Planned | M | Load PEM certificates, separate private keys and certificate chains |
 | [P19](#p19) | P2 | Planned | L | Study in-process host restart and service lifecycle |
 | [P20](#p20) | P2 | Planned | M | Keep API versions coexistable and generate matching OpenAPI documents |
-| [P21](#p21) | P1 | Planned | L | Run the delivery artifact through unit, DB and HTTP integration gates |
+| [P21](#p21) | P1 | In progress | L | Run the delivery artifact through unit, DB and HTTP integration gates |
 | [P22](#p22) | P2 | Planned | L | Define a truthful support matrix and package each native dependency |
 | [P23](#p23) | P3 | Planned | M | Add opt-in request/SQL profiling only after core correctness |
 | [P24](#p24) | P2 | Planned | S | Correct URL-base boundary handling on login redirects |
@@ -1096,6 +1096,36 @@ still requires the native ARM64 runner recorded under P01.
 **Book/audio caution:** CI must include representative EPUB/PDF, audio chapters/parts, narrator metadata, overrides and MediaInfo ABI/package tests. A Sonarr TV fixture suite cannot validate those.
 
 **Acceptance:** PR jobs exercise workflow-only changes; failing unit/DB/import/auth tests prevent image publication; tested hashes/artifacts are the packaged ones; clean-state and upgrade integration tests use disposable homes; test discovery counts/categories are visible; deploy credentials are unavailable to untrusted PR execution. Add Windows/macOS gates only when those platforms are supported.
+
+**2026-11-16 local-validation implementation record:** GitHub workflow work is
+deferred while billing is unavailable. The local portion is implemented through
+[scripts/validate-local.py](../scripts/validate-local.py) and the
+[local validation guide](local-validation.md). The command runs package checks,
+HTTP startup/authentication, current backup/restore and published media adapters
+using fresh synthetic homes. Explicit older binary packages enable genuine
+same-home upgrades and pre-password-schema backup restoration. Optional Docker
+checks build the actual repository Dockerfile and exercise its S6 service and
+native media adapters on the resulting image.
+
+Each run has private evidence, bounded owned-process cleanup, stable failure
+codes and nonzero failure/interruption exit status. Candidate, baseline and
+Docker-package fingerprints must remain unchanged. Existing homes and nested
+portable data folders are rejected; generated credentials and raw logs stay in
+private ignored output. Paths with spaces and semicolons are exercised. The
+runner neither dispatches workflows nor publishes images.
+
+Preparing fresh artifacts exposed concurrent writers in the shared backend
+output directories. Commit `8b7e07065` serializes solution publication; the
+subsequent locked backend build and fresh frontend/Linux packages succeeded.
+The local validation record is in [the guide](local-validation.md#verification-record).
+An unsuitable legacy binary is rejected rather than counted as legacy coverage.
+The genuine pre-password-schema positive path still requires that older binary.
+
+P21 remains **In progress**: GitHub CI, PostgreSQL/migration-engine integration,
+and the remaining P12/P13/P22/P25 acceptance are separate. Native ARM64 startup
+still requires real ARM64 hardware; this x64 local suite does not close P01's
+ARM gate. No workflow file, running development server or production data was
+changed by this slice.
 
 ### P22
 

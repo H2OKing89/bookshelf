@@ -158,3 +158,5 @@ mam_api_search.md
 
 _cache/
 _temp/
+__pycache__/
+*.pyc
