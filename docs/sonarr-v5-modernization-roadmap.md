@@ -784,3 +784,34 @@ production appdata/media and GitHub workflows were unchanged.
 Bookshelf's schema history and verify synthetic SQLite/PostgreSQL upgrades;
 Sonarr's TV schema is not a replacement. P01's native ARM64 gate and broader
 P09/P21 acceptance remain open.
+
+### P12 migration engine compatibility — 2026-11-16
+
+P12 is verified locally in `bb4cd939e`; see the
+[implementation record](sonarr-v5-porting-backlog.md#p12) and
+[repeatable datastore proof](local-validation.md#check-the-migration-engine-on-sqlite-and-postgresql).
+The migration stack now uses the pinned donor's FluentMigrator 8.0.1 and Npgsql
+10.0.3. Historical Bookshelf main/log/cache migrations and their applied IDs remain
+unchanged, including migration file 034's actual version 158. SQLite's provider
+and busy timeout are deliberately left for P13.
+
+The port preserves raw SQLite schema and sequence details during rebuilds,
+uses native rename/drop where supported, keeps PostgreSQL explicit-ID behavior,
+and restores/disposes migration context and services safely. Ordinary migration
+errors do not trigger destructive log/cache corruption recovery. Stored library
+data, text GUID conventions and dates retain their existing contracts.
+
+**87 focused cases passed on SQLite and owned PostgreSQL**, with no skips.
+Broader offline validation passed **4,523 .NET cases**, plus **23 existing
+migration cases** separately on PostgreSQL. All **63 Python tests** passed.
+Fresh packages passed **37 datastore checks plus two unchanged-input checks**,
+including genuine old-binary upgrades, partial-DDL failure rollback and backup
+recovery on both databases. The same candidate passed **231 existing delivery
+checks**, including .NET 6 upgrade, cancellation and the actual Docker image.
+The [refreshed dependency inventory](dependencies/2026-11-16-migrations/summary.json)
+contains 119 exact components and zero reported NuGet vulnerabilities across 25
+audited projects; license notices accompany the packages.
+
+No live application home was an input. The running dev service, production data
+and GitHub workflows were unchanged. Native ARM64/P01 and broader P09/P21 gates
+remain open. **P13, SQLite provider and busy-timeout compatibility, is next.**

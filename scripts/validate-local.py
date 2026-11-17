@@ -12,7 +12,7 @@ import tempfile
 from validation import common
 
 
-CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "docker")
+CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "docker")
 
 
 def parser():
@@ -37,6 +37,8 @@ def main(argv=None):
             chosen.append("docker")
     if "upgrade" in chosen and not arguments.baseline_runtime:
         parser().error("--checks upgrade requires --baseline-runtime")
+    if "datastore" in chosen and not arguments.baseline_runtime:
+        parser().error("--checks datastore requires --baseline-runtime (a pre-P12 package)")
     if "docker" in chosen and not arguments.docker_runtime:
         parser().error("--checks docker requires --docker-runtime (a musl package)")
     previous_umask = os.umask(0o077)
@@ -70,13 +72,13 @@ def main(argv=None):
             output = common.private_directory(arguments.output.expanduser().resolve())
         for label, runtime in inputs.items():
             snapshots[label] = common.snapshot_runtime(runtime)
-        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation")):
+        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore")):
             common.ensure_host_compatible(inputs["candidate"])
         for label in ("baseline", "legacy"):
             if label in inputs:
                 common.ensure_host_compatible(inputs[label])
         # Imports are deliberately after validation; modules never launch on import.
-        from validation import app, cancellation, docker, media, package, restore, upgrade
+        from validation import app, cancellation, datastore, docker, media, package, restore, upgrade
         callbacks = {
             "package": lambda: package.run(inputs["candidate"], output / "package", repo),
             "app": lambda: app.run(inputs["candidate"], output / "app"),
@@ -84,6 +86,7 @@ def main(argv=None):
             "upgrade": lambda: upgrade.run(inputs["candidate"], output / "upgrade", baseline_runtime=inputs["baseline"]),
             "media": lambda: media.run(inputs["candidate"], output / "media"),
             "cancellation": lambda: cancellation.run(inputs["candidate"], output / "cancellation"),
+            "datastore": lambda: datastore.run(inputs["candidate"], output / "datastore", baseline_runtime=inputs["baseline"]),
             "docker": lambda: docker.run(inputs["docker"], output / "docker", repo),
         }
         for name in chosen:

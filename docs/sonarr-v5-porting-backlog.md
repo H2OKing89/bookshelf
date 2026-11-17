@@ -53,7 +53,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P09](#p09) | P1 | In progress | L | Refresh managed/native packages as a staged compatibility change |
 | [P10](#p10) | P1 | Verified | L | Carry cancellation through the HTTP client stack |
 | [P11](#p11) | P1 | Verified | M | Use per-connection Happy Eyeballs and expire pooled connections |
-| [P12](#p12) | P1 | Planned | XL | Modernize the migration engine while preserving Bookshelf schema history |
+| [P12](#p12) | P1 | Verified | XL | Modernize the migration engine while preserving Bookshelf schema history |
 | [P13](#p13) | P2 | Planned | M | Upgrade SQLite provider and measure busy-timeout behavior |
 | [P14](#p14) | P2 | Planned | M | Support full PostgreSQL connection strings with corrected validation |
 | [P15](#p15) | P2 | Planned | M | Make SQL log storage optional |
@@ -1028,6 +1028,72 @@ acceptance remain open. **P12 is the next implementation slice.**
 **Book/audio caution:** B has migrations 001–047, metadata overrides, narrator aliases, editions, multipart files and a cache DB absent from Sonarr. All require upgrade fixtures; date conversion must preserve release dates and override timestamps.
 
 **Acceptance:** empty SQLite and PostgreSQL homes migrate; representative old Bookshelf/Readarr schemas upgrade copies preserving IDs/constraints/indexes/data; rename/drop/default/date cases pass both DBs; injected migration failure leaves a recoverable backup; test expected UTC/timezone serialization and edition constraints.
+
+**2026-11-16 implementation record:** `bb4cd939e` adapts the pinned v5 migration
+infrastructure to **FluentMigrator 8.0.1** and **Npgsql 10.0.3**. Only the Core,
+SQLite and PostgreSQL runners are referenced; unused provider dependencies and
+the Servarr migration feed are removed. All 25 package lockfiles were restored
+and checked in locked mode. The SQLite provider and busy timeout remain unchanged
+for P13. No historical migration body or version was edited. Files 001–048 retain
+their actual version set **1–33, 35–48, 158**: migration file 034 has always used
+version 158 and is not renumbered.
+
+The controller selects modern processor IDs, scopes/disposes migration services,
+restores its previous context in `finally`, and isolates contexts with
+`AsyncLocal`. It honors the supplied logger provider and omits connection strings
+from migration-start logs. Database version checks use provider metadata instead
+of deliberately issuing PostgreSQL SQL against SQLite and swallowing exceptions.
+
+SQLite rename/drop operations use supported native ALTER statements. Type,
+nullability and default changes rebuild from stored DDL rather than the old lossy
+column approximation. Untouched definitions, CHECK/UNIQUE/foreign-key constraints,
+collations, partial/expression indexes, triggers, views, generated columns and
+AUTOINCREMENT high-water marks survive. Copying values stays inside SQL and does
+not reinterpret dates or GUIDs. Unsupported ambiguous definitions and referenced
+table rebuilds with foreign keys enabled fail before destructive work; native
+DROP rejects dependent schema rather than silently removing it. The scoped
+`legacy_alter_table` setting is restored after rebuilding.
+
+A small PostgreSQL generator adapter retains the old ability to insert explicit
+IDs by default; explicit `GENERATED ALWAYS` requests remain explicit. This covers
+direct table declarations as well as `TableForModel`, without rewriting historical
+migrations. Application GUID identifiers keep their existing text schema and
+converter. Ordinary SQLite migration errors no longer masquerade as corruption
+or trigger deletion/recreation of the log/cache database; actual corruption keeps
+the existing recovery behavior.
+
+**Source validation:** **87 focused cases passed without skips** on real SQLite
+and owned PostgreSQL 16, covering all three histories, seven seeded checkpoints,
+DDL changes, raw schema preservation, UTC/offset instants, nullable dates, native
+GUID storage, rollback, context isolation and failure classification. The broader
+offline suites passed **768 Common**, **3,682 Core**, **8 API** and **65 Host**
+cases (**4,523 total**, with existing platform/fixture skips). All **23 existing
+migration cases** also passed separately against owned PostgreSQL. Focused cases
+overlap the broader suites. All **63 Python validation tests** passed. Locked
+solution and Windows GUI restores passed; the refreshed dependency inventory
+records **zero reported NuGet vulnerabilities** across 25 audited projects.
+
+**Packaged acceptance:** fresh x64/musl-x64 delivery packages built successfully.
+The actual pre-P12 binary created and seeded SQLite and PostgreSQL libraries;
+the new binary upgraded those same databases. The explicit
+[`datastore` check](local-validation.md#check-the-migration-engine-on-sqlite-and-postgresql)
+passed **37 checks**, plus **two unchanged-input checks**, with no failures.
+It preserved catalog identities, two file parts, narrators, overrides, cleanup
+rules, history, settings, dates and the saved PostgreSQL schema. Fresh main/log/
+cache creation passed. Deliberately incompatible migration-158 replay failed,
+rolled back partial DDL and retained catalog rows. Application-generated SQLite
+backup recovery and point-in-time PostgreSQL dump recovery both restarted the
+server and preserved the expected data/schema. The validator compares logical
+visible-column order because `pg_dump` compacts internal positions left by
+dropped columns; types, defaults, nullability, indexes and constraints still must
+match. Synthetic servers use `-exitimmediately` so intentional startup failures
+do not wait for interactive input.
+
+The same candidate also passed **231 package/app/restore/.NET 6 upgrade/media/
+cancellation/Docker checks**. Owned PostgreSQL containers, sockets and app
+processes were removed; input packages stayed unchanged. GitHub workflows, the
+running development service and production appdata/media were unchanged. Native
+ARM64/P01 and broader P09/P21 gates remain open. **P13 is next.**
 
 ### P13
 

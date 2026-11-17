@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "parameters": "--vulnerable --include-transitive",
+  "sources": [
+    "https://api.nuget.org/v3/index.json",
+    "https://pkgs.dev.azure.com/Servarr/Servarr/_packaging/dotnet-bsd-crossbuild/nuget/v3/index.json",
+    "https://pkgs.dev.azure.com/Servarr/Servarr/_packaging/Mono.Posix.NETStandard/nuget/v3/index.json",
+    "https://pkgs.dev.azure.com/Servarr/Servarr/_packaging/SQLite/nuget/v3/index.json"
+  ],
+  "projects": [
+    {
+      "path": "src/Readarr.Api.V1/Readarr.Api.V1.csproj"
+    },
+    {
+      "path": "src/Readarr.Http/Readarr.Http.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Api.Test/Readarr.Api.Test.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Automation.Test/Readarr.Automation.Test.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Common.Test/Readarr.Common.Test.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Common/Readarr.Common.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Console/Readarr.Console.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Core.Test/Readarr.Core.Test.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Core/Readarr.Core.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Host.Test/Readarr.Host.Test.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Host/Readarr.Host.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Integration.Test/Readarr.Integration.Test.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Libraries.Test/Readarr.Libraries.Test.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Mono.Test/Readarr.Mono.Test.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Mono/Readarr.Mono.csproj"
+    },
+    {
+      "path": "src/NzbDrone.SignalR/Readarr.SignalR.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Test.Common/Readarr.Test.Common.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Test.Dummy/Readarr.Test.Dummy.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Update.Test/Readarr.Update.Test.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Update/Readarr.Update.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Windows.Test/Readarr.Windows.Test.csproj"
+    },
+    {
+      "path": "src/NzbDrone.Windows/Readarr.Windows.csproj"
+    },
+    {
+      "path": "src/ServiceHelpers/ServiceInstall/ServiceInstall.csproj"
+    },
+    {
+      "path": "src/ServiceHelpers/ServiceUninstall/ServiceUninstall.csproj"
+    },
+    {
+      "path": "src/NzbDrone/Readarr.csproj"
+    }
+  ],
+  "problems": [],
+  "notes": [
+    "The Windows GUI was audited separately with its explicit net10.0-windows framework; this normalized report combines that successful result with the other 24 solution projects. NuGet omits framework/package entries where no vulnerable packages match."
+  ]
+}

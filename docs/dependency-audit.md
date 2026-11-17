@@ -9,6 +9,26 @@ runtime/version statements for current builds. Earlier sections retain the
 original P09 .NET 6 security-slice evidence; the two dated inventories remain
 separate. P01 and P09 are still **In progress** for the bounded gates below.
 
+**P12 migration dependencies (2026-11-16):** `bb4cd939e` replaces the Servarr
+FluentMigrator 3.3.2.9 umbrella with the three targeted FluentMigrator **8.0.1**
+runner components and updates Npgsql to **10.0.3**, matching the pinned v5 donor.
+The SQLite provider remains unchanged for P13. The
+[new inventory](dependencies/2026-11-16-migrations/summary.json) records **119
+package IDs / 119 exact components across 25 lockfiles**. Targeted runner
+references remove unused database-provider dependencies. The normalized
+[NuGet audit](dependencies/2026-11-16-migrations/nuget-audit.json) combines the
+solution's 24 successful project results with the Windows GUI audited separately
+using its explicit `net10.0-windows` framework: **25 projects, zero reported
+vulnerabilities**. This does not expand the native-code audit or close P09/P21.
+
+The [Npgsql 10 release notes](https://www.npgsql.org/doc/release-notes/10.0.html)
+identify changed native `date`/`time` mappings. P12 verifies UTC instants, offset
+timestamps, nullable dates and native GUID storage on SQLite and PostgreSQL;
+existing application identifiers retain their text schema/converter. Connection
+strings are omitted from migration-start logs. Pinned FluentMigrator/Npgsql
+license texts and source checksums accompany the delivery packages under
+`LICENSES/managed/`. Older dated dependency inventories remain historical records.
+
 ## Earlier 2026-11-15 security-maintenance snapshot
 
 This record covers the **2026-11-15** security-maintenance slice of

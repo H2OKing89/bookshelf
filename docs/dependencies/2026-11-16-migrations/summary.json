@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-16",
+  "sourceCommit": "bb4cd939e",
+  "lockfiles": 25,
+  "packageIds": 119,
+  "components": 119,
+  "auditedProjects": 25,
+  "nugetReportedVulnerablePackages": 0,
+  "historicalMigrationsChanged": false,
+  "directUpdates": {
+    "FluentMigrator.Runner.Core": "8.0.1",
+    "FluentMigrator.Runner.SQLite": "8.0.1",
+    "FluentMigrator.Runner.Postgres": "8.0.1",
+    "Npgsql": "10.0.3"
+  },
+  "sqliteProviderUnchanged": "System.Data.SQLite.Core.Servarr 1.0.115.5-18",
+  "nativeCodeAudit": false
+}

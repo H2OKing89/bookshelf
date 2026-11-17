@@ -169,8 +169,9 @@ class Fixture:
         (self.home / "server.log").chmod(0o600)
         # Fixed shell program; all paths are passed as positional arguments, never interpolated.
         # Limit native crash dumps without changing the caller's limits or using preexec_fn.
+        # Startup failures must exit instead of waiting for interactive intervention.
         command = ["/bin/sh", "-c", 'ulimit -c 0; exec "$@"', "bookshelf-validation",
-                   str(self.runtime / "Readarr"), "-nobrowser", "-nosingleinstancecheck", "-data=" + str(self.home)]
+                   str(self.runtime / "Readarr"), "-nobrowser", "-nosingleinstancecheck", "-exitimmediately", "-data=" + str(self.home)]
         self.process = subprocess.Popen(command, cwd=self.runtime,
                                         env=child_environment(self.home, self.private_tmp),
                                         stdin=subprocess.DEVNULL, stdout=self.process_log,

@@ -67,6 +67,40 @@ The second home receives SIGTERM during a held response and must stop gracefully
 without changing its saved library. No external metadata provider is contacted.
 This check is explicit so the default checks remain usable with older packages.
 
+## Check the migration engine on SQLite and PostgreSQL
+
+Use a complete pre-P12 package as the baseline:
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --baseline-runtime /path/to/pre-P12/package \
+  --checks datastore
+```
+
+This explicit check requires a cached native `postgres:16-alpine` image and the
+same local Unix-socket Docker daemon used by the Docker checks. The PostgreSQL
+container runs as the host uid, with no network, no published ports, and a private
+Unix socket. It accepts no existing application home or PostgreSQL endpoint.
+The candidate must contain FluentMigrator 8 and the baseline must contain the
+older engine; the runner rejects the same package or a newer baseline.
+
+The actual old binary creates synthetic SQLite and PostgreSQL libraries, then
+the candidate opens those same databases. Checks retain authors, books, editions,
+two recording parts, narrators, overrides, cleanup rules, settings, history,
+identities, dates, defaults, indexes and constraints. A fresh PostgreSQL home also
+replays the complete main/log/cache history. Historical migration 034 retains
+its actual version **158**; files are not renumbered to make the test pass.
+
+Recovery checks first create an application-generated SQLite backup and
+`pg_dump` backups of all three PostgreSQL databases. An explicit failure injection
+replays migration 158 against a deliberately incompatible synthetic schema; this
+is labelled as failure injection rather than a legacy upgrade. It must fail,
+roll back partial DDL, preserve the saved catalog, and restart after restoring the
+backup. Owned containers, sockets and application processes are cleaned up, and
+input package fingerprints must remain unchanged. Raw logs and backups stay in
+the private evidence directory.
+
 ## Check a genuine upgrade or legacy backup
 
 Supply a separate older **binary package**, without any saved application data:
@@ -207,3 +241,25 @@ production appdata/media and GitHub workflows were unchanged. The new connection
 race, DNS, proxy/TLS and pool-renewal unit/wire evidence is recorded under
 [P11](sonarr-v5-porting-backlog.md#p11); this package run does not simulate all
 network topologies or establish native ARM64 acceptance.
+
+### P12 migration verification — 2026-11-16
+
+The candidate from `bb4cd939e` passed the new `datastore` proof against a retained
+pre-P12 package: **37 checks**, plus **two unchanged-input checks**, with zero
+failures. Actual old/new binaries created/upgraded synthetic SQLite and
+PostgreSQL 16.13 libraries, retaining saved catalog data, recording parts, settings,
+history, identities, dates and schema. Injected partial-DDL failures rolled back;
+both application-generated SQLite and PostgreSQL point-in-time backups recovered
+and restarted successfully. Restore comparison normalizes PostgreSQL's internal
+dropped-column position gaps while preserving visible column order and every
+type/default/nullability/index/constraint assertion.
+
+The same candidate also passed the seven-check command from the P11 record:
+**231 checks**, with a genuine .NET 6 baseline and native musl-x64 Docker image.
+Both reports recorded the same candidate fingerprint. Locked builds and package
+preparation passed, as did **63 Python regression tests**, including owned
+PostgreSQL cleanup when diagnostic collection fails. All containers, sockets and
+processes owned by the proof were stopped. The development service, production
+data and GitHub workflows were unchanged. Broader migration unit evidence and
+intentional automatic-rebuild rejection cases are recorded under
+[P12](sonarr-v5-porting-backlog.md#p12).
