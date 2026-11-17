@@ -51,7 +51,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P07](#p07) | P1 | Verified | M | Validate every restore payload before replacing config/database files |
 | [P08](#p08) | P1 | Verified | M | Add bounded login-attempt lockout |
 | [P09](#p09) | P1 | In progress | L | Refresh managed/native packages as a staged compatibility change |
-| [P10](#p10) | P1 | Planned | L | Carry cancellation through the HTTP client stack |
+| [P10](#p10) | P1 | Verified | L | Carry cancellation through the HTTP client stack |
 | [P11](#p11) | P1 | Planned | M | Use per-connection Happy Eyeballs and expire pooled connections |
 | [P12](#p12) | P1 | Planned | XL | Modernize the migration engine while preserving Bookshelf schema history |
 | [P13](#p13) | P2 | Planned | M | Upgrade SQLite provider and measure busy-timeout behavior |
@@ -887,6 +887,61 @@ still requires the native ARM64 runner recorded under P01.
 **Book/audio caution:** metadata refreshes across many editions/narrators must stop promptly on shutdown/cancel; stream disposal must not leave partial cover/download files or interrupt a completed import transaction.
 
 **Acceptance:** cancellation during DNS/connect/response body/redirect/download stops promptly and disposes resources; request timeouts still work; retry layers do not restart canceled work; non-canceled concurrent requests survive; command cancellation and clean host shutdown are exercised with synthetic endpoints.
+
+**2026-11-16 implementation record:** explicit cancellation overloads preserve the
+existing synchronous/asynchronous HTTP surface and carry tokens through rate
+limits, redirects, typed responses, the managed dispatcher and streamed downloads.
+The dispatcher links caller cancellation with request timeout, preserves the
+caller token in `OperationCanceledException`, and retains
+`WebExceptionStatus.Timeout` for a real timeout. Cancellation does not dispose a
+shared client or alter the IPv6 fallback decision. Download staging uses a unique
+owned file and replaces the destination only after successful completion.
+
+Running author/book refresh commands opt into API cancellation. Command tokens
+also observe host shutdown; expected cancellation becomes `Cancelled`, while an
+unrelated exception still fails the command. Cancelled scheduled tasks do not
+advance their last-execution timestamp. Audible/Audnexus catalog discovery,
+detail/chapter requests, response caching and cover requests observe the token
+without caching cancellation as a failure or starting a provider cooldown.
+
+Refreshes stage book fallbacks and missing-parent profiles before database
+updates. Once an entity's apply unit begins, it finishes its existing book,
+edition, series and tag writes before observing cancellation again. Completed
+work still publishes its update; cancellation prevents subsequent refresh,
+rescan and cover work. This does not make an in-progress import cancellable or
+change recording/marketplace matching rules.
+
+The reusable [local validator](local-validation.md#check-refresh-cancellation-and-shutdown)
+adds an explicit `--checks cancellation` proof against a real packaged server
+and owned loopback metadata. Deterministic transport tests cover a pending
+connection callback, headers, response bodies, simultaneous timeout/cancellation,
+redirects and downloads. Actual operating-system DNS interruption is not
+simulated; the production socket connection receives the linked token. P11
+retains the separate connection-family, DNS failure and losing-socket gates.
+
+Implementation commits: `25f0540bb` (HTTP/transport/downloads) and `a13f988a1`
+(command, metadata, cover and safe-apply propagation). The final offline suites
+passed **722 Common**, **3,618 Core**, **8 API** and **65 Host** cases, with
+**94 existing skips** in total. Legacy external-provider/updater integration
+fixtures were excluded from the offline Core run; this is not a live-provider
+regression claim. All **47 Python validation tests** passed.
+
+A fresh self-contained Linux x64 package passed the owned-loopback cancellation
+proof: **38 checks**, plus an unchanged-input check. A running refresh accepted
+API cancellation and became `Cancelled` within five seconds, closed its partial
+response, preserved the saved catalog/media, and completed a subsequent refresh
+without cooldown/cache poisoning. A separate synthetic home stopped gracefully
+within ten seconds after SIGTERM during a held body, preserving catalog/media
+and excluding the incomplete response from cache. The actual application,
+command API, HTTP dispatcher and database were used. Development and production
+homes were not inputs, and the running dev service was not restarted.
+
+The same candidate repeated **193 local package/app/restore/upgrade/media/Docker
+checks**, with no failures and unchanged input packages. The upgrade used a
+genuine .NET 6 baseline, and Docker used the actual repository Dockerfile and a
+native musl-x64 package. Locked backend, frontend and both package builds passed.
+GitHub workflows were neither modified nor run. Native ARM64/P01 and broader
+P21 gates remain open; this HTTP change does not close them.
 
 ### P11
 

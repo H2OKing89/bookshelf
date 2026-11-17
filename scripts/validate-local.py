@@ -12,7 +12,7 @@ import tempfile
 from validation import common
 
 
-CHECKS = ("package", "app", "restore", "upgrade", "media", "docker")
+CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "docker")
 
 
 def parser():
@@ -70,19 +70,20 @@ def main(argv=None):
             output = common.private_directory(arguments.output.expanduser().resolve())
         for label, runtime in inputs.items():
             snapshots[label] = common.snapshot_runtime(runtime)
-        if any(name in chosen for name in ("app", "restore", "upgrade", "media")):
+        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation")):
             common.ensure_host_compatible(inputs["candidate"])
         for label in ("baseline", "legacy"):
             if label in inputs:
                 common.ensure_host_compatible(inputs[label])
         # Imports are deliberately after validation; modules never launch on import.
-        from validation import app, docker, media, package, restore, upgrade
+        from validation import app, cancellation, docker, media, package, restore, upgrade
         callbacks = {
             "package": lambda: package.run(inputs["candidate"], output / "package", repo),
             "app": lambda: app.run(inputs["candidate"], output / "app"),
             "restore": lambda: restore.run(inputs["candidate"], output / "restore", legacy_runtime=inputs.get("legacy")),
             "upgrade": lambda: upgrade.run(inputs["candidate"], output / "upgrade", baseline_runtime=inputs["baseline"]),
             "media": lambda: media.run(inputs["candidate"], output / "media"),
+            "cancellation": lambda: cancellation.run(inputs["candidate"], output / "cancellation"),
             "docker": lambda: docker.run(inputs["docker"], output / "docker", repo),
         }
         for name in chosen:

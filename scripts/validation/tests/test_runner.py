@@ -27,7 +27,7 @@ class RunnerResultTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.runtime = package(self.root / "runtime")
         self.modules = {"validation." + name: types.ModuleType("validation." + name)
-                        for name in ("app", "docker", "media", "package", "restore", "upgrade")}
+                        for name in ("app", "cancellation", "docker", "media", "package", "restore", "upgrade")}
         self.output = self.root / "results"
 
     @contextlib.contextmanager

@@ -48,6 +48,25 @@ probe in a private clone using the package's own self-contained runtime and
 native libraries. Calibre coverage exercises the production client with a
 synthetic protocol response; it does not test a running Calibre installation.
 
+## Check refresh cancellation and shutdown
+
+Run the cancellation proof against a package containing P10:
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --checks cancellation
+```
+
+This check creates two synthetic homes and a loopback Audnexus server. It holds a
+metadata response open, cancels a running author refresh through the command API,
+and checks that the HTTP connection closes, the command becomes `Cancelled`, and
+saved catalog rows and media bytes survive. A successful retry verifies that
+cancellation did not populate the response cache or trigger a provider cooldown.
+The second home receives SIGTERM during a held response and must stop gracefully
+without changing its saved library. No external metadata provider is contacted.
+This check is explicit so the default checks remain usable with older packages.
+
 ## Check a genuine upgrade or legacy backup
 
 Supply a separate older **binary package**, without any saved application data:
@@ -148,3 +167,20 @@ boundaries. The existing six shell test-runner status cases also passed.
 GitHub workflows were neither changed nor run. The running development service
 and production media/appdata were unchanged. Native ARM64 and broader P21
 integration acceptance remain open.
+
+### P10 cancellation verification — 2026-11-16
+
+After `25f0540bb` and `a13f988a1`, the fresh Linux x64 package passed
+`--checks cancellation`: **38 checks**, plus **one unchanged-input check**.
+The held response closed on API cancellation, the command became `Cancelled`
+within five seconds, its catalog/media stayed intact, and a subsequent refresh
+completed against the same loopback provider. In a second synthetic home,
+SIGTERM during a held body stopped the server gracefully within ten seconds.
+Incomplete responses were not cached. All **47 Python regression tests** passed.
+
+The same candidate also repeated the six package/app/restore/upgrade/media/Docker
+checks above: **193 passed, zero failed**, using the genuine .NET 6 baseline and
+the actual repository Dockerfile. Both proof reports recorded the same candidate
+fingerprint and unchanged input packages. Locked backend, frontend and native
+x64/musl-x64 package builds passed. The development service was not restarted;
+GitHub workflows were neither changed nor run.

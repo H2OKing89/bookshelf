@@ -728,3 +728,31 @@ browser against an isolated copied profile with copy-only test credentials:
 to the dev service after a new stopped-profile/runtime backup; dev HTTP checks
 confirmed root/deep-link/initialization 302 responses, login 200 and API 401,
 with file metadata, credentials and authentication configuration preserved.
+
+### P10 HTTP and refresh cancellation — 2026-11-16
+
+P10 is verified locally in `25f0540bb` and `a13f988a1`; see the
+[implementation record](sonarr-v5-porting-backlog.md#p10) and
+[repeatable cancellation proof](local-validation.md#check-refresh-cancellation-and-shutdown).
+Caller cancellation reaches rate limiting, redirects, response bodies and
+downloads. Metadata refreshes and cover work observe command cancellation and
+shutdown without treating cancellation as a provider failure. Refreshes fetch
+fallback and missing-parent metadata before saving, then finish the current
+apply unit before stopping further work.
+
+Final validation passed **4,413 offline .NET tests** across Common, Core, API and
+Host, with **94 existing skips**, plus **47 Python tests**. A fresh self-contained
+package passed **38 cancellation checks** plus its unchanged-input check, and
+the same candidate passed **193 package/app/restore/upgrade/media/Docker checks**.
+API cancellation closed a held metadata body, preserved catalog/media and
+allowed a successful retry; SIGTERM stopped a separate synthetic home cleanly.
+The upgrade used the retained .NET 6 package; the Docker proof used the actual
+Dockerfile and a native musl-x64 package. Input packages remained unchanged.
+
+**P11 is the next implementation slice:** replace global IPv6 fallback with
+per-connection Happy Eyeballs and add pooled connection expiry. Operating-system
+DNS interruption was not simulated by the P10 transport tests; connection-family,
+DNS failure and losing-socket cases remain explicit P11 gates. Native ARM64/P01,
+broader P09/P21 acceptance and the separate schema modernization remain open.
+No GitHub workflow was changed or run, and neither the running dev service nor
+production appdata/media was changed by this work.
