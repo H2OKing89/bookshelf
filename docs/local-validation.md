@@ -184,3 +184,26 @@ the actual repository Dockerfile. Both proof reports recorded the same candidate
 fingerprint and unchanged input packages. Locked backend, frontend and native
 x64/musl-x64 package builds passed. The development service was not restarted;
 GitHub workflows were neither changed nor run.
+
+### P11 connection verification — 2026-11-16
+
+After `2512159c9`, fresh Linux x64 and musl-x64 packages passed a single run with
+all seven checks selected:
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --baseline-runtime /path/to/older/net6/package \
+  --docker-runtime _artifacts/linux-musl-x64/net10.0/Readarr \
+  --checks package app restore upgrade media cancellation docker
+```
+
+**231 checks passed, zero failed**: package **14**, app **15**, current restore
+**39**, genuine .NET 6 upgrade **27**, media **42**, cancellation **38**, Docker
+**53**, and **three unchanged-input checks**. Backend/frontend and both package
+builds passed. The run used synthetic libraries and metadata, the actual
+Dockerfile, and no published container ports. The running development service,
+production appdata/media and GitHub workflows were unchanged. The new connection
+race, DNS, proxy/TLS and pool-renewal unit/wire evidence is recorded under
+[P11](sonarr-v5-porting-backlog.md#p11); this package run does not simulate all
+network topologies or establish native ARM64 acceptance.

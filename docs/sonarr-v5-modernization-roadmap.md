@@ -756,3 +756,31 @@ DNS failure and losing-socket cases remain explicit P11 gates. Native ARM64/P01,
 broader P09/P21 acceptance and the separate schema modernization remain open.
 No GitHub workflow was changed or run, and neither the running dev service nor
 production appdata/media was changed by this work.
+
+### P11 connection handling — 2026-11-16
+
+P11 is verified locally in `2512159c9`; see the
+[implementation record](sonarr-v5-porting-backlog.md#p11). New connections use
+the pinned v5 Happy Eyeballs design with local ownership/cancellation fixes.
+IPv6 and IPv4 attempts interleave per connection with a 250 ms stagger and
+immediate fallback after failure. No process-wide IPv6 failure flag remains.
+Cached clients renew connections after a maximum pooled lifetime of 30 minutes,
+while active responses retain their connections until completion.
+
+**56 focused cases passed without skips**, including deterministic race/DNS
+tests and real IPv4/IPv6, HTTP/SOCKS5 proxy, HTTPS CONNECT/SNI, TLS, cookie and
+pooling checks. A sequential expiry test changes an injected DNS answer after
+the first response completes; a separate test keeps an active body open during
+renewal. The production lifetime is checked directly and the renewal tests use
+zero lifetime instead of waiting 30 minutes. OS DNS interruption is not forced.
+
+The broader offline suites passed **4,459 .NET cases**, with existing platform/fixture skips.
+Locked backend/frontend builds and fresh x64/musl-x64 packages passed. The same
+candidate passed **231 combined package/app/restore/upgrade/media/cancellation/
+Docker checks**, including unchanged input fingerprints. The running dev service,
+production appdata/media and GitHub workflows were unchanged.
+
+**P12, the migration engine compatibility slice, is next.** It must preserve
+Bookshelf's schema history and verify synthetic SQLite/PostgreSQL upgrades;
+Sonarr's TV schema is not a replacement. P01's native ARM64 gate and broader
+P09/P21 acceptance remain open.

@@ -52,7 +52,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P08](#p08) | P1 | Verified | M | Add bounded login-attempt lockout |
 | [P09](#p09) | P1 | In progress | L | Refresh managed/native packages as a staged compatibility change |
 | [P10](#p10) | P1 | Verified | L | Carry cancellation through the HTTP client stack |
-| [P11](#p11) | P1 | Planned | M | Use per-connection Happy Eyeballs and expire pooled connections |
+| [P11](#p11) | P1 | Verified | M | Use per-connection Happy Eyeballs and expire pooled connections |
 | [P12](#p12) | P1 | Planned | XL | Modernize the migration engine while preserving Bookshelf schema history |
 | [P13](#p13) | P2 | Planned | M | Upgrade SQLite provider and measure busy-timeout behavior |
 | [P14](#p14) | P2 | Planned | M | Support full PostgreSQL connection strings with corrected validation |
@@ -961,6 +961,54 @@ P21 gates remain open; this HTTP change does not close them.
 **Book/audio caution:** provider refreshes may touch multiple hosts with different IPv6 reachability; one metadata host must not disable IPv6 for every audiobook provider.
 
 **Acceptance:** IPv4-only/IPv6-only/dual-stack success, broken first family, multiple address failures, DNS failure, cancellation and losing-socket cleanup pass deterministically; SOCKS/HTTP proxy and TLS validation still work; DNS endpoint changes are eventually picked up by pooled renewal.
+
+**2026-11-16 implementation record:** `2512159c9` adapts the two connector classes
+from the pinned Sonarr v5 revision. Each new connection resolves its own endpoint
+and interleaves IPv6/IPv4 attempts with a 250 ms stagger. Failed attempts advance
+immediately. DNS duplicates and unsupported or explicitly excluded address
+families are filtered before dialing. The old process-wide IPv6 availability
+flags and interface probing are removed, so one host's failure does not change
+another host's address-family selection.
+
+The port strengthens the donor's ownership handling: synchronous attempt/delay
+failures still cancel and drain existing attempts, every losing or late successful
+socket is disposed, and cancellation during cleanup also disposes a selected
+winner. Simultaneous DNS/connection failures and caller cancellation preserve the
+original caller token. The connector owns the winning socket until its
+`NetworkStream` handoff succeeds. P10's request-timeout versus caller-cancellation
+classification remains intact.
+
+The managed handler now sets a **30-minute pooled connection lifetime**. Expiry
+renews connections within the cached HTTP client and does not interrupt an active
+response. The callback connects to the handler's actual endpoint, including a
+configured proxy; target routing, TLS/SNI, certificate validation, cookie
+isolation, credentials and HTTP version settings remain handler-owned.
+
+**Local test evidence:** **56 focused cases passed without skips**: **19 generic
+race/ownership cases**, **15 DNS/connector cases**, **12 real loopback transport
+cases**, and the **10 existing P10 dispatcher cases**. The wire checks exercised
+IPv4 and IPv6 listeners, a forced IPv6 refusal followed by IPv4 success and an
+independent IPv6 success, HTTP proxying, SOCKS5 remote DNS, HTTPS CONNECT/SNI,
+certificate acceptance/rejection and cookie isolation. Separate pooling cases
+prove default connection reuse, sequential idle-connection expiry and DNS endpoint
+change, and survival of an active response. The expiry tests use a zero lifetime
+to force the production renewal path deterministically; they do not wait 30
+minutes or depend on changing public DNS.
+
+The broader offline suites passed **768 Common**, **3,618 Core**, **8 API** and
+**65 Host** cases: **4,459 passed**, with existing platform/fixture skips. Legacy
+external provider/updater fixtures remain excluded from the offline Core run. DNS
+interruption/failure is tested through an injected resolver sharing the production
+connector path; the operating system's resolver is not artificially stalled.
+
+Locked backend and frontend builds and fresh Linux x64/musl-x64 packages passed.
+The combined local validator then passed **231 checks, zero failures**: package
+**14**, app **15**, current restore **39**, genuine .NET 6 upgrade **27**, media
+**42**, cancellation **38**, actual Dockerfile **53**, and **three unchanged-input
+checks**. All library homes, metadata endpoints and media were synthetic. No
+GitHub workflow was changed or run; the existing development service and
+production appdata/media were unchanged. Native ARM64/P01 and broader P09/P21
+acceptance remain open. **P12 is the next implementation slice.**
 
 ### P12
 
