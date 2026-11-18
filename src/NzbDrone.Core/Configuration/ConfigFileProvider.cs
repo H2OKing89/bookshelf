@@ -38,6 +38,7 @@ namespace NzbDrone.Core.Configuration
         string LogLevel { get; }
         string ConsoleLogLevel { get; }
         bool LogSql { get; }
+        bool LogDbEnabled { get; }
         int LogRotate { get; }
         string Branch { get; }
         string ApiKey { get; }
@@ -231,6 +232,7 @@ namespace NzbDrone.Core.Configuration
         public int PostgresPort => (_postgresOptions?.Port ?? 0) != 0 ? _postgresOptions.Port : GetValueInt("PostgresPort", 5432, persist: false);
 
         public string Theme => _appOptions.Theme ?? GetValue("Theme", "auto", persist: false);
+        public bool LogDbEnabled => _logOptions.DbEnabled ?? GetValueBoolean("LogDbEnabled", true, persist: false);
         public bool LogSql => _logOptions.Sql ?? GetValueBoolean("LogSql", false, persist: false);
         public int LogRotate => _logOptions.Rotate ?? GetValueInt("LogRotate", 50, persist: false);
         public string SslCertPath => _serverOptions.SslCertPath ?? GetValue("SslCertPath", "");

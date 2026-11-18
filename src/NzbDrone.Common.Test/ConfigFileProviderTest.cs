@@ -290,6 +290,71 @@ namespace NzbDrone.Common.Test
         }
 
         [Test]
+        public void sql_log_storage_should_default_to_enabled_without_rewriting_the_config()
+        {
+            _configFileContents = "<Config><Port>19987</Port></Config>";
+
+            Subject.LogDbEnabled.Should().BeTrue();
+
+            _configFileContents.Should().Be("<Config><Port>19987</Port></Config>");
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void sql_log_storage_should_honor_an_explicit_saved_value(bool enabled)
+        {
+            _configFileContents = "<Config><LogDbEnabled>" + enabled + "</LogDbEnabled></Config>";
+
+            Subject.LogDbEnabled.Should().Be(enabled);
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        [NonParallelizable]
+        public void sql_log_storage_environment_option_should_override_xml_without_rewriting_it(bool enabled)
+        {
+            const string environmentKey = "Readarr__Log__DbEnabled";
+            var previousValue = Environment.GetEnvironmentVariable(environmentKey);
+            try
+            {
+                Environment.SetEnvironmentVariable(environmentKey, enabled.ToString());
+                var logOptions = new LogOptions();
+                new ConfigurationBuilder().AddEnvironmentVariables().Build()
+                    .GetSection("Readarr:Log").Bind(logOptions);
+                Mocker.GetMock<IOptions<LogOptions>>().Setup(options => options.Value).Returns(logOptions);
+                _configFileContents = "<Config><LogDbEnabled>" + !enabled + "</LogDbEnabled></Config>";
+
+                Subject.LogDbEnabled.Should().Be(enabled);
+                XDocument.Parse(_configFileContents).Root.Element("LogDbEnabled").Value.Should().Be((!enabled).ToString());
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(environmentKey, previousValue);
+            }
+        }
+
+        [Test]
+        public void saving_other_settings_should_preserve_disabled_sql_logs_and_saved_credentials()
+        {
+            const string apiKey = "0123456789abcdef0123456789abcdef";
+            const string password = "Synthetic password; preserved";
+            _configFileContents = "<Config><LogDbEnabled>False</LogDbEnabled><ApiKey>" + apiKey + "</ApiKey>" +
+                "<PostgresPassword>" + password + "</PostgresPassword><PostgresMainDb>owned-main</PostgresMainDb>" +
+                "<PostgresCacheDb>owned-cache</PostgresCacheDb></Config>";
+
+            Subject.SaveConfigDictionary(new Dictionary<string, object> { { "Port", 19987 } });
+
+            Subject.LogDbEnabled.Should().BeFalse();
+            Subject.Port.Should().Be(19987);
+            var saved = XDocument.Parse(_configFileContents).Root;
+            saved.Element("LogDbEnabled").Value.Should().Be("False");
+            saved.Element("ApiKey").Value.Should().Be(apiKey);
+            saved.Element("PostgresPassword").Value.Should().Be(password);
+            saved.Element("PostgresMainDb").Value.Should().Be("owned-main");
+            saved.Element("PostgresCacheDb").Value.Should().Be("owned-cache");
+        }
+
+        [Test]
         public void should_throw_if_config_file_is_empty()
         {
             Mocker.GetMock<IDiskProvider>()

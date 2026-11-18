@@ -5,6 +5,7 @@ namespace NzbDrone.Core.Datastore
 {
     public interface ILogDatabase : IDatabase
     {
+        bool IsEnabled { get; }
     }
 
     public class LogDatabase : ILogDatabase
@@ -17,6 +18,8 @@ namespace NzbDrone.Core.Datastore
             _database = database;
             _databaseType = _database == null ? DatabaseType.SQLite : _database.DatabaseType;
         }
+
+        public bool IsEnabled => _database != null;
 
         public IDbConnection OpenConnection()
         {

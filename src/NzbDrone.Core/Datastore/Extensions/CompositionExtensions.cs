@@ -5,10 +5,18 @@ namespace NzbDrone.Core.Datastore.Extensions
 {
     public static class CompositionExtensions
     {
-        public static IContainer AddDatabase(this IContainer container)
+        public static IContainer AddDatabase(this IContainer container, bool logDbEnabled = true)
         {
             container.RegisterDelegate<IDbFactory, IMainDatabase>(f => new MainDatabase(f.Create()), Reuse.Singleton);
-            container.RegisterDelegate<IDbFactory, ILogDatabase>(f => new LogDatabase(f.Create(MigrationType.Log)), Reuse.Singleton);
+            if (logDbEnabled)
+            {
+                container.RegisterDelegate<IDbFactory, ILogDatabase>(f => new LogDatabase(f.Create(MigrationType.Log)), Reuse.Singleton);
+            }
+            else
+            {
+                container.RegisterInstance<ILogDatabase>(new LogDatabase(null));
+            }
+
             container.RegisterDelegate<IDbFactory, ICacheDatabase>(f => new CacheDatabase(f.Create(MigrationType.Cache)), Reuse.Singleton);
 
             return container;

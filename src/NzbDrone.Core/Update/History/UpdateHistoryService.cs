@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using NLog;
 using NzbDrone.Common.EnvironmentInfo;
+using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Lifecycle;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Update.History.Events;
@@ -17,19 +18,29 @@ namespace NzbDrone.Core.Update.History
     public class UpdateHistoryService : IUpdateHistoryService, IHandle<ApplicationStartedEvent>, IHandleAsync<ApplicationStartedEvent>
     {
         private readonly IUpdateHistoryRepository _repository;
+        private readonly ILogDatabase _logDatabase;
         private readonly IEventAggregator _eventAggregator;
         private readonly Logger _logger;
         private Version _prevVersion;
 
-        public UpdateHistoryService(IUpdateHistoryRepository repository, IEventAggregator eventAggregator, Logger logger)
+        public UpdateHistoryService(IUpdateHistoryRepository repository,
+                                    IEventAggregator eventAggregator,
+                                    Logger logger,
+                                    ILogDatabase logDatabase)
         {
             _repository = repository;
+            _logDatabase = logDatabase;
             _eventAggregator = eventAggregator;
             _logger = logger;
         }
 
         public Version PreviouslyInstalled()
         {
+            if (!_logDatabase.IsEnabled)
+            {
+                return null;
+            }
+
             try
             {
                 var history = _repository.PreviouslyInstalled();
@@ -45,6 +56,11 @@ namespace NzbDrone.Core.Update.History
 
         public List<UpdateHistory> InstalledSince(DateTime dateTime)
         {
+            if (!_logDatabase.IsEnabled)
+            {
+                return new List<UpdateHistory>();
+            }
+
             try
             {
                 return _repository.InstalledSince(dateTime);
@@ -58,9 +74,9 @@ namespace NzbDrone.Core.Update.History
 
         public void Handle(ApplicationStartedEvent message)
         {
-            if (BuildInfo.Version.Major == 10)
+            if (!_logDatabase.IsEnabled || BuildInfo.Version.Major == 10)
             {
-                // Don't save dev versions, they change constantly
+                // Disabled SQL logging and rapidly changing development builds do not record installs.
                 return;
             }
 
@@ -77,16 +93,16 @@ namespace NzbDrone.Core.Update.History
             }
 
             if (history == null || history.Version != BuildInfo.Version)
-                {
-                    _prevVersion = history?.Version;
+            {
+                _prevVersion = history?.Version;
 
-                    _repository.Insert(new UpdateHistory
-                    {
-                        Date = DateTime.UtcNow,
-                        Version = BuildInfo.Version,
-                        EventType = UpdateHistoryEventType.Installed
-                    });
-                }
+                _repository.Insert(new UpdateHistory
+                {
+                    Date = DateTime.UtcNow,
+                    Version = BuildInfo.Version,
+                    EventType = UpdateHistoryEventType.Installed
+                });
+            }
         }
 
         public void HandleAsync(ApplicationStartedEvent message)

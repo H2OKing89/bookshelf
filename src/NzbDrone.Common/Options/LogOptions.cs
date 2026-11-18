@@ -5,6 +5,7 @@ public class LogOptions
     public string Level { get; set; }
     public int? Rotate { get; set; }
     public bool? Sql { get; set; }
+    public bool? DbEnabled { get; set; }
     public string ConsoleLevel { get; set; }
     public string SyslogServer { get; set; }
     public int? SyslogPort { get; set; }

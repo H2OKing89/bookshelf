@@ -93,7 +93,7 @@ namespace NzbDrone.Host
                             {
                                 c.AutoAddServices(Bootstrap.ASSEMBLIES)
                                     .AddNzbDroneLogger()
-                                    .AddDatabase()
+                                    .AddDatabase(IsLogDatabaseEnabled(config))
                                     .AddStartupContext(startupContext)
                                     .Resolve<UtilityModeRouter>()
                                     .Route(appMode);
@@ -158,7 +158,7 @@ namespace NzbDrone.Host
                 {
                     c.AutoAddServices(Bootstrap.ASSEMBLIES)
                         .AddNzbDroneLogger()
-                        .AddDatabase()
+                        .AddDatabase(IsLogDatabaseEnabled(config))
                         .AddStartupContext(context)
                         .Resolve<IEventAggregator>().PublishEvent(new ApplicationStartingEvent());
                 })
@@ -192,6 +192,12 @@ namespace NzbDrone.Host
                     });
                     builder.UseStartup<Startup>();
                 });
+        }
+
+        private static bool IsLogDatabaseEnabled(IConfiguration configuration)
+        {
+            return configuration.GetValue<bool?>($"Readarr:Log:{nameof(LogOptions.DbEnabled)}") ??
+                configuration.GetValue(nameof(ConfigFileProvider.LogDbEnabled), true);
         }
 
         public static ApplicationModes GetApplicationMode(IStartupContext startupContext)
