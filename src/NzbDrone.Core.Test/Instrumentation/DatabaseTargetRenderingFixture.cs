@@ -4,6 +4,7 @@ using System.Globalization;
 using FluentAssertions;
 using Moq;
 using NLog;
+using Npgsql;
 using NUnit.Framework;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Datastore.Migration.Framework;
@@ -134,6 +135,21 @@ namespace NzbDrone.Core.Test.Instrumentation
             using var target = new ExposedDatabaseTarget(factory.Object);
 
             Assert.Throws<SQLiteException>(() => target.WriteEntry(new LogEventInfo(LogLevel.Info, "Caller", "?apikey=" + Secret)));
+        }
+
+        [TestCase("Unrecognized Option=database-render-secret-12345")]
+        [TestCase("Host='database-render-secret-12345;Password=unterminated")]
+        public void postgres_provider_failures_should_not_reach_nlog_internal_diagnostics_with_configuration(string connection)
+        {
+            var factory = new Mock<IConnectionStringFactory>();
+            factory.SetupGet(item => item.LogDbConnection).Returns(new DatabaseConnectionInfo(DatabaseType.PostgreSQL, connection));
+            using var target = new ExposedDatabaseTarget(factory.Object);
+
+            var failure = Assert.Throws<NpgsqlException>(() => target.WriteEntry(new LogEventInfo(LogLevel.Info, "Caller", "ordinary log event")));
+
+            failure.InnerException.Should().BeNull();
+            failure.Message.Should().Be("Unable to save log event to PostgreSQL database.");
+            failure.ToString().Should().NotContain(Secret);
         }
 
         public class ExposedDatabaseTarget : DatabaseTarget

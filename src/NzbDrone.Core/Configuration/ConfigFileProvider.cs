@@ -26,6 +26,7 @@ namespace NzbDrone.Core.Configuration
         Dictionary<string, object> GetConfigDictionary();
         void SaveConfigDictionary(Dictionary<string, object> configValues);
         void EnsureDefaultConfigFile();
+        bool HasPostgresComponentSettings();
 
         string BindAddress { get; }
         string TrustedNetworks { get; }
@@ -61,6 +62,9 @@ namespace NzbDrone.Core.Configuration
         string PostgresMainDb { get; }
         string PostgresLogDb { get; }
         string PostgresCacheDb { get; }
+        string PostgresMainDbConnectionString { get; }
+        string PostgresLogDbConnectionString { get; }
+        string PostgresCacheDbConnectionString { get; }
         bool TrustCgnatIpAddresses { get; }
     }
 
@@ -97,7 +101,17 @@ namespace NzbDrone.Core.Configuration
             _eventAggregator = eventAggregator;
             _diskProvider = diskProvider;
             _configFile = appFolderInfo.GetConfigPath();
-            _postgresOptions = postgresOptions.Value;
+
+            try
+            {
+                _postgresOptions = postgresOptions.Value;
+            }
+            catch (Exception error) when (error is InvalidOperationException or ArgumentException or FormatException or OverflowException)
+            {
+                // Options binding can echo a malformed port or a connection-string value.
+                throw new InvalidConfigFileException("PostgreSQL configuration is invalid. Check the Readarr:Postgres option names and value types.");
+            }
+
             _authOptions = authOptions.Value;
             _appOptions = appOptions.Value;
             _serverOptions = serverOptions.Value;
@@ -229,7 +243,33 @@ namespace NzbDrone.Core.Configuration
         public string PostgresMainDb => _postgresOptions?.MainDb ?? GetValue("PostgresMainDb", "readarr-main", persist: false);
         public string PostgresLogDb => _postgresOptions?.LogDb ?? GetValue("PostgresLogDb", "readarr-log", persist: false);
         public string PostgresCacheDb => _postgresOptions?.CacheDb ?? GetValue("PostgresCacheDb", "readarr-cache", persist: false);
-        public int PostgresPort => (_postgresOptions?.Port ?? 0) != 0 ? _postgresOptions.Port : GetValueInt("PostgresPort", 5432, persist: false);
+        public string PostgresMainDbConnectionString => _postgresOptions?.MainDbConnectionString ?? GetValue("PostgresMainDbConnectionString", string.Empty, persist: false);
+        public string PostgresLogDbConnectionString => _postgresOptions?.LogDbConnectionString ?? GetValue("PostgresLogDbConnectionString", string.Empty, persist: false);
+        public string PostgresCacheDbConnectionString => _postgresOptions?.CacheDbConnectionString ?? GetValue("PostgresCacheDbConnectionString", string.Empty, persist: false);
+        public int PostgresPort => (_postgresOptions?.Port ?? 0) != 0 ? _postgresOptions.Port.Value : GetValueInt("PostgresPort", 5432, persist: false);
+
+        public bool HasPostgresComponentSettings()
+        {
+            // Effective values contain defaults, so inspect presence separately.
+            // An explicitly supplied default port is still a mixed source.
+            if (_postgresOptions?.Host != null || _postgresOptions?.User != null ||
+                _postgresOptions?.Password != null || _postgresOptions?.Port.HasValue == true ||
+                _postgresOptions?.ConfiguredPort != null ||
+                _postgresOptions?.MainDb != null || _postgresOptions?.CacheDb != null ||
+                (LogDbEnabled && _postgresOptions?.LogDb != null))
+            {
+                return true;
+            }
+
+            var componentNames = new[]
+            {
+                nameof(PostgresHost), nameof(PostgresUser), nameof(PostgresPassword),
+                nameof(PostgresPort), nameof(PostgresMainDb), nameof(PostgresCacheDb)
+            };
+            var config = LoadConfigFile().Descendants(CONFIG_ELEMENT_NAME).Single();
+            return config.Descendants().Any(element => componentNames.Contains(element.Name.LocalName) ||
+                (LogDbEnabled && element.Name.LocalName == nameof(PostgresLogDb)));
+        }
 
         public string Theme => _appOptions.Theme ?? GetValue("Theme", "auto", persist: false);
         public bool LogDbEnabled => _logOptions.DbEnabled ?? GetValueBoolean("LogDbEnabled", true, persist: false);
@@ -436,9 +476,10 @@ namespace NzbDrone.Core.Configuration
                     return newXDoc;
                 }
             }
-            catch (XmlException ex)
+            catch (XmlException)
             {
-                throw new InvalidConfigFileException($"{_configFile} is corrupt is invalid. Please delete the config file and Readarr will recreate it.", ex);
+                // XML parser details may contain an uploaded connection string or credential.
+                throw new InvalidConfigFileException($"{_configFile} is corrupt is invalid. Please delete the config file and Readarr will recreate it.");
             }
             catch (UnauthorizedAccessException ex)
             {

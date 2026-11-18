@@ -102,7 +102,7 @@ namespace NzbDrone.Common.Test.InstrumentationTests
             cleansedMessage.Should().NotContain("01233210");
         }
 
-        [TestCase(@"[Info] MigrationController: *** Migrating Database=radarr-main;Host=postgres14;Username=mySecret;Password=mySecret;Port=5432;token=mySecret;Enlist=False&username=mySecret;mypassword=mySecret;mypass=shouldkeep1;test_token=mySecret;password=123%@%_@!#^#@;use_password=mySecret;get_token=shouldkeep2;usetoken=shouldkeep3;passwrd=mySecret;")]
+        [TestCase(@"[Info] Provider: token=mySecret&username=mySecret&mypassword=mySecret&mypass=shouldkeep1&test_token=mySecret&password=123%@%_@!#^#@&use_password=mySecret&get_token=shouldkeep2&usetoken=shouldkeep3&passwrd=mySecret;")]
         public void should_keep_message(string message)
         {
             var cleansedMessage = CleanseLogMessage.Cleanse(message);

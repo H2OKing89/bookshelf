@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Net;
 using System.Threading.Tasks;
@@ -5,6 +7,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using NLog;
+using Npgsql;
 using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Exceptions;
@@ -28,6 +31,18 @@ namespace Readarr.Http.ErrorManagement
             var response = context.Response;
             var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
             var exception = exceptionHandlerPathFeature?.Error;
+
+            if (ContainsPostgresFailure(exception))
+            {
+                // A provider exception may contain a role, database, certificate
+                // path or connection-string value even when its password is hidden.
+                // Do not render the original exception for either HTTP or logging.
+                const string message = "PostgreSQL database request failed.";
+                _logger.Error(message);
+                await new ErrorModel { Message = message, Description = message }
+                    .WriteToResponse(response, HttpStatusCode.InternalServerError);
+                return;
+            }
 
             var statusCode = HttpStatusCode.InternalServerError;
             var errorModel = new ErrorModel
@@ -82,6 +97,46 @@ namespace Readarr.Http.ErrorManagement
             }
 
             await errorModel.WriteToResponse(response, statusCode);
+        }
+
+        private static bool ContainsPostgresFailure(Exception exception)
+        {
+            if (exception == null)
+            {
+                return false;
+            }
+
+            const int maximumExceptions = 64;
+            var pending = new Stack<Exception>();
+            pending.Push(exception);
+            for (var visited = 0; visited < maximumExceptions && pending.Count > 0; visited++)
+            {
+                var current = pending.Pop();
+                if (current is NpgsqlException)
+                {
+                    return true;
+                }
+
+                if (current is AggregateException aggregate)
+                {
+                    if (aggregate.InnerExceptions.Count + pending.Count > maximumExceptions)
+                    {
+                        return true;
+                    }
+
+                    foreach (var inner in aggregate.InnerExceptions)
+                    {
+                        pending.Push(inner);
+                    }
+                }
+                else if (current.InnerException != null)
+                {
+                    pending.Push(current.InnerException);
+                }
+            }
+
+            // Excessively deep/broad wrappers are not safe to render in full.
+            return pending.Count > 0;
         }
     }
 }

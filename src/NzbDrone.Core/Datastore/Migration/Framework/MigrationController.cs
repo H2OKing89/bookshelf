@@ -8,6 +8,7 @@ using FluentMigrator.Runner.Initialization;
 using FluentMigrator.Runner.Processors;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NLog;
 
 namespace NzbDrone.Core.Datastore.Migration.Framework
@@ -42,8 +43,13 @@ namespace NzbDrone.Core.Datastore.Migration.Framework
                 _ => throw new NotSupportedException($"Unknown database type: {databaseType}")
             };
 
+            // Runner diagnostics can embed unlabelled server authentication
+            // fields. Our migration classes still report stages and versions;
+            // DbFactory reports only safe PostgreSQL failure codes.
             using var serviceProvider = new ServiceCollection()
-                .AddLogging(b => b.AddProvider(_migrationLoggerProvider))
+                .AddLogging(b => b.AddProvider(databaseType == DatabaseType.PostgreSQL
+                    ? NullLoggerProvider.Instance
+                    : _migrationLoggerProvider))
                 .AddFluentMigratorCore()
                 .Configure<RunnerOptions>(cfg => cfg.IncludeUntaggedMaintenances = true)
                 .ConfigureRunner(

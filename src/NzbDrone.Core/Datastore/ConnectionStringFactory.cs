@@ -2,6 +2,7 @@
 using System.Data.SQLite;
 using Npgsql;
 using NzbDrone.Common.EnvironmentInfo;
+using NzbDrone.Common.Exceptions;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Configuration;
 
@@ -23,6 +24,30 @@ namespace NzbDrone.Core.Datastore
         {
             _configFileProvider = configFileProvider;
 
+            var main = _configFileProvider.PostgresMainDbConnectionString;
+            var cache = _configFileProvider.PostgresCacheDbConnectionString;
+            var logEnabled = _configFileProvider.LogDbEnabled;
+            var log = logEnabled ? _configFileProvider.PostgresLogDbConnectionString : null;
+            var usesConnectionStrings = main.IsNotNullOrWhiteSpace() || cache.IsNotNullOrWhiteSpace() || log.IsNotNullOrWhiteSpace();
+            if (usesConnectionStrings)
+            {
+                if (_configFileProvider.HasPostgresComponentSettings())
+                {
+                    throw new ReadarrStartupException("PostgreSQL connection strings cannot be combined with individual PostgreSQL settings.");
+                }
+
+                if (main.IsNullOrWhiteSpace() || cache.IsNullOrWhiteSpace() || (logEnabled && log.IsNullOrWhiteSpace()))
+                {
+                    throw new ReadarrStartupException("PostgreSQL connection strings require MainDbConnectionString and CacheDbConnectionString, plus LogDbConnectionString when database logging is enabled.");
+                }
+
+                MainDbConnection = GetPostgresConnectionInfo(main, "main");
+                CacheDbConnection = GetPostgresConnectionInfo(cache, "cache");
+                LogDbConnection = logEnabled ? GetPostgresConnectionInfo(log, "log") : null;
+                return;
+            }
+
+            // Keep legacy component selection and defaults when full strings are absent.
             MainDbConnection = _configFileProvider.PostgresHost.IsNotNullOrWhiteSpace() ? GetPostgresConnectionString(_configFileProvider.PostgresMainDb) :
                 GetConnectionString(appFolderInfo.GetDatabase());
 
@@ -65,6 +90,29 @@ namespace NzbDrone.Core.Datastore
             }
 
             return new DatabaseConnectionInfo(DatabaseType.SQLite, connectionBuilder.ConnectionString);
+        }
+
+        private static DatabaseConnectionInfo GetPostgresConnectionInfo(string connectionString, string role)
+        {
+            try
+            {
+                var builder = new NpgsqlConnectionStringBuilder(connectionString)
+                {
+                    Enlist = false
+                };
+                if (builder.Host.IsNullOrWhiteSpace() || builder.Database.IsNullOrWhiteSpace())
+                {
+                    throw new ArgumentException();
+                }
+
+                return new DatabaseConnectionInfo(DatabaseType.PostgreSQL, builder.ConnectionString);
+            }
+            catch (Exception error) when (error is ArgumentException or FormatException or OverflowException)
+            {
+                // Provider parser errors may include the password or arbitrary values.
+                // Never retain them as an inner exception or echo the supplied string.
+                throw new ReadarrStartupException($"The PostgreSQL {role} connection string is invalid; Host and Database are required.");
+            }
         }
 
         private DatabaseConnectionInfo GetPostgresConnectionString(string dbName)

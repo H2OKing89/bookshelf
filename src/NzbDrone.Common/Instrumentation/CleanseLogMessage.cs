@@ -12,12 +12,27 @@ namespace NzbDrone.Common.Instrumentation
     public class CleanseLogMessage
     {
         private const string FailedMessage = "(removed, log message could not be safely cleansed)";
+        private const string DatabaseConfigurationMessage = "(removed, database connection configuration)";
         private const int MaximumMessageLength = 64 * 1024;
         private static readonly TimeSpan MatchTimeout = TimeSpan.FromMilliseconds(100);
         private static readonly TimeSpan CleansingBudget = TimeSpan.FromSeconds(1);
 
+        private static readonly Regex DatabaseConfigurationRegex = new (
+            @"(?:Postgres(?:Main|Log|Cache)DbConnectionString|Readarr(?:__|:)Postgres(?:__|:)(?:Main|Log|Cache)DbConnectionString)[""']?\s*[:=]|<\s*Postgres(?:Main|Log|Cache)DbConnectionString\s*>",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+            MatchTimeout);
+
+        private static readonly Regex DatabaseConnectionRegex = new (
+            @"(?<!\w)(?:Host|Server|Data\s+Source|Database|Initial\s+Catalog|User\s+ID)\s*=",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+            MatchTimeout);
+
         private static readonly Regex[] CleansingRules =
         {
+            // Connection-string quoting permits embedded separators and escaped quotes.
+            // Consume an unterminated quoted value through the end rather than leaking a suffix.
+            new (@"\b\w*(?:password|passwrd|pwd|username|user\s+id|uid)\s*=\s*(?<secret>""(?:[^""]|"""")*(?:""|$)|'(?:[^']|'')*(?:'|$)|[^;\r\n&]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, MatchTimeout),
+
             // Url
             new (@"(?<=\?|&|: )((?:api|auth|pass)?key|(?:access[-_]?)?token|auth|user|uid|api|[a-z_]*apikey|account|passwd)=(?<secret>[^&=""]+?)(?=[ ""&=]|$)", RegexOptions.Compiled | RegexOptions.IgnoreCase, MatchTimeout),
             new (@"(?<=\?|&)[^=&?]*?(username|password)=(?<secret>[^&=]+?)(?= |&|$)", RegexOptions.Compiled | RegexOptions.IgnoreCase, MatchTimeout),
@@ -112,6 +127,15 @@ namespace NzbDrone.Common.Instrumentation
             var elapsed = Stopwatch.StartNew();
             try
             {
+                // A full database string may contain passwords, certificates and
+                // provider options with their own escaping. Do not partially redact it.
+                CheckBudget(elapsed);
+                if (DatabaseConfigurationRegex.IsMatch(message) ||
+                    (message.Contains(';') && DatabaseConnectionRegex.IsMatch(message)))
+                {
+                    return DatabaseConfigurationMessage;
+                }
+
                 foreach (var regex in rules)
                 {
                     if (regex.MatchTimeout == Regex.InfiniteMatchTimeout || regex.MatchTimeout > MatchTimeout)

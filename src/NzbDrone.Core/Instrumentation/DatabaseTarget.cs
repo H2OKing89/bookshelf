@@ -138,7 +138,17 @@ namespace NzbDrone.Core.Instrumentation
                 }
                 else
                 {
-                    WritePostgresLog(log, connectionInfo.ConnectionString);
+                    try
+                    {
+                        WritePostgresLog(log, connectionInfo.ConnectionString);
+                    }
+                    catch (Exception)
+                    {
+                        // NLog's internal diagnostics bypass the application's
+                        // cleansing layouts. Never pass provider configuration,
+                        // certificate paths or server messages to that boundary.
+                        throw new NpgsqlException("Unable to save log event to PostgreSQL database.");
+                    }
                 }
             }
             catch (SQLiteException ex)

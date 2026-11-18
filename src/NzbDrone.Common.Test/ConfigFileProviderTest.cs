@@ -3,15 +3,20 @@ using System.Collections.Generic;
 using System.Xml.Linq;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework;
+using NzbDrone.Common.Cache;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.EnvironmentInfo;
+using NzbDrone.Common.Exceptions;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Options;
 using NzbDrone.Core.Authentication;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Datastore;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Test.Common;
 
 namespace NzbDrone.Common.Test
@@ -354,6 +359,191 @@ namespace NzbDrone.Common.Test
             saved.Element("PostgresCacheDb").Value.Should().Be("owned-cache");
         }
 
+        [TestCase("Main")]
+        [TestCase("Cache")]
+        [TestCase("Log")]
+        public void postgres_connection_strings_should_read_saved_values_without_persisting_defaults(string role)
+        {
+            var key = "Postgres" + role + "DbConnectionString";
+            const string value = "Host=synthetic.invalid;Database=owned;Password=\" secret;with='quotes' \"";
+            _configFileContents = new XElement("Config", new XElement(key, value)).ToString();
+
+            PostgresConnectionString(role).Should().Be(value);
+            Subject.HasPostgresComponentSettings().Should().BeFalse();
+            XDocument.Parse(_configFileContents).Root.Elements().Should().ContainSingle();
+        }
+
+        [Test]
+        public void absent_postgres_connection_strings_and_component_defaults_should_not_select_or_persist_postgres()
+        {
+            _configFileContents = "<Config><Port>19987</Port></Config>";
+
+            Subject.PostgresMainDbConnectionString.Should().BeEmpty();
+            Subject.PostgresCacheDbConnectionString.Should().BeEmpty();
+            Subject.PostgresLogDbConnectionString.Should().BeEmpty();
+            Subject.PostgresPort.Should().Be(5432);
+            Subject.PostgresMainDb.Should().Be("readarr-main");
+            Subject.PostgresCacheDb.Should().Be("readarr-cache");
+            Subject.HasPostgresComponentSettings().Should().BeFalse();
+            _configFileContents.Should().Be("<Config><Port>19987</Port></Config>");
+        }
+
+        [Test]
+        public void binding_only_full_strings_should_not_invent_an_explicit_component_port()
+        {
+            var options = new PostgresOptions();
+            new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string>
+            {
+                { "MainDbConnectionString", "Host=synthetic.invalid;Database=owned-main" },
+                { "CacheDbConnectionString", "Host=synthetic.invalid;Database=owned-cache" },
+                { "LogDbConnectionString", "Host=synthetic.invalid;Database=owned-log" }
+            }).Build().Bind(options);
+            Mocker.GetMock<IOptions<PostgresOptions>>().Setup(item => item.Value).Returns(options);
+
+            options.Port.Should().BeNull();
+            options.ConfiguredPort.Should().BeNull();
+            Subject.PostgresPort.Should().Be(5432);
+            Subject.HasPostgresComponentSettings().Should().BeFalse();
+            Subject.PostgresMainDbConnectionString.Should().Contain("owned-main");
+        }
+
+        [Test]
+        public void an_explicit_empty_bound_port_should_conflict_with_full_strings_without_changing_legacy_port_defaults()
+        {
+            var options = new PostgresOptions();
+            new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string>
+            {
+                { "Port", string.Empty },
+                { "MainDbConnectionString", "Host=synthetic.invalid;Database=owned-main" },
+                { "CacheDbConnectionString", "Host=synthetic.invalid;Database=owned-cache" },
+                { "LogDbConnectionString", "Host=synthetic.invalid;Database=owned-log" }
+            }).Build().Bind(options);
+            Mocker.GetMock<IOptions<PostgresOptions>>().Setup(item => item.Value).Returns(options);
+
+            options.Port.Should().BeNull();
+            options.ConfiguredPort.Should().BeEmpty();
+            Subject.PostgresPort.Should().Be(5432);
+            Subject.HasPostgresComponentSettings().Should().BeTrue();
+            var error = Assert.Throws<ReadarrStartupException>(() => new ConnectionStringFactory(Mocker.Resolve<IAppFolderInfo>(), Subject));
+            error.InnerException.Should().BeNull();
+            error.ToString().Should().NotContain("synthetic.invalid");
+        }
+
+        [TestCase("PostgresHost", "")]
+        [TestCase("PostgresUser", "")]
+        [TestCase("PostgresPassword", "")]
+        [TestCase("PostgresPort", "5432")]
+        [TestCase("PostgresPort", "0")]
+        [TestCase("PostgresMainDb", "readarr-main")]
+        [TestCase("PostgresCacheDb", "readarr-cache")]
+        [TestCase("PostgresLogDb", "readarr-log")]
+        public void explicit_saved_component_presence_should_be_detected_even_when_equal_to_a_default(string key, string value)
+        {
+            _configFileContents = new XElement("Config", new XElement(key, value)).ToString();
+
+            Subject.HasPostgresComponentSettings().Should().BeTrue();
+        }
+
+        [TestCase("Host", "")]
+        [TestCase("User", "")]
+        [TestCase("Password", "")]
+        [TestCase("Port", "5432")]
+        [TestCase("Port", "0")]
+        [TestCase("MainDb", "readarr-main")]
+        [TestCase("CacheDb", "readarr-cache")]
+        [TestCase("LogDb", "readarr-log")]
+        public void bound_component_presence_should_be_detected_without_confusing_it_with_defaults(string key, string value)
+        {
+            var options = new PostgresOptions();
+            new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string> { { key, value } })
+                .Build().Bind(options);
+            Mocker.GetMock<IOptions<PostgresOptions>>().Setup(item => item.Value).Returns(options);
+
+            Subject.HasPostgresComponentSettings().Should().BeTrue();
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void component_log_name_should_be_ignored_only_while_database_logging_is_disabled(bool enabled)
+        {
+            _configFileContents = new XElement(
+                "Config",
+                new XElement("LogDbEnabled", enabled),
+                new XElement("PostgresLogDb", "ignored-log-name")).ToString();
+            Mocker.GetMock<IOptions<PostgresOptions>>().Setup(item => item.Value)
+                .Returns(new PostgresOptions { LogDb = "ignored-environment-log-name" });
+
+            Subject.HasPostgresComponentSettings().Should().Be(enabled);
+        }
+
+        [TestCase("Main")]
+        [TestCase("Cache")]
+        [TestCase("Log")]
+        [NonParallelizable]
+        public void postgres_connection_string_environment_values_should_override_xml_without_being_persisted(string role)
+        {
+            var environmentKey = "Readarr__Postgres__" + role + "DbConnectionString";
+            var previous = Environment.GetEnvironmentVariable(environmentKey);
+            const string secret = "Host=synthetic.invalid;Database=owned;Password=\" secret;with='quotes' \"";
+            try
+            {
+                Environment.SetEnvironmentVariable(environmentKey, secret);
+                var options = new PostgresOptions();
+                new ConfigurationBuilder().AddEnvironmentVariables().Build().GetSection("Readarr:Postgres").Bind(options);
+                Mocker.GetMock<IOptions<PostgresOptions>>().Setup(item => item.Value).Returns(options);
+                var key = "Postgres" + role + "DbConnectionString";
+                _configFileContents = new XElement("Config", new XElement(key, "Host=saved.invalid;Database=saved")).ToString();
+
+                PostgresConnectionString(role).Should().Be(secret);
+                Subject.SaveConfigDictionary(new Dictionary<string, object> { { "Port", 19987 } });
+
+                XDocument.Parse(_configFileContents).Root.Element(key).Value.Should().Be("Host=saved.invalid;Database=saved");
+                _configFileContents.Should().NotContain(secret);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(environmentKey, previous);
+            }
+        }
+
+        [Test]
+        public void generating_default_configuration_should_not_copy_environment_connection_strings_to_disk()
+        {
+            const string secret = "Host=synthetic.invalid;Database=owned;Password=environment-only-sentinel";
+            var options = new PostgresOptions
+            {
+                MainDbConnectionString = secret, CacheDbConnectionString = secret, LogDbConnectionString = secret
+            };
+            Mocker.GetMock<IOptions<PostgresOptions>>().Setup(item => item.Value).Returns(options);
+
+            Subject.EnsureDefaultConfigFile();
+
+            var saved = XDocument.Parse(_configFileContents).Root;
+            saved.Element("PostgresMainDbConnectionString").Should().BeNull();
+            saved.Element("PostgresCacheDbConnectionString").Should().BeNull();
+            saved.Element("PostgresLogDbConnectionString").Should().BeNull();
+            _configFileContents.Should().NotContain("environment-only-sentinel");
+        }
+
+        [Test]
+        public void saving_other_settings_should_preserve_saved_postgres_connection_strings_and_password_quoting()
+        {
+            const string secret = "Host=synthetic.invalid;Database=owned;Password=\" secret;with='quotes' \"";
+            _configFileContents = new XElement(
+                "Config",
+                new XElement("PostgresMainDbConnectionString", secret),
+                new XElement("PostgresCacheDbConnectionString", secret),
+                new XElement("PostgresLogDbConnectionString", secret)).ToString();
+
+            Subject.SaveConfigDictionary(new Dictionary<string, object> { { "Port", 19987 } });
+
+            var saved = XDocument.Parse(_configFileContents).Root;
+            saved.Element("PostgresMainDbConnectionString").Value.Should().Be(secret);
+            saved.Element("PostgresCacheDbConnectionString").Value.Should().Be(secret);
+            saved.Element("PostgresLogDbConnectionString").Value.Should().Be(secret);
+            Subject.HasPostgresComponentSettings().Should().BeFalse();
+        }
+
         [Test]
         public void should_throw_if_config_file_is_empty()
         {
@@ -378,6 +568,60 @@ namespace NzbDrone.Common.Test
             _configFileContents = "{ \"key\": \"value\" }";
 
             Assert.Throws<InvalidConfigFileException>(() => Subject.GetValue("key", "value"));
+        }
+
+        [Test]
+        public void invalid_xml_containing_postgres_credentials_should_not_retain_parser_details()
+        {
+            const string sentinel = "private-connection-credential";
+            _configFileContents = "<Config><PostgresMainDbConnectionString>Host=synthetic.invalid;Database=owned;Password=&" +
+                sentinel + ";</PostgresMainDbConnectionString></Config>";
+
+            var error = Assert.Throws<InvalidConfigFileException>(() => Subject.GetValue("PostgresMainDbConnectionString", string.Empty, false));
+
+            error.InnerException.Should().BeNull();
+            error.ToString().Should().NotContain(sentinel).And.NotContain("synthetic.invalid");
+        }
+
+        [Test]
+        public void malformed_postgres_option_binding_should_not_retain_configuration_values_in_errors()
+        {
+            const string sentinel = "private-port-conversion-credential";
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string>
+            {
+                { "Readarr:Postgres:Port", sentinel },
+                { "Readarr:Postgres:MainDbConnectionString", "Host=synthetic.invalid;Database=owned;Password=another-private-credential" }
+            }).Build();
+            var services = new ServiceCollection();
+            services.Configure<PostgresOptions>(configuration.GetSection("Readarr:Postgres"));
+            using var provider = services.BuildServiceProvider();
+            var postgresOptions = provider.GetRequiredService<IOptions<PostgresOptions>>();
+
+            var error = Assert.Throws<InvalidConfigFileException>(() => new ConfigFileProvider(
+                Mocker.Resolve<IAppFolderInfo>(),
+                Mocker.Resolve<ICacheManager>(),
+                Mocker.GetMock<IEventAggregator>().Object,
+                Mocker.GetMock<IDiskProvider>().Object,
+                postgresOptions,
+                Mocker.GetMock<IOptions<AuthOptions>>().Object,
+                Mocker.GetMock<IOptions<AppOptions>>().Object,
+                Mocker.GetMock<IOptions<ServerOptions>>().Object,
+                Mocker.GetMock<IOptions<UpdateOptions>>().Object,
+                Mocker.GetMock<IOptions<LogOptions>>().Object));
+
+            error.InnerException.Should().BeNull();
+            error.ToString().Should().NotContain(sentinel).And.NotContain("another-private-credential").And.NotContain("synthetic.invalid");
+        }
+
+        private string PostgresConnectionString(string role)
+        {
+            return role switch
+            {
+                "Main" => Subject.PostgresMainDbConnectionString,
+                "Cache" => Subject.PostgresCacheDbConnectionString,
+                "Log" => Subject.PostgresLogDbConnectionString,
+                _ => throw new ArgumentException("Unknown owned connection role")
+            };
         }
     }
 }

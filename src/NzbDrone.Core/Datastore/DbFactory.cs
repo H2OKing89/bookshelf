@@ -106,7 +106,7 @@ namespace NzbDrone.Core.Datastore
                 }
                 else
                 {
-                    conn = new NpgsqlConnection(connectionInfo.ConnectionString);
+                    return OpenPostgresConnection(connectionInfo.ConnectionString);
                 }
 
                 conn.Open();
@@ -142,7 +142,7 @@ namespace NzbDrone.Core.Datastore
 
                     while (true)
                     {
-                        Logger.Error(e, "Failure to connect to Postgres DB, {0} retries remaining", retryCount);
+                        Logger.Error("Failure to connect to Postgres DB, {0} retries remaining", retryCount);
 
                         Thread.Sleep(5000);
 
@@ -158,17 +158,22 @@ namespace NzbDrone.Core.Datastore
                                 continue;
                             }
 
-                            throw new ReadarrStartupException(ex, "Error creating main database");
+                            throw PostgresStartupError(MigrationType.Main, ex);
                         }
                     }
                 }
                 else
                 {
-                    throw new ReadarrStartupException(e, "Error creating main database");
+                    throw PostgresStartupError(MigrationType.Main, e);
                 }
             }
             catch (Exception e)
             {
+                if (databaseType == DatabaseType.PostgreSQL)
+                {
+                    throw PostgresStartupError(MigrationType.Main, e);
+                }
+
                 throw new ReadarrStartupException(e, "Error creating main database");
             }
         }
@@ -201,8 +206,59 @@ namespace NzbDrone.Core.Datastore
             }
             catch (Exception e)
             {
+                if (databaseType == DatabaseType.PostgreSQL)
+                {
+                    throw PostgresStartupError(migrationContext.MigrationType, e);
+                }
+
                 throw new ReadarrStartupException(e, "Error creating log database");
             }
+        }
+
+        private static DbConnection OpenPostgresConnection(string connectionString)
+        {
+            NpgsqlConnection connection = null;
+            try
+            {
+                connection = new NpgsqlConnection(connectionString);
+                connection.Open();
+                return connection;
+            }
+            catch (Exception)
+            {
+                try
+                {
+                    connection?.Dispose();
+                }
+                catch (Exception)
+                {
+                    // Cleanup failures must not expose connection settings either.
+                }
+
+                // Provider errors may contain credentials, server fields or TLS paths
+                // without key/value labels. Keep them out of API and command errors.
+                throw new NpgsqlException("Unable to open the PostgreSQL database. Check its connection settings and server availability.");
+            }
+        }
+
+        private static ReadarrStartupException PostgresStartupError(MigrationType database, Exception error)
+        {
+            var state = (error as PostgresException)?.SqlState;
+            var validState = state?.Length == 5;
+            if (validState)
+            {
+                foreach (var character in state)
+                {
+                    if (!char.IsAsciiDigit(character) && !char.IsAsciiLetterUpper(character))
+                    {
+                        validState = false;
+                        break;
+                    }
+                }
+            }
+
+            var code = validState ? $" (SQLSTATE {state})" : string.Empty;
+            return new ReadarrStartupException($"Error creating PostgreSQL {database} database{code}. Check its connection settings and server availability.");
         }
 
         private static bool IsCorruptDatabase(SQLiteException error)
