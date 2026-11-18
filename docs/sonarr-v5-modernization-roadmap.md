@@ -815,3 +815,44 @@ audited projects; license notices accompany the packages.
 No live application home was an input. The running dev service, production data
 and GitHub workflows were unchanged. Native ARM64/P01 and broader P09/P21 gates
 remain open. **P13, SQLite provider and busy-timeout compatibility, is next.**
+
+
+### P13 SQLite provider and lock behavior — 2026-11-17
+
+Implementation `238cc9a0e` and the
+[P13 evidence record](sonarr-v5-porting-backlog.md#p13)
+update the managed provider to **System.Data.SQLite 2.0.4** and bundles the pinned
+v5 donor's **SourceGear.sqlite3 / SQLite 3.53.4** engine. Loading is explicit and
+fails without the matching bundled asset. The new glibc asset requires **glibc
+2.34+**; musl uses its own binary. Exact package notices and RID checksums accompany
+the new [120-component dependency inventory](dependencies/2026-11-17-sqlite/summary.json),
+with zero NuGet-reported vulnerable packages across 25 projects.
+
+The new engine's default foreign-key enforcement exposed an incompatibility with
+Bookshelf's historical migrations. The connection factory explicitly retains the
+legacy disabled-enforcement policy; historical migrations remain untouched. Main,
+log and cache connections retain UTC/pooling/journaling behavior. Production
+repositories verify GUID TEXT storage and fractional UTC/local dates under two
+cultures and two non-UTC timezones.
+
+The v5 **1000 ms native busy timeout** passes paired contention measurements,
+while the **30-second default managed command timeout** remains separate. Both
+100/1000 ms policies recover from a briefly held writer and report BUSY within
+the measured command budget for a sustained lock; these results do not demonstrate
+a throughput improvement. **98 paired SQLite probe checks** cover exact multipart
+rows, concurrent readers/writers, online snapshots, cache/log writes, media
+preservation, interruption rollback and the next writer. Candidate provenance
+includes mapped engine bytes, source ID and compile options; a missing-engine
+clone fails without falling back to host SQLite.
+
+Backups use an unpooled staging destination, verify standalone journaling and
+integrity, close before rename, preserve prior backups on failure and reject
+source/symlink aliases. Stalled retries honor the source timeout, including
+explicit unlimited zero, without clearing unrelated connection pools.
+
+Local verification passes **4,538 source tests**, **23 PostgreSQL migration
+cases**, **73 Python tests**, **131 app/restore/cancellation/datastore checks** and
+**141 package/.NET 6 upgrade/media/Docker checks**. The fresh musl-ARM64 package
+passes **17 static checks**. Runtime acceptance on native ARM64 remains required,
+so **P13 stays In progress** for that gate. This work used no GitHub workflows and
+changed no running development service, production appdata or media.

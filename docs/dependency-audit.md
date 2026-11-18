@@ -12,7 +12,7 @@ separate. P01 and P09 are still **In progress** for the bounded gates below.
 **P12 migration dependencies (2026-11-16):** `bb4cd939e` replaces the Servarr
 FluentMigrator 3.3.2.9 umbrella with the three targeted FluentMigrator **8.0.1**
 runner components and updates Npgsql to **10.0.3**, matching the pinned v5 donor.
-The SQLite provider remains unchanged for P13. The
+This P12 slice left the SQLite provider update for P13. The
 [new inventory](dependencies/2026-11-16-migrations/summary.json) records **119
 package IDs / 119 exact components across 25 lockfiles**. Targeted runner
 references remove unused database-provider dependencies. The normalized
@@ -28,6 +28,43 @@ existing application identifiers retain their text schema/converter. Connection
 strings are omitted from migration-start logs. Pinned FluentMigrator/Npgsql
 license texts and source checksums accompany the delivery packages under
 `LICENSES/managed/`. Older dated dependency inventories remain historical records.
+
+## P13 SQLite provider and engine, 2026-11-17
+
+Current builds replace `System.Data.SQLite.Core.Servarr 1.0.115.5-18` with
+[`System.Data.SQLite 2.0.4`](https://www.nuget.org/packages/System.Data.SQLite/2.0.4)
+and the pinned v5 donor's separate
+[`SourceGear.sqlite3 3.53.4`](https://www.nuget.org/packages/SourceGear.sqlite3/3.53.4)
+native engine. The obsolete Servarr SQLite feed and mapping are removed. All
+25 lockfiles were refreshed and restored in locked mode. The new
+[inventory](dependencies/2026-11-17-sqlite/summary.json) contains **120 package
+IDs / 120 exact components**, with **zero NuGet-reported vulnerable packages
+across 25 audited projects**. As in P12, the Windows GUI audit uses its explicit
+framework and is combined with the 24 successful solution results.
+
+The managed provider no longer silently selects host SQLite. It loads the
+explicit bundled `e_sqlite3` asset or fails. The
+[native source/checksum lock](../scripts/sqlite-native.lock.json) identifies the
+actual package bytes for glibc/musl x64 and ARM64; package checks verify the RID,
+architecture and checksum. **The glibc assets require glibc 2.34 or newer.** Static
+ARM64 asset inspection is recorded separately from native execution acceptance,
+which remains open; this does not establish all P22 platforms.
+
+Both packages identify their distributed provider/engine contents as public
+domain. Exact package notices, SourceGear's license text and the pinned official
+SQLite copyright page accompany delivery packages. The
+[notice manifest](../LICENSES/managed/sources.json) distinguishes the provider
+package's unavailable source revision from the independently pinned copyright
+artifact. A clean NuGet report is not a comprehensive native-code audit.
+
+Runtime compatibility includes an explicit preservation of Bookshelf's legacy
+`ForeignKeys=false` policy: the new engine otherwise enables enforcement by
+build default, breaking historical migrations. No historical migration is
+changed. UTC dates, fractional ticks and GUID TEXT storage are verified through
+production repositories under two non-English cultures and two non-UTC timezones.
+WAL/pooling, the cache database and macOS's TRUNCATE/FullFSync settings remain in
+the connection factory. Native busy timeout advances to 1000 ms after paired
+measurements; the separate managed command timeout remains 30 seconds by default.
 
 ## Earlier 2026-11-15 security-maintenance snapshot
 

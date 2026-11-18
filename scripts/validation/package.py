@@ -14,7 +14,7 @@ import subprocess
 from .common import ValidationFailure, private_directory, snapshot_runtime, validate_output
 
 
-LINUX_MACHINES = {"linux-x64": 62, "linux-musl-x64": 62, "linux-musl-arm64": 183}
+LINUX_MACHINES = {"linux-x64": 62, "linux-musl-x64": 62, "linux-musl-arm64": 183, "linux-arm64": 183}
 
 
 def elf_info(path: Path) -> dict:
@@ -133,7 +133,7 @@ def run(runtime: Path, output: Path, repo_root: Path) -> dict:
             "Readarr", "Readarr.dll", "Readarr.deps.json", "Readarr.runtimeconfig.json",
             "Readarr.Core.dll", "Readarr.Common.dll", "Readarr.Host.dll", "Readarr.Mono.dll",
             "Mono.Posix.NETStandard.dll", "libMonoPosixHelper.so", "libcoreclr.so", "libhostfxr.so",
-            "System.Private.CoreLib.dll", "System.Data.SQLite.dll", "UI/index.html", "LICENSE.md",
+            "System.Private.CoreLib.dll", "System.Data.SQLite.dll", "libe_sqlite3.so", "UI/index.html", "LICENSE.md",
             "tools/mediainfo/mediainfo", "Readarr.Update/Readarr.Update",
             "Readarr.Update/Readarr.Update.runtimeconfig.json", "Readarr.Update/Readarr.Mono.dll",
             "Readarr.Update/Mono.Posix.NETStandard.dll", "Readarr.Update/libMonoPosixHelper.so",
@@ -150,7 +150,7 @@ def run(runtime: Path, output: Path, repo_root: Path) -> dict:
         checks["updater_bundles_matching_runtime_patch"] = updater["tfm"] == details["tfm"] and {
             item["name"]: item["version"] for item in updater.get("includedFrameworks", [])
         } == {"Microsoft.NETCore.App": runtime_version}
-        native = ("Readarr", "libcoreclr.so", "libhostfxr.so", "libMonoPosixHelper.so",
+        native = ("Readarr", "libcoreclr.so", "libhostfxr.so", "libMonoPosixHelper.so", "libe_sqlite3.so",
                   "tools/mediainfo/mediainfo", "Readarr.Update/Readarr.Update",
                   "Readarr.Update/libcoreclr.so", "Readarr.Update/libMonoPosixHelper.so")
         headers = {name: elf_info(runtime / name) for name in native}
@@ -165,6 +165,16 @@ def run(runtime: Path, output: Path, repo_root: Path) -> dict:
         metadata["hostExecutable"] = (platform.system() == "Linux" and host_machine() == expected_machine
                                       and (interpreter is None or Path(interpreter).is_file()))
         metadata["applicationElfInterpreter"] = interpreter
+        sqlite_lock = json.loads((repo_root / "scripts/sqlite-native.lock.json").read_text())
+        sqlite_asset = sqlite_lock["linuxAssets"][rid]
+        metadata["bundledSqlite"] = {"engineVersion": sqlite_lock["engineVersion"],
+                                    "managedVersion": sqlite_lock["managedVersion"],
+                                    "minimumGlibc": sqlite_asset["minimumGlibc"]}
+        checks["sqlite_native_asset_matches_pinned_package"] = _sha256(runtime / sqlite_asset["file"]) == sqlite_asset["sha256"]
+        dependencies = json.loads((runtime / "Readarr.deps.json").read_text())["libraries"]
+        checks["sqlite_managed_and_native_packages_are_pinned"] = all(
+            item in dependencies for item in (sqlite_lock["package"] + "/" + sqlite_lock["version"],
+                                               sqlite_lock["managedPackage"] + "/" + sqlite_lock["managedVersion"]))
         notices = json.loads((repo_root / "LICENSES/managed/sources.json").read_text())
         checks["managed_licenses_and_notices_match_repository"] = all(
             (runtime / "licenses/managed" / name).is_file()

@@ -1,0 +1,31 @@
+{
+  "package": "SourceGear.sqlite3",
+  "version": "3.53.4",
+  "engineVersion": "3.53.4",
+  "managedPackage": "System.Data.SQLite",
+  "managedVersion": "2.0.4",
+  "source": "https://api.nuget.org/v3-flatcontainer/sourcegear.sqlite3/3.53.4/sourcegear.sqlite3.3.53.4.nupkg",
+  "packageSha512Base64": "W2mME6FU2IfIF3Agdr9loSiLTWRndIgFsLTim6pRxSV9WsrzkxV+ikjm32a2jiHGWW920qXT4R+cVHpgb2BTdA==",
+  "linuxAssets": {
+    "linux-x64": {
+      "file": "libe_sqlite3.so",
+      "sha256": "eddcd4aa561d5b8f252db77e8272e7d1aed96bcab9fda3f177ca542f916290bf",
+      "minimumGlibc": "2.34"
+    },
+    "linux-arm64": {
+      "file": "libe_sqlite3.so",
+      "sha256": "66436d4bd02b1b1c25b964a744b5230122bca6a5d006aa80add129ef892c273a",
+      "minimumGlibc": "2.34"
+    },
+    "linux-musl-x64": {
+      "file": "libe_sqlite3.so",
+      "sha256": "7d275542af8aac5a19f5a873da7cdadcc20c453fb52b7df57bd747e2f02ab92b",
+      "minimumGlibc": null
+    },
+    "linux-musl-arm64": {
+      "file": "libe_sqlite3.so",
+      "sha256": "91e5ff240be8cdc24068c149754d3506dd3f7098cb0fd3d6606c4f0ce3b5fd42",
+      "minimumGlibc": null
+    }
+  }
+}

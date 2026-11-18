@@ -54,7 +54,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P10](#p10) | P1 | Verified | L | Carry cancellation through the HTTP client stack |
 | [P11](#p11) | P1 | Verified | M | Use per-connection Happy Eyeballs and expire pooled connections |
 | [P12](#p12) | P1 | Verified | XL | Modernize the migration engine while preserving Bookshelf schema history |
-| [P13](#p13) | P2 | Planned | M | Upgrade SQLite provider and measure busy-timeout behavior |
+| [P13](#p13) | P2 | In progress | M | Upgrade SQLite provider and measure busy-timeout behavior |
 | [P14](#p14) | P2 | Planned | M | Support full PostgreSQL connection strings with corrected validation |
 | [P15](#p15) | P2 | Planned | M | Make SQL log storage optional |
 | [P16](#p16) | P2 | Planned | L | Review v5 authentication defaults, bootstrap and recovery as product policy |
@@ -1113,6 +1113,67 @@ ARM64/P01 and broader P09/P21 gates remain open. **P13 is next.**
 **Book/audio caution:** simultaneous metadata refresh, audio analysis, covers and large multipart import updates have a different write load than episode updates. Retain B's cache-database connection path.
 
 **Acceptance:** simultaneous read/write/import/backup activity has bounded latency and appropriate busy behavior on disposable DBs; SQLite backup/restore and journal changes remain valid; no data loss or permanent lock follows cancellation; native loading succeeds on glibc/musl/arm64. Preserve explicit values and platform journaling behavior.
+
+**Implemented locally in `238cc9a0e`, 2026-11-17; native ARM64 acceptance remains open.**
+The provider is now **System.Data.SQLite 2.0.4**, with separately bundled
+**SourceGear.sqlite3 / SQLite 3.53.4** from the pinned v5 donor. Central versions,
+all 25 lockfiles, licenses and the native RID/checksum lock are updated; the old
+Servarr SQLite feed is removed. The resolver loads explicit bundled paths and
+fails if delivery is incomplete. The glibc native assets require **glibc 2.34+**;
+musl has a separate native asset. No host SQLite fallback is accepted.
+
+The new native build defaults to foreign-key enforcement. Bookshelf explicitly
+keeps its legacy **ForeignKeys=false** contract so the unchanged historical
+migrations and application deletion behavior retain their existing semantics.
+Production repositories preserve GUID TEXT identities and exact fractional UTC
+instants across fr-FR/de-DE and America/Chicago/Asia/Kathmandu. Main/log/cache
+connections retain UTC, pooling and the cache budget; Linux uses WAL and macOS
+retains TRUNCATE plus FullFSync. The new **1000 ms busy timeout** is the measured
+v5 policy choice, with the separate **30-second default managed command budget**
+unchanged. It is neither a total-operation deadline nor a demonstrated throughput
+improvement.
+
+Online backups now copy to a unique unpooled staging database, check standalone
+rollback journaling and `quick_check`, close the destination and publish by rename.
+Failures retain the prior backup. Source-path and symlink-directory aliases,
+existing destination sidecars, invalid snapshots and locked sources have
+regression coverage. Copy retries use the source's no-progress timeout, resetting
+only on progress; explicit zero stays unlimited. No unrelated global connection
+pool is cleared. Each database snapshot is separate; this is not a transaction
+across the three databases.
+
+Paired probes against the genuine pre-P13 package and the candidate pass **98
+checks** using the production connection factory and backup implementation. The
+synthetic workload verifies exact author/book/history/part values, 30 multipart
+recordings, concurrent WAL readers, metadata writes, log/cache activity, three
+consistent backups, unchanged media and later writer recovery after interruption.
+With a 350 ms held lock and a three-second command budget, both 100/1000 ms policies
+succeed; with a 1600 ms held lock and one-second command budget, both report BUSY.
+The supported connection interrupt completes in about 5–7 ms and rollback removes
+the unfinished recording. The corrected probe joins the active query before
+disposal; initial command-cancellation probe failures were harness errors and are
+excluded from acceptance evidence. Candidate evidence includes the actual native
+mapping/hash, source ID and compile options; deleting the engine from an owned
+clone produces a DllNotFound failure without loading the host engine.
+
+Local source suites pass **4,538 tests** (Common 768, Core 3,697, API 8, Host 65),
+with existing skips retained; **23 PostgreSQL migration cases** also pass on an
+owned PostgreSQL 16 server. All **73 Python validation tests** pass. Fresh package
+startup, backup/restore, refresh cancellation and genuine pre-P12 SQLite/PostgreSQL
+upgrade/recovery checks pass **131 checks**, including unchanged package inputs.
+The dependency audit covers **120 exact components / 25 projects**, with zero
+NuGet-reported vulnerable packages. See [local validation](local-validation.md)
+and the [dependency record](dependency-audit.md#p13-sqlite-provider-and-engine-2026-11-17).
+
+Fresh glibc and musl-x64 packages also pass **141 package/.NET 6 upgrade/media/
+Docker checks**, including input fingerprints. The exact repository S6 image
+exercises bundled SQLite writes/reads/integrity, codecs, PDF, audio tags and
+MediaInfo, along with API startup/shutdown. The musl-ARM64 package passes **17
+static package/input checks**; native execution is explicitly unrequested.
+
+Native ARM64 runtime acceptance remains required for full P13 verification;
+static assets or QEMU do not satisfy that gate. No GitHub workflows or live
+service/appdata/media changes are included.
 
 ### P14
 

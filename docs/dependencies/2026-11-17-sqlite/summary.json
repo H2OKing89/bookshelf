@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-17",
+  "sourceBaseCommit": "721720769f4042c721c8ec0f365cfa913e8bf2f4",
+  "lockfiles": 25,
+  "packageIds": 120,
+  "components": 120,
+  "auditedProjects": 25,
+  "nugetReportedVulnerablePackages": 0,
+  "historicalMigrationsChanged": false,
+  "directUpdates": {
+    "System.Data.SQLite": "2.0.4",
+    "SourceGear.sqlite3": "3.53.4"
+  },
+  "sqliteNativeBusyTimeoutMilliseconds": 1000,
+  "sqliteManagedDefaultCommandTimeoutSeconds": 30,
+  "minimumGlibc": "2.34",
+  "nativeArm64ExecutionVerified": false,
+  "nativeCodeAudit": false,
+  "sqliteForeignKeyEnforcement": false,
+  "legacyForeignKeyPolicyPreserved": true,
+  "sourceCommit": "238cc9a0e23d822d20892f88ec0eef508eb75f8d"
+}

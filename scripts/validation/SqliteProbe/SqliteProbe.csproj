@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Bookshelf.SqliteProbe</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Readarr.Core"><HintPath>$(CandidateDir)/Readarr.Core.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Readarr.Common"><HintPath>$(CandidateDir)/Readarr.Common.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="NLog"><HintPath>$(CandidateDir)/NLog.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="System.Data.SQLite"><HintPath>$(CandidateDir)/System.Data.SQLite.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <Target Name="RequirePublishedCandidate" BeforeTargets="ResolveReferences">
+    <Error Condition="'$(ValidationOutputDir)' == ''" Text="Use the local SQLite validator so outputs stay in an owned directory." />
+    <Error Condition="'$(CandidateDir)' == ''" Text="Pass CandidateDir pointing to the published runtime being verified." />
+    <Error Condition="!Exists('$(CandidateDir)/Readarr.Core.dll')" Text="CandidateDir has no published Readarr.Core.dll." />
+  </Target>
+</Project>

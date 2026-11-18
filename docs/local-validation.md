@@ -101,6 +101,33 @@ backup. Owned containers, sockets and application processes are cleaned up, and
 input package fingerprints must remain unchanged. Raw logs and backups stay in
 the private evidence directory.
 
+## Measure SQLite locking and bundled native loading
+
+Use the explicit SQLite check for a package containing P13. An optional pre-P13 .NET 10
+package measures both providers with the same synthetic workload:
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --baseline-runtime /path/to/pre-P13-net10/package \
+  --checks package sqlite
+```
+
+The probe uses the application's connection factory and backup implementation
+inside an owned runtime clone. It measures 100 ms and 1000 ms native busy waits
+with separate managed command budgets, concurrent WAL readers, atomic recording
+parts, metadata/history writes, main/log/cache databases, online snapshots and
+interrupted work followed by another write. Timings describe this workload;
+they are not throughput or total request-latency guarantees.
+
+Evidence includes the actual engine version/source ID, compile options and
+mapped native path/checksum. The package check compares the engine bytes with
+[`sqlite-native.lock.json`](../scripts/sqlite-native.lock.json), including the
+RID. The new engine's glibc assets require **glibc 2.34 or newer**; musl uses its
+separate asset. The application fails if the bundled engine is missing rather
+than selecting host SQLite. ARM64 assets can be inspected here, but runtime
+acceptance requires matching native ARM64 hardware.
+
 ## Check a genuine upgrade or legacy backup
 
 Supply a separate older **binary package**, without any saved application data:
@@ -263,3 +290,25 @@ processes owned by the proof were stopped. The development service, production
 data and GitHub workflows were unchanged. Broader migration unit evidence and
 intentional automatic-rebuild rejection cases are recorded under
 [P12](sonarr-v5-porting-backlog.md#p12).
+
+
+### P13 verification, 2026-11-17
+
+Implementation `238cc9a0e` passed the explicit SQLite comparison against a
+preserved genuine pre-P13 .NET 10 package: **98 probe checks plus two unchanged
+input-package checks**, zero failures. The candidate used the pinned native
+SQLite 3.53.4 bytes; the missing-engine clone failed without using host SQLite.
+Both busy-timeout policies passed controlled contention. The supported connection
+interrupt rolled back unfinished work and allowed subsequent writes; the probe
+joins native work before disposing its resources.
+
+Fresh glibc/musl-x64 delivery packages passed **141 package/.NET 6 upgrade/media/
+Docker checks**. Separately, **131 app/restore/cancellation/datastore checks**
+passed with the genuine pre-P12 migration-engine baseline and owned PostgreSQL 16.
+The musl-ARM64 package passed **17 static package/input checks**; no native ARM64
+execution was claimed. All **73 Python regression tests** passed. Source suites
+passed Common **768**, Core **3,697**, API **8** and Host **65**, retaining existing
+skips, plus **23** PostgreSQL migration cases. Every owned container, private
+socket and application process was cleaned up. No live home, production media,
+running development service or GitHub workflow was changed. P13 remains open for
+native ARM64 runtime acceptance and does not establish all P22 platforms.
