@@ -36,6 +36,32 @@ For reverse proxy deployments, configure the
 [trusted proxy addresses](docs/trusted-proxies.md) before upgrading. Changes to
 this setting require a server restart.
 
+## Database log storage
+
+Database logging is enabled by default. To stop storing diagnostic events in the
+log database, stop Bookshelf, add this setting inside your existing `config.xml`
+`<Config>` element, then restart:
+
+```xml
+<LogDbEnabled>False</LogDbEnabled>
+```
+
+Alternatively, set `Readarr__Log__DbEnabled=false` in the server's environment
+before starting it. The environment value takes precedence over XML. Set the
+effective value to true, or remove both overrides, and restart to enable database
+logging again.
+
+Disabled mode leaves the existing log database untouched. The Events list is
+empty, while file/console logging, audiobook library/download history and the
+metadata cache remain available. Application update-install history also lives
+in the log database; that history and the corresponding update-installed
+notifications pause while this mode is disabled. Reenabling reuses the existing
+database; normal log retention still applies. PostgreSQL still needs the main
+and cache databases; an unused log database is not opened or created.
+
+This setting controls log storage. The existing `LogSql` setting independently
+controls diagnostic SQL-statement tracing.
+
 ## Catalog settings
 
 Under **Settings → Metadata → Audiobook Catalog**, select an Audible marketplace

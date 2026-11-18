@@ -75,6 +75,39 @@ class AppFixtureTests(unittest.TestCase):
         self.assertEqual(environment["HOME"], str(self.root / "home"))
         self.assertEqual(environment["TMPDIR"], str(self.root / "tmp"))
 
+    def test_owned_log_override_accepts_only_an_explicit_boolean(self):
+        fixture = app.Fixture(self.runtime, self.root / "invalid-override")
+        fixture.configure_home()
+        for invalid in ("false", "true", 0, 1, {}, []):
+            with self.subTest(invalid=invalid), patch.object(subprocess, "Popen") as process:
+                with self.assertRaises(ValidationFailure) as error:
+                    fixture.start(log_db_enabled=invalid)
+                self.assertEqual(error.exception.code, "invalid_owned_log_db_override")
+                process.assert_not_called()
+
+    def test_owned_log_override_is_scoped_and_never_inherited_from_the_caller(self):
+        for enabled in (None, False, True):
+            with self.subTest(enabled=enabled):
+                fixture = app.Fixture(self.runtime, self.root / ("override-" + str(enabled)))
+                fixture.configure_home()
+                with (patch.dict(os.environ, {"Readarr__Log__DbEnabled": "unrelated override"}),
+                      patch.object(app, "ensure_host_compatible"),
+                      patch.object(subprocess, "Popen") as process,
+                      patch.object(fixture, "request", return_value=(200, [], b"{}"))):
+                    process.return_value.poll.return_value = None
+                    try:
+                        fixture.start(log_db_enabled=enabled)
+                        environment = process.call_args.kwargs["env"]
+                        if enabled is None:
+                            self.assertNotIn("Readarr__Log__DbEnabled", environment)
+                        else:
+                            self.assertEqual(environment["Readarr__Log__DbEnabled"], str(enabled).lower())
+                    finally:
+                        fixture.process = None
+                        if fixture.process_log is not None:
+                            fixture.process_log.close()
+                            fixture.process_log = None
+
     def test_failure_metadata_omits_exception_payload_and_traceback(self):
         error = RuntimeError("saved-credential-must-not-reach-a-report")
         report = app.safe_failure("startup", error)

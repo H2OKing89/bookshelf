@@ -27,7 +27,7 @@ class RunnerResultTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.runtime = package(self.root / "runtime")
         self.modules = {"validation." + name: types.ModuleType("validation." + name)
-                        for name in ("app", "cancellation", "datastore", "docker", "media", "package", "restore", "sqlite", "upgrade")}
+                        for name in ("app", "cancellation", "datastore", "docker", "logstorage", "media", "package", "restore", "sqlite", "upgrade")}
         self.output = self.root / "results"
 
     @contextlib.contextmanager
@@ -58,6 +58,20 @@ class RunnerResultTests(unittest.TestCase):
         self.assertIn("upgrade", report["notRequested"])
         self.assertTrue(report["results"]["unchanged_candidate"]["checks"]["input_package_unchanged"])
         self.assertEqual(len(report["inputFingerprints"]["candidate"]), 64)
+
+    def test_explicit_logstorage_check_uses_candidate_without_requiring_a_baseline(self):
+        calls = []
+        self.modules["validation.logstorage"].run = lambda *args: (
+            calls.append(args) or {"checks": {"owned": True}, "passed": 1, "failed": 0, "completed": True})
+        console = io.StringIO()
+        with (self.mocked_modules(), patch.object(runner.common, "ensure_host_compatible"),
+              contextlib.redirect_stdout(console), contextlib.redirect_stderr(console)):
+            status = runner.main(["--runtime", str(self.runtime), "--output", str(self.output), "--checks", "logstorage"])
+        self.assertEqual(status, 0)
+        self.assertEqual(calls, [(self.runtime.resolve(), self.output / "logstorage")])
+        report = json.loads((self.output / "summary.json").read_text())
+        self.assertEqual(report["checksRequested"], ["logstorage"])
+        self.assertIn("datastore", report["notRequested"])
 
     def test_candidate_mutation_fails_even_when_check_claims_success(self):
         def mutate(*args):

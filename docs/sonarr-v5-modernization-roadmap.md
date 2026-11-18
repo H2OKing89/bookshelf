@@ -821,7 +821,7 @@ remain open. **P13, SQLite provider and busy-timeout compatibility, is next.**
 
 Implementation `238cc9a0e` and the
 [P13 evidence record](sonarr-v5-porting-backlog.md#p13)
-update the managed provider to **System.Data.SQLite 2.0.4** and bundles the pinned
+update the managed provider to **System.Data.SQLite 2.0.4** and bundle the pinned
 v5 donor's **SourceGear.sqlite3 / SQLite 3.53.4** engine. Loading is explicit and
 fails without the matching bundled asset. The new glibc asset requires **glibc
 2.34+**; musl uses its own binary. Exact package notices and RID checksums accompany
@@ -856,3 +856,30 @@ cases**, **73 Python tests**, **131 app/restore/cancellation/datastore checks** 
 passes **17 static checks**. Runtime acceptance on native ARM64 remains required,
 so **P13 stays In progress** for that gate. This work used no GitHub workflows and
 changed no running development service, production appdata or media.
+
+
+### P15 optional database logging — 2026-11-17
+
+Implementation `9c36a3bc9` completes the
+[P15 local acceptance record](sonarr-v5-porting-backlog.md#p15). Database logging
+still defaults on. XML `LogDbEnabled=false` or environment
+`Readarr__Log__DbEnabled=false` disables it after restart; environment values win
+over XML and explicit false is preserved. The effective database registration
+controls startup SQL-target registration, log paging/clear/trim and update-history
+consumers. Main/library/download history and the metadata cache stay active, as
+do file/console logging and existing backups. Existing log databases are retained
+for reenabling. Update-install history and its corresponding notifications pause
+while their log storage is disabled; this is documented with the setting.
+
+All **4,560 source tests**, **23 PostgreSQL migration cases**, **81 Python tests**,
+**233 delivery checks** and **63 optional-log checks** pass. The new proof covers
+missing/inaccessible SQLite and PostgreSQL log databases, default/enabled/disabled
+modes, both option sources, existing-row preservation, reenabling with fresh SQL
+writes, independent logs and backups. The pre-P15 package correctly fails the
+missing-feature check. Every application home, database and container is owned
+synthetic data, with input fingerprints preserved and owned resources cleaned up.
+
+**P14 is next:** full PostgreSQL connection strings can now validate an optional
+log connection consistently. No GitHub workflows, running development service or
+production appdata/media were changed; P13 native ARM64 and the broader platform
+and release gates remain open.

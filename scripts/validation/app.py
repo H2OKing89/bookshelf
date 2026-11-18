@@ -161,7 +161,9 @@ class Fixture:
         self.check("authenticated_api_request_succeeded", status in (200, 201, 202))
         return json.loads(body) if body else None
 
-    def start(self) -> None:
+    def start(self, *, log_db_enabled: bool | None = None) -> None:
+        if log_db_enabled is not None and type(log_db_enabled) is not bool:
+            raise ValidationFailure("invalid_owned_log_db_override")
         if self.process is not None or self.home is None:
             raise ValidationFailure("owned_process_lifecycle")
         ensure_host_compatible(self.runtime)
@@ -172,8 +174,11 @@ class Fixture:
         # Startup failures must exit instead of waiting for interactive intervention.
         command = ["/bin/sh", "-c", 'ulimit -c 0; exec "$@"', "bookshelf-validation",
                    str(self.runtime / "Readarr"), "-nobrowser", "-nosingleinstancecheck", "-exitimmediately", "-data=" + str(self.home)]
+        environment = child_environment(self.home, self.private_tmp)
+        if log_db_enabled is not None:
+            environment["Readarr__Log__DbEnabled"] = str(log_db_enabled).lower()
         self.process = subprocess.Popen(command, cwd=self.runtime,
-                                        env=child_environment(self.home, self.private_tmp),
+                                        env=environment,
                                         stdin=subprocess.DEVNULL, stdout=self.process_log,
                                         stderr=subprocess.STDOUT, start_new_session=True)
         deadline = time.monotonic() + self.startup_timeout

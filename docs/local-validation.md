@@ -128,6 +128,29 @@ separate asset. The application fails if the bundled engine is missing rather
 than selecting host SQLite. ARM64 assets can be inspected here, but runtime
 acceptance requires matching native ARM64 hardware.
 
+## Check optional database log storage
+
+Use a package containing P15 and an owned PostgreSQL 16 container:
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --checks logstorage
+```
+
+This explicit check needs the cached `postgres:16-alpine` image and the local
+Unix-socket Docker daemon. It accepts no existing home or database endpoint.
+It exercises the default enabled mode, XML `LogDbEnabled=false` and the explicit
+`Readarr__Log__DbEnabled=false` environment override in fresh synthetic homes.
+
+SQLite checks cover missing and existing log databases, empty paged log browsing,
+log clearing, housekeeping, backups, file/console output and reenabling. PostgreSQL
+uses separate owned main/cache databases with an absent log database, then denies
+connections to a previously populated log database while disabled. Both engines
+must retain library/download history, cached metadata and synthetic media, and
+recover the existing log/update history after reenabling. The setting takes effect
+at process startup; later configuration reads do not change the registered mode.
+
 ## Check a genuine upgrade or legacy backup
 
 Supply a separate older **binary package**, without any saved application data:
@@ -312,3 +335,20 @@ skips, plus **23** PostgreSQL migration cases. Every owned container, private
 socket and application process was cleaned up. No live home, production media,
 running development service or GitHub workflow was changed. P13 remains open for
 native ARM64 runtime acceptance and does not establish all P22 platforms.
+
+
+### P15 verification, 2026-11-17
+
+Implementation `9c36a3bc9` passed **63 optional-log checks** against a fresh
+package, including unchanged inputs and cleanup. SQLite/PostgreSQL default,
+disabled and reenabled modes preserve the library, download history, metadata
+cache, media and prior log/update rows. Disabled mode succeeds with inaccessible
+log storage; file/console output and backups continue. Reenabling produces a new
+SQL event. The genuine pre-P15 package fails the disabled-log creation assertion,
+as expected. All **81 Python regression tests** passed.
+
+The canonical backend/frontend and both x64 package preparations passed. The
+usual package/app/restore/.NET 6 upgrade/media/cancellation/Docker command passed
+**233 checks**. Source suites passed Core **3,704**, Common **774**, API **8** and
+Host **74**, with existing skips retained, plus **23 PostgreSQL migration cases**.
+No GitHub workflow, running development service or production data was changed.

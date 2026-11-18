@@ -56,7 +56,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P12](#p12) | P1 | Verified | XL | Modernize the migration engine while preserving Bookshelf schema history |
 | [P13](#p13) | P2 | In progress | M | Upgrade SQLite provider and measure busy-timeout behavior |
 | [P14](#p14) | P2 | Planned | M | Support full PostgreSQL connection strings with corrected validation |
-| [P15](#p15) | P2 | Planned | M | Make SQL log storage optional |
+| [P15](#p15) | P2 | Verified | M | Make SQL log storage optional |
 | [P16](#p16) | P2 | Planned | L | Review v5 authentication defaults, bootstrap and recovery as product policy |
 | [P17](#p17) | P2 | Planned | L | Add OIDC only if SSO is wanted |
 | [P18](#p18) | P2 | Planned | M | Load PEM certificates, separate private keys and certificate chains |
@@ -1199,19 +1199,68 @@ service/appdata/media changes are included.
 **Make SQL log storage optional**
 
 - Priority / effort: **P2 / M**.
-- Current Bookshelf state: missing switch; it unconditionally registers/opens log and cache DBs.
+- Current Bookshelf state: verified locally; database logging defaults on and can be disabled independently of main/cache storage.
 - Approach: adapt.
-- Prerequisites: None beyond the shared preservation gates..
+- Prerequisites: None beyond the shared preservation gates.
 - Pinned v5 source: [src/NzbDrone.Core/Datastore/Extensions/CompositionExtensions.cs](https://github.com/Sonarr/Sonarr/blob/c018578e4b79ee048575c02d7a8aa2b929e4b837/src/NzbDrone.Core/Datastore/Extensions/CompositionExtensions.cs#L15).
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/Datastore/Extensions/CompositionExtensions.cs](../src/NzbDrone.Core/Datastore/Extensions/CompositionExtensions.cs#L8).
 
-**Bookshelf status:** missing switch; it unconditionally registers/opens log and cache DBs. B `src/NzbDrone.Core/Datastore/Extensions/CompositionExtensions.cs:8` registers all three and `Startup.cs:225` initializes them. S5 `CompositionExtensions.cs:15`/`:29` chooses real/dummy log DB, `Bootstrap.cs:175` selects via config, `Startup.cs:313` opens/registers DatabaseTarget only when enabled; `ConfigFileProvider.cs:288` defaults LogDbEnabled to true.
+**Comparison baseline:** missing switch; it unconditionally registers/opens log and cache DBs. B `src/NzbDrone.Core/Datastore/Extensions/CompositionExtensions.cs:8` registers all three and `Startup.cs:225` initializes them. S5 `CompositionExtensions.cs:15`/`:29` chooses real/dummy log DB, `Bootstrap.cs:175` selects via config, `Startup.cs:313` opens/registers DatabaseTarget only when enabled; `ConfigFileProvider.cs:288` defaults LogDbEnabled to true.
 
 **Action/dependencies:** keep default true; audit every log repository/controller/health task for dummy behavior and documentation. P14's full-string requirements must match this switch. Console/file logging remain independently configured.
 
 **Book/audio caution:** the metadata cache is not the log DB. A log switch must never disable library history or the metadata cache. A valid no-log mode may help appliance deployments with limited disk writes.
 
 **Acceptance:** default retains log API/history behavior; disabled mode starts without opening/creating log DB and leaves library/download history intact; log browsing fails gracefully; file/console logs work; PostgreSQL config doesn't require an unused log string; reenabling preserves the existing log DB where possible.
+
+**Implemented and verified locally in `9c36a3bc9`, 2026-11-17.**
+The optional XML `LogDbEnabled` / environment `Readarr__Log__DbEnabled` setting
+uses a nullable option and defaults to **true**. Explicit false survives binding,
+with environment precedence over XML. Both console-host and utility bootstrap use
+the same selection. Changes require a restart: `ILogDatabase.IsEnabled` records
+the registered database's effective startup state, so later configuration reads
+cannot accidentally attach SQL logging to a disabled instance.
+
+Disabled mode registers a dummy log database, initializes real main/cache
+databases and leaves the SQL logging target unregistered. Log paging returns a
+non-null empty page with existing sort/filter/paging behavior; clear and trim
+commands are no-ops. The existing frontend empty state works without a new API
+contract or UI setting. File/console/syslog logging and diagnostic `LogSql` tracing
+remain independently configured. Library/download history, metadata cache,
+authentication and backups keep their existing storage paths and contracts.
+
+Application update-install history is also stored in the log database. Disabled
+mode skips its reads/writes and the corresponding update-installed notifications,
+matching the pinned donor behavior. Existing database contents are retained for
+reenabling, subject to the usual enabled-mode retention rules. P14's full
+connection-string validation remains separate; an unused PostgreSQL log database
+is neither required nor opened in disabled mode.
+
+**Validation:** all **4,560 source tests** passed (Core 3,704, Common 774, API 8,
+Host 74), including **22 new config/registration/consumer/API cases**. Existing
+platform skips remain. **23 PostgreSQL migration cases** and **81 Python
+regression tests** passed. Canonical locked backend builds for all three declared
+Linux RIDs, the frontend and glibc/musl-x64 delivery packages passed. The normal
+local package/app/restore/.NET 6 upgrade/media/cancellation/S6 Docker command
+passed **233 checks**, preserving default-enabled behavior and input packages.
+
+The new explicit `--checks logstorage` command passed **63 checks**, including
+its input fingerprint and cleanup. Fresh SQLite and owned PostgreSQL homes
+exercise omitted/default true, XML false and environment false over XML true;
+an unopenable SQLite log pathname and a PostgreSQL log database refusing
+connections prove disabled mode never opens those databases. Enable/disable/
+reenable cycles retain exact log/update rows, library/history/settings identities,
+metadata cache and synthetic media, then verify a new SQL event after reenabling.
+Disabled backups and ongoing file/console output pass. The genuine pre-P15 package
+correctly fails the new disabled-log creation check, demonstrating that the proof
+detects the missing feature. Only disposable homes and owned PostgreSQL 16
+containers/private sockets are used; all owned processes/containers are stopped.
+
+See [configuration](../README.md#database-log-storage) and
+[local validation](local-validation.md#check-optional-database-log-storage).
+No running dev service, production data or GitHub workflow was changed. P13's
+native ARM64 gate and the broader platform/release gates remain open. **P14 is
+next**, now that its optional-log prerequisite is verified.
 
 ### P16
 

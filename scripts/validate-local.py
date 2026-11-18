@@ -12,7 +12,7 @@ import tempfile
 from validation import common
 
 
-CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "docker")
+CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "docker")
 
 
 def parser():
@@ -72,13 +72,13 @@ def main(argv=None):
             output = common.private_directory(arguments.output.expanduser().resolve())
         for label, runtime in inputs.items():
             snapshots[label] = common.snapshot_runtime(runtime)
-        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite")):
+        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage")):
             common.ensure_host_compatible(inputs["candidate"])
         for label in ("baseline", "legacy"):
             if label in inputs:
                 common.ensure_host_compatible(inputs[label])
         # Imports are deliberately after validation; modules never launch on import.
-        from validation import app, cancellation, datastore, docker, media, package, restore, sqlite, upgrade
+        from validation import app, cancellation, datastore, docker, logstorage, media, package, restore, sqlite, upgrade
         callbacks = {
             "package": lambda: package.run(inputs["candidate"], output / "package", repo),
             "app": lambda: app.run(inputs["candidate"], output / "app"),
@@ -88,6 +88,7 @@ def main(argv=None):
             "cancellation": lambda: cancellation.run(inputs["candidate"], output / "cancellation"),
             "datastore": lambda: datastore.run(inputs["candidate"], output / "datastore", baseline_runtime=inputs["baseline"]),
             "sqlite": lambda: sqlite.run(inputs["candidate"], output / "sqlite", baseline_runtime=inputs.get("baseline")),
+            "logstorage": lambda: logstorage.run(inputs["candidate"], output / "logstorage"),
             "docker": lambda: docker.run(inputs["docker"], output / "docker", repo),
         }
         for name in chosen:
