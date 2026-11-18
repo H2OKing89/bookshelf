@@ -46,6 +46,7 @@ namespace NzbDrone.Core.Datastore
 
         private static DatabaseConnectionInfo GetConnectionString(string dbPath)
         {
+            // Preserve legacy foreign-key behavior independently of native build defaults.
             var connectionBuilder = new SQLiteConnectionStringBuilder
             {
                 DataSource = dbPath,
@@ -53,8 +54,9 @@ namespace NzbDrone.Core.Datastore
                 DateTimeKind = DateTimeKind.Utc,
                 JournalMode = OsInfo.IsOsx ? SQLiteJournalModeEnum.Truncate : SQLiteJournalModeEnum.Wal,
                 Pooling = true,
+                ForeignKeys = false,
                 Version = 3,
-                BusyTimeout = 100
+                BusyTimeout = 1000
             };
 
             if (OsInfo.IsOsx)

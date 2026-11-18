@@ -65,5 +65,42 @@
       "commit": "d3768398c17877b3a916c3c4d87e8e11698991fc"
     },
     "packageSha512Base64": "9wZYlR6r1uLGnAxBuUPOCmgbS6SDtVKyGkZ0tDGPaBHYbbdEDEajD0VErq+W/dn3gHfJ3WvOdZaNNNybnFCupA=="
+  },
+  "System.Data.SQLite/NOTICE.nuspec": {
+    "source": "https://api.nuget.org/v3-flatcontainer/system.data.sqlite/2.0.4/system.data.sqlite.2.0.4.nupkg#System.Data.SQLite.nuspec",
+    "package": "System.Data.SQLite",
+    "version": "2.0.4",
+    "bytes": 1046,
+    "sha256": "4f9f8fae5dec592f019be187544e271bd8d7f0c0a9463608146201fef4e6cf37",
+    "packageSha512Base64": "WoICQI0/987/vdYu9d9KStUJNxqMmjIRkz2BPtOv3HtrCJh3ROJdbgyIR8P+JdD2nkbYG3vl3Ys2uAkXkUwpaw=="
+  },
+  "System.Data.SQLite/COPYRIGHT.wiki": {
+    "source": "https://system.data.sqlite.org/home/raw/d482eac20488a27bbb3de2dd5bb55cde44ba227b",
+    "package": "System.Data.SQLite",
+    "version": "2.0.4",
+    "bytes": 4024,
+    "sha256": "2c77fbd856a302e1a70174b171083c597b32ba293ae26decf143d98a2ebd4e0f",
+    "repository": {
+      "type": "fossil",
+      "url": "https://system.data.sqlite.org/home",
+      "artifact": "d482eac20488a27bbb3de2dd5bb55cde44ba227b"
+    },
+    "packageSha512Base64": "WoICQI0/987/vdYu9d9KStUJNxqMmjIRkz2BPtOv3HtrCJh3ROJdbgyIR8P+JdD2nkbYG3vl3Ys2uAkXkUwpaw=="
+  },
+  "SourceGear.sqlite3/LICENSE.txt": {
+    "source": "https://api.nuget.org/v3-flatcontainer/sourcegear.sqlite3/3.53.4/sourcegear.sqlite3.3.53.4.nupkg#LICENSE.txt",
+    "package": "SourceGear.sqlite3",
+    "version": "3.53.4",
+    "bytes": 61,
+    "sha256": "99464c3a88df7b708ce59e462cdcb85f72dfc9b1335b4fcc68be56131b634b95",
+    "packageSha512Base64": "W2mME6FU2IfIF3Agdr9loSiLTWRndIgFsLTim6pRxSV9WsrzkxV+ikjm32a2jiHGWW920qXT4R+cVHpgb2BTdA=="
+  },
+  "SourceGear.sqlite3/NOTICE.nuspec": {
+    "source": "https://api.nuget.org/v3-flatcontainer/sourcegear.sqlite3/3.53.4/sourcegear.sqlite3.3.53.4.nupkg#SourceGear.sqlite3.nuspec",
+    "package": "SourceGear.sqlite3",
+    "version": "3.53.4",
+    "bytes": 1048,
+    "sha256": "6e87a17b8230b7a3a7e6ec8681ddf13bf3bf9ddc3679d461cd700d6ef0460821",
+    "packageSha512Base64": "W2mME6FU2IfIF3Agdr9loSiLTWRndIgFsLTim6pRxSV9WsrzkxV+ikjm32a2jiHGWW920qXT4R+cVHpgb2BTdA=="
   }
 }

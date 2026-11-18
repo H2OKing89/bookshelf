@@ -431,7 +431,7 @@ namespace NzbDrone.Core.Test.Datastore.Migration
         {
             return new SQLiteConnectionStringBuilder
             {
-                DataSource = path, Version = 3, Pooling = false, BinaryGUID = false, DateTimeKind = DateTimeKind.Utc
+                DataSource = path, Version = 3, Pooling = false, ForeignKeys = false, BinaryGUID = false, DateTimeKind = DateTimeKind.Utc
             }.ConnectionString;
         }
 

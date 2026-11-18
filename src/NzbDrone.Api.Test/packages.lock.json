@@ -512,8 +512,9 @@
           "NLog.Extensions.Logging": "[5.5.0, )",
           "Newtonsoft.Json": "[13.0.3, )",
           "SharpZipLib": "[1.4.2, )",
+          "SourceGear.sqlite3": "[3.53.4, )",
           "System.Configuration.ConfigurationManager": "[10.0.15, )",
-          "System.Data.SQLite.Core.Servarr": "[1.0.115.5-18, )",
+          "System.Data.SQLite": "[2.0.4, )",
           "System.IO.Abstractions": "[17.0.24, )",
           "System.ServiceProcess.ServiceController": "[10.0.15, )",
           "System.ValueTuple": "[4.6.1, )"
@@ -850,6 +851,12 @@
         "resolved": "1.4.2",
         "contentHash": "yjj+3zgz8zgXpiiC3ZdF/iyTBbz2fFvMxZFEBPUcwZjIvXOf37Ylm+K58hqMfIBt5JgU/Z2uoUS67JmTLe973A=="
       },
+      "SourceGear.sqlite3": {
+        "type": "CentralTransitive",
+        "requested": "[3.53.4, )",
+        "resolved": "3.53.4",
+        "contentHash": "aXPX39R0Vgivhi95Z82TRenG56bSOs+Hnt8h1GV0nmfuRaANObd3LC44eoZwszmQqALjaV3ZnBQRej8m5E0L4Q=="
+      },
       "System.Configuration.ConfigurationManager": {
         "type": "CentralTransitive",
         "requested": "[10.0.15, )",
@@ -860,11 +867,11 @@
           "System.Security.Cryptography.ProtectedData": "10.0.15"
         }
       },
-      "System.Data.SQLite.Core.Servarr": {
+      "System.Data.SQLite": {
         "type": "CentralTransitive",
-        "requested": "[1.0.115.5-18, )",
-        "resolved": "1.0.115.5-18",
-        "contentHash": "bqSg3X04ugH2gqau7NGh3JHQ3zfchtwUdyBDs4AIEAi00iKZeINz6VQb85VkMMqzqQCN+i59pF/cPkoTLafiuA=="
+        "requested": "[2.0.4, )",
+        "resolved": "2.0.4",
+        "contentHash": "iiawN8l6QBzLZTK2BQRyq/1XmvDONghjvXoDhkkQgPTG8bRIsmIxJV1+Lc75fviNgMnjAE3wxReVJAF7P1hkoQ=="
       },
       "System.IO.Abstractions": {
         "type": "CentralTransitive",
@@ -924,11 +931,11 @@
           "Magick.NET.Core": "15.1.0"
         }
       },
-      "System.Data.SQLite.Core.Servarr": {
+      "SourceGear.sqlite3": {
         "type": "CentralTransitive",
-        "requested": "[1.0.115.5-18, )",
-        "resolved": "1.0.115.5-18",
-        "contentHash": "bqSg3X04ugH2gqau7NGh3JHQ3zfchtwUdyBDs4AIEAi00iKZeINz6VQb85VkMMqzqQCN+i59pF/cPkoTLafiuA=="
+        "requested": "[3.53.4, )",
+        "resolved": "3.53.4",
+        "contentHash": "aXPX39R0Vgivhi95Z82TRenG56bSOs+Hnt8h1GV0nmfuRaANObd3LC44eoZwszmQqALjaV3ZnBQRej8m5E0L4Q=="
       },
       "System.Security.Cryptography.Pkcs": {
         "type": "CentralTransitive",
@@ -961,11 +968,11 @@
           "Magick.NET.Core": "15.1.0"
         }
       },
-      "System.Data.SQLite.Core.Servarr": {
+      "SourceGear.sqlite3": {
         "type": "CentralTransitive",
-        "requested": "[1.0.115.5-18, )",
-        "resolved": "1.0.115.5-18",
-        "contentHash": "bqSg3X04ugH2gqau7NGh3JHQ3zfchtwUdyBDs4AIEAi00iKZeINz6VQb85VkMMqzqQCN+i59pF/cPkoTLafiuA=="
+        "requested": "[3.53.4, )",
+        "resolved": "3.53.4",
+        "contentHash": "aXPX39R0Vgivhi95Z82TRenG56bSOs+Hnt8h1GV0nmfuRaANObd3LC44eoZwszmQqALjaV3ZnBQRej8m5E0L4Q=="
       },
       "System.Security.Cryptography.Pkcs": {
         "type": "CentralTransitive",
@@ -998,11 +1005,11 @@
           "Magick.NET.Core": "15.1.0"
         }
       },
-      "System.Data.SQLite.Core.Servarr": {
+      "SourceGear.sqlite3": {
         "type": "CentralTransitive",
-        "requested": "[1.0.115.5-18, )",
-        "resolved": "1.0.115.5-18",
-        "contentHash": "bqSg3X04ugH2gqau7NGh3JHQ3zfchtwUdyBDs4AIEAi00iKZeINz6VQb85VkMMqzqQCN+i59pF/cPkoTLafiuA=="
+        "requested": "[3.53.4, )",
+        "resolved": "3.53.4",
+        "contentHash": "aXPX39R0Vgivhi95Z82TRenG56bSOs+Hnt8h1GV0nmfuRaANObd3LC44eoZwszmQqALjaV3ZnBQRej8m5E0L4Q=="
       },
       "System.Security.Cryptography.Pkcs": {
         "type": "CentralTransitive",

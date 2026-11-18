@@ -44,8 +44,8 @@ namespace NzbDrone.Common.Composition
 
         public static void RegisterSQLiteResolver()
         {
-            // This ensures we look for sqlite3 using libsqlite3.so.0 on Linux and not libsqlite3.so which
-            // is less likely to exist.
+            // The managed provider and the engine are separate packages. Resolve
+            // both import names to our pinned native asset on every platform.
             var sqliteAssembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "System.Data.SQLite.dll"));
 
@@ -62,8 +62,27 @@ namespace NzbDrone.Common.Composition
 
         private static IntPtr LoadSqliteNativeLib(string libraryName, Assembly assembly, DllImportSearchPath? dllImportSearchPath)
         {
-            var mappedName = OsInfo.IsLinux && libraryName == "sqlite3" ? "libsqlite3.so.0" : libraryName;
-            return NativeLibrary.Load(mappedName, assembly, dllImportSearchPath);
+            if (libraryName is "sqlite3" or "e_sqlite3")
+            {
+                var fileName = OsInfo.IsWindows ? "e_sqlite3.dll" : OsInfo.IsOsx ? "libe_sqlite3.dylib" : "libe_sqlite3.so";
+                var directories = new[] { AppContext.BaseDirectory }
+                    .Concat(((string)AppContext.GetData("NATIVE_DLL_SEARCH_DIRECTORIES") ?? string.Empty)
+                        .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries));
+
+                foreach (var directory in directories.Distinct())
+                {
+                    var path = Path.Combine(directory, fileName);
+                    if (Path.IsPathFullyQualified(path) && File.Exists(path))
+                    {
+                        return NativeLibrary.Load(path);
+                    }
+                }
+
+                // Never substitute an arbitrary host SQLite when delivery is incomplete.
+                throw new DllNotFoundException($"The bundled SQLite engine ({fileName}) is missing.");
+            }
+
+            return IntPtr.Zero;
         }
     }
 }

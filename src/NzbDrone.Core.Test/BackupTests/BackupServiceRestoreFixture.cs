@@ -824,6 +824,7 @@ namespace NzbDrone.Core.Test.BackupTests
         {
             DataSource = path,
             Pooling = false,
+            ForeignKeys = false,
             DateTimeKind = DateTimeKind.Utc
         }.ConnectionString;
 
