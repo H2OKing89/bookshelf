@@ -883,3 +883,35 @@ synthetic data, with input fingerprints preserved and owned resources cleaned up
 log connection consistently. No GitHub workflows, running development service or
 production appdata/media were changed; P13 native ARM64 and the broader platform
 and release gates remain open.
+
+
+### P14 full PostgreSQL connection strings — 2026-11-17
+
+Implementation `787a593e2` completes the
+[P14 local acceptance record](sonarr-v5-porting-backlog.md#p14). XML/environment
+strings now configure main, metadata cache and optional diagnostic logs. Missing
+active strings and mixed component/string sources are rejected without a SQLite
+fallback. Presence tracking distinguishes omitted settings from explicit empty,
+zero and default ports under real .NET configuration binding. Legacy component
+selection, credentials and database names retain their existing behavior.
+
+Npgsql retains quoted-password, TLS and other connection options with
+`Enlist=false`. Environment strings are absent from generated/default XML and
+host API resources. Existing XML and backup contracts are preserved. Config/parser/
+binding and PostgreSQL connection/startup/API/logging-target failure boundaries
+avoid raw secret-bearing provider payloads. Migration stage/version and safe
+SQLSTATE diagnostics remain; bounded cleansing removes whole connection strings.
+
+All **4,671 source tests**, **23 PostgreSQL migration cases**, **90 Python tests**,
+**115 connection-string checks**, **63 optional-log checks**, **52 SQLite checks**
+and **233 delivery checks** pass. Owned
+PostgreSQL 16 SCRAM authentication exercises semicolons/quotes in real passwords;
+the genuine pre-P14 binary's component-mode library is reopened through DSNs with
+schema, identity, files, history, cache, media and account authentication intact.
+The previous package correctly fails the no-SQLite-fallback requirement. The proof
+uses private Unix sockets, so TLS transport/certificate integration is not claimed.
+
+The running development service, production appdata/media and GitHub workflows
+were unchanged. P13 native ARM64 and broader P01/P09/P21/P22/P25 gates remain open.
+The P16 record also tracks an existing single-user assumption in host-settings
+access found while independently preserving multiple authenticated accounts.

@@ -12,7 +12,7 @@ import tempfile
 from validation import common
 
 
-CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "docker")
+CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "docker")
 
 
 def parser():
@@ -39,6 +39,8 @@ def main(argv=None):
         parser().error("--checks upgrade requires --baseline-runtime")
     if "datastore" in chosen and not arguments.baseline_runtime:
         parser().error("--checks datastore requires --baseline-runtime (a pre-P12 package)")
+    if "postgresconnections" in chosen and not arguments.baseline_runtime:
+        parser().error("--checks postgresconnections requires --baseline-runtime (a pre-P14 package)")
     if "docker" in chosen and not arguments.docker_runtime:
         parser().error("--checks docker requires --docker-runtime (a musl package)")
     previous_umask = os.umask(0o077)
@@ -72,13 +74,13 @@ def main(argv=None):
             output = common.private_directory(arguments.output.expanduser().resolve())
         for label, runtime in inputs.items():
             snapshots[label] = common.snapshot_runtime(runtime)
-        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage")):
+        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections")):
             common.ensure_host_compatible(inputs["candidate"])
         for label in ("baseline", "legacy"):
             if label in inputs:
                 common.ensure_host_compatible(inputs[label])
         # Imports are deliberately after validation; modules never launch on import.
-        from validation import app, cancellation, datastore, docker, logstorage, media, package, restore, sqlite, upgrade
+        from validation import app, cancellation, datastore, docker, logstorage, media, package, postgresconnections, restore, sqlite, upgrade
         callbacks = {
             "package": lambda: package.run(inputs["candidate"], output / "package", repo),
             "app": lambda: app.run(inputs["candidate"], output / "app"),
@@ -89,6 +91,7 @@ def main(argv=None):
             "datastore": lambda: datastore.run(inputs["candidate"], output / "datastore", baseline_runtime=inputs["baseline"]),
             "sqlite": lambda: sqlite.run(inputs["candidate"], output / "sqlite", baseline_runtime=inputs.get("baseline")),
             "logstorage": lambda: logstorage.run(inputs["candidate"], output / "logstorage"),
+            "postgresconnections": lambda: postgresconnections.run(inputs["candidate"], output / "postgresconnections", baseline_runtime=inputs["baseline"]),
             "docker": lambda: docker.run(inputs["docker"], output / "docker", repo),
         }
         for name in chosen:

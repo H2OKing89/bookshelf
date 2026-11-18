@@ -108,6 +108,37 @@ class AppFixtureTests(unittest.TestCase):
                             fixture.process_log.close()
                             fixture.process_log = None
 
+    def test_owned_postgres_overrides_reject_non_strings_unknown_keys_and_native_injection(self):
+        fixture = app.Fixture(self.runtime, self.root / "invalid-postgres")
+        fixture.configure_home()
+        for value in ([], "value", {"PATH": "unsafe"}, {"Host": "unowned"},
+                      {"MainDbConnectionString": False}, {"MainDbConnectionString": "bad\0value"}):
+            with self.subTest(value=value), patch.object(subprocess, "Popen") as process:
+                with self.assertRaises(ValidationFailure) as error:
+                    fixture.start(postgres_connection_strings=value)
+                self.assertEqual(error.exception.code, "invalid_owned_postgres_connection_override")
+                process.assert_not_called()
+
+    def test_owned_postgres_strings_are_injected_only_from_explicit_exact_keys(self):
+        fixture = app.Fixture(self.runtime, self.root / "postgres-override")
+        fixture.configure_home()
+        overrides = {"MainDbConnectionString": "owned-main", "CacheDbConnectionString": "owned-cache"}
+        with (patch.dict(os.environ, {"Readarr__Postgres__LogDbConnectionString": "unrelated connection"}),
+              patch.object(app, "ensure_host_compatible"), patch.object(subprocess, "Popen") as process,
+              patch.object(fixture, "request", return_value=(200, [], b"{}"))):
+            process.return_value.poll.return_value = None
+            try:
+                fixture.start(postgres_connection_strings=overrides)
+                environment = process.call_args.kwargs["env"]
+                self.assertEqual(environment["Readarr__Postgres__MainDbConnectionString"], "owned-main")
+                self.assertEqual(environment["Readarr__Postgres__CacheDbConnectionString"], "owned-cache")
+                self.assertNotIn("Readarr__Postgres__LogDbConnectionString", environment)
+            finally:
+                fixture.process = None
+                if fixture.process_log is not None:
+                    fixture.process_log.close()
+                    fixture.process_log = None
+
     def test_failure_metadata_omits_exception_payload_and_traceback(self):
         error = RuntimeError("saved-credential-must-not-reach-a-report")
         report = app.safe_failure("startup", error)

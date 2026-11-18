@@ -151,6 +151,33 @@ must retain library/download history, cached metadata and synthetic media, and
 recover the existing log/update history after reenabling. The setting takes effect
 at process startup; later configuration reads do not change the registered mode.
 
+## Check PostgreSQL connection strings
+
+Use the explicit P14 check with a complete pre-P14 package as the baseline:
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --baseline-runtime /path/to/pre-P14/package \
+  --checks postgresconnections
+```
+
+The check uses an owned PostgreSQL 16 container with a private Unix socket, no
+network and no published ports. It creates a SCRAM-authenticated role with a
+password containing semicolons and quotes. The old binary creates component-mode
+main/log/cache databases; the candidate switches that same home to full strings
+without losing library identities, authentication, file parts, history, metadata
+cache or media. No existing home or PostgreSQL endpoint is accepted.
+
+Other cases cover XML/environment precedence, unrelated settings saves, the
+optional log database, missing strings, mixed sources, invalid syntax/values and
+owned server authentication failures. Canaries must not appear in application
+logs or API resources. Saved XML and backups retain their normal configuration
+contract and are excluded from output scans. The runner preserves input package
+fingerprints and cleans up its application processes, container and socket.
+TLS options are checked by source tests; this Unix-socket proof does not claim
+TLS transport or certificate-chain integration coverage.
+
 ## Check a genuine upgrade or legacy backup
 
 Supply a separate older **binary package**, without any saved application data:
@@ -352,3 +379,25 @@ usual package/app/restore/.NET 6 upgrade/media/cancellation/Docker command passe
 **233 checks**. Source suites passed Core **3,704**, Common **774**, API **8** and
 Host **74**, with existing skips retained, plus **23 PostgreSQL migration cases**.
 No GitHub workflow, running development service or production data was changed.
+
+
+### P14 verification, 2026-11-17
+
+Implementation `787a593e2` passed **115 PostgreSQL connection-string checks**,
+including input fingerprints and cleanup. Real SCRAM authentication exercises
+quoted/semicolon passwords. A genuine pre-P14 binary creates component-mode
+libraries, then full strings reopen those same databases with schema, identities,
+authentication, history, cache and media intact. XML/env precedence, unrelated
+saves, optional logs, invalid configurations and secret-free server errors pass.
+The previous package fails the expected SQLite-fallback check. TLS flags are
+source-tested; transport integration is outside the Unix-socket proof.
+
+The existing optional-log proof passes **63 checks**, the SQLite native/locking
+regression passes **52 checks**, and the normal delivery command passes **233
+checks**. All **90 Python tests** pass.
+Source suites pass Core **3,756**, Common **828**, API **13**, Host **74**, and
+**23 PostgreSQL migration cases**, retaining existing platform skips. An existing
+loopback cancellation teardown returned Linux EINVAL once; the unchanged Common
+suite passed on a full rerun. Canonical locked backend/frontend builds and both
+x64 packages passed. No live home, production data, running development service
+or GitHub workflow was changed.

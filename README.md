@@ -62,6 +62,52 @@ and cache databases; an unused log database is not opened or created.
 This setting controls log storage. The existing `LogSql` setting independently
 controls diagnostic SQL-statement tracing.
 
+## PostgreSQL connection strings
+
+Existing PostgreSQL host/user/password/port/database settings continue to work.
+You can instead supply complete Npgsql connection strings through XML or the
+server environment:
+
+| Database | XML setting | Environment variable |
+| --- | --- | --- |
+| Main library | `PostgresMainDbConnectionString` | `Readarr__Postgres__MainDbConnectionString` |
+| Metadata cache | `PostgresCacheDbConnectionString` | `Readarr__Postgres__CacheDbConnectionString` |
+| Diagnostic logs | `PostgresLogDbConnectionString` | `Readarr__Postgres__LogDbConnectionString` |
+
+Set main and cache strings together. Also set the log string when database
+logging is enabled, which is the default. With `LogDbEnabled=false`, the log
+string is ignored, even if it remains in the configuration. A partial active
+set is rejected before opening a database; it never falls back to SQLite.
+Without active strings, existing SQLite/component selection stays unchanged.
+
+Remove the individual `PostgresHost`, `PostgresPort`, `PostgresUser`,
+`PostgresPassword`, `PostgresMainDb` and `PostgresCacheDb` settings when switching
+to strings, including environment overrides and explicitly saved default/empty
+values. Remove `PostgresLogDb` too when logging is enabled. Mixing the two forms
+is rejected. Point the strings at the existing databases to retain your library,
+cache and logs, then restart Bookshelf.
+
+Every active string must explicitly name its `Host` and `Database`. For example,
+a main string can contain:
+
+```text
+Host=postgres.example;Port=5432;Database=bookshelf-main;Username=bookshelf;Password="example;with ""quotes""";SSL Mode=VerifyFull;Root Certificate=/config/postgres-ca.crt
+```
+
+Use the corresponding database names for cache and logs. Npgsql quoting handles
+semicolon/quote characters in values; XML settings additionally need normal XML
+escaping. TLS and other provider options are retained, with `Enlist=false` forced
+for Bookshelf's database operations. See the official
+[Npgsql parameters](https://www.npgsql.org/doc/connection-string-parameters.html)
+and [TLS settings](https://www.npgsql.org/doc/security.html) for supported options;
+`VerifyFull` validates the server certificate and hostname.
+
+Environment strings override the matching XML strings and are not copied into
+`config.xml` by default generation or unrelated settings saves. Strings are not
+returned by the host-settings API. XML strings remain part of the existing
+configuration backup contract. Connection/configuration failures use generic
+messages and safe SQLSTATE codes, without raw provider exceptions or credentials.
+
 ## Catalog settings
 
 Under **Settings → Metadata → Audiobook Catalog**, select an Audible marketplace

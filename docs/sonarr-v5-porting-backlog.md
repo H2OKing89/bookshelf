@@ -55,7 +55,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P11](#p11) | P1 | Verified | M | Use per-connection Happy Eyeballs and expire pooled connections |
 | [P12](#p12) | P1 | Verified | XL | Modernize the migration engine while preserving Bookshelf schema history |
 | [P13](#p13) | P2 | In progress | M | Upgrade SQLite provider and measure busy-timeout behavior |
-| [P14](#p14) | P2 | Planned | M | Support full PostgreSQL connection strings with corrected validation |
+| [P14](#p14) | P2 | Verified | M | Support full PostgreSQL connection strings with corrected validation |
 | [P15](#p15) | P2 | Verified | M | Make SQL log storage optional |
 | [P16](#p16) | P2 | Planned | L | Review v5 authentication defaults, bootstrap and recovery as product policy |
 | [P17](#p17) | P2 | Planned | L | Add OIDC only if SSO is wanted |
@@ -1180,19 +1180,77 @@ service/appdata/media changes are included.
 **Support full PostgreSQL connection strings with corrected validation**
 
 - Priority / effort: **P2 / M**.
-- Current Bookshelf state: partial; PostgreSQL host/user/password/port/main/log/cache configuration already exists.
+- Current Bookshelf state: verified locally; full main/cache/optional-log connection strings coexist with preserved legacy component mode.
 - Approach: adapt with upstream bug fixed.
 - Prerequisites: [P09](#p09), [P12](#p12), [P15](#p15).
 - Pinned v5 source: [src/NzbDrone.Core/Datastore/ConnectionStringFactory.cs](https://github.com/Sonarr/Sonarr/blob/c018578e4b79ee048575c02d7a8aa2b929e4b837/src/NzbDrone.Core/Datastore/ConnectionStringFactory.cs#L106).
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/Datastore/ConnectionStringFactory.cs](../src/NzbDrone.Core/Datastore/ConnectionStringFactory.cs#L20).
 
-**Bookshelf status:** partial; PostgreSQL host/user/password/port/main/log/cache configuration already exists. S5 `src/NzbDrone.Core/Datastore/ConnectionStringFactory.cs:106` selects full-string versus component settings; `GetPostgresConnectionInfoFromConnectionString:92` uses NpgsqlConnectionStringBuilder and Enlist=false. B constructor at line 20 supports component settings only. S5 `PostgresOptions.cs:13` adds the string options; `MigrationController.cs:92` removes Password through NpgsqlConnectionStringBuilder before logging.
+**Comparison baseline:** partial; PostgreSQL host/user/password/port/main/log/cache configuration already exists. S5 `src/NzbDrone.Core/Datastore/ConnectionStringFactory.cs:106` selects full-string versus component settings; `GetPostgresConnectionInfoFromConnectionString:92` uses NpgsqlConnectionStringBuilder and Enlist=false. B constructor at line 20 supports component settings only. S5 `PostgresOptions.cs:13` adds the string options; `MigrationController.cs:92` removes Password through NpgsqlConnectionStringBuilder before logging.
 
 **Action/dependencies:** P09/12/15; design all three B database strings and validation rules. S5 line 120 tests `!isMainDBConnectionStringSet && isLogDBConnectionStringSet`; line 125 repeats the same logical predicate, so main-only + enabled log is not caught there. Correct both one-sided cases and enforce mixed-source rules across host/user/port/password rather than copying this method.
 
 **Book/audio caution:** Bookshelf has a third CacheDb; do not remove it to match Sonarr. Preserve existing component defaults/names and secrets, allow TLS parameters without returning the connection string to UI/logs.
 
 **Acceptance:** exhaustive config table covers no Postgres, components, all strings, each missing string, log disabled, cache choices, mixed sources, invalid syntax, TLS flags and quoted/semicolon passwords; errors/logs contain sentinel-free redaction; existing homes choose the same databases after upgrade.
+
+**Implemented and verified locally in `787a593e2`, 2026-11-17.**
+Bookshelf now accepts `PostgresMainDbConnectionString`,
+`PostgresCacheDbConnectionString` and `PostgresLogDbConnectionString`, with matching
+`Readarr__Postgres__*DbConnectionString` environment options. Environment values
+win over matching XML. Main/cache are always required in full-string mode; log
+is required only when database logging is enabled. Disabled log strings/names
+are ignored for mode selection, validation and connection creation. Partial
+active sets fail before opening a database and never select SQLite instead.
+No active strings preserves the old SQLite/component selection and names.
+
+The mixed-source check reads actual source presence, including explicit empty,
+zero and default ports, rather than treating effective default values as user
+settings. The nullable typed port plus raw bound presence handle .NET 10 binding
+without changing the public effective port contract. Active host/user/password/
+port/main/cache names cannot coexist with full strings; the log name matters only
+when logging is enabled. Each active string explicitly requires Host and Database.
+`NpgsqlConnectionStringBuilder` preserves quoted passwords, TLS, pooling and other
+provider options while forcing `Enlist=false`. No historical migration or package
+version is changed.
+
+Environment strings are not materialized into default XML or unrelated settings
+saves, and existing XML strings retain exact quoting. Host API resources do not
+expose them. XML strings intentionally remain in configuration backups. Parser,
+XML and options-binding errors discard sensitive inner exceptions. PostgreSQL
+startup errors retain only database purpose and strict SQLSTATE codes; connection
+opens, logging-target failures and direct/wrapped API errors do not render raw
+provider payloads. Migration classes retain stage/version logs, while arbitrary
+PostgreSQL runner diagnostics are suppressed. Bounded cleansing removes whole
+assigned/recognizable connection strings and handles quoted credential aliases;
+SQLite corruption recovery and constraint responses remain unchanged.
+
+**Validation:** **4,671 source tests** passed (Core 3,756, Common 828, API 13,
+Host 74), including **111 new configuration/privacy cases**. Existing platform
+skips remain; **23 PostgreSQL migration cases** and **90 Python tests** pass.
+One existing loopback HTTP cancellation teardown returned Linux EINVAL once;
+the unchanged Common suite passed on a clean rerun. The canonical locked backend
+builds, frontend and glibc/musl-x64 packages passed.
+
+The explicit `--checks postgresconnections` proof passes **115 checks**, including
+input fingerprints. A genuine pre-P14 binary creates component-mode databases;
+the candidate opens those same main/log/cache databases using full strings,
+preserving schema, identities, two recording parts, history, cache, media and both
+legacy/salted account logins. An owned SCRAM role genuinely authenticates a
+password with semicolons, quotes and backslashes. XML/environment precedence,
+settings saves, inactive log handling, 19 invalid configurations and three server
+failure cases pass. Canaries remain absent from application logs/API outputs.
+The previous package correctly fails the explicit SQLite-fallback assertion.
+The P15 optional-log regression also passes **63 checks**, the SQLite native/locking
+regression passes **52 checks**, and the normal package/app/restore/.NET 6 upgrade/
+media/cancellation/S6 Docker command passes **233 checks**. These proofs use owned
+PostgreSQL 16 with no network/published ports. TLS parameter retention is tested;
+this Unix-socket proof does not claim TLS transport/certificate integration.
+
+See [configuration](../README.md#postgresql-connection-strings) and
+[local validation](local-validation.md#check-postgresql-connection-strings).
+No running development service, production data or GitHub workflow was changed;
+P13 native ARM64 and the broader platform/release gates remain open.
 
 ### P15
 
@@ -1280,6 +1338,13 @@ next**, now that its optional-log prerequisite is verified.
 **Book/audio caution:** preserve existing library-user identity and automation access; no surprise user reset or catalog rebuild. Document a trusted local recovery flow rather than inheriting Sonarr branding/default username.
 
 **Acceptance:** fresh and upgraded homes have deliberate reachable auth states; credential migration preserves identifiers; policy changes are explained; reset attempts expire, throttle and consume correctly; process restart behavior of any configured token is explicitly tested; secrets never enter export/support-bundle channels inadvertently.
+
+**Additional existing edge found during P14 verification:** authentication can
+retain and authenticate multiple saved accounts, while host-settings access uses
+`UserService.FindUser()` / `SingleOrDefault`. P16 must define which account
+administrative settings edit without deleting other saved identities. P14's
+settings-save proof uses a separate fresh home; its upgrade proof independently
+preserves and authenticates both legacy and salted accounts.
 
 ### P17
 

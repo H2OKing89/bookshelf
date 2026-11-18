@@ -397,7 +397,8 @@ public class ConfigProxy : DispatchProxy
 {
     protected override object Invoke(MethodInfo method, object[] args)
     {
-        if (method.Name == "get_PostgresHost") return string.Empty;
+        if (method.Name is "get_PostgresHost" or "get_PostgresMainDbConnectionString" or "get_PostgresLogDbConnectionString" or "get_PostgresCacheDbConnectionString") return string.Empty;
+        if (method.Name == "get_LogDbEnabled") return true;
         throw new NotSupportedException("Only synthetic SQLite settings are allowed in this probe.");
     }
 }
