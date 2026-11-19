@@ -1,10 +1,19 @@
 using DryIoc;
+using NzbDrone.Core.Authentication;
 using NzbDrone.Core.Datastore.Migration.Framework;
 
 namespace NzbDrone.Core.Datastore.Extensions
 {
     public static class CompositionExtensions
     {
+        public static IContainer AddRecoveryDatabase(this IContainer container)
+        {
+            container.RegisterDelegate<IConnectionStringFactory, IMainDatabase>(
+                factory => new MainDatabase(PasswordRecoveryDatabase.Create(factory.MainDbConnection)),
+                Reuse.Singleton);
+            return container;
+        }
+
         public static IContainer AddDatabase(this IContainer container, bool logDbEnabled = true)
         {
             container.RegisterDelegate<IDbFactory, IMainDatabase>(f => new MainDatabase(f.Create()), Reuse.Singleton);

@@ -21,6 +21,7 @@ namespace NzbDrone.Common
             Console.WriteLine();
             Console.WriteLine("     Usage: {0} <command> ", Process.GetCurrentProcess().MainModule.ModuleName);
             Console.WriteLine("     Commands:");
+            Console.WriteLine("                 /{0} Reset an existing account password locally; stop the server and specify /data=path. Passwords are read from standard input, never arguments.", StartupContext.PASSWORD_RESET);
             if (OsInfo.IsWindows)
             {
                 Console.WriteLine("                 /{0} Install the application as a Windows Service ({1}).", StartupContext.INSTALL_SERVICE, ServiceProvider.SERVICE_NAME);

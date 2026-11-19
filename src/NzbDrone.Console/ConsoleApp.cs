@@ -26,6 +26,9 @@ namespace NzbDrone.Console
         public static void Main(string[] args)
         {
             StartupContext startupArgs = null;
+            var isPasswordReset = Array.Exists(
+                args ?? Array.Empty<string>(),
+                argument => argument.TrimStart(' ', '/', '-').StartsWith(StartupContext.PASSWORD_RESET, StringComparison.OrdinalIgnoreCase));
 
             try
             {
@@ -36,11 +39,20 @@ namespace NzbDrone.Console
                 }
                 catch (Exception ex)
                 {
-                    System.Console.WriteLine("NLog Exception: " + ex.ToString());
+                    if (!isPasswordReset)
+                    {
+                        System.Console.WriteLine("NLog Exception: " + ex.ToString());
+                    }
+
                     throw;
                 }
 
                 Bootstrap.Start(args);
+            }
+            catch (Exception) when (isPasswordReset)
+            {
+                System.Console.WriteLine("Password reset failed. Check the existing home, server state and configuration.");
+                Exit(ExitCodes.UnknownFailure, new StartupContext("-passwordreset"));
             }
             catch (ReadarrStartupException ex)
             {
@@ -85,6 +97,13 @@ namespace NzbDrone.Console
                 Exit(ExitCodes.UnknownFailure, startupArgs);
             }
 
+            if (startupArgs?.PasswordReset == true)
+            {
+                LogManager.Shutdown();
+                Environment.Exit(Environment.ExitCode);
+                return;
+            }
+
             Logger.Info("Exiting main.");
 
             Exit(ExitCodes.Normal, startupArgs);
@@ -93,6 +112,12 @@ namespace NzbDrone.Console
         private static void Exit(ExitCodes exitCode, StartupContext startupArgs)
         {
             LogManager.Shutdown();
+
+            if (startupArgs?.PasswordReset == true)
+            {
+                Environment.Exit((int)exitCode);
+                return;
+            }
 
             if (exitCode != ExitCodes.Normal)
             {

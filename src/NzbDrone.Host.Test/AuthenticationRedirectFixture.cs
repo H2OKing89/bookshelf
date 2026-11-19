@@ -56,6 +56,11 @@ namespace NzbDrone.Host.Test
             config.SetupGet(provider => provider.AuthenticationMethod).Returns(AuthenticationType.Forms);
             config.SetupGet(provider => provider.AuthenticationRequired).Returns(AuthenticationRequiredType.Enabled);
 
+            var user = new User { Identifier = Guid.NewGuid(), Username = "fixture-reader", Password = "fixture-digest" };
+            var users = new Mock<IUserService>();
+            users.Setup(service => service.FindUser(user.Identifier)).Returns(user);
+            users.Setup(service => service.GetUsers()).Returns(new List<User> { user });
+
             var mapper = new Mock<IMapHttpRequestsToDisk>();
             mapper.Setup(m => m.CanHandle(It.IsAny<string>())).Returns(true);
             mapper.Setup(m => m.GetResponse(It.IsAny<string>()))
@@ -72,6 +77,7 @@ namespace NzbDrone.Host.Test
                     .ConfigureServices(services =>
                     {
                         services.AddSingleton(config.Object);
+                        services.AddSingleton(users.Object);
                         services.AddSingleton(TestLogger);
                         services.AddSingleton(mapper.Object);
                         services.AddDataProtection().UseEphemeralDataProtectionProvider();
@@ -183,6 +189,13 @@ namespace NzbDrone.Host.Test
     [Route("api/auth-redirect-probe")]
     public class AuthenticationRedirectProbeController : ControllerBase
     {
+        private readonly IUserService _users;
+
+        public AuthenticationRedirectProbeController(IUserService users)
+        {
+            _users = users;
+        }
+
         [HttpGet]
         public IActionResult Get()
         {
@@ -193,7 +206,14 @@ namespace NzbDrone.Host.Test
         [HttpPost("sign-in")]
         public async Task<IActionResult> SignIn()
         {
-            var principal = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "fixture-reader") }, "Cookies"));
+            var user = _users.GetUsers().Single();
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim("identifier", user.Identifier.ToString()),
+                new Claim(UserCredentialStamp.ClaimType, UserCredentialStamp.Create(user))
+            };
+            var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, "Cookies"));
             await HttpContext.SignInAsync("Forms", principal);
             return NoContent();
         }

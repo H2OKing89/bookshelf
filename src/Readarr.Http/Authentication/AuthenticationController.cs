@@ -62,7 +62,8 @@ namespace Readarr.Http.Authentication
             {
                 new Claim("user", user.Username),
                 new Claim("identifier", user.Identifier.ToString()),
-                new Claim("AuthType", AuthenticationType.Forms.ToString())
+                new Claim("AuthType", AuthenticationType.Forms.ToString()),
+                new Claim(UserCredentialStamp.ClaimType, UserCredentialStamp.Create(user))
             };
 
             var authProperties = new AuthenticationProperties

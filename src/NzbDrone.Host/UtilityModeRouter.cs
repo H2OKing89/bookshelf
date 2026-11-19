@@ -20,13 +20,15 @@ namespace NzbDrone.Host
         private readonly IRemoteAccessAdapter _remoteAccessAdapter;
         private readonly IAppFolderFactory _appFolderFactory;
         private readonly Logger _logger;
+        private readonly IPasswordResetUtility _passwordReset;
 
         public UtilityModeRouter(IServiceProvider serviceProvider,
                       IConsoleService consoleService,
                       IProcessProvider processProvider,
                       IRemoteAccessAdapter remoteAccessAdapter,
                       IAppFolderFactory appFolderFactory,
-                      Logger logger)
+                      Logger logger,
+                      IPasswordResetUtility passwordReset)
         {
             _serviceProvider = serviceProvider;
             _consoleService = consoleService;
@@ -34,6 +36,7 @@ namespace NzbDrone.Host
             _remoteAccessAdapter = remoteAccessAdapter;
             _appFolderFactory = appFolderFactory;
             _logger = logger;
+            _passwordReset = passwordReset;
         }
 
         public void Route(ApplicationModes applicationModes)
@@ -42,6 +45,12 @@ namespace NzbDrone.Host
 
             switch (applicationModes)
             {
+                case ApplicationModes.PasswordReset:
+                    {
+                        _passwordReset.Run();
+                        break;
+                    }
+
                 case ApplicationModes.InstallService:
                     {
                         _logger.Debug("Install Service selected");

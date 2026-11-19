@@ -1,6 +1,8 @@
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -21,6 +23,7 @@ using Readarr.Http.REST;
 namespace Readarr.Api.V1.Config
 {
     [V1ApiController("config/host")]
+    [HostAccountAuthentication]
     public class HostConfigController : RestController<HostConfigResource>
     {
         private const string PrivateValue = "********";
@@ -52,14 +55,31 @@ namespace Readarr.Api.V1.Config
             SharedValidator.RuleFor(c => c.UrlBase).ValidUrlBase();
             SharedValidator.RuleFor(c => c.InstanceName).ContainsReadarr().When(c => c.InstanceName.IsNotNullOrWhiteSpace());
 
-            SharedValidator.RuleFor(c => c.Username).NotEmpty().When(c => c.AuthenticationMethod == AuthenticationType.Basic ||
-                                                                          c.AuthenticationMethod == AuthenticationType.Forms);
+            SharedValidator.RuleFor(c => c).Custom((resource, context) =>
+            {
+                try
+                {
+                    ValidateAccountSelection(resource);
+                }
+                catch (ValidationException error)
+                {
+                    foreach (var failure in error.Errors)
+                    {
+                        context.AddFailure(failure);
+                    }
+                }
+            });
+
+            SharedValidator.RuleFor(c => c.Username).NotEmpty().When(c =>
+                (c.AuthenticationMethod == AuthenticationType.Basic || c.AuthenticationMethod == AuthenticationType.Forms) &&
+                !IsUnselectedGeneralSave(c));
             SharedValidator.RuleFor(c => c.Password).NotEmpty()
-                .When(c => (c.AuthenticationMethod == AuthenticationType.Basic || c.AuthenticationMethod == AuthenticationType.Forms) &&
-                           (c.Password != null || _userService.FindUser() == null));
+                .When(c => !IsUnselectedGeneralSave(c) &&
+                           (c.AuthenticationMethod == AuthenticationType.Basic || c.AuthenticationMethod == AuthenticationType.Forms) &&
+                           (c.Password != null || SelectedAccount(c.UserIdentifier) == null));
 
             SharedValidator.RuleFor(c => c.Password).NotEqual(PrivateValue)
-                .When(c => _userService.FindUser() == null);
+                .When(c => !IsUnselectedGeneralSave(c) && SelectedAccount(c.UserIdentifier) == null);
 
             SharedValidator.RuleFor(c => c.PasswordConfirmation)
                 .Must((resource, p) => IsMatchingPassword(resource)).WithMessage("Must match Password");
@@ -98,7 +118,12 @@ namespace Readarr.Api.V1.Config
 
         private bool IsMatchingPassword(HostConfigResource resource)
         {
-            var user = _userService.FindUser();
+            if (IsUnselectedGeneralSave(resource))
+            {
+                return true;
+            }
+
+            var user = SelectedAccount(resource.UserIdentifier);
 
             if (IsUnchangedPassword(resource.Password, user))
             {
@@ -121,12 +146,33 @@ namespace Readarr.Api.V1.Config
         }
 
         [HttpGet]
-        public HostConfigResource GetHostConfig()
+        public HostConfigResource GetHostConfig([FromQuery] Guid? userIdentifier = null)
         {
+            if (!userIdentifier.HasValue && HttpContext?.Request.Query.TryGetValue("userIdentifier", out var query) == true)
+            {
+                if (!Guid.TryParse(query, out var parsed))
+                {
+                    throw SelectionError("Select a valid account identifier");
+                }
+
+                userIdentifier = parsed;
+            }
+
             var resource = HostConfigResourceMapper.ToResource(_configFileProvider, _configService);
             resource.Id = 1;
 
-            var user = _userService.FindUser();
+            var accounts = _userService.GetUsers();
+            var user = SelectedAccount(userIdentifier);
+
+            resource.Accounts = accounts.Where(account => AuthenticatedAccountIdentity() == null || account.Identifier == user?.Identifier)
+                .Select(account => new HostAccountResource
+            {
+                Identifier = account.Identifier,
+                Username = account.Username,
+                HasPassword = account.Password.IsNotNullOrWhiteSpace()
+            }).ToList();
+            resource.UserIdentifier = user?.Identifier;
+            resource.AccountSelectionRequired = user == null && accounts.Count > 1;
 
             resource.Username = user?.Username ?? string.Empty;
             resource.Password = user?.Password.IsNotNullOrWhiteSpace() == true ? PrivateValue : string.Empty;
@@ -138,6 +184,8 @@ namespace Readarr.Api.V1.Config
         [RestPutById]
         public ActionResult<HostConfigResource> SaveHostConfig(HostConfigResource resource)
         {
+            ValidateAccountSelection(resource);
+            var selected = SelectedAccount(resource.UserIdentifier);
             if (resource.TrustedNetworks != null)
             {
                 if (!IPNetworkParser.IsValidList(resource.TrustedNetworks))
@@ -152,7 +200,7 @@ namespace Readarr.Api.V1.Config
                 resource.TrustedNetworks = IPNetworkParser.NormalizeList(resource.TrustedNetworks);
             }
 
-            var unchangedPassword = IsUnchangedPassword(resource.Password, _userService.FindUser());
+            var unchangedPassword = IsUnchangedPassword(resource.Password, selected);
             if (!unchangedPassword && resource.Password.IsNotNullOrWhiteSpace() && resource.Password != PrivateValue &&
                 resource.Password != resource.PasswordConfirmation)
             {
@@ -163,6 +211,9 @@ namespace Readarr.Api.V1.Config
                                      .GetProperties(BindingFlags.Instance | BindingFlags.Public)
                                      .Where(prop => prop.Name != nameof(HostConfigResource.Password) &&
                                                     prop.Name != nameof(HostConfigResource.PasswordConfirmation) &&
+                                                    prop.Name != nameof(HostConfigResource.UserIdentifier) &&
+                                                    prop.Name != nameof(HostConfigResource.Accounts) &&
+                                                    prop.Name != nameof(HostConfigResource.AccountSelectionRequired) &&
                                                     (prop.Name != nameof(HostConfigResource.TrustedNetworks) || resource.TrustedNetworks != null))
                                      .ToDictionary(prop => prop.Name, prop => prop.GetValue(resource, null));
 
@@ -173,15 +224,92 @@ namespace Readarr.Api.V1.Config
             {
                 if (unchangedPassword)
                 {
-                    _userService.Upsert(resource.Username, null);
+                    SaveAccount(selected, resource.Username, null);
                 }
                 else if (resource.Password.IsNotNullOrWhiteSpace() && resource.Password != PrivateValue)
                 {
-                    _userService.Upsert(resource.Username, resource.Password);
+                    SaveAccount(selected, resource.Username, resource.Password);
                 }
             }
 
             return Accepted(resource.Id);
+        }
+
+        private void SaveAccount(User selected, string username, string password)
+        {
+            if (selected != null)
+            {
+                _userService.Upsert(selected.Identifier, username, password);
+            }
+            else
+            {
+                _userService.Upsert(username, password);
+            }
+        }
+
+        private User SelectedAccount(Guid? requested)
+        {
+            var authenticatedAccount = AuthenticatedAccountIdentity();
+            if (authenticatedAccount != null)
+            {
+                if (!Guid.TryParse(authenticatedAccount.FindFirst("identifier")?.Value, out var identifier) ||
+                    (requested.HasValue && requested.Value != identifier))
+                {
+                    throw SelectionError("An authenticated account may edit only its own credentials");
+                }
+
+                requested = identifier;
+            }
+
+            var users = _userService.GetUsers();
+            if (requested.HasValue)
+            {
+                var selected = users.SingleOrDefault(user => user.Identifier == requested.Value);
+                if (selected == null)
+                {
+                    throw SelectionError("The selected account no longer exists; reload settings");
+                }
+
+                return selected;
+            }
+
+            return users.Count == 1 ? users[0] : null;
+        }
+
+        private ClaimsIdentity AuthenticatedAccountIdentity()
+        {
+            return HttpContext?.User?.Identities.FirstOrDefault(identity => identity.IsAuthenticated &&
+                identity.Claims.Any(claim => claim.Type == "AuthType" &&
+                    (claim.Value == AuthenticationType.Forms.ToString() || claim.Value == AuthenticationType.Basic.ToString())));
+        }
+
+        private bool IsUnselectedGeneralSave(HostConfigResource resource)
+        {
+            return _userService.GetUsers().Count > 1 && SelectedAccount(resource.UserIdentifier) == null &&
+                resource.Username.IsNullOrWhiteSpace() && resource.Password.IsNullOrWhiteSpace() &&
+                resource.PasswordConfirmation.IsNullOrWhiteSpace() &&
+                resource.AuthenticationMethod == _configFileProvider.AuthenticationMethod;
+        }
+
+        private void ValidateAccountSelection(HostConfigResource resource)
+        {
+            var users = _userService.GetUsers();
+            var selected = SelectedAccount(resource.UserIdentifier);
+            if (selected == null && users.Count > 1 && !IsUnselectedGeneralSave(resource))
+            {
+                throw SelectionError("Select an account before changing credentials or authentication mode");
+            }
+
+            if (selected != null && resource.Username.IsNotNullOrWhiteSpace() && users.Any(user =>
+                user.Identifier != selected.Identifier && string.Equals(user.Username, resource.Username, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw SelectionError("The requested username belongs to another account");
+            }
+        }
+
+        private static ValidationException SelectionError(string message)
+        {
+            return new ValidationException(new[] { new ValidationFailure(nameof(HostConfigResource.UserIdentifier), message) });
         }
     }
 }

@@ -51,7 +51,10 @@ namespace NzbDrone.Common.Instrumentation
                     RegisterConsole();
                 }
 
-                RegisterAppFile(appFolderInfo);
+                if (!startupContext.PasswordReset)
+                {
+                    RegisterAppFile(appFolderInfo);
+                }
             }
 
             RegisterAuthLogger();

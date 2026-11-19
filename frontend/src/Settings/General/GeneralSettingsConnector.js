@@ -66,6 +66,15 @@ class GeneralSettingsConnector extends Component {
   // Listeners
 
   onInputChange = ({ name, value }) => {
+    if (name === 'userIdentifier') {
+      const account = this.props.settings.accounts.value.find((item) => item.identifier === value);
+      this.props.setGeneralSettingsValue({ name, value: account ? account.identifier : null });
+      this.props.setGeneralSettingsValue({ name: 'username', value: account ? account.username : '' });
+      this.props.setGeneralSettingsValue({ name: 'password', value: account && account.hasPassword ? '********' : '' });
+      this.props.setGeneralSettingsValue({ name: 'passwordConfirmation', value: '' });
+      return;
+    }
+
     this.props.setGeneralSettingsValue({ name, value });
   };
 
@@ -98,6 +107,7 @@ class GeneralSettingsConnector extends Component {
 }
 
 GeneralSettingsConnector.propTypes = {
+  settings: PropTypes.object.isRequired,
   isResettingApiKey: PropTypes.bool.isRequired,
   setGeneralSettingsValue: PropTypes.func.isRequired,
   saveGeneralSettings: PropTypes.func.isRequired,

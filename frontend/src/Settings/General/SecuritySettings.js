@@ -126,7 +126,9 @@ class SecuritySettings extends Component {
       password,
       passwordConfirmation,
       apiKey,
-      certificateValidation
+      certificateValidation,
+      accounts,
+      userIdentifier
     } = settings;
 
     const authenticationEnabled = authenticationMethod && authenticationMethod.value !== 'none';
@@ -162,6 +164,24 @@ class SecuritySettings extends Component {
               />
             </FormGroup> :
             null
+        }
+
+        {
+          accounts && accounts.value.length > 1 ?
+            <FormGroup>
+              <FormLabel>{translate('AccountToEdit')}</FormLabel>
+              <FormInputGroup
+                type={inputTypes.SELECT}
+                name="userIdentifier"
+                values={[
+                  { key: '', value: translate('SelectAccount') },
+                  ...accounts.value.map((account) => ({ key: account.identifier, value: account.username }))
+                ]}
+                value={userIdentifier && userIdentifier.value ? userIdentifier.value : ''}
+                helpText={translate('AccountToEditHelpText')}
+                onChange={onInputChange}
+              />
+            </FormGroup> : null
         }
 
         {

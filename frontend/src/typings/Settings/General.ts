@@ -14,6 +14,9 @@ export default interface General {
   launchBrowser: boolean;
   authenticationMethod: string;
   authenticationRequired: string;
+  userIdentifier?: string | null;
+  accountSelectionRequired?: boolean;
+  accounts?: { identifier: string; username: string; hasPassword: boolean }[];
   username: string;
   password: string;
   passwordConfirmation: string;

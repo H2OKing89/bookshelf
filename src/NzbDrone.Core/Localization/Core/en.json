@@ -1164,5 +1164,8 @@
   "YesCancel": "Yes, Cancel",
   "Yesterday": "Yesterday",
   "PreferPathAsin": "Prefer filename ASIN",
-  "PreferPathAsinHelpText": "Use the bracketed ASIN in the filename or nearest recording folder for matching, even when embedded tags disagree. Filename and folder ASINs must agree. This does not change file tags or allow conflicting tags to be scrubbed."
+  "PreferPathAsinHelpText": "Use the bracketed ASIN in the filename or nearest recording folder for matching, even when embedded tags disagree. Filename and folder ASINs must agree. This does not change file tags or allow conflicting tags to be scrubbed.",
+    "AccountToEdit": "Account to edit",
+    "SelectAccount": "Select an account",
+    "AccountToEditHelpText": "Username and password changes apply to this account. Other accounts are retained."
 }

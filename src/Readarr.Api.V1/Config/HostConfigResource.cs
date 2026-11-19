@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using NzbDrone.Common.Http.Proxy;
 using NzbDrone.Core.Authentication;
 using NzbDrone.Core.Configuration;
@@ -20,6 +22,9 @@ namespace Readarr.Api.V1.Config
         public string Username { get; set; }
         public string Password { get; set; }
         public string PasswordConfirmation { get; set; }
+        public Guid? UserIdentifier { get; set; }
+        public bool AccountSelectionRequired { get; set; }
+        public List<HostAccountResource> Accounts { get; set; } = new List<HostAccountResource>();
         public string LogLevel { get; set; }
         public string ConsoleLogLevel { get; set; }
         public string Branch { get; set; }
@@ -45,6 +50,13 @@ namespace Readarr.Api.V1.Config
         public int BackupInterval { get; set; }
         public int BackupRetention { get; set; }
         public bool TrustCgnatIpAddresses { get; set; }
+    }
+
+    public class HostAccountResource
+    {
+        public Guid Identifier { get; set; }
+        public string Username { get; set; }
+        public bool HasPassword { get; set; }
     }
 
     public static class HostConfigResourceMapper

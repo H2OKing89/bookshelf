@@ -45,6 +45,8 @@ namespace NzbDrone.Integration.Test.ApiTests
             };
             _users = new Mock<IUserService>();
             _users.Setup(x => x.FindUser()).Returns(_user);
+            _users.Setup(x => x.GetUsers()).Returns(() => new List<User> { _user });
+            _users.Setup(x => x.Upsert(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>())).Returns(_user);
             _users.Setup(x => x.Upsert(It.IsAny<string>(), It.IsAny<string>())).Returns(_user);
             _configFile = new Mock<IConfigFileProvider>();
             _configFile.SetupGet(x => x.TrustedNetworks).Returns(() => _storedNetworks);
@@ -198,7 +200,7 @@ namespace NzbDrone.Integration.Test.ApiTests
             _fileSettings[nameof(HostConfigResource.EnableSsl)].Should().Be(false);
             _fileSettings[nameof(HostConfigResource.ProxyPort)].Should().Be(0);
             _fileSettings[nameof(HostConfigResource.ApiKey)].Should().Be("preserved-api-key");
-            _users.Verify(x => x.Upsert("reader", null), Times.Once());
+            _users.Verify(x => x.Upsert(_user.Identifier, "reader", null), Times.Once());
             _user.Id.Should().Be(42);
             _user.Password.Should().Be("existing password".SHA256Hash());
             _user.Salt.Should().BeNull();

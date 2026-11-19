@@ -197,16 +197,15 @@ namespace NzbDrone.Host
 
         public void Configure(IApplicationBuilder app,
                               IContainer container,
-                              IStartupContext startupContext,
                               Lazy<IMainDatabase> mainDatabaseFactory,
                               Lazy<ILogDatabase> logDatabaseFactory,
                               Lazy<ICacheDatabase> cacheDatabaseFactory,
                               DatabaseTarget dbTarget,
-                              ISingleInstancePolicy singleInstancePolicy,
                               InitializeLogger initializeLogger,
                               ReconfigureLogging reconfigureLogging,
                               IAppFolderFactory appFolderFactory,
                               IProvidePidFile pidFileProvider,
+                              IAppHomeLock appHomeLock,
                               IConfigFileProvider configFileProvider,
                               IRuntimeInfo runtimeInfo,
                               IFirewallAdapter firewallAdapter,
@@ -215,13 +214,13 @@ namespace NzbDrone.Host
         {
             initializeLogger.Initialize();
             appFolderFactory.Register();
-            pidFileProvider.Write();
 
             configFileProvider.EnsureDefaultConfigFile();
 
             reconfigureLogging.Reconfigure();
 
-            EnsureSingleInstance(false, startupContext, singleInstancePolicy);
+            appHomeLock.Acquire();
+            pidFileProvider.Write();
 
             // instantiate the databases to initialize/migrate them
             _ = mainDatabaseFactory.Value;
@@ -286,31 +285,6 @@ namespace NzbDrone.Host
                 x.MapHub<MessageHub>("/signalr/messages").RequireAuthorization("SignalR");
                 x.MapControllers();
             });
-        }
-
-        private void EnsureSingleInstance(bool isService, IStartupContext startupContext, ISingleInstancePolicy instancePolicy)
-        {
-            if (startupContext.Flags.Contains(StartupContext.NO_SINGLE_INSTANCE_CHECK))
-            {
-                return;
-            }
-
-            if (startupContext.Flags.Contains(StartupContext.TERMINATE))
-            {
-                instancePolicy.KillAllOtherInstance();
-            }
-            else if (startupContext.Args.ContainsKey(StartupContext.APPDATA))
-            {
-                instancePolicy.WarnIfAlreadyRunning();
-            }
-            else if (isService)
-            {
-                instancePolicy.KillAllOtherInstance();
-            }
-            else
-            {
-                instancePolicy.PreventStartIfAlreadyRunning();
-            }
         }
     }
 }

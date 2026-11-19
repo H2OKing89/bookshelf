@@ -41,6 +41,8 @@ namespace NzbDrone.Integration.Test.ApiTests
             _user = new User { Id = 42, Identifier = Guid.NewGuid(), Username = "reader", Password = Password.SHA256Hash() };
             _repository = new Mock<IUserRepository>();
             _repository.Setup(x => x.SingleOrDefault()).Returns(() => _user);
+            _repository.Setup(x => x.All()).Returns(() => _user == null ? new List<User>() : new List<User> { _user });
+            _repository.Setup(x => x.FindUser(It.IsAny<Guid>())).Returns<Guid>(identifier => _user?.Identifier == identifier ? _user : null);
             _repository.Setup(x => x.FindUser(It.IsAny<string>()))
                 .Returns<string>(username => username == _user?.Username ? _user : null);
             _repository.Setup(x => x.TryUpdateCredentials(It.IsAny<User>(), It.IsAny<User>(), It.IsAny<bool>(), It.IsAny<bool>()))

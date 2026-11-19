@@ -58,6 +58,11 @@ namespace NzbDrone.Host
                 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
                 var appMode = GetApplicationMode(startupContext);
+                if (appMode == ApplicationModes.PasswordReset)
+                {
+                    PasswordResetUtility.ValidateArguments(startupContext);
+                }
+
                 var config = GetConfiguration(startupContext);
 
                 switch (appMode)
@@ -92,9 +97,17 @@ namespace NzbDrone.Host
                             .ConfigureContainer<IContainer>(c =>
                             {
                                 c.AutoAddServices(Bootstrap.ASSEMBLIES)
-                                    .AddNzbDroneLogger()
-                                    .AddDatabase(IsLogDatabaseEnabled(config))
-                                    .AddStartupContext(startupContext)
+                                    .AddNzbDroneLogger();
+                                if (appMode == ApplicationModes.PasswordReset)
+                                {
+                                    c.AddRecoveryDatabase();
+                                }
+                                else
+                                {
+                                    c.AddDatabase(IsLogDatabaseEnabled(config));
+                                }
+
+                                c.AddStartupContext(startupContext)
                                     .Resolve<UtilityModeRouter>()
                                     .Route(appMode);
                             })
@@ -159,8 +172,9 @@ namespace NzbDrone.Host
                     c.AutoAddServices(Bootstrap.ASSEMBLIES)
                         .AddNzbDroneLogger()
                         .AddDatabase(IsLogDatabaseEnabled(config))
-                        .AddStartupContext(context)
-                        .Resolve<IEventAggregator>().PublishEvent(new ApplicationStartingEvent());
+                        .AddStartupContext(context);
+                    PrepareStartupHome(context, c.Resolve<ISingleInstancePolicy>(), c.Resolve<IAppFolderFactory>(), c.Resolve<IAppHomeLock>());
+                    c.Resolve<IEventAggregator>().PublishEvent(new ApplicationStartingEvent());
                 })
                 .ConfigureServices(services =>
                 {
@@ -200,8 +214,35 @@ namespace NzbDrone.Host
                 configuration.GetValue(nameof(ConfigFileProvider.LogDbEnabled), true);
         }
 
+        public static void PrepareStartupHome(IStartupContext startupContext, ISingleInstancePolicy instancePolicy, IAppFolderFactory appFolderFactory, IAppHomeLock appHomeLock)
+        {
+            if (!startupContext.Flags.Contains(StartupContext.NO_SINGLE_INSTANCE_CHECK))
+            {
+                if (startupContext.Flags.Contains(StartupContext.TERMINATE))
+                {
+                    instancePolicy.KillAllOtherInstance();
+                }
+                else if (startupContext.Args.ContainsKey(StartupContext.APPDATA))
+                {
+                    instancePolicy.WarnIfAlreadyRunning();
+                }
+                else
+                {
+                    instancePolicy.PreventStartIfAlreadyRunning();
+                }
+            }
+
+            appFolderFactory.Register();
+            appHomeLock.AcquireForStartup();
+        }
+
         public static ApplicationModes GetApplicationMode(IStartupContext startupContext)
         {
+            if (startupContext.PasswordReset)
+            {
+                return ApplicationModes.PasswordReset;
+            }
+
             if (startupContext.Help)
             {
                 return ApplicationModes.Help;
@@ -258,7 +299,10 @@ namespace NzbDrone.Host
             }
             catch (InvalidDataException ex)
             {
-                Logger.Error(ex, ex.Message);
+                if (!context.PasswordReset)
+                {
+                    Logger.Error(ex, ex.Message);
+                }
 
                 throw new InvalidConfigFileException($"{configPath} is corrupt or invalid. Please delete the config file and Readarr will recreate it.", ex);
             }

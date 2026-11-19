@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using FluentValidation;
@@ -60,11 +61,30 @@ namespace Readarr.Http.ErrorManagement
             }
             else if (exception is ValidationException validationException)
             {
-                _logger.Warn("Invalid request {0}", validationException.Message);
+                _logger.Warn("Invalid request");
 
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
                 response.ContentType = "application/json";
-                await response.WriteAsync(STJson.ToJson(validationException.Errors));
+                var failures = validationException.Errors.Select(failure =>
+                {
+                    if (failure.PropertyName.IndexOf("password", StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        return failure;
+                    }
+
+                    // Validation failures retain the attempted input and formatter
+                    // placeholders. Neither belongs in credential error responses.
+                    return new FluentValidation.Results.ValidationFailure(
+                        failure.PropertyName,
+                        failure.PropertyName.EndsWith("PasswordConfirmation", StringComparison.OrdinalIgnoreCase)
+                            ? "Must match Password"
+                            : "Enter a valid password")
+                    {
+                        ErrorCode = "CredentialValidation",
+                        Severity = failure.Severity
+                    };
+                });
+                await response.WriteAsync(STJson.ToJson(failures));
                 return;
             }
             else if (exception is NzbDroneClientException clientException)

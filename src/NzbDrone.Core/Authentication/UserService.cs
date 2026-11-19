@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using NzbDrone.Common.Disk;
@@ -13,6 +15,9 @@ namespace NzbDrone.Core.Authentication
         User Add(string username, string password);
         User Update(User user);
         User Upsert(string username, string password);
+        User Upsert(Guid identifier, string username, string password);
+        User ResetPassword(Guid identifier, string password);
+        List<User> GetUsers();
         User FindUser();
         User FindUser(string username, string password);
         User FindUser(Guid identifier);
@@ -38,6 +43,13 @@ namespace NzbDrone.Core.Authentication
 
         public User Add(string username, string password)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(username);
+            ArgumentException.ThrowIfNullOrWhiteSpace(password);
+            if (_repo.All().Any(existing => string.Equals(existing.Username, username, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new ModelConflictException(typeof(User), 0, "Username belongs to another account");
+            }
+
             var user = new User
             {
                 Identifier = Guid.NewGuid(),
@@ -63,6 +75,47 @@ namespace NzbDrone.Core.Authentication
                 return password == null ? null : Add(username, password);
             }
 
+            return UpdateCredentials(user, username, password);
+        }
+
+        public User Upsert(Guid identifier, string username, string password)
+        {
+            var user = _repo.FindUser(identifier);
+            if (user == null)
+            {
+                throw new ModelNotFoundException(typeof(User), 0);
+            }
+
+            return UpdateCredentials(user, username, password);
+        }
+
+        public User ResetPassword(Guid identifier, string password)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(password);
+            var user = _repo.FindUser(identifier);
+            if (user == null)
+            {
+                throw new ModelNotFoundException(typeof(User), 0);
+            }
+
+            var updated = CopyUser(user);
+            SetPassword(updated, password);
+            if (!_repo.TryUpdateCredentials(user, updated, false, true))
+            {
+                throw new ModelConflictException(typeof(User), user.Id, "Account changed during password recovery; try again");
+            }
+
+            return updated;
+        }
+
+        public List<User> GetUsers()
+        {
+            return _repo.All().OrderBy(user => user.Id).ToList();
+        }
+
+        private User UpdateCredentials(User user, string username, string password)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(username);
             var updated = CopyUser(user);
 
             // Older settings clients round-trip the stored SHA-256 digest.

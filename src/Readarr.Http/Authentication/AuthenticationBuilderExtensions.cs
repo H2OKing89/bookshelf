@@ -49,6 +49,18 @@ namespace Readarr.Http.Authentication
                     options.ExpireTimeSpan = TimeSpan.FromDays(7);
                     options.SlidingExpiration = true;
                     options.ReturnUrlParameter = "returnUrl";
+                    options.Events.OnValidatePrincipal = async context =>
+                    {
+                        var users = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
+                        var identifier = context.Principal?.FindFirst("identifier")?.Value;
+                        var stamp = context.Principal?.FindFirst(UserCredentialStamp.ClaimType)?.Value;
+                        var user = Guid.TryParse(identifier, out var parsed) ? users.FindUser(parsed) : null;
+                        if (!UserCredentialStamp.Matches(user, stamp))
+                        {
+                            context.RejectPrincipal();
+                            await context.HttpContext.SignOutAsync(AuthenticationType.Forms.ToString());
+                        }
+                    };
                 });
 
             return services.AddAuthentication()

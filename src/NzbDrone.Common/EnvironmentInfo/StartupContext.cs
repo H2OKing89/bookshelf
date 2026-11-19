@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace NzbDrone.Common.EnvironmentInfo
 {
@@ -10,6 +11,7 @@ namespace NzbDrone.Common.EnvironmentInfo
         bool InstallService { get; }
         bool UninstallService { get; }
         bool RegisterUrl { get; }
+        bool PasswordReset { get; }
 
         string PreservedArguments { get; }
     }
@@ -26,6 +28,7 @@ namespace NzbDrone.Common.EnvironmentInfo
         public const string REGISTER_URL = "registerurl";
         public const string NO_SINGLE_INSTANCE_CHECK = "nosingleinstancecheck";
         public const string EXIT_IMMEDIATELY = "exitimmediately";
+        public const string PASSWORD_RESET = "passwordreset";
 
         public StartupContext(params string[] args)
         {
@@ -57,6 +60,7 @@ namespace NzbDrone.Common.EnvironmentInfo
         public bool UninstallService => Flags.Contains(UNINSTALL_SERVICE);
         public bool RegisterUrl => Flags.Contains(REGISTER_URL);
         public bool ExitImmediately => Flags.Contains(EXIT_IMMEDIATELY);
+        public bool PasswordReset => Flags.Any(flag => flag.StartsWith(PASSWORD_RESET)) || Args.Keys.Any(key => key.StartsWith(PASSWORD_RESET));
 
         public string PreservedArguments
         {
