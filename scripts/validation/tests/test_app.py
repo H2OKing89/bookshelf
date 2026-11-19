@@ -108,6 +108,39 @@ class AppFixtureTests(unittest.TestCase):
                             fixture.process_log.close()
                             fixture.process_log = None
 
+    def test_owned_allowed_hosts_override_rejects_non_strings_and_native_nulls(self):
+        fixture = app.Fixture(self.runtime, self.root / "invalid-allowed-hosts")
+        fixture.configure_home()
+        for value in (False, 0, [], {}, "allowed.invalid\0other.invalid"):
+            with self.subTest(value=value), patch.object(subprocess, "Popen") as process:
+                with self.assertRaises(ValidationFailure) as error:
+                    fixture.start(allowed_hosts=value)
+                self.assertEqual(error.exception.code, "invalid_owned_allowed_hosts_override")
+                process.assert_not_called()
+
+    def test_owned_allowed_hosts_override_is_scoped_and_explicit_empty_is_preserved(self):
+        for value in (None, "", "allowed.invalid"):
+            with self.subTest(value=value):
+                fixture = app.Fixture(self.runtime, self.root / ("hosts-override-" + str(value)))
+                fixture.configure_home()
+                with (patch.dict(os.environ, {"Readarr__Server__AllowedHosts": "unrelated override"}),
+                      patch.object(app, "ensure_host_compatible"),
+                      patch.object(subprocess, "Popen") as process,
+                      patch.object(fixture, "request", return_value=(200, [], b"{}"))):
+                    process.return_value.poll.return_value = None
+                    try:
+                        fixture.start(allowed_hosts=value)
+                        environment = process.call_args.kwargs["env"]
+                        if value is None:
+                            self.assertNotIn("Readarr__Server__AllowedHosts", environment)
+                        else:
+                            self.assertEqual(environment["Readarr__Server__AllowedHosts"], value)
+                    finally:
+                        fixture.process = None
+                        if fixture.process_log is not None:
+                            fixture.process_log.close()
+                            fixture.process_log = None
+
     def test_owned_postgres_overrides_reject_non_strings_unknown_keys_and_native_injection(self):
         fixture = app.Fixture(self.runtime, self.root / "invalid-postgres")
         fixture.configure_home()

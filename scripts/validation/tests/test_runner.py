@@ -27,7 +27,7 @@ class RunnerResultTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.runtime = package(self.root / "runtime")
         self.modules = {"validation." + name: types.ModuleType("validation." + name)
-                        for name in ("app", "authpolicy", "cancellation", "datastore", "docker", "logstorage", "media", "package", "postgresconnections", "restore", "sqlite", "upgrade")}
+                        for name in ("accesspolicy", "app", "authpolicy", "cancellation", "datastore", "docker", "logstorage", "media", "package", "postgresconnections", "releaseidentity", "restore", "sqlite", "upgrade")}
         self.output = self.root / "results"
 
     @contextlib.contextmanager
@@ -72,6 +72,20 @@ class RunnerResultTests(unittest.TestCase):
         report = json.loads((self.output / "summary.json").read_text())
         self.assertEqual(report["checksRequested"], ["logstorage"])
         self.assertIn("datastore", report["notRequested"])
+
+    def test_explicit_accesspolicy_check_uses_candidate_without_requiring_a_baseline(self):
+        calls = []
+        self.modules["validation.accesspolicy"].run = lambda *args: (
+            calls.append(args) or {"checks": {"owned": True}, "passed": 1, "failed": 0, "completed": True})
+        console = io.StringIO()
+        with (self.mocked_modules(), patch.object(runner.common, "ensure_host_compatible"),
+              contextlib.redirect_stdout(console), contextlib.redirect_stderr(console)):
+            status = runner.main(["--runtime", str(self.runtime), "--output", str(self.output), "--checks", "accesspolicy"])
+        self.assertEqual(status, 0)
+        self.assertEqual(calls, [(self.runtime.resolve(), self.output / "accesspolicy")])
+        report = json.loads((self.output / "summary.json").read_text())
+        self.assertEqual(report["checksRequested"], ["accesspolicy"])
+        self.assertIn("authpolicy", report["notRequested"])
 
     def test_postgres_connection_check_requires_and_passes_an_explicit_baseline(self):
         baseline = package(self.root / "baseline")

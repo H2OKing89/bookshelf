@@ -32,9 +32,17 @@ Run the [local package validation](docs/local-validation.md) checks against a
 complete package to verify startup, backup/restore, upgrades and media handling
 with fresh synthetic data. GitHub Actions is not required.
 
+This fork blocks in-app update downloads and replacement until a compatible
+Bookshelf feed is implemented. See [release policy](docs/release-policy.md) for
+manual/container updates and the local source-and-artifact verification process.
+
 For reverse proxy deployments, configure the
 [trusted proxy addresses](docs/trusted-proxies.md) before upgrading. Changes to
 this setting require a server restart.
+
+An optional [Allowed Hosts list](docs/allowed-hosts.md) restricts inbound host
+names. Its empty default preserves existing access; configured changes require a
+restart.
 
 ## Accounts and password recovery
 

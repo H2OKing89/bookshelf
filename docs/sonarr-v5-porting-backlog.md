@@ -45,7 +45,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P01](#p01) | P1 | In progress | XL | Move the runtime and SDK together to .NET 10 |
 | [P02](#p02) | P0 | In progress | M | Replace unsalted password hashes with versioned salted derivation |
 | [P03](#p03) | P0 | Verified | M | Restrict forwarded-header trust and local-address auth bypass |
-| [P04](#p04) | P1 | Planned | M | Add optional allowed-host filtering |
+| [P04](#p04) | P1 | Verified | M | Add optional allowed-host filtering |
 | [P05](#p05) | P1 | Verified | S | Read the current API key and compare it in fixed time |
 | [P06](#p06) | P1 | Verified | M | Bound log-cleansing regex work and fail closed on timeout |
 | [P07](#p07) | P1 | Verified | M | Validate every restore payload before replacing config/database files |
@@ -58,15 +58,15 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P14](#p14) | P2 | Verified | M | Support full PostgreSQL connection strings with corrected validation |
 | [P15](#p15) | P2 | Verified | M | Make SQL log storage optional |
 | [P16](#p16) | P2 | Verified | L | Review v5 authentication defaults, bootstrap and recovery as product policy |
-| [P17](#p17) | P2 | Planned | L | Add OIDC only if SSO is wanted |
+| [P17](#p17) | P2 | Deferred | L | Add OIDC only if SSO is wanted |
 | [P18](#p18) | P2 | Planned | M | Load PEM certificates, separate private keys and certificate chains |
 | [P19](#p19) | P2 | Planned | L | Study in-process host restart and service lifecycle |
 | [P20](#p20) | P2 | Planned | M | Keep API versions coexistable and generate matching OpenAPI documents |
 | [P21](#p21) | P1 | In progress | L | Run the delivery artifact through unit, DB and HTTP integration gates |
 | [P22](#p22) | P2 | Planned | L | Define a truthful support matrix and package each native dependency |
 | [P23](#p23) | P3 | Planned | M | Add opt-in request/SQL profiling only after core correctness |
-| [P24](#p24) | P2 | Planned | S | Correct URL-base boundary handling on login redirects |
-| [P25](#p25) | P0 | Planned | L | Isolate fork release channels and require matching source/artifact identity |
+| [P24](#p24) | P2 | Verified | S | Correct URL-base boundary handling on login redirects |
+| [P25](#p25) | P0 | In progress | L | Isolate fork release channels and require matching source/artifact identity |
 | [P26](#p26) | P0 | Verified | M | Propagate repository write failures and transact general bulk updates |
 | [D01](#d01) | P0 | Planned | S | Preserve Bookshelf's staged replacement and ownership boundary |
 | [D02](#d02) | P1 | Planned | L | Add machine-readable download and import rejection codes |
@@ -429,6 +429,36 @@ audit-policy change is part of P03. This batch was followed by [P05](#p05).
 **Book/audio caution:** document extra hostnames used by library frontends and book-server integrations; do not confuse listener addresses (`0.0.0.0`, `::`) with client Host names.
 
 **Acceptance:** empty config preserves today's access; configured valid names work; other hosts are rejected; localhost recovery works; IPv6 literals, ports, wildcard policy, base paths and proxy host forwarding are tested.
+
+**2026-11-18 implementation record:** P04 is **Verified** locally in
+`c03ea78e2`. `AllowedHosts` is available through XML, the
+`Readarr__Server__AllowedHosts` environment setting, the host API and an advanced
+Host settings field. The default remains empty and permissive. A configured list
+accepts exact DNS/IP names or `*.domain` subdomains; wildcard matching excludes
+the apex. Commas and semicolons separate entries. Names are normalized to IDN
+ASCII/lowercase, IPv6 literals to brackets, and duplicates removed. Configured
+entries cannot contain schemes, ports, paths, CIDRs, scoped IPv6, listener bind
+wildcards or a lone `*`; request ports are ignored when matching valid names.
+
+Localhost, loopback IPv4/IPv6 and a valid normalized server hostname remain
+available for local recovery. Invalid startup configuration fails before serving
+requests. API omission/null preserves the saved value, explicit empty clears it,
+and invalid saves fail before configuration/account writes. Environment values,
+including explicit empty, take precedence over XML. Changes require restart.
+Host filtering runs after trusted forwarded headers and before UI/API/SignalR
+access, so a trusted proxy's effective host must also be allowed. An untrusted
+peer cannot override that host through forwarding headers.
+
+The **89 focused source cases** pass, including grammar, configuration/API
+preservation and hosted middleware/proxy boundaries. Initial packaged
+`accesspolicy` validation passes **62 checks** including its unchanged-input
+check: exact/wildcard/IPv6-with-port/local hosts, rejection before authentication,
+trusted-loopback forwarding, settings/environment precedence, restart behavior,
+and invalid startup with the synthetic library/accounts intact. A genuine
+pre-P04 package fails `host_reject_unknown` as expected, with cleanup and input
+fingerprints intact. Source fixtures cover forged remote peers; the packaged
+loopback proof does not claim a physical reverse-proxy deployment audit. Final
+clean-build evidence is recorded separately in [local validation](local-validation.md).
 
 ### P05
 
@@ -1446,6 +1476,13 @@ runtime acceptance remain open, as do the broader platform and release gates.
 
 **Acceptance:** a disposable identity provider verifies correct/wrong identity, unverified email, callback/base path, cancellation, logout with/without provider end-session endpoint, changed config/principal rejection, invalid authority, HTTPS and proxy scheme handling; provider errors/logs do not leak tokens/client secrets.
 
+**2026-11-18 product decision:** P17 is **Deferred** at the user's explicit
+request to skip it. This batch adds no OIDC package, provider configuration,
+callback flow or identity-provider dependency. Forms/Basic, API keys and the P16
+local recovery policy remain the supported access paths. Reconsider SSO only
+after a new product decision; completing adjacent prerequisites does not enable
+this optional feature.
+
 ### P18
 
 **Load PEM certificates, separate private keys and certificate chains**
@@ -1609,6 +1646,25 @@ changed by this slice.
 
 **Acceptance:** return URLs `/`, absent, malformed, external, exact base, base child, similarly prefixed sibling, case variants and encoded paths produce the intended local URL with one prefix; reverse proxy and base-path login/logout work.
 
+**2026-11-18 implementation record:** P24 is **Verified** locally in
+`9dda441fd`. Login now uses a redirect helper that retains ASP.NET's existing
+`IsLocalUrl` rejection and compares the raw path using an ordinal, case-insensitive
+exact-base or `base + "/"` boundary. A sibling such as `/bookshelf` no longer
+counts as a child of `/books`. Query/fragment suffixes on the exact base are
+recognized, and application-relative `~/...` destinations receive the configured
+base once. Encoded path/query bytes are preserved without decoding/reencoding.
+Existing logout destinations remain unchanged. This corrects local application
+routing; the prior non-local URL rejection already existed.
+
+All **41 focused source cases** pass, covering absent/empty/root, exact/base child,
+sibling, case, query/fragment, encoded bytes, trailing slash, application-relative,
+malformed-relative, external, protocol-relative, backslash and control-character
+inputs, plus logout with and without a base. The initial packaged `accesspolicy`
+proof additionally exercises fourteen real login destinations and base-path
+logout. Its combined P24/P04/P25 result is **62 checks passed**, including input
+preservation and cleanup. Final clean-package evidence remains a separate local
+validation record; no live home or running server was changed.
+
 ### P25
 
 **Isolate fork release channels and require matching source/artifact identity**
@@ -1627,6 +1683,57 @@ changed by this slice.
 **Book/audio caution:** a Sonarr or older Readarr binary cannot consume the native audiobook schema safely. Product branding can be changed independently from persistent filesystem paths/API compatibility; avoid renaming `/config`, DB/files or user identities as part of release-channel cleanup. Current softcover/hardcover tags need an explicit retention/migration decision tied to the audiobook product.
 
 **Acceptance:** a dry release consumes only tested artifacts and emits matching commit/version/hash/source manifests; wrong product, branch, RID, runtime/schema or checksum is rejected; Docker updater behavior remains container-managed; a copied Bookshelf home never accepts a Sonarr/legacy Readarr update; CI cannot publish unsupported legacy metadata variants accidentally; release and rollback use disposable fixtures, with no live update endpoint called in tests.
+
+**2026-11-18 local isolation record:** P25 is **In progress**. Production
+safeguards and compiled provenance are implemented in `736ffe104`; this completes
+a local prerequisite for release work, not the full release/publication gate.
+The product identity is `bookshelf-audiobooks`. Existing executable names,
+filesystem/database paths, account identities, API contracts and saved update
+choices remain compatible.
+
+`BookshelfUpdatePolicy` always denies in-app updates because no compatible
+fork-owned feed is configured. Checks and update listings do not call the legacy
+Readarr update service; manual installation commands fail with the explicit
+unavailable reason. Startup leaves legacy branch/mechanism choices and an
+`update_required` marker intact. The package provider, verification and installer
+boundaries also deny access, and the standalone updater exits nonzero before
+logging, argument parsing or constructing replacement services. Status/UI explain
+that a verified Bookshelf release must be installed manually. No configuration
+switch enables an unreviewed feed.
+
+Builds embed product ID, source commit/tree/branch and dirty state in the backend;
+the frontend carries matching `UI/source-provenance.json`. The optional
+`releaseidentity` proof reads the actual hosted binary's values and compares the
+frontend. Initial validation passes **8 checks**, including its unchanged-input
+check. Source tests cover the denied HTTP/download/script/replacement boundaries;
+the packaged access-policy proof checks status, empty update results, no-op
+checks, rejected installation commands, retained settings/marker and the refused
+standalone updater. It does not claim a network-capture audit.
+
+Local candidate tooling requires a clean checkout, matching compiled backend/UI
+identity and passing evidence for the same package fingerprint. It stages a
+private package copy, corresponding Git source archive with GPL license, evidence
+receipts and an unsigned manifest tying product/channel, version, source commit,
+runtime/RID, schema and checksums together. Verification rejects mismatches or
+changed bytes. The current local channel is `develop`, with Linux x64/.NET 10
+only; the manifest explicitly sets `publishable=false` and
+`builtInUpdatesEnabled=false`. This is a local attestation, not a trusted update
+manifest or a signed release.
+
+Initial source verification passes **4,985 cases**: Core **3,856**, Common **835**,
+API **16**, Host **181**, authentication integration **54**, PostgreSQL migration
+**23** and updater **20**, with the existing **97 skips** retained. Python
+validation currently passes **131 tests**. The initial access-policy proof passes
+**62 checks**, and identity passes **8**. A final clean build and corresponding
+candidate/evidence verification are still pending and must be recorded after
+execution.
+
+No GitHub workflow, publication, signing, feed service or container-tag migration
+is implemented here. P25 remains open for those release-policy and enforcement
+gates, the supported artifact/platform matrix and native ARM acceptance. Existing
+P02/P13 ARM and broader P01/P09/P21/P22 gates remain open. This work does not
+publish a release or change the running development service or production
+appdata/media.
 
 ### P26
 

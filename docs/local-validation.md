@@ -94,6 +94,32 @@ and API keys must survive. Responses and logs are checked for credential canarie
 Every owned process, container and socket is cleaned up, and both input packages
 are fingerprinted. No existing home or external database is accepted as input.
 
+## Check host filtering, redirects and updater isolation
+
+Run the explicit checks with a complete current package:
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --checks accesspolicy releaseidentity
+```
+
+`accesspolicy` uses fresh synthetic homes to check local login return URLs,
+configured/default host filtering, API/UI/SignalR boundaries, trusted forwarded
+hosts, configuration precedence and rejected startup settings. It verifies that
+manual update commands and direct standalone-updater execution refuse before
+replacement while retaining saved update settings and markers. Source tests use
+HTTP mocks to prove no legacy feed/download calls; the package check does not
+claim to monitor every outbound connection.
+
+`releaseidentity` reads compiled product/source metadata through the owned
+server's status API and compares it with the frontend build receipt. Dirty builds
+can pass this consistency check but cannot pass the release-candidate gate.
+Native source builds without the canonical build metadata are also ineligible.
+See [release policy](release-policy.md) for clean-checkout preparation, required
+evidence, exact source archives and the unsigned, unpublished candidate boundary.
+Both checks leave input packages unchanged and clean up their owned processes.
+
 ## Check the migration engine on SQLite and PostgreSQL
 
 Use a complete pre-P12 package as the baseline:

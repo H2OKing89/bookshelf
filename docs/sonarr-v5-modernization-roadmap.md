@@ -967,3 +967,77 @@ benchmark and P13's native ARM64 runtime acceptance remain open, together with
 broader P01/P09/P21/P22/P25 platform and release gates. This work does not deploy
 the running development service or use production appdata/media or GitHub
 workflows.
+
+
+### P24 URL-base login redirects — 2026-11-18
+
+P24 is **Verified** locally in `9dda441fd`; see the
+[P24 acceptance record](sonarr-v5-porting-backlog.md#p24). The login redirect helper
+checks the raw path against an exact base or a slash-delimited child using ordinal
+case-insensitive comparison. `/bookshelf` no longer counts as a child of `/books`.
+Exact-base queries/fragments, application-relative paths and encoded bytes retain
+the intended single prefix; non-local destinations still use the existing local
+URL guard. This is a routing correctness fix, not a new external-redirect guard.
+
+All **41 focused source cases** pass. The initial packaged proof covers fourteen
+real login destinations plus base-path logout. No saved identity, authentication
+mode, API key or library contract changes.
+
+
+### P04 optional allowed-host filtering — 2026-11-18
+
+P04 is **Verified** locally in `c03ea78e2`; see the
+[P04 acceptance record](sonarr-v5-porting-backlog.md#p04). The optional XML/env/API/UI
+setting retains permissive access when empty. Configured exact DNS/IP names and
+`*.domain` subdomains are normalized; wildcards do not match their apex. Bind
+wildcards, ports, schemes, paths, CIDRs and malformed entries are rejected. Request ports do not
+change host matching. Localhost, loopbacks and a valid normalized server hostname
+remain available for local recovery. Invalid startup settings fail before serving;
+invalid saves do not change accounts or configuration. Omitted/null values preserve
+XML, explicit empty clears it, and environment values take precedence. Restart is
+required after changes.
+
+The middleware filters the effective host after trusted forwarding and before
+UI/API/SignalR access. **89 focused source cases** include trusted/untrusted proxy
+boundaries, and the initial packaged proof covers hosts, ports, localhost,
+configuration/environment compatibility and startup preservation. The combined
+P24/P04/P25 `accesspolicy` command passes **62 checks**, including unchanged inputs
+and cleanup. A genuine pre-P04 package fails the expected unknown-host assertion.
+The packaged proxy check uses loopback; source fixtures supply forged remote peers.
+
+
+### P25 local update isolation and candidate provenance — 2026-11-18
+
+P25 remains **In progress**. Commit `736ffe104` adds an always-deny in-app update
+policy and compiled fork identity; see the
+[P25 local record](sonarr-v5-porting-backlog.md#p25). Existing update settings and
+markers are preserved, but they cannot authorize legacy Readarr downloads or file
+replacement. Update listings/checks remain empty/no-op; installation and the
+standalone updater fail with an explicit manual-installation reason. Backend
+assembly metadata and frontend provenance share the product ID
+`bookshelf-audiobooks` and source commit/tree/branch/dirty state. The initial hosted
+identity proof passes **8 checks**, including unchanged input.
+
+Local tooling stages only a clean, matching, tested Linux x64/.NET 10 package with
+its corresponding GPL source archive and evidence receipts. Its unsigned manifest
+binds product, local `develop` channel, version, source, runtime/RID, schema and
+checksums, and explicitly denies publication and in-app updates. It is not a
+signed release or an operational update feed. Final clean-source candidate and
+package evidence remain pending after this initial record.
+
+Initial source verification passes **4,985 cases** across Core **3,856**, Common
+**835**, API **16**, Host **181**, authentication integration **54**, PostgreSQL
+migration **23** and updater **20**, retaining **97 existing skips**. Python checks
+currently pass **131 tests**. See [local validation](local-validation.md) for the
+final package/candidate record. GitHub workflow gates, signing, publication,
+container tags, a fork-owned feed and the supported platform matrix remain open;
+P02/P13 native ARM acceptance is also unchanged. No running development service,
+production home/media or GitHub workflow was changed.
+
+
+### P17 optional SSO deferred — 2026-11-18
+
+The user explicitly requested that P17 be skipped. It is **Deferred**, and this
+batch introduces no OIDC provider, dependency, settings or callback flow. Existing
+Forms/Basic, API-key access and local password recovery continue under the P16
+policy. Revisit SSO only after an explicit product decision.

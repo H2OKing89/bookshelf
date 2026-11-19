@@ -162,7 +162,8 @@ class Fixture:
         return json.loads(body) if body else None
 
     def start(self, *, log_db_enabled: bool | None = None,
-              postgres_connection_strings: dict[str, str] | None = None) -> None:
+              postgres_connection_strings: dict[str, str] | None = None,
+              allowed_hosts: str | None = None) -> None:
         if log_db_enabled is not None and type(log_db_enabled) is not bool:
             raise ValidationFailure("invalid_owned_log_db_override")
         if postgres_connection_strings is not None and (
@@ -171,6 +172,8 @@ class Fixture:
                     or type(value) is not str or "\0" in value
                     for key, value in postgres_connection_strings.items())):
             raise ValidationFailure("invalid_owned_postgres_connection_override")
+        if allowed_hosts is not None and (type(allowed_hosts) is not str or "\0" in allowed_hosts):
+            raise ValidationFailure("invalid_owned_allowed_hosts_override")
         if self.process is not None or self.home is None:
             raise ValidationFailure("owned_process_lifecycle")
         ensure_host_compatible(self.runtime)
@@ -184,6 +187,8 @@ class Fixture:
         environment = child_environment(self.home, self.private_tmp)
         if log_db_enabled is not None:
             environment["Readarr__Log__DbEnabled"] = str(log_db_enabled).lower()
+        if allowed_hosts is not None:
+            environment["Readarr__Server__AllowedHosts"] = allowed_hosts
         for key, value in (postgres_connection_strings or {}).items():
             environment["Readarr__Postgres__" + key] = value
         self.process = subprocess.Popen(command, cwd=self.runtime,

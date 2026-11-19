@@ -12,7 +12,7 @@ import tempfile
 from validation import common
 
 
-CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "docker")
+CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "docker")
 
 
 def parser():
@@ -76,13 +76,13 @@ def main(argv=None):
             output = common.private_directory(arguments.output.expanduser().resolve())
         for label, runtime in inputs.items():
             snapshots[label] = common.snapshot_runtime(runtime)
-        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy")):
+        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity")):
             common.ensure_host_compatible(inputs["candidate"])
         for label in ("baseline", "legacy"):
             if label in inputs:
                 common.ensure_host_compatible(inputs[label])
         # Imports are deliberately after validation; modules never launch on import.
-        from validation import app, authpolicy, cancellation, datastore, docker, logstorage, media, package, postgresconnections, restore, sqlite, upgrade
+        from validation import accesspolicy, app, authpolicy, cancellation, datastore, docker, logstorage, media, package, postgresconnections, releaseidentity, restore, sqlite, upgrade
         callbacks = {
             "package": lambda: package.run(inputs["candidate"], output / "package", repo),
             "app": lambda: app.run(inputs["candidate"], output / "app"),
@@ -94,6 +94,8 @@ def main(argv=None):
             "sqlite": lambda: sqlite.run(inputs["candidate"], output / "sqlite", baseline_runtime=inputs.get("baseline")),
             "logstorage": lambda: logstorage.run(inputs["candidate"], output / "logstorage"),
             "postgresconnections": lambda: postgresconnections.run(inputs["candidate"], output / "postgresconnections", baseline_runtime=inputs["baseline"]),
+            "accesspolicy": lambda: accesspolicy.run(inputs["candidate"], output / "accesspolicy"),
+            "releaseidentity": lambda: releaseidentity.run(inputs["candidate"], output / "releaseidentity"),
             "authpolicy": lambda: authpolicy.run(inputs["candidate"], output / "authpolicy", baseline_runtime=inputs["baseline"]),
             "docker": lambda: docker.run(inputs["docker"], output / "docker", repo),
         }
