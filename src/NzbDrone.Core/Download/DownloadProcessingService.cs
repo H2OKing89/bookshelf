@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using NLog;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
@@ -15,6 +16,8 @@ namespace NzbDrone.Core.Download
         private readonly IFailedDownloadService _failedDownloadService;
         private readonly ITrackedDownloadService _trackedDownloadService;
         private readonly IEventAggregator _eventAggregator;
+        private readonly IDownloadHistoryService _downloadHistoryService;
+        private readonly IDownloadImportCompletionService _completionService;
         private readonly Logger _logger;
 
         public DownloadProcessingService(IConfigService configService,
@@ -22,6 +25,8 @@ namespace NzbDrone.Core.Download
                                          IFailedDownloadService failedDownloadService,
                                          ITrackedDownloadService trackedDownloadService,
                                          IEventAggregator eventAggregator,
+                                         IDownloadHistoryService downloadHistoryService,
+                                         IDownloadImportCompletionService completionService,
                                          Logger logger)
         {
             _configService = configService;
@@ -29,6 +34,8 @@ namespace NzbDrone.Core.Download
             _failedDownloadService = failedDownloadService;
             _trackedDownloadService = trackedDownloadService;
             _eventAggregator = eventAggregator;
+            _downloadHistoryService = downloadHistoryService;
+            _completionService = completionService;
             _logger = logger;
         }
 
@@ -40,6 +47,33 @@ namespace NzbDrone.Core.Download
 
             foreach (var trackedDownload in trackedDownloads)
             {
+                if (trackedDownload.DownloadItem.Status != DownloadItemStatus.Completed)
+                {
+                    trackedDownload.State = TrackedDownloadState.Downloading;
+                    trackedDownload.Warn("The download client has not confirmed completion. Cleanup remains pending.");
+                    continue;
+                }
+
+                DownloadImportReceipt receipt;
+                try
+                {
+                    receipt = _completionService.ReadReceipt(trackedDownload,
+                        _downloadHistoryService.GetLatestDownloadHistoryItem(trackedDownload.DownloadItem.DownloadId));
+                }
+                catch (Exception error)
+                {
+                    _logger.Debug(error, "Could not revalidate imported download before cleanup");
+                    receipt = null;
+                }
+
+                if (receipt == null)
+                {
+                    trackedDownload.State = TrackedDownloadState.ImportPending;
+                    trackedDownload.Warn("Previous download completion could not be verified. Rescan or review its recording parts before cleanup.");
+                    continue;
+                }
+
+                trackedDownload.ImportReceipt = receipt;
                 _eventAggregator.PublishEvent(new DownloadCanBeRemovedEvent(trackedDownload));
             }
         }

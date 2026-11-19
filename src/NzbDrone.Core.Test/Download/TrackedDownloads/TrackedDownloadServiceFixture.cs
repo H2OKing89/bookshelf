@@ -6,6 +6,7 @@ using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Download;
+using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.History;
 using NzbDrone.Core.Indexers;
@@ -18,6 +19,69 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
     [TestFixture]
     public class TrackedDownloadServiceFixture : CoreTest<TrackedDownloadService>
     {
+        private TrackedDownload TrackCompletion(DownloadImportReceipt receipt)
+        {
+            var remote = new RemoteBook { Author = new Author { Id = 5 }, Books = new List<Book> { new Book { Id = 4 } } };
+            var marker = new DownloadHistory { EventType = DownloadHistoryEventType.DownloadImported, DownloadId = "owned-download" };
+            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId("owned-download")).Returns(new List<EntityHistory>());
+            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.GetLatestDownloadHistoryItem("owned-download")).Returns(marker);
+            Mocker.GetMock<IParsingService>().Setup(service => service.Map(It.IsAny<ParsedBookInfo>(), null)).Returns(remote);
+            Mocker.GetMock<IDownloadImportCompletionService>().Setup(service => service.ReadReceipt(It.IsAny<TrackedDownload>(), marker)).Returns(receipt);
+            var client = new DownloadClientDefinition { Id = 1, Protocol = DownloadProtocol.Torrent };
+            var item = new DownloadClientItem
+            {
+                DownloadId = "owned-download", Title = "Audio Author - Audio Book [2018 - FLAC]",
+                OutputPath = new NzbDrone.Common.Disk.OsPath(System.IO.Path.Combine(TempFolder, "original")),
+                DownloadClientInfo = new DownloadClientItemClientInfo { Id = 1, Name = "owned" }
+            };
+            return Subject.TrackDownload(client, item);
+        }
+
+        [Test]
+        public void a_legacy_or_invalid_completion_marker_should_restart_as_pending_for_review()
+        {
+            var tracked = TrackCompletion(null);
+
+            tracked.Should().NotBeNull();
+            tracked.State.Should().Be(TrackedDownloadState.ImportPending);
+            tracked.Status.Should().Be(TrackedDownloadStatus.Warning);
+        }
+
+        [Test]
+        public void a_validated_receipt_should_restore_completed_state_and_copy_intent_without_replaying_completion()
+        {
+            var receipt = new DownloadImportReceipt { KeepSourceFiles = true };
+
+            var tracked = TrackCompletion(receipt);
+
+            tracked.State.Should().Be(TrackedDownloadState.Imported);
+            tracked.ImportReceipt.Should().BeSameAs(receipt);
+            tracked.KeepSourceFiles.Should().BeTrue();
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void cached_completion_should_not_follow_a_changed_client_or_output_path(bool changedClient)
+        {
+            var tracked = TrackCompletion(new DownloadImportReceipt());
+            tracked.ImportItem = tracked.DownloadItem.Clone();
+            var changed = tracked.DownloadItem.Clone();
+            if (!changedClient)
+            {
+                changed.OutputPath = new NzbDrone.Common.Disk.OsPath(System.IO.Path.Combine(TempFolder, "new-output"));
+            }
+
+            var client = new DownloadClientDefinition { Id = changedClient ? 2 : 1, Protocol = DownloadProtocol.Torrent };
+
+            var refreshed = Subject.TrackDownload(client, changed);
+
+            refreshed.State.Should().Be(TrackedDownloadState.ImportPending);
+            refreshed.ImportItem.Should().BeNull();
+            refreshed.ImportReceipt.Should().BeNull();
+            refreshed.Status.Should().Be(TrackedDownloadStatus.Warning);
+            refreshed.DownloadClient.Should().Be(client.Id);
+        }
+
         private void GivenDownloadHistory()
         {
             Mocker.GetMock<IHistoryService>()

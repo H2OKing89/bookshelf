@@ -225,6 +225,13 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                             break;
                     }
 
+                    // Tracked downloads retain every source until completion has
+                    // durable evidence for the whole download, including all parts.
+                    if (downloadClientItem?.DownloadId.IsNotNullOrWhiteSpace() == true)
+                    {
+                        copyOnly = true;
+                    }
+
                     if (!localTrack.ExistingFile)
                     {
                         bookFile.SceneName = GetSceneReleaseName(downloadClientItem);
@@ -405,6 +412,13 @@ namespace NzbDrone.Core.MediaFiles.BookImport
             // now that trackfiles have been inserted and ids generated, publish the import events
             foreach (var trackImportedEvent in trackImportedEvents)
             {
+                var result = importResults.FirstOrDefault(item => item.Result == ImportResultType.Imported &&
+                    ReferenceEquals(item.ImportDecision.Item, trackImportedEvent.BookInfo));
+                if (result != null)
+                {
+                    result.ImportedFile = trackImportedEvent.ImportedBook;
+                }
+
                 _eventAggregator.PublishEvent(trackImportedEvent);
             }
 

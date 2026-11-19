@@ -170,6 +170,22 @@ namespace NzbDrone.Core.Test.MediaFiles
                   .Verify(v => v.GetFolderSize(It.IsAny<string>()), Times.Never());
         }
 
+        [TestCase(ImportMode.Auto)]
+        [TestCase(ImportMode.Move)]
+        [TestCase(ImportMode.Copy)]
+        public void tracked_source_folder_should_survive_until_completion_is_verified(ImportMode mode)
+        {
+            GivenValidAuthor();
+            GivenSuccessfulImport();
+            _trackedDownload.DownloadItem.CanMoveFiles = true;
+            var path = _subFolders.Single();
+
+            Subject.ProcessPath(path, mode, null, _trackedDownload.DownloadItem);
+
+            FileSystem.Directory.Exists(path).Should().BeTrue();
+            FileSystem.File.ReadAllText(_audioFiles.Single()).Should().Be(new string(' ', 10));
+        }
+
         [Test]
         public void should_not_delete_folder_if_files_were_imported_and_audio_files_remain()
         {
@@ -307,14 +323,17 @@ namespace NzbDrone.Core.Test.MediaFiles
             DiskProvider.FolderExists(_subFolders[0]).Should().BeTrue();
         }
 
-        [Test]
-        public void should_delete_folder_if_importmode_move()
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase(" ")]
+        public void should_delete_untracked_folder_if_importmode_move(string downloadId)
         {
             GivenValidAuthor();
 
             GivenSuccessfulImport();
 
             _trackedDownload.DownloadItem.CanMoveFiles = false;
+            _trackedDownload.DownloadItem.DownloadId = downloadId;
 
             Subject.ProcessPath(_droneFactory, ImportMode.Move, _trackedDownload.RemoteBook.Author, _trackedDownload.DownloadItem);
 

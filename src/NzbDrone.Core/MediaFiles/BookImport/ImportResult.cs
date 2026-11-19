@@ -10,6 +10,12 @@ namespace NzbDrone.Core.MediaFiles.BookImport
         public ImportDecision<LocalBook> ImportDecision { get; private set; }
         public List<string> Errors { get; private set; }
 
+        // Only assigned after persistence. Completion must bind to this exact
+        // live file rather than infer a committed destination from a name.
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
+        public BookFile ImportedFile { get; set; }
+
         public ImportResultType Result
         {
             get

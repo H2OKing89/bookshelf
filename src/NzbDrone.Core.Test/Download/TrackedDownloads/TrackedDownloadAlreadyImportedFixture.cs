@@ -4,6 +4,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Download;
+using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.History;
 using NzbDrone.Core.Parser.Model;
@@ -104,7 +105,7 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
         }
 
         [Test]
-        public void should_return_true_if_single_episode_download_is_imported()
+        public void legacy_single_book_history_without_a_receipt_should_remain_unverified()
         {
             GivenEpisodes(1);
 
@@ -112,11 +113,11 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
 
             Subject.IsImported(_trackedDownload, _historyItems)
                    .Should()
-                   .BeTrue();
+                   .BeFalse();
         }
 
         [Test]
-        public void should_return_true_if_multi_episode_download_is_imported()
+        public void legacy_multi_book_history_without_a_receipt_should_remain_unverified()
         {
             GivenEpisodes(2);
 
@@ -125,7 +126,18 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
 
             Subject.IsImported(_trackedDownload, _historyItems)
                    .Should()
-                   .BeTrue();
+                   .BeFalse();
+        }
+
+        [Test]
+        public void shared_receipt_validation_should_be_required_even_when_remote_mapping_is_missing()
+        {
+            _trackedDownload.RemoteBook = null;
+            var marker = new DownloadHistory { EventType = DownloadHistoryEventType.DownloadImported };
+            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.GetLatestDownloadHistoryItem(_trackedDownload.DownloadItem.DownloadId)).Returns(marker);
+            Mocker.GetMock<IDownloadImportCompletionService>().Setup(service => service.ReadReceipt(_trackedDownload, marker)).Returns(new DownloadImportReceipt());
+
+            Subject.IsImported(_trackedDownload, _historyItems).Should().BeTrue();
         }
     }
 }

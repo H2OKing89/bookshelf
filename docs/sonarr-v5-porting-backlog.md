@@ -70,8 +70,8 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P26](#p26) | P0 | Verified | M | Propagate repository write failures and transact general bulk updates |
 | [D01](#d01) | P0 | Planned | S | Preserve Bookshelf's staged replacement and ownership boundary |
 | [D02](#d02) | P1 | Planned | L | Add machine-readable download and import rejection codes |
-| [D03](#d03) | P0 | Planned | S | Fix tag isolation when choosing download clients |
-| [D04](#d04) | P0 | Planned | M | Audit completion against distinct books and complete recording parts |
+| [D03](#d03) | P0 | Verified | S | Fix tag isolation when choosing download clients |
+| [D04](#d04) | P0 | In progress | M | Audit completion against distinct books and complete recording parts |
 | [D05](#d05) | P1 | Planned | M | Prevent custom-format downgrades during import and rename |
 | [D06](#d06) | P1 | Planned | M | Classify rejected extensions, including downloads with no importable files |
 | [D07](#d07) | P1 | Planned | L | Ask download clients for file inventory when the filesystem has no eligible files |
@@ -1844,6 +1844,15 @@ is part of this batch.
 
 **P0 · partial, concrete routing gap · port logic with author terminology · no dependency · S.** S:`src/NzbDrone.Core/Download/DownloadClientProvider.cs:174` `GetFilteredDownloadClients` normalizes absent tags to an empty set at line 178, then always filters tagged clients. B:`src/NzbDrone.Core/Download/DownloadClientProvider.cs:40` `GetDownloadClient` filters tags only inside `if (tags is { Count: > 0 })`. Consequently an untagged author can select a client intended only for tagged authors. Preserve existing indexer overrides, blocked-client behavior, priority, and round robin. Acceptance: an untagged author never selects a tagged-only client; matching tags beat untagged defaults; no eligible client gives an explicit error; indexer overrides cannot bypass tag isolation accidentally.
 
+**2026-11-18 implementation:** `f7ee205d8` normalizes missing author tags and
+always applies tag eligibility before indexer overrides, blocked-client handling,
+priority and round robin. Matching tags retain preference over untagged defaults;
+null/empty author tags only permit untagged clients. No eligible tagged match
+produces the existing explicit unavailable error. No-protocol-provider behavior
+stays compatible. The focused fixture passes **36 cases**, including **24 new
+regressions** for both protocols, overrides, blocked matching clients and eligible
+round robin. Final published acquisition evidence is recorded with D04 below.
+
 ### D04
 
 **Audit completion against distinct books and complete recording parts**
@@ -1856,6 +1865,23 @@ is part of this batch.
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/Download/CompletedDownloadService.cs](../src/NzbDrone.Core/Download/CompletedDownloadService.cs#L121).
 
 **P0 · partial; source demonstrates a TV assumption that needs adaptation · adapt/test local logic · D01 · M.** S:`src/NzbDrone.Core/Download/CompletedDownloadService.cs:216` `VerifyImport` counts imported episode identities and falls back to history. B:`src/NzbDrone.Core/Download/CompletedDownloadService.cs:121` counts imported `ImportResult` objects (`Select(...Book).Count()` at 123–125), not distinct books or expected audiobook parts; B:`src/NzbDrone.Core/Download/TrackedDownloads/TrackedDownloadAlreadyImported.cs:23` also treats a null remote-book mapping as imported whenever any history exists (33–35). These are audit targets, not proof every multipart import is currently broken. Define expected Bookshelf identity/part coverage from its new provenance and compare actual committed results to it. Acceptance: two parts of one book cannot satisfy a two-book download; partial multipart imports never trigger source/client cleanup; a restart with complete committed history is idempotent; unrelated or grab-only history is insufficient evidence of completion.
+
+**2026-11-18 implementation in progress:** completion is now designed around
+one shared recording/file receipt, not imported-result row counts. Automatic and
+manual import, restart restoration, event-driven client cleanup and periodic
+cleanup must all establish the same scope. Tracked imports retain source copies
+through staged/database publication. History receives additive per-file identity
+and part metadata; completion writes its receipt synchronously before state,
+source retirement or notifications. Saved legacy markers alone cannot authorize
+removal. Explicit Copy intent survives later retry history and client removal
+uses `deleteData=false` when preserving those sources.
+
+The [completion policy](download-completion.md) describes book/edition/file IDs,
+discovered/declared part coverage, current inventory, mapped paths, configured
+library aliases and conservative unknown/legacy handling. This makes no claim to
+know publisher totals or files absent from local inventory; D07 and B03 remain
+separate work. Initial source/package acceptance is pending and will be recorded
+before D04 is marked verified. No production media or running server is used.
 
 ### D05
 

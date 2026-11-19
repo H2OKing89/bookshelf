@@ -31,6 +31,7 @@ namespace NzbDrone.Core.Download.History
         DownloadFailed = 3,
         DownloadIgnored = 4,
         FileImported = 5,
-        DownloadImportIncomplete = 6
+        DownloadImportIncomplete = 6,
+        DownloadSourceRetained = 7
     }
 }

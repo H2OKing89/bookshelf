@@ -9,6 +9,7 @@ using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download;
+using NzbDrone.Core.History;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.BookImport;
 using NzbDrone.Core.MediaFiles.Events;
@@ -266,6 +267,51 @@ namespace NzbDrone.Core.Test.MediaFiles
                   .Verify(v => v.UpgradeBookFile(It.IsAny<BookFile>(), _approvedDecisions.First().Item, false), Times.Once());
         }
 
+        [TestCase(ImportMode.Auto, true)]
+        [TestCase(ImportMode.Auto, false)]
+        [TestCase(ImportMode.Move, true)]
+        [TestCase(ImportMode.Move, false)]
+        [TestCase(ImportMode.Copy, true)]
+        [TestCase(ImportMode.Copy, false)]
+        public void tracked_imports_should_keep_sources_until_download_completion(ImportMode mode, bool canMove)
+        {
+            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId("owned-tracked-import"))
+                .Returns(new List<EntityHistory>());
+            var client = new DownloadClientItem
+            {
+                DownloadId = "owned-tracked-import",
+                Title = "Alien.Ant.Farm-Truant",
+                CanMoveFiles = canMove,
+                DownloadClientInfo = _clientInfo
+            };
+
+            Subject.Import(_approvedDecisions, true, client, mode);
+
+            Mocker.GetMock<IUpgradeMediaFiles>().Verify(
+                service => service.UpgradeBookFile(It.IsAny<BookFile>(), _approvedDecisions.First().Item, true),
+                Times.Once());
+        }
+
+        [Test]
+        public void successful_import_should_return_the_exact_committed_file_before_history_is_published()
+        {
+            BookFile committed = null;
+            Mocker.GetMock<IMediaFileService>()
+                .Setup(service => service.ImportFiles(It.IsAny<List<BookFile>>(), It.IsAny<List<BookFile>>(), It.IsAny<List<BookFile>>()))
+                .Callback<List<BookFile>, List<BookFile>, List<BookFile>>((added, updated, replaced) =>
+                {
+                    committed = added.Single();
+                    committed.Id = 901;
+                });
+
+            var results = Subject.Import(_approvedDecisions, true);
+
+            results.Should().ContainSingle().Which.ImportedFile.Should().BeSameAs(committed);
+            committed.Id.Should().Be(901);
+            committed.EditionId.Should().Be(_approvedDecisions.Single().Item.Edition.Id);
+            committed.Part.Should().Be(_approvedDecisions.Single().Item.Part);
+        }
+
         private ImportDecision<LocalBook> AudioPart(string name, int disc, int part, long size = 100)
         {
             var original = _approvedDecisions.First().Item;
@@ -459,6 +505,7 @@ namespace NzbDrone.Core.Test.MediaFiles
             var results = Subject.Import(new List<ImportDecision<LocalBook>> { new (first), new (second) }, true);
 
             results.Should().OnlyContain(result => result.Result != ImportResultType.Imported);
+            results.Should().OnlyContain(result => result.ImportedFile == null);
             Mocker.GetMock<IUpgradeMediaFiles>().Verify(x => x.CommitUpgrade(It.IsAny<List<BookFileMoveResult>>()), Times.Never());
             Mocker.GetMock<IUpgradeMediaFiles>().Verify(x => x.AbortUpgrade(It.Is<List<BookFileMoveResult>>(items => items.Count == 1)), Times.Once());
             Mocker.GetMock<IMediaFileService>().Verify(x => x.AddMany(It.IsAny<List<BookFile>>()), Times.Never());

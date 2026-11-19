@@ -32,6 +32,10 @@ Run the [local package validation](docs/local-validation.md) checks against a
 complete package to verify startup, backup/restore, upgrades and media handling
 with fresh synthetic data. GitHub Actions is not required.
 
+Tracked downloads retain sources until their intended books and recording parts
+have verified committed files. See [download completion](docs/download-completion.md)
+for retry, restart, manual Copy and client-cleanup behavior.
+
 This fork blocks in-app update downloads and replacement until a compatible
 Bookshelf feed is implemented. See [release policy](docs/release-policy.md) for
 manual/container updates and the local source-and-artifact verification process.

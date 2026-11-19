@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using System.Linq;
 using NLog;
-using NzbDrone.Common.Extensions;
+using NzbDrone.Core.Download.History;
 using NzbDrone.Core.History;
 
 namespace NzbDrone.Core.Download.TrackedDownloads
@@ -14,9 +13,13 @@ namespace NzbDrone.Core.Download.TrackedDownloads
     public class TrackedDownloadAlreadyImported : ITrackedDownloadAlreadyImported
     {
         private readonly Logger _logger;
+        private readonly IDownloadImportCompletionService _completionService;
+        private readonly IDownloadHistoryService _downloadHistory;
 
-        public TrackedDownloadAlreadyImported(Logger logger)
+        public TrackedDownloadAlreadyImported(IDownloadImportCompletionService completionService, IDownloadHistoryService downloadHistory, Logger logger)
         {
+            _completionService = completionService;
+            _downloadHistory = downloadHistory;
             _logger = logger;
         }
 
@@ -24,31 +27,8 @@ namespace NzbDrone.Core.Download.TrackedDownloads
         {
             _logger.Trace("Checking if all books for '{0}' have been imported", trackedDownload.DownloadItem.Title);
 
-            if (historyItems.Empty())
-            {
-                _logger.Trace("No history for {0}", trackedDownload.DownloadItem.Title);
-                return false;
-            }
-
-            if (trackedDownload.RemoteBook == null || trackedDownload.RemoteBook.Books == null)
-            {
-                return true;
-            }
-
-            var allBooksImportedInHistory = trackedDownload.RemoteBook.Books.All(book =>
-            {
-                var lastHistoryItem = historyItems.FirstOrDefault(h => h.BookId == book.Id);
-
-                if (lastHistoryItem == null)
-                {
-                    _logger.Trace($"No history for book: {book}");
-                    return false;
-                }
-
-                _logger.Trace($"Last event for book: {book} is: {lastHistoryItem.EventType}");
-
-                return lastHistoryItem.EventType == EntityHistoryEventType.BookFileImported;
-            });
+            var history = _downloadHistory.GetLatestDownloadHistoryItem(trackedDownload.DownloadItem.DownloadId);
+            var allBooksImportedInHistory = _completionService.ReadReceipt(trackedDownload, history) != null;
 
             _logger.Trace("All books for '{0}' have been imported: {1}", trackedDownload.DownloadItem.Title, allBooksImportedInHistory);
 

@@ -6,15 +6,18 @@ using System.Linq;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
+using NzbDrone.Common.Disk;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.Download;
+using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.BookImport;
 using NzbDrone.Core.MediaFiles.BookImport.Aggregation;
 using NzbDrone.Core.MediaFiles.BookImport.Identification;
 using NzbDrone.Core.MediaFiles.BookImport.Manual;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Profiles;
 using NzbDrone.Core.Profiles.Qualities;
@@ -55,6 +58,9 @@ namespace NzbDrone.Core.Test.MediaFiles
             _edition = new Edition { Id = 3, ForeignEditionId = "local-edition", Book = _book, Monitored = true };
             _book.Editions = new List<Edition> { _edition };
             _imported = new List<LocalBook>();
+            Mocker.GetMock<IProvideImportItemService>()
+                .Setup(service => service.ProvideImportItem(It.IsAny<DownloadClientItem>(), It.IsAny<DownloadClientItem>()))
+                .Returns<DownloadClientItem, DownloadClientItem>((item, _) => item);
 
             Mocker.GetMock<IMetadataTagService>().Setup(s => s.ReadTags(It.IsAny<IFileInfo>())).Returns(new ParsedTrackInfo());
             Mocker.GetMock<IMediaFileService>()
@@ -201,6 +207,139 @@ namespace NzbDrone.Core.Test.MediaFiles
             imported.ReleaseGroup.Should().Be(expected);
             imported.ReleaseGroupOverride.Should().Be(choice);
             tracked.State.Should().NotBe(TrackedDownloadState.Imported);
+        }
+
+        [TestCase(ImportMode.Auto, false)]
+        [TestCase(ImportMode.Move, false)]
+        [TestCase(ImportMode.Copy, true)]
+        public void should_delegate_tracked_completion_and_preserve_copy_choice_and_sources(ImportMode mode, bool keepSources)
+        {
+            var output = System.IO.Path.GetDirectoryName(_path);
+            var tracked = new TrackedDownload
+            {
+                DownloadClient = 7,
+                DownloadItem = new DownloadClientItem { DownloadId = "owned-job", OutputPath = new OsPath(output), CanMoveFiles = true },
+                ImportItem = new DownloadClientItem { OutputPath = new OsPath(output) },
+                RemoteBook = new RemoteBook { Books = new List<Book> { _book, new Book { Id = 99 } } }
+            };
+            Mocker.GetMock<ITrackedDownloadService>().Setup(service => service.Find("owned-job")).Returns(tracked);
+            Mocker.GetMock<IDownloadedBooksImportService>().Setup(service => service.ShouldDeleteFolder(It.IsAny<IDirectoryInfo>())).Returns(true);
+            var command = Command(null);
+            command.ImportMode = mode;
+            command.Files.Single().DownloadId = "owned-job";
+            var secondPath = System.IO.Path.Combine(output, "Book.Part2.m4b");
+            FileSystem.AddFile(secondPath, new MockFileData("owned second part"));
+            command.Files.Add(new ManualImportFile
+            {
+                Path = secondPath,
+                AuthorId = _author.Id,
+                BookId = _book.Id,
+                ForeignEditionId = _edition.ForeignEditionId,
+                Quality = new QualityModel(Quality.M4B),
+                DownloadId = "owned-job"
+            });
+
+            Subject.Execute(command);
+
+            Mocker.GetMock<ICompletedDownloadService>().Verify(
+                service => service.VerifyImport(tracked, It.Is<List<ImportResult>>(items => items.Count == 2 && items.All(item => item.ImportDecision.Item.Book.Id == _book.Id))),
+                Times.Once());
+            tracked.KeepSourceFiles.Should().Be(keepSources);
+            tracked.State.Should().NotBe(TrackedDownloadState.Imported);
+            FileSystem.File.ReadAllText(_path).Should().Be("audio");
+            FileSystem.File.ReadAllText(secondPath).Should().Be("owned second part");
+            Mocker.GetMock<IDownloadedBooksImportService>().Verify(service => service.ShouldDeleteFolder(It.IsAny<IDirectoryInfo>()), Times.Never());
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<DownloadCompletedEvent>()), Times.Never());
+        }
+
+        [Test]
+        public void should_keep_separate_download_provenance_when_the_same_book_is_selected_from_two_downloads()
+        {
+            var secondPath = @"C:\other-download\Author.Book.m4b".AsOsAgnostic();
+            FileSystem.AddFile(secondPath, new MockFileData("another owned source"));
+            var first = new TrackedDownload { DownloadItem = new DownloadClientItem { DownloadId = "first-job" } };
+            var second = new TrackedDownload { DownloadItem = new DownloadClientItem { DownloadId = "second-job" } };
+            Mocker.GetMock<ITrackedDownloadService>().Setup(service => service.Find("first-job")).Returns(first);
+            Mocker.GetMock<ITrackedDownloadService>().Setup(service => service.Find("second-job")).Returns(second);
+            var command = Command(null);
+            command.Files.Single().DownloadId = "first-job";
+            command.Files.Add(new ManualImportFile
+            {
+                Path = secondPath,
+                AuthorId = _author.Id,
+                BookId = _book.Id,
+                ForeignEditionId = _edition.ForeignEditionId,
+                Quality = new QualityModel(Quality.M4B),
+                DownloadId = "second-job"
+            });
+
+            Subject.Execute(command);
+
+            Mocker.GetMock<IImportApprovedBooks>().Verify(
+                service => service.Import(It.Is<List<ImportDecision<LocalBook>>>(items => items.Count == 1 && items[0].Item.Path == _path), false, first.DownloadItem, ImportMode.Copy),
+                Times.Once());
+            Mocker.GetMock<IImportApprovedBooks>().Verify(
+                service => service.Import(It.Is<List<ImportDecision<LocalBook>>>(items => items.Count == 1 && items[0].Item.Path == secondPath), false, second.DownloadItem, ImportMode.Copy),
+                Times.Once());
+            Mocker.GetMock<ICompletedDownloadService>().Verify(service => service.VerifyImport(first, It.IsAny<List<ImportResult>>()), Times.Once());
+            Mocker.GetMock<ICompletedDownloadService>().Verify(service => service.VerifyImport(second, It.IsAny<List<ImportResult>>()), Times.Once());
+        }
+
+        [Test]
+        public void a_subset_copy_should_record_its_mapped_retention_intent_before_importing_any_file()
+        {
+            var tracked = new TrackedDownload
+            {
+                DownloadClient = 7,
+                DownloadItem = new DownloadClientItem { DownloadId = "owned-job", OutputPath = new OsPath(@"Z:\remote\job") },
+                ImportItem = new DownloadClientItem { OutputPath = new OsPath(@"C:\stale\old-job".AsOsAgnostic()) }
+            };
+            var previousImport = tracked.ImportItem;
+            var mapped = new DownloadClientItem { OutputPath = new OsPath(System.IO.Path.GetDirectoryName(_path)) };
+            Mocker.GetMock<ITrackedDownloadService>().Setup(service => service.Find("owned-job")).Returns(tracked);
+            Mocker.GetMock<IProvideImportItemService>().Setup(service => service.ProvideImportItem(tracked.DownloadItem, previousImport)).Returns(mapped);
+            var recorded = false;
+            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.RecordSourceRetention(tracked))
+                .Callback(() =>
+                {
+                    tracked.ImportItem.Should().BeSameAs(mapped);
+                    _imported.Should().BeEmpty();
+                    recorded = true;
+                });
+            Mocker.GetMock<IImportApprovedBooks>()
+                .Setup(service => service.Import(It.IsAny<List<ImportDecision<LocalBook>>>(), false, tracked.DownloadItem, ImportMode.Copy))
+                .Returns((List<ImportDecision<LocalBook>> decisions, bool replace, DownloadClientItem client, ImportMode mode) =>
+                {
+                    recorded.Should().BeTrue();
+                    return decisions.Select(decision => new ImportResult(decision)).ToList();
+                });
+            var command = Command(null);
+            command.Files.Single().DownloadId = "owned-job";
+
+            Subject.Execute(command);
+
+            tracked.KeepSourceFiles.Should().BeTrue();
+            tracked.State.Should().NotBe(TrackedDownloadState.Imported);
+            Mocker.GetMock<IDownloadHistoryService>().Verify(service => service.RecordSourceRetention(tracked), Times.Once());
+        }
+
+        [Test]
+        public void retention_persistence_failure_should_abort_a_manual_copy_before_any_import()
+        {
+            var tracked = new TrackedDownload
+            {
+                DownloadClient = 7,
+                DownloadItem = new DownloadClientItem { DownloadId = "owned-job", OutputPath = new OsPath(System.IO.Path.GetDirectoryName(_path)) }
+            };
+            Mocker.GetMock<ITrackedDownloadService>().Setup(service => service.Find("owned-job")).Returns(tracked);
+            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.RecordSourceRetention(tracked)).Throws<System.IO.IOException>();
+            var command = Command(null);
+            command.Files.Single().DownloadId = "owned-job";
+
+            Assert.Throws<System.IO.IOException>(() => Subject.Execute(command));
+
+            Mocker.GetMock<IImportApprovedBooks>().Verify(service => service.Import(
+                It.IsAny<List<ImportDecision<LocalBook>>>(), It.IsAny<bool>(), It.IsAny<DownloadClientItem>(), It.IsAny<ImportMode>()), Times.Never());
         }
 
         private ManualImportCommand Command(string choice)

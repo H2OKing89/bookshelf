@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using NLog;
@@ -157,6 +158,7 @@ namespace NzbDrone.Core.History
                 history.Data.Add("PublishedDate", message.Book.Release.PublishDate.ToString("s") + "Z");
                 history.Data.Add("DownloadClient", message.DownloadClient);
                 history.Data.Add("DownloadClientName", message.DownloadClientName);
+                history.Data.Add("DownloadClientId", message.DownloadClientId.ToString(CultureInfo.InvariantCulture));
                 history.Data.Add("Size", message.Book.Release.Size.ToString());
                 history.Data.Add("DownloadUrl", message.Book.Release.DownloadUrl);
                 history.Data.Add("Guid", message.Book.Release.Guid);
@@ -234,6 +236,11 @@ namespace NzbDrone.Core.History
             };
 
             history.Data.Add("FileId", message.ImportedBook.Id.ToString());
+            history.Data.Add("EditionId", message.ImportedBook.EditionId.ToString(CultureInfo.InvariantCulture));
+            history.Data.Add("Part", message.ImportedBook.Part.ToString(CultureInfo.InvariantCulture));
+            history.Data.Add("PartCount", message.BookInfo.PartCount.ToString(CultureInfo.InvariantCulture));
+            history.Data.Add("DownloadClientId", (message.DownloadClientInfo?.Id ?? 0).ToString(CultureInfo.InvariantCulture));
+            history.Data.Add("SourceModifiedUtc", message.BookInfo.Modified.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture));
             history.Data.Add("DroppedPath", message.BookInfo.Path);
             history.Data.Add("ImportedPath", message.ImportedBook.Path);
             history.Data.Add("DownloadClient", message.DownloadClientInfo?.Type);

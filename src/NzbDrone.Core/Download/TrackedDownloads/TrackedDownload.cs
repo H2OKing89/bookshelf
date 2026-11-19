@@ -15,6 +15,8 @@ namespace NzbDrone.Core.Download.TrackedDownloads
         public DownloadProtocol Protocol { get; set; }
         public string Indexer { get; set; }
         public bool IsTrackable { get; set; }
+        public bool KeepSourceFiles { get; set; }
+        public DownloadImportReceipt ImportReceipt { get; set; }
 
         public TrackedDownload()
         {
@@ -31,6 +33,12 @@ namespace NzbDrone.Core.Download.TrackedDownloads
         {
             Status = TrackedDownloadStatus.Warning;
             StatusMessages = statusMessages;
+        }
+
+        public void ClearWarnings()
+        {
+            Status = TrackedDownloadStatus.Ok;
+            StatusMessages = new TrackedDownloadStatusMessage[] { };
         }
     }
 

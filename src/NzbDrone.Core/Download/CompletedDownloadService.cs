@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -27,21 +26,24 @@ namespace NzbDrone.Core.Download
         private readonly IHistoryService _historyService;
         private readonly IProvideImportItemService _provideImportItemService;
         private readonly IDownloadedBooksImportService _downloadedTracksImportService;
-        private readonly ITrackedDownloadAlreadyImported _trackedDownloadAlreadyImported;
+        private readonly IDownloadImportCompletionService _completionService;
+        private readonly IDownloadImportSourceService _sourceService;
         private readonly Logger _logger;
 
         public CompletedDownloadService(IEventAggregator eventAggregator,
                                         IHistoryService historyService,
                                         IProvideImportItemService provideImportItemService,
                                         IDownloadedBooksImportService downloadedTracksImportService,
-                                        ITrackedDownloadAlreadyImported trackedDownloadAlreadyImported,
+                                        IDownloadImportCompletionService completionService,
+                                        IDownloadImportSourceService sourceService,
                                         Logger logger)
         {
             _eventAggregator = eventAggregator;
             _historyService = historyService;
             _provideImportItemService = provideImportItemService;
             _downloadedTracksImportService = downloadedTracksImportService;
-            _trackedDownloadAlreadyImported = trackedDownloadAlreadyImported;
+            _completionService = completionService;
+            _sourceService = sourceService;
             _logger = logger;
         }
 
@@ -85,20 +87,36 @@ namespace NzbDrone.Core.Download
                 return;
             }
 
+            if (trackedDownload.DownloadItem.Status != DownloadItemStatus.Completed)
+            {
+                trackedDownload.State = TrackedDownloadState.Downloading;
+                trackedDownload.Warn("Waiting for the download client to finish before completion verification.");
+                return;
+            }
+
             trackedDownload.State = TrackedDownloadState.Importing;
 
             var outputPath = trackedDownload.ImportItem.OutputPath.FullPath;
-            var importResults = _downloadedTracksImportService.ProcessPath(outputPath, ImportMode.Auto, trackedDownload.RemoteBook?.Author, trackedDownload.DownloadItem);
+            List<ImportResult> importResults;
+            try
+            {
+                importResults = _downloadedTracksImportService.ProcessPath(outputPath, ImportMode.Auto, trackedDownload.RemoteBook?.Author, trackedDownload.DownloadItem);
+                if (VerifyImport(trackedDownload, importResults))
+                {
+                    return;
+                }
+            }
+            catch
+            {
+                trackedDownload.State = TrackedDownloadState.ImportPending;
+                trackedDownload.Warn("Import verification did not finish. Source files and download cleanup remain pending.");
+                throw;
+            }
 
             if (importResults.Empty())
             {
                 trackedDownload.Warn("No files found are eligible for import in {0}", outputPath);
                 trackedDownload.State = TrackedDownloadState.ImportPending;
-                return;
-            }
-
-            if (VerifyImport(trackedDownload, importResults))
-            {
                 return;
             }
 
@@ -120,69 +138,48 @@ namespace NzbDrone.Core.Download
 
         public bool VerifyImport(TrackedDownload trackedDownload, List<ImportResult> importResults)
         {
-            var allItemsImported = importResults.Where(c => c.Result == ImportResultType.Imported)
-                                                   .Select(c => c.ImportDecision.Item.Book)
-                                                   .Count() >= Math.Max(1, trackedDownload.RemoteBook?.Books.Count ?? 1);
-
-            if (allItemsImported)
+            if (trackedDownload.DownloadItem.Status != DownloadItemStatus.Completed)
             {
-                _logger.Debug("All books were imported for {0}", trackedDownload.DownloadItem.Title);
-                trackedDownload.State = TrackedDownloadState.Imported;
-
-                var importedAuthorId = importResults.Where(x => x.Result == ImportResultType.Imported)
-                    .Select(c => c.ImportDecision.Item.Author.Id)
-                    .MostCommon();
-                _eventAggregator.PublishEvent(new DownloadCompletedEvent(trackedDownload, trackedDownload.RemoteBook?.Author.Id ?? importedAuthorId));
-                return true;
+                trackedDownload.State = TrackedDownloadState.Downloading;
+                trackedDownload.Warn("Waiting for the download client to finish before completion verification.");
+                return false;
             }
 
-            // Double check if all episodes were imported by checking the history if at least one
-            // file was imported. This will allow the decision engine to reject already imported
-            // episode files and still mark the download complete when all files are imported.
-
-            // EDGE CASE: This process relies on EpisodeIds being consistent between executions, if a series is updated
-            // and an episode is removed, but later comes back with a different ID then Sonarr will treat it as incomplete.
-            // Since imports should be relatively fast and these types of data changes are infrequent this should be quite
-            // safe, but commenting for future benefit.
-            var atLeastOneEpisodeImported = importResults.Any(c => c.Result == ImportResultType.Imported);
-
-            var historyItems = _historyService.FindByDownloadId(trackedDownload.DownloadItem.DownloadId)
-                                              .OrderByDescending(h => h.Date)
-                                              .ToList();
-
-            var allEpisodesImportedInHistory = _trackedDownloadAlreadyImported.IsImported(trackedDownload, historyItems);
-
-            if (allEpisodesImportedInHistory)
+            try
             {
-                // Log different error messages depending on the circumstances, but treat both as fully imported, because that's the reality.
-                // The second message shouldn't be logged in most cases, but continued reporting would indicate an ongoing issue.
-                if (atLeastOneEpisodeImported)
+                var wasImported = trackedDownload.State == TrackedDownloadState.Imported;
+                var receipt = _completionService.VerifyAndRecord(trackedDownload, importResults ?? new List<ImportResult>());
+                if (receipt == null)
                 {
-                    _logger.Debug("All books were imported in history for {0}", trackedDownload.DownloadItem.Title);
+                    trackedDownload.State = TrackedDownloadState.ImportPending;
+                    trackedDownload.Warn("Not all intended books and recording parts have verified committed files. Source files and download cleanup remain pending.");
+                    return false;
                 }
-                else
+
+                trackedDownload.ImportReceipt = receipt;
+                if (!_sourceService.Retire(trackedDownload, receipt))
                 {
-                    _logger.ForDebugEvent()
-                           .Message("No books were just imported, but all books were previously imported, possible issue with download history.")
-                           .Property("AuthorId", trackedDownload.RemoteBook.Author.Id)
-                           .Property("DownloadId", trackedDownload.DownloadItem.DownloadId)
-                           .Property("Title", trackedDownload.DownloadItem.Title)
-                           .Property("Path", trackedDownload.DownloadItem.OutputPath.ToString())
-                           .Log();
+                    trackedDownload.State = TrackedDownloadState.ImportPending;
+                    trackedDownload.Warn("The download source changed or could not be safely retired. Download cleanup remains pending.");
+                    return false;
                 }
 
                 trackedDownload.State = TrackedDownloadState.Imported;
-
-                var importedAuthorId = historyItems.Where(x => x.EventType == EntityHistoryEventType.BookFileImported)
-                    .Select(x => x.AuthorId)
-                    .MostCommon();
-                _eventAggregator.PublishEvent(new DownloadCompletedEvent(trackedDownload, trackedDownload.RemoteBook?.Author.Id ?? importedAuthorId));
+                trackedDownload.ClearWarnings();
+                if (!wasImported)
+                {
+                    _logger.Debug("Verified all intended books and recording parts for {0}", trackedDownload.DownloadItem.Title);
+                    _eventAggregator.PublishEvent(new DownloadCompletedEvent(trackedDownload, receipt.AuthorId));
+                }
 
                 return true;
             }
-
-            _logger.Debug("Not all books have been imported for {0}", trackedDownload.DownloadItem.Title);
-            return false;
+            catch
+            {
+                trackedDownload.State = TrackedDownloadState.ImportPending;
+                trackedDownload.Warn("Import verification did not finish. Source files and download cleanup remain pending.");
+                throw;
+            }
         }
 
         private void SetImportItem(TrackedDownload trackedDownload)

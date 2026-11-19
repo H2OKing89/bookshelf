@@ -1,6 +1,7 @@
 using System;
 using NLog;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.Messaging.Events;
 
@@ -12,14 +13,23 @@ namespace NzbDrone.Core.Download
     {
         private readonly IConfigService _configService;
         private readonly IProvideDownloadClient _downloadClientProvider;
+        private readonly IDownloadHistoryService _downloadHistoryService;
+        private readonly IDownloadImportCompletionService _completionService;
+        private readonly IDownloadImportSourceService _sourceService;
         private readonly Logger _logger;
 
         public DownloadEventHub(IConfigService configService,
             IProvideDownloadClient downloadClientProvider,
+            IDownloadHistoryService downloadHistoryService,
+            IDownloadImportCompletionService completionService,
+            IDownloadImportSourceService sourceService,
             Logger logger)
         {
             _configService = configService;
             _downloadClientProvider = downloadClientProvider;
+            _downloadHistoryService = downloadHistoryService;
+            _completionService = completionService;
+            _sourceService = sourceService;
             _logger = logger;
         }
 
@@ -48,6 +58,11 @@ namespace NzbDrone.Core.Download
         public void Handle(DownloadCompletedEvent message)
         {
             var trackedDownload = message.TrackedDownload;
+            if (trackedDownload?.DownloadItem?.Removed == true || !HasVerifiedImport(trackedDownload))
+            {
+                return;
+            }
+
             var downloadClient = _downloadClientProvider.Get(trackedDownload.DownloadClient);
             var definition = downloadClient.Definition as DownloadClientDefinition;
 
@@ -55,7 +70,7 @@ namespace NzbDrone.Core.Download
 
             if (trackedDownload.DownloadItem.Removed ||
                 !trackedDownload.DownloadItem.CanBeRemoved ||
-                trackedDownload.DownloadItem.Status == DownloadItemStatus.Downloading)
+                trackedDownload.DownloadItem.Status != DownloadItemStatus.Completed)
             {
                 return;
             }
@@ -65,12 +80,17 @@ namespace NzbDrone.Core.Download
                 return;
             }
 
-            RemoveFromDownloadClient(message.TrackedDownload, downloadClient);
+            RemoveFromDownloadClient(message.TrackedDownload, downloadClient, !trackedDownload.KeepSourceFiles && !trackedDownload.ImportReceipt.KeepSourceFiles);
         }
 
         public void Handle(DownloadCanBeRemovedEvent message)
         {
             var trackedDownload = message.TrackedDownload;
+            if (trackedDownload?.DownloadItem?.Removed == true || !HasVerifiedImport(trackedDownload))
+            {
+                return;
+            }
+
             var downloadClient = _downloadClientProvider.Get(trackedDownload.DownloadClient);
             var definition = downloadClient.Definition as DownloadClientDefinition;
 
@@ -81,15 +101,66 @@ namespace NzbDrone.Core.Download
                 return;
             }
 
-            RemoveFromDownloadClient(message.TrackedDownload, downloadClient);
+            RemoveFromDownloadClient(message.TrackedDownload, downloadClient, !trackedDownload.KeepSourceFiles && !trackedDownload.ImportReceipt.KeepSourceFiles);
         }
 
-        private void RemoveFromDownloadClient(TrackedDownload trackedDownload, IDownloadClient downloadClient)
+        private bool HasVerifiedImport(TrackedDownload trackedDownload)
+        {
+            if (trackedDownload?.DownloadItem == null)
+            {
+                return false;
+            }
+
+            if (trackedDownload.DownloadItem.Status != DownloadItemStatus.Completed)
+            {
+                trackedDownload.State = TrackedDownloadState.Downloading;
+                trackedDownload.Warn("The download client has not reported completion. Completion cannot authorize cleanup.");
+                return false;
+            }
+
+            DownloadImportReceipt receipt;
+            try
+            {
+                receipt = _completionService.ReadReceipt(trackedDownload,
+                    _downloadHistoryService.GetLatestDownloadHistoryItem(trackedDownload.DownloadItem.DownloadId));
+            }
+            catch (Exception error)
+            {
+                _logger.Debug(error, "Could not verify completed download before client cleanup");
+                receipt = null;
+            }
+
+            if (receipt == null)
+            {
+                trackedDownload.State = TrackedDownloadState.ImportPending;
+                trackedDownload.Warn("Download cleanup requires verified committed books and recording parts.");
+                return false;
+            }
+
+            trackedDownload.ImportReceipt = receipt;
+            try
+            {
+                if (_sourceService.Retire(trackedDownload, receipt))
+                {
+                    return true;
+                }
+            }
+            catch (Exception error)
+            {
+                _logger.Debug(error, "Could not safely retire completed download sources before client cleanup");
+            }
+
+            trackedDownload.State = TrackedDownloadState.ImportPending;
+            trackedDownload.Warn("The download source changed or could not be safely retired. Download cleanup remains pending.");
+            return false;
+        }
+
+        private void RemoveFromDownloadClient(TrackedDownload trackedDownload, IDownloadClient downloadClient, bool deleteData = true)
         {
             try
             {
                 _logger.Debug("[{0}] Removing download from {1} history", trackedDownload.DownloadItem.Title, trackedDownload.DownloadItem.DownloadClientInfo.Name);
-                downloadClient.RemoveItem(trackedDownload.DownloadItem, true);
+                downloadClient.RemoveItem(trackedDownload.DownloadItem, deleteData);
                 trackedDownload.DownloadItem.Removed = true;
             }
             catch (NotSupportedException)

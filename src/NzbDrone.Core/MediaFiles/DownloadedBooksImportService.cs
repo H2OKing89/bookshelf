@@ -234,6 +234,7 @@ namespace NzbDrone.Core.MediaFiles
             }
 
             if (importMode == ImportMode.Move &&
+                string.IsNullOrWhiteSpace(downloadClientItem?.DownloadId) &&
                 importResults.Any(i => i.Result == ImportResultType.Imported) &&
                 ShouldDeleteFolder(directoryInfo))
             {

@@ -35,6 +35,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
         private readonly IEventAggregator _eventAggregator;
         private readonly IDownloadHistoryService _downloadHistoryService;
         private readonly ICustomFormatCalculationService _formatCalculator;
+        private readonly IDownloadImportCompletionService _completionService;
         private readonly Logger _logger;
         private readonly ICached<TrackedDownload> _cache;
 
@@ -44,6 +45,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                                       IEventAggregator eventAggregator,
                                       IDownloadHistoryService downloadHistoryService,
                                       ICustomFormatCalculationService formatCalculator,
+                                      IDownloadImportCompletionService completionService,
                                       Logger logger)
         {
             _parsingService = parsingService;
@@ -52,6 +54,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
             _formatCalculator = formatCalculator;
             _eventAggregator = eventAggregator;
             _downloadHistoryService = downloadHistoryService;
+            _completionService = completionService;
             _cache = cacheManager.GetCache<TrackedDownload>(GetType());
             _logger = logger;
         }
@@ -112,7 +115,20 @@ namespace NzbDrone.Core.Download.TrackedDownloads
             {
                 LogItemChange(existingItem, existingItem.DownloadItem, downloadItem);
 
+                if (existingItem.DownloadItem.OutputPath != downloadItem.OutputPath || existingItem.DownloadClient != downloadClient.Id)
+                {
+                    existingItem.ImportItem = null;
+                    existingItem.ImportReceipt = null;
+                    if (existingItem.State == TrackedDownloadState.Imported)
+                    {
+                        existingItem.State = TrackedDownloadState.ImportPending;
+                        existingItem.Warn("Download client or output path changed. Previous completion cannot authorize cleanup in the new context.");
+                    }
+                }
+
                 existingItem.DownloadItem = downloadItem;
+                existingItem.DownloadClient = downloadClient.Id;
+                existingItem.Protocol = downloadClient.Protocol;
                 existingItem.IsTrackable = true;
 
                 return existingItem;
@@ -205,6 +221,21 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                 if (trackedDownload.RemoteBook != null)
                 {
                     trackedDownload.RemoteBook.CustomFormats = _formatCalculator.ParseCustomFormat(trackedDownload.RemoteBook, downloadItem.TotalSize);
+                }
+
+                if (downloadHistory?.EventType == DownloadHistoryEventType.DownloadImported)
+                {
+                    var receipt = _completionService.ReadReceipt(trackedDownload, downloadHistory);
+                    if (receipt == null)
+                    {
+                        trackedDownload.State = TrackedDownloadState.ImportPending;
+                        trackedDownload.Warn("Previous import completion could not be verified. Download files are retained for review.");
+                    }
+                    else
+                    {
+                        trackedDownload.ImportReceipt = receipt;
+                        trackedDownload.KeepSourceFiles = receipt.KeepSourceFiles;
+                    }
                 }
 
                 // Track it so it can be displayed in the queue even though we can't determine which artist it is for
