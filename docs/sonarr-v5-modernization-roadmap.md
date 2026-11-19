@@ -1048,3 +1048,34 @@ The user explicitly requested that P17 be skipped. It is **Deferred**, and this
 batch introduces no OIDC provider, dependency, settings or callback flow. Existing
 Forms/Basic, API-key access and local password recovery continue under the P16
 policy. Revisit SSO only after an explicit product decision.
+
+
+### D03 and D04 client routing and completion — 2026-11-18
+
+D03 and D04 are **Verified**. `f7ee205d8` always applies author-tag eligibility
+before client overrides, blocked-client policy, priority and round robin.
+`ef8beac21` and `3aeb8c56b` require distinct intended books and coherent committed
+recording parts before completion, source retirement or client cleanup. See the
+[completion policy](download-completion.md) and
+[backlog acceptance](sonarr-v5-porting-backlog.md#d04).
+
+Automatic and manual imports, restart restoration and both client cleanup paths
+share persisted, revalidated file evidence. Tracked imports retain source copies
+through database publication. Copy saves a durable retention policy before a
+manual selection imports; failed retirement remains retryable after restart.
+The verifier refreshes mapped paths, supports configured library-root aliases,
+rejects unsafe child links, and waits for client status `Completed`. Client
+removal preserves data for explicit Copy and nonmovable sources. Unknown scope
+withholds cleanup; files absent from local inventory and unknown publisher totals
+remain D07/B03 work.
+
+Verification passes **5,205 source cases** with **97 existing skips**, **29 focused
+cleanup follow-up cases** and **141 Python tests**. Clean source `3aeb8c56b`,
+version `10.0.0.39353`, passes **433 delivery checks** (including **132 acquisition
+and 53 actual Docker checks**), **111 authentication checks** and **43 actual
+candidate CLI checks**. The local unsigned/unpublished Linux x64 candidate binds
+that exact source, package and evidence; its release gate now requires acquisition
+proof. See [local validation](local-validation.md#d03-and-d04-source-verification-2026-11-18).
+No running development service, production/Unraid home or media, or GitHub workflow
+was changed. P17 remains deferred; broader platform and release-feed gates retain
+their existing status.

@@ -595,3 +595,38 @@ importer, manual selection, rollback and physical library-alias behavior.
 A subsequent nonmovable-source cleanup follow-up passes **29 focused cases**,
 including two new regressions for removable client tasks whose files cannot be
 moved. Both event paths remove the task with `deleteData=false`.
+
+
+Final packages were built with normal package permissions from clean source
+**`3aeb8c56b`**, version **`10.0.0.39353`**, on
+`fix/sonarr-v5-foundation`. Backend and frontend provenance agree on commit, tree,
+branch and `buildDirty=false`. glibc and musl packages contain .NET **10.0.15**.
+The final delivery command passes **433 checks**, including **132 published
+acquisition checks**, **53 actual musl Docker checks**, and unchanged-input guards.
+The separate genuine pre-P16 authentication proof passes **111 checks**.
+
+Actual candidate preparation and verification pass **43 checks**, including
+rejection of otherwise passing evidence that omits `acquisition`, incorrect
+identity, altered bytes/modes, source-archive tampering and unexpected bundle
+files. The Linux x64 `develop` candidate remains unsigned, unpublished and
+`publishable=false`, with in-app updates disabled. Its GPL source archive is
+exactly `3aeb8c56b`; this evidence record does not relabel the artifact after a
+documentation-only commit.
+
+Private local evidence is retained under `_temp/d03-d04-20261118/`:
+
+- `source-core-final/tests/` and `source-verified/tests/`: source TRX reports.
+- `tests/cleanup-final.trx`: final cleanup follow-up.
+- `python-tests-final.log`: Python discovery.
+- `build-correct-permissions/results.json`: clean backend, frontend and packages.
+- `final-delivery-correct-permissions/summary.json`: final delivery receipts.
+- `authpolicy-final/summary.json`: final authentication receipts.
+- `release-candidate-proof/summary.json`: actual CLI rejection/acceptance proof.
+- `release-candidate/`: complete local candidate, source archive and manifest.
+
+Checks use owned synthetic homes, files, databases, clients and containers.
+They preserve the input packages and clean up owned processes/containers. The
+running development service remains PID **3980350** in its separate runtime.
+No running development/production home, media, Unraid share or GitHub workflow
+was changed. P17 remains deferred; native ARM64 and broader release gates remain
+separate work.

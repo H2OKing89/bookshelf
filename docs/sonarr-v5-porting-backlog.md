@@ -71,7 +71,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D01](#d01) | P0 | Planned | S | Preserve Bookshelf's staged replacement and ownership boundary |
 | [D02](#d02) | P1 | Planned | L | Add machine-readable download and import rejection codes |
 | [D03](#d03) | P0 | Verified | S | Fix tag isolation when choosing download clients |
-| [D04](#d04) | P0 | In progress | M | Audit completion against distinct books and complete recording parts |
+| [D04](#d04) | P0 | Verified | M | Audit completion against distinct books and complete recording parts |
 | [D05](#d05) | P1 | Planned | M | Prevent custom-format downgrades during import and rename |
 | [D06](#d06) | P1 | Planned | M | Classify rejected extensions, including downloads with no importable files |
 | [D07](#d07) | P1 | Planned | L | Ask download clients for file inventory when the filesystem has no eligible files |
@@ -1847,9 +1847,9 @@ is part of this batch.
 **2026-11-18 implementation:** `f7ee205d8` normalizes missing author tags and
 always applies tag eligibility before indexer overrides, blocked-client handling,
 priority and round robin. Matching tags retain preference over untagged defaults;
-null/empty author tags only permit untagged clients. No eligible tagged match
-produces the existing explicit unavailable error. No-protocol-provider behavior
-stays compatible. The focused fixture passes **36 cases**, including **24 new
+null/empty author tags only permit untagged clients. When no client is eligible,
+selection reports the existing explicit unavailable error. No-protocol-provider
+behavior stays compatible. The focused fixture passes **36 cases**, including **24 new
 regressions** for both protocols, overrides, blocked matching clients and eligible
 round robin. Final published acquisition evidence is recorded with D04 below.
 
@@ -1866,22 +1866,38 @@ round robin. Final published acquisition evidence is recorded with D04 below.
 
 **P0 · partial; source demonstrates a TV assumption that needs adaptation · adapt/test local logic · D01 · M.** S:`src/NzbDrone.Core/Download/CompletedDownloadService.cs:216` `VerifyImport` counts imported episode identities and falls back to history. B:`src/NzbDrone.Core/Download/CompletedDownloadService.cs:121` counts imported `ImportResult` objects (`Select(...Book).Count()` at 123–125), not distinct books or expected audiobook parts; B:`src/NzbDrone.Core/Download/TrackedDownloads/TrackedDownloadAlreadyImported.cs:23` also treats a null remote-book mapping as imported whenever any history exists (33–35). These are audit targets, not proof every multipart import is currently broken. Define expected Bookshelf identity/part coverage from its new provenance and compare actual committed results to it. Acceptance: two parts of one book cannot satisfy a two-book download; partial multipart imports never trigger source/client cleanup; a restart with complete committed history is idempotent; unrelated or grab-only history is insufficient evidence of completion.
 
-**2026-11-18 implementation in progress:** completion is now designed around
-one shared recording/file receipt, not imported-result row counts. Automatic and
+**2026-11-18 verified implementation:** `ef8beac21` and `3aeb8c56b` establish
+one shared recording/file receipt for completion. Automatic and
 manual import, restart restoration, event-driven client cleanup and periodic
 cleanup must all establish the same scope. Tracked imports retain source copies
 through staged/database publication. History receives additive per-file identity
 and part metadata; completion writes its receipt synchronously before state,
 source retirement or notifications. Saved legacy markers alone cannot authorize
 removal. Explicit Copy intent survives later retry history and client removal
-uses `deleteData=false` when preserving those sources.
+uses `deleteData=false` when preserving those sources. Manual Copy also saves a
+state-neutral retention marker before any selected tracked job imports, preserving
+that choice through an incomplete selection or a restart before completion.
+Cleanup requires client status `Completed`, refreshes mapped paths, retries source
+retirement, and preserves data when the client cannot move its files.
 
 The [completion policy](download-completion.md) describes book/edition/file IDs,
 discovered/declared part coverage, current inventory, mapped paths, configured
 library aliases and conservative unknown/legacy handling. This makes no claim to
 know publisher totals or files absent from local inventory; D07 and B03 remain
-separate work. Initial source/package acceptance is pending and will be recorded
-before D04 is marked verified. No production media or running server is used.
+separate work. Source verification passes **5,205 cases** with **97 existing
+skips**, followed by **29 focused cleanup cases**, including two additional
+nonmovable-source regressions. Tooling passes **141 Python tests**.
+
+Clean artifact source `3aeb8c56b` passes **433 delivery checks**, including **132
+published acquisition checks**. Separate proofs pass **111 authentication checks**
+and **43 actual candidate CLI checks**. The latter rejects missing acquisition evidence. Both
+Linux x64 packages build; the actual musl Docker proof passes **53 checks**.
+Evidence is recorded in [local validation](local-validation.md#d03-and-d04-source-verification-2026-11-18).
+The owned probe uses physical synthetic files, production completion/history
+services and SQLite-backed repository interfaces; its committed-import result
+boundary is controlled, with real importer coverage in source tests. No actual
+download client, existing home, production media or running server was used. P17
+remains deferred, and wider platform/feed/signing gates are unchanged.
 
 ### D05
 
