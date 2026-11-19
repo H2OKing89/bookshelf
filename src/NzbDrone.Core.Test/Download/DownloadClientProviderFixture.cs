@@ -90,6 +90,179 @@ namespace NzbDrone.Core.Test.Download
             });
         }
 
+        private Mock<IDownloadClient> WithClient(DownloadProtocol protocol, int priority = 0, HashSet<int> tags = null)
+        {
+            return protocol == DownloadProtocol.Torrent ? WithTorrentClient(priority, tags) : WithUsenetClient(priority, tags);
+        }
+
+        [TestCase(DownloadProtocol.Usenet, false)]
+        [TestCase(DownloadProtocol.Usenet, true)]
+        [TestCase(DownloadProtocol.Torrent, false)]
+        [TestCase(DownloadProtocol.Torrent, true)]
+        public void untagged_author_should_only_select_an_untagged_client(DownloadProtocol protocol, bool omittedTags)
+        {
+            WithClient(protocol, 0, new HashSet<int> { 1 });
+            var untagged = WithClient(protocol, 10);
+
+            var client = Subject.GetDownloadClient(protocol, tags: omittedTags ? null : new HashSet<int>());
+
+            client.Should().BeSameAs(untagged.Object);
+        }
+
+        [TestCase(DownloadProtocol.Usenet, false)]
+        [TestCase(DownloadProtocol.Usenet, true)]
+        [TestCase(DownloadProtocol.Torrent, false)]
+        [TestCase(DownloadProtocol.Torrent, true)]
+        public void untagged_author_should_fail_when_only_tagged_clients_exist(DownloadProtocol protocol, bool omittedTags)
+        {
+            WithClient(protocol, tags: new HashSet<int> { 1 });
+
+            Assert.Throws<DownloadClientUnavailableException>(() =>
+                Subject.GetDownloadClient(protocol, tags: omittedTags ? null : new HashSet<int>()))
+                .Message.Should().Contain("matching author tag");
+        }
+
+        [TestCase(DownloadProtocol.Usenet)]
+        [TestCase(DownloadProtocol.Torrent)]
+        public void no_client_for_protocol_should_keep_the_existing_null_result(DownloadProtocol protocol)
+        {
+            var otherProtocol = protocol == DownloadProtocol.Torrent ? DownloadProtocol.Usenet : DownloadProtocol.Torrent;
+            WithClient(otherProtocol, tags: new HashSet<int> { 1 });
+
+            Subject.GetDownloadClient(protocol, tags: new HashSet<int> { 1 }).Should().BeNull();
+        }
+
+        [Test]
+        public void any_matching_author_tag_should_take_precedence_over_default_client_priority()
+        {
+            WithTorrentClient(0);
+            WithTorrentClient(0, new HashSet<int> { 4 });
+            var matching = WithTorrentClient(10, new HashSet<int> { 2, 3 });
+
+            var client = Subject.GetDownloadClient(DownloadProtocol.Torrent, tags: new HashSet<int> { 1, 2 });
+
+            client.Should().BeSameAs(matching.Object);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void indexer_override_should_not_authorize_a_tagged_client_for_an_untagged_author(bool omittedTags)
+        {
+            var tagged = WithTorrentClient(tags: new HashSet<int> { 1 });
+            WithTorrentClient();
+            WithTorrentIndexer(tagged.Object.Definition.Id);
+
+            Assert.Throws<DownloadClientUnavailableException>(() =>
+                Subject.GetDownloadClient(DownloadProtocol.Torrent, 1, tags: omittedTags ? null : new HashSet<int>()));
+        }
+
+        [Test]
+        public void indexer_override_should_not_authorize_a_client_with_unmatched_tags()
+        {
+            var unmatched = WithTorrentClient(tags: new HashSet<int> { 2 });
+            WithTorrentClient();
+            WithTorrentIndexer(unmatched.Object.Definition.Id);
+
+            Assert.Throws<DownloadClientUnavailableException>(() =>
+                Subject.GetDownloadClient(DownloadProtocol.Torrent, 1, tags: new HashSet<int> { 1 }));
+        }
+
+        [Test]
+        public void indexer_override_should_keep_the_existing_matching_tag_preference()
+        {
+            var untagged = WithTorrentClient();
+            WithTorrentClient(tags: new HashSet<int> { 1 });
+            WithTorrentIndexer(untagged.Object.Definition.Id);
+
+            Assert.Throws<DownloadClientUnavailableException>(() =>
+                Subject.GetDownloadClient(DownloadProtocol.Torrent, 1, tags: new HashSet<int> { 1 }));
+        }
+
+        [Test]
+        public void indexer_override_should_select_an_untagged_default_when_no_tag_matches()
+        {
+            var untagged = WithTorrentClient(10);
+            WithTorrentClient(0, new HashSet<int> { 2 });
+            WithTorrentIndexer(untagged.Object.Definition.Id);
+
+            Subject.GetDownloadClient(DownloadProtocol.Torrent, 1, tags: new HashSet<int> { 1 })
+                .Should().BeSameAs(untagged.Object);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void eligible_indexer_override_should_retain_blocked_client_policy(bool filterBlockedClients)
+        {
+            var matching = WithTorrentClient(tags: new HashSet<int> { 1 });
+            WithTorrentClient(tags: new HashSet<int> { 1 });
+            WithTorrentIndexer(matching.Object.Definition.Id);
+            GivenBlockedClient(matching.Object.Definition.Id);
+
+            if (filterBlockedClients)
+            {
+                Assert.Throws<DownloadClientUnavailableException>(() =>
+                    Subject.GetDownloadClient(DownloadProtocol.Torrent, 1, true, new HashSet<int> { 1 }));
+            }
+            else
+            {
+                Subject.GetDownloadClient(DownloadProtocol.Torrent, 1, false, new HashSet<int> { 1 })
+                    .Should().BeSameAs(matching.Object);
+            }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void blocked_matching_client_should_not_fall_back_outside_the_existing_tag_selection(bool filterBlockedClients)
+        {
+            WithTorrentClient();
+            var matching = WithTorrentClient(tags: new HashSet<int> { 1 });
+            GivenBlockedClient(matching.Object.Definition.Id);
+
+            if (filterBlockedClients)
+            {
+                Assert.Throws<DownloadClientUnavailableException>(() =>
+                    Subject.GetDownloadClient(DownloadProtocol.Torrent, filterBlockedClients: true, tags: new HashSet<int> { 1 }));
+            }
+            else
+            {
+                Subject.GetDownloadClient(DownloadProtocol.Torrent, tags: new HashSet<int> { 1 })
+                    .Should().BeSameAs(matching.Object);
+            }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void blocked_default_should_not_fall_back_to_a_tagged_client_for_an_untagged_author(bool filterBlockedClients)
+        {
+            var untagged = WithTorrentClient();
+            WithTorrentClient(tags: new HashSet<int> { 1 });
+            GivenBlockedClient(untagged.Object.Definition.Id);
+
+            if (filterBlockedClients)
+            {
+                Assert.Throws<DownloadClientUnavailableException>(() =>
+                    Subject.GetDownloadClient(DownloadProtocol.Torrent, filterBlockedClients: true));
+            }
+            else
+            {
+                Subject.GetDownloadClient(DownloadProtocol.Torrent).Should().BeSameAs(untagged.Object);
+            }
+        }
+
+        [TestCase(DownloadProtocol.Usenet)]
+        [TestCase(DownloadProtocol.Torrent)]
+        public void untagged_author_should_roundrobin_only_the_eligible_first_priority_clients(DownloadProtocol protocol)
+        {
+            WithClient(protocol, 0, new HashSet<int> { 1 });
+            var first = WithClient(protocol, 1);
+            WithClient(protocol, 2);
+            var second = WithClient(protocol, 1);
+
+            Subject.GetDownloadClient(protocol).Should().BeSameAs(first.Object);
+            Subject.GetDownloadClient(protocol).Should().BeSameAs(second.Object);
+            Subject.GetDownloadClient(protocol).Should().BeSameAs(first.Object);
+        }
+
         [Test]
         public void should_roundrobin_over_usenet_client()
         {
