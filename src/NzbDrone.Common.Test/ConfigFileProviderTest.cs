@@ -297,10 +297,23 @@ namespace NzbDrone.Common.Test
         [Test]
         public void allowed_hosts_should_default_to_optional_without_changing_other_defaults()
         {
+            _configFileContents = "<Config><Port>8787</Port></Config>";
+
             Subject.AllowedHosts.Should().BeEmpty();
-            XDocument.Parse(_configFileContents).Root.Element("AllowedHosts").Value.Should().BeEmpty();
+            XDocument.Parse(_configFileContents).Root.Element("AllowedHosts").Should().BeNull();
             Subject.Port.Should().Be(8787);
             Subject.AuthenticationMethod.Should().Be(AuthenticationType.None);
+        }
+
+        [Test]
+        public void reading_missing_allowed_hosts_should_preserve_the_original_configuration_bytes()
+        {
+            const string original = "<Config><ApiKey>preserved-key</ApiKey><LaunchBrowser>False</LaunchBrowser></Config>";
+            _configFileContents = original;
+
+            Subject.AllowedHosts.Should().BeEmpty();
+
+            _configFileContents.Should().Be(original);
         }
 
         [Test]
