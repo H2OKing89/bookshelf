@@ -48,6 +48,28 @@ probe in a private clone using the package's own self-contained runtime and
 native libraries. Calibre coverage exercises the production client with a
 synthetic protocol response; it does not test a running Calibre installation.
 
+## Check client routing and download completion
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --checks acquisition
+```
+
+This explicit check loads the package's client-selection, completion, history,
+tracking and cleanup services in a private package clone. It uses synthetic book
+and file identities, owned SQLite-backed repository interfaces, physical source
+and library files, and a fake download client. It contacts no indexer or download
+client and accepts no existing application home or media library.
+
+The proof covers tag isolation, distinct books, coherent recording parts,
+incomplete imports, synchronous receipt-write failures, source-retirement order,
+restarts, legacy and stale evidence, ebook formats, and persisted manual Copy
+intent. Its importer boundary supplies controlled committed-file results; source
+tests separately exercise the staged importer and manual-import integration.
+Input package fingerprints must remain unchanged. See the
+[completion policy](download-completion.md) for scope and cleanup behavior.
+
 ## Check refresh cancellation and shutdown
 
 Run the cancellation proof against a package containing P10:
@@ -552,3 +574,24 @@ untouched. No GitHub workflow, push, image publication or production update was
 performed. P17 is deferred at the user's request. P25 feed/signing/publication
 and supported-platform gates, P02/P13 native ARM acceptance and the broader
 release matrix remain open.
+
+
+### D03 and D04 source verification, 2026-11-18
+
+Client-tag isolation is committed in `f7ee205d8`; completion, source-retention and
+cleanup changes are committed in `ef8beac21`. Offline Core passes **4,075 cases**
+with **55 existing skips**. Common **836**, API **16**, Host **181**, PostgreSQL
+migration **23**, authentication integration **54** and updater **20** also pass:
+**5,205 source cases**, retaining **97 existing skips** in total. PostgreSQL uses
+an owned temporary cluster and socket; external metadata fixtures are excluded
+from the offline Core run as in the preceding validation.
+
+The tooling passes **141 Python tests**. The explicit `acquisition` check is now
+required by local candidate preparation, including rejection of an otherwise
+passing report that omits this proof. Its published importer boundary is
+controlled committed-file results; the source suites exercise the actual staged
+importer, manual selection, rollback and physical library-alias behavior.
+
+A subsequent nonmovable-source cleanup follow-up passes **29 focused cases**,
+including two new regressions for removable client tasks whose files cannot be
+moved. Both event paths remove the task with `deleteData=false`.

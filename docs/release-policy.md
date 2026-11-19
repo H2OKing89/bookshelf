@@ -61,15 +61,15 @@ normal [package preparation](local-validation.md#prepare-a-package). Do not chan
 source or create a different commit between compilation, testing and staging.
 Every output path below must be new and must not contain an application home.
 
-The candidate requires passing, complete synthetic-data evidence for all nine
+The candidate requires passing, complete synthetic-data evidence for all ten
 checks: `package`, `app`, `restore`, `upgrade`, `media`, `cancellation`,
-`authpolicy`, `accesspolicy` and `releaseidentity`. For example:
+`authpolicy`, `accesspolicy`, `releaseidentity` and `acquisition`. For example:
 
 ```sh
 python3 scripts/validate-local.py \
   --runtime _artifacts/linux-x64/net10.0/Readarr \
   --baseline-runtime /path/to/genuine-older-package \
-  --checks package app restore upgrade media cancellation accesspolicy releaseidentity \
+  --checks package app restore upgrade media cancellation accesspolicy releaseidentity acquisition \
   --output _temp/release-evidence
 
 python3 scripts/validate-local.py \

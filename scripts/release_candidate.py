@@ -20,7 +20,7 @@ from validation.package import runtime_details
 from validation.releaseidentity import PRODUCT_ID, SOURCE_FIELDS, valid_identity
 
 
-REQUIRED_CHECKS = {"package", "app", "restore", "upgrade", "media", "cancellation", "authpolicy", "accesspolicy", "releaseidentity"}
+REQUIRED_CHECKS = {"package", "app", "restore", "upgrade", "media", "cancellation", "authpolicy", "accesspolicy", "releaseidentity", "acquisition"}
 ALLOWED_RIDS = {"linux-x64"}
 CHANNEL = "develop"
 

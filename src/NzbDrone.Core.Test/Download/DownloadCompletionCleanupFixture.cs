@@ -29,7 +29,7 @@ namespace NzbDrone.Core.Test.Download
                 DownloadItem = new DownloadClientItem
                 {
                     DownloadId = "owned-download", Title = "Owned recording", Status = DownloadItemStatus.Completed,
-                    CanBeRemoved = true, DownloadClientInfo = new DownloadClientItemClientInfo { Id = 3, Name = "Owned client" }
+                    CanBeRemoved = true, CanMoveFiles = true, DownloadClientInfo = new DownloadClientItemClientInfo { Id = 3, Name = "Owned client" }
                 }
             };
             _receipt = new DownloadImportReceipt { DownloadId = "owned-download", DownloadClientId = 3, AuthorId = 7 };
@@ -133,6 +133,21 @@ namespace NzbDrone.Core.Test.Download
 
             _client.Verify(client => client.RemoveItem(_tracked.DownloadItem, false), Times.Once());
             _client.Verify(client => client.RemoveItem(It.IsAny<DownloadClientItem>(), true), Times.Never());
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void a_removable_task_without_file_move_permission_should_keep_its_client_data(bool removalOnly)
+        {
+            GivenReceipt();
+            _tracked.DownloadItem.CanMoveFiles = false;
+
+            Notify(removalOnly);
+
+            _tracked.DownloadItem.Removed.Should().BeTrue();
+            _client.Verify(client => client.RemoveItem(_tracked.DownloadItem, false), Times.Once());
+            _client.Verify(client => client.RemoveItem(It.IsAny<DownloadClientItem>(), true), Times.Never());
+            _client.Verify(client => client.MarkItemAsImported(_tracked.DownloadItem), removalOnly ? Times.Never() : Times.Once());
         }
 
         [Test]

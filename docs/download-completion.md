@@ -52,6 +52,12 @@ the current source inventory. A changed output path invalidates the previous
 path's cached evidence. Missing library files, changed associations, unexpected
 source files and malformed receipts keep cleanup pending.
 
+The client must report `Completed` before completion can retire sources, mark the
+task imported or remove it. Queued, paused, downloading, warning and failed
+statuses cannot borrow an older completion receipt. Cleanup retries source
+retirement after a restart; a failed deletion cannot be bypassed by removing the
+client task instead.
+
 Older completion markers have no receipt and remain available in history. They
 are held for rescan or review instead of granting cleanup automatically. A fresh
 scan can use bound legacy file history when its live files and complete observed

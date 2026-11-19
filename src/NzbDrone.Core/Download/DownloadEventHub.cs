@@ -80,7 +80,7 @@ namespace NzbDrone.Core.Download
                 return;
             }
 
-            RemoveFromDownloadClient(message.TrackedDownload, downloadClient, !trackedDownload.KeepSourceFiles && !trackedDownload.ImportReceipt.KeepSourceFiles);
+            RemoveFromDownloadClient(message.TrackedDownload, downloadClient, trackedDownload.DownloadItem.CanMoveFiles && !trackedDownload.KeepSourceFiles && !trackedDownload.ImportReceipt.KeepSourceFiles);
         }
 
         public void Handle(DownloadCanBeRemovedEvent message)
@@ -101,7 +101,7 @@ namespace NzbDrone.Core.Download
                 return;
             }
 
-            RemoveFromDownloadClient(message.TrackedDownload, downloadClient, !trackedDownload.KeepSourceFiles && !trackedDownload.ImportReceipt.KeepSourceFiles);
+            RemoveFromDownloadClient(message.TrackedDownload, downloadClient, trackedDownload.DownloadItem.CanMoveFiles && !trackedDownload.KeepSourceFiles && !trackedDownload.ImportReceipt.KeepSourceFiles);
         }
 
         private bool HasVerifiedImport(TrackedDownload trackedDownload)
