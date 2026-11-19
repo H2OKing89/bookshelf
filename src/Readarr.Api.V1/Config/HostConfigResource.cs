@@ -13,6 +13,7 @@ namespace Readarr.Api.V1.Config
     {
         public string BindAddress { get; set; }
         public string TrustedNetworks { get; set; }
+        public string AllowedHosts { get; set; }
         public int Port { get; set; }
         public int SslPort { get; set; }
         public bool EnableSsl { get; set; }
@@ -68,6 +69,7 @@ namespace Readarr.Api.V1.Config
             {
                 BindAddress = model.BindAddress,
                 TrustedNetworks = model.TrustedNetworks,
+                AllowedHosts = model.AllowedHosts,
                 Port = model.Port,
                 SslPort = model.SslPort,
                 EnableSsl = model.EnableSsl,

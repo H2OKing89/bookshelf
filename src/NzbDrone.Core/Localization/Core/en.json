@@ -1167,5 +1167,9 @@
   "PreferPathAsinHelpText": "Use the bracketed ASIN in the filename or nearest recording folder for matching, even when embedded tags disagree. Filename and folder ASINs must agree. This does not change file tags or allow conflicting tags to be scrubbed.",
     "AccountToEdit": "Account to edit",
     "SelectAccount": "Select an account",
-    "AccountToEditHelpText": "Username and password changes apply to this account. Other accounts are retained."
+    "AccountToEditHelpText": "Username and password changes apply to this account. Other accounts are retained.",
+    "AllowedHosts": "Allowed Hosts",
+    "AllowedHostsHelpText": "Optional comma-separated host names or IP addresses, without ports. Use *.example.com for subdomains; leave empty to allow any host. Localhost, loopback addresses and this server's host name remain allowed.",
+    "BookshelfUpdatesUnavailable": "In-app updates are unavailable for this Bookshelf build. Install a verified Bookshelf release manually.",
+    "BookshelfContainerUpdates": "Update Bookshelf by replacing its container image. In-app updates are unavailable."
 }

@@ -295,6 +295,87 @@ namespace NzbDrone.Common.Test
         }
 
         [Test]
+        public void allowed_hosts_should_default_to_optional_without_changing_other_defaults()
+        {
+            Subject.AllowedHosts.Should().BeEmpty();
+            XDocument.Parse(_configFileContents).Root.Element("AllowedHosts").Value.Should().BeEmpty();
+            Subject.Port.Should().Be(8787);
+            Subject.AuthenticationMethod.Should().Be(AuthenticationType.None);
+        }
+
+        [Test]
+        public void allowed_hosts_should_read_saved_xml_without_reinterpreting_it()
+        {
+            _configFileContents = "<Config><AllowedHosts> Books.TEST; [2001:db8::1] </AllowedHosts></Config>";
+
+            Subject.AllowedHosts.Should().Be("Books.TEST; [2001:db8::1]");
+        }
+
+        [Test]
+        public void allowed_hosts_save_should_preserve_credentials_and_explicit_false_values()
+        {
+            const string apiKey = "0123456789abcdef0123456789abcdef";
+            _configFileContents = "<Config><ApiKey>" + apiKey + "</ApiKey><Port>20555</Port>" +
+                "<EnableSsl>False</EnableSsl><LaunchBrowser>False</LaunchBrowser><AuthenticationMethod>Forms</AuthenticationMethod></Config>";
+
+            Subject.SaveConfigDictionary(new Dictionary<string, object> { { "AllowedHosts", "books.test" } });
+
+            Subject.AllowedHosts.Should().Be("books.test");
+            Subject.ApiKey.Should().Be(apiKey);
+            Subject.Port.Should().Be(20555);
+            Subject.EnableSsl.Should().BeFalse();
+            Subject.LaunchBrowser.Should().BeFalse();
+            Subject.AuthenticationMethod.Should().Be(AuthenticationType.Forms);
+        }
+
+        [Test]
+        public void omitted_allowed_hosts_should_be_preserved_and_explicit_empty_should_clear()
+        {
+            _configFileContents = "<Config><AllowedHosts>books.test</AllowedHosts></Config>";
+
+            Subject.SaveConfigDictionary(new Dictionary<string, object> { { "Port", 20555 } });
+            Subject.AllowedHosts.Should().Be("books.test");
+            Subject.SaveConfigDictionary(new Dictionary<string, object> { { "AllowedHosts", string.Empty } });
+
+            Subject.AllowedHosts.Should().BeEmpty();
+            Subject.Port.Should().Be(20555);
+        }
+
+        [Test]
+        [NonParallelizable]
+        public void allowed_hosts_environment_should_override_xml_without_rewriting_it()
+        {
+            const string environmentKey = "Readarr__Server__AllowedHosts";
+            var previousValue = Environment.GetEnvironmentVariable(environmentKey);
+            try
+            {
+                Environment.SetEnvironmentVariable(environmentKey, "env.books.test");
+                var options = new ServerOptions();
+                new ConfigurationBuilder().AddEnvironmentVariables().Build().GetSection("Readarr:Server").Bind(options);
+                Mocker.GetMock<IOptions<ServerOptions>>().Setup(value => value.Value).Returns(options);
+                _configFileContents = "<Config><AllowedHosts>xml.books.test</AllowedHosts></Config>";
+
+                Subject.AllowedHosts.Should().Be("env.books.test");
+                XDocument.Parse(_configFileContents).Root.Element("AllowedHosts").Value.Should().Be("xml.books.test");
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(environmentKey, previousValue);
+            }
+        }
+
+        [Test]
+        public void explicit_empty_allowed_hosts_option_should_override_saved_xml()
+        {
+            Mocker.GetMock<IOptions<ServerOptions>>().Setup(options => options.Value)
+                .Returns(new ServerOptions { AllowedHosts = string.Empty });
+            _configFileContents = "<Config><AllowedHosts>xml.books.test</AllowedHosts></Config>";
+
+            Subject.AllowedHosts.Should().BeEmpty();
+            XDocument.Parse(_configFileContents).Root.Element("AllowedHosts").Value.Should().Be("xml.books.test");
+        }
+
+        [Test]
         public void sql_log_storage_should_default_to_enabled_without_rewriting_the_config()
         {
             _configFileContents = "<Config><Port>19987</Port></Config>";

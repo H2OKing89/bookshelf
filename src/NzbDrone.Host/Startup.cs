@@ -5,6 +5,7 @@ using DryIoc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HostFiltering;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -57,6 +58,10 @@ namespace NzbDrone.Host
 
             services.AddOptions<ForwardedHeadersOptions>()
                 .Configure<IConfigFileProvider>(ForwardedHeadersConfigurator.Configure);
+
+            services.AddOptions<HostFilteringOptions>()
+                .Configure<IConfigFileProvider>(ConfigureHostFilteringOptions.Configure)
+                .ValidateOnStart();
 
             services.AddRouting(options => options.LowercaseUrls = true);
 
@@ -247,6 +252,7 @@ namespace NzbDrone.Host
             }
 
             app.UseTrustedForwardedHeaders();
+            app.UseHostFiltering();
             app.UseMiddleware<LoggingMiddleware>();
             app.UsePathBase(new PathString(configFileProvider.UrlBase));
             app.UseExceptionHandler(new ExceptionHandlerOptions

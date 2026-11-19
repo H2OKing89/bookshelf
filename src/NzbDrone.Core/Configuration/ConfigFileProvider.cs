@@ -30,6 +30,7 @@ namespace NzbDrone.Core.Configuration
 
         string BindAddress { get; }
         string TrustedNetworks { get; }
+        string AllowedHosts { get; }
         int Port { get; }
         int SslPort { get; }
         bool EnableSsl { get; }
@@ -185,6 +186,7 @@ namespace NzbDrone.Core.Configuration
         public int Port => _serverOptions.Port ?? GetValueInt("Port", 8787);
 
         public string TrustedNetworks => _serverOptions.TrustedNetworks ?? GetValue("TrustedNetworks", string.Empty);
+        public string AllowedHosts => _serverOptions.AllowedHosts ?? GetValue("AllowedHosts", string.Empty);
 
         public int SslPort => _serverOptions.SslPort ?? GetValueInt("SslPort", 6868);
 

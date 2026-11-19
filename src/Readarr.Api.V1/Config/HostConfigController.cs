@@ -52,6 +52,11 @@ namespace Readarr.Api.V1.Config
                 .WithMessage("Enter comma-separated IP addresses or CIDR networks, such as 192.0.2.10 or 192.0.2.0/24")
                 .When(c => c.TrustedNetworks != null);
 
+            SharedValidator.RuleFor(c => c.AllowedHosts)
+                .Must(AllowedHostsParser.IsValidList)
+                .WithMessage("Enter host names or IP addresses without ports, schemes, paths or bind addresses. Leave empty to allow any host.")
+                .When(c => c.AllowedHosts != null);
+
             SharedValidator.RuleFor(c => c.UrlBase).ValidUrlBase();
             SharedValidator.RuleFor(c => c.InstanceName).ContainsReadarr().When(c => c.InstanceName.IsNotNullOrWhiteSpace());
 
@@ -186,6 +191,20 @@ namespace Readarr.Api.V1.Config
         {
             ValidateAccountSelection(resource);
             var selected = SelectedAccount(resource.UserIdentifier);
+            if (resource.AllowedHosts != null)
+            {
+                if (!AllowedHostsParser.IsValidList(resource.AllowedHosts))
+                {
+                    throw new ValidationException(new[]
+                    {
+                        new ValidationFailure(nameof(resource.AllowedHosts),
+                            "Enter host names or IP addresses without ports, schemes, paths or bind addresses. Leave empty to allow any host.")
+                    });
+                }
+
+                resource.AllowedHosts = AllowedHostsParser.NormalizeList(resource.AllowedHosts);
+            }
+
             if (resource.TrustedNetworks != null)
             {
                 if (!IPNetworkParser.IsValidList(resource.TrustedNetworks))
@@ -214,6 +233,7 @@ namespace Readarr.Api.V1.Config
                                                     prop.Name != nameof(HostConfigResource.UserIdentifier) &&
                                                     prop.Name != nameof(HostConfigResource.Accounts) &&
                                                     prop.Name != nameof(HostConfigResource.AccountSelectionRequired) &&
+                                                    (prop.Name != nameof(HostConfigResource.AllowedHosts) || resource.AllowedHosts != null) &&
                                                     (prop.Name != nameof(HostConfigResource.TrustedNetworks) || resource.TrustedNetworks != null))
                                      .ToDictionary(prop => prop.Name, prop => prop.GetValue(resource, null));
 
