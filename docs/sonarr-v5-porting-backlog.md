@@ -57,7 +57,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P13](#p13) | P2 | In progress | M | Upgrade SQLite provider and measure busy-timeout behavior |
 | [P14](#p14) | P2 | Verified | M | Support full PostgreSQL connection strings with corrected validation |
 | [P15](#p15) | P2 | Verified | M | Make SQL log storage optional |
-| [P16](#p16) | P2 | Planned | L | Review v5 authentication defaults, bootstrap and recovery as product policy |
+| [P16](#p16) | P2 | Verified | L | Review v5 authentication defaults, bootstrap and recovery as product policy |
 | [P17](#p17) | P2 | Planned | L | Add OIDC only if SSO is wanted |
 | [P18](#p18) | P2 | Planned | M | Load PEM certificates, separate private keys and certificate chains |
 | [P19](#p19) | P2 | Planned | L | Study in-process host restart and service lifecycle |
@@ -1325,26 +1325,107 @@ next**, now that its optional-log prerequisite is verified.
 **Review v5 authentication defaults, bootstrap and recovery as product policy**
 
 - Priority / effort: **P2 / L**.
-- Current Bookshelf state: different policy, not simply missing login.
-- Approach: study/adapt selectively.
+- Current Bookshelf state: compatible authentication defaults, explicit account editing and local password recovery verified locally on SQLite/PostgreSQL.
+- Approach: adapt account/recovery safeguards while retaining Bookshelf's authentication policy.
 - Prerequisites: [P02](#p02), [P03](#p03), [P06](#p06), [P08](#p08).
 - Pinned v5 source: [src/NzbDrone.Core/Authentication/InitialUserService.cs](https://github.com/Sonarr/Sonarr/blob/c018578e4b79ee048575c02d7a8aa2b929e4b837/src/NzbDrone.Core/Authentication/InitialUserService.cs#L58).
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/Configuration/ConfigFileProvider.cs](../src/NzbDrone.Core/Configuration/ConfigFileProvider.cs#L193).
 
-**Bookshelf status:** different policy, not simply missing login. B `ConfigFileProvider.cs:193` preserves Basic/None and B AuthOptions has no initial/reset options. S5 `ConfigFileProvider.cs:216` converts Basic/None persisted modes to Forms/default Forms; `AuthenticationRequiredType.cs:7` adds loopback-only bypass; `InitialUserService.cs:58` creates a first user or migrates config credentials; `AuthenticationService.cs:112`/`:148` provides expiring/one-use reset tokens and an environment-token recovery path.
+**Comparison baseline:** Bookshelf has a different policy, not simply missing
+login. B `ConfigFileProvider.cs:193` preserves Basic/None and B AuthOptions has
+no initial/reset options. S5 `ConfigFileProvider.cs:216` converts Basic/None
+persisted modes to Forms/default Forms; `AuthenticationRequiredType.cs:7` adds
+loopback-only bypass; `InitialUserService.cs:58` creates a first user or migrates
+config credentials; `AuthenticationService.cs:112`/`:148` provides expiring/one-use
+reset tokens and an environment-token recovery path.
 
-**Action/dependencies:** first P02/03/06/08, then explicitly decide Bookshelf's access/default/Basic compatibility policy. Avoid silent Basic-to-Forms conversion that breaks clients. Inspect recovery carefully: S5 `InitialUserService.cs:88` logs the generated password, and `AuthenticationService.cs:143` logs the reset token. The configured reset token is disabled only in process memory after use (`:189`), so leaving the environment setting reintroduces it at restart. Do not claim this is a persistent one-use recovery secret.
+**Donor boundary:** S5 `InitialUserService.cs:88` logs the generated password,
+and `AuthenticationService.cs:143` logs the reset token. Its configured reset
+token is disabled only in process memory after use (`:189`), so leaving the
+environment setting reintroduces it at restart. Bookshelf does not adopt generated
+bootstrap credentials, a forced Basic/None-to-Forms conversion, HTTP reset tokens
+or an environment recovery secret.
 
-**Book/audio caution:** preserve existing library-user identity and automation access; no surprise user reset or catalog rebuild. Document a trusted local recovery flow rather than inheriting Sonarr branding/default username.
+**2026-11-18 implementation and acceptance record:** P16 is **Verified** locally
+in `0b6c53444`, with the policy and evidence below. Existing Forms/Basic/None
+defaults, local-address policy, API-key requirements and library identities stay
+intact. Existing accounts remain shared administrators of one application and
+library; this change does not introduce registration, roles or per-account
+libraries.
 
-**Acceptance:** fresh and upgraded homes have deliberate reachable auth states; credential migration preserves identifiers; policy changes are explained; reset attempts expire, throttle and consume correctly; process restart behavior of any configured token is explicitly tested; secrets never enter export/support-bundle channels inadvertently.
+The [host-settings controller](../src/Readarr.Api.V1/Config/HostConfigController.cs)
+now selects an account by its saved identifier. A valid Forms/Basic identity is
+pinned to its own credentials. API-key-only requests retain their administrative
+scope and explicitly select an account when several exist. Unselected multi-account
+GETs return safe account choices and a selection-required flag instead of failing
+through `FindUser()` / `SingleOrDefault`. The frontend provides **Account to edit**.
+Ambiguous credential/authentication-mode changes, unknown selectors and duplicate
+usernames are rejected before settings writes. Unrelated general saves remain
+available without a selection when credentials and authentication mode are
+unchanged. Single-account editing remains compatible. Account choices expose only
+identifier, username and whether a password exists; hashes and salts remain
+private. The endpoint still requires the API key; optional Forms/Basic
+authentication supplies the account identity without granting additional API
+access.
 
-**Additional existing edge found during P14 verification:** authentication can
-retain and authenticate multiple saved accounts, while host-settings access uses
-`UserService.FindUser()` / `SingleOrDefault`. P16 must define which account
-administrative settings edit without deleting other saved identities. P14's
-settings-save proof uses a separate fresh home; its upgrade proof independently
-preserves and authenticates both legacy and salted accounts.
+The [password-recovery utility](../src/NzbDrone.Host/PasswordResetUtility.cs)
+requires the server to be stopped and an absolute existing home:
+
+```sh
+Readarr -passwordreset -data=/absolute/existing/home
+```
+
+It uses the server's existing database configuration, including environment
+overrides. Hidden interactive prompts accept the existing username or `id:GUID`,
+then a new password and confirmation. There is one attempt with a total two-minute
+input deadline and bounded input lengths. Account/input/provider failures produce
+generic messages without echoing supplied values. The utility locks the home,
+rejects a live recorded server PID and requires the current compatible existing
+schema; it neither creates nor migrates a home or database. Recovery opens only
+the main database and updates only the selected account's salted password through
+the existing credential compare-and-swap path. Username, row ID, account
+identifier, authentication mode, API key and library stay unchanged. No token is
+created or consumed, so restarting cannot reenable a recovery token.
+
+Forms cookies now carry a credential stamp checked against the saved account.
+Changing/recovering credentials invalidates previous sessions for that account.
+Cookies from before this check require one fresh login. Basic continues to verify
+the supplied password per request, and API keys are independent of account
+password recovery. Authentication validation responses redact attempted values.
+
+**Compatibility limits:** general configuration and account credentials retain
+the existing separate persistence order; a later credential conflict can occur
+after unrelated general settings were saved. Account renames reject collisions,
+with database serialization for competing PostgreSQL renames. Concurrent first
+account creation is not a registration workflow or a new supported concurrency
+contract. No identities are deleted or rotated to resolve ambiguity.
+
+**Measured acceptance:** the explicit `authpolicy` proof passes **111 checks**
+against a genuine pre-P16 baseline and owned SQLite/PostgreSQL 16 homes. It proves
+Forms/Basic/None and API-key boundaries, multi-account selection and own-account
+pinning, targeted recovery, old-cookie revocation, live-home and invalid-selector/confirmation rejection,
+recovery-to-startup lock handoff, no credential canaries in responses/logs, and
+preserved identities, other accounts, schema, library/history/cache/media,
+authentication mode and API keys. The pre-P16 package fails specifically at the
+old-cookie assertion when baseline and candidate occupy the same owned content
+root. Every owned process/container/socket is cleaned up; input packages remain
+unchanged.
+
+Canonical locked backend and frontend builds and both x64 package preparations
+pass. Source suites pass Core **3,776**, Common **828**, API **16**, Host **110**,
+plus **44** authentication integration cases and **23** PostgreSQL migration
+cases, retaining existing skips. An existing HTTP fixture teardown race was fixed
+in `ad11a435b`: cancellation now joins the pending accept before closing its native
+socket; the full Common suite then passes. Python validation passes **101 tests**.
+Normal delivery passes **233 checks**; P14/P15 regressions pass **115 PostgreSQL
+connection-string checks** and **63 optional-log checks**. The browser smoke test
+passes desktop and 390px phone account selection, masked passwords, confirmation
+clearing and a selected-account rename with other credentials unchanged.
+
+Evidence is recorded in [local validation](local-validation.md#p16-verification-2026-11-18).
+The running development service, production appdata/media and GitHub workflows
+were unchanged. P02's native ARM work-factor benchmark and P13's native ARM64
+runtime acceptance remain open, as do the broader platform and release gates.
 
 ### P17
 

@@ -27,7 +27,7 @@ class RunnerResultTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.runtime = package(self.root / "runtime")
         self.modules = {"validation." + name: types.ModuleType("validation." + name)
-                        for name in ("app", "cancellation", "datastore", "docker", "logstorage", "media", "package", "postgresconnections", "restore", "sqlite", "upgrade")}
+                        for name in ("app", "authpolicy", "cancellation", "datastore", "docker", "logstorage", "media", "package", "postgresconnections", "restore", "sqlite", "upgrade")}
         self.output = self.root / "results"
 
     @contextlib.contextmanager
@@ -88,6 +88,23 @@ class RunnerResultTests(unittest.TestCase):
                                   "--output", str(self.output), "--checks", "postgresconnections"])
         self.assertEqual(status, 0)
         self.assertEqual(calls, [((self.runtime.resolve(), self.output / "postgresconnections"),
+                                  {"baseline_runtime": baseline.resolve()})])
+
+    def test_authpolicy_requires_and_receives_owned_baseline_argument(self):
+        baseline = package(self.root / "baseline")
+        calls = []
+        self.modules["validation.authpolicy"].run = lambda *args, **kwargs: (
+            calls.append((args, kwargs)) or {"checks": {"owned": True}, "passed": 1, "failed": 0, "completed": True})
+        console = io.StringIO()
+        with (self.mocked_modules(), patch.object(runner.common, "ensure_host_compatible"),
+              contextlib.redirect_stdout(console), contextlib.redirect_stderr(console)):
+            with self.assertRaises(SystemExit):
+                runner.main(["--runtime", str(self.runtime), "--output", str(self.output), "--checks", "authpolicy"])
+            self.assertFalse(self.output.exists())
+            status = runner.main(["--runtime", str(self.runtime), "--baseline-runtime", str(baseline),
+                                  "--output", str(self.output), "--checks", "authpolicy"])
+        self.assertEqual(status, 0)
+        self.assertEqual(calls, [((self.runtime.resolve(), self.output / "authpolicy"),
                                   {"baseline_runtime": baseline.resolve()})])
 
     def test_candidate_mutation_fails_even_when_check_claims_success(self):

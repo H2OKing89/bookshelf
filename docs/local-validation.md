@@ -67,6 +67,33 @@ The second home receives SIGTERM during a held response and must stop gracefully
 without changing its saved library. No external metadata provider is contacted.
 This check is explicit so the default checks remain usable with older packages.
 
+## Check authentication policy and local recovery
+
+Use a package containing P16 and a complete, genuine pre-P16 package:
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --baseline-runtime /path/to/pre-P16/package \
+  --checks authpolicy
+```
+
+This explicit check creates private synthetic homes and an owned PostgreSQL 16
+container with a Unix socket and no published ports. It checks Forms, Basic and
+None compatibility, API-key enforcement, multiple-account settings, account
+selection, credential changes and old-session rejection. The baseline creates
+the SQLite library and a working Forms cookie; candidate bytes replace it at the
+same owned content-root path so cookie rejection cannot result from a different
+data-protection discriminator.
+
+Recovery checks send synthetic passwords through standard input, never arguments
+or environment variables. They cover stopped-home recovery, invalid selectors,
+confirmation failure, live-server rejection and recovery-to-startup lock handoff.
+Saved identities, other accounts, library/history/cache/media, authentication mode
+and API keys must survive. Responses and logs are checked for credential canaries.
+Every owned process, container and socket is cleaned up, and both input packages
+are fingerprinted. No existing home or external database is accepted as input.
+
 ## Check the migration engine on SQLite and PostgreSQL
 
 Use a complete pre-P12 package as the baseline:
@@ -401,3 +428,41 @@ loopback cancellation teardown returned Linux EINVAL once; the unchanged Common
 suite passed on a full rerun. Canonical locked backend/frontend builds and both
 x64 packages passed. No live home, production data, running development service
 or GitHub workflow was changed.
+
+
+### P16 verification, 2026-11-18
+
+Implementation `0b6c53444` passes **111 authentication-policy checks** with a
+genuine pre-P16 P14 package and private SQLite/PostgreSQL 16 homes. Baseline and
+candidate run at the same owned content-root path with preserved data-protection
+keys; pre-stamp cookies require fresh login. The genuine previous binary fails
+that exact assertion. Forms/Basic UI credentials still cannot replace the API
+key. Account settings require unambiguous selection, authenticated users edit
+their own credentials, and recovery targets one existing identity. Both real
+recovery-to-startup handoffs pass. Rejected live homes, selectors and confirmations do not change credentials; logs and responses do not
+contain password canaries. Account identities, other users, configuration, API
+keys, main schema, library/history/cache and media survive. All owned processes,
+containers and Unix sockets are removed; both input packages remain unchanged.
+
+Canonical locked backend/frontend builds and glibc/musl-x64 packages pass. Source
+suites pass Core **3,776**, Common **828**, API **16**, Host **110**, plus **44**
+authentication integration cases and **23** PostgreSQL migration cases, with
+existing skips retained. Source cases additionally verify missing/old/future
+database rejection without creation or migration and prompt timeout rejection.
+An existing Linux socket-accept teardown race occurred
+in Common; `ad11a435b` joins cancelled accepts before closing their native socket,
+and the full suite passes afterward. Python validation passes **101 tests**.
+Desktop and 390px phone Chromium smoke checks verify account choices, populated
+username/masked password, cleared confirmation on switching, and a saved targeted
+rename while preserving other accounts and credential encodings.
+
+Normal package/app/restore/.NET 6 upgrade/media/cancellation/Docker delivery passes
+**233 checks**, including unchanged inputs. P14 connection-string and P15 optional
+log regressions pass **115** and **63** checks respectively. Private evidence is
+under `_temp/p16-auth-20261118/`: `final-authpolicy`,
+`final-authpolicy-negative`, `final-suites`, `final-delivery`,
+`final-postgresconnections`, `final-logstorage`, and `browser-final-pass`.
+The browser evidence includes a phone screenshot with its synthetic API key
+masked. No existing home, running development service, production media or GitHub
+workflow was changed. P02 ARM work-factor and P13 native ARM64 acceptance remain
+open; these x64 results do not establish the complete platform/release matrix.

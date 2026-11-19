@@ -36,6 +36,44 @@ For reverse proxy deployments, configure the
 [trusted proxy addresses](docs/trusted-proxies.md) before upgrading. Changes to
 this setting require a server restart.
 
+## Accounts and password recovery
+
+Upgrades retain existing Forms, Basic and None authentication settings, API keys
+and saved accounts. Accounts share administration of the same library; Bookshelf
+does not provide roles or separate per-account libraries.
+
+Under **Settings → General → Security**, an authenticated Forms or Basic account
+edits its own username and password. API-key-only access to a home with multiple
+saved accounts shows **Account to edit**; select one before changing credentials
+or the authentication method. Other accounts are retained. General settings can
+still be saved without a selection when credentials and the authentication method
+are unchanged. A home with one account keeps its existing editing behavior.
+
+To recover a password, stop the server and run the packaged executable against
+its existing configuration home:
+
+```sh
+Readarr -passwordreset -data=/absolute/existing/home
+```
+
+Use the same database configuration and environment as the server, including any
+PostgreSQL settings. Enter the existing username or `id:GUID` account identifier,
+then enter and confirm a new nonblank password. Input is hidden in an interactive
+terminal. The utility allows one attempt within a total two-minute prompt window;
+it reports a generic failure and exits if selection or confirmation fails.
+
+Recovery requires an existing home with `config.xml` and a database schema
+compatible with this binary. It does not create an account, initialize a home or
+run database migrations. It changes only the selected account's password and
+preserves its identity, username, authentication mode, API key and library. Start
+the server again and sign in with the new password. Recovery uses no reset token
+or HTTP reset endpoint.
+
+Forms sessions are checked against the saved credentials. A password change or
+recovery invalidates that account's previous sessions; the first upgrade to this
+check also requires existing Forms sessions to sign in again once. API keys are
+unchanged.
+
 ## Database log storage
 
 Database logging is enabled by default. To stop storing diagnostic events in the

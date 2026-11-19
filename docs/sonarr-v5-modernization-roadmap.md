@@ -915,3 +915,55 @@ The running development service, production appdata/media and GitHub workflows
 were unchanged. P13 native ARM64 and broader P01/P09/P21/P22/P25 gates remain open.
 The P16 record also tracks an existing single-user assumption in host-settings
 access found while independently preserving multiple authenticated accounts.
+
+
+### P16 account settings and local recovery — 2026-11-18
+
+P16 is **Verified** locally in `0b6c53444`; see the [policy and acceptance record](sonarr-v5-porting-backlog.md#p16)
+and [user-facing recovery instructions](../README.md#accounts-and-password-recovery).
+Bookshelf retains existing Forms, Basic and None defaults, local-address policy,
+API-key requirements and saved account identities. It does not inherit the donor's
+forced mode conversion, generated bootstrap credentials or reset-token paths.
+
+Host settings now select credentials by the saved account identifier. An
+authenticated Forms/Basic account edits its own credentials; API-key-only access
+to multiple saved accounts requires explicit selection before credential or
+authentication-mode changes. Unrelated general saves can proceed without a
+selection when those fields are unchanged. The frontend shows **Account to edit**
+when choices are available. Safe account metadata and masked passwords replace
+the previous multiple-account `SingleOrDefault` failure. Existing accounts remain
+shared administrators of one application; no roles, registration or separate
+per-account library model is introduced.
+
+Stopped-server recovery uses
+`Readarr -passwordreset -data=/absolute/existing/home`, the existing database
+configuration, hidden interactive username/`id:GUID` and password prompts, and one
+attempt within a two-minute total input window. It requires a compatible existing
+schema, opens only the main database and does not initialize or migrate a home.
+The selected password changes through the salted credential compare-and-swap
+path; username, identifiers, authentication mode, API key and library remain
+unchanged. The utility creates no reset token or HTTP endpoint, and reports
+generic errors without echoing supplied values.
+
+Forms credential stamps invalidate earlier sessions after a credential change or
+recovery. Existing Forms cookies from before this check need one fresh login;
+API keys remain independent. The implementation also redacts attempted values
+from authentication validation responses. Configuration and account writes keep
+their separate persistence order; this slice does not promise a cross-store
+transaction or a concurrent registration workflow.
+
+The packaged authentication proof passes **111 checks** on owned SQLite and
+PostgreSQL 16 homes, including recovery/startup mutual exclusion and unchanged
+identities, settings, API keys and library data. A genuine pre-P16 binary fails the
+same-content-root old-cookie assertion as expected. Source suites pass **4,730**
+cases plus **44** authentication integration and **23** PostgreSQL migration cases;
+**101** Python tests, **233** delivery checks, **115** PostgreSQL connection-string
+checks and **63** optional-log checks pass. Desktop and phone browser smoke tests
+verify selection, masked passwords, cleared confirmation and a targeted rename.
+See the [validation record](local-validation.md#p16-verification-2026-11-18).
+
+P02's supported ARM password work-factor
+benchmark and P13's native ARM64 runtime acceptance remain open, together with
+broader P01/P09/P21/P22/P25 platform and release gates. This work does not deploy
+the running development service or use production appdata/media or GitHub
+workflows.
