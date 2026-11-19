@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -89,17 +90,7 @@ namespace Readarr.Http.Authentication
                 return Unauthorized();
             }
 
-            if (returnUrl.IsNullOrWhiteSpace() || !Url.IsLocalUrl(returnUrl))
-            {
-                return Redirect(_configFileProvider.UrlBase + "/");
-            }
-
-            if (_configFileProvider.UrlBase.IsNullOrWhiteSpace() || returnUrl.StartsWith(_configFileProvider.UrlBase))
-            {
-                return Redirect(returnUrl);
-            }
-
-            return Redirect(_configFileProvider.UrlBase + returnUrl);
+            return Redirect(GetRedirectUrl(returnUrl));
         }
 
         [HttpGet("logout")]
@@ -108,6 +99,32 @@ namespace Readarr.Http.Authentication
             _authService.Logout(HttpContext);
             await HttpContext.SignOutAsync(AuthenticationType.Forms.ToString());
             return Redirect(_configFileProvider.UrlBase + "/");
+        }
+
+        private string GetRedirectUrl(string returnUrl)
+        {
+            var urlBase = _configFileProvider.UrlBase;
+            if (returnUrl.IsNullOrWhiteSpace() || !Url.IsLocalUrl(returnUrl))
+            {
+                return urlBase + "/";
+            }
+
+            if (returnUrl.StartsWith("~/", StringComparison.Ordinal))
+            {
+                return urlBase + returnUrl.Substring(1);
+            }
+
+            // Match the path boundary without decoding or changing query/fragment bytes.
+            var pathEnd = returnUrl.IndexOfAny(new[] { '?', '#' });
+            var path = pathEnd < 0 ? returnUrl : returnUrl.Substring(0, pathEnd);
+            if (urlBase.IsNullOrWhiteSpace() ||
+                path.Equals(urlBase, StringComparison.OrdinalIgnoreCase) ||
+                path.StartsWith(urlBase + "/", StringComparison.OrdinalIgnoreCase))
+            {
+                return returnUrl;
+            }
+
+            return urlBase + returnUrl;
         }
     }
 }
