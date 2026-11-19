@@ -349,10 +349,18 @@ namespace NzbDrone.Common.Test.Http
             public async ValueTask DisposeAsync()
             {
                 await _stopping.CancelAsync();
-                _listener.Stop();
-                await _accept.WaitAsync(Deadline);
-                await Task.WhenAll(_connections).WaitAsync(Deadline);
-                _stopping.Dispose();
+                try
+                {
+                    // Join the cancelled accept before closing its native socket.
+                    // Closing concurrently can surface Linux EINVAL during teardown.
+                    await _accept.WaitAsync(Deadline);
+                    await Task.WhenAll(_connections).WaitAsync(Deadline);
+                }
+                finally
+                {
+                    _listener.Stop();
+                    _stopping.Dispose();
+                }
             }
 
             private async Task Accept()
