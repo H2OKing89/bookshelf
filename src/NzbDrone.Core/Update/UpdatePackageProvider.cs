@@ -20,17 +20,25 @@ namespace NzbDrone.Core.Update
         private readonly IHttpRequestBuilderFactory _requestBuilder;
         private readonly IPlatformInfo _platformInfo;
         private readonly IMainDatabase _mainDatabase;
+        private readonly IBookshelfUpdatePolicy _updatePolicy;
 
-        public UpdatePackageProvider(IHttpClient httpClient, IReadarrCloudRequestBuilder requestBuilder, IPlatformInfo platformInfo, IMainDatabase mainDatabase)
+        public UpdatePackageProvider(IHttpClient httpClient, IReadarrCloudRequestBuilder requestBuilder, IPlatformInfo platformInfo, IMainDatabase mainDatabase, IBookshelfUpdatePolicy updatePolicy)
         {
             _platformInfo = platformInfo;
-            _requestBuilder = requestBuilder.Services;
+            _requestBuilder = updatePolicy.IsEnabled ? requestBuilder.Services : null;
             _httpClient = httpClient;
             _mainDatabase = mainDatabase;
+            _updatePolicy = updatePolicy;
         }
 
         public UpdatePackage GetLatestUpdate(string branch, Version currentVersion)
         {
+            if (!_updatePolicy.IsEnabled)
+            {
+                return null;
+            }
+
+            _updatePolicy.EnsureEnabled();
             var request = _requestBuilder.Create()
                                          .Resource("/update/{branch}")
                                          .AddQueryParam("version", currentVersion)
@@ -54,6 +62,12 @@ namespace NzbDrone.Core.Update
 
         public List<UpdatePackage> GetRecentUpdates(string branch, Version currentVersion, Version previousVersion)
         {
+            if (!_updatePolicy.IsEnabled)
+            {
+                return new List<UpdatePackage>();
+            }
+
+            _updatePolicy.EnsureEnabled();
             var request = _requestBuilder.Create()
                                          .Resource("/update/{branch}/changes")
                                          .AddQueryParam("version", currentVersion)

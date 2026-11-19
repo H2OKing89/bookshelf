@@ -1,10 +1,13 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import { useSelector } from 'react-redux';
+import Alert from 'Components/Alert';
 import FieldSet from 'Components/FieldSet';
 import FormGroup from 'Components/Form/FormGroup';
 import FormInputGroup from 'Components/Form/FormInputGroup';
 import FormLabel from 'Components/Form/FormLabel';
-import { inputTypes, sizes } from 'Helpers/Props';
+import { inputTypes, kinds, sizes } from 'Helpers/Props';
+import createSystemStatusSelector from 'Store/Selectors/createSystemStatusSelector';
 import titleCase from 'Utilities/String/titleCase';
 import translate from 'Utilities/String/translate';
 
@@ -15,6 +18,7 @@ const branchValues = [
 ];
 
 function UpdateSettings(props) {
+  const { builtInUpdatesAvailable, isDocker } = useSelector(createSystemStatusSelector());
   const {
     advancedSettings,
     settings,
@@ -31,6 +35,16 @@ function UpdateSettings(props) {
 
   if (!advancedSettings) {
     return null;
+  }
+
+  if (builtInUpdatesAvailable === false) {
+    return (
+      <FieldSet legend={translate('Updates')}>
+        <Alert kind={kinds.INFO}>
+          {translate(isDocker ? 'BookshelfContainerUpdates' : 'BookshelfUpdatesUnavailable')}
+        </Alert>
+      </FieldSet>
+    );
   }
 
   const usingExternalUpdateMechanism = packageUpdateMechanism !== 'builtIn';

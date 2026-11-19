@@ -9,6 +9,11 @@ namespace Readarr.Api.V1.System
     public class SystemResource
     {
         public string AppName { get; set; }
+        public string ProductId { get; set; }
+        public string SourceCommit { get; set; }
+        public string SourceTree { get; set; }
+        public string SourceBranch { get; set; }
+        public bool BuildDirty { get; set; }
         public string InstanceName { get; set; }
         public string Version { get; set; }
         public DateTime BuildTime { get; set; }
@@ -39,5 +44,7 @@ namespace Readarr.Api.V1.System
         public string PackageAuthor { get; set; }
         public UpdateMechanism PackageUpdateMechanism { get; set; }
         public string PackageUpdateMechanismMessage { get; set; }
+        public bool BuiltInUpdatesAvailable { get; set; }
+        public string BuiltInUpdateMessage { get; set; }
     }
 }

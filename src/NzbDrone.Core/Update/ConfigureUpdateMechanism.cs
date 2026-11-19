@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NLog;
+using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Lifecycle;
@@ -18,16 +19,26 @@ namespace NzbDrone.Core.Update
         private readonly Logger _logger;
         private readonly IConfigFileProvider _configFileProvider;
         private readonly IDeploymentInfoProvider _deploymentInfoProvider;
+        private readonly IBookshelfUpdatePolicy _updatePolicy;
 
-        public UpdaterConfigProvider(IDeploymentInfoProvider deploymentInfoProvider, IConfigFileProvider configFileProvider, Logger logger)
+        public UpdaterConfigProvider(IDeploymentInfoProvider deploymentInfoProvider, IConfigFileProvider configFileProvider, Logger logger, IBookshelfUpdatePolicy updatePolicy)
         {
             _deploymentInfoProvider = deploymentInfoProvider;
             _configFileProvider = configFileProvider;
             _logger = logger;
+            _updatePolicy = updatePolicy;
         }
 
         public void Handle(ApplicationStartedEvent message)
         {
+            if (!_updatePolicy.IsEnabled)
+            {
+                // Keep saved update choices for a future explicit compatibility
+                // decision; the blocked updater does not normalize legacy homes.
+                return;
+            }
+
+            _updatePolicy.EnsureEnabled();
             var updateMechanism = _configFileProvider.UpdateMechanism;
             var packageUpdateMechanism = _deploymentInfoProvider.PackageUpdateMechanism;
 

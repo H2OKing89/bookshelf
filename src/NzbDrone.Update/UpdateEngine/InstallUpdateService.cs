@@ -26,6 +26,7 @@ namespace NzbDrone.Update.UpdateEngine
         private readonly IStartNzbDrone _startNzbDrone;
         private readonly IProcessProvider _processProvider;
         private readonly Logger _logger;
+        private readonly IBookshelfUpdatePolicy _updatePolicy;
 
         public InstallUpdateService(IDiskProvider diskProvider,
                                     IDiskTransferService diskTransferService,
@@ -37,7 +38,8 @@ namespace NzbDrone.Update.UpdateEngine
                                     IBackupAppData backupAppData,
                                     IStartNzbDrone startNzbDrone,
                                     IProcessProvider processProvider,
-                                    Logger logger)
+                                    Logger logger,
+                                    IBookshelfUpdatePolicy updatePolicy)
         {
             _diskProvider = diskProvider;
             _diskTransferService = diskTransferService;
@@ -50,6 +52,7 @@ namespace NzbDrone.Update.UpdateEngine
             _startNzbDrone = startNzbDrone;
             _processProvider = processProvider;
             _logger = logger;
+            _updatePolicy = updatePolicy;
         }
 
         private void Verify(string targetFolder, int processId)
@@ -85,6 +88,7 @@ namespace NzbDrone.Update.UpdateEngine
 
         public void Start(string installationFolder, int processId)
         {
+            _updatePolicy.EnsureEnabled();
             _logger.Info("Installation Folder: {0}", installationFolder);
             _logger.Info("Updating Readarr from version {0} to version {1}", _detectExistingVersion.GetExistingVersion(installationFolder), BuildInfo.Version);
 

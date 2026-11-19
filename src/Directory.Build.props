@@ -94,6 +94,10 @@
 
   <!-- Set the AssemblyConfiguration attribute for projects -->
   <ItemGroup Condition="'$(ReadarrProject)'=='true'">
+    <AssemblyMetadata Include="BookshelfSourceCommit" Value="$(BookshelfSourceCommit)" />
+    <AssemblyMetadata Include="BookshelfSourceTree" Value="$(BookshelfSourceTree)" />
+    <AssemblyMetadata Include="BookshelfSourceBranch" Value="$(BookshelfSourceBranch)" />
+    <AssemblyMetadata Include="BookshelfBuildDirty" Value="$(BookshelfBuildDirty)" />
     <AssemblyAttribute Include="System.Reflection.AssemblyConfigurationAttribute">
       <_Parameter1>$(AssemblyConfiguration)</_Parameter1>
     </AssemblyAttribute>

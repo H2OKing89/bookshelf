@@ -38,6 +38,7 @@ namespace NzbDrone.Core.Update
         private readonly IRuntimeInfo _runtimeInfo;
         private readonly IBackupService _backupService;
         private readonly IOsInfo _osInfo;
+        private readonly IBookshelfUpdatePolicy _updatePolicy;
 
         public InstallUpdateService(ICheckUpdateService checkUpdateService,
                                     IAppFolderInfo appFolderInfo,
@@ -54,7 +55,8 @@ namespace NzbDrone.Core.Update
                                     IRuntimeInfo runtimeInfo,
                                     IBackupService backupService,
                                     IOsInfo osInfo,
-                                    Logger logger)
+                                    Logger logger,
+                                    IBookshelfUpdatePolicy updatePolicy)
         {
             if (configFileProvider == null)
             {
@@ -77,10 +79,12 @@ namespace NzbDrone.Core.Update
             _backupService = backupService;
             _osInfo = osInfo;
             _logger = logger;
+            _updatePolicy = updatePolicy;
         }
 
         private bool InstallUpdate(UpdatePackage updatePackage)
         {
+            _updatePolicy.EnsureEnabled();
             EnsureAppDataSafety();
 
             if (_configFileProvider.UpdateMechanism != UpdateMechanism.Script)
@@ -234,6 +238,7 @@ namespace NzbDrone.Core.Update
 
         private UpdatePackage GetUpdatePackage(CommandTrigger updateTrigger, bool installMajorUpdate)
         {
+            _updatePolicy.EnsureEnabled();
             _logger.ProgressDebug("Checking for updates");
 
             var latestAvailable = _checkUpdateService.AvailableUpdate();
@@ -279,6 +284,12 @@ namespace NzbDrone.Core.Update
 
         public void Execute(ApplicationUpdateCheckCommand message)
         {
+            if (!_updatePolicy.IsEnabled)
+            {
+                _logger.ProgressInfo(_updatePolicy.UnavailableReason);
+                return;
+            }
+
             if (GetUpdatePackage(message.Trigger, true) != null)
             {
                 _commandQueueManager.Push(new ApplicationUpdateCommand(), trigger: message.Trigger);
@@ -287,6 +298,11 @@ namespace NzbDrone.Core.Update
 
         public void Execute(ApplicationUpdateCommand message)
         {
+            if (!_updatePolicy.IsEnabled)
+            {
+                throw new CommandFailedException(_updatePolicy.UnavailableReason);
+            }
+
             var latestAvailable = GetUpdatePackage(message.Trigger, message.InstallMajorUpdate);
 
             if (latestAvailable != null)
@@ -316,6 +332,11 @@ namespace NzbDrone.Core.Update
 
         public void Handle(ApplicationStartingEvent message)
         {
+            if (!_updatePolicy.IsEnabled)
+            {
+                return;
+            }
+
             // Check if we have to do an application update on startup
             try
             {

@@ -13,16 +13,24 @@ namespace Readarr.Api.V1.Update
     {
         private readonly IRecentUpdateProvider _recentUpdateProvider;
         private readonly IUpdateHistoryService _updateHistoryService;
+        private readonly IBookshelfUpdatePolicy _updatePolicy;
 
-        public UpdateController(IRecentUpdateProvider recentUpdateProvider, IUpdateHistoryService updateHistoryService)
+        public UpdateController(IRecentUpdateProvider recentUpdateProvider, IUpdateHistoryService updateHistoryService, IBookshelfUpdatePolicy updatePolicy)
         {
             _recentUpdateProvider = recentUpdateProvider;
             _updateHistoryService = updateHistoryService;
+            _updatePolicy = updatePolicy;
         }
 
         [HttpGet]
         public List<UpdateResource> GetRecentUpdates()
         {
+            if (!_updatePolicy.IsEnabled)
+            {
+                return new List<UpdateResource>();
+            }
+
+            _updatePolicy.EnsureEnabled();
             var resources = _recentUpdateProvider.GetRecentUpdatePackages()
                                                  .OrderByDescending(u => u.Version)
                                                  .ToResource();

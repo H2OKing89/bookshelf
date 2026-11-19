@@ -18,17 +18,29 @@ namespace NzbDrone.Update
     {
         private readonly IInstallUpdateService _installUpdateService;
         private readonly IProcessProvider _processProvider;
+        private readonly IBookshelfUpdatePolicy _updatePolicy;
 
         private static readonly Logger Logger = NzbDroneLogger.GetLogger(typeof(UpdateApp));
 
-        public UpdateApp(IInstallUpdateService installUpdateService, IProcessProvider processProvider)
+        public UpdateApp(IInstallUpdateService installUpdateService, IProcessProvider processProvider, IBookshelfUpdatePolicy updatePolicy)
         {
             _installUpdateService = installUpdateService;
             _processProvider = processProvider;
+            _updatePolicy = updatePolicy;
         }
 
         public static void Main(string[] args)
         {
+            // Refuse before logging/argument parsing or constructing services.
+            // An old launcher must not authorize replacement of this fork.
+            var updatePolicy = new BookshelfUpdatePolicy();
+            if (!updatePolicy.IsEnabled)
+            {
+                Console.Error.WriteLine(updatePolicy.UnavailableReason);
+                Environment.ExitCode = 1;
+                return;
+            }
+
             try
             {
                 var startupContext = new StartupContext(args);
@@ -54,6 +66,7 @@ namespace NzbDrone.Update
 
         public void Start(string[] args)
         {
+            _updatePolicy.EnsureEnabled();
             var startupContext = ParseArgs(args);
             var targetFolder = GetInstallationDirectory(startupContext);
 

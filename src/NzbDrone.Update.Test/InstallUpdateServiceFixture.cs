@@ -19,6 +19,9 @@ namespace NzbDrone.Update.Test
         [SetUp]
         public void Setup()
         {
+            Mocker.GetMock<IBookshelfUpdatePolicy>().SetupGet(policy => policy.IsEnabled).Returns(true);
+            Mocker.GetMock<IBookshelfUpdatePolicy>().Setup(policy => policy.EnsureEnabled());
+
             Mocker.GetMock<IAppFolderInfo>()
                   .Setup(c => c.TempFolder).Returns(@"C:\Temp\");
         }

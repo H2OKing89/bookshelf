@@ -1,9 +1,8 @@
 using System;
-using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Common.EnvironmentInfo;
-using NzbDrone.Common.Extensions;
+using NzbDrone.Common.Http;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Core.Update;
 
@@ -14,45 +13,29 @@ namespace NzbDrone.Core.Test.UpdateTests
         [SetUp]
         public void Setup()
         {
-            Mocker.GetMock<IPlatformInfo>().SetupGet(c => c.Version).Returns(new Version("9.9.9"));
+            Mocker.SetConstant<IBookshelfUpdatePolicy>(new BookshelfUpdatePolicy());
         }
 
-        [Test]
-        public void no_update_when_version_higher()
+        [TestCase("develop")]
+        [TestCase("master")]
+        [TestCase("nightly")]
+        [TestCase("sonarr")]
+        public void latest_update_should_not_contact_a_legacy_feed(string branch)
         {
-            UseRealHttp();
-            Subject.GetLatestUpdate("develop", new Version(10, 0)).Should().BeNull();
+            Subject.GetLatestUpdate(branch, new Version(0, 1)).Should().BeNull();
+
+            Mocker.GetMock<IHttpClient>().VerifyNoOtherCalls();
         }
 
-        [Test]
-        public void finds_update_when_version_lower()
+        [TestCase(null)]
+        [TestCase("0.1")]
+        public void changes_should_not_contact_a_legacy_feed(string previous)
         {
-            UseRealHttp();
-            Subject.GetLatestUpdate("develop", new Version(0, 1)).Should().NotBeNull();
-        }
+            var version = previous == null ? null : new Version(previous);
 
-        [Test]
-        [Ignore("Ignore until we actually release something on Master")]
-        public void should_get_master_if_branch_doesnt_exit()
-        {
-            UseRealHttp();
-            Subject.GetLatestUpdate("invalid_branch", new Version(0, 2)).Should().NotBeNull();
-        }
+            Subject.GetRecentUpdates("develop", new Version(0, 2), version).Should().BeEmpty();
 
-        [Test]
-        public void should_get_recent_updates()
-        {
-            const string branch = "develop";
-            UseRealHttp();
-            var recent = Subject.GetRecentUpdates(branch, new Version(0, 1), null);
-
-            recent.Should().NotBeEmpty();
-            recent.Should().OnlyContain(c => c.Hash.IsNotNullOrWhiteSpace());
-            recent.Should().OnlyContain(c => c.FileName.Contains("Readarr.develop.0"));
-            recent.Should().OnlyContain(c => c.ReleaseDate.Year >= 2014);
-            recent.Where(c => c.Changes != null).Should().OnlyContain(c => c.Changes.New != null);
-            recent.Where(c => c.Changes != null).Should().OnlyContain(c => c.Changes.Fixed != null);
-            recent.Should().OnlyContain(c => c.Branch == branch);
+            Mocker.GetMock<IHttpClient>().VerifyNoOtherCalls();
         }
     }
 }

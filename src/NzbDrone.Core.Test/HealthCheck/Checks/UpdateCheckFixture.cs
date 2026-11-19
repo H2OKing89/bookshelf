@@ -17,6 +17,9 @@ namespace NzbDrone.Core.Test.HealthCheck.Checks
         [SetUp]
         public void Setup()
         {
+            Mocker.GetMock<IBookshelfUpdatePolicy>().SetupGet(policy => policy.IsEnabled).Returns(true);
+            Mocker.GetMock<IBookshelfUpdatePolicy>().Setup(policy => policy.EnsureEnabled());
+
             Mocker.GetMock<ILocalizationService>()
                   .Setup(s => s.GetLocalizedString(It.IsAny<string>()))
                   .Returns("Some Warning Message");

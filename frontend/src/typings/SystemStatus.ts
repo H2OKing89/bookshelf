@@ -3,6 +3,8 @@ interface SystemStatus {
   appName: string;
   authentication: string;
   branch: string;
+  builtInUpdatesAvailable?: boolean;
+  builtInUpdateMessage?: string;
   buildTime: string;
   instanceName: string;
   isAdmin: boolean;

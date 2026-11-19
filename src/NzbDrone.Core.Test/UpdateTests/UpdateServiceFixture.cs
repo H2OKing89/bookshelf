@@ -31,6 +31,11 @@ namespace NzbDrone.Core.Test.UpdateTests
         [SetUp]
         public void Setup()
         {
+            // Retain installer mechanics coverage behind an explicitly permitted
+            // test policy. The production policy never permits these operations.
+            Mocker.GetMock<IBookshelfUpdatePolicy>().SetupGet(policy => policy.IsEnabled).Returns(true);
+            Mocker.GetMock<IBookshelfUpdatePolicy>().Setup(policy => policy.EnsureEnabled());
+
             if (OsInfo.IsLinux)
             {
                 _updatePackage = new UpdatePackage

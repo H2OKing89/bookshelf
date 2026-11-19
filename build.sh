@@ -76,6 +76,25 @@ Build()
 
     BuildMediaInfo
 
+    local bookshelf_build_commit bookshelf_build_tree bookshelf_build_branch bookshelf_build_dirty
+    bookshelf_build_commit=$(git rev-parse HEAD)
+    bookshelf_build_tree=$(git rev-parse 'HEAD^{tree}')
+    bookshelf_build_branch=$(git branch --show-current)
+    bookshelf_build_dirty=true
+    if [[ -z "$(git status --porcelain --untracked-files=normal)" ]]; then
+        bookshelf_build_dirty=false
+    fi
+    if [[ ! "$bookshelf_build_branch" =~ ^[a-zA-Z0-9._/-]+$ ]]; then
+        bookshelf_build_branch=unknown
+        bookshelf_build_dirty=true
+    fi
+    local -a bookshelf_source_properties=(
+        "-p:BookshelfSourceCommit=$bookshelf_build_commit"
+        "-p:BookshelfSourceTree=$bookshelf_build_tree"
+        "-p:BookshelfSourceBranch=$bookshelf_build_branch"
+        "-p:BookshelfBuildDirty=$bookshelf_build_dirty"
+    )
+
     slnFile=src/Readarr.sln
 
     if [ $os = "windows" ]; then
@@ -87,9 +106,18 @@ Build()
     if [[ -z "$RID" || -z "$FRAMEWORK" ]];
     then
         # Projects share output directories, so publish the solution serially.
-        dotnet msbuild -restore $slnFile -maxcpucount:1 -p:BuildInParallel=false -p:Configuration=Release -p:Platform=$platform -t:PublishAllRids
+        dotnet msbuild -restore $slnFile -maxcpucount:1 -p:BuildInParallel=false -p:Configuration=Release -p:Platform=$platform "${bookshelf_source_properties[@]}" -t:PublishAllRids
     else
-        dotnet msbuild -restore $slnFile -maxcpucount:1 -p:BuildInParallel=false -p:Configuration=Release -p:Platform=$platform -p:RuntimeIdentifiers=$RID -t:PublishAllRids
+        dotnet msbuild -restore $slnFile -maxcpucount:1 -p:BuildInParallel=false -p:Configuration=Release -p:Platform=$platform "${bookshelf_source_properties[@]}" -p:RuntimeIdentifiers=$RID -t:PublishAllRids
+    fi
+
+    if [[ "$bookshelf_build_dirty" = false ]] &&
+       { [[ "$(git rev-parse HEAD)" != "$bookshelf_build_commit" ]] ||
+         [[ "$(git rev-parse 'HEAD^{tree}')" != "$bookshelf_build_tree" ]] ||
+         [[ "$(git branch --show-current)" != "$bookshelf_build_branch" ]] ||
+         [[ -n "$(git status --porcelain --untracked-files=normal)" ]]; }; then
+        echo "Source changed during publication; rebuild from a stable checkout." >&2
+        return 1
     fi
 
     ProgressEnd 'Build'

@@ -1,6 +1,7 @@
 using System;
 using Moq;
 using NUnit.Framework;
+using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Common.Model;
 using NzbDrone.Common.Processes;
 using NzbDrone.Test.Common;
@@ -11,6 +12,13 @@ namespace NzbDrone.Update.Test
     [TestFixture]
     public class ProgramFixture : TestBase<UpdateApp>
     {
+        [SetUp]
+        public void Setup()
+        {
+            Mocker.GetMock<IBookshelfUpdatePolicy>().SetupGet(policy => policy.IsEnabled).Returns(true);
+            Mocker.GetMock<IBookshelfUpdatePolicy>().Setup(policy => policy.EnsureEnabled());
+        }
+
         [Test]
         public void should_throw_if_null_passed_in()
         {

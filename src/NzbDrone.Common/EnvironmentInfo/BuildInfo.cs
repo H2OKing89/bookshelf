@@ -27,6 +27,11 @@ namespace NzbDrone.Common.EnvironmentInfo
         }
 
         public static string AppName { get; } = "Readarr";
+        public static string ProductId { get; } = "bookshelf-audiobooks";
+        public static string SourceCommit => Metadata("BookshelfSourceCommit");
+        public static string SourceTree => Metadata("BookshelfSourceTree");
+        public static string SourceBranch => Metadata("BookshelfSourceBranch");
+        public static bool BuildDirty => !string.Equals(Metadata("BookshelfBuildDirty"), "false", StringComparison.Ordinal);
 
         public static Version Version { get; }
         public static string Branch { get; }
@@ -51,6 +56,12 @@ namespace NzbDrone.Common.EnvironmentInfo
                 return false;
 #endif
             }
+        }
+
+        private static string Metadata(string key)
+        {
+            return typeof(BuildInfo).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
+                .FirstOrDefault(attribute => attribute.Key == key)?.Value ?? string.Empty;
         }
     }
 }

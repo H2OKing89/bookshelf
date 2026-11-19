@@ -52,7 +52,7 @@ function createUpdatesSelector() {
 
 function Updates() {
   const currentVersion = useSelector((state: AppState) => state.app.version);
-  const { packageUpdateMechanismMessage } = useSelector(
+  const { packageUpdateMechanismMessage, builtInUpdatesAvailable, isDocker } = useSelector(
     createSystemStatusSelector()
   );
   const { shortDateFormat, longDateFormat, timeFormat } = useSelector(
@@ -74,7 +74,8 @@ function Updates() {
   const dispatch = useDispatch();
   const [isMajorUpdateModalOpen, setIsMajorUpdateModalOpen] = useState(false);
   const hasError = !!(updatesError || generalSettingsError);
-  const hasUpdates = isPopulated && !hasError && items.length > 0;
+  const updatesUnavailable = builtInUpdatesAvailable === false;
+  const hasUpdates = !updatesUnavailable && isPopulated && !hasError && items.length > 0;
   const noUpdates = isPopulated && !hasError && !items.length;
 
   const externalUpdaterPrefix = translate('UpdateAppDirectlyLoadError');
@@ -96,11 +97,11 @@ function Updates() {
 
     return {
       isMajorUpdate: latestMajorVersion > majorVersion,
-      hasUpdateToInstall: items.some(
+      hasUpdateToInstall: !updatesUnavailable && items.some(
         (update) => update.installable && update.latest
       ),
     };
-  }, [currentVersion, items]);
+  }, [currentVersion, items, updatesUnavailable]);
 
   const noUpdateToInstall = hasUpdates && !hasUpdateToInstall;
 
@@ -137,7 +138,13 @@ function Updates() {
       <PageContentBody>
         {isPopulated || hasError ? null : <LoadingIndicator />}
 
-        {noUpdates ? (
+        {updatesUnavailable ? (
+          <Alert kind={kinds.INFO}>
+            {translate(isDocker ? 'BookshelfContainerUpdates' : 'BookshelfUpdatesUnavailable')}
+          </Alert>
+        ) : null}
+
+        {noUpdates && !updatesUnavailable ? (
           <Alert kind={kinds.INFO}>{translate('NoUpdatesAreAvailable')}</Alert>
         ) : null}
 

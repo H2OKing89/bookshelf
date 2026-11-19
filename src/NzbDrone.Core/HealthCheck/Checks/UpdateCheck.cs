@@ -18,13 +18,15 @@ namespace NzbDrone.Core.HealthCheck.Checks
         private readonly ICheckUpdateService _checkUpdateService;
         private readonly IConfigFileProvider _configFileProvider;
         private readonly IOsInfo _osInfo;
+        private readonly IBookshelfUpdatePolicy _updatePolicy;
 
         public UpdateCheck(IDiskProvider diskProvider,
                            IAppFolderInfo appFolderInfo,
                            ICheckUpdateService checkUpdateService,
                            IConfigFileProvider configFileProvider,
                            IOsInfo osInfo,
-                           ILocalizationService localizationService)
+                           ILocalizationService localizationService,
+                           IBookshelfUpdatePolicy updatePolicy)
             : base(localizationService)
         {
             _diskProvider = diskProvider;
@@ -32,10 +34,17 @@ namespace NzbDrone.Core.HealthCheck.Checks
             _checkUpdateService = checkUpdateService;
             _configFileProvider = configFileProvider;
             _osInfo = osInfo;
+            _updatePolicy = updatePolicy;
         }
 
         public override HealthCheck Check()
         {
+            if (!_updatePolicy.IsEnabled)
+            {
+                return new HealthCheck(GetType());
+            }
+
+            _updatePolicy.EnsureEnabled();
             var startupFolder = _appFolderInfo.StartUpFolder;
             var uiFolder = Path.Combine(startupFolder, "UI");
 

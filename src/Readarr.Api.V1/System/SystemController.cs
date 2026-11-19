@@ -59,6 +59,11 @@ namespace Readarr.Api.V1.System
             return new SystemResource
             {
                 AppName = BuildInfo.AppName,
+                ProductId = BuildInfo.ProductId,
+                SourceCommit = BuildInfo.SourceCommit,
+                SourceTree = BuildInfo.SourceTree,
+                SourceBranch = BuildInfo.SourceBranch,
+                BuildDirty = BuildInfo.BuildDirty,
                 InstanceName = _configFileProvider.InstanceName,
                 Version = BuildInfo.Version.ToString(),
                 BuildTime = BuildInfo.BuildDateTime,
@@ -88,7 +93,9 @@ namespace Readarr.Api.V1.System
                 PackageVersion = _deploymentInfoProvider.PackageVersion,
                 PackageAuthor = _deploymentInfoProvider.PackageAuthor,
                 PackageUpdateMechanism = _deploymentInfoProvider.PackageUpdateMechanism,
-                PackageUpdateMechanismMessage = _deploymentInfoProvider.PackageUpdateMechanismMessage
+                PackageUpdateMechanismMessage = _deploymentInfoProvider.PackageUpdateMechanismMessage,
+                BuiltInUpdatesAvailable = false,
+                BuiltInUpdateMessage = BookshelfUpdatePolicy.DisabledReason
             };
         }
 

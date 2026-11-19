@@ -7,6 +7,7 @@ const LiveReloadPlugin = require('webpack-livereload-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const SourceProvenancePlugin = require('./SourceProvenancePlugin');
 
 const version = require('../../package.json').version;
 
@@ -105,6 +106,7 @@ module.exports = (env) => {
     },
 
     plugins: [
+      new SourceProvenancePlugin(),
       new webpack.DefinePlugin({
         __DEV__: !isProduction,
         'process.env.NODE_ENV': isProduction
