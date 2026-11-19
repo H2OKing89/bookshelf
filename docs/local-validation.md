@@ -492,3 +492,63 @@ The browser evidence includes a phone screenshot with its synthetic API key
 masked. No existing home, running development service, production media or GitHub
 workflow was changed. P02 ARM work-factor and P13 native ARM64 acceptance remain
 open; these x64 results do not establish the complete platform/release matrix.
+
+
+### P24, P04 and local P25 verification, 2026-11-18
+
+P24 `9dda441fd`, P04 `c03ea78e2`, updater/build identity `736ffe104` and local
+candidate tooling `07794abd6` are verified with clean artifact source
+`0015c349f`. Both x64 package preparations and canonical locked backend/frontend
+builds pass. The backend and frontend record the same Git commit/tree/branch
+with `buildDirty=false`; direct source builds with missing metadata or dirty
+builds cannot satisfy candidate preparation.
+
+The first older-home upgrade exposed an unintended XML write while reading the
+new empty Allowed Hosts default. `0015c349f` changes it to a non-persistent read
+and adds exact-byte preservation coverage. A Common-only rerun initially lacked
+the platform test assembly after packaging; rerunning Core first restored the
+required test layout. All seven ordered suites then pass: Core **3,856**, Common
+**836**, API **16**, Host **181**, authentication integration **54**, PostgreSQL
+migration **23** and standalone updater **20**: **4,986 passed**, with **97 existing
+skips** retained. Python validation passes **131 tests** and changed frontend
+files pass ESLint; only the existing Browserslist age notice remains.
+
+The final delivery command passes **301 checks**: package, app, restore, genuine
+.NET 6 upgrade, media, cancellation, actual repository Docker/S6, access policy
+and compiled/frontend identity, plus unchanged inputs. The separate same-content-
+root pre-P16 P14 authentication proof passes **111 checks**, retaining the
+account/session/recovery, SQLite/PostgreSQL and saved-data boundaries. The
+pre-P04 package fails the intended unknown-host assertion as a negative proof.
+Source HTTP mocks prove that disabled updater paths make no legacy feed/download
+calls; the package proof does not claim outbound network monitoring.
+
+Chromium desktop and 390px phone smoke checks pass **20 UI/API assertions plus
+seven preservation/cleanup guards**. They exercise advanced Allowed Hosts,
+actionable invalid-save 400 feedback without config writes, normalized valid
+saves and restart notices, disabled-update explanations and hidden install
+controls. Credentials and API keys remain unchanged. Screenshots mask the
+synthetic API key; every owned browser/server process stops and package bytes
+remain unchanged. This is a focused browser check, not a full accessibility audit.
+
+The actual release CLI stages and verifies one native Linux x64/.NET 10 `develop`
+candidate at version `10.0.0.36421`, bound to source `0015c349f`, the exact matching
+GPL source archive and the two passing reports. **41 checks** reject failed,
+incomplete or foreign receipts; wrong product/channel/commit/tree/branch/version/
+RID/runtime/schema; altered manifests, payload bytes, permissions, evidence or
+source archives; and unexpected bundle files. The controlled mutations are
+restored and final verification passes. Source and canonical package remain
+unchanged. The candidate stays unsigned, `publishable=false` and
+`builtInUpdatesEnabled=false`; no installation, feed activation or publication
+is authorized by that receipt.
+
+Private evidence is under `_temp/p24-p04-p25-20261118/`:
+`source-verified`, `final-delivery-v2`, `authpolicy-final-v2`, `browser-final-2`,
+`release-candidate` and `release-candidate-proof`. The candidate is deliberately
+bound to the exact `0015c349f` checkout; later documentation-only commits do not
+relabel its source identity. Verification requires that matching clean checkout.
+Owned applications, PostgreSQL containers/sockets and Docker test containers are
+cleaned up. The running development service and production appdata/media remain
+untouched. No GitHub workflow, push, image publication or production update was
+performed. P17 is deferred at the user's request. P25 feed/signing/publication
+and supported-platform gates, P02/P13 native ARM acceptance and the broader
+release matrix remain open.

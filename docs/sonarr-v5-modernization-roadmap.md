@@ -998,12 +998,14 @@ XML, explicit empty clears it, and environment values take precedence. Restart i
 required after changes.
 
 The middleware filters the effective host after trusted forwarding and before
-UI/API/SignalR access. **89 focused source cases** include trusted/untrusted proxy
+UI/API/SignalR access. **90 focused source cases** include trusted/untrusted proxy
 boundaries, and the initial packaged proof covers hosts, ports, localhost,
 configuration/environment compatibility and startup preservation. The combined
 P24/P04/P25 `accesspolicy` command passes **62 checks**, including unchanged inputs
 and cleanup. A genuine pre-P04 package fails the expected unknown-host assertion.
 The packaged proxy check uses loopback; source fixtures supply forged remote peers.
+The upgrade follow-up `0015c349f` keeps absent defaults out of existing XML and
+adds an exact-byte regression; the genuine older-home upgrade then passes.
 
 
 ### P25 local update isolation and candidate provenance — 2026-11-18
@@ -1022,14 +1024,19 @@ Local tooling stages only a clean, matching, tested Linux x64/.NET 10 package wi
 its corresponding GPL source archive and evidence receipts. Its unsigned manifest
 binds product, local `develop` channel, version, source, runtime/RID, schema and
 checksums, and explicitly denies publication and in-app updates. It is not a
-signed release or an operational update feed. Final clean-source candidate and
-package evidence remain pending after this initial record.
+signed release or an operational update feed. Clean source `0015c349f` now passes
+**301 delivery checks**, **111 authentication checks** and **41 actual candidate
+CLI checks**, including failed-receipt and controlled-tamper rejection. Its
+version `10.0.0.36421` candidate includes the exact corresponding GPL source and
+remains unsigned and unpublished.
 
-Initial source verification passes **4,985 cases** across Core **3,856**, Common
-**835**, API **16**, Host **181**, authentication integration **54**, PostgreSQL
+Final source verification passes **4,986 cases** across Core **3,856**, Common
+**836**, API **16**, Host **181**, authentication integration **54**, PostgreSQL
 migration **23** and updater **20**, retaining **97 existing skips**. Python checks
-currently pass **131 tests**. See [local validation](local-validation.md) for the
-final package/candidate record. GitHub workflow gates, signing, publication,
+pass **131 tests**. Desktop/390px browser checks pass **20 UI/API assertions plus
+seven preservation/cleanup guards**. See
+[local validation](local-validation.md#p24-p04-and-local-p25-verification-2026-11-18)
+for the final package/candidate record. GitHub workflow gates, signing, publication,
 container tags, a fork-owned feed and the supported platform matrix remain open;
 P02/P13 native ARM acceptance is also unchanged. No running development service,
 production home/media or GitHub workflow was changed.

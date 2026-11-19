@@ -460,6 +460,13 @@ fingerprints intact. Source fixtures cover forged remote peers; the packaged
 loopback proof does not claim a physical reverse-proxy deployment audit. Final
 clean-build evidence is recorded separately in [local validation](local-validation.md).
 
+**Final upgrade follow-up:** `0015c349f` makes an absent `AllowedHosts` read
+non-persistent. The older-home upgrade initially exposed an unwanted empty-key
+write; the exact-byte regression and clean-package upgrade now pass. This raises
+the focused source coverage to **90 cases**. The final artifact, authentication,
+browser and candidate proofs are recorded in
+[local validation](local-validation.md#p24-p04-and-local-p25-verification-2026-11-18).
+
 ### P05
 
 **Read the current API key and compare it in fixed time**
@@ -1724,9 +1731,24 @@ Initial source verification passes **4,985 cases**: Core **3,856**, Common **835
 API **16**, Host **181**, authentication integration **54**, PostgreSQL migration
 **23** and updater **20**, with the existing **97 skips** retained. Python
 validation currently passes **131 tests**. The initial access-policy proof passes
-**62 checks**, and identity passes **8**. A final clean build and corresponding
-candidate/evidence verification are still pending and must be recorded after
-execution.
+**62 checks**, and identity passes **8**.
+
+**Final clean-artifact acceptance:** `0015c349f` passes **301 delivery checks**
+(including access policy, identity, a genuine .NET 6 upgrade and Docker) and
+**111 authentication-policy checks** against a genuine pre-P16 P14 package.
+Source suites pass **4,986 cases** after the configuration-preservation follow-up
+(Common **836**, other counts above unchanged), with **97 existing skips**.
+Python validation passes **131 tests**. Desktop/390px Chromium checks pass **20
+UI/API assertions and seven preservation/cleanup guards**.
+
+The actual local CLI stages and verifies one unsigned candidate at version
+`10.0.0.36421`, with the matching GPL source archive and both passing reports.
+**41 checks** prove rejection of failed/incomplete/foreign evidence, wrong
+product/channel/commit/branch/runtime/version/schema, changed payload bytes/modes,
+source archives and unexpected files. Every controlled mutation is restored; the
+candidate verifies again and the canonical package remains unchanged. It is
+bound to exact source commit `0015c349f`, remains `publishable=false`, and enables
+no updater. See [the final record](local-validation.md#p24-p04-and-local-p25-verification-2026-11-18).
 
 No GitHub workflow, publication, signing, feed service or container-tag migration
 is implemented here. P25 remains open for those release-policy and enforcement
