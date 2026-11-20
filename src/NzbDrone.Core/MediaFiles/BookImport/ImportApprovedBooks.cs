@@ -49,6 +49,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
         private readonly IHistoryService _historyService;
         private readonly IEventAggregator _eventAggregator;
         private readonly IManageCommandQueue _commandQueueManager;
+        private readonly IRejectedFileExtensionService _rejectedFileExtensions;
         private readonly Logger _logger;
 
         public ImportApprovedBooks(IUpgradeMediaFiles bookFileUpgrader,
@@ -65,6 +66,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                                    IHistoryService historyService,
                                    IEventAggregator eventAggregator,
                                    IManageCommandQueue commandQueueManager,
+                                   IRejectedFileExtensionService rejectedFileExtensions,
                                    Logger logger)
         {
             _bookFileUpgrader = bookFileUpgrader;
@@ -81,6 +83,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
             _historyService = historyService;
             _eventAggregator = eventAggregator;
             _commandQueueManager = commandQueueManager;
+            _rejectedFileExtensions = rejectedFileExtensions;
             _logger = logger;
         }
 
@@ -94,6 +97,18 @@ namespace NzbDrone.Core.MediaFiles.BookImport
 
             foreach (var decision in decisions.Where(x => x.Approved))
             {
+                var extensionRejection = decision.Item.ExistingFile ? null : _rejectedFileExtensions.GetRejection(decision.Item.Path);
+                if (!decision.Item.ExistingFile && extensionRejection == null && _rejectedFileExtensions.Classify(decision.Item.Path) == DownloadFileKind.Sidecar)
+                {
+                    extensionRejection = new Rejection("Supporting files are not standalone books", code: RejectionCode.UnsupportedFileExtension);
+                }
+
+                if (extensionRejection != null)
+                {
+                    decision.Reject(extensionRejection);
+                    continue;
+                }
+
                 if (!AudioRecordingIdentifier.MatchesEdition(decision.Item.FileTrackInfo, decision.Item.Path, decision.Item.Edition))
                 {
                     decision.Reject(new Rejection("File recording ASIN does not match the selected edition", code: RejectionCode.RecordingIdentityMismatch));

@@ -85,7 +85,7 @@ namespace NzbDrone.Core.Test.Configuration
 
                 if (propertyInfo.PropertyType == typeof(string))
                 {
-                    value = Guid.NewGuid().ToString();
+                    value = propertyInfo.Name == nameof(ConfigService.UserRejectedExtensions) ? "mp3, tar.gz" : Guid.NewGuid().ToString();
                 }
                 else if (propertyInfo.PropertyType == typeof(int))
                 {

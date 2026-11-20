@@ -197,6 +197,22 @@ class MediaManagement extends Component {
                         />
                       </FormGroup>
 
+                      <FormGroup
+                        advancedSettings={advancedSettings}
+                        isAdvanced={true}
+                        size={sizes.MEDIUM}
+                      >
+                        <FormLabel>{translate('UserRejectedExtensions')}</FormLabel>
+
+                        <FormInputGroup
+                          type={inputTypes.TEXT}
+                          name="userRejectedExtensions"
+                          helpText={translate('UserRejectedExtensionsHelpText')}
+                          onChange={onInputChange}
+                          {...settings.userRejectedExtensions}
+                        />
+                      </FormGroup>
+
                       <FormGroup size={sizes.MEDIUM}>
                         <FormLabel>
                           {translate('ImportExtraFiles')}

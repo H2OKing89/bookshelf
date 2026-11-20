@@ -53,6 +53,14 @@ namespace NzbDrone.Core.Configuration
 
         public void SaveConfigDictionary(Dictionary<string, object> configValues)
         {
+            // Validate and normalize this policy before writing any settings.
+            var rejectedKey = configValues.Keys.FirstOrDefault(key => string.Equals(key, nameof(UserRejectedExtensions), StringComparison.OrdinalIgnoreCase));
+            if (rejectedKey != null && configValues[rejectedKey] != null)
+            {
+                configValues = new Dictionary<string, object>(configValues);
+                configValues[rejectedKey] = RejectedFileExtensions.Normalize(configValues[rejectedKey].ToString());
+            }
+
             var allWithDefaults = AllWithDefaults();
 
             foreach (var configValue in configValues)
@@ -212,6 +220,22 @@ namespace NzbDrone.Core.Configuration
             get { return GetValueBoolean("ImportExtraFiles", false); }
 
             set { SetValue("ImportExtraFiles", value); }
+        }
+
+        public string UserRejectedExtensions
+        {
+            get
+            {
+                return GetValue("UserRejectedExtensions", string.Empty);
+            }
+
+            set
+            {
+                if (value != null)
+                {
+                    SetValue("UserRejectedExtensions", RejectedFileExtensions.Normalize(value));
+                }
+            }
         }
 
         public string ExtraFileExtensions

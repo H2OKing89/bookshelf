@@ -1,6 +1,7 @@
 using FluentValidation;
 using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Validation;
 using NzbDrone.Core.Validation.Paths;
 using Readarr.Http;
@@ -33,6 +34,8 @@ namespace Readarr.Api.V1.Config
             SharedValidator.RuleFor(c => c.RecycleBinCleanupDays).GreaterThanOrEqualTo(0);
             SharedValidator.RuleFor(c => c.ChmodFolder).SetValidator(folderChmodValidator).When(c => !string.IsNullOrEmpty(c.ChmodFolder) && (OsInfo.IsLinux || OsInfo.IsOsx));
             SharedValidator.RuleFor(c => c.MinimumFreeSpaceWhenImporting).GreaterThanOrEqualTo(100);
+            SharedValidator.RuleFor(c => c.UserRejectedExtensions).Must(RejectedFileExtensions.IsValid)
+                .WithMessage("Use comma-separated file extensions without paths or wildcards");
         }
 
         protected override MediaManagementConfigResource ToResource(IConfigService model)

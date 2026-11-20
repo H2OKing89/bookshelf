@@ -4,6 +4,15 @@ namespace NzbDrone.Core.DecisionEngine
     // are edited or localized; consumers must preserve unfamiliar values.
     public static class RejectionCode
     {
+        public const string InventoryUnavailable = "inventory_unavailable";
+        public const string InventoryInvalid = "inventory_invalid";
+        public const string InventoryTruncated = "inventory_truncated";
+        public const string ImportPathUnavailable = "import_path_unavailable";
+        public const string DangerousFile = "dangerous_file";
+        public const string ExecutableFile = "executable_file";
+        public const string UserRejectedExtension = "user_rejected_extension";
+        public const string ArchiveNotExtracted = "archive_not_extracted";
+        public const string UnsupportedFileExtension = "unsupported_file_extension";
         public const string Unknown = "unknown";
         public const string UnknownAuthor = "author_unknown";
         public const string UnknownBook = "book_unknown";

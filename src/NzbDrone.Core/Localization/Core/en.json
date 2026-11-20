@@ -485,6 +485,8 @@
   "IgnoredPlaceHolder": "Add new restriction",
   "IllRestartLater": "I'll restart later",
   "Implementation": "Implementation",
+  "UserRejectedExtensions": "Rejected File Extensions",
+  "UserRejectedExtensionsHelpText": "Comma-separated extensions to exclude from new imports, for example mp3, .wma. Leave empty for no custom exclusions. Existing library files are retained.",
   "ImportExtraFiles": "Import Extra Files",
   "ImportExtraFilesHelpText": "Import matching extra files (subtitles, nfo, etc) after importing an book file",
   "ImportFailedInterp": "Import failed: {0}",
