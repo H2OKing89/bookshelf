@@ -3,6 +3,7 @@ using FizzWare.NBuilder;
 using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.DecisionEngine.Specifications.RssSync;
 using NzbDrone.Core.IndexerSearch.Definitions;
 using NzbDrone.Core.Parser.Model;
@@ -71,14 +72,20 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         public void not_monitored_author_should_be_skipped()
         {
             _fakeAuthor.Monitored = false;
-            _monitoredBookSpecification.IsSatisfiedBy(_parseResultMulti, null).Accepted.Should().BeFalse();
+            var decision = _monitoredBookSpecification.IsSatisfiedBy(_parseResultMulti, null);
+
+            decision.Accepted.Should().BeFalse();
+            decision.Code.Should().Be(RejectionCode.AuthorNotMonitored);
         }
 
         [Test]
         public void only_book_not_monitored_should_return_false()
         {
             WithFirstBookUnmonitored();
-            _monitoredBookSpecification.IsSatisfiedBy(_parseResultSingle, null).Accepted.Should().BeFalse();
+            var decision = _monitoredBookSpecification.IsSatisfiedBy(_parseResultSingle, null);
+
+            decision.Accepted.Should().BeFalse();
+            decision.Code.Should().Be(RejectionCode.BookNotMonitored);
         }
 
         [Test]

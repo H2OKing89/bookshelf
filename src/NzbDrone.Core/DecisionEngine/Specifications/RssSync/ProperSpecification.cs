@@ -52,13 +52,13 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
                         if (downloadPropersAndRepacks == ProperDownloadTypes.DoNotUpgrade)
                         {
                             _logger.Debug("Auto downloading of propers is disabled");
-                            return Decision.Reject("Proper downloading is disabled");
+                            return Decision.RejectCode(RejectionCode.PropersDisabled, "Proper downloading is disabled");
                         }
 
                         if (file.DateAdded < DateTime.Today.AddDays(-7))
                         {
                             _logger.Debug("Proper for old file, rejecting: {0}", subject);
-                            return Decision.Reject("Proper for old file");
+                            return Decision.RejectCode(RejectionCode.ProperForOldFile, "Proper for old file");
                         }
                     }
                 }

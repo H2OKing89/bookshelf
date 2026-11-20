@@ -391,7 +391,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
                     if (_rootFolderService.GetBestRootFolder(author.Path) == null)
                     {
                         _logger.Warn($"Destination author folder {author.Path} not in a Root Folder, skipping import");
-                        importDecision.Reject(new Rejection($"Destination author folder {author.Path} is not in a Root Folder"));
+                        importDecision.Reject(new Rejection($"Destination author folder {author.Path} is not in a Root Folder", code: RejectionCode.RootFolderMissing));
                     }
 
                     bookImportDecisions.Add(importDecision);

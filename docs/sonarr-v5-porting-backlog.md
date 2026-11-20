@@ -68,11 +68,11 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P24](#p24) | P2 | Verified | S | Correct URL-base boundary handling on login redirects |
 | [P25](#p25) | P0 | In progress | L | Isolate fork release channels and require matching source/artifact identity |
 | [P26](#p26) | P0 | Verified | M | Propagate repository write failures and transact general bulk updates |
-| [D01](#d01) | P0 | Planned | S | Preserve Bookshelf's staged replacement and ownership boundary |
-| [D02](#d02) | P1 | Planned | L | Add machine-readable download and import rejection codes |
+| [D01](#d01) | P0 | In progress | S | Preserve Bookshelf's staged replacement and ownership boundary |
+| [D02](#d02) | P1 | In progress | L | Add machine-readable download and import rejection codes |
 | [D03](#d03) | P0 | Verified | S | Fix tag isolation when choosing download clients |
 | [D04](#d04) | P0 | Verified | M | Audit completion against distinct books and complete recording parts |
-| [D05](#d05) | P1 | Planned | M | Prevent custom-format downgrades during import and rename |
+| [D05](#d05) | P1 | In progress | M | Prevent custom-format downgrades during import and rename |
 | [D06](#d06) | P1 | Planned | M | Classify rejected extensions, including downloads with no importable files |
 | [D07](#d07) | P1 | Planned | L | Ask download clients for file inventory when the filesystem has no eligible files |
 | [D08](#d08) | P2 | Planned | M | Make automatic failure/blocklist/redownload actions explicit per indexer |
@@ -120,7 +120,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [U20](#u20) | P2 | Planned | M | Text filtering and intentional caching of interactive searches |
 | [U21](#u21) | P2 | Planned | M | Simplify existing library virtualization after measuring it |
 | [U22](#u22) | P2 | Planned | L | Vite/HMR and a separately verified asset pipeline |
-| [B01](#b01) | P0 | Planned | M | Make audiobook identity and upgrade invariants the porting contract |
+| [B01](#b01) | P0 | In progress | M | Make audiobook identity and upgrade invariants the porting contract |
 | [B02](#b02) | P1 | Planned | L | Provide a supported author reconciliation and correction workflow |
 | [B03](#b03) | P2 | Planned | XL | Represent publisher-pack membership without collapsing recording identities |
 | [B04](#b04) | P1 | Planned | L | Add audio-specific custom-format rules from trustworthy media evidence |

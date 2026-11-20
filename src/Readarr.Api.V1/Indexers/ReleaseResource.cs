@@ -37,6 +37,7 @@ namespace Readarr.Api.V1.Indexers
         public bool TemporarilyRejected { get; set; }
         public bool Rejected { get; set; }
         public IEnumerable<string> Rejections { get; set; }
+        public IEnumerable<Rejection> RejectionDetails { get; set; }
         public DateTime PublishDate { get; set; }
         public string CommentUrl { get; set; }
         public string DownloadUrl { get; set; }
@@ -101,6 +102,7 @@ namespace Readarr.Api.V1.Indexers
                 TemporarilyRejected = model.TemporarilyRejected,
                 Rejected = model.Rejected,
                 Rejections = model.Rejections.Select(r => r.Reason).ToList(),
+                RejectionDetails = model.Rejections.ToList(),
                 PublishDate = releaseInfo.PublishDate,
                 CommentUrl = releaseInfo.CommentUrl,
                 DownloadUrl = releaseInfo.DownloadUrl,

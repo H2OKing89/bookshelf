@@ -62,7 +62,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                 var message = $"Release published date, {subject.Release.PublishDate.ToShortDateString()}, is outside of {indexerSettings.EarlyReleaseLimit.Value} day early grab limit allowed by user";
 
                 _logger.Debug(message);
-                return Decision.Reject(message);
+                return Decision.RejectCode(RejectionCode.BeforeReleaseDate, message);
             }
 
             return Decision.Accept();

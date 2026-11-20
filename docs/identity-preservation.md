@@ -113,3 +113,37 @@ The hosted fixture verifies persistence, upgrade, API and browser projection. It
 does not pretend to perform a real metadata-provider refresh: the source fixtures
 exercise refresh services with controlled providers, including cancellation and
 missing/regional responses. No test requires the user's private library.
+
+
+## Rejection codes and upgrade preference
+
+Download and import decisions carry stable string `code` identifiers alongside
+readable `reason` and the existing temporary/permanent `type`. Changing or
+localizing an explanation does not classify a rejection. Unknown future strings
+round-trip unchanged; legacy unclassified reasons use `unknown`.
+
+API v1 release results retain their `rejections` string array and add
+`rejectionDetails` objects. Manual import retains its rejection objects with an
+additive `code`; queue status messages retain `messages` and add `rejections`.
+Codes survive incomplete-import history and restart. This is an additive wire
+change; clients can continue showing readable explanations. Codes themselves do
+not authorize removal, blocklisting or redownload actions.
+
+Automatic imports compare custom-format preference only within the selected
+recording. At the same quality, every incoming part must meet every existing
+part's score; additional low-scoring parts cannot average away a downgrade.
+Higher quality retains the existing quality-first ordering, while a same-quality
+proper/repack revision does not bypass custom-format protection. Existing-file
+reidentification does not replace media and skips this replacement check.
+
+The guard previews the intended filename through the real filename builder and
+the same acquisition metadata used to publish the file. Retained scene names,
+release groups and indexer flags keep their meaning after a rename. A filename
+rule that loses a preferred token reports `custom_format_lost_after_rename`; an
+ordinary lower score reports `custom_format_downgrade`. Existing files are scored
+from their own metadata, without borrowing another recording's provenance.
+
+Manual preview exposes the same explanation. An explicitly submitted manual
+import retains its existing override behavior; it still obeys the staged
+ownership, database and source-retention boundaries. The guard does not add a
+silent automatic override.

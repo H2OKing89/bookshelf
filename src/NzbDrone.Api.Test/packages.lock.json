@@ -390,6 +390,11 @@
         "resolved": "1.1.0",
         "contentHash": "kz0PEW2lhqygehI/d6XsPCQzD7ff7gUJaVGPVETX611eadGsA3A877GdSlU0LRVMCTH/+P3o2iDTak+S08V2+A=="
       },
+      "Microsoft.OpenApi": {
+        "type": "Transitive",
+        "resolved": "1.6.14",
+        "contentHash": "tTaBT8qjk3xINfESyOPE2rIellPvB7qpVqiWiyA/lACVvz+xOGiXhFUfohcx82NLbi5avzLW0lx+s6oAqQijfw=="
+      },
       "Microsoft.Testing.Extensions.Telemetry": {
         "type": "Transitive",
         "resolved": "2.4.1",
@@ -471,6 +476,11 @@
           "Microsoft.NETCore.Platforms": "1.1.0"
         }
       },
+      "NodaTime": {
+        "type": "Transitive",
+        "resolved": "3.2.0",
+        "contentHash": "yoRA3jEJn8NM0/rQm78zuDNPA3DonNSZdsorMUj+dltc1D+/Lc5h9YXGqbEEZozMGr37lAoYkcSM/KjTVqD0ow=="
+      },
       "Polly.Contrib.WaitAndRetry": {
         "type": "Transitive",
         "resolved": "1.1.1",
@@ -486,6 +496,14 @@
         "resolved": "2.0.0",
         "contentHash": "HWb7Yy7dQfWPh0V4X42ounPkrzUvL6gB7bwshX7EqBDCl879iBQIS0TRrXFXKOTO2dNJxaEfXnAbX8Fzv3U7Cw=="
       },
+      "Swashbuckle.AspNetCore.Swagger": {
+        "type": "Transitive",
+        "resolved": "6.6.2",
+        "contentHash": "ovgPTSYX83UrQUWiS5vzDcJ8TEX1MAxBgDFMK45rC24MorHEPQlZAHlaXj/yth4Zf6xcktpUgTEBvffRQVwDKA==",
+        "dependencies": {
+          "Microsoft.OpenApi": "1.6.14"
+        }
+      },
       "System.ComponentModel.Annotations": {
         "type": "Transitive",
         "resolved": "5.0.0",
@@ -500,6 +518,21 @@
         "type": "Transitive",
         "resolved": "10.0.15",
         "contentHash": "AG49oTxB0R4YQJzeIIHRgqyaI3SOT8Q8vEfGUcju2WxOvsBkDJU4FKTQ8gYQAYCxmHOHqyJL0UDGcCf8nzRoiw=="
+      },
+      "readarr.api.v1": {
+        "type": "Project",
+        "dependencies": {
+          "FluentValidation": "[9.5.4, )",
+          "Ical.Net": "[4.3.1, )",
+          "NLog": "[5.5.1, )",
+          "Readarr.Common": "[1.0.0, )",
+          "Readarr.Core": "[1.0.0, )",
+          "Readarr.Http": "[1.0.0, )",
+          "Readarr.SignalR": "[1.0.0, )",
+          "Swashbuckle.AspNetCore.Annotations": "[6.6.2, )",
+          "System.IO.Abstractions": "[17.0.24, )",
+          "System.Reflection.TypeExtensions": "[4.7.0, )"
+        }
       },
       "readarr.common": {
         "type": "Project",
@@ -656,6 +689,15 @@
         "requested": "[9.5.4, )",
         "resolved": "9.5.4",
         "contentHash": "dnAz4PUtSSa+8EGWDUmEZujOa9rvzxln4BgokZZfO2Gbcj0612TMISU4vkvL60qIy5DI/sDF9Oy1iMXr7sJW3A=="
+      },
+      "Ical.Net": {
+        "type": "CentralTransitive",
+        "requested": "[4.3.1, )",
+        "resolved": "4.3.1",
+        "contentHash": "ZQHNJAy26XeW0OnVRxyHW1xNWkLdueIInPCo76sdNCC0Sr8dAfBzN3DApWWk2r0nwCU0oJIGsrFHdCcQu5RWag==",
+        "dependencies": {
+          "NodaTime": "3.2.0"
+        }
       },
       "ImpromptuInterface": {
         "type": "CentralTransitive",
@@ -857,6 +899,24 @@
         "resolved": "3.53.4",
         "contentHash": "aXPX39R0Vgivhi95Z82TRenG56bSOs+Hnt8h1GV0nmfuRaANObd3LC44eoZwszmQqALjaV3ZnBQRej8m5E0L4Q=="
       },
+      "Swashbuckle.AspNetCore.Annotations": {
+        "type": "CentralTransitive",
+        "requested": "[6.6.2, )",
+        "resolved": "6.6.2",
+        "contentHash": "itEYQwWam7FT/8qUEMmC+BDt38J4w52NDod9yUeWpIKA7pM1xo+FbGSjXR6Q9oLOTT1PiJ+zYVf5Ij6pVX99tw==",
+        "dependencies": {
+          "Swashbuckle.AspNetCore.SwaggerGen": "6.6.2"
+        }
+      },
+      "Swashbuckle.AspNetCore.SwaggerGen": {
+        "type": "CentralTransitive",
+        "requested": "[6.6.2, )",
+        "resolved": "6.6.2",
+        "contentHash": "zv4ikn4AT1VYuOsDCpktLq4QDq08e7Utzbir86M5/ZkRaLXbCPF11E1/vTmOiDzRTl0zTZINQU2qLKwTcHgfrA==",
+        "dependencies": {
+          "Swashbuckle.AspNetCore.Swagger": "6.6.2"
+        }
+      },
       "System.Configuration.ConfigurationManager": {
         "type": "CentralTransitive",
         "requested": "[10.0.15, )",
@@ -887,6 +947,12 @@
         "dependencies": {
           "System.IO.Abstractions": "17.0.24"
         }
+      },
+      "System.Reflection.TypeExtensions": {
+        "type": "CentralTransitive",
+        "requested": "[4.7.0, )",
+        "resolved": "4.7.0",
+        "contentHash": "VybpaOQQhqE6siHppMktjfGBw1GCwvCqiufqmP8F1nj7fTUNtW35LOEt3UZTEsECfo+ELAl/9o9nJx3U91i7vA=="
       },
       "System.Security.Cryptography.Pkcs": {
         "type": "CentralTransitive",

@@ -1,0 +1,84 @@
+namespace NzbDrone.Core.DecisionEngine
+{
+    // These values are public wire identifiers. Keep them stable when messages
+    // are edited or localized; consumers must preserve unfamiliar values.
+    public static class RejectionCode
+    {
+        public const string Unknown = "unknown";
+        public const string UnknownAuthor = "author_unknown";
+        public const string UnknownBook = "book_unknown";
+        public const string UnknownEdition = "edition_unknown";
+        public const string UnableToParse = "unable_to_parse";
+        public const string ProcessingError = "processing_error";
+        public const string DecisionError = "decision_error";
+        public const string RecordingIdentityRequired = "recording_identity_required";
+        public const string RecordingIdentityMismatch = "recording_identity_mismatch";
+        public const string BookMatchNotClose = "book_match_not_close";
+        public const string RevisionNotUpgrade = "revision_not_upgrade";
+        public const string QualityNotUpgrade = "quality_not_upgrade";
+        public const string CustomFormatDowngrade = "custom_format_downgrade";
+        public const string CustomFormatLostAfterRename = "custom_format_lost_after_rename";
+        public const string CustomFormatMinimumScore = "custom_format_minimum_score";
+        public const string MinimumFreeSpace = "insufficient_free_space";
+        public const string SameFile = "same_file";
+        public const string SourceUnpacking = "source_unpacking";
+        public const string RootFolderMissing = "root_folder_missing";
+        public const string AlreadyImported = "already_imported";
+        public const string AlreadyImportedSameHash = "already_imported_same_hash";
+        public const string AlreadyImportedSameName = "already_imported_same_name";
+        public const string QueueCutoffMet = "queue_cutoff_met";
+        public const string QueueHigherPreference = "queue_higher_preference";
+        public const string QueueUpgradesNotAllowed = "queue_upgrades_not_allowed";
+        public const string PropersDisabled = "propers_disabled";
+        public const string RepackDisabled = "repack_disabled";
+        public const string ReleaseGroupUnknown = "release_group_unknown";
+        public const string ReleaseGroupMismatch = "release_group_mismatch";
+        public const string Sample = "sample";
+        public const string ProtocolDisabled = "protocol_disabled";
+        public const string CutoffMet = "cutoff_met";
+        public const string IndexerDisabled = "indexer_disabled";
+        public const string MaximumSizeExceeded = "maximum_size_exceeded";
+        public const string BeforeReleaseDate = "before_release_date";
+        public const string RawRelease = "raw_release";
+        public const string AuthorPackNotReleased = "author_pack_not_released";
+        public const string Blocklisted = "blocklisted";
+        public const string DiskHigherPreference = "disk_higher_preference";
+        public const string RetentionExceeded = "retention_exceeded";
+        public const string QualityNotWanted = "quality_not_wanted";
+        public const string BelowMinimumSize = "below_minimum_size";
+        public const string AboveMaximumSize = "above_maximum_size";
+        public const string RequiredTermMissing = "required_term_missing";
+        public const string IgnoredTermPresent = "ignored_term_present";
+        public const string MinimumAge = "minimum_age";
+        public const string MinimumSeeders = "minimum_seeders";
+        public const string BookNotRequested = "book_not_requested";
+        public const string UpgradesNotAllowed = "upgrades_not_allowed";
+        public const string AuthorMismatch = "author_mismatch";
+        public const string FullAuthorPack = "full_author_pack";
+        public const string AuthorNotMonitored = "author_not_monitored";
+        public const string BookNotMonitored = "book_not_monitored";
+        public const string NoMatchingIndexerTag = "no_matching_indexer_tag";
+        public const string HistoryCutoffMet = "history_cutoff_met";
+        public const string HistoryHigherPreference = "history_higher_preference";
+        public const string BetterReleaseDelay = "better_release_delay";
+        public const string ProperForOldFile = "proper_for_old_file";
+        public const string InvalidFile = "invalid_file";
+        public const string FileLocked = "file_locked";
+        public const string AuthorAddFailed = "author_add_failed";
+        public const string BookAddFailed = "book_add_failed";
+        public const string ImportFailed = "import_failed";
+        public const string PermissionDenied = "permission_denied";
+        public const string DestinationExists = "destination_exists";
+        public const string FileAlreadyImported = "file_already_imported";
+        public const string RecycleBinFailed = "recycle_bin_failed";
+        public const string CalibreUnavailable = "calibre_unavailable";
+        public const string ImportPartFailed = "import_part_failed";
+        public const string ClientNotCompleted = "client_not_completed";
+        public const string CompletionUnverified = "completion_unverified";
+        public const string SourceCleanupPending = "source_cleanup_pending";
+        public const string ImportVerificationFailed = "import_verification_failed";
+        public const string NoEligibleFiles = "no_eligible_files";
+        public const string DownloadNotTracked = "download_not_tracked";
+        public const string InvalidImportPath = "invalid_import_path";
+    }
+}

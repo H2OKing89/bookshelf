@@ -13,47 +13,84 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Specifications
     {
         private readonly IConfigService _configService;
         private readonly ICustomFormatCalculationService _customFormatCalculationService;
+        private readonly ILocalBookCustomFormatCalculationService _localFormats;
         private readonly Logger _logger;
 
         public UpgradeSpecification(IConfigService configService,
                                     ICustomFormatCalculationService customFormatCalculationService,
+                                    ILocalBookCustomFormatCalculationService localFormats,
                                     Logger logger)
         {
             _configService = configService;
             _customFormatCalculationService = customFormatCalculationService;
+            _localFormats = localFormats;
             _logger = logger;
         }
 
         public Decision IsSatisfiedBy(LocalBook item, DownloadClientItem downloadClientItem)
         {
-            var files = item.Book?.BookFiles?.Value;
+            // A different narration, marketplace or local recording is not the
+            // replacement target. This matches the staged import's ownership scope.
+            var files = item.Book?.BookFiles?.Value?.Where(file => item.Edition?.Id > 0 && file.EditionId == item.Edition.Id).ToList();
             if (files == null || !files.Any())
             {
-                // No existing books, skip.  This guards against new authors not having a QualityProfile.
                 return Decision.Accept();
             }
 
             var downloadPropersAndRepacks = _configService.DownloadPropersAndRepacks;
-            var qualityComparer = new QualityModelComparer(item.Author.QualityProfile);
+            var qualityProfile = item.Author.QualityProfile.Value;
+            var qualityComparer = new QualityModelComparer(qualityProfile);
+            LocalBookCustomFormatScores candidate = null;
 
             foreach (var bookFile in files)
             {
                 var qualityCompare = qualityComparer.Compare(item.Quality.Quality, bookFile.Quality.Quality);
-
                 if (qualityCompare < 0)
                 {
-                    _logger.Debug("This file isn't a quality upgrade for all books. Skipping {0}", item.Path);
-                    return Decision.Reject("Not an upgrade for existing book file(s)");
+                    return Decision.RejectCode(RejectionCode.QualityNotUpgrade, "Not an upgrade for existing book file(s)");
                 }
 
                 if (qualityCompare == 0 && downloadPropersAndRepacks != ProperDownloadTypes.DoNotPrefer &&
                     item.Quality.Revision.CompareTo(bookFile.Quality.Revision) < 0)
                 {
-                    _logger.Debug("This file isn't a quality upgrade for all books. Skipping {0}", item.Path);
-                    return Decision.Reject("Not an upgrade for existing book file(s)");
+                    return Decision.RejectCode(RejectionCode.RevisionNotUpgrade, "Not a quality revision upgrade for existing book file(s)");
+                }
+
+                // Reidentifying an existing file publishes no replacement. Higher
+                // qualities retain the established quality-before-format ordering.
+                if (item.ExistingFile || qualityCompare != 0)
+                {
+                    continue;
+                }
+
+                candidate ??= _localFormats.Calculate(item, downloadClientItem);
+                var currentFormats = _customFormatCalculationService.ParseCustomFormat(bookFile);
+                var currentScore = qualityProfile.CalculateCustomFormatScore(currentFormats);
+                if (candidate.IntendedScore < currentScore)
+                {
+                    _logger.Debug("Recording {0}, part {1}: intended custom format score {2} is below existing {3}",
+                        bookFile.EditionId,
+                        bookFile.Part,
+                        candidate.IntendedScore,
+                        currentScore);
+                    if (candidate.OriginalScore >= currentScore && candidate.OriginalScore > candidate.IntendedScore)
+                    {
+                        return Decision.RejectCode(RejectionCode.CustomFormatLostAfterRename,
+                            "Custom format score would decrease after renaming: original {0}, intended {1}, existing recording part {2}",
+                            candidate.OriginalScore,
+                            candidate.IntendedScore,
+                            currentScore);
+                    }
+
+                    return Decision.RejectCode(RejectionCode.CustomFormatDowngrade,
+                        "Custom format score {0} is below existing recording part score {1}",
+                        candidate.IntendedScore,
+                        currentScore);
                 }
             }
 
+            // Every incoming part must meet every replaced part. Scores are not
+            // summed or averaged, so extra parts cannot conceal a lower score.
             return Decision.Accept();
         }
     }

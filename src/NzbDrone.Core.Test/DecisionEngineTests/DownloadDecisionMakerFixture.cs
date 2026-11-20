@@ -75,6 +75,27 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.SetConstant<IEnumerable<IDecisionEngineSpecification>>(mocks.Select(c => c.Object));
         }
 
+        [TestCase(false, RejectionType.Permanent)]
+        [TestCase(false, RejectionType.Temporary)]
+        [TestCase(true, RejectionType.Permanent)]
+        [TestCase(true, RejectionType.Temporary)]
+        public void rss_and_search_should_preserve_rejection_code_text_and_severity(bool search, RejectionType type)
+        {
+            _fail1.Setup(c => c.IsSatisfiedBy(It.IsAny<RemoteBook>(), It.IsAny<SearchCriteriaBase>()))
+                .Returns(Decision.RejectCode("provider.future.reason", "A translated explanation"));
+            _fail1.SetupGet(c => c.Type).Returns(type);
+            GivenSpecifications(_fail1);
+
+            var decisions = search
+                ? Subject.GetSearchDecision(_reports, new BookSearchCriteria { Author = _remoteBook.Author, Books = _remoteBook.Books })
+                : Subject.GetRssDecision(_reports);
+            var rejection = decisions.Single().Rejections.Single();
+
+            rejection.Code.Should().Be("provider.future.reason");
+            rejection.Reason.Should().Be("A translated explanation");
+            rejection.Type.Should().Be(type);
+        }
+
         [Test]
         public void should_call_all_specifications()
         {

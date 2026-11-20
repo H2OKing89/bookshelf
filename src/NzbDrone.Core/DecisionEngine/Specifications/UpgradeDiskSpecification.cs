@@ -43,7 +43,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                                                            subject.ParsedBookInfo.Quality,
                                                            subject.CustomFormats))
                 {
-                    return Decision.Reject("Existing files on disk is of equal or higher preference: {0}", file.Quality.Quality.Name);
+                    return Decision.RejectCode(RejectionCode.DiskHigherPreference, "Existing files on disk is of equal or higher preference: {0}", file.Quality.Quality.Name);
                 }
             }
 

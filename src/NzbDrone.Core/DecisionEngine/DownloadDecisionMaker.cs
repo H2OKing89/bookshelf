@@ -140,7 +140,7 @@ namespace NzbDrone.Core.DecisionEngine
 
                         if (remoteBook.Author == null)
                         {
-                            decision = new DownloadDecision(remoteBook, new Rejection("Unknown Author"));
+                            decision = new DownloadDecision(remoteBook, new Rejection("Unknown Author", code: RejectionCode.UnknownAuthor));
 
                             // shove in the searched author in case of forced download in interactive search
                             if (searchCriteria != null)
@@ -152,7 +152,7 @@ namespace NzbDrone.Core.DecisionEngine
                         else if (remoteBook.Books.Empty())
                         {
                             var reason = parsedBookInfo.ExtraInfo.GetValueOrDefault("StructuredMetadataRejection") as string ?? "Unable to parse books from release name";
-                            decision = new DownloadDecision(remoteBook, new Rejection(reason));
+                            decision = new DownloadDecision(remoteBook, new Rejection(reason, code: RejectionCode.UnknownBook));
                             if (searchCriteria != null)
                             {
                                 remoteBook.Books = searchCriteria.Books;
@@ -188,7 +188,7 @@ namespace NzbDrone.Core.DecisionEngine
                                 ParsedBookInfo = parsedBookInfo
                             };
 
-                            decision = new DownloadDecision(remoteBook, new Rejection("Unable to parse release"));
+                            decision = new DownloadDecision(remoteBook, new Rejection("Unable to parse release", code: RejectionCode.UnableToParse));
                         }
                     }
 
@@ -210,7 +210,7 @@ namespace NzbDrone.Core.DecisionEngine
                                 ParsedBookInfo = parsedBookInfo
                             };
 
-                            decision = new DownloadDecision(remoteBook, new Rejection("Unable to parse release"));
+                            decision = new DownloadDecision(remoteBook, new Rejection("Unable to parse release", code: RejectionCode.UnableToParse));
                         }
                     }
                 }
@@ -219,7 +219,7 @@ namespace NzbDrone.Core.DecisionEngine
                     _logger.Error(e, "Couldn't process release.");
 
                     var remoteBook = new RemoteBook { Release = report };
-                    decision = new DownloadDecision(remoteBook, new Rejection("Unexpected error processing release"));
+                    decision = new DownloadDecision(remoteBook, new Rejection("Unexpected error processing release", code: RejectionCode.ProcessingError));
                 }
 
                 reportNumber++;
@@ -287,7 +287,7 @@ namespace NzbDrone.Core.DecisionEngine
 
                 if (!result.Accepted)
                 {
-                    return new Rejection(result.Reason, spec.Type);
+                    return new Rejection(result.Reason, spec.Type, result.Code);
                 }
             }
             catch (NotImplementedException)
@@ -299,7 +299,7 @@ namespace NzbDrone.Core.DecisionEngine
                 e.Data.Add("report", remoteBook.Release.ToJson());
                 e.Data.Add("parsed", remoteBook.ParsedBookInfo.ToJson());
                 _logger.Error(e, "Couldn't evaluate decision on {0}", remoteBook.Release.Title);
-                return new Rejection($"{spec.GetType().Name}: {e.Message}");
+                return new Rejection($"{spec.GetType().Name}: {e.Message}", code: RejectionCode.DecisionError);
             }
 
             return null;

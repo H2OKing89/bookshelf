@@ -34,7 +34,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Specifications
                     !LocalRecordingId.IsLocal(item.Edition?.Book?.Value?.ForeignBookId))
                 {
                     _logger.Debug("Audio match without an ASIN needs recording identity confirmation: {0}", item);
-                    return Decision.Reject("Audio files without an ASIN need recording identity confirmation; select the recording manually or create a local recording");
+                    return Decision.RejectCode(RejectionCode.RecordingIdentityRequired, "Audio files without an ASIN need recording identity confirmation; select the recording manually or create a local recording");
                 }
 
                 // Matching language, year, or publisher must not outweigh a different work or
@@ -47,7 +47,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Specifications
                     {
                         var label = field == "book" ? "title" : "author";
                         _logger.Debug("Audio match without an ASIN has insufficient {0} evidence: {1}", label, item);
-                        return Decision.Reject($"Audio files without an ASIN need a closer {label} match; select the correct recording manually");
+                        return Decision.RejectCode(RejectionCode.RecordingIdentityRequired, $"Audio files without an ASIN need a closer {label} match; select the correct recording manually");
                     }
                 }
             }
@@ -60,7 +60,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Specifications
                 if (dist > _bookThreshold)
                 {
                     _logger.Debug($"Book match is not close enough: {dist} vs {_bookThreshold} {reasons}. Skipping {item}");
-                    return Decision.Reject($"Book match is not close enough: {1 - dist:P1} vs {1 - _bookThreshold:P0} {reasons}");
+                    return Decision.RejectCode(RejectionCode.BookMatchNotClose, $"Book match is not close enough: {1 - dist:P1} vs {1 - _bookThreshold:P0} {reasons}");
                 }
             }
 
@@ -73,7 +73,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Specifications
                 if (dist > _bookThreshold)
                 {
                     _logger.Debug($"Book match is not close enough: {dist} vs {_bookThreshold} {reasons}. Skipping {item}");
-                    return Decision.Reject($"Book match is not close enough: {1 - dist:P1} vs {1 - _bookThreshold:P0} {reasons}");
+                    return Decision.RejectCode(RejectionCode.BookMatchNotClose, $"Book match is not close enough: {1 - dist:P1} vs {1 - _bookThreshold:P0} {reasons}");
                 }
             }
 

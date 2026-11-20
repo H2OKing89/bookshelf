@@ -167,6 +167,31 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport
                   });
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void recording_and_file_rejections_should_preserve_machine_codes(bool recording)
+        {
+            GivenAugmentationSuccess();
+            if (recording)
+            {
+                _bookfail1.Setup(c => c.IsSatisfiedBy(It.IsAny<LocalEdition>(), It.IsAny<DownloadClientItem>()))
+                    .Returns(Decision.RejectCode("publisher.future.reason", "Explanation for the recording"));
+                GivenSpecifications(_bookfail1);
+            }
+            else
+            {
+                _fail1.Setup(c => c.IsSatisfiedBy(It.IsAny<LocalBook>(), It.IsAny<DownloadClientItem>()))
+                    .Returns(Decision.RejectCode("publisher.future.reason", "Explanation for the file"));
+                GivenSpecifications(_fail1);
+            }
+
+            var result = Subject.GetImportDecisions(_fileInfos, _idOverrides, new ImportDecisionMakerInfo(), _idConfig).Single();
+
+            result.Rejections.Single().Code.Should().Be("publisher.future.reason");
+            result.Rejections.Single().Reason.Should().Be(recording ? "Explanation for the recording" : "Explanation for the file");
+            result.Rejections.Single().Type.Should().Be(RejectionType.Permanent);
+        }
+
         [Test]
         public void should_call_all_book_specifications()
         {

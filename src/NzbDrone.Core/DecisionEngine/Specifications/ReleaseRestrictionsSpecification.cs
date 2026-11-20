@@ -43,7 +43,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                 {
                     var terms = string.Join(", ", requiredTerms);
                     _logger.Debug("[{0}] does not contain one of the required terms: {1}", title, terms);
-                    return Decision.Reject("Does not contain one of the required terms: {0}", terms);
+                    return Decision.RejectCode(RejectionCode.RequiredTermMissing, "Does not contain one of the required terms: {0}", terms);
                 }
             }
 
@@ -56,7 +56,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                 {
                     var terms = string.Join(", ", foundTerms);
                     _logger.Debug("[{0}] contains these ignored terms: {1}", title, terms);
-                    return Decision.Reject("Contains these ignored terms: {0}", terms);
+                    return Decision.RejectCode(RejectionCode.IgnoredTermPresent, "Contains these ignored terms: {0}", terms);
                 }
             }
 

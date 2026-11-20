@@ -4,6 +4,7 @@ using System.Linq;
 using NLog;
 using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.History;
 using NzbDrone.Core.MediaFiles;
@@ -66,7 +67,7 @@ namespace NzbDrone.Core.Download
 
             if (historyItem == null && trackedDownload.DownloadItem.Category.IsNullOrWhiteSpace())
             {
-                trackedDownload.Warn("Download wasn't grabbed by Readarr and not in a category, Skipping.");
+                trackedDownload.WarnCode(RejectionCode.DownloadNotTracked, "Download wasn't grabbed by Readarr and not in a category, Skipping.");
                 return;
             }
 
@@ -90,7 +91,7 @@ namespace NzbDrone.Core.Download
             if (trackedDownload.DownloadItem.Status != DownloadItemStatus.Completed)
             {
                 trackedDownload.State = TrackedDownloadState.Downloading;
-                trackedDownload.Warn("Waiting for the download client to finish before completion verification.");
+                trackedDownload.WarnCode(RejectionCode.ClientNotCompleted, "Waiting for the download client to finish before completion verification.");
                 return;
             }
 
@@ -109,13 +110,13 @@ namespace NzbDrone.Core.Download
             catch
             {
                 trackedDownload.State = TrackedDownloadState.ImportPending;
-                trackedDownload.Warn("Import verification did not finish. Source files and download cleanup remain pending.");
+                trackedDownload.WarnCode(RejectionCode.ImportVerificationFailed, "Import verification did not finish. Source files and download cleanup remain pending.");
                 throw;
             }
 
             if (importResults.Empty())
             {
-                trackedDownload.Warn("No files found are eligible for import in {0}", outputPath);
+                trackedDownload.WarnCode(RejectionCode.NoEligibleFiles, "No files found are eligible for import in {0}", outputPath);
                 trackedDownload.State = TrackedDownloadState.ImportPending;
                 return;
             }
@@ -127,7 +128,7 @@ namespace NzbDrone.Core.Download
                 trackedDownload.State = TrackedDownloadState.ImportFailed;
                 var statusMessages = importResults
                     .Where(v => v.Result != ImportResultType.Imported && v.ImportDecision.Item != null)
-                    .Select(v => new TrackedDownloadStatusMessage(Path.GetFileName(v.ImportDecision.Item.Path), v.Errors))
+                    .Select(v => new TrackedDownloadStatusMessage(Path.GetFileName(v.ImportDecision.Item.Path), v.Errors, v.Rejections))
                     .ToArray();
 
                 trackedDownload.Warn(statusMessages);
@@ -141,7 +142,7 @@ namespace NzbDrone.Core.Download
             if (trackedDownload.DownloadItem.Status != DownloadItemStatus.Completed)
             {
                 trackedDownload.State = TrackedDownloadState.Downloading;
-                trackedDownload.Warn("Waiting for the download client to finish before completion verification.");
+                trackedDownload.WarnCode(RejectionCode.ClientNotCompleted, "Waiting for the download client to finish before completion verification.");
                 return false;
             }
 
@@ -152,7 +153,7 @@ namespace NzbDrone.Core.Download
                 if (receipt == null)
                 {
                     trackedDownload.State = TrackedDownloadState.ImportPending;
-                    trackedDownload.Warn("Not all intended books and recording parts have verified committed files. Source files and download cleanup remain pending.");
+                    trackedDownload.WarnCode(RejectionCode.CompletionUnverified, "Not all intended books and recording parts have verified committed files. Source files and download cleanup remain pending.");
                     return false;
                 }
 
@@ -160,7 +161,7 @@ namespace NzbDrone.Core.Download
                 if (!_sourceService.Retire(trackedDownload, receipt))
                 {
                     trackedDownload.State = TrackedDownloadState.ImportPending;
-                    trackedDownload.Warn("The download source changed or could not be safely retired. Download cleanup remains pending.");
+                    trackedDownload.WarnCode(RejectionCode.SourceCleanupPending, "The download source changed or could not be safely retired. Download cleanup remains pending.");
                     return false;
                 }
 
@@ -177,7 +178,7 @@ namespace NzbDrone.Core.Download
             catch
             {
                 trackedDownload.State = TrackedDownloadState.ImportPending;
-                trackedDownload.Warn("Import verification did not finish. Source files and download cleanup remain pending.");
+                trackedDownload.WarnCode(RejectionCode.ImportVerificationFailed, "Import verification did not finish. Source files and download cleanup remain pending.");
                 throw;
             }
         }
@@ -193,14 +194,14 @@ namespace NzbDrone.Core.Download
 
             if (downloadItemOutputPath.IsEmpty)
             {
-                trackedDownload.Warn("Download doesn't contain intermediate path, Skipping.");
+                trackedDownload.WarnCode(RejectionCode.InvalidImportPath, "Download doesn't contain intermediate path, Skipping.");
                 return false;
             }
 
             if ((OsInfo.IsWindows && !downloadItemOutputPath.IsWindowsPath) ||
                 (OsInfo.IsNotWindows && !downloadItemOutputPath.IsUnixPath))
             {
-                trackedDownload.Warn("[{0}] is not a valid local path. You may need a Remote Path Mapping.", downloadItemOutputPath);
+                trackedDownload.WarnCode(RejectionCode.InvalidImportPath, "[{0}] is not a valid local path. You may need a Remote Path Mapping.", downloadItemOutputPath);
                 return false;
             }
 

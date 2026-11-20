@@ -50,7 +50,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Specifications
                 if (freeSpace < item.Size + _configService.MinimumFreeSpaceWhenImporting.Megabytes())
                 {
                     _logger.Warn("Not enough free space ({0}) to import: {1} ({2})", freeSpace, item, item.Size);
-                    return Decision.Reject("Not enough free space");
+                    return Decision.RejectCode(RejectionCode.MinimumFreeSpace, "Not enough free space");
                 }
             }
             catch (DirectoryNotFoundException ex)

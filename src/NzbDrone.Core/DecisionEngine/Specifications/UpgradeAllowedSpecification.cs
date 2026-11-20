@@ -47,7 +47,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                 {
                     _logger.Debug("Upgrading is not allowed by the quality profile");
 
-                    return Decision.Reject("Existing files and the Quality profile does not allow upgrades");
+                    return Decision.RejectCode(RejectionCode.UpgradesNotAllowed, "Existing files and the Quality profile does not allow upgrades");
                 }
             }
 

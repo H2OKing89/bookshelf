@@ -28,7 +28,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.Search
             if (remoteBook.Author.Id != searchCriteria.Author.Id)
             {
                 _logger.Debug("Author {0} does not match {1}", remoteBook.Author, searchCriteria.Author);
-                return Decision.Reject("Wrong author");
+                return Decision.RejectCode(RejectionCode.AuthorMismatch, "Wrong author");
             }
 
             return Decision.Accept();

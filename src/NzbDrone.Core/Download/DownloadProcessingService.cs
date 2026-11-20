@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using NLog;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.Messaging.Commands;
@@ -50,7 +51,7 @@ namespace NzbDrone.Core.Download
                 if (trackedDownload.DownloadItem.Status != DownloadItemStatus.Completed)
                 {
                     trackedDownload.State = TrackedDownloadState.Downloading;
-                    trackedDownload.Warn("The download client has not confirmed completion. Cleanup remains pending.");
+                    trackedDownload.WarnCode(RejectionCode.ClientNotCompleted, "The download client has not confirmed completion. Cleanup remains pending.");
                     continue;
                 }
 
@@ -69,7 +70,7 @@ namespace NzbDrone.Core.Download
                 if (receipt == null)
                 {
                     trackedDownload.State = TrackedDownloadState.ImportPending;
-                    trackedDownload.Warn("Previous download completion could not be verified. Rescan or review its recording parts before cleanup.");
+                    trackedDownload.WarnCode(RejectionCode.CompletionUnverified, "Previous download completion could not be verified. Rescan or review its recording parts before cleanup.");
                     continue;
                 }
 

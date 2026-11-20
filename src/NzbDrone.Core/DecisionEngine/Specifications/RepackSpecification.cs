@@ -54,25 +54,25 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                         if (downloadPropersAndRepacks == ProperDownloadTypes.DoNotUpgrade)
                         {
                             _logger.Debug("Auto downloading of repacks is disabled");
-                            return Decision.Reject("Repack downloading is disabled");
+                            return Decision.RejectCode(RejectionCode.RepackDisabled, "Repack downloading is disabled");
                         }
 
                         var fileReleaseGroup = file.ReleaseGroup;
 
                         if (fileReleaseGroup.IsNullOrWhiteSpace())
                         {
-                            return Decision.Reject("Unable to determine release group for the existing file");
+                            return Decision.RejectCode(RejectionCode.ReleaseGroupUnknown, "Unable to determine release group for the existing file");
                         }
 
                         if (releaseGroup.IsNullOrWhiteSpace())
                         {
-                            return Decision.Reject("Unable to determine release group for this release");
+                            return Decision.RejectCode(RejectionCode.ReleaseGroupUnknown, "Unable to determine release group for this release");
                         }
 
                         if (!fileReleaseGroup.Equals(releaseGroup, StringComparison.InvariantCultureIgnoreCase))
                         {
                             _logger.Debug("Release is a repack for a different release group. Release Group: {0}. File release group: {1}", releaseGroup, fileReleaseGroup);
-                            return Decision.Reject("Release is a repack for a different release group. Release Group: {0}. File release group: {1}", releaseGroup, fileReleaseGroup);
+                            return Decision.RejectCode(RejectionCode.ReleaseGroupMismatch, "Release is a repack for a different release group. Release Group: {0}. File release group: {1}", releaseGroup, fileReleaseGroup);
                         }
                     }
                 }

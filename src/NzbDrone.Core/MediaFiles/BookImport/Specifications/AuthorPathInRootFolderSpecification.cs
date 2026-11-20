@@ -31,7 +31,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Specifications
             if (_rootFolderService.GetBestRootFolder(pathToCheck) == null)
             {
                 _logger.Warn($"Destination folder {pathToCheck} not in a Root Folder, skipping import");
-                return Decision.Reject($"Destination folder {pathToCheck} is not in a Root Folder");
+                return Decision.RejectCode(RejectionCode.RootFolderMissing, $"Destination folder {pathToCheck} is not in a Root Folder");
             }
 
             return Decision.Accept();

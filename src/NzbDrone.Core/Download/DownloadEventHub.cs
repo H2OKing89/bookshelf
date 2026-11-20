@@ -1,6 +1,7 @@
 using System;
 using NLog;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.Messaging.Events;
@@ -114,7 +115,7 @@ namespace NzbDrone.Core.Download
             if (trackedDownload.DownloadItem.Status != DownloadItemStatus.Completed)
             {
                 trackedDownload.State = TrackedDownloadState.Downloading;
-                trackedDownload.Warn("The download client has not reported completion. Completion cannot authorize cleanup.");
+                trackedDownload.WarnCode(RejectionCode.ClientNotCompleted, "The download client has not reported completion. Completion cannot authorize cleanup.");
                 return false;
             }
 
@@ -133,7 +134,7 @@ namespace NzbDrone.Core.Download
             if (receipt == null)
             {
                 trackedDownload.State = TrackedDownloadState.ImportPending;
-                trackedDownload.Warn("Download cleanup requires verified committed books and recording parts.");
+                trackedDownload.WarnCode(RejectionCode.CompletionUnverified, "Download cleanup requires verified committed books and recording parts.");
                 return false;
             }
 
@@ -151,7 +152,7 @@ namespace NzbDrone.Core.Download
             }
 
             trackedDownload.State = TrackedDownloadState.ImportPending;
-            trackedDownload.Warn("The download source changed or could not be safely retired. Download cleanup remains pending.");
+            trackedDownload.WarnCode(RejectionCode.SourceCleanupPending, "The download source changed or could not be safely retired. Download cleanup remains pending.");
             return false;
         }
 

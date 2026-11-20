@@ -57,7 +57,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Specifications
             if (lastImported.DownloadId == downloadClientItem.DownloadId)
             {
                 _logger.Debug("Book previously imported at {0}", lastImported.Date);
-                return Decision.Reject("Book already imported at {0}", lastImported.Date);
+                return Decision.RejectCode(RejectionCode.AlreadyImported, "Book already imported at {0}", lastImported.Date);
             }
 
             return Decision.Accept();

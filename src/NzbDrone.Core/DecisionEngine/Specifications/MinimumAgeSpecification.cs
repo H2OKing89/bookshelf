@@ -43,7 +43,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             if (age < minimumAge)
             {
                 _logger.Debug("Only {0} minutes old, minimum age is {1} minutes", ageRounded, minimumAge);
-                return Decision.Reject("Only {0} minutes old, minimum age is {1} minutes", ageRounded, minimumAge);
+                return Decision.RejectCode(RejectionCode.MinimumAge, "Only {0} minutes old, minimum age is {1} minutes", ageRounded, minimumAge);
             }
 
             _logger.Debug("Release is {0} minutes old, greater than minimum age of {1} minutes", ageRounded, minimumAge);

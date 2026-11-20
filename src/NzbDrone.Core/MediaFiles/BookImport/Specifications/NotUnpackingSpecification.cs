@@ -41,13 +41,13 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Specifications
                         if (OsInfo.IsNotWindows)
                         {
                             _logger.Debug("{0} is still being unpacked", item.Path);
-                            return Decision.Reject("File is still being unpacked");
+                            return Decision.RejectCode(RejectionCode.SourceUnpacking, "File is still being unpacked");
                         }
 
                         if (_diskProvider.FileGetLastWrite(item.Path) > DateTime.UtcNow.AddMinutes(-5))
                         {
                             _logger.Debug("{0} appears to be unpacking still", item.Path);
-                            return Decision.Reject("File is still being unpacked");
+                            return Decision.RejectCode(RejectionCode.SourceUnpacking, "File is still being unpacked");
                         }
                     }
 

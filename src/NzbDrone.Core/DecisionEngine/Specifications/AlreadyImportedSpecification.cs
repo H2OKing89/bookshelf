@@ -86,7 +86,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                     if (torrentInfo?.InfoHash != null && torrentInfo.InfoHash.ToUpper() == lastGrabbed.DownloadId)
                     {
                         _logger.Debug("Has same torrent hash as a grabbed and imported release");
-                        return Decision.Reject("Has same torrent hash as a grabbed and imported release");
+                        return Decision.RejectCode(RejectionCode.AlreadyImportedSameHash, "Has same torrent hash as a grabbed and imported release");
                     }
                 }
 
@@ -95,7 +95,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                 if (release.Title.Equals(lastGrabbed.SourceTitle, StringComparison.InvariantCultureIgnoreCase))
                 {
                     _logger.Debug("Has same release name as a grabbed and imported release");
-                    return Decision.Reject("Has same release name as a grabbed and imported release");
+                    return Decision.RejectCode(RejectionCode.AlreadyImportedSameName, "Has same release name as a grabbed and imported release");
                 }
             }
 

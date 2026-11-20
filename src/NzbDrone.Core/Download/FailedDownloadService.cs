@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.History;
 using NzbDrone.Core.Messaging.Events;
@@ -77,7 +78,7 @@ namespace NzbDrone.Core.Download
 
                 if (grabbedItems.Empty())
                 {
-                    trackedDownload.Warn("Download wasn't grabbed by Readarr, skipping");
+                    trackedDownload.WarnCode(RejectionCode.DownloadNotTracked, "Download wasn't grabbed by Readarr, skipping");
                     return;
                 }
 

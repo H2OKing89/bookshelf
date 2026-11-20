@@ -28,7 +28,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                 if (subject.Books.Any(e => !e.ReleaseDate.HasValue || e.ReleaseDate.Value.After(DateTime.UtcNow)))
                 {
                     _logger.Debug("Discography release {0} rejected. All books haven't released yet.", subject.Release.Title);
-                    return Decision.Reject("Discography release rejected. All books haven't released yet.");
+                    return Decision.RejectCode(RejectionCode.AuthorPackNotReleased, "Discography release rejected. All books haven't released yet.");
                 }
             }
 

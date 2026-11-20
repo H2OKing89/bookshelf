@@ -57,7 +57,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
                 }
 
                 _logger.Debug("Files for this book exist in the database but not on disk, will be unmonitored on next diskscan. skipping.");
-                return Decision.Reject("Author is not monitored");
+                return Decision.RejectCode(RejectionCode.AuthorNotMonitored, "Author is not monitored");
             }
 
             return Decision.Accept();

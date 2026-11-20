@@ -30,7 +30,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.Search
             if (!criteriaBook.Intersect(remoteBooks).Any())
             {
                 _logger.Debug("Release rejected since the book wasn't requested: {0}", remoteBook.ParsedBookInfo);
-                return Decision.Reject("Book wasn't requested");
+                return Decision.RejectCode(RejectionCode.BookNotRequested, "Book wasn't requested");
             }
 
             return Decision.Accept();

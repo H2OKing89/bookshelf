@@ -27,7 +27,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             if (!qualityOrGroup.Allowed)
             {
                 _logger.Debug("Quality {0} rejected by Author's quality profile", subject.ParsedBookInfo.Quality);
-                return Decision.Reject("{0} is not wanted in profile", subject.ParsedBookInfo.Quality.Quality);
+                return Decision.RejectCode(RejectionCode.QualityNotWanted, "{0} is not wanted in profile", subject.ParsedBookInfo.Quality.Quality);
             }
 
             return Decision.Accept();

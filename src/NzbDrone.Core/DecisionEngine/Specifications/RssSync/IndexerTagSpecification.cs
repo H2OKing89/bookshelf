@@ -47,7 +47,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
             {
                 _logger.Debug("Indexer {0} has tags. None of these are present on author {1}. Rejecting", subject.Release.Indexer, subject.Author);
 
-                return Decision.Reject("Author tags do not match any of the indexer tags");
+                return Decision.RejectCode(RejectionCode.NoMatchingIndexerTag, "Author tags do not match any of the indexer tags");
             }
 
             return Decision.Accept();

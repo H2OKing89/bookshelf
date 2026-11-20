@@ -21,7 +21,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             if (subject.Release.Title.ToLower().Contains("sample") && subject.Release.Size < 20.Megabytes())
             {
                 _logger.Debug("Sample release, rejecting.");
-                return Decision.Reject("Sample");
+                return Decision.RejectCode(RejectionCode.Sample, "Sample");
             }
 
             return Decision.Accept();

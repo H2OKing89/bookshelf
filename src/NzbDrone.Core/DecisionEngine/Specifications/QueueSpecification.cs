@@ -65,7 +65,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                                                            queuedItemCustomFormats,
                                                            subject.ParsedBookInfo.Quality))
                 {
-                    return Decision.Reject("Release in queue already meets cutoff: {0}", remoteBook.ParsedBookInfo.Quality);
+                    return Decision.RejectCode(RejectionCode.QueueCutoffMet, "Release in queue already meets cutoff: {0}", remoteBook.ParsedBookInfo.Quality);
                 }
 
                 _logger.Debug("Checking if release is higher quality than queued release. Queued: {0}", remoteBook.ParsedBookInfo.Quality);
@@ -76,7 +76,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                                                            subject.ParsedBookInfo.Quality,
                                                            subject.CustomFormats))
                 {
-                    return Decision.Reject("Release in queue is of equal or higher preference: {0}", remoteBook.ParsedBookInfo.Quality);
+                    return Decision.RejectCode(RejectionCode.QueueHigherPreference, "Release in queue is of equal or higher preference: {0}", remoteBook.ParsedBookInfo.Quality);
                 }
 
                 _logger.Debug("Checking if profiles allow upgrading. Queued: {0}", remoteBook.ParsedBookInfo.Quality);
@@ -87,7 +87,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                                                                subject.ParsedBookInfo.Quality,
                                                                subject.CustomFormats))
                 {
-                    return Decision.Reject("Another release is queued and the Quality profile does not allow upgrades");
+                    return Decision.RejectCode(RejectionCode.QueueUpgradesNotAllowed, "Another release is queued and the Quality profile does not allow upgrades");
                 }
 
                 if (_upgradableSpecification.IsRevisionUpgrade(remoteBook.ParsedBookInfo.Quality, subject.ParsedBookInfo.Quality))
@@ -95,7 +95,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                     if (_configService.DownloadPropersAndRepacks == ProperDownloadTypes.DoNotUpgrade)
                     {
                         _logger.Debug("Auto downloading of propers is disabled");
-                        return Decision.Reject("Proper downloading is disabled");
+                        return Decision.RejectCode(RejectionCode.PropersDisabled, "Proper downloading is disabled");
                     }
                 }
             }

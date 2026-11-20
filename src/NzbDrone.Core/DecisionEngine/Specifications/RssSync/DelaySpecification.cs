@@ -113,7 +113,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
             if (subject.Release.AgeMinutes < delay)
             {
                 _logger.Debug("Waiting for better quality release, There is a {0} minute delay on {1}", delay, subject.Release.DownloadProtocol);
-                return Decision.Reject("Waiting for better quality release");
+                return Decision.RejectCode(RejectionCode.BetterReleaseDelay, "Waiting for better quality release");
             }
 
             return Decision.Accept();

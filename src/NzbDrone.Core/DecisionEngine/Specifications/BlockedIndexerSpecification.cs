@@ -32,7 +32,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             var status = _blockedIndexerCache.Find(subject.Release.IndexerId.ToString());
             if (status != null)
             {
-                return Decision.Reject($"Indexer {subject.Release.Indexer} is blocked till {status.DisabledTill} due to failures, cannot grab release.");
+                return Decision.RejectCode(RejectionCode.IndexerDisabled, $"Indexer {subject.Release.Indexer} is blocked till {status.DisabledTill} due to failures, cannot grab release.");
             }
 
             return Decision.Accept();

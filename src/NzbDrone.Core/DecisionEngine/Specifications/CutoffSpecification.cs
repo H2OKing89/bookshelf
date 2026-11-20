@@ -50,7 +50,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                     var qualityCutoffIndex = qualityProfile.GetIndex(qualityProfile.Cutoff);
                     var qualityCutoff = qualityProfile.Items[qualityCutoffIndex.Index];
 
-                    return Decision.Reject("Existing files meets cutoff: {0}", qualityCutoff);
+                    return Decision.RejectCode(RejectionCode.CutoffMet, "Existing files meets cutoff: {0}", qualityCutoff);
                 }
             }
 

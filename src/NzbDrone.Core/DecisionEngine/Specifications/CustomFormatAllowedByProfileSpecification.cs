@@ -16,7 +16,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
 
             if (score < minScore)
             {
-                return Decision.Reject("Custom Formats {0} have score {1} below Author profile minimum {2}", subject.CustomFormats.ConcatToString(), score, minScore);
+                return Decision.RejectCode(RejectionCode.CustomFormatMinimumScore, "Custom Formats {0} have score {1} below Author profile minimum {2}", subject.CustomFormats.ConcatToString(), score, minScore);
             }
 
             return Decision.Accept();

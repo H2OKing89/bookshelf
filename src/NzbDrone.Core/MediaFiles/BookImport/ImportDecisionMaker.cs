@@ -130,13 +130,13 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                 }
                 catch (AugmentingFailedException)
                 {
-                    decisions.Add(new ImportDecision<LocalBook>(localTrack, new Rejection("Unable to parse file")));
+                    decisions.Add(new ImportDecision<LocalBook>(localTrack, new Rejection("Unable to parse file", code: RejectionCode.UnableToParse)));
                 }
                 catch (Exception e)
                 {
                     _logger.Error(e, "Couldn't import file. {0}", localTrack.Path);
 
-                    decisions.Add(new ImportDecision<LocalBook>(localTrack, new Rejection("Unexpected error processing file")));
+                    decisions.Add(new ImportDecision<LocalBook>(localTrack, new Rejection("Unexpected error processing file", code: RejectionCode.ProcessingError)));
                 }
             }
 
@@ -226,7 +226,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
 
             if (localEdition.Edition == null)
             {
-                decision = new ImportDecision<LocalEdition>(localEdition, new Rejection($"Couldn't find similar book for {localEdition}"));
+                decision = new ImportDecision<LocalEdition>(localEdition, new Rejection($"Couldn't find similar book for {localEdition}", code: RejectionCode.UnknownEdition));
             }
             else
             {
@@ -258,7 +258,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
 
             if (localBook.Book == null)
             {
-                decision = new ImportDecision<LocalBook>(localBook, new Rejection($"Couldn't parse book from: {localBook.FileTrackInfo}"));
+                decision = new ImportDecision<LocalBook>(localBook, new Rejection($"Couldn't parse book from: {localBook.FileTrackInfo}", code: RejectionCode.UnknownBook));
             }
             else
             {
@@ -292,13 +292,13 @@ namespace NzbDrone.Core.MediaFiles.BookImport
 
                 if (!result.Accepted)
                 {
-                    return new Rejection(result.Reason);
+                    return new Rejection(result.Reason, code: result.Code);
                 }
             }
             catch (Exception e)
             {
                 _logger.Error(e, "Couldn't evaluate decision on {0}", item);
-                return new Rejection($"{spec.GetType().Name}: {e.Message}");
+                return new Rejection($"{spec.GetType().Name}: {e.Message}", code: RejectionCode.DecisionError);
             }
 
             return null;

@@ -96,7 +96,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
             {
                 if (!AudioRecordingIdentifier.MatchesEdition(decision.Item.FileTrackInfo, decision.Item.Path, decision.Item.Edition))
                 {
-                    decision.Reject(new Rejection("File recording ASIN does not match the selected edition"));
+                    decision.Reject(new Rejection("File recording ASIN does not match the selected edition", code: RejectionCode.RecordingIdentityMismatch));
                 }
             }
 
@@ -171,44 +171,13 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                     //check if already imported
                     if (importResults.Where(r => r.Result == ImportResultType.Imported && r.ImportDecision.Item.Book.Id == localTrack.Book.Id).Any(r => r.ImportDecision.Item.Part == localTrack.Part))
                     {
-                        importResults.Add(new ImportResult(importDecision, "Book has already been imported"));
+                        importResults.Add(ImportResult.WithRejections(importDecision, new Rejection("Book has already been imported", code: RejectionCode.FileAlreadyImported)));
                         continue;
                     }
 
                     localTrack.Book.Author = localTrack.Author;
 
-                    var bookFile = new BookFile
-                    {
-                        Path = localTrack.Path.CleanFilePath(),
-                        CalibreId = localTrack.CalibreId,
-                        Part = localTrack.Part,
-                        PartCount = localTrack.PartCount,
-                        Size = localTrack.Size,
-                        Modified = localTrack.Modified,
-                        DateAdded = DateTime.UtcNow,
-                        ReleaseGroup = localTrack.ReleaseGroupOverride ?? localTrack.ReleaseGroup,
-                        Quality = localTrack.Quality,
-                        MediaInfo = localTrack.FileTrackInfo.MediaInfo,
-                        EditionId = localTrack.Edition.Id,
-                        Author = localTrack.Author,
-                        Edition = localTrack.Edition
-                    };
-
-                    if (downloadClientItem?.DownloadId.IsNotNullOrWhiteSpace() == true)
-                    {
-                        var grabHistory = _historyService.FindByDownloadId(downloadClientItem.DownloadId)
-                            .OrderByDescending(h => h.Date)
-                            .FirstOrDefault(h => h.EventType == EntityHistoryEventType.Grabbed);
-
-                        if (Enum.TryParse(grabHistory?.Data.GetValueOrDefault("indexerFlags"), true, out IndexerFlags flags))
-                        {
-                            bookFile.IndexerFlags = flags;
-                        }
-                    }
-                    else
-                    {
-                        bookFile.IndexerFlags = localTrack.IndexerFlags;
-                    }
+                    var bookFile = ImportBookFileMetadata.Create(localTrack, downloadClientItem, _historyService);
 
                     bool copyOnly;
                     switch (importMode)
@@ -234,8 +203,6 @@ namespace NzbDrone.Core.MediaFiles.BookImport
 
                     if (!localTrack.ExistingFile)
                     {
-                        bookFile.SceneName = GetSceneReleaseName(downloadClientItem);
-
                         var moveResult = _bookFileUpgrader.UpgradeBookFile(bookFile, localTrack, copyOnly);
                         moveResult.BookFile ??= bookFile;
                         preparedUpgrades.Add(importDecision, moveResult);
@@ -289,37 +256,37 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                     _logger.Warn(e, "Couldn't import book " + localTrack);
                     _eventAggregator.PublishEvent(new TrackImportFailedEvent(e, localTrack, !localTrack.ExistingFile, downloadClientItem));
 
-                    importResults.Add(new ImportResult(importDecision, "Failed to import book, root folder missing."));
+                    importResults.Add(ImportResult.WithRejections(importDecision, new Rejection("Failed to import book, root folder missing.", code: RejectionCode.RootFolderMissing)));
                 }
                 catch (DestinationAlreadyExistsException e)
                 {
                     _logger.Warn(e, "Couldn't import book " + localTrack);
-                    importResults.Add(new ImportResult(importDecision, "Failed to import book, destination already exists."));
+                    importResults.Add(ImportResult.WithRejections(importDecision, new Rejection("Failed to import book, destination already exists.", code: RejectionCode.DestinationExists)));
                 }
                 catch (UnauthorizedAccessException e)
                 {
                     _logger.Warn(e, "Couldn't import book " + localTrack);
                     _eventAggregator.PublishEvent(new TrackImportFailedEvent(e, localTrack, !localTrack.ExistingFile, downloadClientItem));
 
-                    importResults.Add(new ImportResult(importDecision, "Failed to import book, permissions error"));
+                    importResults.Add(ImportResult.WithRejections(importDecision, new Rejection("Failed to import book, permissions error", code: RejectionCode.PermissionDenied)));
                 }
                 catch (RecycleBinException e)
                 {
                     _logger.Warn(e, "Couldn't import book " + localTrack);
                     _eventAggregator.PublishEvent(new TrackImportFailedEvent(e, localTrack, !localTrack.ExistingFile, downloadClientItem));
 
-                    importResults.Add(new ImportResult(importDecision, "Failed to import book, unable to move existing file to the Recycle Bin."));
+                    importResults.Add(ImportResult.WithRejections(importDecision, new Rejection("Failed to import book, unable to move existing file to the Recycle Bin.", code: RejectionCode.RecycleBinFailed)));
                 }
                 catch (CalibreException e)
                 {
                     _logger.Warn(e, "Couldn't import book " + localTrack);
 
-                    importResults.Add(new ImportResult(importDecision, "Failed to import book, error communicating with Calibre.  Check log for details."));
+                    importResults.Add(ImportResult.WithRejections(importDecision, new Rejection("Failed to import book, error communicating with Calibre.  Check log for details.", code: RejectionCode.CalibreUnavailable)));
                 }
                 catch (Exception e)
                 {
                     _logger.Warn(e, "Couldn't import book " + localTrack);
-                    importResults.Add(new ImportResult(importDecision, "Failed to import book."));
+                    importResults.Add(ImportResult.WithRejections(importDecision, new Rejection("Failed to import book.", code: RejectionCode.ImportFailed)));
                 }
             }
 
@@ -331,6 +298,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                 var complete = decisions.Where(decision => !decision.Item.ExistingFile && decision.Item.Book?.Id == group.Key)
                     .All(decision => successfulParts.Contains(decision.Item.Part));
                 string failure = null;
+                var failureCode = RejectionCode.ImportFailed;
                 if (complete)
                 {
                     try
@@ -346,6 +314,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                 else
                 {
                     failure = "Recording import canceled because another part failed; previous files preserved";
+                    failureCode = RejectionCode.ImportPartFailed;
                 }
 
                 if (failure != null)
@@ -357,7 +326,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                     trackImportedEvents.RemoveAll(item => preparedFiles.Contains(item.ImportedBook));
                     foreach (var result in importResults.Where(result => result.Result == ImportResultType.Imported && group.Any(item => item.Key == result.ImportDecision)))
                     {
-                        result.Errors.Add(failure);
+                        result.AddRejection(new Rejection(failure, code: failureCode));
                     }
 
                     continue;
@@ -556,7 +525,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                         _logger.Error(e, "Failed to add author {0}", author);
                         foreach (var decision in decisions)
                         {
-                            decision.Reject(new Rejection("Failed to add missing author", RejectionType.Temporary));
+                            decision.Reject(new Rejection("Failed to add missing author", RejectionType.Temporary, RejectionCode.AuthorAddFailed));
                         }
 
                         return null;
@@ -681,7 +650,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
         {
             foreach (var decision in decisions)
             {
-                decision.Reject(new Rejection("Failed to add missing book", RejectionType.Temporary));
+                decision.Reject(new Rejection("Failed to add missing book", RejectionType.Temporary, RejectionCode.BookAddFailed));
             }
         }
 
@@ -703,23 +672,6 @@ namespace NzbDrone.Core.MediaFiles.BookImport
 
                 _mediaFileService.Delete(previousFile, DeleteMediaFileReason.Upgrade);
             }
-        }
-
-        private string GetSceneReleaseName(DownloadClientItem downloadClientItem)
-        {
-            if (downloadClientItem != null)
-            {
-                var title = Parser.Parser.RemoveFileExtension(downloadClientItem.Title);
-
-                var parsedTitle = Parser.Parser.ParseBookTitle(title);
-
-                if (parsedTitle != null)
-                {
-                    return title;
-                }
-            }
-
-            return null;
         }
     }
 }

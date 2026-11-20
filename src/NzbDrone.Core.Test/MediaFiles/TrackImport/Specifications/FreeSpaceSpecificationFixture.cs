@@ -6,6 +6,7 @@ using NUnit.Framework;
 using NzbDrone.Common.Disk;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.MediaFiles.BookImport.Specifications;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Test.Framework;
@@ -55,7 +56,10 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport.Specifications
             GivenFileSize(100.Megabytes());
             GivenFreeSpace(80.Megabytes());
 
-            Subject.IsSatisfiedBy(_localTrack, null).Accepted.Should().BeFalse();
+            var decision = Subject.IsSatisfiedBy(_localTrack, null);
+
+            decision.Accepted.Should().BeFalse();
+            decision.Code.Should().Be(RejectionCode.MinimumFreeSpace);
             ExceptionVerification.ExpectedWarns(1);
         }
 
@@ -69,7 +73,10 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport.Specifications
             GivenFileSize(100.Megabytes());
             GivenFreeSpace(150.Megabytes());
 
-            Subject.IsSatisfiedBy(_localTrack, null).Accepted.Should().BeFalse();
+            var decision = Subject.IsSatisfiedBy(_localTrack, null);
+
+            decision.Accepted.Should().BeFalse();
+            decision.Code.Should().Be(RejectionCode.MinimumFreeSpace);
             ExceptionVerification.ExpectedWarns(1);
         }
 

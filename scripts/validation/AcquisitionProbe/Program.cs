@@ -11,6 +11,7 @@ using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.CustomFormats;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Download.Clients;
 using NzbDrone.Core.Download.History;
@@ -21,8 +22,11 @@ using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.BookImport;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.Organizer;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
+using NzbDrone.Core.Profiles;
+using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.RootFolders;
 
@@ -61,6 +65,7 @@ internal static class Program
             Metadata["sourceRetirementBoundary"] = "published source helper with owned physical filesystem operations";
             Metadata["downloadClientNetworkUsed"] = false;
             VerifyClientTags();
+            VerifyCustomFormatUpgrades(fixture);
             foreach (var name in new[] { "two_books_one_recording", "two_books_one_ebook", "declared_missing_part", "duplicate_parts", "different_editions", "unrepresented_source", "manual_subset", "rejected_part" })
                 VerifyIncomplete(fixture, name);
             VerifyWriteFailure(fixture);
@@ -148,6 +153,62 @@ internal static class Program
             try { provider.GetDownloadClient(protocol); } catch (DownloadClientUnavailableException) { rejected = true; }
             Check(prefix + "_no_eligible_client_is_explicit", rejected);
         }
+    }
+
+    private static void VerifyCustomFormatUpgrades(string root)
+    {
+        Phase = "custom_format_upgrade_guard";
+        var folder = Directory.CreateDirectory(Path.Combine(root, "custom-format-guard")).FullName;
+        var originalPath = Path.Combine(folder, "incoming.mp3");
+        var existingPath = Path.Combine(folder, "existing-Preferred.mp3");
+        File.WriteAllText(originalPath, "Owned incoming bytes");
+        File.WriteAllText(existingPath, "Owned existing bytes");
+        var before = new[] { originalPath, existingPath }.ToDictionary(path => path, path => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))));
+        var preferred = new CustomFormat("Preferred filename", new ReleaseTitleSpecification { Value = "Preferred" }) { Id = 100 };
+        var formats = Fake<ICustomFormatService>((method, _) => method.Name == "All" ? new List<CustomFormat> { preferred } : Unexpected(method));
+        var calculator = new CustomFormatCalculationService(formats, LogManager.GetLogger("OwnedFormatProbe"));
+        var intended = "Book";
+        var names = Fake<IBuildFileNames>((method, _) => method.Name == "BuildBookFileName" ? intended : Unexpected(method));
+        var history = Fake<IHistoryService>((method, _) => method.Name == "FindByDownloadId" ? new List<EntityHistory>() : Unexpected(method));
+        var preview = new LocalBookCustomFormatCalculationService(names, calculator, history);
+        var config = Fake<IConfigService>((method, _) => method.Name == "get_DownloadPropersAndRepacks" ? ProperDownloadTypes.PreferAndUpgrade : Unexpected(method));
+        var profile = new QualityProfile
+        {
+            Items = new List<QualityProfileQualityItem>
+            {
+                new() { Quality = Quality.MP3, Allowed = true },
+                new() { Quality = Quality.FLAC, Allowed = true }
+            },
+            FormatItems = new List<ProfileFormatItem> { new() { Format = preferred, Score = 100 } }
+        };
+        var author = new Author { Id = 81, Name = "Owned format author", QualityProfile = profile };
+        var existing = new BookFile { Id = 82, EditionId = 83, Part = 1, Path = existingPath, Quality = new QualityModel(Quality.MP3), Author = author };
+        var item = new LocalBook
+        {
+            Path = originalPath, Quality = new QualityModel(Quality.MP3), Author = author,
+            Edition = new Edition { Id = 83, BookId = 84, ForeignEditionId = "audible:us:B000000083", Asin = "B000000083", AudibleRegion = "us" },
+            Book = new Book { Id = 84, BookFiles = new List<BookFile> { existing } },
+            FileTrackInfo = new ParsedTrackInfo(), Part = 1, PartCount = 1
+        };
+        var spec = new NzbDrone.Core.MediaFiles.BookImport.Specifications.UpgradeSpecification(config, calculator, preview, LogManager.GetLogger("OwnedFormatProbe"));
+        var decision = spec.IsSatisfiedBy(item, null);
+        Check("published_same_quality_custom_format_downgrade_has_stable_code", !decision.Accepted && decision.Code == RejectionCode.CustomFormatDowngrade);
+        intended = "Book-Preferred";
+        Check("published_same_quality_preserved_custom_format_is_accepted", spec.IsSatisfiedBy(item, null).Accepted);
+        item.Path = existingPath;
+        intended = "Book";
+        decision = spec.IsSatisfiedBy(item, null);
+        Check("published_filename_preference_lost_after_rename_has_specific_code", !decision.Accepted && decision.Code == RejectionCode.CustomFormatLostAfterRename);
+        item.Path = originalPath;
+        var client = new DownloadClientItem { Title = "Brandon Sanderson - Mistborn Preferred (2025)", DownloadId = "owned-cf" };
+        Check("published_preserved_scene_metadata_keeps_its_format_after_rename", spec.IsSatisfiedBy(item, client).Accepted);
+        item.Edition.Id = 85;
+        Check("published_other_recording_is_not_a_format_replacement", spec.IsSatisfiedBy(item, null).Accepted);
+        item.Edition.Id = 83;
+        item.Quality = new QualityModel(Quality.FLAC);
+        Check("published_quality_upgrade_retains_precedence_over_format_score", spec.IsSatisfiedBy(item, null).Accepted);
+        Check("published_format_preview_preserves_recording_identity", item.Edition.Asin == "B000000083" && item.Edition.ForeignEditionId == "audible:us:B000000083" && item.Edition.AudibleRegion == "us");
+        Check("published_format_decisions_leave_source_and_library_bytes_unchanged", before.All(pair => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(pair.Key))) == pair.Value));
     }
 
     private static IDownloadClient FakeClient(DownloadClientDefinition definition)

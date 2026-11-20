@@ -34,7 +34,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             if (retention > 0 && age > retention)
             {
                 _logger.Debug("Report age: {0} rejected by user's retention limit", age);
-                return Decision.Reject("Older than configured retention");
+                return Decision.RejectCode(RejectionCode.RetentionExceeded, "Older than configured retention");
             }
 
             return Decision.Accept();

@@ -49,7 +49,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                 if (torrentInfo.Seeders.HasValue && torrentInfo.Seeders.Value < minimumSeeders)
                 {
                     _logger.Debug("Not enough seeders: {0}. Minimum seeders: {1}", torrentInfo.Seeders, minimumSeeders);
-                    return Decision.Reject("Not enough seeders: {0}. Minimum seeders: {1}", torrentInfo.Seeders, minimumSeeders);
+                    return Decision.RejectCode(RejectionCode.MinimumSeeders, "Not enough seeders: {0}. Minimum seeders: {1}", torrentInfo.Seeders, minimumSeeders);
                 }
             }
 

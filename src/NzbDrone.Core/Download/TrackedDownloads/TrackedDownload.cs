@@ -1,3 +1,5 @@
+using System.Linq;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Parser.Model;
 
@@ -27,6 +29,12 @@ namespace NzbDrone.Core.Download.TrackedDownloads
         {
             var statusMessage = string.Format(message, args);
             Warn(new TrackedDownloadStatusMessage(DownloadItem.Title, statusMessage));
+        }
+
+        public void WarnCode(string code, string message, params object[] args)
+        {
+            var rejection = new Rejection(string.Format(message, args), RejectionType.Temporary, code);
+            Warn(new TrackedDownloadStatusMessage(DownloadItem.Title, new[] { rejection.Reason }.ToList(), new[] { rejection }));
         }
 
         public void Warn(params TrackedDownloadStatusMessage[] statusMessages)

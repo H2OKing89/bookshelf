@@ -8,6 +8,7 @@ using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.CustomFormats;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download.History;
 using NzbDrone.Core.History;
 using NzbDrone.Core.Messaging.Events;
@@ -122,7 +123,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                     if (existingItem.State == TrackedDownloadState.Imported)
                     {
                         existingItem.State = TrackedDownloadState.ImportPending;
-                        existingItem.Warn("Download client or output path changed. Previous completion cannot authorize cleanup in the new context.");
+                        existingItem.WarnCode(RejectionCode.CompletionUnverified, "Download client or output path changed. Previous completion cannot authorize cleanup in the new context.");
                     }
                 }
 
@@ -229,7 +230,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                     if (receipt == null)
                     {
                         trackedDownload.State = TrackedDownloadState.ImportPending;
-                        trackedDownload.Warn("Previous import completion could not be verified. Download files are retained for review.");
+                        trackedDownload.WarnCode(RejectionCode.CompletionUnverified, "Previous import completion could not be verified. Download files are retained for review.");
                     }
                     else
                     {

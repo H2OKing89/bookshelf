@@ -30,7 +30,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             if (_cdContainerTypes.Contains(subject.Release.Container.ToLower()))
             {
                 _logger.Debug("Release contains raw CD, rejecting.");
-                return Decision.Reject("Raw CD release");
+                return Decision.RejectCode(RejectionCode.RawRelease, "Raw CD release");
             }
 
             return Decision.Accept();

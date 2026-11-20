@@ -45,7 +45,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                 if (subject.Release.Size < minSize)
                 {
                     _logger.Debug("Item: {0}, Size: {1} is smaller than minimum allowed size ({2} bytes), rejecting.", subject, subject.Release.Size, minSize);
-                    return Decision.Reject("{0} is smaller than minimum allowed {1}", subject.Release.Size.SizeSuffix(), minSize.SizeSuffix());
+                    return Decision.RejectCode(RejectionCode.BelowMinimumSize, "{0} is smaller than minimum allowed {1}", subject.Release.Size.SizeSuffix(), minSize.SizeSuffix());
                 }
             }
 
@@ -61,7 +61,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                 if (subject.Release.Size > maxSize)
                 {
                     _logger.Debug("Item: {0}, Size: {1} is greater than maximum allowed size ({2} bytes), rejecting.", subject, subject.Release.Size, maxSize);
-                    return Decision.Reject("{0} is larger than maximum allowed {1}", subject.Release.Size.SizeSuffix(), maxSize.SizeSuffix());
+                    return Decision.RejectCode(RejectionCode.AboveMaximumSize, "{0} is larger than maximum allowed {1}", subject.Release.Size.SizeSuffix(), maxSize.SizeSuffix());
                 }
             }
 

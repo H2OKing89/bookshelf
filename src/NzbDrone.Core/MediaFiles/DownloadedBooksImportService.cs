@@ -278,7 +278,7 @@ namespace NzbDrone.Core.MediaFiles
 
                 return new List<ImportResult>
                        {
-                           new ImportResult(new ImportDecision<LocalBook>(new LocalBook { Path = fileInfo.FullName }, new Rejection("Invalid music file, filename starts with '._'")), "Invalid music file, filename starts with '._'")
+                           new ImportResult(new ImportDecision<LocalBook>(new LocalBook { Path = fileInfo.FullName }, new Rejection("Invalid music file, filename starts with '._'", code: RejectionCode.InvalidFile)), "Invalid music file, filename starts with '._'")
                        };
             }
 
@@ -326,14 +326,15 @@ namespace NzbDrone.Core.MediaFiles
         private ImportResult FileIsLockedResult(string audioFile)
         {
             _logger.Debug("[{0}] is currently locked by another process, skipping", audioFile);
-            return new ImportResult(new ImportDecision<LocalBook>(new LocalBook { Path = audioFile }, new Rejection("Locked file, try again later")), "Locked file, try again later");
+            return new ImportResult(new ImportDecision<LocalBook>(new LocalBook { Path = audioFile }, new Rejection("Locked file, try again later", code: RejectionCode.FileLocked)), "Locked file, try again later");
         }
 
         private ImportResult UnknownAuthorResult(string message, string bookFile = null)
         {
             var localTrack = bookFile == null ? null : new LocalBook { Path = bookFile };
 
-            return new ImportResult(new ImportDecision<LocalBook>(localTrack, new Rejection("Unknown Author")), message);
+            return ImportResult.WithRejections(new ImportDecision<LocalBook>(localTrack, new Rejection("Unknown Author", code: RejectionCode.UnknownAuthor)),
+                new Rejection(message, code: RejectionCode.UnknownAuthor));
         }
 
         private void LogInaccessiblePathError(string path)

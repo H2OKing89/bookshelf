@@ -81,20 +81,20 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
                     {
                         if (recent)
                         {
-                            return Decision.Reject("Recent grab event in history already meets cutoff: {0}", mostRecent.Quality);
+                            return Decision.RejectCode(RejectionCode.HistoryCutoffMet, "Recent grab event in history already meets cutoff: {0}", mostRecent.Quality);
                         }
 
-                        return Decision.Reject("CDH is disabled and grab event in history already meets cutoff: {0}", mostRecent.Quality);
+                        return Decision.RejectCode(RejectionCode.HistoryCutoffMet, "CDH is disabled and grab event in history already meets cutoff: {0}", mostRecent.Quality);
                     }
 
                     if (!upgradeable)
                     {
                         if (recent)
                         {
-                            return Decision.Reject("Recent grab event in history is of equal or higher quality: {0}", mostRecent.Quality);
+                            return Decision.RejectCode(RejectionCode.HistoryHigherPreference, "Recent grab event in history is of equal or higher quality: {0}", mostRecent.Quality);
                         }
 
-                        return Decision.Reject("CDH is disabled and grab event in history is of equal or higher quality: {0}", mostRecent.Quality);
+                        return Decision.RejectCode(RejectionCode.HistoryHigherPreference, "CDH is disabled and grab event in history is of equal or higher quality: {0}", mostRecent.Quality);
                     }
                 }
             }

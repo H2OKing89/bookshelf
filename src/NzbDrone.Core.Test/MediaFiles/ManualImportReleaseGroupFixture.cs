@@ -9,6 +9,7 @@ using NUnit.Framework;
 using NzbDrone.Common.Disk;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.CustomFormats;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
@@ -340,6 +341,54 @@ namespace NzbDrone.Core.Test.MediaFiles
 
             Mocker.GetMock<IImportApprovedBooks>().Verify(service => service.Import(
                 It.IsAny<List<ImportDecision<LocalBook>>>(), It.IsAny<bool>(), It.IsAny<DownloadClientItem>(), It.IsAny<ImportMode>()), Times.Never());
+        }
+
+        [Test]
+        public void a_custom_format_rejection_is_visible_before_an_explicit_manual_replacement()
+        {
+            _author.QualityProfile.Value.Items = new List<QualityProfileQualityItem>
+            {
+                new QualityProfileQualityItem { Quality = Quality.M4B, Allowed = true }
+            };
+            _book.BookFiles = new List<BookFile>
+            {
+                new BookFile
+                {
+                    Id = 42, EditionId = _edition.Id, Author = _author,
+                    Path = @"C:\library\Author\Existing.m4b".AsOsAgnostic(),
+                    Quality = new QualityModel(Quality.M4B), ReleaseGroup = "Preferred"
+                }
+            };
+            Mocker.GetMock<ILocalBookCustomFormatCalculationService>()
+                .Setup(service => service.Calculate(It.IsAny<LocalBook>(), It.IsAny<DownloadClientItem>()))
+                .Returns(new LocalBookCustomFormatScores
+                {
+                    OriginalFormats = new List<CustomFormat>(), IntendedFormats = new List<CustomFormat>()
+                });
+            var specifications = new[]
+            {
+                Mocker.Resolve<NzbDrone.Core.MediaFiles.BookImport.Specifications.UpgradeSpecification>()
+            };
+            Mocker.SetConstant<IMakeImportDecision>(new ImportDecisionMaker(
+                specifications,
+                Array.Empty<IImportDecisionEngineSpecification<LocalEdition>>(),
+                Mocker.GetMock<IMediaFileService>().Object,
+                Mocker.GetMock<IMetadataTagService>().Object,
+                Mocker.GetMock<IAugmentingService>().Object,
+                Mocker.GetMock<IIdentificationService>().Object,
+                Mocker.GetMock<IRootFolderService>().Object,
+                Mocker.GetMock<IQualityProfileService>().Object,
+                TestLogger));
+
+            var preview = Subject.GetMediaFiles(_path, null, _author, FilterFilesType.None, true).Single();
+
+            preview.Rejections.Should().ContainSingle().Which.Code.Should().Be(RejectionCode.CustomFormatDowngrade);
+            var command = Command(null);
+            command.ReplaceExistingFiles = true;
+            Subject.Execute(command);
+
+            Mocker.GetMock<IImportApprovedBooks>().Verify(service => service.Import(
+                It.Is<List<ImportDecision<LocalBook>>>(items => items.All(item => item.Approved)), true, null, ImportMode.Copy), Times.Once());
         }
 
         private ManualImportCommand Command(string choice)

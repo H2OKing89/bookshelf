@@ -38,7 +38,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Specifications
                 if (bookFile.Size == localBook.Size)
                 {
                     _logger.Debug("'{0}' Has the same filesize as existing file", localBook.Path);
-                    return Decision.Reject("Has the same filesize as existing file");
+                    return Decision.RejectCode(RejectionCode.SameFile, "Has the same filesize as existing file");
                 }
             }
 

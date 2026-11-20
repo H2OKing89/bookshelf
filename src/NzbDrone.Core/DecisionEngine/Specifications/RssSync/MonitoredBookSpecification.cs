@@ -31,7 +31,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
             if (!subject.Author.Monitored)
             {
                 _logger.Debug("{0} is present in the DB but not tracked. Rejecting.", subject.Author);
-                return Decision.Reject("Author is not monitored");
+                return Decision.RejectCode(RejectionCode.AuthorNotMonitored, "Author is not monitored");
             }
 
             var monitoredCount = subject.Books.Count(book => book.Monitored);
@@ -43,7 +43,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
             if (subject.Books.Count == 1)
             {
                 _logger.Debug("Book is not monitored. Rejecting", monitoredCount, subject.Books.Count);
-                return Decision.Reject("Book is not monitored");
+                return Decision.RejectCode(RejectionCode.BookNotMonitored, "Book is not monitored");
             }
 
             if (monitoredCount == 0)
@@ -55,7 +55,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
                 _logger.Debug("Only {0}/{1} books in the release are monitored. Rejecting", monitoredCount, subject.Books.Count);
             }
 
-            return Decision.Reject("Book is not monitored");
+            return Decision.RejectCode(RejectionCode.BookNotMonitored, "Book is not monitored");
         }
     }
 }
