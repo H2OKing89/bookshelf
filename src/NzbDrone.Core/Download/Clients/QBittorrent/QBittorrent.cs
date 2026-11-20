@@ -332,6 +332,43 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
             Proxy.RemoveTorrent(item.DownloadId.ToLower(), deleteData, Settings);
         }
 
+        public override IEnumerable<DownloadClientFile> GetFiles(DownloadClientItem item)
+        {
+            if (string.IsNullOrWhiteSpace(item?.DownloadId) ||
+                (Definition?.Id > 0 && item.DownloadClientInfo?.Id > 0 && item.DownloadClientInfo.Id != Definition.Id))
+            {
+                throw new DownloadClientException("File inventory requires an item from this download client");
+            }
+
+            var files = Proxy.GetTorrentFiles(item.DownloadId.ToLowerInvariant(), Settings);
+            if (files == null || files.Count > DownloadClientFile.MaximumFiles)
+            {
+                throw new DownloadClientException("qBittorrent returned an invalid file inventory");
+            }
+
+            var result = new List<DownloadClientFile>(files.Count);
+            var paths = new HashSet<string>(StringComparer.Ordinal);
+            var characters = 0;
+            foreach (var file in files)
+            {
+                if (file == null || file.Size is < 0 ||
+                    !DownloadClientFile.TryNormalizeRelativePath(file.Name, out var relativePath) || !paths.Add(relativePath))
+                {
+                    throw new DownloadClientException("qBittorrent returned an invalid file inventory");
+                }
+
+                characters += relativePath.Length;
+                if (characters > DownloadClientFile.MaximumInventoryPathCharacters)
+                {
+                    throw new DownloadClientException("qBittorrent returned an oversized file inventory");
+                }
+
+                result.Add(new DownloadClientFile { RelativePath = relativePath, Size = file.Size });
+            }
+
+            return result;
+        }
+
         public override DownloadClientItem GetImportItem(DownloadClientItem item, DownloadClientItem previousImportAttempt)
         {
             // On API version >= 2.6.1 this is already set correctly
