@@ -220,7 +220,7 @@ namespace NzbDrone.Core.Test.Download
             Mocker.SetConstant<IImportRetryService>(new ImportRetryService(TimeProvider.System));
             _tracked = new TrackedDownload
             {
-                IsTrackable = true, State = TrackedDownloadState.Imported,
+                IsTrackable = true, IsClientAvailable = true, State = TrackedDownloadState.Imported,
                 DownloadItem = new DownloadClientItem { DownloadId = "owned-download", CanBeRemoved = true, Title = "Owned recording", Status = DownloadItemStatus.Completed }
             };
             _receipt = new DownloadImportReceipt { DownloadId = "owned-download" };

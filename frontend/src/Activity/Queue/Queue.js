@@ -24,6 +24,7 @@ import toggleSelected from 'Utilities/Table/toggleSelected';
 import QueueOptionsConnector from './QueueOptionsConnector';
 import QueueRowConnector from './QueueRowConnector';
 import RemoveQueueItemModal from './RemoveQueueItemModal';
+import SubmissionHolds from './SubmissionHolds';
 
 class Queue extends Component {
 
@@ -226,6 +227,7 @@ class Queue extends Component {
         </PageToolbar>
 
         <PageContentBody>
+          <SubmissionHolds isRefreshing={isRefreshing} />
           {
             isRefreshing && !isAllPopulated ?
               <LoadingIndicator /> :

@@ -24,6 +24,8 @@ namespace NzbDrone.Core.Queue
         public TrackedDownloadState? TrackedDownloadState { get; set; }
         public List<TrackedDownloadStatusMessage> StatusMessages { get; set; }
         public string DownloadId { get; set; }
+        public int? DownloadClientId { get; set; }
+        public bool DownloadClientAvailable { get; set; }
         public RemoteBook RemoteBook { get; set; }
         public DownloadProtocol Protocol { get; set; }
         public string DownloadClient { get; set; }

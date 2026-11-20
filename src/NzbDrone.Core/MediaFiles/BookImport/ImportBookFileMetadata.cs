@@ -30,9 +30,9 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                 Edition = localBook.Edition
             };
 
-            if (downloadClientItem?.DownloadId.IsNotNullOrWhiteSpace() == true)
+            if (downloadClientItem?.DownloadId.IsNotNullOrWhiteSpace() == true && downloadClientItem.DownloadClientInfo?.Id > 0)
             {
-                var grab = historyService.FindByDownloadId(downloadClientItem.DownloadId)
+                var grab = (historyService.FindByDownloadId(downloadClientItem.DownloadId, downloadClientItem.DownloadClientInfo.Id) ?? new List<EntityHistory>())
                     .OrderByDescending(row => row.Date).FirstOrDefault(row => row.EventType == EntityHistoryEventType.Grabbed);
                 if (Enum.TryParse(grab?.Data.GetValueOrDefault("indexerFlags"), true, out IndexerFlags flags))
                 {

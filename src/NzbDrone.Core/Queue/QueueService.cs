@@ -63,10 +63,10 @@ namespace NzbDrone.Core.Queue
         private Queue MapQueueItem(TrackedDownload trackedDownload, Book book)
         {
             var downloadForced = false;
-            var history = _historyService.Find(trackedDownload.DownloadItem.DownloadId, EntityHistoryEventType.Grabbed).FirstOrDefault();
+            var history = _historyService.Find(trackedDownload.DownloadItem.DownloadId, EntityHistoryEventType.Grabbed, trackedDownload.DownloadClient).FirstOrDefault();
             if (history != null && history.Data.ContainsKey("downloadForced"))
             {
-                downloadForced = bool.Parse(history.Data["downloadForced"]);
+                bool.TryParse(history.Data["downloadForced"], out downloadForced);
             }
 
             var queue = new Queue
@@ -85,6 +85,8 @@ namespace NzbDrone.Core.Queue
                 ErrorMessage = trackedDownload.DownloadItem.Message,
                 RemoteBook = trackedDownload.RemoteBook,
                 DownloadId = trackedDownload.DownloadItem.DownloadId,
+                DownloadClientId = trackedDownload.DownloadClient,
+                DownloadClientAvailable = trackedDownload.IsClientAvailable,
                 Protocol = trackedDownload.Protocol,
                 DownloadClient = trackedDownload.DownloadItem.DownloadClientInfo.Name,
                 Indexer = trackedDownload.Indexer,
@@ -106,7 +108,6 @@ namespace NzbDrone.Core.Queue
         public void Handle(TrackedDownloadRefreshedEvent message)
         {
             _queue = message.TrackedDownloads
-                .Where(t => t.IsTrackable)
                 .OrderBy(c => c.DownloadItem.RemainingTime)
                 .SelectMany(MapQueue)
                 .ToList();

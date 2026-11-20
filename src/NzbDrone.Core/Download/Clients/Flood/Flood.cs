@@ -147,7 +147,7 @@ namespace NzbDrone.Core.Download.Clients.Flood
                 if (item.Status == DownloadItemStatus.Completed)
                 {
                     // Grab cached seedConfig
-                    var seedConfig = _downloadSeedConfigProvider.GetSeedConfiguration(item.DownloadId);
+                    var seedConfig = _downloadSeedConfigProvider.GetSeedConfiguration(item.DownloadId, Definition.Id);
 
                     if (seedConfig != null)
                     {

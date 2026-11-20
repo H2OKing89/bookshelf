@@ -46,7 +46,7 @@ namespace NzbDrone.Core.Download
         private void RemoveCompletedDownloads()
         {
             var trackedDownloads = _trackedDownloadService.GetTrackedDownloads()
-                                                          .Where(t => !t.DownloadItem.Removed && t.DownloadItem.CanBeRemoved && t.State == TrackedDownloadState.Imported)
+                                                          .Where(t => t.IsClientAvailable && !t.DownloadItem.Removed && t.DownloadItem.CanBeRemoved && t.State == TrackedDownloadState.Imported)
                                                           .ToList();
 
             foreach (var trackedDownload in trackedDownloads)
@@ -62,7 +62,7 @@ namespace NzbDrone.Core.Download
                 try
                 {
                     receipt = _completionService.ReadReceipt(trackedDownload,
-                        _downloadHistoryService.GetLatestDownloadHistoryItem(trackedDownload.DownloadItem.DownloadId));
+                        _downloadHistoryService.GetLatestDownloadHistoryItem(trackedDownload.DownloadItem.DownloadId, trackedDownload.DownloadClient));
                 }
                 catch (Exception error)
                 {
@@ -86,7 +86,7 @@ namespace NzbDrone.Core.Download
         {
             var enableCompletedDownloadHandling = _configService.EnableCompletedDownloadHandling;
             var trackedDownloads = _trackedDownloadService.GetTrackedDownloads()
-                                                          .Where(t => t.IsTrackable)
+                                                          .Where(t => t.IsTrackable && t.IsClientAvailable)
                                                           .ToList();
 
             foreach (var trackedDownload in trackedDownloads)

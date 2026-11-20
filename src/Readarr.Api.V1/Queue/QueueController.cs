@@ -87,14 +87,15 @@ namespace Readarr.Api.V1.Queue
                 throw new NotFoundException();
             }
 
-            Remove(trackedDownload, removeFromClient, blocklist, skipRedownload, changeCategory);
-            _trackedDownloadService.StopTracking(trackedDownload.DownloadItem.DownloadId);
+            if (Remove(trackedDownload, removeFromClient, blocklist, skipRedownload, changeCategory) != null)
+            {
+                _trackedDownloadService.StopTracking(trackedDownload.DownloadItem.DownloadId, trackedDownload.DownloadClient);
+            }
         }
 
         [HttpDelete("bulk")]
         public object RemoveMany([FromBody] QueueBulkResource resource, [FromQuery] bool removeFromClient = true, [FromQuery] bool blocklist = false, [FromQuery] bool skipRedownload = false, [FromQuery] bool changeCategory = false)
         {
-            var trackedDownloadIds = new List<string>();
             var pendingToRemove = new List<NzbDrone.Core.Queue.Queue>();
             var trackedToRemove = new List<TrackedDownload>();
 
@@ -121,13 +122,13 @@ namespace Readarr.Api.V1.Queue
                 Remove(pendingRelease);
             }
 
-            foreach (var trackedDownload in trackedToRemove.DistinctBy(t => t.DownloadItem.DownloadId))
+            foreach (var trackedDownload in trackedToRemove.DistinctBy(t => (t.DownloadClient, t.DownloadItem.DownloadId)))
             {
-                Remove(trackedDownload, removeFromClient, blocklist, skipRedownload, changeCategory);
-                trackedDownloadIds.Add(trackedDownload.DownloadItem.DownloadId);
+                if (Remove(trackedDownload, removeFromClient, blocklist, skipRedownload, changeCategory) != null)
+                {
+                    _trackedDownloadService.StopTracking(trackedDownload.DownloadItem.DownloadId, trackedDownload.DownloadClient);
+                }
             }
-
-            _trackedDownloadService.StopTracking(trackedDownloadIds);
 
             return new { };
         }
@@ -272,7 +273,7 @@ namespace Readarr.Api.V1.Queue
 
             if (blocklist)
             {
-                _failedDownloadService.MarkAsFailed(trackedDownload.DownloadItem.DownloadId, skipRedownload);
+                _failedDownloadService.MarkAsFailed(trackedDownload.DownloadItem.DownloadId, trackedDownload.DownloadClient, skipRedownload);
             }
 
             if (!removeFromClient && !blocklist && !changeCategory)
@@ -295,7 +296,9 @@ namespace Readarr.Api.V1.Queue
                 throw new NotFoundException();
             }
 
-            var trackedDownload = _trackedDownloadService.Find(queueItem.DownloadId);
+            var trackedDownload = queueItem.DownloadClientId.HasValue
+                ? _trackedDownloadService.Find(queueItem.DownloadId, queueItem.DownloadClientId.Value)
+                : _trackedDownloadService.Find(queueItem.DownloadId);
 
             if (trackedDownload == null)
             {

@@ -40,6 +40,7 @@ function QueueStatusCell(props) {
     status,
     trackedDownloadStatus,
     trackedDownloadState,
+    downloadClientAvailable,
     statusMessages,
     errorMessage
   } = props;
@@ -126,6 +127,13 @@ function QueueStatusCell(props) {
     }
   }
 
+  let body = hasWarning || hasError ? getDetailedPopoverBody(statusMessages) : sourceTitle;
+  if (downloadClientAvailable === false) {
+    iconKind = kinds.WARNING;
+    title = 'Download client unavailable';
+    body = 'The download client is unavailable. Showing its last known state; automatic import and cleanup are paused.';
+  }
+
   return (
     <TableRowCell className={styles.status}>
       <Popover
@@ -136,7 +144,7 @@ function QueueStatusCell(props) {
           />
         }
         title={title}
-        body={hasWarning || hasError ? getDetailedPopoverBody(statusMessages) : sourceTitle}
+        body={body}
         position={tooltipPositions.RIGHT}
         canFlip={false}
       />
@@ -149,6 +157,7 @@ QueueStatusCell.propTypes = {
   status: PropTypes.string.isRequired,
   trackedDownloadStatus: PropTypes.string.isRequired,
   trackedDownloadState: PropTypes.string.isRequired,
+  downloadClientAvailable: PropTypes.bool,
   statusMessages: PropTypes.arrayOf(PropTypes.object),
   errorMessage: PropTypes.string
 };

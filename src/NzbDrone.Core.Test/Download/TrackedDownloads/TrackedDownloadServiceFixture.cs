@@ -32,8 +32,8 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
         {
             var remote = new RemoteBook { Author = new Author { Id = 5 }, Books = new List<Book> { new Book { Id = 4 } } };
             var marker = new DownloadHistory { EventType = DownloadHistoryEventType.DownloadImported, DownloadId = "owned-download" };
-            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId("owned-download")).Returns(new List<EntityHistory>());
-            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.GetLatestDownloadHistoryItem("owned-download")).Returns(marker);
+            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId("owned-download", 1)).Returns(new List<EntityHistory>());
+            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.GetLatestDownloadHistoryItem("owned-download", 1)).Returns(marker);
             Mocker.GetMock<IParsingService>().Setup(service => service.Map(It.IsAny<ParsedBookInfo>(), null)).Returns(remote);
             Mocker.GetMock<IDownloadImportCompletionService>().Setup(service => service.ReadReceipt(It.IsAny<TrackedDownload>(), marker)).Returns(receipt);
             var client = new DownloadClientDefinition { Id = 1, Protocol = DownloadProtocol.Torrent };
@@ -68,20 +68,16 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
             tracked.KeepSourceFiles.Should().BeTrue();
         }
 
-        [TestCase(false)]
-        [TestCase(true)]
-        public void cached_completion_should_not_follow_a_changed_client_or_output_path(bool changedClient)
+        [Test]
+        public void cached_completion_should_not_follow_a_changed_output_path()
         {
             var tracked = TrackCompletion(new DownloadImportReceipt());
             tracked.ImportItem = tracked.DownloadItem.Clone();
             tracked.ImportCompletionAnnounced = true;
             var changed = tracked.DownloadItem.Clone();
-            if (!changedClient)
-            {
-                changed.OutputPath = new NzbDrone.Common.Disk.OsPath(System.IO.Path.Combine(TempFolder, "new-output"));
-            }
+            changed.OutputPath = new NzbDrone.Common.Disk.OsPath(System.IO.Path.Combine(TempFolder, "new-output"));
 
-            var client = new DownloadClientDefinition { Id = changedClient ? 2 : 1, Protocol = DownloadProtocol.Torrent };
+            var client = new DownloadClientDefinition { Id = 1, Protocol = DownloadProtocol.Torrent };
 
             var refreshed = Subject.TrackDownload(client, changed);
 
@@ -102,8 +98,8 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
                 EventType = DownloadHistoryEventType.DownloadImportIncomplete,
                 Data = new Dictionary<string, string> { ["statusMessages"] = invalidJson ? "invalid" : "[{\"title\":\"Part 1\",\"messages\":[\"Review matching\"]}]" }
             };
-            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.GetLatestDownloadHistoryItem("35238")).Returns(marker);
-            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId("35238")).Returns(new List<EntityHistory>());
+            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.GetLatestDownloadHistoryItem("35238", 1)).Returns(marker);
+            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId("35238", 1)).Returns(new List<EntityHistory>());
             var item = new DownloadClientItem
             {
                 DownloadId = "35238", Title = "Audio Author - Audio Book [2018 - FLAC]",
@@ -164,7 +160,7 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
         private void GivenDownloadHistory()
         {
             Mocker.GetMock<IHistoryService>()
-                .Setup(s => s.FindByDownloadId(It.Is<string>(sr => sr == "35238")))
+                .Setup(s => s.FindByDownloadId(It.Is<string>(sr => sr == "35238"), 1))
                 .Returns(new List<EntityHistory>()
                 {
                     new EntityHistory()
@@ -300,7 +296,7 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
                   .Returns(default(RemoteBook));
 
             Mocker.GetMock<IHistoryService>()
-                  .Setup(s => s.FindByDownloadId(It.IsAny<string>()))
+                  .Setup(s => s.FindByDownloadId(It.IsAny<string>(), It.IsAny<int>()))
                   .Returns(new List<EntityHistory>());
 
             var client = new DownloadClientDefinition()
@@ -356,7 +352,7 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
                   .Returns(default(RemoteBook));
 
             Mocker.GetMock<IHistoryService>()
-                  .Setup(s => s.FindByDownloadId(It.IsAny<string>()))
+                  .Setup(s => s.FindByDownloadId(It.IsAny<string>(), It.IsAny<int>()))
                   .Returns(new List<EntityHistory>());
 
             var client = new DownloadClientDefinition()

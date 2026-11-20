@@ -27,7 +27,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
         {
             _logger.Trace("Checking if all books for '{0}' have been imported", trackedDownload.DownloadItem.Title);
 
-            var history = _downloadHistory.GetLatestDownloadHistoryItem(trackedDownload.DownloadItem.DownloadId);
+            var history = _downloadHistory.GetLatestDownloadHistoryItem(trackedDownload.DownloadItem.DownloadId, trackedDownload.DownloadClient);
             var allBooksImportedInHistory = _completionService.ReadReceipt(trackedDownload, history) != null;
 
             _logger.Trace("All books for '{0}' have been imported: {1}", trackedDownload.DownloadItem.Title, allBooksImportedInHistory);

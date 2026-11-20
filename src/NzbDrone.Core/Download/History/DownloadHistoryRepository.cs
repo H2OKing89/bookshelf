@@ -8,6 +8,7 @@ namespace NzbDrone.Core.Download.History
     public interface IDownloadHistoryRepository : IBasicRepository<DownloadHistory>
     {
         List<DownloadHistory> FindByDownloadId(string downloadId);
+        List<DownloadHistory> GetSubmissionAttempts();
         void DeleteByAuthorId(int authorId);
     }
 
@@ -28,6 +29,11 @@ namespace NzbDrone.Core.Download.History
         public void DeleteByAuthorId(int authorId)
         {
             Delete(r => r.AuthorId == authorId);
+        }
+
+        public List<DownloadHistory> GetSubmissionAttempts()
+        {
+            return Query(history => history.EventType == DownloadHistoryEventType.DownloadSubmissionPending);
         }
     }
 }

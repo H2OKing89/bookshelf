@@ -76,10 +76,10 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D06](#d06) | P1 | Verified | M | Classify rejected extensions, including downloads with no importable files |
 | [D07](#d07) | P1 | Verified | L | Ask download clients for file inventory when the filesystem has no eligible files |
 | [D08](#d08) | P2 | Planned | M | Make automatic failure/blocklist/redownload actions explicit per indexer |
-| [D09](#d09) | P1 | Planned | M | Fail over among eligible download clients |
-| [D10](#d10) | P1 | Planned | M | Remove disappeared tracked items and refresh client configuration promptly |
+| [D09](#d09) | P1 | Implemented | M | Fail over among eligible download clients |
+| [D10](#d10) | P1 | Implemented | M | Remove disappeared tracked items and refresh client configuration promptly |
 | [D11](#d11) | P1 | Verified | M | Separate blocked import state from terminal failure |
-| [D12](#d12) | P1 | Planned | M | Notify once when manual intervention is required |
+| [D12](#d12) | P1 | Implemented | M | Notify once when manual intervention is required |
 | [D13](#d13) | P1 | Planned | M | Add minimum custom-format score improvement for upgrades |
 | [D14](#d14) | P1 | Planned | M | Add language custom formats using audiobook evidence |
 | [D15](#d15) | P1 | Planned | L | Implement meaningful audiobook size policy, including per-profile limits |
@@ -2044,6 +2044,24 @@ do not reach filesystem calls or authorize completion. No live client was used.
 
 **P1 · partial · adapt rather than copy catch-all behavior · D03 · M.** S:`src/NzbDrone.Core/Download/DownloadClientProvider.cs:76` `GetDownloadClients` returns ordered priority/round-robin candidates; `ReportSuccessfulDownloadClient:118`; S:`src/NzbDrone.Core/Download/DownloadService.cs:55` tries candidates at lines 83–118. B:`src/NzbDrone.Core/Download/DownloadService.cs:53` chooses one client, with priorities already supported by its provider. Port selection/ordering and classify retryable errors narrowly: Sonarr's broad exception fallback is not sufficient proof an add never succeeded. Acceptance: first unavailable client falls back; explicit user-selected client and indexer-mandated routing retain intent; release-unavailable/blocked/duplicate responses stop; ambiguous add-timeout reconciles client state before a second add; one successful grab/history event is recorded.
 
+
+**2026-11-19 implementation:** candidate selection preserves priority, success-only
+round-robin, author tags and explicit user/indexer routing. Failover is allowed
+only when a read-only readiness check fails before submission. Release removal,
+blocklist, duplicate and indexer-download errors stop that attempt. After an add
+starts, only the actual submitted torrent hash on the same client can establish
+success; an indexer hash or title cannot. An unknown result creates a durable
+neutral history hold before any later release/client/batch can submit those
+books again. Holds survive restart, reject acknowledgement while in flight and
+can be reviewed in **Activity → Queue → Review submission**. Clearing a hold
+requires explicit client review, preserves an audit record and neither removes
+nor restarts a job. The protected API exposes `GET /api/v1/downloadsubmission`
+and `POST /api/v1/downloadsubmission/acknowledge` with `attemptId`, positive
+`downloadClientId`, and `clientReviewed: true`. Review the named client first;
+clearing permits future automatic grabs. Some legacy adapters have static
+readiness checks; an outage discovered only during add remains held for review.
+
+
 ### D10
 
 **Remove disappeared tracked items and refresh client configuration promptly**
@@ -2056,6 +2074,26 @@ do not reach filesystem calls or authorize completion. No live client was used.
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/Download/TrackedDownloads/TrackedDownloadService.cs](../src/NzbDrone.Core/Download/TrackedDownloads/TrackedDownloadService.cs#L228).
 
 **P1 · partial · port/adapt · no dependency · S–M.** S:`src/NzbDrone.Core/Download/TrackedDownloads/TrackedDownloadService.cs:236` `StopTrackingMissing` evicts cache entries for one successfully polled client; S:`src/NzbDrone.Core/Download/TrackedDownloads/DownloadMonitoringService.cs:100` calls it only after a successful poll; `Handle(ProviderUpdatedEvent):188` and `Handle(ProviderDeletedEvent):193` debounce refreshes. B:`src/NzbDrone.Core/Download/TrackedDownloads/TrackedDownloadService.cs:228` has no missing-item method; B:`src/NzbDrone.Core/Download/TrackedDownloads/DownloadMonitoringService.cs:95` records success without reconciliation. Acceptance: a removed client download disappears from queue/cache after success, an offline/partial-failure client is not mistaken for an empty client, a changed category/path gets re-evaluated, and entries from other clients remain intact. Verify same download IDs across clients before preserving the current cache-key design.
+
+
+**2026-11-19 implementation:** tracking, queue mutations, failed-download actions,
+manual preview/update/import, completion receipts and history lookups now carry
+`(downloadClientId, downloadId)`. Two clients can share the same opaque,
+case-sensitive download ID. Legacy calls without a client may resolve a unique
+job; ambiguous calls fail before mutation. Numeric scope without a valid job ID
+is rejected. Legacy entity history is usable only with a unique persisted client
+binding; explicit foreign or conflicting client metadata is never borrowed.
+
+A successful complete client poll removes only that client's disappeared jobs.
+Offline, malformed, lazy-enumeration and per-item failures preserve cached jobs
+as unavailable, while automatic import/failure processing and cleanup require a
+fresh poll. A separate availability flag permits healthy imported jobs to finish
+cleanup without authorizing stale ones. Category/path edits invalidate old poll
+state and debounce a refresh; deletion removes only that client's entries. A new
+grab evicts only its own cached pair, including a prior terminal state. Queue
+resources expose `downloadClientId` and `downloadClientAvailable`; queue manual
+import passes that identity through preview and command payloads.
+
 
 ### D11
 
@@ -2111,6 +2149,26 @@ P17 remains deferred; wider release/platform gates retain their prior status.
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/Download/CompletedDownloadService.cs](../src/NzbDrone.Core/Download/CompletedDownloadService.cs#L116).
 
 **P1 · partial · adapt · D11 · M.** S:`src/NzbDrone.Core/Download/CompletedDownloadService.cs:339` `SetStateToImportBlocked` publishes `ManualInteractionRequiredEvent` and tracks `HasNotifiedManualInteractionRequired`; S:`src/NzbDrone.Core/Download/TrackedDownloads/TrackedDownloadService.cs:118` preserves the flag across refresh; S:`src/NzbDrone.Core/Notifications/NotificationService.cs:364` builds a rich message; S:`src/NzbDrone.Core/Notifications/Webhook/WebhookManualInteractionPayload.cs`. B:`src/NzbDrone.Core/Download/CompletedDownloadService.cs:116` already emits `BookImportIncompleteEvent`, and Bookshelf has import-failure notifications, so this is an upgrade in semantics/payload, not “add notifications.” Acceptance: one actionable alert per blocked download, with errors/client/source and correct book identity; no alert spam every poll; recovery/reblocking behavior is defined; provider tag filters and notification failures remain isolated.
+
+
+**2026-11-19 implementation:** a synchronous durable neutral history marker records
+one notification **attempt** per blocked episode before event dispatch. An
+episode is bound to the client/job, latest scoped grab and raw source path.
+Polling, changed diagnostics, metadata refreshes and mapped-path/settings changes
+do not repeat alerts, including after restart. A new grab/source or verified
+completion after source retirement allows a later blocked episode to alert.
+Receipt-only re-acknowledgements do not reset it. A marker write failure sends
+nothing and permits a later retry; a recovery-marker failure remains conservative.
+
+Existing import-failure opt-ins and author-tag filters remain; provider failures
+are isolated. Messages and the optional manual-interaction webhook include typed
+errors, client/source details and correct work/edition/recording identities.
+Unknown matches do not fabricate library identities. Webhooks gain support for
+the existing opt-in without changing defaults. Delivery is at-most-once per
+episode: a crash/provider failure after recording the attempt can lose delivery.
+This is deduplication, not a guaranteed-delivery queue. All validation uses fake
+notification transports.
+
 
 ### D13
 

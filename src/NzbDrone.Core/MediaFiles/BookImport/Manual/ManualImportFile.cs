@@ -16,6 +16,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
         public string ReleaseGroup { get; set; }
         public int IndexerFlags { get; set; }
         public string DownloadId { get; set; }
+        public int? DownloadClientId { get; set; }
         public bool DisableReleaseSwitching { get; set; }
 
         public bool Equals(ManualImportFile other)

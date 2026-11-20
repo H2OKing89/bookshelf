@@ -16,6 +16,7 @@ namespace Readarr.Api.V1.ManualImport
         public string ReleaseGroup { get; set; }
         public int IndexerFlags { get; set; }
         public string DownloadId { get; set; }
+        public int? DownloadClientId { get; set; }
         public bool AdditionalFile { get; set; }
         public bool ReplaceExistingFiles { get; set; }
         public bool DisableReleaseSwitching { get; set; }

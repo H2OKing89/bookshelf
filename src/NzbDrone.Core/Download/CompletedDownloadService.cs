@@ -35,6 +35,7 @@ namespace NzbDrone.Core.Download
         private readonly IDownloadHistoryService _downloadHistory;
         private readonly IDownloadImportDiagnostics _diagnostics;
         private readonly IImportRetryService _retry;
+        private readonly IManualInteractionRequiredService _manualInteraction;
         private readonly Logger _logger;
 
         public CompletedDownloadService(IEventAggregator eventAggregator,
@@ -46,6 +47,7 @@ namespace NzbDrone.Core.Download
                                         IDownloadHistoryService downloadHistory,
                                         IDownloadImportDiagnostics diagnostics,
                                         IImportRetryService retry,
+                                        IManualInteractionRequiredService manualInteraction,
                                         Logger logger)
         {
             _eventAggregator = eventAggregator;
@@ -57,6 +59,7 @@ namespace NzbDrone.Core.Download
             _downloadHistory = downloadHistory;
             _diagnostics = diagnostics;
             _retry = retry;
+            _manualInteraction = manualInteraction;
             _logger = logger;
         }
 
@@ -67,7 +70,8 @@ namespace NzbDrone.Core.Download
                 return;
             }
 
-            var historyItem = _historyService.MostRecentForDownloadId(trackedDownload.DownloadItem.DownloadId);
+            var previousWarnings = STJson.ToJson(trackedDownload.StatusMessages);
+            var historyItem = _historyService.FindByDownloadId(trackedDownload.DownloadItem.DownloadId, trackedDownload.DownloadClient)?.FirstOrDefault();
             if (historyItem == null && trackedDownload.DownloadItem.Category.IsNullOrWhiteSpace())
             {
                 trackedDownload.WarnCode(RejectionCode.DownloadNotTracked, "Download wasn't grabbed by Readarr and not in a category, Skipping.");
@@ -82,12 +86,14 @@ namespace NzbDrone.Core.Download
             {
                 trackedDownload.WarnCode(RejectionCode.ImportPathUnavailable, "The local import path could not be determined. Check the download client and remote path mapping.");
                 _retry.Block(trackedDownload);
+                PublishBlocked(trackedDownload, previousWarnings);
                 return;
             }
 
             if (!ValidatePath(trackedDownload))
             {
                 _retry.Block(trackedDownload);
+                PublishBlocked(trackedDownload, previousWarnings);
                 return;
             }
 
@@ -215,6 +221,7 @@ namespace NzbDrone.Core.Download
             trackedDownload.State = TrackedDownloadState.Imported;
             _retry.Reset(trackedDownload);
             trackedDownload.ClearWarnings();
+            UpdateIntervention(trackedDownload, recovered: true);
             if (!wasImported && !trackedDownload.ImportCompletionAnnounced)
             {
                 _logger.Debug("Verified all intended books and recording parts for {0}", trackedDownload.DownloadItem.Title);
@@ -246,6 +253,29 @@ namespace NzbDrone.Core.Download
             if (previousWarnings != STJson.ToJson(trackedDownload.StatusMessages))
             {
                 _eventAggregator.PublishEvent(new BookImportIncompleteEvent(trackedDownload));
+            }
+
+            UpdateIntervention(trackedDownload, recovered: false);
+        }
+
+        private void UpdateIntervention(TrackedDownload trackedDownload, bool recovered)
+        {
+            try
+            {
+                if (recovered)
+                {
+                    _manualInteraction.Recovered(trackedDownload);
+                }
+                else
+                {
+                    _manualInteraction.Required(trackedDownload);
+                }
+            }
+            catch (Exception error)
+            {
+                // Notification persistence cannot change import/cleanup results.
+                // A failed write leaves the episode unacknowledged for retry.
+                _logger.Debug("Unable to update manual-interaction notification state ({0})", error.GetType().Name);
             }
         }
 

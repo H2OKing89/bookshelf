@@ -26,7 +26,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
 {
     public interface IManualImportService
     {
-        List<ManualImportItem> GetMediaFiles(string path, string downloadId, Author author, FilterFilesType filter, bool replaceExistingFiles);
+        List<ManualImportItem> GetMediaFiles(string path, string downloadId, Author author, FilterFilesType filter, bool replaceExistingFiles, int? downloadClientId = null);
         List<ManualImportItem> UpdateItems(List<ManualImportItem> item);
     }
 
@@ -87,11 +87,12 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
             _logger = logger;
         }
 
-        public List<ManualImportItem> GetMediaFiles(string path, string downloadId, Author author, FilterFilesType filter, bool replaceExistingFiles)
+        public List<ManualImportItem> GetMediaFiles(string path, string downloadId, Author author, FilterFilesType filter, bool replaceExistingFiles, int? downloadClientId = null)
         {
+            ValidateDownloadScope(downloadId, downloadClientId);
             if (downloadId.IsNotNullOrWhiteSpace())
             {
-                var trackedDownload = _trackedDownloadService.Find(downloadId);
+                var trackedDownload = FindTrackedDownload(downloadId, downloadClientId);
 
                 if (trackedDownload == null)
                 {
@@ -104,6 +105,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
                 }
 
                 path = trackedDownload.ImportItem.OutputPath.FullPath;
+                downloadClientId = trackedDownload.DownloadClient;
             }
 
             if (!_diskProvider.FolderExists(path))
@@ -127,15 +129,15 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
                 };
 
                 var decision = _importDecisionMaker.GetImportDecisions(files, null, null, config);
-                var result = MapItem(decision.First(), downloadId, replaceExistingFiles, false);
+                var result = MapItem(decision.First(), downloadId, replaceExistingFiles, false, downloadClientId);
 
                 return new List<ManualImportItem> { result };
             }
 
-            return ProcessFolder(path, downloadId, author, filter, replaceExistingFiles);
+            return ProcessFolder(path, downloadId, author, filter, replaceExistingFiles, downloadClientId);
         }
 
-        private List<ManualImportItem> ProcessFolder(string folder, string downloadId, Author author, FilterFilesType filter, bool replaceExistingFiles)
+        private List<ManualImportItem> ProcessFolder(string folder, string downloadId, Author author, FilterFilesType filter, bool replaceExistingFiles, int? downloadClientId = null)
         {
             DownloadClientItem downloadClientItem = null;
             var directoryInfo = new DirectoryInfo(folder);
@@ -143,7 +145,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
 
             if (downloadId.IsNotNullOrWhiteSpace())
             {
-                var trackedDownload = _trackedDownloadService.Find(downloadId);
+                var trackedDownload = FindTrackedDownload(downloadId, downloadClientId);
                 downloadClientItem = trackedDownload?.DownloadItem;
 
                 if (author == null)
@@ -182,7 +184,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
                                             (f, d) => new { File = f, Decision = d },
                                             PathEqualityComparer.Instance);
 
-            var newItems = newFiles.Select(x => MapItem(x.Decision, downloadId, replaceExistingFiles, false));
+            var newItems = newFiles.Select(x => MapItem(x.Decision, downloadId, replaceExistingFiles, false, downloadClientId));
             var existingDecisions = decisions.Except(newFiles.Select(x => x.Decision));
             var existingItems = existingDecisions.Select(x => MapItem(x, null, replaceExistingFiles, false));
 
@@ -191,8 +193,13 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
 
         public List<ManualImportItem> UpdateItems(List<ManualImportItem> items)
         {
+            foreach (var item in items)
+            {
+                ValidateDownloadScope(item.DownloadId, item.DownloadClientId);
+            }
+
             var replaceExistingFiles = items.All(x => x.ReplaceExistingFiles);
-            var groupedItems = items.Where(x => !x.AdditionalFile).GroupBy(x => x.Book?.Id);
+            var groupedItems = items.Where(x => !x.AdditionalFile).GroupBy(x => new { BookId = x.Book?.Id, x.DownloadId, x.DownloadClientId });
             _logger.Debug($"UpdateItems, {groupedItems.Count()} groups, replaceExisting {replaceExistingFiles}");
 
             var result = new List<ManualImportItem>();
@@ -269,14 +276,15 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
             return result;
         }
 
-        private ManualImportItem MapItem(ImportDecision<LocalBook> decision, string downloadId, bool replaceExistingFiles, bool disableReleaseSwitching)
+        private ManualImportItem MapItem(ImportDecision<LocalBook> decision, string downloadId, bool replaceExistingFiles, bool disableReleaseSwitching, int? downloadClientId = null)
         {
             var item = new ManualImportItem();
 
-            item.Id = HashConverter.GetHashInt31(decision.Item.Path);
+            item.Id = HashConverter.GetHashInt31(downloadClientId.HasValue ? $"{downloadClientId}:{downloadId}:{decision.Item.Path}" : decision.Item.Path);
             item.Path = decision.Item.Path;
             item.Name = Path.GetFileNameWithoutExtension(decision.Item.Path);
             item.DownloadId = downloadId;
+            item.DownloadClientId = downloadClientId;
 
             if (decision.Item.Author != null)
             {
@@ -309,11 +317,28 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
         {
             _logger.ProgressTrace("Manually importing {0} files using mode {1}", message.Files.Count, message.ImportMode);
 
+            // Resolve every selected client before retention writes, transfers, or metadata changes.
+            foreach (var file in message.Files)
+            {
+                ValidateDownloadScope(file.DownloadId, file.DownloadClientId);
+            }
+
+            foreach (var file in message.Files.Where(file => file.DownloadId.IsNotNullOrWhiteSpace()))
+            {
+                var tracked = FindTrackedDownload(file.DownloadId, file.DownloadClientId);
+                if (tracked == null)
+                {
+                    throw new InvalidOperationException("The selected download is no longer tracked");
+                }
+
+                file.DownloadClientId = tracked.DownloadClient;
+            }
+
             if (message.ImportMode == ImportMode.Copy)
             {
-                foreach (var downloadId in message.Files.Select(file => file.DownloadId).Where(id => id.IsNotNullOrWhiteSpace()).Distinct())
+                foreach (var identity in message.Files.Where(file => file.DownloadId.IsNotNullOrWhiteSpace()).Select(file => new { file.DownloadId, file.DownloadClientId }).Distinct())
                 {
-                    var tracked = _trackedDownloadService.Find(downloadId);
+                    var tracked = FindTrackedDownload(identity.DownloadId, identity.DownloadClientId);
                     if (tracked == null)
                     {
                         throw new InvalidOperationException("The selected download is no longer tracked");
@@ -335,7 +360,8 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
             var bookIds = message.Files.GroupBy(file => new
             {
                 file.BookId,
-                DownloadId = file.DownloadId.IsNullOrWhiteSpace() ? null : file.DownloadId
+                DownloadId = file.DownloadId.IsNullOrWhiteSpace() ? null : file.DownloadId,
+                file.DownloadClientId
             }).ToList();
             var fileCount = 0;
 
@@ -405,7 +431,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
                 }
                 else
                 {
-                    var trackedDownload = _trackedDownloadService.Find(downloadId);
+                    var trackedDownload = FindTrackedDownload(downloadId, importBookId.Key.DownloadClientId);
                     trackedDownload.KeepSourceFiles |= message.ImportMode == ImportMode.Copy;
                     var importResults = _importApprovedBooks.Import(bookImportDecisions, message.ReplaceExistingFiles, trackedDownload.DownloadItem, message.ImportMode);
 
@@ -424,7 +450,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
 
             _logger.ProgressTrace("Manually imported {0} files", imported.Count);
 
-            foreach (var groupedTrackedDownload in importedTrackedDownload.GroupBy(i => i.TrackedDownload.DownloadItem.DownloadId).ToList())
+            foreach (var groupedTrackedDownload in importedTrackedDownload.GroupBy(i => new { i.TrackedDownload.DownloadClient, i.TrackedDownload.DownloadItem.DownloadId }).ToList())
             {
                 var trackedDownload = groupedTrackedDownload.First().TrackedDownload;
                 trackedDownload.KeepSourceFiles |= message.ImportMode == ImportMode.Copy;
@@ -434,9 +460,24 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
             }
         }
 
+        private static void ValidateDownloadScope(string downloadId, int? downloadClientId)
+        {
+            if (downloadClientId.HasValue && (downloadClientId.Value <= 0 || downloadId.IsNullOrWhiteSpace()))
+            {
+                throw new ArgumentException("A positive download client ID requires a download identifier.", nameof(downloadClientId));
+            }
+        }
+
+        private TrackedDownload FindTrackedDownload(string downloadId, int? downloadClientId)
+        {
+            return downloadClientId.HasValue
+                ? _trackedDownloadService.Find(downloadId, downloadClientId.Value)
+                : _trackedDownloadService.Find(downloadId);
+        }
+
         private string DetectReleaseGroup(ManualImportFile file, ParsedTrackInfo fileInfo)
         {
-            var trackedDownload = file.DownloadId.IsNullOrWhiteSpace() ? null : _trackedDownloadService.Find(file.DownloadId);
+            var trackedDownload = file.DownloadId.IsNullOrWhiteSpace() ? null : FindTrackedDownload(file.DownloadId, file.DownloadClientId);
             var group = trackedDownload?.RemoteBook?.ParsedBookInfo?.ReleaseGroup;
 
             if (group.IsNullOrWhiteSpace() && trackedDownload?.DownloadItem?.Title.IsNotNullOrWhiteSpace() == true)

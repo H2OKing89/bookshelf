@@ -8,6 +8,7 @@ namespace NzbDrone.Core.MediaFiles.Commands
         // Properties used by third-party apps, do not modify.
         public string Path { get; set; }
         public string DownloadClientId { get; set; }
+        public int? ClientId { get; set; }
         public ImportMode ImportMode { get; set; }
     }
 }

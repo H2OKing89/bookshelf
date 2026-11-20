@@ -15,7 +15,9 @@ namespace NzbDrone.Core.Download.History
     {
         bool DownloadAlreadyImported(string downloadId);
         DownloadHistory GetLatestDownloadHistoryItem(string downloadId);
+        DownloadHistory GetLatestDownloadHistoryItem(string downloadId, int downloadClientId);
         DownloadHistory GetLatestGrab(string downloadId);
+        DownloadHistory GetLatestGrab(string downloadId, int downloadClientId);
         DownloadHistory GetLatestImportCompletion(string downloadId, int downloadClientId);
         DownloadHistory RecordImportCompletion(TrackedDownload trackedDownload, DownloadImportReceipt receipt);
         DownloadHistory RecordSourceRetention(TrackedDownload trackedDownload);
@@ -100,6 +102,24 @@ namespace NzbDrone.Core.Download.History
             }
 
             return null;
+        }
+
+        public DownloadHistory GetLatestDownloadHistoryItem(string downloadId, int downloadClientId)
+        {
+            return _repository.FindByDownloadId(downloadId)
+                .Where(history => history.DownloadClientId == downloadClientId ||
+                    (history.DownloadClientId == 0 && history.EventType == DownloadHistoryEventType.DownloadIgnored))
+                .Where(history => history.EventType == DownloadHistoryEventType.DownloadIgnored ||
+                    history.EventType == DownloadHistoryEventType.DownloadGrabbed || history.EventType == DownloadHistoryEventType.DownloadImported ||
+                    history.EventType == DownloadHistoryEventType.DownloadFailed || history.EventType == DownloadHistoryEventType.DownloadImportIncomplete)
+                .OrderByDescending(history => history.Date).ThenByDescending(history => history.Id).FirstOrDefault();
+        }
+
+        public DownloadHistory GetLatestGrab(string downloadId, int downloadClientId)
+        {
+            return _repository.FindByDownloadId(downloadId)
+                .Where(history => history.DownloadClientId == downloadClientId && history.EventType == DownloadHistoryEventType.DownloadGrabbed)
+                .OrderByDescending(history => history.Date).ThenByDescending(history => history.Id).FirstOrDefault();
         }
 
         public DownloadHistory GetLatestGrab(string downloadId)
@@ -223,7 +243,7 @@ namespace NzbDrone.Core.Download.History
                 throw new ArgumentException("Download completion receipt exceeds the supported size");
             }
 
-            var previous = GetLatestDownloadHistoryItem(receipt.DownloadId);
+            var previous = GetLatestDownloadHistoryItem(receipt.DownloadId, receipt.DownloadClientId);
             if (previous?.EventType == DownloadHistoryEventType.DownloadImported && previous.DownloadClientId == receipt.DownloadClientId &&
                 DownloadImportCompletionService.DataValue(previous.Data, ImportReceiptKey) == json)
             {

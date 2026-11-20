@@ -9,6 +9,7 @@ using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Download;
+using NzbDrone.Core.Download.History;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
@@ -27,6 +28,8 @@ namespace NzbDrone.Core.History
         List<EntityHistory> GetByBook(int bookId, EntityHistoryEventType? eventType);
         List<EntityHistory> Find(string downloadId, EntityHistoryEventType eventType);
         List<EntityHistory> FindByDownloadId(string downloadId);
+        List<EntityHistory> FindByDownloadId(string downloadId, int downloadClientId);
+        List<EntityHistory> Find(string downloadId, EntityHistoryEventType eventType, int downloadClientId);
         string FindDownloadId(TrackImportedEvent trackedDownload);
         List<EntityHistory> Since(DateTime date, EntityHistoryEventType? eventType);
         void UpdateMany(IList<EntityHistory> items);
@@ -44,11 +47,13 @@ namespace NzbDrone.Core.History
                                   IHandle<DownloadIgnoredEvent>
     {
         private readonly IHistoryRepository _historyRepository;
+        private readonly IDownloadHistoryRepository _downloadHistory;
         private readonly Logger _logger;
 
-        public HistoryService(IHistoryRepository historyRepository, Logger logger)
+        public HistoryService(IHistoryRepository historyRepository, Logger logger, IDownloadHistoryRepository downloadHistory = null)
         {
             _historyRepository = historyRepository;
+            _downloadHistory = downloadHistory;
             _logger = logger;
         }
 
@@ -203,6 +208,7 @@ namespace NzbDrone.Core.History
                 };
 
                 history.Data.Add("StatusMessages", message.TrackedDownload.StatusMessages.ToJson());
+                history.Data.Add("DownloadClientId", message.TrackedDownload.DownloadClient.ToString(CultureInfo.InvariantCulture));
                 history.Data.Add("ReleaseGroup", message.TrackedDownload?.RemoteBook?.ParsedBookInfo?.ReleaseGroup);
                 history.Data.Add("IndexerFlags", message.TrackedDownload?.RemoteBook?.Release?.IndexerFlags.ToString());
 
@@ -268,6 +274,8 @@ namespace NzbDrone.Core.History
                 };
 
                 history.Data.Add("DownloadClient", message.DownloadClient);
+                history.Data.Add("DownloadClientId", message.TrackedDownload?.DownloadClient.ToString(CultureInfo.InvariantCulture) ??
+                    message.Data?.FirstOrDefault(pair => string.Equals(pair.Key, "downloadClientId", StringComparison.OrdinalIgnoreCase)).Value ?? "0");
                 history.Data.Add("DownloadClientName", message.TrackedDownload?.DownloadItem.DownloadClientInfo.Name);
                 history.Data.Add("Message", message.Message);
                 history.Data.Add("ReleaseGroup", message.TrackedDownload?.RemoteBook?.ParsedBookInfo?.ReleaseGroup ?? message.Data.GetValueOrDefault(EntityHistory.RELEASE_GROUP));
@@ -379,6 +387,7 @@ namespace NzbDrone.Core.History
                 };
 
                 history.Data.Add("DownloadClient", message.DownloadClientInfo.Name);
+                history.Data.Add("DownloadClientId", message.DownloadClientInfo.Id.ToString(CultureInfo.InvariantCulture));
                 history.Data.Add("Message", message.Message);
                 history.Data.Add("ReleaseGroup", message.TrackedDownload?.RemoteBook?.ParsedBookInfo?.ReleaseGroup);
                 history.Data.Add("Size", message.TrackedDownload?.DownloadItem.TotalSize.ToString());
@@ -388,6 +397,36 @@ namespace NzbDrone.Core.History
             }
 
             _historyRepository.InsertMany(historyToAdd);
+        }
+
+        public List<EntityHistory> FindByDownloadId(string downloadId, int downloadClientId)
+        {
+            var bindings = (_downloadHistory?.FindByDownloadId(downloadId) ?? new List<DownloadHistory>())
+                .Where(history => history.DownloadClientId > 0).Select(history => history.DownloadClientId).Distinct().ToList();
+            var allowLegacy = bindings.Count == 1 && bindings[0] == downloadClientId;
+            return (_historyRepository.FindByDownloadId(downloadId) ?? new List<EntityHistory>())
+                .Where(history => history.DownloadId == downloadId && BelongsToClient(history, downloadClientId, allowLegacy)).ToList();
+        }
+
+        public List<EntityHistory> Find(string downloadId, EntityHistoryEventType eventType, int downloadClientId)
+        {
+            return FindByDownloadId(downloadId, downloadClientId).Where(history => history.EventType == eventType).ToList();
+        }
+
+        private static bool BelongsToClient(EntityHistory history, int downloadClientId, bool allowLegacy)
+        {
+            var values = history.Data?.Where(pair => string.Equals(pair.Key, "downloadClientId", StringComparison.OrdinalIgnoreCase)).ToList();
+            if (values?.Count > 1)
+            {
+                return false;
+            }
+
+            if (values?.Count == 1 && int.TryParse(values[0].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var clientId) && clientId > 0)
+            {
+                return clientId == downloadClientId;
+            }
+
+            return allowLegacy && (values == null || values.Count == 0 || values[0].Value == "0");
         }
 
         public List<EntityHistory> Since(DateTime date, EntityHistoryEventType? eventType)

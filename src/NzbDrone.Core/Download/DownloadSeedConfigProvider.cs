@@ -5,6 +5,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Download.Clients;
 using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Indexers;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.Download
@@ -12,9 +13,10 @@ namespace NzbDrone.Core.Download
     public interface IDownloadSeedConfigProvider
     {
         TorrentSeedConfiguration GetSeedConfiguration(string infoHash);
+        TorrentSeedConfiguration GetSeedConfiguration(string infoHash, int downloadClientId);
     }
 
-    public class DownloadSeedConfigProvider : IDownloadSeedConfigProvider
+    public class DownloadSeedConfigProvider : IDownloadSeedConfigProvider, IHandle<BookGrabbedEvent>
     {
         private readonly Logger _logger;
         private readonly ISeedConfigProvider _indexerSeedConfigProvider;
@@ -39,14 +41,20 @@ namespace NzbDrone.Core.Download
 
         public TorrentSeedConfiguration GetSeedConfiguration(string infoHash)
         {
-            if (infoHash.IsNullOrWhiteSpace())
+            // Unknown ownership cannot safely select another client's seed policy.
+            return null;
+        }
+
+        public TorrentSeedConfiguration GetSeedConfiguration(string infoHash, int downloadClientId)
+        {
+            if (infoHash.IsNullOrWhiteSpace() || downloadClientId <= 0)
             {
                 return null;
             }
 
-            infoHash = infoHash.ToUpper();
+            infoHash = infoHash.ToUpperInvariant();
 
-            var cachedConfig = _cacheDownloads.Get(infoHash, () => FetchIndexer(infoHash));
+            var cachedConfig = _cacheDownloads.Get(CacheKey(infoHash, downloadClientId), () => FetchIndexer(infoHash, downloadClientId));
 
             if (cachedConfig == null)
             {
@@ -58,11 +66,24 @@ namespace NzbDrone.Core.Download
             return seedConfig;
         }
 
-        private CachedSeedConfiguration FetchIndexer(string infoHash)
+        private static string CacheKey(string infoHash, int downloadClientId)
         {
-            var historyItem = _downloadHistoryService.GetLatestGrab(infoHash);
+            return $"{downloadClientId}:{infoHash.ToUpperInvariant()}";
+        }
 
-            if (historyItem == null)
+        public void Handle(BookGrabbedEvent message)
+        {
+            if (message.DownloadClientId > 0 && message.DownloadId.IsNotNullOrWhiteSpace())
+            {
+                _cacheDownloads.Remove(CacheKey(message.DownloadId, message.DownloadClientId));
+            }
+        }
+
+        private CachedSeedConfiguration FetchIndexer(string infoHash, int downloadClientId)
+        {
+            var historyItem = _downloadHistoryService.GetLatestGrab(infoHash, downloadClientId);
+
+            if (historyItem == null || historyItem.DownloadClientId != downloadClientId || !string.Equals(historyItem.DownloadId, infoHash, StringComparison.OrdinalIgnoreCase))
             {
                 _logger.Debug("No download history item for infohash {0}, unable to provide seed configuration", infoHash);
                 return null;

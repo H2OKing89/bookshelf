@@ -58,7 +58,7 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport
             Mocker.SetConstant<ICustomFormatCalculationService>(Mocker.Resolve<CustomFormatCalculationService>());
             Mocker.GetMock<IBuildFileNames>().Setup(builder => builder.BuildBookFileName(It.IsAny<Author>(), It.IsAny<Edition>(), It.IsAny<BookFile>(), null, It.IsAny<List<CustomFormat>>()))
                 .Returns(() => _intended);
-            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId(It.IsAny<string>())).Returns(new List<EntityHistory>());
+            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId(It.IsAny<string>(), It.IsAny<int>())).Returns(new List<EntityHistory>());
         }
 
         [Test]
@@ -133,7 +133,7 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport
         public void only_the_latest_grab_flags_are_used_for_a_tracked_download()
         {
             _item.Path = Path.Combine(TempFolder, "download", "Book.mp3");
-            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId("owned-download"))
+            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId("owned-download", 7))
                 .Returns(new List<EntityHistory>
                 {
                     new EntityHistory { EventType = EntityHistoryEventType.Grabbed, Date = DateTime.UtcNow.AddMinutes(-2), Data = new Dictionary<string, string> { ["indexerFlags"] = "0" } },
@@ -141,7 +141,7 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport
                     new EntityHistory { EventType = EntityHistoryEventType.BookFileImported, Date = DateTime.UtcNow, Data = new Dictionary<string, string> { ["indexerFlags"] = "0" } }
                 });
 
-            var result = Subject.Calculate(_item, new DownloadClientItem { DownloadId = "owned-download", Title = "Unparsed" });
+            var result = Subject.Calculate(_item, new DownloadClientItem { DownloadId = "owned-download", Title = "Unparsed", DownloadClientInfo = new DownloadClientItemClientInfo { Id = 7 } });
 
             result.OriginalScore.Should().Be(300);
             result.IntendedScore.Should().Be(300);
@@ -154,7 +154,7 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport
             _item.Path = Path.Combine(TempFolder, "download", "Book.mp3");
             _item.IndexerFlags = IndexerFlags.Freeleech;
 
-            var result = Subject.Calculate(_item, tracked ? new DownloadClientItem { DownloadId = "owned-download", Title = "Unparsed" } : null);
+            var result = Subject.Calculate(_item, tracked ? new DownloadClientItem { DownloadId = "owned-download", Title = "Unparsed", DownloadClientInfo = new DownloadClientItemClientInfo { Id = 7 } } : null);
 
             result.IntendedScore.Should().Be(score);
         }

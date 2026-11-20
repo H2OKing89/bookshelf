@@ -59,10 +59,10 @@ namespace NzbDrone.Core.Test.Download
             _files = new Dictionary<int, BookFile>();
             Mocker.GetMock<IDownloadImportSourceService>().Setup(service => service.Scan(It.IsAny<TrackedDownload>())).Returns(() => _sources);
             Mocker.GetMock<IDownloadImportSourceService>().Setup(service => service.Validate(It.IsAny<TrackedDownload>(), It.IsAny<DownloadImportReceipt>())).Returns(true);
-            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId("owned-download")).Returns(() => _history);
-            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.GetLatestDownloadHistoryItem("owned-download")).Returns(() => _marker);
+            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId("owned-download", 1)).Returns(() => _history);
+            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.GetLatestDownloadHistoryItem("owned-download", 1)).Returns(() => _marker);
             Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.GetLatestImportCompletion("owned-download", 1)).Returns(() => _completionMarker);
-            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.GetLatestGrab("owned-download")).Returns(() => _grab);
+            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.GetLatestGrab("owned-download", 1)).Returns(() => _grab);
             Mocker.GetMock<IMediaFileService>().Setup(service => service.Get(It.IsAny<int>())).Returns<int>(id => _files.GetValueOrDefault(id));
             Mocker.GetMock<IDiskProvider>().Setup(disk => disk.FileExists(It.IsAny<string>())).Returns<string>(path => _files.Values.Any(file => file.Path == path));
             Mocker.GetMock<IDiskProvider>().Setup(disk => disk.GetFileSize(It.IsAny<string>())).Returns(100);

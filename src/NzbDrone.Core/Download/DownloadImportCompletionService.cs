@@ -48,7 +48,7 @@ namespace NzbDrone.Core.Download
                 return null;
             }
 
-            var previousHistory = _downloadHistory.GetLatestDownloadHistoryItem(trackedDownload.DownloadItem.DownloadId);
+            var previousHistory = _downloadHistory.GetLatestDownloadHistoryItem(trackedDownload.DownloadItem.DownloadId, trackedDownload.DownloadClient);
             var previous = ReadReceipt(trackedDownload, previousHistory);
             var resumedCompletion = false;
             if (previous == null && previousHistory?.EventType == DownloadHistoryEventType.DownloadImportIncomplete)
@@ -99,7 +99,7 @@ namespace NzbDrone.Core.Download
             };
 
             var authorIds = new HashSet<int>();
-            var latestGrabDate = _downloadHistory.GetLatestGrab(trackedDownload.DownloadItem.DownloadId)?.Date;
+            var latestGrabDate = _downloadHistory.GetLatestGrab(trackedDownload.DownloadItem.DownloadId, trackedDownload.DownloadClient)?.Date;
             foreach (var source in sourceFiles.OrderBy(file => file.Path, StringComparer.Ordinal))
             {
                 var decisions = (importResults ?? new List<ImportResult>())
@@ -191,7 +191,7 @@ namespace NzbDrone.Core.Download
                     return null;
                 }
 
-                var grab = _downloadHistory.GetLatestGrab(history.DownloadId);
+                var grab = _downloadHistory.GetLatestGrab(history.DownloadId, trackedDownload.DownloadClient);
                 if (grab != null && grab.Date > history.Date)
                 {
                     return null;
@@ -236,13 +236,7 @@ namespace NzbDrone.Core.Download
 
         private List<EntityHistory> BoundHistory(TrackedDownload trackedDownload)
         {
-            var grab = _downloadHistory.GetLatestGrab(trackedDownload.DownloadItem.DownloadId);
-            var legacyClientBound = grab?.DownloadClientId == trackedDownload.DownloadClient;
-            return (_history.FindByDownloadId(trackedDownload.DownloadItem.DownloadId) ?? new List<EntityHistory>())
-                .Where(history => history.DownloadId == trackedDownload.DownloadItem.DownloadId &&
-                    (DataValue(history.Data, "downloadClientId") is string client
-                        ? int.TryParse(client, NumberStyles.None, CultureInfo.InvariantCulture, out var id) && id == trackedDownload.DownloadClient
-                        : legacyClientBound))
+            return (_history.FindByDownloadId(trackedDownload.DownloadItem.DownloadId, trackedDownload.DownloadClient) ?? new List<EntityHistory>())
                 .OrderByDescending(history => history.Date).ThenByDescending(history => history.Id).ToList();
         }
 
@@ -254,7 +248,7 @@ namespace NzbDrone.Core.Download
                 return null;
             }
 
-            var grab = _downloadHistory.GetLatestGrab(trackedDownload.DownloadItem.DownloadId);
+            var grab = _downloadHistory.GetLatestGrab(trackedDownload.DownloadItem.DownloadId, trackedDownload.DownloadClient);
             if (grab != null && grab.DownloadClientId != trackedDownload.DownloadClient)
             {
                 return null;

@@ -97,7 +97,7 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.RTorrentTests
                 });
 
             Mocker.GetMock<IDownloadSeedConfigProvider>()
-                .Setup(x => x.GetSeedConfiguration(It.IsAny<string>()))
+                .Setup(x => x.GetSeedConfiguration(It.IsAny<string>(), It.IsAny<int>()))
                 .Returns(new TorrentSeedConfiguration
                 {
                     Ratio = 1.0,

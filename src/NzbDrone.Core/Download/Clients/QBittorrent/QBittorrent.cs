@@ -70,7 +70,7 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
         {
             if (!Proxy.GetConfig(Settings).DhtEnabled && !magnetLink.Contains("&tr="))
             {
-                throw new NotSupportedException("Magnet Links without trackers not supported if DHT is disabled");
+                throw new DownloadClientMagnetNotSupportedException("Magnet Links without trackers not supported if DHT is disabled");
             }
 
             var setShareLimits = remoteBook.SeedConfiguration != null && (remoteBook.SeedConfiguration.Ratio.HasValue || remoteBook.SeedConfiguration.SeedTime.HasValue);

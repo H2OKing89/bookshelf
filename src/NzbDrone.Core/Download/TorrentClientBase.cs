@@ -8,6 +8,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Http;
 using NzbDrone.Core.Blocklisting;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Download.Clients;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.MediaFiles.TorrentInfo;
@@ -71,19 +72,7 @@ namespace NzbDrone.Core.Download
             {
                 if (torrentUrl.IsNotNullOrWhiteSpace())
                 {
-                    try
-                    {
-                        return await DownloadFromWebUrl(remoteBook, indexer, torrentUrl);
-                    }
-                    catch (Exception ex)
-                    {
-                        if (!magnetUrl.IsNullOrWhiteSpace())
-                        {
-                            throw;
-                        }
-
-                        _logger.Debug("Torrent download failed, trying magnet. ({0})", ex.Message);
-                    }
+                    return await DownloadFromWebUrl(remoteBook, indexer, torrentUrl);
                 }
 
                 if (magnetUrl.IsNotNullOrWhiteSpace())
@@ -92,7 +81,7 @@ namespace NzbDrone.Core.Download
                     {
                         return DownloadFromMagnetUrl(remoteBook, indexer, magnetUrl);
                     }
-                    catch (NotSupportedException ex)
+                    catch (DownloadClientMagnetNotSupportedException ex)
                     {
                         throw new ReleaseDownloadException(remoteBook.Release, "Magnet not supported by download client. ({0})", ex.Message);
                     }
@@ -106,7 +95,7 @@ namespace NzbDrone.Core.Download
                     {
                         return DownloadFromMagnetUrl(remoteBook, indexer, magnetUrl);
                     }
-                    catch (NotSupportedException ex)
+                    catch (DownloadClientMagnetNotSupportedException ex)
                     {
                         if (torrentUrl.IsNullOrWhiteSpace())
                         {
@@ -123,7 +112,7 @@ namespace NzbDrone.Core.Download
                 }
             }
 
-            return null;
+            throw new ReleaseDownloadException(remoteBook.Release, "Release has no usable torrent or magnet download URL");
         }
 
         private async Task<string> DownloadFromWebUrl(RemoteBook remoteBook, IIndexer indexer, string torrentUrl)
@@ -199,7 +188,7 @@ namespace NzbDrone.Core.Download
 
             EnsureReleaseIsNotBlocklisted(remoteBook, indexer, hash);
 
-            var actualHash = AddFromTorrentFile(remoteBook, hash, filename, torrentFile);
+            var actualHash = SubmitTorrent(() => AddFromTorrentFile(remoteBook, hash, filename, torrentFile), hash);
 
             if (actualHash.IsNotNullOrWhiteSpace() && hash != actualHash)
             {
@@ -225,14 +214,14 @@ namespace NzbDrone.Core.Download
             {
                 _logger.Error(ex, "Failed to parse magnetlink for release '{0}': '{1}'", remoteBook.Release.Title, magnetUrl);
 
-                return null;
+                throw new ReleaseDownloadException(remoteBook.Release, "Release contains an invalid magnet download URL", ex);
             }
 
             if (hash != null)
             {
                 EnsureReleaseIsNotBlocklisted(remoteBook, indexer, hash);
 
-                actualHash = AddFromMagnetLink(remoteBook, hash, magnetUrl);
+                actualHash = SubmitTorrent(() => AddFromMagnetLink(remoteBook, hash, magnetUrl), hash);
             }
 
             if (actualHash.IsNotNullOrWhiteSpace() && hash != actualHash)
@@ -244,6 +233,31 @@ namespace NzbDrone.Core.Download
             }
 
             return actualHash;
+        }
+
+        private static string SubmitTorrent(Func<string> submit, string hash)
+        {
+            try
+            {
+                return submit();
+            }
+            catch (ReleaseDownloadException)
+            {
+                // Explicit release-unavailable/blocked/duplicate responses stop
+                // the grab. They must not turn into a fallback candidate.
+                throw;
+            }
+            catch (DownloadClientMagnetNotSupportedException)
+            {
+                // Existing magnet-to-torrent-file capability fallback occurs
+                // before an add on clients that do not support magnets.
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new DownloadClientSubmissionUncertainException(
+                    "The torrent add did not finish normally; its submission outcome must be checked on this client.", ex, hash);
+            }
         }
 
         private void EnsureReleaseIsNotBlocklisted(RemoteBook remoteBook, IIndexer indexer, string hash)

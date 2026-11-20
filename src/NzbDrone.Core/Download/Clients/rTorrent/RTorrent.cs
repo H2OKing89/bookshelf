@@ -181,7 +181,7 @@ namespace NzbDrone.Core.Download.Clients.RTorrent
                 }
 
                 // Grab cached seedConfig
-                var seedConfig = _downloadSeedConfigProvider.GetSeedConfiguration(torrent.Hash);
+                var seedConfig = _downloadSeedConfigProvider.GetSeedConfiguration(torrent.Hash, Definition.Id);
 
                 if (torrent.IsFinished && seedConfig != null)
                 {

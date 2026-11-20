@@ -7,7 +7,9 @@ using Moq;
 using NUnit.Framework;
 using NzbDrone.Common.Http;
 using NzbDrone.Core.Download;
+using NzbDrone.Core.Download.Clients;
 using NzbDrone.Core.Download.Clients.Deluge;
+using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.MediaFiles.TorrentInfo;
 using NzbDrone.Test.Common;
 
@@ -119,6 +121,46 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.DelugeTests
                 .Setup(s => s.AddTorrentFromFile(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DelugeSettings>()))
                 .Returns("CBC2F069FE8BB2F544EAE707D75BCD3DE9DCF951".ToLower())
                 .Callback(PrepareClientToReturnQueuedItem);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void accepted_torrent_followed_by_configuration_failure_should_preserve_submitted_hash(bool unsupportedFailure)
+        {
+            GivenSuccessfulDownload();
+            Mocker.GetMock<IDelugeProxy>()
+                .Setup(proxy => proxy.SetTorrentSeedingConfiguration(It.IsAny<string>(), It.IsAny<TorrentSeedConfiguration>(), It.IsAny<DelugeSettings>()))
+                .Throws(unsupportedFailure ? new NotSupportedException("Failed after add") : new DownloadClientUnavailableException("Connection lost after add"));
+
+            var exception = Assert.ThrowsAsync<DownloadClientSubmissionUncertainException>(() => Subject.Download(CreateRemoteBook(), CreateIndexer()));
+
+            exception.ExpectedDownloadId.Should().Be("CBC2F069FE8BB2F544EAE707D75BCD3DE9DCF951");
+            exception.InnerException.Should().BeOfType(unsupportedFailure ? typeof(NotSupportedException) : typeof(DownloadClientUnavailableException));
+            Mocker.GetMock<IDelugeProxy>().Verify(proxy => proxy.AddTorrentFromFile(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DelugeSettings>()), Times.Once());
+        }
+
+        [Test]
+        public void release_without_any_download_url_should_not_report_a_successful_add()
+        {
+            var book = CreateRemoteBook();
+            book.Release.DownloadUrl = null;
+
+            Assert.ThrowsAsync<ReleaseDownloadException>(() => Subject.Download(book, CreateIndexer()));
+
+            Mocker.GetMock<IDelugeProxy>().Verify(proxy => proxy.AddTorrentFromFile(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<DelugeSettings>()), Times.Never());
+            Mocker.GetMock<IDelugeProxy>().Verify(proxy => proxy.AddTorrentFromMagnet(It.IsAny<string>(), It.IsAny<DelugeSettings>()), Times.Never());
+        }
+
+        [Test]
+        public void malformed_magnet_should_not_report_a_successful_add()
+        {
+            var book = CreateRemoteBook();
+            book.Release.DownloadUrl = "magnet:?xt=urn:btih:not-a-valid-infohash";
+
+            Assert.ThrowsAsync<ReleaseDownloadException>(() => Subject.Download(book, CreateIndexer()));
+
+            Mocker.GetMock<IDelugeProxy>().Verify(proxy => proxy.AddTorrentFromMagnet(It.IsAny<string>(), It.IsAny<DelugeSettings>()), Times.Never());
+            ExceptionVerification.ExpectedErrors(1);
         }
 
         protected virtual void GivenTorrents(List<DelugeTorrent> torrents)

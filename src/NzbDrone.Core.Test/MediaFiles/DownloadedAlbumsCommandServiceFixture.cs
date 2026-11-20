@@ -7,6 +7,7 @@ using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Download;
+using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.BookImport;
@@ -139,6 +140,92 @@ namespace NzbDrone.Core.Test.MediaFiles
             Subject.Execute(new DownloadedBooksScanCommand() { Path = _downloadFile, ImportMode = ImportMode.Copy });
 
             Mocker.GetMock<IDownloadedBooksImportService>().Verify(c => c.ProcessPath(It.IsAny<string>(), ImportMode.Copy, null, null), Times.Once());
+        }
+
+        [Test]
+        public void numeric_client_scope_selects_the_requested_client_without_legacy_lookup()
+        {
+            GivenExistingFolder(_downloadFolder);
+            Mocker.GetMock<ITrackedDownloadService>().Setup(service => service.Find("sab1", 7)).Returns(_trackedDownload);
+
+            Subject.Execute(new DownloadedBooksScanCommand { Path = _downloadFolder, DownloadClientId = "sab1", ClientId = 7 });
+
+            Mocker.GetMock<IDownloadedBooksImportService>().Verify(service => service.ProcessPath(_downloadFolder, ImportMode.Auto, _trackedDownload.RemoteBook.Author, _trackedDownload.DownloadItem), Times.Once());
+            Mocker.GetMock<ITrackedDownloadService>().Verify(service => service.Find("sab1"), Times.Never());
+        }
+
+        [Test]
+        public void unknown_explicit_client_cannot_fall_back_to_untracked_import()
+        {
+            GivenExistingFolder(_downloadFolder);
+            GivenValidQueueItem();
+
+            Assert.Throws<InvalidOperationException>(() => Subject.Execute(new DownloadedBooksScanCommand
+            {
+                Path = _downloadFolder, DownloadClientId = "sab1", ClientId = 8
+            }));
+
+            AssertNoImport();
+        }
+
+        [Test]
+        public void ambiguous_legacy_download_id_aborts_before_any_import_or_completion()
+        {
+            GivenExistingFolder(_downloadFolder);
+            Mocker.GetMock<ITrackedDownloadService>().Setup(service => service.Find("sab1")).Throws(new AmbiguousTrackedDownloadException("sab1"));
+
+            Assert.Throws<AmbiguousTrackedDownloadException>(() => Subject.Execute(new DownloadedBooksScanCommand
+            {
+                Path = _downloadFolder, DownloadClientId = "sab1"
+            }));
+
+            AssertNoImport();
+        }
+
+        [TestCase(0, "sab1")]
+        [TestCase(-1, "sab1")]
+        [TestCase(7, null)]
+        public void invalid_explicit_scope_is_rejected_before_import(int clientId, string downloadId)
+        {
+            GivenExistingFolder(_downloadFolder);
+
+            Assert.Throws<ArgumentException>(() => Subject.Execute(new DownloadedBooksScanCommand
+            {
+                Path = _downloadFolder, DownloadClientId = downloadId, ClientId = clientId
+            }));
+
+            AssertNoImport();
+        }
+
+        [Test]
+        public void scoped_external_copy_persists_retention_before_import()
+        {
+            GivenExistingFolder(_downloadFolder);
+            Mocker.GetMock<ITrackedDownloadService>().Setup(service => service.Find("sab1", 7)).Returns(_trackedDownload);
+            Mocker.GetMock<IProvideImportItemService>().Setup(service => service.ProvideImportItem(_trackedDownload.DownloadItem, null)).Returns(_trackedDownload.DownloadItem);
+            var retained = false;
+            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.RecordSourceRetention(_trackedDownload)).Callback(() => retained = true);
+            Mocker.GetMock<IDownloadedBooksImportService>()
+                .Setup(service => service.ProcessPath(_downloadFolder, ImportMode.Copy, _trackedDownload.RemoteBook.Author, _trackedDownload.DownloadItem))
+                .Returns(() =>
+                {
+                    Assert.That(retained, Is.True);
+                    return new List<ImportResult>();
+                });
+
+            Subject.Execute(new DownloadedBooksScanCommand
+            {
+                Path = _downloadFolder, DownloadClientId = "sab1", ClientId = 7, ImportMode = ImportMode.Copy
+            });
+
+            Assert.That(_trackedDownload.KeepSourceFiles, Is.True);
+            Mocker.GetMock<IDownloadHistoryService>().Verify(service => service.RecordSourceRetention(_trackedDownload), Times.Once());
+        }
+
+        private void AssertNoImport()
+        {
+            Mocker.GetMock<IDownloadedBooksImportService>().Verify(service => service.ProcessPath(It.IsAny<string>(), It.IsAny<ImportMode>(), It.IsAny<Author>(), It.IsAny<DownloadClientItem>()), Times.Never());
+            Mocker.GetMock<ICompletedDownloadService>().Verify(service => service.VerifyImport(It.IsAny<TrackedDownload>(), It.IsAny<List<ImportResult>>()), Times.Never());
         }
     }
 }

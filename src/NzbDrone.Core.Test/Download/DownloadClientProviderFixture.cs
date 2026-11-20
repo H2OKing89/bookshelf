@@ -95,6 +95,54 @@ namespace NzbDrone.Core.Test.Download
             return protocol == DownloadProtocol.Torrent ? WithTorrentClient(priority, tags) : WithUsenetClient(priority, tags);
         }
 
+        private IDownloadClient GetSuccessfulClient(DownloadProtocol protocol, int indexerId = 0, bool filterBlockedClients = false, HashSet<int> tags = null)
+        {
+            var client = Subject.GetDownloadClient(protocol, indexerId, filterBlockedClients, tags);
+            if (client != null)
+            {
+                Subject.ReportSuccessfulDownloadClient(protocol, client.Definition.Id);
+            }
+
+            return client;
+        }
+
+        [Test]
+        public void should_only_advance_round_robin_after_success()
+        {
+            var first = WithTorrentClient();
+            var second = WithTorrentClient();
+
+            Subject.GetDownloadClient(DownloadProtocol.Torrent).Should().BeSameAs(first.Object);
+            Subject.GetDownloadClient(DownloadProtocol.Torrent).Should().BeSameAs(first.Object);
+            Subject.GetDownloadClients(DownloadProtocol.Torrent).Should().Equal(first.Object, second.Object);
+
+            Subject.ReportSuccessfulDownloadClient(DownloadProtocol.Torrent, first.Object.Definition.Id);
+            Subject.GetDownloadClients(DownloadProtocol.Torrent).Should().Equal(second.Object, first.Object);
+        }
+
+        [Test]
+        public void should_return_all_eligible_priority_groups_in_round_robin_order()
+        {
+            var first = WithTorrentClient(1);
+            var fallback = WithTorrentClient(2);
+            var second = WithTorrentClient(1);
+            WithTorrentClient(0, new HashSet<int> { 9 });
+
+            Subject.GetDownloadClients(DownloadProtocol.Torrent).Should().Equal(first.Object, second.Object, fallback.Object);
+            Subject.ReportSuccessfulDownloadClient(DownloadProtocol.Torrent, first.Object.Definition.Id);
+            Subject.GetDownloadClients(DownloadProtocol.Torrent).Should().Equal(second.Object, first.Object, fallback.Object);
+        }
+
+        [Test]
+        public void indexer_routing_should_return_only_its_eligible_client()
+        {
+            WithTorrentClient();
+            var selected = WithTorrentClient(2);
+            WithTorrentIndexer(selected.Object.Definition.Id);
+
+            Subject.GetDownloadClients(DownloadProtocol.Torrent, 1).Should().Equal(selected.Object);
+        }
+
         [TestCase(DownloadProtocol.Usenet, false)]
         [TestCase(DownloadProtocol.Usenet, true)]
         [TestCase(DownloadProtocol.Torrent, false)]
@@ -104,7 +152,7 @@ namespace NzbDrone.Core.Test.Download
             WithClient(protocol, 0, new HashSet<int> { 1 });
             var untagged = WithClient(protocol, 10);
 
-            var client = Subject.GetDownloadClient(protocol, tags: omittedTags ? null : new HashSet<int>());
+            var client = GetSuccessfulClient(protocol, tags: omittedTags ? null : new HashSet<int>());
 
             client.Should().BeSameAs(untagged.Object);
         }
@@ -118,7 +166,7 @@ namespace NzbDrone.Core.Test.Download
             WithClient(protocol, tags: new HashSet<int> { 1 });
 
             Assert.Throws<DownloadClientUnavailableException>(() =>
-                Subject.GetDownloadClient(protocol, tags: omittedTags ? null : new HashSet<int>()))
+                GetSuccessfulClient(protocol, tags: omittedTags ? null : new HashSet<int>()))
                 .Message.Should().Contain("matching author tag");
         }
 
@@ -129,7 +177,7 @@ namespace NzbDrone.Core.Test.Download
             var otherProtocol = protocol == DownloadProtocol.Torrent ? DownloadProtocol.Usenet : DownloadProtocol.Torrent;
             WithClient(otherProtocol, tags: new HashSet<int> { 1 });
 
-            Subject.GetDownloadClient(protocol, tags: new HashSet<int> { 1 }).Should().BeNull();
+            GetSuccessfulClient(protocol, tags: new HashSet<int> { 1 }).Should().BeNull();
         }
 
         [Test]
@@ -139,7 +187,7 @@ namespace NzbDrone.Core.Test.Download
             WithTorrentClient(0, new HashSet<int> { 4 });
             var matching = WithTorrentClient(10, new HashSet<int> { 2, 3 });
 
-            var client = Subject.GetDownloadClient(DownloadProtocol.Torrent, tags: new HashSet<int> { 1, 2 });
+            var client = GetSuccessfulClient(DownloadProtocol.Torrent, tags: new HashSet<int> { 1, 2 });
 
             client.Should().BeSameAs(matching.Object);
         }
@@ -153,7 +201,7 @@ namespace NzbDrone.Core.Test.Download
             WithTorrentIndexer(tagged.Object.Definition.Id);
 
             Assert.Throws<DownloadClientUnavailableException>(() =>
-                Subject.GetDownloadClient(DownloadProtocol.Torrent, 1, tags: omittedTags ? null : new HashSet<int>()));
+                GetSuccessfulClient(DownloadProtocol.Torrent, 1, tags: omittedTags ? null : new HashSet<int>()));
         }
 
         [Test]
@@ -164,7 +212,7 @@ namespace NzbDrone.Core.Test.Download
             WithTorrentIndexer(unmatched.Object.Definition.Id);
 
             Assert.Throws<DownloadClientUnavailableException>(() =>
-                Subject.GetDownloadClient(DownloadProtocol.Torrent, 1, tags: new HashSet<int> { 1 }));
+                GetSuccessfulClient(DownloadProtocol.Torrent, 1, tags: new HashSet<int> { 1 }));
         }
 
         [Test]
@@ -175,7 +223,7 @@ namespace NzbDrone.Core.Test.Download
             WithTorrentIndexer(untagged.Object.Definition.Id);
 
             Assert.Throws<DownloadClientUnavailableException>(() =>
-                Subject.GetDownloadClient(DownloadProtocol.Torrent, 1, tags: new HashSet<int> { 1 }));
+                GetSuccessfulClient(DownloadProtocol.Torrent, 1, tags: new HashSet<int> { 1 }));
         }
 
         [Test]
@@ -185,7 +233,7 @@ namespace NzbDrone.Core.Test.Download
             WithTorrentClient(0, new HashSet<int> { 2 });
             WithTorrentIndexer(untagged.Object.Definition.Id);
 
-            Subject.GetDownloadClient(DownloadProtocol.Torrent, 1, tags: new HashSet<int> { 1 })
+            GetSuccessfulClient(DownloadProtocol.Torrent, 1, tags: new HashSet<int> { 1 })
                 .Should().BeSameAs(untagged.Object);
         }
 
@@ -201,11 +249,11 @@ namespace NzbDrone.Core.Test.Download
             if (filterBlockedClients)
             {
                 Assert.Throws<DownloadClientUnavailableException>(() =>
-                    Subject.GetDownloadClient(DownloadProtocol.Torrent, 1, true, new HashSet<int> { 1 }));
+                    GetSuccessfulClient(DownloadProtocol.Torrent, 1, true, new HashSet<int> { 1 }));
             }
             else
             {
-                Subject.GetDownloadClient(DownloadProtocol.Torrent, 1, false, new HashSet<int> { 1 })
+                GetSuccessfulClient(DownloadProtocol.Torrent, 1, false, new HashSet<int> { 1 })
                     .Should().BeSameAs(matching.Object);
             }
         }
@@ -221,11 +269,11 @@ namespace NzbDrone.Core.Test.Download
             if (filterBlockedClients)
             {
                 Assert.Throws<DownloadClientUnavailableException>(() =>
-                    Subject.GetDownloadClient(DownloadProtocol.Torrent, filterBlockedClients: true, tags: new HashSet<int> { 1 }));
+                    GetSuccessfulClient(DownloadProtocol.Torrent, filterBlockedClients: true, tags: new HashSet<int> { 1 }));
             }
             else
             {
-                Subject.GetDownloadClient(DownloadProtocol.Torrent, tags: new HashSet<int> { 1 })
+                GetSuccessfulClient(DownloadProtocol.Torrent, tags: new HashSet<int> { 1 })
                     .Should().BeSameAs(matching.Object);
             }
         }
@@ -241,11 +289,11 @@ namespace NzbDrone.Core.Test.Download
             if (filterBlockedClients)
             {
                 Assert.Throws<DownloadClientUnavailableException>(() =>
-                    Subject.GetDownloadClient(DownloadProtocol.Torrent, filterBlockedClients: true));
+                    GetSuccessfulClient(DownloadProtocol.Torrent, filterBlockedClients: true));
             }
             else
             {
-                Subject.GetDownloadClient(DownloadProtocol.Torrent).Should().BeSameAs(untagged.Object);
+                GetSuccessfulClient(DownloadProtocol.Torrent).Should().BeSameAs(untagged.Object);
             }
         }
 
@@ -258,9 +306,9 @@ namespace NzbDrone.Core.Test.Download
             WithClient(protocol, 2);
             var second = WithClient(protocol, 1);
 
-            Subject.GetDownloadClient(protocol).Should().BeSameAs(first.Object);
-            Subject.GetDownloadClient(protocol).Should().BeSameAs(second.Object);
-            Subject.GetDownloadClient(protocol).Should().BeSameAs(first.Object);
+            GetSuccessfulClient(protocol).Should().BeSameAs(first.Object);
+            GetSuccessfulClient(protocol).Should().BeSameAs(second.Object);
+            GetSuccessfulClient(protocol).Should().BeSameAs(first.Object);
         }
 
         [Test]
@@ -271,11 +319,11 @@ namespace NzbDrone.Core.Test.Download
             WithUsenetClient();
             WithTorrentClient();
 
-            var client1 = Subject.GetDownloadClient(DownloadProtocol.Usenet);
-            var client2 = Subject.GetDownloadClient(DownloadProtocol.Usenet);
-            var client3 = Subject.GetDownloadClient(DownloadProtocol.Usenet);
-            var client4 = Subject.GetDownloadClient(DownloadProtocol.Usenet);
-            var client5 = Subject.GetDownloadClient(DownloadProtocol.Usenet);
+            var client1 = GetSuccessfulClient(DownloadProtocol.Usenet);
+            var client2 = GetSuccessfulClient(DownloadProtocol.Usenet);
+            var client3 = GetSuccessfulClient(DownloadProtocol.Usenet);
+            var client4 = GetSuccessfulClient(DownloadProtocol.Usenet);
+            var client5 = GetSuccessfulClient(DownloadProtocol.Usenet);
 
             client1.Definition.Id.Should().Be(1);
             client2.Definition.Id.Should().Be(2);
@@ -292,11 +340,11 @@ namespace NzbDrone.Core.Test.Download
             WithTorrentClient();
             WithTorrentClient();
 
-            var client1 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client2 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client3 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client4 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client5 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
+            var client1 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client2 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client3 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client4 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client5 = GetSuccessfulClient(DownloadProtocol.Torrent);
 
             client1.Definition.Id.Should().Be(2);
             client2.Definition.Id.Should().Be(3);
@@ -312,10 +360,10 @@ namespace NzbDrone.Core.Test.Download
             WithTorrentClient();
             WithTorrentClient();
 
-            var client1 = Subject.GetDownloadClient(DownloadProtocol.Usenet);
-            var client2 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client3 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client4 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
+            var client1 = GetSuccessfulClient(DownloadProtocol.Usenet);
+            var client2 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client3 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client4 = GetSuccessfulClient(DownloadProtocol.Torrent);
 
             client1.Definition.Id.Should().Be(1);
             client2.Definition.Id.Should().Be(2);
@@ -334,10 +382,10 @@ namespace NzbDrone.Core.Test.Download
             WithTorrentClient();
             WithTorrentClient(0, clientTags);
 
-            var client1 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 0, false, seriesTags);
-            var client2 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 0, false, seriesTags);
-            var client3 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 0, false, seriesTags);
-            var client4 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 0, false, seriesTags);
+            var client1 = GetSuccessfulClient(DownloadProtocol.Torrent, 0, false, seriesTags);
+            var client2 = GetSuccessfulClient(DownloadProtocol.Torrent, 0, false, seriesTags);
+            var client3 = GetSuccessfulClient(DownloadProtocol.Torrent, 0, false, seriesTags);
+            var client4 = GetSuccessfulClient(DownloadProtocol.Torrent, 0, false, seriesTags);
 
             client1.Definition.Id.Should().Be(2);
             client2.Definition.Id.Should().Be(4);
@@ -356,10 +404,10 @@ namespace NzbDrone.Core.Test.Download
             WithTorrentClient();
             WithTorrentClient(0, clientTags);
 
-            var client1 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 0, false, seriesTags);
-            var client2 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 0, false, seriesTags);
-            var client3 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 0, false, seriesTags);
-            var client4 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 0, false, seriesTags);
+            var client1 = GetSuccessfulClient(DownloadProtocol.Torrent, 0, false, seriesTags);
+            var client2 = GetSuccessfulClient(DownloadProtocol.Torrent, 0, false, seriesTags);
+            var client3 = GetSuccessfulClient(DownloadProtocol.Torrent, 0, false, seriesTags);
+            var client4 = GetSuccessfulClient(DownloadProtocol.Torrent, 0, false, seriesTags);
 
             client1.Definition.Id.Should().Be(1);
             client2.Definition.Id.Should().Be(3);
@@ -375,7 +423,7 @@ namespace NzbDrone.Core.Test.Download
 
             WithTorrentClient(0, clientTags);
 
-            Assert.Throws<DownloadClientUnavailableException>(() => Subject.GetDownloadClient(DownloadProtocol.Torrent, 0, false, seriesTags));
+            Assert.Throws<DownloadClientUnavailableException>(() => GetSuccessfulClient(DownloadProtocol.Torrent, 0, false, seriesTags));
         }
 
         [Test]
@@ -388,10 +436,10 @@ namespace NzbDrone.Core.Test.Download
 
             GivenBlockedClient(3);
 
-            var client1 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client2 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client3 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client4 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
+            var client1 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client2 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client3 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client4 = GetSuccessfulClient(DownloadProtocol.Torrent);
 
             client1.Definition.Id.Should().Be(2);
             client2.Definition.Id.Should().Be(4);
@@ -411,11 +459,11 @@ namespace NzbDrone.Core.Test.Download
             GivenBlockedClient(3);
             GivenBlockedClient(4);
 
-            var client1 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client2 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client3 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client4 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client5 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
+            var client1 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client2 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client3 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client4 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client5 = GetSuccessfulClient(DownloadProtocol.Torrent);
 
             client1.Definition.Id.Should().Be(2);
             client2.Definition.Id.Should().Be(3);
@@ -431,11 +479,11 @@ namespace NzbDrone.Core.Test.Download
             WithTorrentClient();
             WithTorrentClient();
 
-            var client1 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client2 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client3 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client4 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client5 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
+            var client1 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client2 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client3 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client4 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client5 = GetSuccessfulClient(DownloadProtocol.Torrent);
 
             client1.Definition.Id.Should().Be(3);
             client2.Definition.Id.Should().Be(4);
@@ -453,11 +501,11 @@ namespace NzbDrone.Core.Test.Download
 
             GivenBlockedClient(4);
 
-            var client1 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client2 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client3 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client4 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
-            var client5 = Subject.GetDownloadClient(DownloadProtocol.Torrent);
+            var client1 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client2 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client3 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client4 = GetSuccessfulClient(DownloadProtocol.Torrent);
+            var client5 = GetSuccessfulClient(DownloadProtocol.Torrent);
 
             client1.Definition.Id.Should().Be(2);
             client2.Definition.Id.Should().Be(3);
@@ -474,11 +522,11 @@ namespace NzbDrone.Core.Test.Download
             WithTorrentClient();
             WithTorrentIndexer(3);
 
-            var client1 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 1);
-            var client2 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 1);
-            var client3 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 1);
-            var client4 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 1);
-            var client5 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 1);
+            var client1 = GetSuccessfulClient(DownloadProtocol.Torrent, 1);
+            var client2 = GetSuccessfulClient(DownloadProtocol.Torrent, 1);
+            var client3 = GetSuccessfulClient(DownloadProtocol.Torrent, 1);
+            var client4 = GetSuccessfulClient(DownloadProtocol.Torrent, 1);
+            var client5 = GetSuccessfulClient(DownloadProtocol.Torrent, 1);
 
             client1.Definition.Id.Should().Be(3);
             client2.Definition.Id.Should().Be(3);
@@ -496,7 +544,7 @@ namespace NzbDrone.Core.Test.Download
             WithTorrentClient();
             WithTorrentIndexer(5);
 
-            Assert.Throws<DownloadClientUnavailableException>(() => Subject.GetDownloadClient(DownloadProtocol.Torrent, 1));
+            Assert.Throws<DownloadClientUnavailableException>(() => GetSuccessfulClient(DownloadProtocol.Torrent, 1));
         }
     }
 }

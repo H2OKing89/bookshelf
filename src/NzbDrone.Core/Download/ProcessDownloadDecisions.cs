@@ -42,6 +42,7 @@ namespace NzbDrone.Core.Download
             var grabbed = new List<DownloadDecision>();
             var pending = new List<DownloadDecision>();
             var rejected = decisions.Where(d => d.Rejected).ToList();
+            var uncertain = new List<DownloadDecision>();
 
             var pendingAddQueue = new List<Tuple<DownloadDecision, PendingReleaseReason>>();
 
@@ -53,7 +54,7 @@ namespace NzbDrone.Core.Download
                 var downloadProtocol = report.RemoteBook.Release.DownloadProtocol;
 
                 //Skip if already grabbed
-                if (IsBookProcessed(grabbed, report))
+                if (IsBookProcessed(grabbed, report) || IsBookProcessed(uncertain, report))
                 {
                     continue;
                 }
@@ -111,6 +112,12 @@ namespace NzbDrone.Core.Download
 
                     case ProcessedDecisionResult.Skipped:
                         {
+                            break;
+                        }
+
+                    case ProcessedDecisionResult.SubmissionUncertain:
+                        {
+                            uncertain.Add(report);
                             break;
                         }
                 }
@@ -207,6 +214,11 @@ namespace NzbDrone.Core.Download
             {
                 _logger.Warn("Failed to download release from indexer, no longer available. " + remoteBook);
                 return ProcessedDecisionResult.Rejected;
+            }
+            catch (DownloadClientSubmissionUncertainException ex)
+            {
+                _logger.Warn(ex, "Download submission requires review before retrying. " + remoteBook);
+                return ProcessedDecisionResult.SubmissionUncertain;
             }
             catch (Exception ex)
             {

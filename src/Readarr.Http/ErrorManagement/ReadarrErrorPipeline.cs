@@ -11,6 +11,8 @@ using NLog;
 using Npgsql;
 using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Datastore;
+using NzbDrone.Core.Download.Clients;
+using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.Exceptions;
 using Readarr.Http.Exceptions;
 
@@ -90,6 +92,16 @@ namespace Readarr.Http.ErrorManagement
             else if (exception is NzbDroneClientException clientException)
             {
                 statusCode = clientException.StatusCode;
+            }
+            else if (exception is DownloadClientSubmissionUncertainException)
+            {
+                statusCode = HttpStatusCode.Conflict;
+                errorModel.Description = exception.Message;
+            }
+            else if (exception is AmbiguousTrackedDownloadException)
+            {
+                statusCode = HttpStatusCode.BadRequest;
+                errorModel.Description = exception.Message;
             }
             else if (exception is ModelNotFoundException)
             {

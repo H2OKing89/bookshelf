@@ -5,7 +5,9 @@ using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Books.Events;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download;
+using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.HealthCheck;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
@@ -26,7 +28,7 @@ namespace NzbDrone.Core.Notifications
           IHandle<BookFileDeletedEvent>,
           IHandle<HealthCheckFailedEvent>,
           IHandle<DownloadFailedEvent>,
-          IHandle<BookImportIncompleteEvent>,
+          IHandle<ManualInteractionRequiredEvent>,
           IHandle<BookFileRetaggedEvent>,
           IHandleAsync<DeleteCompletedEvent>,
           IHandle<UpdateInstalledEvent>
@@ -67,12 +69,6 @@ namespace NzbDrone.Core.Notifications
                 tracks.Count);
         }
 
-        private string GetBookIncompleteImportMessage(string source)
-        {
-            return string.Format("Readarr failed to Import all files for {0}",
-                source);
-        }
-
         private string FormatMissing(object value)
         {
             var text = value?.ToString();
@@ -92,6 +88,12 @@ namespace NzbDrone.Core.Notifications
             {
                 _logger.Debug("No tags set for this notification.");
                 return true;
+            }
+
+            if (author == null)
+            {
+                _logger.Debug("Skipping tagged notification because the download has no matched author.");
+                return false;
             }
 
             if (definition.Tags.Intersect(author.Tags).Any())
@@ -364,19 +366,65 @@ namespace NzbDrone.Core.Notifications
             }
         }
 
-        public void Handle(BookImportIncompleteEvent message)
+        public void Handle(ManualInteractionRequiredEvent message)
         {
-            // TODO: Build out this message so that we can pass on what failed and what was successful
+            var tracked = message.TrackedDownload;
+            var books = tracked.RemoteBook?.Books ?? new List<Book>();
+            var statuses = tracked.StatusMessages.Where(status => status != null).Select(status => new TrackedDownloadStatusMessage(status.Title,
+                status.Messages?.ToList() ?? new List<string>(),
+                status.Rejections.Where(reason => reason != null).Select(reason => new Rejection(reason.Reason, reason.Type, reason.Code)))).ToList();
+            var client = tracked.DownloadItem.DownloadClientInfo;
+            var source = tracked.DownloadItem.Title.IsNullOrWhiteSpace() ? tracked.DownloadItem.DownloadId : tracked.DownloadItem.Title;
+            var reasons = statuses.SelectMany(status => status.Rejections.Select(reason => $"[{reason.Code}] {status.Title}: {reason.Reason}"))
+                .Distinct().ToList();
+            var text = $"Bookshelf needs manual intervention to import {source}.";
+            if (client != null)
+            {
+                text += $" Download client: {client.Name} ({client.Type}).";
+            }
+
+            var sourcePath = tracked.ImportItem?.OutputPath.FullPath ?? tracked.DownloadItem.OutputPath.FullPath;
+            if (!sourcePath.IsNullOrWhiteSpace())
+            {
+                text += $" Source: {sourcePath}.";
+            }
+
+            if (reasons.Any())
+            {
+                text += " " + string.Join("; ", reasons.Take(10));
+                if (reasons.Count > 10)
+                {
+                    text += $"; {reasons.Count - 10} additional issues are available in Activity.";
+                }
+            }
+
             var downloadMessage = new BookDownloadMessage
             {
-                Message = GetBookIncompleteImportMessage(message.TrackedDownload.DownloadItem.Title)
+                Message = text,
+                Author = tracked.RemoteBook?.Author,
+                Book = books.Count == 1 ? books[0] : null,
+                Books = books,
+                BookIdentities = books.Select(book => ManualInteractionIdentity(book, tracked)).ToList(),
+                BookFiles = new List<BookFile>(),
+                OldFiles = new List<BookFile>(),
+                DownloadClientInfo = new DownloadClientItemClientInfo
+                {
+                    Id = tracked.DownloadClient, Name = client?.Name, Type = client?.Type, Protocol = tracked.Protocol
+                },
+                DownloadId = tracked.DownloadItem.DownloadId,
+                SourceTitle = source,
+                SourcePath = tracked.DownloadItem.OutputPath.FullPath,
+                OutputPath = tracked.ImportItem?.OutputPath.FullPath,
+                DownloadStatus = tracked.DownloadItem.Status.ToString(),
+                ImportStatus = tracked.State.ToString(),
+                StatusMessages = statuses
             };
 
             foreach (var notification in _notificationFactory.OnImportFailureEnabled())
             {
                 try
                 {
-                    if (ShouldHandleAuthor(notification.Definition, message.TrackedDownload.RemoteBook.Author))
+                    if (ShouldHandleAuthor(notification.Definition, downloadMessage.Author))
                     {
                         notification.OnImportFailure(downloadMessage);
                         _notificationStatusService.RecordSuccess(notification.Definition.Id);
@@ -384,10 +432,43 @@ namespace NzbDrone.Core.Notifications
                 }
                 catch (Exception ex)
                 {
-                    _notificationStatusService.RecordFailure(notification.Definition.Id);
-                    _logger.Warn(ex, "Unable to send OnImportFailure notification to: " + notification.Definition.Name);
+                    try
+                    {
+                        _notificationStatusService.RecordFailure(notification.Definition.Id);
+                    }
+                    catch (Exception statusError)
+                    {
+                        _logger.Debug("Unable to record notification failure ({0})", statusError.GetType().Name);
+                    }
+
+                    // Provider errors may contain endpoint credentials. Preserve
+                    // isolation without copying those details into import logs.
+                    _logger.Warn("Unable to send OnImportFailure notification to {0} ({1})", notification.Definition.Name, ex.GetType().Name);
                 }
             }
+        }
+
+        private static ManualInteractionBook ManualInteractionIdentity(Book book, TrackedDownload tracked)
+        {
+            var committedEditions = tracked.ImportReceipt?.Files?.Where(file => file.BookId == book.Id)
+                .Select(file => file.EditionId).ToHashSet() ?? new HashSet<int>();
+            var editions = (book.Editions?.Value ?? new List<Edition>())
+                .Where(edition => edition.BookId == book.Id &&
+                    (committedEditions.Any() ? committedEditions.Contains(edition.Id) : edition.Monitored));
+            return new ManualInteractionBook
+            {
+                Id = book.Id,
+                Title = book.Title,
+                ForeignBookId = book.ForeignBookId,
+                Editions = editions.Select(edition => new ManualInteractionEdition
+                {
+                    Id = edition.Id,
+                    Title = edition.Title,
+                    ForeignEditionId = edition.ForeignEditionId,
+                    Asin = edition.Asin,
+                    AudibleRegion = edition.AudibleRegion
+                }).ToList()
+            };
         }
 
         public void Handle(BookFileRetaggedEvent message)

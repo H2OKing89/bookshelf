@@ -134,7 +134,7 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
         {
             _trackedDownload.RemoteBook = null;
             var marker = new DownloadHistory { EventType = DownloadHistoryEventType.DownloadImported };
-            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.GetLatestDownloadHistoryItem(_trackedDownload.DownloadItem.DownloadId)).Returns(marker);
+            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.GetLatestDownloadHistoryItem(_trackedDownload.DownloadItem.DownloadId, _trackedDownload.DownloadClient)).Returns(marker);
             Mocker.GetMock<IDownloadImportCompletionService>().Setup(service => service.ReadReceipt(_trackedDownload, marker)).Returns(new DownloadImportReceipt());
 
             Subject.IsImported(_trackedDownload, _historyItems).Should().BeTrue();

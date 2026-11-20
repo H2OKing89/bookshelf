@@ -32,6 +32,8 @@ namespace Readarr.Api.V1.Queue
         public List<TrackedDownloadStatusMessage> StatusMessages { get; set; }
         public string ErrorMessage { get; set; }
         public string DownloadId { get; set; }
+        public int? DownloadClientId { get; set; }
+        public bool? DownloadClientAvailable { get; set; }
         public DownloadProtocol Protocol { get; set; }
         public string DownloadClient { get; set; }
         public bool DownloadClientHasPostImportCategory { get; set; }
@@ -73,6 +75,8 @@ namespace Readarr.Api.V1.Queue
                 StatusMessages = model.StatusMessages,
                 ErrorMessage = model.ErrorMessage,
                 DownloadId = model.DownloadId,
+                DownloadClientId = model.DownloadClientId,
+                DownloadClientAvailable = model.DownloadClientId.HasValue ? model.DownloadClientAvailable : null,
                 Protocol = model.Protocol,
                 DownloadClient = model.DownloadClient,
                 DownloadClientHasPostImportCategory = model.DownloadClientHasPostImportCategory,

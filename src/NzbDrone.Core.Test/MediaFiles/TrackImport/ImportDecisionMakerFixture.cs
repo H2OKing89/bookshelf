@@ -136,7 +136,7 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport
                 .Returns(new ParsedTrackInfo());
 
             Mocker.GetMock<IHistoryService>()
-                .Setup(x => x.FindByDownloadId(It.IsAny<string>()))
+                .Setup(x => x.FindByDownloadId(It.IsAny<string>(), It.IsAny<int>()))
                 .Returns(new List<EntityHistory>());
 
             GivenSpecifications(_bookpass1);

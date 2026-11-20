@@ -22,18 +22,24 @@ namespace NzbDrone.Core.Download.TrackedDownloads
     public interface ITrackedDownloadService
     {
         TrackedDownload Find(string downloadId);
+        TrackedDownload Find(string downloadId, int downloadClientId);
         void StopTracking(string downloadId);
+        void StopTracking(string downloadId, int downloadClientId);
         void StopTracking(List<string> downloadIds);
+        void StopTrackingMissing(int downloadClientId, List<string> downloadIds);
+        void StopTrackingClient(int downloadClientId);
         TrackedDownload TrackDownload(DownloadClientDefinition downloadClient, DownloadClientItem downloadItem);
         List<TrackedDownload> GetTrackedDownloads();
         void UpdateTrackable(List<TrackedDownload> trackedDownloads);
     }
 
     public class TrackedDownloadService : ITrackedDownloadService,
+                                          IHandle<BookGrabbedEvent>,
                                           IHandle<BookInfoRefreshedEvent>,
                                           IHandle<AuthorDeletedEvent>,
                                           IHandle<ConfigSavedEvent>,
-                                          IHandle<ProviderUpdatedEvent<IDownloadClient>>
+                                          IHandle<ProviderUpdatedEvent<IDownloadClient>>,
+                                          IHandle<ProviderDeletedEvent<IDownloadClient>>
     {
         private readonly IParsingService _parsingService;
         private readonly IHistoryService _historyService;
@@ -62,14 +68,29 @@ namespace NzbDrone.Core.Download.TrackedDownloads
             _eventAggregator = eventAggregator;
             _downloadHistoryService = downloadHistoryService;
             _completionService = completionService;
-            _cache = cacheManager.GetCache<TrackedDownload>(GetType());
             _importRetryService = importRetryService;
             _logger = logger;
         }
 
         public TrackedDownload Find(string downloadId)
         {
-            return _cache.Find(downloadId);
+            var matches = _cache.Values.Where(item => string.Equals(item.DownloadItem.DownloadId, downloadId, StringComparison.Ordinal)).Take(2).ToList();
+            if (matches.Count > 1)
+            {
+                throw new AmbiguousTrackedDownloadException(downloadId);
+            }
+
+            return matches.SingleOrDefault();
+        }
+
+        public TrackedDownload Find(string downloadId, int downloadClientId)
+        {
+            return _cache.Find(GetCacheKey(downloadClientId, downloadId));
+        }
+
+        private static string GetCacheKey(int downloadClientId, string downloadId)
+        {
+            return $"{downloadClientId}:{downloadId}";
         }
 
         public void UpdateBookCache(int bookId)
@@ -96,44 +117,75 @@ namespace NzbDrone.Core.Download.TrackedDownloads
 
         public void StopTracking(string downloadId)
         {
-            var trackedDownload = _cache.Find(downloadId);
+            RemoveTrackedDownloads(new[] { Find(downloadId) });
+        }
 
-            _cache.Remove(downloadId);
-            _eventAggregator.PublishEvent(new TrackedDownloadsRemovedEvent(new List<TrackedDownload> { trackedDownload }));
+        public void StopTracking(string downloadId, int downloadClientId)
+        {
+            RemoveTrackedDownloads(new[] { Find(downloadId, downloadClientId) });
         }
 
         public void StopTracking(List<string> downloadIds)
         {
-            var trackedDownloads = new List<TrackedDownload>();
+            // Resolve every identity before mutating the cache, including ambiguous legacy requests.
+            RemoveTrackedDownloads(downloadIds.Select(downloadId => Find(downloadId)).ToList());
+        }
 
-            foreach (var downloadId in downloadIds)
+        public void StopTrackingMissing(int downloadClientId, List<string> downloadIds)
+        {
+            var present = downloadIds.ToHashSet(StringComparer.Ordinal);
+            RemoveTrackedDownloads(_cache.Values.Where(item => item.DownloadClient == downloadClientId && !present.Contains(item.DownloadItem.DownloadId)).ToList());
+        }
+
+        public void StopTrackingClient(int downloadClientId)
+        {
+            RemoveTrackedDownloads(_cache.Values.Where(item => item.DownloadClient == downloadClientId).ToList());
+        }
+
+        private void RemoveTrackedDownloads(IEnumerable<TrackedDownload> items)
+        {
+            var trackedDownloads = items.Where(item => item != null).Distinct().ToList();
+            foreach (var item in trackedDownloads)
             {
-                var trackedDownload = _cache.Find(downloadId);
-                _cache.Remove(downloadId);
-                trackedDownloads.Add(trackedDownload);
+                _cache.Remove(GetCacheKey(item.DownloadClient, item.DownloadItem.DownloadId));
             }
 
-            _eventAggregator.PublishEvent(new TrackedDownloadsRemovedEvent(trackedDownloads));
+            if (trackedDownloads.Any())
+            {
+                _eventAggregator.PublishEvent(new TrackedDownloadsRemovedEvent(trackedDownloads));
+            }
         }
 
         public TrackedDownload TrackDownload(DownloadClientDefinition downloadClient, DownloadClientItem downloadItem)
         {
-            var existingItem = Find(downloadItem.DownloadId);
+            var existingItem = Find(downloadItem.DownloadId, downloadClient.Id);
 
             if (existingItem != null && existingItem.State != TrackedDownloadState.Downloading)
             {
                 LogItemChange(existingItem, existingItem.DownloadItem, downloadItem);
 
-                if (existingItem.DownloadItem.OutputPath != downloadItem.OutputPath || existingItem.DownloadClient != downloadClient.Id)
+                var sourceChanged = existingItem.DownloadItem.OutputPath != downloadItem.OutputPath;
+                var categoryChanged = !string.Equals(existingItem.DownloadItem.Category, downloadItem.Category, StringComparison.Ordinal);
+                if (sourceChanged || categoryChanged)
                 {
                     existingItem.ImportItem = null;
                     existingItem.ImportReceipt = null;
-                    existingItem.ImportCompletionAnnounced = false;
+                    if (sourceChanged)
+                    {
+                        existingItem.ImportCompletionAnnounced = false;
+                    }
+
                     _importRetryService.Reset(existingItem);
                     if (existingItem.State == TrackedDownloadState.Imported)
                     {
                         _importRetryService.Block(existingItem);
-                        existingItem.WarnCode(RejectionCode.CompletionUnverified, "Download client or output path changed. Previous completion cannot authorize cleanup in the new context.");
+                        existingItem.WarnCode(RejectionCode.CompletionUnverified, "Download output path or category changed. Previous completion cannot authorize cleanup in the new context.");
+                    }
+                    else if (existingItem.State == TrackedDownloadState.ImportPending ||
+                             existingItem.State == TrackedDownloadState.ImportBlocked ||
+                             existingItem.State == TrackedDownloadState.ImportFailed)
+                    {
+                        existingItem.State = TrackedDownloadState.Downloading;
                     }
                 }
 
@@ -150,13 +202,16 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                 DownloadClient = downloadClient.Id,
                 DownloadItem = downloadItem,
                 Protocol = downloadClient.Protocol,
-                IsTrackable = true
+                IsTrackable = true,
+                KeepSourceFiles = existingItem?.KeepSourceFiles ?? false,
+                ImportCompletionAnnounced = existingItem?.ImportCompletionAnnounced ?? false,
+                HasNotifiedManualInteractionRequired = existingItem?.HasNotifiedManualInteractionRequired ?? false
             };
 
             try
             {
                 var parsedBookInfo = Parser.Parser.ParseBookTitle(trackedDownload.DownloadItem.Title);
-                var historyItems = _historyService.FindByDownloadId(downloadItem.DownloadId)
+                var historyItems = _historyService.FindByDownloadId(downloadItem.DownloadId, downloadClient.Id)
                     .OrderByDescending(h => h.Date)
                     .ToList();
 
@@ -165,7 +220,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                     trackedDownload.RemoteBook = _parsingService.Map(parsedBookInfo);
                 }
 
-                var downloadHistory = _downloadHistoryService.GetLatestDownloadHistoryItem(downloadItem.DownloadId);
+                var downloadHistory = _downloadHistoryService.GetLatestDownloadHistoryItem(downloadItem.DownloadId, downloadClient.Id);
 
                 if (downloadHistory != null)
                 {
@@ -273,7 +328,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
 
             LogItemChange(trackedDownload, existingItem?.DownloadItem, trackedDownload.DownloadItem);
 
-            _cache.Set(trackedDownload.DownloadItem.DownloadId, trackedDownload);
+            _cache.Set(GetCacheKey(trackedDownload.DownloadClient, trackedDownload.DownloadItem.DownloadId), trackedDownload);
             return trackedDownload;
         }
 
@@ -284,11 +339,10 @@ namespace NzbDrone.Core.Download.TrackedDownloads
 
         public void UpdateTrackable(List<TrackedDownload> trackedDownloads)
         {
-            var untrackable = GetTrackedDownloads().ExceptBy(t => t.DownloadItem.DownloadId, trackedDownloads, t => t.DownloadItem.DownloadId, StringComparer.CurrentCulture).ToList();
-
-            foreach (var trackedDownload in untrackable)
+            var current = trackedDownloads.Select(item => GetCacheKey(item.DownloadClient, item.DownloadItem.DownloadId)).ToHashSet(StringComparer.Ordinal);
+            foreach (var trackedDownload in GetTrackedDownloads())
             {
-                trackedDownload.IsTrackable = false;
+                trackedDownload.IsTrackable = current.Contains(GetCacheKey(trackedDownload.DownloadClient, trackedDownload.DownloadItem.DownloadId));
             }
         }
 
@@ -300,7 +354,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                 existingItem.CanMoveFiles != downloadItem.CanMoveFiles)
             {
                 _logger.Debug("Tracking '{0}:{1}': ClientState={2}{3} ReadarrStage={4} Book='{5}' OutputPath={6}.",
-                    downloadItem.DownloadClientInfo.Name,
+                    downloadItem.DownloadClientInfo?.Name,
                     downloadItem.Title,
                     downloadItem.Status,
                     downloadItem.CanBeRemoved ? "" : downloadItem.CanMoveFiles ? " (busy)" : " (readonly)",
@@ -339,9 +393,31 @@ namespace NzbDrone.Core.Download.TrackedDownloads
             ResetBlockedImports(_cache.Values);
         }
 
+        public void Handle(BookGrabbedEvent message)
+        {
+            if (message.DownloadClientId > 0 && message.DownloadId.IsNotNullOrWhiteSpace())
+            {
+                // A new grab supersedes every state of this client's previous job, including
+                // imported/ignored entries and their completion/notification acknowledgments.
+                StopTracking(message.DownloadId, message.DownloadClientId);
+            }
+        }
+
         public void Handle(ProviderUpdatedEvent<IDownloadClient> message)
         {
-            ResetBlockedImports(_cache.Values.Where(item => item.DownloadClient == message.Definition.Id));
+            var affected = _cache.Values.Where(item => item.DownloadClient == message.Definition.Id).ToList();
+            foreach (var item in affected)
+            {
+                item.IsClientAvailable = false;
+                item.IsTrackable = false;
+            }
+
+            ResetBlockedImports(affected);
+        }
+
+        public void Handle(ProviderDeletedEvent<IDownloadClient> message)
+        {
+            StopTrackingClient(message.ProviderId);
         }
 
         private void ResetBlockedImports(IEnumerable<TrackedDownload> items)

@@ -53,6 +53,7 @@ class InteractiveImportModalContentConnector extends Component {
     const {
       authorId,
       downloadId,
+      downloadClientId,
       folder
     } = this.props;
 
@@ -64,6 +65,7 @@ class InteractiveImportModalContentConnector extends Component {
     this.props.fetchInteractiveImportItems({
       authorId,
       downloadId,
+      downloadClientId,
       folder,
       filterExistingFiles,
       replaceExistingFiles
@@ -77,16 +79,22 @@ class InteractiveImportModalContentConnector extends Component {
     } = this.state;
 
     if (prevState.filterExistingFiles !== filterExistingFiles ||
-        prevState.replaceExistingFiles !== replaceExistingFiles) {
+        prevState.replaceExistingFiles !== replaceExistingFiles ||
+        prevProps.downloadId !== this.props.downloadId ||
+        prevProps.downloadClientId !== this.props.downloadClientId ||
+        prevProps.folder !== this.props.folder ||
+        prevProps.authorId !== this.props.authorId) {
       const {
         authorId,
         downloadId,
+        downloadClientId,
         folder
       } = this.props;
 
       this.props.fetchInteractiveImportItems({
         authorId,
         downloadId,
+        downloadClientId,
         folder,
         filterExistingFiles,
         replaceExistingFiles
@@ -162,7 +170,8 @@ class InteractiveImportModalContentConnector extends Component {
           quality,
           releaseGroup: releaseGroupOverride,
           indexerFlags,
-          downloadId: this.props.downloadId,
+          downloadId: item.downloadId || this.props.downloadId,
+          downloadClientId: item.downloadClientId ?? this.props.downloadClientId,
           disableReleaseSwitching
         });
       }
@@ -211,6 +220,7 @@ class InteractiveImportModalContentConnector extends Component {
 InteractiveImportModalContentConnector.propTypes = {
   authorId: PropTypes.number,
   downloadId: PropTypes.string,
+  downloadClientId: PropTypes.number,
   folder: PropTypes.string,
   filterExistingFiles: PropTypes.bool.isRequired,
   replaceExistingFiles: PropTypes.bool.isRequired,

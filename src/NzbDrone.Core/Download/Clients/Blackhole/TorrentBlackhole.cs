@@ -43,7 +43,7 @@ namespace NzbDrone.Core.Download.Clients.Blackhole
         {
             if (!Settings.SaveMagnetFiles)
             {
-                throw new NotSupportedException("Blackhole does not support magnet links.");
+                throw new DownloadClientMagnetNotSupportedException("Blackhole does not support magnet links.");
             }
 
             var title = remoteBook.Release.Title;

@@ -126,7 +126,7 @@ namespace NzbDrone.Core.Download
             try
             {
                 receipt = _completionService.ReadReceipt(trackedDownload,
-                    _downloadHistoryService.GetLatestDownloadHistoryItem(trackedDownload.DownloadItem.DownloadId));
+                    _downloadHistoryService.GetLatestDownloadHistoryItem(trackedDownload.DownloadItem.DownloadId, trackedDownload.DownloadClient));
             }
             catch (Exception error)
             {

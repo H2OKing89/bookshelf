@@ -83,6 +83,8 @@ class QueueRow extends Component {
     const {
       id,
       downloadId,
+      downloadClientId,
+      downloadClientAvailable,
       title,
       status,
       trackedDownloadStatus,
@@ -122,7 +124,7 @@ class QueueRow extends Component {
     } = this.state;
 
     const progress = 100 - (sizeleft / size * 100);
-    const showInteractiveImport = status === 'completed' && trackedDownloadStatus === 'warning';
+    const showInteractiveImport = downloadClientAvailable !== false && status === 'completed' && trackedDownloadStatus === 'warning';
     const isPending = status === 'delay' || status === 'downloadClientUnavailable';
 
     return (
@@ -152,6 +154,7 @@ class QueueRow extends Component {
                   status={status}
                   trackedDownloadStatus={trackedDownloadStatus}
                   trackedDownloadState={trackedDownloadState}
+                  downloadClientAvailable={downloadClientAvailable}
                   statusMessages={statusMessages}
                   errorMessage={errorMessage}
                 />
@@ -265,7 +268,7 @@ class QueueRow extends Component {
             if (name === 'downloadClient') {
               return (
                 <TableRowCell key={name}>
-                  {downloadClient}
+                  {downloadClient}{downloadClientAvailable === false ? ' (unavailable)' : ''}
                 </TableRowCell>
               );
             }
@@ -381,6 +384,7 @@ class QueueRow extends Component {
         <InteractiveImportModal
           isOpen={isInteractiveImportModalOpen}
           downloadId={downloadId}
+          downloadClientId={downloadClientId}
           title={title}
           onModalClose={this.onInteractiveImportModalClose}
           showReplaceExistingFiles={true}
@@ -405,6 +409,8 @@ class QueueRow extends Component {
 QueueRow.propTypes = {
   id: PropTypes.number.isRequired,
   downloadId: PropTypes.string,
+  downloadClientId: PropTypes.number,
+  downloadClientAvailable: PropTypes.bool,
   title: PropTypes.string.isRequired,
   status: PropTypes.string.isRequired,
   trackedDownloadStatus: PropTypes.string,

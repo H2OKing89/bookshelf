@@ -22,6 +22,8 @@ using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.BookImport;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.Notifications;
+using NzbDrone.Core.Notifications.Webhook;
 using NzbDrone.Core.Organizer;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
@@ -81,6 +83,9 @@ internal static class Program
             VerifyForgedImportedState(fixture);
             VerifyFileDiagnostics(fixture);
             VerifyBlockedRecovery(fixture);
+            VerifyManualIntervention(fixture);
+            DownloadFailoverProbe.Verify(fixture);
+            DownloadTrackingProbe.Verify(fixture);
             Check("published_probe_uses_only_declared_boundaries", BoundaryProxy.Unexpected.Count == 0);
         }
         catch (Exception error)
@@ -551,6 +556,101 @@ internal static class Program
         Check("published_recovered_import_does_not_duplicate_completion", fixture.ImportCalls == 2 && fixture.CompletedEvents == 1 && fixture.Marked == 1 && fixture.Removed == 1 && fixture.OrderValid);
     }
 
+    private static void VerifyManualIntervention(string root)
+    {
+        Phase = "manual_intervention_durable_episode";
+        using (var fixture = new Scenario(root, Phase, new[] { 13, 14 }))
+        {
+            fixture.Add(13, 17, 0, 1, "first-recording.m4b");
+            fixture.EnableAlertNotifications();
+            var source = fixture.SourceHashes();
+            fixture.Import();
+            Check("published_blocked_import_dispatches_one_actionable_notification", fixture.InterventionEvents == 1 && fixture.AlertMessages.Count == 1 && fixture.AlertWebhooks.Count == 1);
+            Check("published_intervention_attempt_is_durable_before_dispatch", fixture.InterventionOrderValid && fixture.Store.DownloadRows(fixture.Tracked.DownloadItem.DownloadId)
+                .Count(row => row.EventType == DownloadHistoryEventType.ManualInteraction && row.Data.GetValueOrDefault(ManualInteractionRequiredService.PhaseKey) == "attempted") == 1);
+            var alert = fixture.AlertMessages.Single();
+            Check("published_intervention_message_identifies_client_source_and_typed_reason", alert.DownloadClientInfo.Id == 11 && alert.DownloadId == fixture.Tracked.DownloadItem.DownloadId &&
+                alert.SourcePath == fixture.Tracked.DownloadItem.OutputPath.FullPath && alert.Message.Contains("manual intervention", StringComparison.Ordinal) &&
+                alert.StatusMessages.SelectMany(status => status.Rejections).Any(reason => reason.Code == RejectionCode.CompletionUnverified));
+            Check("published_intervention_payload_preserves_both_work_identities_and_known_recording", alert.Book == null && alert.BookIdentities.Select(book => book.Id).OrderBy(id => id).SequenceEqual(new[] { 13, 14 }) &&
+                alert.BookIdentities.Single(book => book.Id == 13).Editions.Single().Id == 17 && alert.BookIdentities.Single(book => book.Id == 13).Editions.Single().AudibleRegion == "us");
+            fixture.Tracked.WarnCode(RejectionCode.InvalidImportPath, "Owned changed diagnostic");
+            fixture.RequireIntervention();
+            fixture.Tracked.HasNotifiedManualInteractionRequired = false;
+            fixture.RequireIntervention(restart: true);
+            Check("published_changed_diagnostics_and_service_restart_do_not_repeat_block_alerts", fixture.InterventionEvents == 1 && fixture.AlertMessages.Count == 1);
+            var restarted = fixture.Restart();
+            Check("published_queue_restart_restores_blocked_download_with_typed_diagnostics", restarted != null && restarted.State == TrackedDownloadState.ImportBlocked &&
+                restarted.StatusMessages.SelectMany(status => status.Rejections).Any(reason => reason.Code == RejectionCode.CompletionUnverified));
+            fixture.RequireIntervention(restarted, restart: true);
+            Check("published_reparsed_queue_restart_uses_the_durable_episode_marker", fixture.InterventionEvents == 1);
+            fixture.Store.Insert(new DownloadHistory
+            {
+                DownloadId = fixture.Tracked.DownloadItem.DownloadId, DownloadClientId = 22, AuthorId = 5,
+                EventType = DownloadHistoryEventType.DownloadGrabbed, Date = DateTime.UtcNow, SourceTitle = "Same hash on another client"
+            });
+            fixture.RequireIntervention();
+            Check("published_other_client_grab_does_not_restart_blocked_episode", fixture.InterventionEvents == 1);
+            var other = new TrackedDownload
+            {
+                DownloadClient = 22, Protocol = fixture.Tracked.Protocol, State = TrackedDownloadState.ImportBlocked,
+                DownloadItem = fixture.Tracked.DownloadItem.Clone(), RemoteBook = fixture.Tracked.RemoteBook
+            };
+            other.DownloadItem.DownloadClientInfo = new DownloadClientItemClientInfo { Id = 22, Name = "Other owned client", Type = "OwnedFixture" };
+            other.WarnCode(RejectionCode.NoEligibleFiles, "Other client needs review");
+            fixture.RequireIntervention(other);
+            fixture.RequireIntervention(other, restart: true);
+            Check("published_same_download_on_different_clients_has_independent_durable_alerts", fixture.InterventionEvents == 2 && fixture.AlertMessages.Count == 2 &&
+                fixture.AlertMessages.Select(message => message.DownloadClientInfo.Id).OrderBy(id => id).SequenceEqual(new[] { 11, 22 }));
+            Check("published_blocked_alerts_preserve_all_owned_source_bytes", fixture.SourceHashes().OrderBy(pair => pair.Key).SequenceEqual(source.OrderBy(pair => pair.Key)));
+            fixture.Add(14, 18, 0, 1, "second-recording.m4b");
+            fixture.DenySourceDeletes = true;
+            fixture.Import();
+            fixture.RequireIntervention(restart: true);
+            Check("published_receipt_without_source_retirement_does_not_reset_intervention", fixture.Tracked.State == TrackedDownloadState.ImportBlocked && fixture.InterventionEvents == 2 &&
+                fixture.Store.DownloadRows(fixture.Tracked.DownloadItem.DownloadId).All(row => row.EventType != DownloadHistoryEventType.ManualInteraction || row.Data.GetValueOrDefault(ManualInteractionRequiredService.PhaseKey) != "recovered"));
+            fixture.DenySourceDeletes = false;
+            fixture.Import();
+            Check("published_source_retired_recovery_is_durable_and_client_scoped", fixture.Tracked.State == TrackedDownloadState.Imported && fixture.SourceHashes().Count == 0 &&
+                fixture.Store.DownloadRows(fixture.Tracked.DownloadItem.DownloadId).Count(row => row.EventType == DownloadHistoryEventType.ManualInteraction && row.DownloadClientId == 11 &&
+                    row.Data.GetValueOrDefault(ManualInteractionRequiredService.PhaseKey) == "recovered") == 1);
+            fixture.Tracked.State = TrackedDownloadState.ImportBlocked;
+            fixture.Tracked.WarnCode(RejectionCode.CompletionUnverified, "Owned later blocked episode");
+            fixture.RequireIntervention(restart: true);
+            fixture.RequireIntervention();
+            Check("published_verified_recovery_allows_exactly_one_later_block_alert", fixture.InterventionEvents == 3 && fixture.AlertMessages.Count == 3);
+            fixture.RequireIntervention(other, restart: true);
+            Check("published_recovery_on_one_client_does_not_reset_the_other_clients_episode", fixture.InterventionEvents == 3);
+        }
+
+        Phase = "manual_intervention_notification_opt_in";
+        using (var fixture = new Scenario(root, Phase, new[] { 13 }))
+        {
+            fixture.Import();
+            Check("published_existing_notification_configs_remain_opted_out", fixture.InterventionEvents == 1 && fixture.AlertMessages.Count == 0 && fixture.AlertWebhooks.Count == 0);
+            fixture.EnableAlertNotifications();
+            fixture.Tracked.DownloadItem.OutputPath = new OsPath(fixture.Tracked.DownloadItem.OutputPath.FullPath + "-new-source");
+            fixture.RequireIntervention();
+            var webhook = fixture.AlertWebhooks.Single();
+            Check("published_new_webhook_event_requires_existing_import_failure_opt_in", fixture.AlertMessages.Count == 1 && webhook.EventType == WebhookEventType.ManualInteractionRequired && webhook.PayloadVersion == 1);
+            Check("published_manual_intervention_webhook_has_actionable_identity_and_codes", webhook.DownloadClientId == 11 && webhook.Author.Id == 5 && webhook.Books.Single().Id == 13 &&
+                webhook.DownloadStatusMessages.SelectMany(status => status.Rejections).Any(reason => reason.Code == RejectionCode.NoEligibleFiles) &&
+                webhook.SourcePath == fixture.Tracked.DownloadItem.OutputPath.FullPath);
+        }
+
+        Phase = "manual_intervention_marker_write_failure";
+        using (var fixture = new Scenario(root, Phase, new[] { 13 }))
+        {
+            fixture.EnableAlertNotifications();
+            fixture.Store.FailInterventionWrites = true;
+            fixture.Import();
+            Check("published_failed_intervention_write_neither_sends_nor_acknowledges", fixture.InterventionEvents == 0 && !fixture.Tracked.HasNotifiedManualInteractionRequired && fixture.Tracked.State == TrackedDownloadState.ImportBlocked);
+            fixture.Store.FailInterventionWrites = false;
+            fixture.RequireIntervention(restart: true);
+            Check("published_failed_intervention_write_can_retry_without_duplicate_import_work", fixture.InterventionEvents == 1 && fixture.AlertMessages.Count == 1 && fixture.ImportCalls == 1);
+        }
+    }
+
     internal sealed class ProbeTimeProvider : TimeProvider
     {
         private DateTimeOffset _now = DateTimeOffset.UtcNow;
@@ -577,10 +677,14 @@ internal static class Program
         private readonly IEventAggregator _events;
         private readonly DownloadEventHub _hub;
         private readonly CompletedDownloadService _completed;
+        private readonly ManualInteractionRequiredService _intervention;
+        private readonly NotificationService _notifications;
+        private readonly List<NotificationDefinition> _notificationDefinitions = new();
         private int _nextFileId = 100;
         private readonly ProbeTimeProvider _clock = new();
 
         public Store Store { get; }
+        public IDownloadHistoryRepository DownloadRepository { get; }
         public TrackedDownload Tracked { get; set; }
         public List<ImportResult> Results { get; } = new();
         public IDownloadImportCompletionService Completion { get; }
@@ -599,6 +703,10 @@ internal static class Program
         public List<string> DiskPaths { get; } = new();
         public string UserRejectedExtensions { get; set; } = string.Empty;
         public IRejectedFileExtensionService Extensions { get; private set; }
+        public int InterventionEvents { get; private set; }
+        public List<BookDownloadMessage> AlertMessages { get; } = new();
+        public List<WebhookManualInteractionPayload> AlertWebhooks { get; } = new();
+        public bool InterventionOrderValid { get; private set; } = true;
 
         public Scenario(string root, string name, int[] expectedBooks)
         {
@@ -610,7 +718,7 @@ internal static class Program
             _books = expectedBooks.Append(13).Distinct().ToDictionary(id => id, id => new Book { Id = id, Author = _author, Title = "Owned Book " + id });
             Tracked = new TrackedDownload
             {
-                DownloadClient = 11, Protocol = DownloadProtocol.Usenet, IsTrackable = true, State = TrackedDownloadState.ImportPending,
+                DownloadClient = 11, Protocol = DownloadProtocol.Usenet, IsTrackable = true, IsClientAvailable = true, State = TrackedDownloadState.ImportPending,
                 DownloadItem = new DownloadClientItem { DownloadId = "owned-" + name, Title = "Owned Book", Category = "owned", OutputPath = new OsPath(_source),
                     Status = DownloadItemStatus.Completed, CanMoveFiles = true, CanBeRemoved = true,
                     DownloadClientInfo = new DownloadClientItemClientInfo { Id = 11, Name = "Owned download client", Type = "OwnedFixture", Protocol = DownloadProtocol.Usenet } },
@@ -626,14 +734,17 @@ internal static class Program
                 "MostRecentForDownloadId" => Store.EntityRows((string)arguments[0]).FirstOrDefault(),
                 _ => Unexpected(method)
             });
-            _history = new HistoryService(entityRepository, _logger);
-            var downloadRepository = Fake<IDownloadHistoryRepository>((method, arguments) => method.Name switch
+            DownloadRepository = Fake<IDownloadHistoryRepository>((method, arguments) => method.Name switch
             {
                 "Insert" => Store.Insert((DownloadHistory)arguments[0]),
                 "FindByDownloadId" => Store.DownloadRows((string)arguments[0]),
+                "GetSubmissionAttempts" => Store.GetSubmissionAttempts(),
+                "Update" => Store.Update((DownloadHistory)arguments[0]),
+                "Delete" => Store.Delete((DownloadHistory)arguments[0]),
                 _ => Unexpected(method)
             });
-            _downloadHistory = new DownloadHistoryService(downloadRepository, _history);
+            _history = new HistoryService(entityRepository, _logger, DownloadRepository);
+            _downloadHistory = new DownloadHistoryService(DownloadRepository, _history);
             DownloadImportSourceService publishedSources = null;
             var sources = Fake<IDownloadImportSourceService>((method, arguments) =>
             {
@@ -687,8 +798,39 @@ internal static class Program
                     ((HistoryService)_history).Handle(incomplete);
                     ((DownloadHistoryService)_downloadHistory).Handle(incomplete);
                 }
+                else if (arguments[0] is ManualInteractionRequiredEvent intervention)
+                {
+                    InterventionEvents++;
+                    InterventionOrderValid &= Store.DownloadRows(intervention.TrackedDownload.DownloadItem.DownloadId)
+                        .Any(row => row.EventType == DownloadHistoryEventType.ManualInteraction && row.DownloadClientId == intervention.TrackedDownload.DownloadClient &&
+                            row.Data.GetValueOrDefault(ManualInteractionRequiredService.PhaseKey) == "attempted");
+                    _notifications.Handle(intervention);
+                }
                 return null;
             });
+            var notificationDefinition = new NotificationDefinition { Id = 31, Name = "Owned import notification" };
+            var webhookDefinition = new NotificationDefinition { Id = 32, Name = "Owned webhook", Settings = new WebhookSettings() };
+            _notificationDefinitions.AddRange(new[] { notificationDefinition, webhookDefinition });
+            var importNotification = Fake<INotification>((method, arguments) => method.Name switch
+            {
+                "get_Definition" => notificationDefinition,
+                "OnImportFailure" => CaptureAlert((BookDownloadMessage)arguments[0]),
+                _ => Unexpected(method)
+            });
+            var webhookProxy = Fake<IWebhookProxy>((method, arguments) =>
+            {
+                if (method.Name != "SendWebhook") return Unexpected(method);
+                AlertWebhooks.Add((WebhookManualInteractionPayload)arguments[0]);
+                return null;
+            });
+            var configFile = Fake<IConfigFileProvider>((method, _) => method.Name == "get_InstanceName" ? "Owned candidate" : Unexpected(method));
+            var webhook = new Webhook(webhookProxy, configFile) { Definition = webhookDefinition };
+            var notifications = new List<INotification> { importNotification, webhook };
+            var notificationFactory = Fake<INotificationFactory>((method, _) => method.Name == "OnImportFailureEnabled"
+                ? notifications.Where(notification => ((NotificationDefinition)notification.Definition).OnImportFailure).ToList() : Unexpected(method));
+            var notificationStatus = Fake<INotificationStatusService>((method, _) => method.Name is "RecordSuccess" or "RecordFailure" ? null : Unexpected(method));
+            _notifications = new NotificationService(notificationFactory, notificationStatus, _logger);
+            _intervention = new ManualInteractionRequiredService(DownloadRepository, _events);
             var client = Fake<IDownloadClient>((method, arguments) =>
             {
                 if (method.Name == "get_Definition") return _clientDefinition;
@@ -721,6 +863,7 @@ internal static class Program
             _services[typeof(Logger)] = _logger;
             _services[typeof(IHistoryService)] = _history;
             _services[typeof(IDownloadHistoryService)] = _downloadHistory;
+            _services[typeof(IDownloadHistoryRepository)] = DownloadRepository;
             _services[typeof(IDownloadImportCompletionService)] = Completion;
             _services[typeof(IDownloadImportSourceService)] = sources;
             _services[typeof(IDiskProvider)] = disk;
@@ -731,6 +874,7 @@ internal static class Program
             _services[typeof(IConfigService)] = config;
             _services[typeof(TimeProvider)] = _clock;
             _services[typeof(IImportRetryService)] = new ImportRetryService(_clock);
+            _services[typeof(IManualInteractionRequiredService)] = _intervention;
             _services[typeof(IDownloadImportDiagnostics)] = new DownloadImportDiagnostics(disk, clientProvider, Extensions, _logger);
             _services[typeof(ITrackedDownloadService)] = tracked;
             _services[typeof(IFailedDownloadService)] = Fake<IFailedDownloadService>((method, _) => Unexpected(method));
@@ -747,7 +891,11 @@ internal static class Program
         public BookFile Add(int bookId, int editionId, int part, int partCount, string name)
         {
             var local = Source(name, bookId, part, partCount);
-            var edition = new Edition { Id = editionId, BookId = bookId, Title = "Owned Edition" };
+            var edition = new Edition { Id = editionId, BookId = bookId, Title = "Owned Edition", Monitored = true,
+                ForeignEditionId = "audible:us:B0000000" + editionId, Asin = "B0000000" + editionId, AudibleRegion = "us" };
+            var bookEditions = _books[bookId].Editions?.Value ?? new List<Edition>();
+            if (bookEditions.All(existing => existing.Id != edition.Id)) bookEditions.Add(edition);
+            _books[bookId].Editions = bookEditions;
             local.Edition = edition;
             var path = Path.Combine(_library, name);
             File.Copy(local.Path, path);
@@ -800,6 +948,10 @@ internal static class Program
         }
 
         public void Process() => Construct<DownloadProcessingService>(_services).Execute(new ProcessMonitoredDownloadsCommand());
+        private object CaptureAlert(BookDownloadMessage message) { AlertMessages.Add(message); return null; }
+        public void EnableAlertNotifications() { foreach (var definition in _notificationDefinitions) definition.OnImportFailure = true; }
+        public void RequireIntervention(TrackedDownload tracked = null, bool restart = false) =>
+            (restart ? new ManualInteractionRequiredService(DownloadRepository, _events) : _intervention).Required(tracked ?? Tracked);
         public void Advance(TimeSpan interval) => _clock.Advance(interval);
         public bool HasCode(string code) => Tracked.StatusMessages.SelectMany(message => message.Rejections).Any(rejection => rejection.Code == code);
         public void UseMissingOutput()
@@ -829,7 +981,11 @@ internal static class Program
             var tracker = Construct<TrackedDownloadService>(services);
             var item = Tracked.DownloadItem.Clone();
             item.Removed = false;
-            return tracker.TrackDownload(_clientDefinition, item);
+            var refreshed = tracker.TrackDownload(_clientDefinition, item);
+            // This fixture models a successful single-item client poll. The
+            // separate tracking probe exercises full/failed/partial responses.
+            if (refreshed != null) refreshed.IsClientAvailable = true;
+            return refreshed;
         }
 
         public DownloadImportReceipt ReadReceipt() => Completion.ReadReceipt(Tracked, _downloadHistory.GetLatestImportCompletion(Tracked.DownloadItem.DownloadId, Tracked.DownloadClient));
@@ -859,6 +1015,7 @@ internal static class Program
         private readonly string _connectionString;
         private readonly Author _author;
         public bool FailCompletionWrites { get; set; }
+        public bool FailInterventionWrites { get; set; }
         public int CompletionWriteAttempts { get; private set; }
 
         public Store(string path, Author author)
@@ -894,11 +1051,35 @@ internal static class Program
         {
             if (value.EventType == DownloadHistoryEventType.DownloadImported) CompletionWriteAttempts++;
             if (FailCompletionWrites && value.EventType == DownloadHistoryEventType.DownloadImported) throw new IOException("Owned receipt write failure");
+            if (FailInterventionWrites && value.EventType == DownloadHistoryEventType.ManualInteraction) throw new IOException("Owned intervention write failure");
             using var connection = Open();
             using var command = Command(connection, "INSERT INTO DownloadHistory(AuthorId,DownloadClientId,DownloadId,EventType,Date,SourceTitle,Data) VALUES(@p0,@p1,@p2,@p3,@p4,@p5,@p6)",
                 value.AuthorId, value.DownloadClientId, value.DownloadId, (int)value.EventType, value.Date.ToString("O"), value.SourceTitle, Data(value.Data));
             command.ExecuteNonQuery();
             using var identity = Command(connection, "SELECT last_insert_rowid()"); value.Id = Convert.ToInt32(identity.ExecuteScalar()); return value;
+        }
+
+        public DownloadHistory Update(DownloadHistory value)
+        {
+            Execute("UPDATE DownloadHistory SET AuthorId=@p0,DownloadClientId=@p1,DownloadId=@p2,EventType=@p3,Date=@p4,SourceTitle=@p5,Data=@p6 WHERE Id=@p7",
+                value.AuthorId, value.DownloadClientId, value.DownloadId, (int)value.EventType, value.Date.ToString("O"), value.SourceTitle, Data(value.Data), value.Id);
+            return value;
+        }
+
+        public object Delete(DownloadHistory value)
+        {
+            Execute("DELETE FROM DownloadHistory WHERE Id=@p0", value.Id);
+            return null;
+        }
+
+        public List<DownloadHistory> GetSubmissionAttempts()
+        {
+            var ids = new List<string>();
+            using (var connection = Open())
+            using (var command = Command(connection, "SELECT DISTINCT DownloadId FROM DownloadHistory WHERE EventType=@p0", (int)DownloadHistoryEventType.DownloadSubmissionPending))
+            using (var reader = command.ExecuteReader())
+                while (reader.Read()) ids.Add(reader.GetString(0));
+            return ids.SelectMany(DownloadRows).Where(row => row.EventType == DownloadHistoryEventType.DownloadSubmissionPending).ToList();
         }
 
         public void InsertFile(BookFile value) => Execute("INSERT INTO BookFiles(Id,BookId,EditionId,Part,PartCount,Path,Size) VALUES(@p0,@p1,@p2,@p3,@p4,@p5,@p6)",

@@ -40,7 +40,7 @@ test('file details handles vanished files, tagless files, loading and successful
 });
 
 const tableBoundaries = Object.fromEntries([
-  'Components/Alert', 'Components/Form/SelectInput', 'Components/Link/SpinnerButton',
+  'Components/Alert', 'Components/Form/SelectInput', 'Components/Form/TextInput', 'Components/Link/SpinnerButton',
   'Components/Loading/LoadingIndicator', 'Components/Modal/ConfirmModal',
   'Components/Table/Table', 'Components/Table/TableBody', './BookFileEditorRow'
 ].map((name) => [name, () => null]));

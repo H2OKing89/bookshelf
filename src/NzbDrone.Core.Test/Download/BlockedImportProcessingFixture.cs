@@ -26,6 +26,7 @@ namespace NzbDrone.Core.Test.Download
             _tracked = new TrackedDownload
             {
                 IsTrackable = true,
+                IsClientAvailable = true,
                 DownloadItem = new DownloadClientItem { Status = DownloadItemStatus.Completed, Title = "Owned recording" }
             };
             _retry.Block(_tracked);

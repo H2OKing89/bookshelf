@@ -288,5 +288,40 @@ namespace NzbDrone.Core.Test.Download.DownloadApprovedReportsTests
 
             ExceptionVerification.ExpectedWarns(1);
         }
+
+        [Test]
+        public async Task uncertain_submission_should_stop_alternative_releases_without_grab_or_pending_retry()
+        {
+            var books = new List<Book> { GetBook(1) };
+            var first = GetRemoteBook(books, new QualityModel(Quality.MP3));
+            var alternate = GetRemoteBook(books, new QualityModel(Quality.MP3), DownloadProtocol.Torrent);
+            Mocker.GetMock<IDownloadService>().Setup(service => service.DownloadReport(first, null))
+                .Throws(new DownloadClientSubmissionUncertainException("Review the client"));
+
+            var result = await Subject.ProcessDecisions(new List<DownloadDecision>
+            {
+                new DownloadDecision(first), new DownloadDecision(alternate)
+            });
+
+            result.Grabbed.Should().BeEmpty();
+            result.Pending.Should().BeEmpty();
+            Mocker.GetMock<IDownloadService>().Verify(service => service.DownloadReport(alternate, null), Times.Never());
+            Mocker.GetMock<IPendingReleaseService>().Verify(service => service.AddMany(It.IsAny<List<Tuple<DownloadDecision, PendingReleaseReason>>>()), Times.Never());
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
+        public async Task uncertain_manual_grab_should_not_be_added_to_automatic_pending_retries()
+        {
+            var book = GetRemoteBook(new List<Book> { GetBook(1) }, new QualityModel(Quality.MP3));
+            Mocker.GetMock<IDownloadService>().Setup(service => service.DownloadReport(book, null))
+                .Throws(new DownloadClientSubmissionUncertainException("Review the client"));
+
+            var result = await Subject.ProcessDecision(new DownloadDecision(book), null);
+
+            result.Should().Be(ProcessedDecisionResult.SubmissionUncertain);
+            Mocker.GetMock<IPendingReleaseService>().Verify(service => service.Add(It.IsAny<DownloadDecision>(), It.IsAny<PendingReleaseReason>()), Times.Never());
+            ExceptionVerification.ExpectedWarns(1);
+        }
     }
 }

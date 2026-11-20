@@ -9,6 +9,7 @@ using NzbDrone.Core.Books;
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Download.TrackedDownloads;
+using NzbDrone.Core.History;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.BookImport;
 using NzbDrone.Core.MediaFiles.Events;
@@ -29,6 +30,8 @@ namespace NzbDrone.Core.Test.Download.CompletedDownloadServiceTests
         public void Setup()
         {
             Mocker.SetConstant<IImportRetryService>(new ImportRetryService(TimeProvider.System));
+            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId(It.IsAny<string>(), It.IsAny<int>()))
+                .Returns(new List<EntityHistory>());
             var output = Path.Combine(TempFolder, "download");
             var item = new DownloadClientItem
             {
@@ -161,6 +164,42 @@ namespace NzbDrone.Core.Test.Download.CompletedDownloadServiceTests
 
             _tracked.State.Should().Be(TrackedDownloadState.ImportBlocked);
             _tracked.StatusMessages[0].Rejections[0].Code.Should().Be(RejectionCode.ImportPathUnavailable);
+            Mocker.GetMock<IManualInteractionRequiredService>().Verify(service => service.Required(_tracked), Times.Once());
+        }
+
+        [Test]
+        public void unchanged_warnings_should_still_retry_an_unacknowledged_intervention_attempt()
+        {
+            _results.Clear();
+
+            Subject.Import(_tracked);
+            Subject.Import(_tracked);
+
+            Mocker.GetMock<IManualInteractionRequiredService>().Verify(service => service.Required(_tracked), Times.Exactly(2));
+        }
+
+        [Test]
+        public void notification_persistence_failure_should_not_change_import_or_cleanup_results()
+        {
+            GivenReceipt();
+            Mocker.GetMock<IManualInteractionRequiredService>().Setup(service => service.Recovered(_tracked))
+                .Throws(new IOException("Owned notification write failure"));
+
+            Subject.VerifyImport(_tracked, _results).Should().BeTrue();
+
+            _tracked.State.Should().Be(TrackedDownloadState.Imported);
+        }
+
+        [Test]
+        public void source_retirement_failure_should_not_reset_the_intervention_episode()
+        {
+            GivenReceipt();
+            Mocker.GetMock<IDownloadImportSourceService>().Setup(service => service.Retire(_tracked, _receipt)).Returns(false);
+
+            Subject.VerifyImport(_tracked, _results).Should().BeFalse();
+
+            Mocker.GetMock<IManualInteractionRequiredService>().Verify(service => service.Recovered(It.IsAny<TrackedDownload>()), Times.Never());
+            Mocker.GetMock<IManualInteractionRequiredService>().Verify(service => service.Required(_tracked), Times.Once());
         }
 
         [Test]

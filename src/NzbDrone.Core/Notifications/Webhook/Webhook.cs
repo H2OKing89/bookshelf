@@ -30,6 +30,11 @@ namespace NzbDrone.Core.Notifications.Webhook
             _proxy.SendWebhook(BuildOnReleaseImportPayload(message), Settings);
         }
 
+        public override void OnImportFailure(BookDownloadMessage message)
+        {
+            _proxy.SendWebhook(BuildManualInteractionPayload(message), Settings);
+        }
+
         public override void OnRename(Author author, List<RenamedBookFile> renamedFiles)
         {
             _proxy.SendWebhook(BuildOnRenamePayload(author, renamedFiles), Settings);

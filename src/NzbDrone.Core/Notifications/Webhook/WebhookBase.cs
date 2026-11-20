@@ -61,6 +61,34 @@ namespace NzbDrone.Core.Notifications.Webhook
             return payload;
         }
 
+        public WebhookManualInteractionPayload BuildManualInteractionPayload(BookDownloadMessage message)
+        {
+            return new WebhookManualInteractionPayload
+            {
+                EventType = WebhookEventType.ManualInteractionRequired,
+                InstanceName = _configFileProvider.InstanceName,
+                Author = message.Author == null ? null : new WebhookAuthor
+                {
+                    Id = message.Author.Id,
+                    Name = message.Author.Name,
+                    Path = message.Author.Path,
+                    GoodreadsId = message.Author.Metadata?.Value?.ForeignAuthorId
+                },
+                Books = message.BookIdentities,
+                Message = message.Message,
+                DownloadClientId = message.DownloadClientInfo?.Id ?? 0,
+                DownloadClient = message.DownloadClientInfo?.Name,
+                DownloadClientType = message.DownloadClientInfo?.Type,
+                DownloadId = message.DownloadId,
+                SourceTitle = message.SourceTitle,
+                SourcePath = message.SourcePath,
+                OutputPath = message.OutputPath,
+                DownloadStatus = message.DownloadStatus,
+                ImportStatus = message.ImportStatus,
+                DownloadStatusMessages = message.StatusMessages
+            };
+        }
+
         public WebhookRenamePayload BuildOnRenamePayload(Author author, List<RenamedBookFile> renamedFiles)
         {
             return new WebhookRenamePayload

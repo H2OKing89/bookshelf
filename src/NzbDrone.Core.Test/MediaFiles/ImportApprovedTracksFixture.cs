@@ -275,7 +275,7 @@ namespace NzbDrone.Core.Test.MediaFiles
         [TestCase(ImportMode.Copy, false)]
         public void tracked_imports_should_keep_sources_until_download_completion(ImportMode mode, bool canMove)
         {
-            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId("owned-tracked-import"))
+            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId("owned-tracked-import", _clientInfo.Id))
                 .Returns(new List<EntityHistory>());
             var client = new DownloadClientItem
             {

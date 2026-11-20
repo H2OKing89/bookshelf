@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.DecisionEngine;
+using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.History;
 using NzbDrone.Core.Messaging.Events;
@@ -14,6 +15,7 @@ namespace NzbDrone.Core.Download
     {
         void MarkAsFailed(int historyId, bool skipRedownload = false);
         void MarkAsFailed(string downloadId, bool skipRedownload = false);
+        void MarkAsFailed(string downloadId, int downloadClientId, bool skipRedownload = false);
         void Check(TrackedDownload trackedDownload);
         void ProcessFailed(TrackedDownload trackedDownload);
     }
@@ -23,14 +25,17 @@ namespace NzbDrone.Core.Download
         private readonly IHistoryService _historyService;
         private readonly ITrackedDownloadService _trackedDownloadService;
         private readonly IEventAggregator _eventAggregator;
+        private readonly IDownloadHistoryRepository _downloadHistory;
 
         public FailedDownloadService(IHistoryService historyService,
                                      ITrackedDownloadService trackedDownloadService,
-                                     IEventAggregator eventAggregator)
+                                     IEventAggregator eventAggregator,
+                                     IDownloadHistoryRepository downloadHistory)
         {
             _historyService = historyService;
             _trackedDownloadService = trackedDownloadService;
             _eventAggregator = eventAggregator;
+            _downloadHistory = downloadHistory;
         }
 
         public void MarkAsFailed(int historyId, bool skipRedownload = false)
@@ -44,21 +49,67 @@ namespace NzbDrone.Core.Download
             }
             else
             {
-                var grabbedHistory = _historyService.Find(downloadId, EntityHistoryEventType.Grabbed).ToList();
-                PublishDownloadFailedEvent(grabbedHistory, "Manually marked as failed");
+                var clientId = GetClientId(history);
+                if (clientId.HasValue)
+                {
+                    MarkAsFailed(downloadId, clientId.Value, skipRedownload);
+                }
+                else
+                {
+                    MarkAsFailed(downloadId, skipRedownload);
+                }
             }
         }
 
         public void MarkAsFailed(string downloadId, bool skipRedownload = false)
         {
-            var history = _historyService.Find(downloadId, EntityHistoryEventType.Grabbed);
+            // Resolve a legacy request before reading or modifying any client's history.
+            var trackedDownload = _trackedDownloadService.Find(downloadId);
+            if (trackedDownload != null)
+            {
+                MarkAsFailed(downloadId, trackedDownload.DownloadClient, skipRedownload);
+                return;
+            }
 
+            var history = _historyService.Find(downloadId, EntityHistoryEventType.Grabbed);
+            var clients = history.Select(GetClientId).Where(id => id.HasValue).Select(id => id.Value)
+                .Concat((_downloadHistory.FindByDownloadId(downloadId) ?? new List<DownloadHistory>())
+                    .Where(item => item.DownloadClientId > 0 && item.DownloadId == downloadId).Select(item => item.DownloadClientId))
+                .Distinct().ToList();
+            if (clients.Count > 1)
+            {
+                throw new AmbiguousTrackedDownloadException(downloadId);
+            }
+
+            if (clients.Count == 1)
+            {
+                MarkAsFailed(downloadId, clients[0], skipRedownload);
+            }
+            else if (history.Any())
+            {
+                PublishDownloadFailedEvent(history, "Manually marked as failed", skipRedownload: skipRedownload);
+            }
+        }
+
+        public void MarkAsFailed(string downloadId, int downloadClientId, bool skipRedownload = false)
+        {
+            if (downloadClientId <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(downloadClientId));
+            }
+
+            var history = _historyService.Find(downloadId, EntityHistoryEventType.Grabbed, downloadClientId);
             if (history.Any())
             {
-                var trackedDownload = _trackedDownloadService.Find(downloadId);
-
+                var trackedDownload = _trackedDownloadService.Find(downloadId, downloadClientId);
                 PublishDownloadFailedEvent(history, "Manually marked as failed", trackedDownload, skipRedownload);
             }
+        }
+
+        private static int? GetClientId(EntityHistory history)
+        {
+            var value = history.Data?.FirstOrDefault(pair => string.Equals(pair.Key, "downloadClientId", StringComparison.OrdinalIgnoreCase)).Value;
+            return int.TryParse(value, out var clientId) && clientId > 0 ? clientId : null;
         }
 
         public void Check(TrackedDownload trackedDownload)
@@ -76,7 +127,7 @@ namespace NzbDrone.Core.Download
                 trackedDownload.DownloadItem.Status == DownloadItemStatus.Failed)
             {
                 var grabbedItems = _historyService
-                                   .Find(trackedDownload.DownloadItem.DownloadId, EntityHistoryEventType.Grabbed)
+                                   .Find(trackedDownload.DownloadItem.DownloadId, EntityHistoryEventType.Grabbed, trackedDownload.DownloadClient)
                                    .ToList();
 
                 if (grabbedItems.Empty())
@@ -97,7 +148,7 @@ namespace NzbDrone.Core.Download
             }
 
             var grabbedItems = _historyService
-                               .Find(trackedDownload.DownloadItem.DownloadId, EntityHistoryEventType.Grabbed)
+                               .Find(trackedDownload.DownloadItem.DownloadId, EntityHistoryEventType.Grabbed, trackedDownload.DownloadClient)
                                .ToList();
 
             if (grabbedItems.Empty())

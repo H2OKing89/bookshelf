@@ -26,6 +26,7 @@ namespace Readarr.Api.V1.ManualImport
         public int CustomFormatScore { get; set; }
         public int QualityWeight { get; set; }
         public string DownloadId { get; set; }
+        public int? DownloadClientId { get; set; }
         public int IndexerFlags { get; set; }
         public IEnumerable<Rejection> Rejections { get; set; }
         public ParsedTrackInfo AudioTags { get; set; }
@@ -60,6 +61,7 @@ namespace Readarr.Api.V1.ManualImport
 
                 //QualityWeight
                 DownloadId = model.DownloadId,
+                DownloadClientId = model.DownloadClientId,
                 IndexerFlags = model.IndexerFlags,
                 Rejections = model.Rejections,
 

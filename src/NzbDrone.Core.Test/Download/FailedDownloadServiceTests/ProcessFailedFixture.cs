@@ -45,7 +45,7 @@ namespace NzbDrone.Core.Test.Download.FailedDownloadServiceTests
                     .Build();
 
             Mocker.GetMock<IHistoryService>()
-                  .Setup(s => s.Find(_trackedDownload.DownloadItem.DownloadId, EntityHistoryEventType.Grabbed))
+                  .Setup(s => s.Find(_trackedDownload.DownloadItem.DownloadId, EntityHistoryEventType.Grabbed, _trackedDownload.DownloadClient))
                   .Returns(_grabHistory);
         }
 

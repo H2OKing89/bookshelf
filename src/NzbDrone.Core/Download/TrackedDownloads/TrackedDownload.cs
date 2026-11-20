@@ -18,6 +18,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
         public DownloadProtocol Protocol { get; set; }
         public string Indexer { get; set; }
         public bool IsTrackable { get; set; }
+        public bool IsClientAvailable { get; set; }
         public bool KeepSourceFiles { get; set; }
         public DownloadImportReceipt ImportReceipt { get; set; }
 
@@ -28,6 +29,10 @@ namespace NzbDrone.Core.Download.TrackedDownloads
         [System.Text.Json.Serialization.JsonIgnore]
         [Newtonsoft.Json.JsonIgnore]
         public bool ImportCompletionAnnounced { get; set; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool HasNotifiedManualInteractionRequired { get; set; }
 
         [System.Text.Json.Serialization.JsonIgnore]
         [Newtonsoft.Json.JsonIgnore]

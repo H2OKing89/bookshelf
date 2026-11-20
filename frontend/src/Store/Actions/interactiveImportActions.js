@@ -209,6 +209,7 @@ export const actionHandlers = handleThunks({
         releaseGroup: item.releaseGroupOverride,
         indexerFlags: item.indexerFlags,
         downloadId: item.downloadId,
+        downloadClientId: item.downloadClientId,
         additionalFile: item.additionalFile,
         replaceExistingFiles: item.replaceExistingFiles,
         disableReleaseSwitching: item.disableReleaseSwitching

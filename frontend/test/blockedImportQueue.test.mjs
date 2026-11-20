@@ -32,3 +32,11 @@ test('a real client failure still takes priority over the import-block title', (
   assert.equal(popover.props.title, 'Download failed');
   assert.equal(popover.props.anchor.props.kind, 'danger');
 });
+
+test('an unavailable client shows last known state and explains why work is paused', () => {
+  const popover = QueueStatusCell({ ...props, downloadClientAvailable: false }).props.children;
+  assert.equal(popover.props.title, 'Download client unavailable');
+  assert.equal(popover.props.anchor.props.kind, 'warning');
+  assert.match(popover.props.body, /last known state/);
+  assert.match(popover.props.body, /import and cleanup are paused/);
+});

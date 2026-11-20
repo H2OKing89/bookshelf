@@ -56,7 +56,7 @@ namespace NzbDrone.Core.Test.QueueTests
                 .Build();
 
             Mocker.GetMock<IHistoryService>()
-                .Setup(c => c.Find(It.IsAny<string>(), EntityHistoryEventType.Grabbed)).Returns(
+                .Setup(c => c.Find(It.IsAny<string>(), EntityHistoryEventType.Grabbed, It.IsAny<int>())).Returns(
                     new List<EntityHistory> { historyItem });
         }
 
@@ -74,6 +74,37 @@ namespace NzbDrone.Core.Test.QueueTests
             var distinct = queue.Select(v => v.Id).Distinct().ToArray();
 
             distinct.Should().HaveCount(3);
+        }
+
+        [Test]
+        public void same_download_id_on_different_clients_has_distinct_rows_and_client_identity()
+        {
+            var first = _trackedDownloads.Single();
+            first.DownloadClient = 1;
+            var second = new TrackedDownload
+            {
+                DownloadClient = 2, DownloadItem = first.DownloadItem.Clone(),
+                RemoteBook = first.RemoteBook, IsTrackable = true
+            };
+            _trackedDownloads.Add(second);
+
+            Subject.Handle(new TrackedDownloadRefreshedEvent(_trackedDownloads));
+
+            var queue = Subject.GetQueue();
+            queue.Should().HaveCount(6);
+            queue.Select(item => item.Id).Distinct().Should().HaveCount(6);
+            queue.Count(item => item.DownloadClientId == 1).Should().Be(3);
+            queue.Count(item => item.DownloadClientId == 2).Should().Be(3);
+        }
+
+        [Test]
+        public void last_known_offline_queue_rows_remain_visible_with_client_unavailable()
+        {
+            _trackedDownloads.Single().IsTrackable = false;
+
+            Subject.Handle(new TrackedDownloadRefreshedEvent(_trackedDownloads));
+
+            Subject.GetQueue().Should().HaveCount(3).And.OnlyContain(item => !item.DownloadClientAvailable);
         }
     }
 }

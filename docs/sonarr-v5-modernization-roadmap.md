@@ -1143,3 +1143,32 @@ documentation-only commit does not relabel it. See
 The running development service remains unchanged. No production/Unraid data,
 real library media or GitHub workflow was used or changed. P17 stays deferred;
 D08, D09/D10/D12 and broader signing/feed/platform work retain their status.
+
+
+### D10, D09 and D12 tracking, submission and intervention — 2026-11-19
+
+The next acquisition slice scopes opaque download IDs to their client throughout
+tracking, history, queue actions, manual imports, receipts and seed policy. A
+complete successful poll can reconcile missing jobs. Offline or partial polls
+keep last-known queue state visible and prevent automatic processing/cleanup.
+Client changes debounce refreshes and invalidate freshness; re-grabs reset only
+their own cached pair.
+
+Eligible-client failover occurs only before an add, using read-only readiness
+checks. Explicit routes and author tags retain their meaning. An unknown add
+outcome is held durably across restarts and later batches, unless the actual
+submitted torrent hash is confirmed on the same client. Activity → Queue lets
+an operator review the named client and explicitly clear a hold. This enables
+future grabs without removing or restarting a client job. Static readiness in
+some legacy adapters can result in a review hold instead of automatic failover.
+
+Blocked-import notifications now have a durable once-per-episode attempt marker,
+rich client/source/identity diagnostics and optional webhook support through the
+existing opt-in. Polling and changed diagnostics do not repeat alerts. A new
+grab/source or verified completion after source retirement can start a new
+episode. The marker records an attempt, so a crash or provider failure after it
+is written can lose that notification. No real transports are used in validation.
+
+D08 automatic rejection-directed failure/blocklist/search remains separate.
+P17 remains deferred; publication, signing/feed and unverified platform gates
+retain their previous status. Verification evidence follows in local validation.
