@@ -70,6 +70,33 @@ tests separately exercise the staged importer and manual-import integration.
 Input package fingerprints must remain unchanged. See the
 [completion policy](download-completion.md) for scope and cleanup behavior.
 
+## Check audiobook identity preservation
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --baseline-runtime /path/to/genuine-older-audiobook-package \
+  --playwright-module /path/to/installed/playwright \
+  --checks identity
+```
+
+The explicit proof creates a new home using the older package, then seeds the
+versioned [synthetic recording recipe](../scripts/validation/fixtures/audiobook-identities-v1.json).
+SQLite seeding is the fixture boundary; login, API responses, browser pages,
+restart and application-managed backup restoration use the real server. Desktop
+and 390px browser checks use the explicitly supplied Playwright installation.
+No existing home, private catalog, external metadata provider or real media is
+accepted. A distinct older payload with the audiobook schema is required; this
+is separate from the .NET 6 baseline used for runtime upgrades.
+
+The proof checks exact identities, file ownership, coauthor credits, local
+recordings, regional editions, narrations, pack and fractional positions, unknown
+dates, chapters, saved credentials and explicit false/zero values. Source
+regression fixtures separately cover metadata refresh and staged import failure.
+Restoration rolls data back through the candidate's backup API; it does not
+attempt a binary downgrade across database schemas. Candidate preparation
+requires a complete passing identity receipt in addition to the other checks.
+
 ## Check refresh cancellation and shutdown
 
 Run the cancellation proof against a package containing P10:

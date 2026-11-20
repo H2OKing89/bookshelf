@@ -52,7 +52,26 @@ namespace NzbDrone.Core.MediaFiles
 
         public BookFileMoveResult UpgradeBookFile(BookFile bookFile, LocalBook localBook, bool copyOnly = false)
         {
-            var existingFiles = localBook.Book.BookFiles.Value.ToList();
+            var editionId = bookFile.EditionId;
+            if (bookFile.EditionId > 0 && localBook.Edition?.Id > 0 && (bookFile.EditionId != localBook.Edition.Id ||
+                    (localBook.Edition.BookId > 0 && localBook.Edition.BookId != localBook.Book.Id)))
+            {
+                throw new InvalidOperationException("Incoming file and import decision identify different recordings");
+            }
+
+            // A book may retain several regional editions or narrations. Only the
+            // explicitly selected recording owns the files this import can retire.
+            var existingFiles = localBook.Book.BookFiles.Value
+                .Where(file => editionId > 0 && file.EditionId == editionId).ToList();
+            if (existingFiles.Any())
+            {
+                var ownedIds = existingFiles.Select(file => file.Id).ToHashSet();
+                var sharedPaths = (_mediaFileService.GetFileWithPath(existingFiles.Select(file => file.Path).ToList()) ?? new List<BookFile>())
+                    .Where(file => !ownedIds.Contains(file.Id)).Select(file => file.Path)
+                    .ToHashSet(NzbDrone.Common.PathEqualityComparer.Instance);
+                existingFiles.RemoveAll(file => sharedPaths.Contains(file.Path));
+            }
+
             var rootFolderPath = _diskProvider.GetParentFolder(localBook.Author.Path);
             var rootFolder = _rootFolderService.GetBestRootFolder(rootFolderPath);
             if (rootFolder == null || !_diskProvider.FolderExists(rootFolder.Path))
@@ -123,25 +142,29 @@ namespace NzbDrone.Core.MediaFiles
 
             var pending = replacements.Where(result => !result.Committed).ToList();
             var diskReplacements = pending.Where(result => result.CalibreSettings == null).ToList();
-            var oldFiles = pending.SelectMany(result => result.OldFiles).DistinctBy(file => file.Id).ToList();
-            var incomingParts = pending.Select(result => result.BookFile.Part).ToHashSet();
-            var oldDuration = oldFiles.All(file => file.MediaInfo?.DurationSeconds > 0)
-                ? oldFiles.Sum(file => file.MediaInfo.DurationSeconds.Value) : 0;
-            var newDuration = pending.All(result => result.BookFile.MediaInfo?.DurationSeconds > 0)
-                ? pending.Sum(result => result.BookFile.MediaInfo.DurationSeconds.Value) : 0;
-            if (oldFiles.Count > pending.Count && !(oldDuration > 0 && newDuration >= oldDuration * 0.95))
+            foreach (var recording in pending.GroupBy(result => result.BookFile.EditionId))
             {
-                // A single arriving disc/part does not prove that the whole old recording
-                // is being replaced. Retire only represented parts unless runtime confirms
-                // a complete consolidation (for example several MP3s into one M4B).
-                oldFiles = oldFiles.Where(file => incomingParts.Contains(file.Part) ||
-                    pending.Any(result => result.BookFile.Path.PathEquals(file.Path))).ToList();
+                var oldRecordingFiles = recording.SelectMany(result => result.OldFiles).DistinctBy(file => file.Id).ToList();
+                var incomingParts = recording.Select(result => result.BookFile.Part).ToHashSet();
+                var oldDuration = oldRecordingFiles.All(file => file.MediaInfo?.DurationSeconds > 0)
+                    ? oldRecordingFiles.Sum(file => file.MediaInfo.DurationSeconds.Value) : 0;
+                var newDuration = recording.All(result => result.BookFile.MediaInfo?.DurationSeconds > 0)
+                    ? recording.Sum(result => result.BookFile.MediaInfo.DurationSeconds.Value) : 0;
+                if (oldRecordingFiles.Count > recording.Count() && !(oldDuration > 0 && newDuration >= oldDuration * 0.95))
+                {
+                    // Another recording's runtime cannot prove that missing parts of
+                    // this recording were included in a consolidated replacement.
+                    oldRecordingFiles = oldRecordingFiles.Where(file => incomingParts.Contains(file.Part) ||
+                        recording.Any(result => result.BookFile.Path.PathEquals(file.Path))).ToList();
+                }
+
+                foreach (var replacement in recording)
+                {
+                    replacement.OldFiles.RemoveAll(file => !oldRecordingFiles.Any(old => old.Id == file.Id));
+                }
             }
 
-            foreach (var replacement in pending)
-            {
-                replacement.OldFiles.RemoveAll(file => !oldFiles.Any(old => old.Id == file.Id));
-            }
+            var oldFiles = pending.SelectMany(result => result.OldFiles).DistinctBy(file => file.Id).ToList();
 
             try
             {
@@ -205,7 +228,20 @@ namespace NzbDrone.Core.MediaFiles
                 {
                     if (file.CalibreId > 0)
                     {
-                        TryCleanup(() => _calibre.DeleteBook(file, calibreReplacement.CalibreSettings), file.Path);
+                        TryCleanup(() =>
+                        {
+                            // Calibre deletes a whole record, including other formats.
+                            // A retained part/edition/author may still own that record.
+                            var root = _rootFolderService.GetBestRootFolder(file.Path);
+                            var knownFiles = root == null ? null : _mediaFileService.GetFilesWithBasePath(root.Path);
+                            if (knownFiles == null || knownFiles.Any(other => other.CalibreId == file.CalibreId &&
+                                !oldFiles.Any(retired => retired.Id == other.Id)))
+                            {
+                                return;
+                            }
+
+                            _calibre.DeleteBook(file, calibreReplacement.CalibreSettings);
+                        }, file.Path);
                     }
                 }
                 else

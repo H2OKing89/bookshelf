@@ -70,7 +70,7 @@ class ReleaseCandidateTests(unittest.TestCase):
         self.assertEqual(result["source"]["archiveSha256"], release.archive_sha256(self.repo, self.source["sourceCommit"]))
 
     def test_unrelated_or_failing_evidence_cannot_stage_a_release(self):
-        for label in ("fingerprint", "failure", "incomplete", "check_false", "check_missing", "acquisition_missing", "dirty", "source", "version"):
+        for label in ("fingerprint", "failure", "incomplete", "check_false", "check_missing", "acquisition_missing", "identity_missing", "dirty", "source", "version"):
             with self.subTest(label=label):
                 value = copy.deepcopy(self.evidence)
                 if label == "fingerprint": value["inputFingerprints"]["candidate"] = "0" * 64
@@ -80,6 +80,9 @@ class ReleaseCandidateTests(unittest.TestCase):
                 elif label == "check_missing": del value["results"]["restore"]
                 elif label == "acquisition_missing":
                     del value["results"]["acquisition"]
+                    value["passed"] -= 1
+                elif label == "identity_missing":
+                    del value["results"]["identity"]
                     value["passed"] -= 1
                 elif label == "dirty": value["results"]["releaseidentity"]["metadata"]["source"]["buildDirty"] = True
                 elif label == "source": value["results"]["releaseidentity"]["metadata"]["source"]["sourceCommit"] = "0" * 40

@@ -27,7 +27,7 @@ class RunnerResultTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.runtime = package(self.root / "runtime")
         self.modules = {"validation." + name: types.ModuleType("validation." + name)
-                        for name in ("accesspolicy", "acquisition", "app", "authpolicy", "cancellation", "datastore", "docker", "logstorage", "media", "package", "postgresconnections", "releaseidentity", "restore", "sqlite", "upgrade")}
+                        for name in ("accesspolicy", "acquisition", "app", "authpolicy", "cancellation", "datastore", "docker", "identity", "logstorage", "media", "package", "postgresconnections", "releaseidentity", "restore", "sqlite", "upgrade")}
         self.output = self.root / "results"
 
     @contextlib.contextmanager
@@ -86,6 +86,24 @@ class RunnerResultTests(unittest.TestCase):
         report = json.loads((self.output / "summary.json").read_text())
         self.assertEqual(report["checksRequested"], ["acquisition"])
         self.assertIn("authpolicy", report["notRequested"])
+
+    def test_identity_requires_baseline_and_browser_module_and_passes_both(self):
+        baseline = package(self.root / "baseline")
+        browser = self.root / "playwright"
+        calls = []
+        self.modules["validation.identity"].run = lambda *args, **kwargs: (
+            calls.append((args, kwargs)) or {"checks": {"owned": True}, "passed": 1, "failed": 0, "completed": True})
+        console = io.StringIO()
+        with (self.mocked_modules(), patch.object(runner.common, "ensure_host_compatible"),
+              contextlib.redirect_stdout(console), contextlib.redirect_stderr(console)):
+            with self.assertRaises(SystemExit):
+                runner.main(["--runtime", str(self.runtime), "--output", str(self.output), "--checks", "identity"])
+            self.assertFalse(self.output.exists())
+            status = runner.main(["--runtime", str(self.runtime), "--baseline-runtime", str(baseline),
+                                  "--playwright-module", str(browser), "--output", str(self.output), "--checks", "identity"])
+        self.assertEqual(status, 0)
+        self.assertEqual(calls, [((self.runtime.resolve(), self.output / "identity"),
+                                  {"baseline_runtime": baseline.resolve(), "playwright_module": browser})])
 
     def test_explicit_accesspolicy_check_uses_candidate_without_requiring_a_baseline(self):
         calls = []

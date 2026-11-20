@@ -12,7 +12,7 @@ import tempfile
 from validation import common
 
 
-CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "docker")
+CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "docker")
 
 
 def parser():
@@ -21,6 +21,7 @@ def parser():
     result.add_argument("--baseline-runtime", type=Path, help="Explicit older package for a genuine same-home upgrade check")
     result.add_argument("--legacy-runtime", type=Path, help="Optional older package which generates a genuine legacy backup")
     result.add_argument("--docker-runtime", type=Path, help="Optional native-architecture musl package for the actual Dockerfile checks")
+    result.add_argument("--playwright-module", type=Path, help="Explicit installed Playwright module for the owned identity browser check")
     result.add_argument("--checks", choices=CHECKS, nargs="+", help="Default: package app restore media; upgrade/Docker added when their package arguments are supplied")
     result.add_argument("--output", type=Path, help="A NEW evidence directory; default: _temp/validation/run-<random>")
     return result
@@ -43,6 +44,8 @@ def main(argv=None):
         parser().error("--checks postgresconnections requires --baseline-runtime (a pre-P14 package)")
     if "authpolicy" in chosen and not arguments.baseline_runtime:
         parser().error("--checks authpolicy requires --baseline-runtime (a pre-P16 package)")
+    if "identity" in chosen and (not arguments.baseline_runtime or not arguments.playwright_module):
+        parser().error("--checks identity requires --baseline-runtime and --playwright-module")
     if "docker" in chosen and not arguments.docker_runtime:
         parser().error("--checks docker requires --docker-runtime (a musl package)")
     previous_umask = os.umask(0o077)
@@ -76,13 +79,13 @@ def main(argv=None):
             output = common.private_directory(arguments.output.expanduser().resolve())
         for label, runtime in inputs.items():
             snapshots[label] = common.snapshot_runtime(runtime)
-        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition")):
+        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity")):
             common.ensure_host_compatible(inputs["candidate"])
         for label in ("baseline", "legacy"):
             if label in inputs:
                 common.ensure_host_compatible(inputs[label])
         # Imports are deliberately after validation; modules never launch on import.
-        from validation import accesspolicy, acquisition, app, authpolicy, cancellation, datastore, docker, logstorage, media, package, postgresconnections, releaseidentity, restore, sqlite, upgrade
+        from validation import accesspolicy, acquisition, app, authpolicy, cancellation, datastore, docker, identity, logstorage, media, package, postgresconnections, releaseidentity, restore, sqlite, upgrade
         callbacks = {
             "package": lambda: package.run(inputs["candidate"], output / "package", repo),
             "app": lambda: app.run(inputs["candidate"], output / "app"),
@@ -97,6 +100,7 @@ def main(argv=None):
             "accesspolicy": lambda: accesspolicy.run(inputs["candidate"], output / "accesspolicy"),
             "releaseidentity": lambda: releaseidentity.run(inputs["candidate"], output / "releaseidentity"),
             "acquisition": lambda: acquisition.run(inputs["candidate"], output / "acquisition"),
+            "identity": lambda: identity.run(inputs["candidate"], output / "identity", baseline_runtime=inputs["baseline"], playwright_module=arguments.playwright_module),
             "authpolicy": lambda: authpolicy.run(inputs["candidate"], output / "authpolicy", baseline_runtime=inputs["baseline"]),
             "docker": lambda: docker.run(inputs["docker"], output / "docker", repo),
         }

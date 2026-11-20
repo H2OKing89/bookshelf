@@ -61,9 +61,9 @@ normal [package preparation](local-validation.md#prepare-a-package). Do not chan
 source or create a different commit between compilation, testing and staging.
 Every output path below must be new and must not contain an application home.
 
-The candidate requires passing, complete synthetic-data evidence for all ten
+The candidate requires passing, complete synthetic-data evidence for all eleven
 checks: `package`, `app`, `restore`, `upgrade`, `media`, `cancellation`,
-`authpolicy`, `accesspolicy`, `releaseidentity` and `acquisition`. For example:
+`authpolicy`, `accesspolicy`, `releaseidentity`, `acquisition` and `identity`. For example:
 
 ```sh
 python3 scripts/validate-local.py \
@@ -78,10 +78,18 @@ python3 scripts/validate-local.py \
   --checks authpolicy \
   --output _temp/release-auth-evidence
 
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --baseline-runtime /path/to/genuine-older-audiobook-package \
+  --playwright-module /path/to/installed/playwright \
+  --checks identity \
+  --output _temp/release-audiobook-evidence
+
 python3 scripts/prepare-release.py prepare \
   --runtime _artifacts/linux-x64/net10.0/Readarr \
   --evidence _temp/release-evidence/summary.json \
   --evidence _temp/release-auth-evidence/summary.json \
+  --evidence _temp/release-audiobook-evidence/summary.json \
   --channel develop \
   --output _temp/release-candidate
 ```
@@ -89,7 +97,9 @@ python3 scripts/prepare-release.py prepare \
 Use a genuine older package appropriate for the upgrade check; a .NET 6 baseline
 also exercises the runtime upgrade. The authentication-policy proof separately
 needs a genuine pre-P16 P14 package with the existing salted-credential schema.
-The two reports above share the same candidate bytes. Evidence may be split
+The identity proof needs an older package with the audiobook schema and an
+explicit installed Playwright module; its versioned recipe creates its own home.
+All three reports above share the same candidate bytes. Evidence may be split
 across reports by repeating `--evidence`, but every report must refer to that exact
 same candidate package fingerprint. Skipped, incomplete, failed or inconsistent
 checks are rejected. The `releaseidentity` check reads the identity from an owned
