@@ -762,3 +762,74 @@ Input package preservation and owned process/container cleanup pass. The separat
 development runtime remains PID **3980350**. No running dev/production home,
 real media, Unraid data or GitHub workflow was changed. P17 remains deferred;
 D08 automation and broader release/feed/platform gates retain their prior status.
+
+
+## D10, D09 and D12 verification (2026-11-19)
+
+Clean source `fcf7e589b`, version `10.0.0.38144`, implements client-scoped
+tracking/reconciliation, safe pre-submission failover, durable uncertain-submission
+holds and once-per-blocked-episode notification attempts. Only the pinned Sonarr
+v5 baseline `c018578e4b79ee048575c02d7a8aa2b929e4b837` informed this adaptation.
+No GitHub workflows, production servers, real client adds or notification
+transports were used.
+
+Validation against this source:
+
+- **5,599 source cases passed**, with **94 existing skips**. The Core suite uses
+  the documented offline filter and a new owned PostgreSQL cluster; the Common,
+  API, Host, PostgreSQL migration, authentication integration and Updater suites
+  also pass. Legacy synthetic fixtures now supply scoped history and explicitly
+  identify successful client polls without weakening stale-client assertions.
+- **148 Python tooling tests**, **42 frontend Node tests** and targeted ESLint
+  pass. The frontend suite includes blocked/stale queue rendering and its existing
+  library-editor test has the missing UI boundary stub restored.
+- **552 delivery checks** pass, including **251 acquisition checks** and
+  **53 actual musl Docker checks**. Both clean glibc and musl packages build with
+  .NET 10.0.15, and compiled/frontend provenance agrees on the exact clean source.
+- **111 authentication checks**, **262 identity-preservation
+  checks**, **30 queue review browser checks** and **45 actual
+  candidate CLI checks** pass. Input package hashes and owned-process cleanup
+  checks remain valid. The candidate is unsigned and unpublished.
+
+The acquisition proof runs the published services using owned SQLite-backed
+repository interfaces, physical synthetic source/destination files, controlled
+import results and fake clients/transports. It exercises same-ID jobs on different
+clients, complete/failed/lazy/partial polls, stale cleanup, explicit routing,
+release errors, exact submitted-hash reconciliation, unresolved holds across
+restart/concurrent attempts, explicit acknowledgement and post-add bookkeeping
+failure. Notification checks cover durable deduplication, changed diagnostics,
+separate clients, recovery only after source retirement, provider opt-ins and
+recording/edition identity. These are service/integration boundaries, not live
+protocol tests for every download adapter.
+
+`submission-holds-browser.cjs` runs only against an owned loopback fixture using
+synthetic credentials on stdin. On desktop and at 390px it verifies authentication,
+wrong-client refusal, explicit review confirmation, cancel preservation, scoped
+acknowledgement, reload persistence, another client's retained hold, overflow and
+browser errors. Screenshots contain synthetic data only.
+
+Operational API notes: queue and manual-import resources carry numeric
+`downloadClientId`; ambiguous legacy job IDs fail before mutation. External
+`DownloadedBooksScan` commands retain their legacy string `downloadClientId`
+(job ID) and accept optional numeric `clientId` for ownership. Submission holds
+are listed at `GET /api/v1/downloadsubmission`; clearing uses
+`POST /api/v1/downloadsubmission/acknowledge` with the exact `attemptId`, positive
+`downloadClientId` and `clientReviewed: true`, following client review. Normal
+API authentication and request-header protections apply. Clearing a hold only
+permits future grabs; it performs no client removal/restart.
+
+Known semantics: failover requires a proven pre-add readiness failure. Adapters
+with static readiness checks may conservatively create a review hold when an
+outage is discovered during add. Notification markers record at-most-once
+attempts, so a provider failure/crash after marking can lose delivery. D08
+rejection-directed blocklist/search automation, P17 and broader signing/feed or
+platform gates retain their prior status.
+
+Private local evidence is under `_temp/d09-d10-d12-20261119/`:
+`source-results.json`, `source-final/`, `source-core-verified/`, `api-verified/`,
+`python.log`, `frontend-tests.log`, `eslint.log`, `build-verified/`,
+`delivery-verified/summary.json`, `authpolicy-verified/summary.json`,
+`identity-verified/summary.json`, `submission-ui/summary.json` (and desktop/phone
+screenshots), and `release-candidate-proof/summary.json`. The earlier mixed
+bootstrap proof is smoke evidence only; the clean delivery above is authoritative.
+The running development service remains on its original process/runtime.

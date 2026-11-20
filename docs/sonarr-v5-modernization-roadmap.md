@@ -1172,3 +1172,13 @@ is written can lose that notification. No real transports are used in validation
 D08 automatic rejection-directed failure/blocklist/search remains separate.
 P17 remains deferred; publication, signing/feed and unverified platform gates
 retain their previous status. Verification evidence follows in local validation.
+
+
+Verification: clean source `fcf7e589b`, version `10.0.0.38144`, passes **5,599
+source cases** with **94 existing skips**, **148 Python tests**, **42 frontend
+Node tests**, **552 delivery checks** (including **251 acquisition** and **53
+actual musl Docker**), **111 authentication**, **262 identity-preservation**,
+**30 queue browser** and **45 actual candidate CLI checks**. Both clean native
+packages build with matching source provenance. Inputs and owned-process cleanup
+remain intact. The dev service was not restarted and the candidate remains
+unsigned/unpublished. See [local validation](local-validation.md#d10-d09-and-d12-verification-2026-11-19).

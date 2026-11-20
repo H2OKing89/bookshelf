@@ -76,10 +76,10 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D06](#d06) | P1 | Verified | M | Classify rejected extensions, including downloads with no importable files |
 | [D07](#d07) | P1 | Verified | L | Ask download clients for file inventory when the filesystem has no eligible files |
 | [D08](#d08) | P2 | Planned | M | Make automatic failure/blocklist/redownload actions explicit per indexer |
-| [D09](#d09) | P1 | Implemented | M | Fail over among eligible download clients |
-| [D10](#d10) | P1 | Implemented | M | Remove disappeared tracked items and refresh client configuration promptly |
+| [D09](#d09) | P1 | Verified | M | Fail over among eligible download clients |
+| [D10](#d10) | P1 | Verified | M | Remove disappeared tracked items and refresh client configuration promptly |
 | [D11](#d11) | P1 | Verified | M | Separate blocked import state from terminal failure |
-| [D12](#d12) | P1 | Implemented | M | Notify once when manual intervention is required |
+| [D12](#d12) | P1 | Verified | M | Notify once when manual intervention is required |
 | [D13](#d13) | P1 | Planned | M | Add minimum custom-format score improvement for upgrades |
 | [D14](#d14) | P1 | Planned | M | Add language custom formats using audiobook evidence |
 | [D15](#d15) | P1 | Planned | L | Implement meaningful audiobook size policy, including per-profile limits |
@@ -2062,6 +2062,16 @@ clearing permits future automatic grabs. Some legacy adapters have static
 readiness checks; an outage discovered only during add remains held for review.
 
 
+
+**Verified clean artifact:** source `fcf7e589b`, version `10.0.0.38144`, passes
+**5,599 source cases** (**94 existing skips**), **148 Python tests**, **42 frontend
+Node tests**, **552 delivery checks** (including **251 acquisition** and **53
+actual musl Docker**), **111 authentication**, **262 identity-preservation**,
+**30 desktop/phone queue browser** and **45 actual candidate CLI checks**.
+Both clean packages build, inputs remain unchanged and owned processes are
+cleaned up. The running dev service is unchanged; the candidate is unsigned and
+unpublished. See [local validation](local-validation.md#d10-d09-and-d12-verification-2026-11-19).
+
 ### D10
 
 **Remove disappeared tracked items and refresh client configuration promptly**
@@ -2094,6 +2104,16 @@ grab evicts only its own cached pair, including a prior terminal state. Queue
 resources expose `downloadClientId` and `downloadClientAvailable`; queue manual
 import passes that identity through preview and command payloads.
 
+
+
+**Verified clean artifact:** source `fcf7e589b`, version `10.0.0.38144`, passes
+**5,599 source cases** (**94 existing skips**), **148 Python tests**, **42 frontend
+Node tests**, **552 delivery checks** (including **251 acquisition** and **53
+actual musl Docker**), **111 authentication**, **262 identity-preservation**,
+**30 desktop/phone queue browser** and **45 actual candidate CLI checks**.
+Both clean packages build, inputs remain unchanged and owned processes are
+cleaned up. The running dev service is unchanged; the candidate is unsigned and
+unpublished. See [local validation](local-validation.md#d10-d09-and-d12-verification-2026-11-19).
 
 ### D11
 
@@ -2169,6 +2189,16 @@ episode: a crash/provider failure after recording the attempt can lose delivery.
 This is deduplication, not a guaranteed-delivery queue. All validation uses fake
 notification transports.
 
+
+
+**Verified clean artifact:** source `fcf7e589b`, version `10.0.0.38144`, passes
+**5,599 source cases** (**94 existing skips**), **148 Python tests**, **42 frontend
+Node tests**, **552 delivery checks** (including **251 acquisition** and **53
+actual musl Docker**), **111 authentication**, **262 identity-preservation**,
+**30 desktop/phone queue browser** and **45 actual candidate CLI checks**.
+Both clean packages build, inputs remain unchanged and owned processes are
+cleaned up. The running dev service is unchanged; the candidate is unsigned and
+unpublished. See [local validation](local-validation.md#d10-d09-and-d12-verification-2026-11-19).
 
 ### D13
 
