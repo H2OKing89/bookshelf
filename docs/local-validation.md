@@ -657,3 +657,49 @@ running development service remains PID **3980350** in its separate runtime.
 No running development/production home, media, Unraid share or GitHub workflow
 was changed. P17 remains deferred; native ARM64 and broader release gates remain
 separate work.
+
+
+### D01, B01, D02 and D05 verification, 2026-11-19
+
+Preservation and the reusable recipe/harness are committed in `127f0882f`.
+Rejection codes and custom-format upgrade guards are committed in `c331b0bea`.
+The full offline source run passes Core **4,145**, Common **836**, API **22**,
+Host **181**, PostgreSQL migration **23**, authentication integration **54** and
+updater **20**: **5,281 passing cases**, retaining **94 existing skips**. The
+usual external metadata fixtures remain excluded from offline Core; PostgreSQL
+uses an owned temporary cluster/socket. Python discovery passes **148 tests**.
+
+Normal-permission glibc and musl packages build from clean `c331b0bea`, version
+`10.0.0.34076`, with matching frontend/backend provenance and .NET **10.0.15**.
+Delivery passes **441 checks**, including **140 published acquisition checks**
+and **53 actual musl Docker checks**. A separate genuine pre-P16 proof passes
+**111 authentication checks**. The new identity proof uses the complete prework
+`3aeb8c56b` package to create a genuine older synthetic home and passes **262
+checks**, including desktop/phone login, API identity/ownership, restart and
+application-managed baseline-data restoration. Its declared SQLite recipe
+boundary and separate source refresh/import coverage are documented in the
+[preservation contract](identity-preservation.md).
+
+Actual candidate preparation and verification pass **45 checks**, including
+rejection when acquisition or identity evidence is omitted, incorrect identities,
+changed bytes/modes, source archive/evidence tampering and unexpected bundle
+files. The Linux x64 `develop` candidate binds exact source `c331b0bea`, remains
+unsigned and unpublished, and has in-app updates disabled. This later evidence
+commit does not relabel the compiled source or its GPL archive.
+
+Private receipts live under `_temp/d01-b01-d02-d05-20261119/`:
+
+- `source-final/tests/`: all seven source suite TRX reports.
+- `python-verified.log`: Python discovery.
+- `build/results.json`: clean backend, frontend and both packages.
+- `final-delivery/summary.json`: complete delivery results.
+- `authpolicy-final/summary.json`: authentication and input-preservation results.
+- `identity-final/summary.json`: synthetic upgrade/browser/restore results; owned
+  desktop/phone screenshots are under `identity-final/identity/browser/`.
+- `release-candidate-proof/summary.json`: actual CLI acceptance/rejection proof.
+- `release-candidate/`: complete candidate, source archive, manifest and evidence.
+
+Input packages remain unchanged; owned servers and containers are cleaned up.
+The separate development runtime remains PID **3980350**. No production/dev home,
+real media, Unraid data or GitHub workflow was changed. P17 stays deferred; broader
+platform, signing/publication and release-feed work retain their prior status.

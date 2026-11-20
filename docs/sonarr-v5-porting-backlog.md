@@ -68,11 +68,11 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P24](#p24) | P2 | Verified | S | Correct URL-base boundary handling on login redirects |
 | [P25](#p25) | P0 | In progress | L | Isolate fork release channels and require matching source/artifact identity |
 | [P26](#p26) | P0 | Verified | M | Propagate repository write failures and transact general bulk updates |
-| [D01](#d01) | P0 | In progress | S | Preserve Bookshelf's staged replacement and ownership boundary |
-| [D02](#d02) | P1 | In progress | L | Add machine-readable download and import rejection codes |
+| [D01](#d01) | P0 | Verified | S | Preserve Bookshelf's staged replacement and ownership boundary |
+| [D02](#d02) | P1 | Verified | L | Add machine-readable download and import rejection codes |
 | [D03](#d03) | P0 | Verified | S | Fix tag isolation when choosing download clients |
 | [D04](#d04) | P0 | Verified | M | Audit completion against distinct books and complete recording parts |
-| [D05](#d05) | P1 | In progress | M | Prevent custom-format downgrades during import and rename |
+| [D05](#d05) | P1 | Verified | M | Prevent custom-format downgrades during import and rename |
 | [D06](#d06) | P1 | Planned | M | Classify rejected extensions, including downloads with no importable files |
 | [D07](#d07) | P1 | Planned | L | Ask download clients for file inventory when the filesystem has no eligible files |
 | [D08](#d08) | P2 | Planned | M | Make automatic failure/blocklist/redownload actions explicit per indexer |
@@ -120,7 +120,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [U20](#u20) | P2 | Planned | M | Text filtering and intentional caching of interactive searches |
 | [U21](#u21) | P2 | Planned | M | Simplify existing library virtualization after measuring it |
 | [U22](#u22) | P2 | Planned | L | Vite/HMR and a separately verified asset pipeline |
-| [B01](#b01) | P0 | In progress | M | Make audiobook identity and upgrade invariants the porting contract |
+| [B01](#b01) | P0 | Verified | M | Make audiobook identity and upgrade invariants the porting contract |
 | [B02](#b02) | P1 | Planned | L | Provide a supported author reconciliation and correction workflow |
 | [B03](#b03) | P2 | Planned | XL | Represent publisher-pack membership without collapsing recording identities |
 | [B04](#b04) | P1 | Planned | L | Add audio-specific custom-format rules from trustworthy media evidence |
@@ -1818,6 +1818,18 @@ is part of this batch.
 
 **P0 · existing local advantage · skip wholesale port / study individual deltas · no dependency · S (review gate).** S:`src/NzbDrone.Core/MediaFiles/UpgradeMediaFileService.cs:37` `UpgradeEpisodeFile` recycles/deletes old files at lines 55–74 before moving the new file at lines 78–85. B:`src/NzbDrone.Core/MediaFiles/UpgradeMediaFileService.cs:53` `UpgradeBookFile`, `CommitUpgrade:117`, `FinalizeUpgrade:187`, `AbortUpgrade:234`; B:`src/NzbDrone.Core/MediaFiles/BookImport/ImportApprovedBooks.cs:331` commits staged replacements. B:`src/NzbDrone.Core/MediaFiles/MediaFileDeletionService.cs:125` `Handle(AuthorDeletedEvent)` uses owned file IDs and handles foreign files. Keep these implementations when taking any Sonarr importer/scanner work. Acceptance: retain old library and source files on stage/copy/tag/database failure, preserve unrepresented audiobook parts, never delete another author's owned files, and emit history/notifications only after successful commit. Existing evidence: B:`src/NzbDrone.Core.Test/MediaFiles/UpgradeMediaFileServiceFixture.cs:78,150,198` and B:`src/NzbDrone.Core.Test/MediaFiles/ImportApprovedTracksFixture.cs:489,504`.
 
+**2026-11-19 verified preservation gate:** `127f0882f` retains staged publication
+and fixes an edition-ownership gap found during review: retirement previously
+considered every file attached to a book. It now targets only the incoming known
+edition, rejects conflicting edition/book identities, protects shared paths, and
+evaluates part/runtime consolidation within each recording. Calibre whole-record
+deletion checks live ownership in its configured root; retained parts, editions
+or authors sharing its ID prevent deletion, and unavailable inventory retains
+the record. Eleven new cases cover these boundaries alongside existing
+stage/tag/database failure, unrepresented-part and author-ownership fixtures.
+The [preservation contract](identity-preservation.md) records the retained protocol
+and source matrix. Full source and package acceptance is recorded under B01 below.
+
 ### D02
 
 **Add machine-readable download and import rejection codes**
@@ -1830,6 +1842,22 @@ is part of this batch.
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/DecisionEngine/Decision.cs](../src/NzbDrone.Core/DecisionEngine/Decision.cs#L3).
 
 **P1 · partial · adapt · foundational for D06–08, D11 · L.** S:`src/NzbDrone.Core/DecisionEngine/DownloadRejectionReason.cs:3`, `DownloadSpecDecision.cs`, `DownloadRejection.cs`; S:`src/NzbDrone.Core/MediaFiles/EpisodeImport/ImportRejectionReason.cs:3`, `ImportSpecDecision.cs`. B:`src/NzbDrone.Core/DecisionEngine/Decision.cs:3` and `Rejection.cs:3` carry human strings and permanence; B:`src/NzbDrone.Core/MediaFiles/BookImport/ImportDecision.cs` uses that older decision model. Add stable book/edition/recording rejection codes while keeping readable text and temporary/permanent classification. Acceptance: RSS/search/manual-import/queue API can identify the same rejection without parsing English; localized messages do not alter behavior; unknown codes round-trip safely. Do not copy episode/season/anime rejection enum members without a Bookshelf meaning.
+
+**2026-11-19 verified adaptation:** `c331b0bea` adds stable string codes to
+`Decision` and `Rejection`, rather than changing existing readable `Reason` to an
+enum. Active download/import specifications and known publication failures assign
+codes explicitly; makers and queue status preserve them. Unknown future values
+round-trip unchanged, and legacy uncoded messages use `unknown`. Existing
+temporary/permanent classification and readable strings remain available.
+
+API v1 releases retain `rejections` strings and add `rejectionDetails`; manual
+import objects gain `code`, and queue status retains `messages` alongside typed
+`rejections`. Incomplete-import history preserves codes through both serializers.
+API regressions caught and fixed a collection-population case that otherwise
+replaced saved codes with legacy defaults. Seventeen core contract/propagation
+cases, actual specification assertions, four result/status cases and six API
+cases accompany the full source run. Codes do not trigger new failure, blocklist
+or redownload policies; D06-D08 remain separate work.
 
 ### D03
 
@@ -1911,6 +1939,23 @@ remains deferred, and wider platform/feed/signing gates are unchanged.
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/MediaFiles/BookImport/Specifications/UpgradeSpecification.cs](../src/NzbDrone.Core/MediaFiles/BookImport/Specifications/UpgradeSpecification.cs#L27).
 
 **P1 · partial · adapt · D01, ideally D02 · M.** S:`src/NzbDrone.Core/MediaFiles/EpisodeImport/Specifications/UpgradeSpecification.cs:61` checks current/new custom-format scores and distinguishes a score lost after renaming (76–93); S:`src/NzbDrone.Core/MediaFiles/EpisodeImport/LocalEpisodeCustomFormatCalculationService.cs:26` calculates intended-name and original-name scores. B:`src/NzbDrone.Core/MediaFiles/BookImport/Specifications/UpgradeSpecification.cs:27` only checks quality/revision, despite injecting `_customFormatCalculationService`; B:`src/NzbDrone.Core/CustomFormats/CustomFormatCalculationService.cs:108` already calculates local-book matches. Extend this to book/edition/recording groups before staged commit, preserving scene-name and original release metadata. Acceptance: same-quality lower-score downloads cannot replace better recordings; renaming away a preferred token is explained; permitted manual overrides are explicit; multipart parts use a coherent recording-level comparison.
+
+**2026-11-19 verified implementation:** `c331b0bea` compares same-quality
+custom-format scores within the incoming edition, protecting every existing
+part without summing or averaging. Higher quality retains prior precedence; a
+same-quality proper/repack does not bypass preference protection. Existing-file
+reidentification skips the replacement guard. A shared metadata factory keeps
+actual publication and intended-name preview consistent for scene title, release
+group and grabbed indexer flags. Existing files use their own provenance.
+
+`custom_format_downgrade` and `custom_format_lost_after_rename` distinguish an
+ordinary downgrade from loss caused by the intended filename. Real-condition
+helper/specification fixtures cover retained scene credit, filename changes,
+flags, quality/revision ordering, multipart scores and other editions. Manual
+preview exposes the rejection; explicit manual execution retains its existing
+override semantics while obeying ownership and staged transaction boundaries.
+Eight new checks run the published guard with real custom-format conditions;
+the acquisition proof now passes **140 checks**.
 
 ### D06
 
@@ -2585,6 +2630,30 @@ Treat build tooling as its own change after runtime/query trials. Record the com
 Bookshelf-native work, not a TV model port. Establish fixtures covering work versus recording versus file, full marketplace-plus-ASIN identities, local recording IDs, coauthors, canonical author mappings, publisher packs, US/UK recordings, multiple narrations, fractional positions, chapter parts and unknown dates. Existing tests already cover many individual cases. Add a reusable synthetic legacy-home snapshot and an authenticated API/browser harness checked into the repo so future modernization can reproduce those guarantees without private development-library data.
 
 **Acceptance:** Every port preserves book/edition/file IDs, monitoring, acquisition history, credentials and explicit false/zero values in the applicable fixtures. A file cannot change recording because a title/author is similar; a local recording cannot become an Audible edition during refresh. Upgrades and rollback operate on disposable homes; no production media or private database enters the repository.
+
+**2026-11-19 verified contract and harness:** `127f0882f` adds the public
+versioned [synthetic recipe](../scripts/validation/fixtures/audiobook-identities-v1.json),
+source-preservation matrix and explicit `identity` package check. A genuine older
+package creates an owned home and account; declared SQLite seeding adds eight
+recordings covering marketplace/ASIN identities, alternative narration, a local
+recording, coauthors/canonical mappings, a pack, fractional position, multipart
+files, chapters, unknown dates and explicit false/zero values. The candidate
+upgrades that home, verifies API identities, runs actual Forms login and detail
+pages at desktop/390px, restarts, changes monitoring and restores the baseline
+backup through the application. API-key enforcement remains intact; browser
+credentials and keys use stdin. No private home, provider or real library is used.
+
+Clean source `c331b0bea`, version `10.0.0.34076`, passes **5,281 source cases**
+with **94 existing skips**, **148 Python tests**, **441 delivery checks**
+(including **140 acquisition** and **53 actual musl Docker** checks), **111
+authentication checks**, **262 identity checks** and **45 actual candidate CLI
+checks**. The local candidate requires all eleven gates, including the new
+identity receipt; omission is rejected. glibc/musl packages build, and all input
+fingerprints remain unchanged. The source/refresh fixtures supply metadata-refresh
+and import-failure coverage; the hosted recipe supplies persistence/API/browser
+coverage. Pack membership modeling remains B03 work, and backup restoration does
+not claim binary schema downgrade support. See [local validation](local-validation.md#d01-b01-d02-and-d05-verification-2026-11-19).
+P17 remains deferred, and platform/feed/signing gates retain their prior status.
 
 ### B02
 

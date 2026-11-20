@@ -111,8 +111,8 @@ build-tool and book-model migrations in one change.
 
 ### Phase 0: Reproducible baseline and porting contract
 
-- [ ] Capture the current synthetic upgrade, identity and failure fixtures: B01/D01.
-- [ ] Record runnable build/test commands and a browser harness that does not
+- [x] Capture the current synthetic upgrade, identity and failure fixtures: B01/D01.
+- [x] Record runnable build/test commands and a browser harness that does not
   depend on a private live library; extend P21 as the platform migration proceeds.
 - [ ] Set the fork's source/artifact/update-channel rules before publishing any
   modernization release: P25.
@@ -1079,3 +1079,34 @@ proof. See [local validation](local-validation.md#d03-and-d04-source-verificatio
 No running development service, production/Unraid home or media, or GitHub workflow
 was changed. P17 remains deferred; broader platform and release-feed gates retain
 their existing status.
+
+
+### D01/B01, D02 and D05 preservation and preference gates — 2026-11-19
+
+D01, B01, D02 and D05 are **Verified**. `127f0882f` fixes edition-scoped
+retirement, shared-path ownership, per-recording part/runtime coverage and shared
+Calibre-record deletion. It adds a versioned synthetic home recipe and real
+authenticated API/browser upgrade, restart and backup-restoration harness.
+`c331b0bea` adds stable rejection codes across search/import/queue contracts and
+prevents same-quality custom-format downgrades within a selected recording.
+Intended-name scoring preserves acquisition provenance and explains filename
+preference loss; explicit manual import retains its existing override behavior.
+
+The [preservation contract](identity-preservation.md) defines source and hosted
+fixture boundaries. Automatic file imports remain staged; another edition's
+files or runtime cannot authorize retirement. Readable API messages and
+temporary/permanent classification remain compatible, with additive codes and
+unknown-value round trips. The published guard is checked against actual
+custom-format conditions, while filesystem/naming/repository inputs are owned.
+
+Clean artifact source `c331b0bea`, version `10.0.0.34076`, passes **5,281 source
+cases** with **94 existing skips**, **148 Python tests**, **441 delivery checks**
+(including **140 acquisition** and **53 Docker**), **111 authentication**,
+**262 identity** and **45 actual candidate CLI checks**. The local unsigned and
+unpublished candidate now requires eleven gates, including identity evidence.
+See [local validation](local-validation.md#d01-b01-d02-and-d05-verification-2026-11-19).
+
+This completes the B01/D01 fixture and runnable-harness entries in Phase 0; P25
+publication/feed/platform gates remain open. D06-D08 classification/policy work
+and B03 pack membership remain separate. P17 remains deferred. No running dev
+service, production/Unraid home or media, or GitHub workflow was changed.

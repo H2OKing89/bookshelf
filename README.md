@@ -35,6 +35,9 @@ with fresh synthetic data. GitHub Actions is not required.
 Tracked downloads retain sources until their intended books and recording parts
 have verified committed files. See [download completion](docs/download-completion.md)
 for retry, restart, manual Copy and client-cleanup behavior.
+The [audiobook preservation contract](docs/identity-preservation.md) covers
+recording ownership, upgrade preferences, rejection codes and the reusable
+synthetic API/browser check.
 
 This fork blocks in-app update downloads and replacement until a compatible
 Bookshelf feed is implemented. See [release policy](docs/release-policy.md) for
