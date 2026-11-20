@@ -1110,3 +1110,36 @@ This completes the B01/D01 fixture and runnable-harness entries in Phase 0; P25
 publication/feed/platform gates remain open. D06-D08 classification/policy work
 and B03 pack membership remain separate. P17 remains deferred. No running dev
 service, production/Unraid home or media, or GitHub workflow was changed.
+
+
+### D06, D07 and D11 diagnostic and recovery gates — 2026-11-19
+
+D06, D07 and D11 are **Verified**. `e13f2ebd0` adds book-aware rejected-file
+classification and validated advanced Media Management extension policy.
+`7cbb3b78e` adds a bounded client inventory contract and qBittorrent adapter.
+`fd35e9d11` integrates local/client diagnostics and an explicit recoverable
+`importBlocked` state, bounded retries, failure detection and receipt-only
+cleanup recovery. `faf8684c1` makes the reusable browser proof wait for actual
+rendered controls and advanced-setting state.
+
+The [completion/recovery policy](download-completion.md#blocked-imports-and-file-diagnostics)
+documents supported containers, harmless sidecars, extension-setting semantics,
+API state compatibility and 30–300-second retry behavior. Remote file inventories
+remain diagnostic data and never authorize filesystem work or completion.
+Existing Copy, ownership and committed-part guarantees remain enforced. Actual
+client failures retain their existing handling; extension rejections alone do not
+activate D08 failure/blocklist/redownload automation.
+
+Source verification passes **5,447 cases** with **94 existing skips**, plus
+**148 Python tests** and **2 queue UI tests**. Clean artifact source `faf8684c1`,
+version `10.0.0.36335`, passes **466 delivery checks** (including **165 published
+acquisition and 53 Docker checks**), **111 authentication**, **262 identity**,
+**40 desktop/390px settings UI** and **45 actual candidate CLI checks**.
+The glibc and musl builds carry matching clean provenance. The unsigned local
+Linux x64 candidate and GPL source archive bind that exact commit; a later
+documentation-only commit does not relabel it. See
+[local validation](local-validation.md#d06-d07-and-d11-verification-2026-11-19).
+
+The running development service remains unchanged. No production/Unraid data,
+real library media or GitHub workflow was used or changed. P17 stays deferred;
+D08, D09/D10/D12 and broader signing/feed/platform work retain their status.

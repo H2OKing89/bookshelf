@@ -703,3 +703,62 @@ Input packages remain unchanged; owned servers and containers are cleaned up.
 The separate development runtime remains PID **3980350**. No production/dev home,
 real media, Unraid data or GitHub workflow was changed. P17 stays deferred; broader
 platform, signing/publication and release-feed work retain their prior status.
+
+
+### D06, D07 and D11 verification, 2026-11-19
+
+File classification/policy is committed in `e13f2ebd0`, client inventory in
+`7cbb3b78e`, blocked recovery in `fd35e9d11`, and the reusable browser proof's
+rendering waits in `faf8684c1`. Final source verification passes Core **4,303**,
+Common **836**, API **30**, Host **181**, PostgreSQL migration **23**,
+authentication integration **54** and updater **20**: **5,447 cases**, with
+**94 existing skips**. The Core and Host follow-ups verify the optional-clock
+construction fix discovered by the full run; the original failure receipts are
+retained separately. Offline metadata exclusions and the owned PostgreSQL
+cluster/socket follow the preceding records. Python discovery passes **148
+tests**; the queue renderer passes **2 Node tests** and targeted frontend ESLint.
+
+Clean glibc/musl packages were built from **`faf8684c1`**, version
+**`10.0.0.36335`**, with .NET **10.0.15** and matching frontend/backend commit,
+tree, branch and `buildDirty=false`. Final delivery passes **466 checks**,
+including **165 acquisition checks** and **53 actual musl Docker checks**.
+Separate proofs pass **111 authentication** and **262 identity checks**, using
+genuine appropriate older packages. The owned acquisition fixture uses actual
+classification, diagnostics, retry, history and completion services with physical
+synthetic files and SQLite-backed repository interfaces; its importer and client
+boundaries are controlled, with real importer/adapter coverage in source tests.
+
+The settings browser proof passes **40 checks** through actual Forms login and
+Media Management at desktop and 390px phone width: advanced-field visibility,
+normalization/save, invalid-save preservation and feedback, explicit clear,
+reload, other-setting preservation and no external browser requests. Its reusable
+script is [rejected-extensions-browser.cjs](../scripts/validation/rejected-extensions-browser.cjs).
+It accepts only the supplied owned loopback fixture and uses stdin for synthetic
+credentials/key; browser/server cleanup and package fingerprints are checked.
+Four screenshots retain valid and invalid states at both widths.
+
+Actual candidate preparation and verification pass **45 checks** against the
+final receipts, including missing acquisition/identity evidence, wrong identity,
+altered payload/evidence/source bytes or modes and unexpected bundle files.
+The Linux x64 `develop` candidate remains unsigned, unpublished and
+`publishable=false`, with built-in updates disabled. Its source archive is
+exactly `faf8684c1`; this evidence-only commit does not change artifact identity.
+
+Private receipts live under `_temp/d06-d07-d11-20261119/`:
+
+- `source-core-verified/tests/`: final Core TRX; `tests/host-verified.trx`: Host.
+- `source-final/tests/`: Common, API, PostgreSQL, authentication and updater TRX.
+- `python-final.log`, `queue-ui-tests.log`, `frontend-lint.log`: tooling/UI checks.
+- `build-verified/results.json`: clean backend, frontend and package results.
+- `delivery-verified/summary.json`: final package delivery checks.
+- `authpolicy-verified/summary.json`, `identity-verified/summary.json`: separate
+  authentication and synthetic identity/upgrade/browser/restore gates.
+- `policy-ui-verified/summary.json`: final settings proof and artifact fingerprint;
+  `policy-ui-verified/screenshots/`: desktop/phone valid/invalid screenshots.
+- `release-candidate-proof/summary.json`: final actual candidate CLI proof.
+- `release-candidate/`: complete package, GPL source archive, manifest and evidence.
+
+Input package preservation and owned process/container cleanup pass. The separate
+development runtime remains PID **3980350**. No running dev/production home,
+real media, Unraid data or GitHub workflow was changed. P17 remains deferred;
+D08 automation and broader release/feed/platform gates retain their prior status.

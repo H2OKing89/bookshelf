@@ -73,12 +73,12 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D03](#d03) | P0 | Verified | S | Fix tag isolation when choosing download clients |
 | [D04](#d04) | P0 | Verified | M | Audit completion against distinct books and complete recording parts |
 | [D05](#d05) | P1 | Verified | M | Prevent custom-format downgrades during import and rename |
-| [D06](#d06) | P1 | In progress | M | Classify rejected extensions, including downloads with no importable files |
-| [D07](#d07) | P1 | In progress | L | Ask download clients for file inventory when the filesystem has no eligible files |
+| [D06](#d06) | P1 | Verified | M | Classify rejected extensions, including downloads with no importable files |
+| [D07](#d07) | P1 | Verified | L | Ask download clients for file inventory when the filesystem has no eligible files |
 | [D08](#d08) | P2 | Planned | M | Make automatic failure/blocklist/redownload actions explicit per indexer |
 | [D09](#d09) | P1 | Planned | M | Fail over among eligible download clients |
 | [D10](#d10) | P1 | Planned | M | Remove disappeared tracked items and refresh client configuration promptly |
-| [D11](#d11) | P1 | In progress | M | Separate blocked import state from terminal failure |
+| [D11](#d11) | P1 | Verified | M | Separate blocked import state from terminal failure |
 | [D12](#d12) | P1 | Planned | M | Notify once when manual intervention is required |
 | [D13](#d13) | P1 | Planned | M | Add minimum custom-format score improvement for upgrades |
 | [D14](#d14) | P1 | Planned | M | Add language custom formats using audiobook evidence |
@@ -1970,6 +1970,25 @@ the acquisition proof now passes **140 checks**.
 
 **P1 · missing specific capability · adapt · D02 · M.** S:`src/NzbDrone.Core/MediaFiles/EpisodeImport/RejectedFileExtensionService.cs:24` `GetRejection`, S:`src/NzbDrone.Core/MediaFiles/FileExtensions.cs`, S:`src/NzbDrone.Core/Download/CompletedDownloadService.cs:290` `ProcessRejectedDownloadClientFiles`. B:`src/NzbDrone.Core/Download/CompletedDownloadService.cs:93` currently reports only “No files found are eligible for import” for an empty import result; B:`src/NzbDrone.Core/MediaFiles/MediaFileExtensions.cs` is the book extension authority. Implement a book-aware allow/reject policy and typed explanations. Acceptance: mixed-case extensions, sidecars, archives, valid ebook containers, `.exe`-only downloads, user rejected extensions, and valid audio plus incidental sidecars are covered. Do not conflate an audiobook `.cue`/`.m3u` sidecar with a malicious executable.
 
+**2026-11-19 verified implementation:** `e13f2ebd0` adds a book-aware
+classifier using the union of supported audio and ebook extensions. It separates
+archives/split archives, executables, potentially dangerous extensions,
+unsupported files, user-rejected suffixes and harmless cue/m3u/nfo/image sidecars.
+Valid EPUB/kepub/PDF containers stay importable; sidecars are not standalone
+books. Classification is extension-based, not a malware/content scan.
+
+The advanced Media Management **Rejected File Extensions** field persists
+`userRejectedExtensions`. The default is empty; normalization accepts optional
+dots and compound extensions, ignores case and removes duplicates. Invalid
+paths/wildcards/oversized values are rejected before writes. Omitted/null values
+preserve settings; explicit empty clears them. New automatic and explicit manual
+imports enforce policy before staging, while existing-file rescans retain
+identity and files. Typed reasons flow into queue diagnostics. The final
+desktop/390px settings proof passes **40 checks**, covering normalization,
+invalid-save preservation, explicit clear, reload and other-setting preservation.
+See [completion/recovery policy](download-completion.md#blocked-imports-and-file-diagnostics)
+and [final validation](local-validation.md#d06-d07-and-d11-verification-2026-11-19).
+
 ### D07
 
 **Ask download clients for file inventory when the filesystem has no eligible files**
@@ -1982,6 +2001,22 @@ the acquisition proof now passes **140 checks**.
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/Download/IDownloadClient.cs](../src/NzbDrone.Core/Download/IDownloadClient.cs).
 
 **P1 · missing interface/capability · port generic contract and selected adapters · D06 · M–L.** S:`src/NzbDrone.Core/Download/DownloadClientBase.cs:102` `GetFiles` has a safe empty default; S:`src/NzbDrone.Core/Download/DownloadClientFile.cs`; S:`src/NzbDrone.Core/Download/Clients/QBittorrent/QBittorrent.cs:394`; S:`src/NzbDrone.Core/Download/CompletedDownloadService.cs:323` catches inventory failures. B:`src/NzbDrone.Core/Download/IDownloadClient.cs` and `DownloadClientBase.cs` have no equivalent. Acceptance: qBittorrent relative file paths can explain rejection before local mounts are readable; unsupported clients still work; inventory errors do not erase import diagnostics or change completion; remote paths never authorize filesystem deletion.
+
+**2026-11-19 verified implementation:** `7cbb3b78e` adds
+`IDownloadClient.GetFiles(item)` with a safe empty base implementation. The
+qBittorrent adapter uses its existing file-list proxy to return relative names
+and nullable sizes, verifies client scope, and rejects rooted/drive/UNC/traversal,
+control, duplicate, negative-size and oversized inventories. Limits are 10,000
+files, 4,096 characters per relative path and 1 MiB aggregate path characters.
+Thirty-eight adapter/model cases include actual DTO decoding and proxy failures.
+
+`fd35e9d11` integrates diagnostic-only fallback when the bounded local inventory
+contains no accepted media or cannot be inspected safely. Remote names go only to
+the pure extension classifier; they never become local paths, book identities,
+committed-file proof or deletion authority. Unsupported providers remain usable;
+invalid/unavailable client inventory retains original warnings. Published
+checks use owned physical files and a fake client, proving that remote-only names
+do not reach filesystem calls or authorize completion. No live client was used.
 
 ### D08
 
@@ -2034,6 +2069,35 @@ the acquisition proof now passes **140 checks**.
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/Download/CompletedDownloadService.cs](../src/NzbDrone.Core/Download/CompletedDownloadService.cs#L109).
 
 **P1 · partial · adapt · D02, D04 · M.** S:`src/NzbDrone.Core/Download/TrackedDownloads/TrackedDownload.cs:49` contains `ImportBlocked`; S:`src/NzbDrone.Core/Download/TrackedDownloads/DownloadMonitoringService.cs:129`, S:`src/NzbDrone.Core/Download/CompletedDownloadService.cs:81`, and S:`src/NzbDrone.Core/Download/FailedDownloadService.cs:88` recheck downloading/blocked items. B:`src/NzbDrone.Core/Download/CompletedDownloadService.cs:109` sets `ImportFailed`, while B:`src/NzbDrone.Core/Download/FailedDownloadService.cs:66` only checks `Downloading`. Keep retryable permission/path/matching blocks visible and reevaluate after relevant changes, with bounded work and idempotent commit. Acceptance: fixing a mapping or permission allows recovery; a client-side failure after an import block is detected; invalid files do not repeatedly transfer/tag; a failed staged import remains recoverable.
+
+**2026-11-19 verified implementation:** `fd35e9d11` appends
+`ImportBlocked=8` without renumbering existing states. API v1 adds `importBlocked`
+and the queue displays it as a recoverable block. Legacy incomplete-import
+history restores its messages and codes in that state. The retry service uses a
+testable clock with a system-clock fallback for pre-HTTP Core construction.
+With CDH enabled, retries back off 30/60/120/240 seconds, capped at five minutes;
+polling alone never postpones the deadline. Settings/client/metadata changes
+reset the delay. Failed/encrypted clients are still detected after a block, and
+CDH-off, ignored, removed and imported behavior remains guarded.
+
+Eligible-job checks run before path resolution so an untracked uncategorized job
+cannot enter automatic recovery through a resolver failure. Valid saved receipts
+retry completion/retirement without repeating import transfers or tags. Receipt
+resumption behind an incomplete marker revalidates live files, paths, scope and
+current grab, then synchronously re-acknowledges completion. Unchanged blocks
+avoid duplicate incomplete-history events; a live announced completion is not
+reannounced merely to retry cleanup. The queue and retry/reset/failure fixtures
+cover these boundaries. D08 automatic rejection-directed failure/blocklist/search
+and D12 intervention notification work remain separate.
+
+Clean artifact source `faf8684c1`, version `10.0.0.36335`, passes **5,447 source
+cases** with **94 existing skips**, **148 Python tests**, **2 queue UI tests**,
+**466 delivery checks** (including **165 acquisition** and **53 actual musl
+Docker**), **111 authentication**, **262 identity**, **40 settings browser** and
+**45 actual candidate CLI checks**. Both glibc/musl packages build; input hashes
+and owned-process cleanup checks pass. The source archive corresponds exactly
+to that artifact commit. See [local validation](local-validation.md#d06-d07-and-d11-verification-2026-11-19).
+P17 remains deferred; wider release/platform gates retain their prior status.
 
 ### D12
 
