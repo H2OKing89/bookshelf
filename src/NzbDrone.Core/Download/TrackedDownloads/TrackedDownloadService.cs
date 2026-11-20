@@ -7,6 +7,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Books.Events;
+using NzbDrone.Core.Configuration.Events;
 using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download.History;
@@ -14,6 +15,7 @@ using NzbDrone.Core.History;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
+using NzbDrone.Core.ThingiProvider.Events;
 
 namespace NzbDrone.Core.Download.TrackedDownloads
 {
@@ -29,7 +31,9 @@ namespace NzbDrone.Core.Download.TrackedDownloads
 
     public class TrackedDownloadService : ITrackedDownloadService,
                                           IHandle<BookInfoRefreshedEvent>,
-                                          IHandle<AuthorDeletedEvent>
+                                          IHandle<AuthorDeletedEvent>,
+                                          IHandle<ConfigSavedEvent>,
+                                          IHandle<ProviderUpdatedEvent<IDownloadClient>>
     {
         private readonly IParsingService _parsingService;
         private readonly IHistoryService _historyService;
@@ -37,6 +41,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
         private readonly IDownloadHistoryService _downloadHistoryService;
         private readonly ICustomFormatCalculationService _formatCalculator;
         private readonly IDownloadImportCompletionService _completionService;
+        private readonly IImportRetryService _importRetryService;
         private readonly Logger _logger;
         private readonly ICached<TrackedDownload> _cache;
 
@@ -47,6 +52,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                                       IDownloadHistoryService downloadHistoryService,
                                       ICustomFormatCalculationService formatCalculator,
                                       IDownloadImportCompletionService completionService,
+                                      IImportRetryService importRetryService,
                                       Logger logger)
         {
             _parsingService = parsingService;
@@ -57,6 +63,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
             _downloadHistoryService = downloadHistoryService;
             _completionService = completionService;
             _cache = cacheManager.GetCache<TrackedDownload>(GetType());
+            _importRetryService = importRetryService;
             _logger = logger;
         }
 
@@ -75,6 +82,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                 {
                     var parsedBookInfo = Parser.Parser.ParseBookTitle(item.DownloadItem.Title);
                     item.RemoteBook = null;
+                    _importRetryService.Reset(item);
 
                     if (parsedBookInfo != null)
                     {
@@ -120,9 +128,11 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                 {
                     existingItem.ImportItem = null;
                     existingItem.ImportReceipt = null;
+                    existingItem.ImportCompletionAnnounced = false;
+                    _importRetryService.Reset(existingItem);
                     if (existingItem.State == TrackedDownloadState.Imported)
                     {
-                        existingItem.State = TrackedDownloadState.ImportPending;
+                        _importRetryService.Block(existingItem);
                         existingItem.WarnCode(RejectionCode.CompletionUnverified, "Download client or output path changed. Previous completion cannot authorize cleanup in the new context.");
                     }
                 }
@@ -164,8 +174,18 @@ namespace NzbDrone.Core.Download.TrackedDownloads
 
                     if (downloadHistory.EventType == DownloadHistoryEventType.DownloadImportIncomplete)
                     {
-                        var messages = Json.Deserialize<List<TrackedDownloadStatusMessage>>(downloadHistory.Data["statusMessages"]).ToArray();
-                        trackedDownload.Warn(messages);
+                        var savedMessages = downloadHistory.Data?.FirstOrDefault(pair =>
+                            string.Equals(pair.Key, "statusMessages", StringComparison.OrdinalIgnoreCase)).Value;
+                        if (savedMessages != null && STJson.TryDeserialize<List<TrackedDownloadStatusMessage>>(savedMessages, out var messages) && messages != null)
+                        {
+                            trackedDownload.Warn(messages.ToArray());
+                        }
+                        else
+                        {
+                            trackedDownload.WarnCode(RejectionCode.ImportVerificationFailed, "Previous import needs review. Saved import diagnostics could not be read.");
+                        }
+
+                        _importRetryService.Block(trackedDownload);
                     }
                 }
 
@@ -229,7 +249,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                     var receipt = _completionService.ReadReceipt(trackedDownload, downloadHistory);
                     if (receipt == null)
                     {
-                        trackedDownload.State = TrackedDownloadState.ImportPending;
+                        _importRetryService.Block(trackedDownload);
                         trackedDownload.WarnCode(RejectionCode.CompletionUnverified, "Previous import completion could not be verified. Download files are retained for review.");
                     }
                     else
@@ -302,7 +322,7 @@ namespace NzbDrone.Core.Download.TrackedDownloads
             switch (eventType)
             {
                 case DownloadHistoryEventType.DownloadImportIncomplete:
-                    return TrackedDownloadState.ImportFailed;
+                    return TrackedDownloadState.ImportBlocked;
                 case DownloadHistoryEventType.DownloadImported:
                     return TrackedDownloadState.Imported;
                 case DownloadHistoryEventType.DownloadFailed:
@@ -314,8 +334,38 @@ namespace NzbDrone.Core.Download.TrackedDownloads
             }
         }
 
+        public void Handle(ConfigSavedEvent message)
+        {
+            ResetBlockedImports(_cache.Values);
+        }
+
+        public void Handle(ProviderUpdatedEvent<IDownloadClient> message)
+        {
+            ResetBlockedImports(_cache.Values.Where(item => item.DownloadClient == message.Definition.Id));
+        }
+
+        private void ResetBlockedImports(IEnumerable<TrackedDownload> items)
+        {
+            foreach (var item in items.Where(item => item.State == TrackedDownloadState.ImportBlocked || item.State == TrackedDownloadState.ImportFailed))
+            {
+                item.ImportItem = null;
+                item.ImportReceipt = null;
+                _importRetryService.Reset(item);
+            }
+        }
+
         public void Handle(BookInfoRefreshedEvent message)
         {
+            var affectedBlocked = _cache.Values.Where(item =>
+                (item.State == TrackedDownloadState.ImportBlocked || item.State == TrackedDownloadState.ImportFailed) &&
+                (item.RemoteBook?.Author == null || item.RemoteBook.Author.Id == message.Author?.Id)).ToList();
+            foreach (var item in affectedBlocked)
+            {
+                var parsed = Parser.Parser.ParseBookTitle(item.DownloadItem.Title);
+                item.RemoteBook = parsed == null ? null : _parsingService.Map(parsed);
+            }
+
+            ResetBlockedImports(affectedBlocked);
             var needsToUpdate = false;
 
             foreach (var episode in message.Removed)

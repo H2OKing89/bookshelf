@@ -129,6 +129,35 @@ namespace NzbDrone.Core.Test.Download
             };
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void an_incomplete_marker_can_resume_only_a_live_valid_previous_receipt(bool missingCommittedFile)
+        {
+            var original = Subject.VerifyAndRecord(_tracked, _results);
+            _marker = new DownloadHistory
+            {
+                DownloadId = "owned-download", DownloadClientId = 1,
+                EventType = DownloadHistoryEventType.DownloadImportIncomplete
+            };
+            if (missingCommittedFile)
+            {
+                _files.Clear();
+            }
+
+            var resumed = Subject.VerifyAndRecord(_tracked, new List<ImportResult>());
+
+            if (missingCommittedFile)
+            {
+                resumed.Should().BeNull();
+                _marker.EventType.Should().Be(DownloadHistoryEventType.DownloadImportIncomplete);
+            }
+            else
+            {
+                resumed.Should().BeEquivalentTo(original);
+                _marker.EventType.Should().Be(DownloadHistoryEventType.DownloadImported);
+            }
+        }
+
         [Test]
         public void committed_current_file_should_persist_complete_proof_even_if_event_history_was_not_written()
         {

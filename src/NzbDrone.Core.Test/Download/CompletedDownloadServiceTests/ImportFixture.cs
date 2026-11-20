@@ -28,6 +28,7 @@ namespace NzbDrone.Core.Test.Download.CompletedDownloadServiceTests
         [SetUp]
         public void Setup()
         {
+            Mocker.SetConstant<IImportRetryService>(new ImportRetryService(TimeProvider.System));
             var output = Path.Combine(TempFolder, "download");
             var item = new DownloadClientItem
             {
@@ -87,7 +88,7 @@ namespace NzbDrone.Core.Test.Download.CompletedDownloadServiceTests
 
             Subject.Import(_tracked);
 
-            _tracked.State.Should().Be(TrackedDownloadState.ImportFailed);
+            _tracked.State.Should().Be(TrackedDownloadState.ImportBlocked);
             AssertNoCompletion();
             Mocker.GetMock<IDownloadImportSourceService>().Verify(service => service.Retire(It.IsAny<TrackedDownload>(), It.IsAny<DownloadImportReceipt>()), Times.Never());
             Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<BookImportIncompleteEvent>()), Times.Once());
@@ -106,7 +107,7 @@ namespace NzbDrone.Core.Test.Download.CompletedDownloadServiceTests
 
             Subject.Import(_tracked);
 
-            _tracked.State.Should().Be(TrackedDownloadState.ImportPending);
+            _tracked.State.Should().Be(TrackedDownloadState.ImportBlocked);
             AssertNoCompletion();
             Mocker.GetMock<IDownloadImportSourceService>().Verify(service => service.Retire(It.IsAny<TrackedDownload>(), It.IsAny<DownloadImportReceipt>()), Times.Never());
         }
@@ -118,7 +119,7 @@ namespace NzbDrone.Core.Test.Download.CompletedDownloadServiceTests
 
             Subject.Import(_tracked);
 
-            _tracked.State.Should().Be(TrackedDownloadState.ImportPending);
+            _tracked.State.Should().Be(TrackedDownloadState.ImportBlocked);
             AssertNoCompletion();
         }
 
@@ -132,6 +133,72 @@ namespace NzbDrone.Core.Test.Download.CompletedDownloadServiceTests
 
             _tracked.State.Should().Be(TrackedDownloadState.Imported);
             Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<DownloadCompletedEvent>()), Times.Once());
+        }
+
+        [Test]
+        public void an_untracked_download_without_a_category_must_not_enter_recovery_after_a_path_error()
+        {
+            _tracked.State = TrackedDownloadState.Downloading;
+            Mocker.GetMock<IProvideImportItemService>()
+                .Setup(service => service.ProvideImportItem(It.IsAny<DownloadClientItem>(), It.IsAny<DownloadClientItem>())).Throws<IOException>();
+
+            Subject.Check(_tracked);
+
+            _tracked.State.Should().Be(TrackedDownloadState.Downloading);
+            _tracked.StatusMessages[0].Rejections[0].Code.Should().Be(RejectionCode.DownloadNotTracked);
+            Mocker.GetMock<IProvideImportItemService>().Verify(service => service.ProvideImportItem(It.IsAny<DownloadClientItem>(), It.IsAny<DownloadClientItem>()), Times.Never());
+        }
+
+        [Test]
+        public void an_eligible_download_with_a_path_error_should_be_blocked_for_recovery()
+        {
+            _tracked.State = TrackedDownloadState.Downloading;
+            _tracked.DownloadItem.Category = "owned-category";
+            Mocker.GetMock<IProvideImportItemService>()
+                .Setup(service => service.ProvideImportItem(It.IsAny<DownloadClientItem>(), It.IsAny<DownloadClientItem>())).Throws<IOException>();
+
+            Subject.Check(_tracked);
+
+            _tracked.State.Should().Be(TrackedDownloadState.ImportBlocked);
+            _tracked.StatusMessages[0].Rejections[0].Code.Should().Be(RejectionCode.ImportPathUnavailable);
+        }
+
+        [Test]
+        public void a_valid_cached_receipt_should_retry_completion_without_running_the_importer()
+        {
+            GivenReceipt();
+            Mocker.GetMock<IDownloadImportCompletionService>()
+                .Setup(service => service.ReadReceipt(_tracked, It.IsAny<NzbDrone.Core.Download.History.DownloadHistory>())).Returns(_receipt);
+
+            Subject.Import(_tracked);
+
+            _tracked.State.Should().Be(TrackedDownloadState.Imported);
+            Mocker.GetMock<IDownloadedBooksImportService>().Verify(service => service.ProcessPath(It.IsAny<string>(), It.IsAny<ImportMode>(), It.IsAny<Author>(), It.IsAny<DownloadClientItem>()), Times.Never());
+        }
+
+        [Test]
+        public void repeated_identical_blocks_should_not_duplicate_incomplete_history_events()
+        {
+            _results.Clear();
+
+            Subject.Import(_tracked);
+            Subject.Import(_tracked);
+
+            _tracked.State.Should().Be(TrackedDownloadState.ImportBlocked);
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<BookImportIncompleteEvent>()), Times.Once());
+        }
+
+        [Test]
+        public void a_cleanup_retry_should_not_reannounce_a_previously_published_completion()
+        {
+            GivenReceipt();
+            _tracked.State = TrackedDownloadState.ImportBlocked;
+            _tracked.ImportCompletionAnnounced = true;
+
+            Subject.VerifyImport(_tracked, _results).Should().BeTrue();
+
+            _tracked.State.Should().Be(TrackedDownloadState.Imported);
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<DownloadCompletedEvent>()), Times.Never());
         }
 
         [Test]
@@ -172,7 +239,7 @@ namespace NzbDrone.Core.Test.Download.CompletedDownloadServiceTests
 
             Assert.Throws<InvalidOperationException>(() => Subject.Import(_tracked));
 
-            _tracked.State.Should().Be(TrackedDownloadState.ImportPending);
+            _tracked.State.Should().Be(TrackedDownloadState.ImportBlocked);
             AssertNoCompletion();
             Mocker.GetMock<IDownloadImportSourceService>().Verify(service => service.Retire(It.IsAny<TrackedDownload>(), It.IsAny<DownloadImportReceipt>()), Times.Never());
         }
@@ -186,7 +253,7 @@ namespace NzbDrone.Core.Test.Download.CompletedDownloadServiceTests
 
             Assert.Throws<IOException>(() => Subject.Import(_tracked));
 
-            _tracked.State.Should().Be(TrackedDownloadState.ImportPending);
+            _tracked.State.Should().Be(TrackedDownloadState.ImportBlocked);
             AssertNoCompletion();
             Mocker.GetMock<IDownloadImportCompletionService>().Verify(service => service.VerifyAndRecord(It.IsAny<TrackedDownload>(), It.IsAny<List<ImportResult>>()), Times.Never());
         }
@@ -208,7 +275,7 @@ namespace NzbDrone.Core.Test.Download.CompletedDownloadServiceTests
                 Subject.Import(_tracked);
             }
 
-            _tracked.State.Should().Be(TrackedDownloadState.ImportPending);
+            _tracked.State.Should().Be(TrackedDownloadState.ImportBlocked);
             AssertNoCompletion();
         }
 

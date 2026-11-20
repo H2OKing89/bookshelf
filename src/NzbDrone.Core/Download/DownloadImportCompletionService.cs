@@ -50,11 +50,19 @@ namespace NzbDrone.Core.Download
 
             var previousHistory = _downloadHistory.GetLatestDownloadHistoryItem(trackedDownload.DownloadItem.DownloadId);
             var previous = ReadReceipt(trackedDownload, previousHistory);
+            var resumedCompletion = false;
+            if (previous == null && previousHistory?.EventType == DownloadHistoryEventType.DownloadImportIncomplete)
+            {
+                previous = ReadReceipt(trackedDownload, _downloadHistory.GetLatestImportCompletion(
+                    trackedDownload.DownloadItem.DownloadId, trackedDownload.DownloadClient));
+                resumedCompletion = previous != null;
+            }
+
             if (previous != null)
             {
-                if (trackedDownload.KeepSourceFiles && !previous.KeepSourceFiles)
+                if (resumedCompletion || (trackedDownload.KeepSourceFiles && !previous.KeepSourceFiles))
                 {
-                    previous.KeepSourceFiles = true;
+                    previous.KeepSourceFiles |= trackedDownload.KeepSourceFiles;
                     if (!_sources.Validate(trackedDownload, previous))
                     {
                         return null;

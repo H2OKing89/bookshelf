@@ -73,12 +73,12 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D03](#d03) | P0 | Verified | S | Fix tag isolation when choosing download clients |
 | [D04](#d04) | P0 | Verified | M | Audit completion against distinct books and complete recording parts |
 | [D05](#d05) | P1 | Verified | M | Prevent custom-format downgrades during import and rename |
-| [D06](#d06) | P1 | Planned | M | Classify rejected extensions, including downloads with no importable files |
-| [D07](#d07) | P1 | Planned | L | Ask download clients for file inventory when the filesystem has no eligible files |
+| [D06](#d06) | P1 | In progress | M | Classify rejected extensions, including downloads with no importable files |
+| [D07](#d07) | P1 | In progress | L | Ask download clients for file inventory when the filesystem has no eligible files |
 | [D08](#d08) | P2 | Planned | M | Make automatic failure/blocklist/redownload actions explicit per indexer |
 | [D09](#d09) | P1 | Planned | M | Fail over among eligible download clients |
 | [D10](#d10) | P1 | Planned | M | Remove disappeared tracked items and refresh client configuration promptly |
-| [D11](#d11) | P1 | Planned | M | Separate blocked import state from terminal failure |
+| [D11](#d11) | P1 | In progress | M | Separate blocked import state from terminal failure |
 | [D12](#d12) | P1 | Planned | M | Notify once when manual intervention is required |
 | [D13](#d13) | P1 | Planned | M | Add minimum custom-format score improvement for upgrades |
 | [D14](#d14) | P1 | Planned | M | Add language custom formats using audiobook evidence |

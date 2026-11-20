@@ -23,6 +23,7 @@ namespace NzbDrone.Core.Test.Download
         [SetUp]
         public void Setup()
         {
+            Mocker.SetConstant<IImportRetryService>(new ImportRetryService(TimeProvider.System));
             _tracked = new TrackedDownload
             {
                 DownloadClient = 3, State = TrackedDownloadState.Imported,
@@ -72,7 +73,7 @@ namespace NzbDrone.Core.Test.Download
 
             Notify(removalOnly);
 
-            _tracked.State.Should().Be(TrackedDownloadState.ImportPending);
+            _tracked.State.Should().Be(TrackedDownloadState.ImportBlocked);
             _client.Verify(client => client.MarkItemAsImported(It.IsAny<DownloadClientItem>()), Times.Never());
             _client.Verify(client => client.RemoveItem(It.IsAny<DownloadClientItem>(), It.IsAny<bool>()), Times.Never());
             Mocker.GetMock<IProvideDownloadClient>().Verify(provider => provider.Get(It.IsAny<int>()), Times.Never());
@@ -113,7 +114,7 @@ namespace NzbDrone.Core.Test.Download
 
             Notify(removalOnly);
 
-            _tracked.State.Should().Be(TrackedDownloadState.ImportPending);
+            _tracked.State.Should().Be(TrackedDownloadState.ImportBlocked);
             _client.Verify(client => client.MarkItemAsImported(It.IsAny<DownloadClientItem>()), Times.Never());
             _client.Verify(client => client.RemoveItem(It.IsAny<DownloadClientItem>(), It.IsAny<bool>()), Times.Never());
             Mocker.GetMock<IProvideDownloadClient>().Verify(provider => provider.Get(It.IsAny<int>()), Times.Never());
@@ -216,6 +217,7 @@ namespace NzbDrone.Core.Test.Download
         [SetUp]
         public void Setup()
         {
+            Mocker.SetConstant<IImportRetryService>(new ImportRetryService(TimeProvider.System));
             _tracked = new TrackedDownload
             {
                 IsTrackable = true, State = TrackedDownloadState.Imported,
@@ -238,7 +240,7 @@ namespace NzbDrone.Core.Test.Download
 
             Subject.Execute(new ProcessMonitoredDownloadsCommand());
 
-            _tracked.State.Should().Be(TrackedDownloadState.ImportPending);
+            _tracked.State.Should().Be(TrackedDownloadState.ImportBlocked);
             Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<DownloadCanBeRemovedEvent>()), Times.Never());
         }
 

@@ -71,6 +71,11 @@ function QueueStatusCell(props) {
       iconKind = kinds.PURPLE;
     }
 
+    if (trackedDownloadState === 'importBlocked') {
+      title += ' - Import blocked';
+      iconKind = kinds.WARNING;
+    }
+
     if (trackedDownloadState === 'importing') {
       title += ' - Importing';
       iconKind = kinds.PURPLE;

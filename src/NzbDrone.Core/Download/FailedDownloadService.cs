@@ -63,8 +63,11 @@ namespace NzbDrone.Core.Download
 
         public void Check(TrackedDownload trackedDownload)
         {
-            // Only process tracked downloads that are still downloading
-            if (trackedDownload.State != TrackedDownloadState.Downloading)
+            // Import blocks must not hide a subsequent client-side failure.
+            if (trackedDownload.State != TrackedDownloadState.Downloading &&
+                trackedDownload.State != TrackedDownloadState.ImportPending &&
+                trackedDownload.State != TrackedDownloadState.ImportBlocked &&
+                trackedDownload.State != TrackedDownloadState.ImportFailed)
             {
                 return;
             }

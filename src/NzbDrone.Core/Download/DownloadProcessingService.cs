@@ -19,6 +19,7 @@ namespace NzbDrone.Core.Download
         private readonly IEventAggregator _eventAggregator;
         private readonly IDownloadHistoryService _downloadHistoryService;
         private readonly IDownloadImportCompletionService _completionService;
+        private readonly IImportRetryService _importRetryService;
         private readonly Logger _logger;
 
         public DownloadProcessingService(IConfigService configService,
@@ -28,6 +29,7 @@ namespace NzbDrone.Core.Download
                                          IEventAggregator eventAggregator,
                                          IDownloadHistoryService downloadHistoryService,
                                          IDownloadImportCompletionService completionService,
+                                         IImportRetryService importRetryService,
                                          Logger logger)
         {
             _configService = configService;
@@ -37,6 +39,7 @@ namespace NzbDrone.Core.Download
             _eventAggregator = eventAggregator;
             _downloadHistoryService = downloadHistoryService;
             _completionService = completionService;
+            _importRetryService = importRetryService;
             _logger = logger;
         }
 
@@ -69,7 +72,7 @@ namespace NzbDrone.Core.Download
 
                 if (receipt == null)
                 {
-                    trackedDownload.State = TrackedDownloadState.ImportPending;
+                    _importRetryService.Block(trackedDownload);
                     trackedDownload.WarnCode(RejectionCode.CompletionUnverified, "Previous download completion could not be verified. Rescan or review its recording parts before cleanup.");
                     continue;
                 }
@@ -94,13 +97,24 @@ namespace NzbDrone.Core.Download
                     {
                         _failedDownloadService.ProcessFailed(trackedDownload);
                     }
-                    else if (enableCompletedDownloadHandling && trackedDownload.State == TrackedDownloadState.ImportPending)
+                    else if (enableCompletedDownloadHandling &&
+                             (trackedDownload.State == TrackedDownloadState.ImportPending || _importRetryService.CanRetry(trackedDownload)))
                     {
+                        trackedDownload.State = TrackedDownloadState.ImportPending;
                         _completedDownloadService.Import(trackedDownload);
                     }
                 }
                 catch (Exception e)
                 {
+                    if (trackedDownload.State == TrackedDownloadState.ImportPending || trackedDownload.State == TrackedDownloadState.Importing)
+                    {
+                        _importRetryService.Block(trackedDownload);
+                        if (trackedDownload.StatusMessages.Length == 0)
+                        {
+                            trackedDownload.WarnCode(RejectionCode.ImportVerificationFailed, "Import did not finish. Source files remain retained while a retry is scheduled.");
+                        }
+                    }
+
                     _logger.Debug(e, "Failed to process download: {0}", trackedDownload.DownloadItem.Title);
                 }
             }

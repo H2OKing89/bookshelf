@@ -79,6 +79,8 @@ internal static class Program
             VerifyLegacyHistory(fixture);
             VerifyStaleReceipt(fixture);
             VerifyForgedImportedState(fixture);
+            VerifyFileDiagnostics(fixture);
+            VerifyBlockedRecovery(fixture);
             Check("published_probe_uses_only_declared_boundaries", BoundaryProxy.Unexpected.Count == 0);
         }
         catch (Exception error)
@@ -417,19 +419,29 @@ internal static class Program
         var hashes = fixture.SourceHashes();
         fixture.DenySourceDeletes = true;
         fixture.Import();
-        Check("source_delete_failure_keeps_receipt_but_blocks_completion", fixture.Tracked.State == TrackedDownloadState.ImportPending && fixture.ReadReceipt() != null && fixture.Retired > 0 && fixture.SourceDeleteAttempts > 0);
+        Check("source_delete_failure_keeps_receipt_but_blocks_completion", fixture.Tracked.State == TrackedDownloadState.ImportBlocked && fixture.ReadReceipt() != null && fixture.Retired > 0 && fixture.SourceDeleteAttempts > 0);
         Check("source_delete_failure_blocks_event_and_client_cleanup", fixture.CompletedEvents == 0 && fixture.Marked == 0 && fixture.Removed == 0 && fixture.OrderValid);
         Check("source_delete_failure_preserves_source_bytes", fixture.SourceHashes().OrderBy(pair => pair.Key).SequenceEqual(hashes.OrderBy(pair => pair.Key)));
         fixture.ResetActions();
         fixture.Tracked = fixture.Restart();
-        Check("source_delete_failure_restart_reads_durable_proof", fixture.Tracked?.State == TrackedDownloadState.Imported);
+        Check("source_delete_failure_restart_reads_durable_proof", fixture.Tracked?.State == TrackedDownloadState.ImportBlocked && fixture.ReadReceipt() != null);
+        var imports = fixture.ImportCalls;
         fixture.Process();
-        Check("source_delete_failure_restart_retries_retirement_before_client_cleanup", fixture.Tracked.State == TrackedDownloadState.ImportPending && fixture.Retired > 0 && fixture.CompletedEvents == 0 && fixture.Marked == 0 && fixture.Removed == 0 && fixture.OrderValid);
+        Check("source_delete_failure_restart_waits_before_retry", fixture.Tracked.State == TrackedDownloadState.ImportBlocked && fixture.Retired == 0 && fixture.ImportCalls == imports);
+        fixture.Advance(TimeSpan.FromSeconds(31));
+        fixture.Process();
+        Check("source_delete_failure_restart_retries_retirement_before_client_cleanup", fixture.Tracked.State == TrackedDownloadState.ImportBlocked && fixture.Retired > 0 && fixture.CompletedEvents == 0 && fixture.Marked == 0 && fixture.Removed == 0 && fixture.OrderValid);
         Check("source_delete_failure_restart_preserves_source_bytes", fixture.SourceHashes().OrderBy(pair => pair.Key).SequenceEqual(hashes.OrderBy(pair => pair.Key)));
         fixture.DenySourceDeletes = false;
+        fixture.Advance(TimeSpan.FromSeconds(61));
         fixture.Process();
         Check("source_delete_retry_completes_after_fault_is_removed", fixture.Tracked.State == TrackedDownloadState.Imported && fixture.SourceHashes().Count == 0 && fixture.CompletedEvents == 1 && fixture.Marked == 1 && fixture.Removed == 1 && fixture.OrderValid);
-        Check("source_delete_retry_does_not_duplicate_durable_completion", fixture.Store.DownloadRows(fixture.Tracked.DownloadItem.DownloadId).Count(row => row.EventType == DownloadHistoryEventType.DownloadImported) == 1);
+        Check("source_delete_retry_does_not_duplicate_durable_completion", fixture.Store.DownloadRows(fixture.Tracked.DownloadItem.DownloadId)
+            .Where(row => row.EventType == DownloadHistoryEventType.DownloadImported)
+            .Select(row => row.Data[DownloadHistoryService.ImportReceiptKey]).Distinct().Count() == 1);
+        Check("source_delete_retry_skips_committed_import_transfer_and_tagging_boundary", fixture.ImportCalls == imports);
+        fixture.Process();
+        Check("source_delete_retry_emits_one_live_completion", fixture.CompletedEvents == 1 && fixture.Marked == 1 && fixture.Removed == 1 && fixture.ImportCalls == imports);
     }
 
     private static void VerifyResumedReceipt(string root)
@@ -478,6 +490,74 @@ internal static class Program
         Check("forged_state_retains_source_bytes", fixture.SourceHashes().OrderBy(pair => pair.Key).SequenceEqual(hashes.OrderBy(pair => pair.Key)));
     }
 
+    private static void VerifyFileDiagnostics(string root)
+    {
+        Phase = "executable_only_diagnostic";
+        using (var fixture = new Scenario(root, Phase, new[] { 13 }))
+        {
+            fixture.AddUnrepresented("setup.EXE");
+            var hashes = fixture.SourceHashes();
+            fixture.Import();
+            Check("published_executable_only_download_has_specific_diagnostic", fixture.Tracked.State == TrackedDownloadState.ImportBlocked && fixture.HasCode(RejectionCode.ExecutableFile) && fixture.HasCode(RejectionCode.NoEligibleFiles));
+            fixture.AssertRetained(Phase, hashes);
+            Check("published_ebook_container_and_sidecars_are_classified_by_book_policy", fixture.Extensions.Classify("Book.EPUB") == DownloadFileKind.Media && fixture.Extensions.Classify("Book.M4B") == DownloadFileKind.Media && fixture.Extensions.Classify("Book.cue") == DownloadFileKind.Sidecar && fixture.Extensions.Classify("Book.m3u") == DownloadFileKind.Sidecar);
+            Check("published_archive_download_is_recoverable_not_executable", fixture.Extensions.GetRejection("Book.ZIP") is { Code: RejectionCode.ArchiveNotExtracted, Type: RejectionType.Temporary });
+            fixture.UserRejectedExtensions = ".mp3";
+            Check("published_user_rejected_extension_has_its_own_code", fixture.Extensions.GetRejection("Book.MP3")?.Code == RejectionCode.UserRejectedExtension);
+        }
+
+        Phase = "remote_inventory_missing_mount";
+        using (var fixture = new Scenario(root, Phase, new[] { 13 }))
+        {
+            fixture.UseMissingOutput();
+            fixture.ClientFiles.Add(new DownloadClientFile { RelativePath = "RemoteOnly/NeverOnDisk.MP3", Size = 123 });
+            fixture.Import();
+            Check("published_remote_inventory_explains_missing_local_media", fixture.Tracked.State == TrackedDownloadState.ImportBlocked && fixture.HasCode(RejectionCode.ImportPathUnavailable) && fixture.ClientInventoryCalls == 1);
+            Check("published_remote_inventory_never_becomes_a_disk_path", fixture.DiskPaths.All(path => !path.Contains("RemoteOnly", StringComparison.Ordinal) && !path.Contains("NeverOnDisk", StringComparison.Ordinal)));
+            Check("published_remote_inventory_grants_no_completion_or_cleanup", fixture.CompletedEvents == 0 && fixture.Marked == 0 && fixture.Removed == 0 && fixture.Retired == 0 && fixture.ReadReceipt() == null);
+        }
+
+        Phase = "remote_inventory_failure";
+        using (var fixture = new Scenario(root, Phase, new[] { 13 }))
+        {
+            fixture.AddUnrepresented("setup.exe");
+            fixture.InventoryThrows = true;
+            var hashes = fixture.SourceHashes();
+            fixture.Import();
+            Check("published_inventory_error_retains_primary_and_file_diagnostics", fixture.HasCode(RejectionCode.NoEligibleFiles) && fixture.HasCode(RejectionCode.ExecutableFile) && fixture.HasCode(RejectionCode.InventoryUnavailable));
+            fixture.AssertRetained(Phase, hashes);
+        }
+    }
+
+    private static void VerifyBlockedRecovery(string root)
+    {
+        Phase = "blocked_missing_book_recovery";
+        using var fixture = new Scenario(root, Phase, new[] { 13, 14 });
+        var original = fixture.Add(13, 17, 0, 1, "first-book.m4b");
+        var source = fixture.SourceHashes();
+        var library = fixture.LibraryHashes();
+        fixture.Import();
+        Check("published_missing_book_import_is_blocked_with_bounded_retry", fixture.Tracked.State == TrackedDownloadState.ImportBlocked && fixture.Tracked.ImportRetryAfterUtc.HasValue && fixture.ImportCalls == 1);
+        fixture.Process();
+        fixture.Process();
+        Check("published_unchanged_block_does_not_repeat_import_work_immediately", fixture.ImportCalls == 1 && fixture.CompletedEvents == 0 && fixture.Retired == 0);
+        Check("published_blocked_retry_preserves_existing_file_identity_and_bytes", fixture.Store.GetFile(original.Id)?.EditionId == 17 && fixture.SourceHashes().OrderBy(pair => pair.Key).SequenceEqual(source.OrderBy(pair => pair.Key)) && fixture.LibraryHashes().OrderBy(pair => pair.Key).SequenceEqual(library.OrderBy(pair => pair.Key)));
+        fixture.Add(14, 18, 0, 1, "second-book.m4b");
+        fixture.Advance(TimeSpan.FromSeconds(31));
+        fixture.Process();
+        Check("published_block_recovers_after_waiting_and_fixing_coverage", fixture.Tracked.State == TrackedDownloadState.Imported && fixture.ImportCalls == 2 && fixture.CompletedEvents == 1 && fixture.Marked == 1 && fixture.Removed == 1);
+        Check("published_recovery_preserves_old_library_file_id_and_bytes", fixture.Store.GetFile(original.Id)?.EditionId == 17 && library.All(pair => fixture.LibraryHashes().TryGetValue(pair.Key, out var hash) && hash == pair.Value));
+        fixture.Process();
+        Check("published_recovered_import_does_not_duplicate_completion", fixture.ImportCalls == 2 && fixture.CompletedEvents == 1 && fixture.Marked == 1 && fixture.Removed == 1 && fixture.OrderValid);
+    }
+
+    internal sealed class ProbeTimeProvider : TimeProvider
+    {
+        private DateTimeOffset _now = DateTimeOffset.UtcNow;
+        public override DateTimeOffset GetUtcNow() => _now;
+        public void Advance(TimeSpan interval) => _now = _now.Add(interval);
+    }
+
     internal sealed class ProbeFailure(string code) : Exception(code)
     {
         public string Code { get; } = code;
@@ -498,6 +578,7 @@ internal static class Program
         private readonly DownloadEventHub _hub;
         private readonly CompletedDownloadService _completed;
         private int _nextFileId = 100;
+        private readonly ProbeTimeProvider _clock = new();
 
         public Store Store { get; }
         public TrackedDownload Tracked { get; set; }
@@ -511,6 +592,13 @@ internal static class Program
         public bool OrderValid { get; private set; } = true;
         public bool DenySourceDeletes { get; set; }
         public int SourceDeleteAttempts { get; private set; }
+        public int ImportCalls { get; private set; }
+        public int ClientInventoryCalls { get; private set; }
+        public bool InventoryThrows { get; set; }
+        public List<DownloadClientFile> ClientFiles { get; } = new();
+        public List<string> DiskPaths { get; } = new();
+        public string UserRejectedExtensions { get; set; } = string.Empty;
+        public IRejectedFileExtensionService Extensions { get; private set; }
 
         public Scenario(string root, string name, int[] expectedBooks)
         {
@@ -561,18 +649,22 @@ internal static class Program
                 return Unexpected(method);
             });
             var files = Fake<IMediaFileService>((method, arguments) => method.Name == "Get" && arguments[0] is int id ? Store.GetFile(id) : Unexpected(method));
-            var disk = Fake<IDiskProvider>((method, arguments) => method.Name switch
+            var disk = Fake<IDiskProvider>((method, arguments) =>
             {
-                "FileExists" => File.Exists((string)arguments[0]),
-                "FolderExists" => Directory.Exists((string)arguments[0]),
-                "GetFileSize" => new FileInfo((string)arguments[0]).Length,
-                "FileGetLastWrite" => File.GetLastWriteTimeUtc((string)arguments[0]),
-                "GetFileAttributes" => File.GetAttributes((string)arguments[0]),
-                "GetDirectoryInfo" => new System.IO.Abstractions.FileSystem().DirectoryInfo.FromDirectoryName((string)arguments[0]),
-                "GetFiles" => Directory.GetFiles((string)arguments[0], "*", (bool)arguments[1] ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly),
-                "GetDirectories" => Directory.GetDirectories((string)arguments[0]),
-                "DeleteFile" => DeleteOwnedSource((string)arguments[0]),
-                _ => Unexpected(method)
+                if (arguments.Length > 0 && arguments[0] is string path) DiskPaths.Add(path);
+                return method.Name switch
+                {
+                    "FileExists" => File.Exists((string)arguments[0]),
+                    "FolderExists" => Directory.Exists((string)arguments[0]),
+                    "GetFileSize" => new FileInfo((string)arguments[0]).Length,
+                    "FileGetLastWrite" => File.GetLastWriteTimeUtc((string)arguments[0]),
+                    "GetFileAttributes" => File.GetAttributes((string)arguments[0]),
+                    "GetDirectoryInfo" => new System.IO.Abstractions.FileSystem().DirectoryInfo.FromDirectoryName((string)arguments[0]),
+                    "GetFiles" => Directory.GetFiles((string)arguments[0], "*", (bool)arguments[1] ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly),
+                    "GetDirectories" => Directory.GetDirectories((string)arguments[0]),
+                    "DeleteFile" => DeleteOwnedSource((string)arguments[0]),
+                    _ => Unexpected(method)
+                };
             });
             var importItems = Fake<IProvideImportItemService>((method, arguments) => method.Name == "ProvideImportItem" ? ((DownloadClientItem)arguments[0]).Clone() : Unexpected(method));
             var roots = Fake<IRootFolderService>((method, _) => method.Name == "All" ? new List<RootFolder> { new() { Id = 1, Path = _library } } : Unexpected(method));
@@ -601,13 +693,30 @@ internal static class Program
             {
                 if (method.Name == "get_Definition") return _clientDefinition;
                 if (method.Name == "get_Name") return _clientDefinition.Name;
+                if (method.Name == "GetFiles")
+                {
+                    ClientInventoryCalls++;
+                    if (InventoryThrows) throw new NotSupportedException("Owned client inventory unavailable");
+                    return ClientFiles;
+                }
                 if (method.Name == "MarkItemAsImported") { Marked++; OrderValid &= HasReceipt(); return null; }
                 if (method.Name == "RemoveItem") { Removed++; DeleteDataFlags.Add((bool)arguments[1]); OrderValid &= HasReceipt(); return null; }
                 return Unexpected(method);
             });
             var clientProvider = Fake<IProvideDownloadClient>((method, _) => method.Name == "Get" ? client : Unexpected(method));
-            var config = Fake<IConfigService>((method, _) => method.Name == "get_EnableCompletedDownloadHandling" ? true : Unexpected(method));
-            var importer = Fake<IDownloadedBooksImportService>((method, _) => method.Name == "ProcessPath" ? Results : Unexpected(method));
+            var config = Fake<IConfigService>((method, _) => method.Name switch
+            {
+                "get_EnableCompletedDownloadHandling" => true,
+                "get_UserRejectedExtensions" => UserRejectedExtensions,
+                _ => Unexpected(method)
+            });
+            Extensions = new RejectedFileExtensionService(config);
+            var importer = Fake<IDownloadedBooksImportService>((method, _) =>
+            {
+                if (method.Name != "ProcessPath") return Unexpected(method);
+                ImportCalls++;
+                return Results;
+            });
             var tracked = Fake<ITrackedDownloadService>((method, _) => method.Name == "GetTrackedDownloads" ? new List<TrackedDownload> { Tracked } : Unexpected(method));
             _services[typeof(Logger)] = _logger;
             _services[typeof(IHistoryService)] = _history;
@@ -620,6 +729,9 @@ internal static class Program
             _services[typeof(IDownloadedBooksImportService)] = importer;
             _services[typeof(IProvideDownloadClient)] = clientProvider;
             _services[typeof(IConfigService)] = config;
+            _services[typeof(TimeProvider)] = _clock;
+            _services[typeof(IImportRetryService)] = new ImportRetryService(_clock);
+            _services[typeof(IDownloadImportDiagnostics)] = new DownloadImportDiagnostics(disk, clientProvider, Extensions, _logger);
             _services[typeof(ITrackedDownloadService)] = tracked;
             _services[typeof(IFailedDownloadService)] = Fake<IFailedDownloadService>((method, _) => Unexpected(method));
             _services[typeof(ITrackedDownloadAlreadyImported)] = Construct<TrackedDownloadAlreadyImported>(_services);
@@ -688,6 +800,13 @@ internal static class Program
         }
 
         public void Process() => Construct<DownloadProcessingService>(_services).Execute(new ProcessMonitoredDownloadsCommand());
+        public void Advance(TimeSpan interval) => _clock.Advance(interval);
+        public bool HasCode(string code) => Tracked.StatusMessages.SelectMany(message => message.Rejections).Any(rejection => rejection.Code == code);
+        public void UseMissingOutput()
+        {
+            Tracked.DownloadItem.OutputPath = new OsPath(Path.Combine(Path.GetDirectoryName(_source), "missing-source"));
+            Tracked.ImportItem = Tracked.DownloadItem.Clone();
+        }
 
         public void WriteIncompleteMarker()
         {
@@ -713,7 +832,7 @@ internal static class Program
             return tracker.TrackDownload(_clientDefinition, item);
         }
 
-        public DownloadImportReceipt ReadReceipt() => Completion.ReadReceipt(Tracked, _downloadHistory.GetLatestDownloadHistoryItem(Tracked.DownloadItem.DownloadId));
+        public DownloadImportReceipt ReadReceipt() => Completion.ReadReceipt(Tracked, _downloadHistory.GetLatestImportCompletion(Tracked.DownloadItem.DownloadId, Tracked.DownloadClient));
 
         private bool HasReceipt() => ReadReceipt() != null;
 
@@ -726,7 +845,7 @@ internal static class Program
 
         public void AssertRetained(string prefix, Dictionary<string, string> before)
         {
-            Check(prefix + "_remains_pending", Tracked.State is TrackedDownloadState.ImportPending or TrackedDownloadState.ImportFailed or TrackedDownloadState.Downloading);
+            Check(prefix + "_remains_pending", Tracked.State is TrackedDownloadState.ImportBlocked or TrackedDownloadState.ImportPending or TrackedDownloadState.ImportFailed or TrackedDownloadState.Downloading);
             Check(prefix + "_has_no_completion_or_client_cleanup", CompletedEvents == 0 && Marked == 0 && Removed == 0 && Retired == 0);
             Check(prefix + "_preserves_every_source_byte", SourceHashes().OrderBy(pair => pair.Key).SequenceEqual(before.OrderBy(pair => pair.Key)));
             Check(prefix + "_does_not_write_a_complete_receipt", ReadReceipt() == null);

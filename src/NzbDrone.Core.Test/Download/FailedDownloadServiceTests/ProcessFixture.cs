@@ -88,6 +88,33 @@ namespace NzbDrone.Core.Test.Download.FailedDownloadServiceTests
             _trackedDownload.StatusMessages.Should().NotBeEmpty();
         }
 
+        [TestCase(TrackedDownloadState.ImportBlocked, false)]
+        [TestCase(TrackedDownloadState.ImportBlocked, true)]
+        [TestCase(TrackedDownloadState.ImportFailed, false)]
+        [TestCase(TrackedDownloadState.ImportPending, false)]
+        public void an_import_block_should_not_hide_a_later_client_failure(TrackedDownloadState state, bool encrypted)
+        {
+            _trackedDownload.State = state;
+            _trackedDownload.DownloadItem.Status = encrypted ? DownloadItemStatus.Completed : DownloadItemStatus.Failed;
+            _trackedDownload.DownloadItem.IsEncrypted = encrypted;
+
+            Subject.Check(_trackedDownload);
+
+            _trackedDownload.State.Should().Be(TrackedDownloadState.DownloadFailedPending);
+        }
+
+        [TestCase(TrackedDownloadState.Imported)]
+        [TestCase(TrackedDownloadState.Ignored)]
+        public void completed_or_ignored_imports_keep_their_terminal_state(TrackedDownloadState state)
+        {
+            _trackedDownload.State = state;
+            _trackedDownload.DownloadItem.Status = DownloadItemStatus.Failed;
+
+            Subject.Check(_trackedDownload);
+
+            _trackedDownload.State.Should().Be(state);
+        }
+
         private void AssertDownloadNotFailed()
         {
             Mocker.GetMock<IEventAggregator>()

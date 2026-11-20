@@ -77,3 +77,53 @@ with `deleteData=false`. Clients that cannot move their files keep
 their source copies. Existing client removal settings still apply. Untracked
 imports retain their existing import-mode behavior, and failed-download removal
 keeps its independent existing policy.
+
+
+## Blocked imports and file diagnostics
+
+A recoverable import problem now uses queue state `importBlocked`; the existing
+state numbers remain unchanged and the new state is appended. API v1 consumers
+should recognize the additional string value or handle unfamiliar states.
+Legacy incomplete-import history restores as blocked, retaining its messages
+and typed rejection codes. A real failed/encrypted client download remains
+eligible for the existing failed-download handling even after an import block.
+
+With completed-download handling enabled, blocked imports retry after 30, 60,
+120 and 240 seconds, then at most once every five minutes. The worker does not
+advance that deadline merely by polling. Client/output changes and saved
+settings or relevant metadata refreshes reset the delay. Restart restores the
+block with its initial delay; retry timing is transient and adds no migration.
+Disabling completed-download handling stops automatic import retries.
+
+A valid committed completion receipt retries verification and source retirement
+without running the importer again. A prior receipt hidden by an incomplete
+marker can resume only after the same live-file, scope, path and grab checks;
+it is synchronously re-acknowledged before cleanup. Unchanged blocked warnings
+do not produce repeated incomplete-history events. Retrying post-completion
+cleanup does not announce the same live completion again. These checks retain
+the existing source/client cleanup authority and explicit Copy policy.
+
+When no files import, diagnostics inspect a bounded local inventory without
+following links, then may request the client's file list if no accepted media is
+accessible. qBittorrent supplies bounded relative names and optional sizes; other
+clients safely default to an empty list. Invalid paths, oversized inventory and
+client failures preserve the original import warning. Remote inventory is passed
+only to the extension classifier: it is never mapped to a local filesystem path,
+a book identity or deletion permission.
+
+The classifier recognizes supported audio and ebook containers, including EPUB,
+kepub and PDF, separately from archives, executables, potentially dangerous
+extensions, unsupported files and harmless cue/m3u/nfo/image sidecars. It uses
+filename extensions rather than claiming a malware/content scan. Incidental
+sidecars do not reject a valid book, and they cannot be imported as standalone
+books. This work adds explanations and recovery, not D08's automatic per-indexer
+failure, blocklist or redownload policy.
+
+Under **Settings → Media Management → Advanced**, **Rejected File Extensions**
+sets `userRejectedExtensions` in API v1 Media Management configuration. The
+comma-separated value accepts optional dots and compound extensions; for example
+`.MP3, m4b, .mp3` normalizes to `mp3, m4b`. Matching ignores case. Paths, wildcards,
+malformed tokens and oversized values are rejected before saving. The default
+is empty; an explicit empty string clears the policy, while omitted/null values
+preserve it. New imports, including explicit manual imports, enforce the policy
+before staging. Existing-file rescans retain their files and identities.

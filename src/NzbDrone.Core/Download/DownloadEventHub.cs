@@ -17,6 +17,7 @@ namespace NzbDrone.Core.Download
         private readonly IDownloadHistoryService _downloadHistoryService;
         private readonly IDownloadImportCompletionService _completionService;
         private readonly IDownloadImportSourceService _sourceService;
+        private readonly IImportRetryService _retry;
         private readonly Logger _logger;
 
         public DownloadEventHub(IConfigService configService,
@@ -24,6 +25,7 @@ namespace NzbDrone.Core.Download
             IDownloadHistoryService downloadHistoryService,
             IDownloadImportCompletionService completionService,
             IDownloadImportSourceService sourceService,
+            IImportRetryService retry,
             Logger logger)
         {
             _configService = configService;
@@ -31,6 +33,7 @@ namespace NzbDrone.Core.Download
             _downloadHistoryService = downloadHistoryService;
             _completionService = completionService;
             _sourceService = sourceService;
+            _retry = retry;
             _logger = logger;
         }
 
@@ -133,7 +136,7 @@ namespace NzbDrone.Core.Download
 
             if (receipt == null)
             {
-                trackedDownload.State = TrackedDownloadState.ImportPending;
+                _retry.Block(trackedDownload);
                 trackedDownload.WarnCode(RejectionCode.CompletionUnverified, "Download cleanup requires verified committed books and recording parts.");
                 return false;
             }
@@ -151,7 +154,7 @@ namespace NzbDrone.Core.Download
                 _logger.Debug(error, "Could not safely retire completed download sources before client cleanup");
             }
 
-            trackedDownload.State = TrackedDownloadState.ImportPending;
+            _retry.Block(trackedDownload);
             trackedDownload.WarnCode(RejectionCode.SourceCleanupPending, "The download source changed or could not be safely retired. Download cleanup remains pending.");
             return false;
         }

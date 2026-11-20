@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Indexers;
@@ -19,6 +20,18 @@ namespace NzbDrone.Core.Download.TrackedDownloads
         public bool IsTrackable { get; set; }
         public bool KeepSourceFiles { get; set; }
         public DownloadImportReceipt ImportReceipt { get; set; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
+        public int ImportRetryCount { get; set; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool ImportCompletionAnnounced { get; set; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
+        public DateTime? ImportRetryAfterUtc { get; set; }
 
         public TrackedDownload()
         {
@@ -59,7 +72,8 @@ namespace NzbDrone.Core.Download.TrackedDownloads
         Importing,
         ImportFailed,
         Imported,
-        Ignored
+        Ignored,
+        ImportBlocked
     }
 
     public enum TrackedDownloadStatus

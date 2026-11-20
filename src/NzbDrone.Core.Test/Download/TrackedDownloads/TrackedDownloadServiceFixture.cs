@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
@@ -5,6 +6,7 @@ using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Books.Events;
+using NzbDrone.Core.Configuration.Events;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
@@ -13,12 +15,19 @@ using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Test.Framework;
+using NzbDrone.Core.ThingiProvider.Events;
 
 namespace NzbDrone.Core.Test.Download.TrackedDownloads
 {
     [TestFixture]
     public class TrackedDownloadServiceFixture : CoreTest<TrackedDownloadService>
     {
+        [SetUp]
+        public void SetRetryPolicy()
+        {
+            Mocker.SetConstant<IImportRetryService>(new ImportRetryService(TimeProvider.System));
+        }
+
         private TrackedDownload TrackCompletion(DownloadImportReceipt receipt)
         {
             var remote = new RemoteBook { Author = new Author { Id = 5 }, Books = new List<Book> { new Book { Id = 4 } } };
@@ -38,12 +47,12 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
         }
 
         [Test]
-        public void a_legacy_or_invalid_completion_marker_should_restart_as_pending_for_review()
+        public void a_legacy_or_invalid_completion_marker_should_restart_as_blocked_for_review()
         {
             var tracked = TrackCompletion(null);
 
             tracked.Should().NotBeNull();
-            tracked.State.Should().Be(TrackedDownloadState.ImportPending);
+            tracked.State.Should().Be(TrackedDownloadState.ImportBlocked);
             tracked.Status.Should().Be(TrackedDownloadStatus.Warning);
         }
 
@@ -65,6 +74,7 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
         {
             var tracked = TrackCompletion(new DownloadImportReceipt());
             tracked.ImportItem = tracked.DownloadItem.Clone();
+            tracked.ImportCompletionAnnounced = true;
             var changed = tracked.DownloadItem.Clone();
             if (!changedClient)
             {
@@ -75,11 +85,80 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
 
             var refreshed = Subject.TrackDownload(client, changed);
 
-            refreshed.State.Should().Be(TrackedDownloadState.ImportPending);
+            refreshed.State.Should().Be(TrackedDownloadState.ImportBlocked);
             refreshed.ImportItem.Should().BeNull();
             refreshed.ImportReceipt.Should().BeNull();
+            refreshed.ImportCompletionAnnounced.Should().BeFalse();
             refreshed.Status.Should().Be(TrackedDownloadStatus.Warning);
             refreshed.DownloadClient.Should().Be(client.Id);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void incomplete_history_should_restore_as_blocked_and_survive_unreadable_diagnostics(bool invalidJson)
+        {
+            var marker = new DownloadHistory
+            {
+                EventType = DownloadHistoryEventType.DownloadImportIncomplete,
+                Data = new Dictionary<string, string> { ["statusMessages"] = invalidJson ? "invalid" : "[{\"title\":\"Part 1\",\"messages\":[\"Review matching\"]}]" }
+            };
+            Mocker.GetMock<IDownloadHistoryService>().Setup(service => service.GetLatestDownloadHistoryItem("35238")).Returns(marker);
+            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId("35238")).Returns(new List<EntityHistory>());
+            var item = new DownloadClientItem
+            {
+                DownloadId = "35238", Title = "Audio Author - Audio Book [2018 - FLAC]",
+                Status = DownloadItemStatus.Completed, DownloadClientInfo = new DownloadClientItemClientInfo { Id = 1 }
+            };
+
+            var tracked = Subject.TrackDownload(new DownloadClientDefinition { Id = 1 }, item);
+
+            tracked.Should().NotBeNull();
+            tracked.State.Should().Be(TrackedDownloadState.ImportBlocked);
+            tracked.ImportRetryAfterUtc.Should().BeAfter(DateTime.UtcNow);
+            tracked.StatusMessages.Should().NotBeEmpty();
+        }
+
+        [Test]
+        public void saving_settings_should_allow_a_blocked_import_to_be_rechecked_with_fresh_mapping()
+        {
+            var tracked = TrackCompletion(null);
+            tracked.ImportItem = tracked.DownloadItem.Clone();
+            tracked.ImportReceipt = new DownloadImportReceipt();
+            tracked.ImportCompletionAnnounced = true;
+
+            Subject.Handle(new ConfigSavedEvent());
+
+            tracked.ImportRetryAfterUtc.Should().BeNull();
+            tracked.ImportRetryCount.Should().Be(0);
+            tracked.ImportItem.Should().BeNull();
+            tracked.ImportReceipt.Should().BeNull();
+            tracked.ImportCompletionAnnounced.Should().BeTrue();
+            tracked.StatusMessages.Should().NotBeEmpty();
+        }
+
+        [TestCase(1, true)]
+        [TestCase(2, false)]
+        public void changing_a_client_resets_only_its_blocked_imports(int clientId, bool reset)
+        {
+            var tracked = TrackCompletion(null);
+
+            Subject.Handle(new ProviderUpdatedEvent<IDownloadClient>(new DownloadClientDefinition { Id = clientId }));
+
+            tracked.ImportRetryAfterUtc.HasValue.Should().Be(!reset);
+        }
+
+        [Test]
+        public void refreshed_metadata_can_recover_a_blocked_matching_context()
+        {
+            var tracked = TrackCompletion(null);
+            tracked.RemoteBook = null;
+            var remapped = new RemoteBook { Author = new Author { Id = 5 }, Books = new List<Book> { new Book { Id = 4 } } };
+            Mocker.GetMock<IParsingService>().Setup(service => service.Map(It.IsAny<ParsedBookInfo>(), null)).Returns(remapped);
+
+            Subject.Handle(new BookInfoRefreshedEvent(new Author { Id = 5 }, new List<Book>(), new List<Book>(), new List<Book>()));
+
+            tracked.RemoteBook.Should().BeSameAs(remapped);
+            tracked.ImportRetryAfterUtc.Should().BeNull();
         }
 
         private void GivenDownloadHistory()
