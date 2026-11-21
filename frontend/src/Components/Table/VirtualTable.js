@@ -135,7 +135,7 @@ class VirtualTable extends Component {
       >
         {({ height, registerChild, onChildScroll, scrollTop }) => {
           if (!height) {
-            return null;
+            return <div ref={registerChild} />;
           }
           return (
             <Measure

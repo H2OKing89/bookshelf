@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createContext, createElement } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server.js';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { loadFrontendModule } from './helpers/loadFrontendModule.mjs';
 
 function setup(t) {

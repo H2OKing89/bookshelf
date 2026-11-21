@@ -301,7 +301,7 @@ class BookIndexPosters extends Component {
         >
           {({ height, registerChild, onChildScroll, scrollTop }) => {
             if (!height) {
-              return <div />;
+              return <div ref={registerChild} />;
             }
 
             return (

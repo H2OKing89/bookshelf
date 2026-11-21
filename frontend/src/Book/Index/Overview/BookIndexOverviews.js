@@ -229,7 +229,7 @@ class BookIndexOverviews extends Component {
         >
           {({ height, registerChild, onChildScroll, scrollTop }) => {
             if (!height) {
-              return <div />;
+              return <div ref={registerChild} />;
             }
 
             return (

@@ -2,7 +2,6 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { DragSource, DropTarget } from 'react-dnd';
-import { findDOMNode } from 'react-dom';
 import { DELAY_PROFILE } from 'Helpers/dragTypes';
 import DelayProfile from './DelayProfile';
 import styles from './DelayProfileDragSource.css';
@@ -22,9 +21,15 @@ const delayProfileDropTarget = {
     const dragIndex = monitor.getItem().order;
     const hoverIndex = props.order;
 
-    const hoverBoundingRect = findDOMNode(component).getBoundingClientRect();
-    const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+    const hoverNode = component?.dropTargetRef.current;
     const clientOffset = monitor.getClientOffset();
+
+    if (!hoverNode || !clientOffset) {
+      return;
+    }
+
+    const hoverBoundingRect = hoverNode.getBoundingClientRect();
+    const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
     const hoverClientY = clientOffset.y - hoverBoundingRect.top;
 
     if (dragIndex === hoverIndex) {
@@ -60,6 +65,8 @@ function collectDropTarget(connect, monitor) {
 
 class DelayProfileDragSource extends Component {
 
+  dropTargetRef = React.createRef();
+
   //
   // Render
 
@@ -85,6 +92,7 @@ class DelayProfileDragSource extends Component {
 
     return connectDropTarget(
       <div
+        ref={this.dropTargetRef}
         className={classNames(
           styles.delayProfileDragSource,
           isBefore && styles.isDraggingUp,

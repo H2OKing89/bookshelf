@@ -2,7 +2,6 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { DragSource, DropTarget } from 'react-dnd';
-import { findDOMNode } from 'react-dom';
 import { QUALITY_PROFILE_ITEM } from 'Helpers/dragTypes';
 import QualityProfileItem from './QualityProfileItem';
 import QualityProfileItemGroup from './QualityProfileItemGroup';
@@ -44,14 +43,24 @@ const qualityProfileItemDropTarget = {
 
     const dropQualityIndex = props.qualityIndex;
     const isDropGroupItem = !!(props.qualityId && props.groupId);
+    const dropTarget = component?.dropTargetRef.current;
+
+    if (!dropTarget) {
+      return;
+    }
 
     // Use childNodeIndex to select the correct node to get the middle of so
     // we don't bounce between above and below causing rapid setState calls.
-    const childNodeIndex = component.props.isOverCurrent && component.props.isDraggingUp ? 1 :0;
-    const componentDOMNode = findDOMNode(component).children[childNodeIndex];
-    const hoverBoundingRect = componentDOMNode.getBoundingClientRect();
-    const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+    const childNodeIndex = component.props.isOverCurrent && component.props.isDraggingUp ? 1 : 0;
+    const hoverNode = dropTarget.children[childNodeIndex];
     const clientOffset = monitor.getClientOffset();
+
+    if (!hoverNode || !clientOffset) {
+      return;
+    }
+
+    const hoverBoundingRect = hoverNode.getBoundingClientRect();
+    const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
     const hoverClientY = clientOffset.y - hoverBoundingRect.top;
 
     // If we're hovering over a child don't trigger on the parent
@@ -105,6 +114,8 @@ function collectDropTarget(connect, monitor) {
 
 class QualityProfileItemDragSource extends Component {
 
+  dropTargetRef = React.createRef();
+
   //
   // Render
 
@@ -137,6 +148,7 @@ class QualityProfileItemDragSource extends Component {
 
     return connectDropTarget(
       <div
+        ref={this.dropTargetRef}
         className={classNames(
           styles.qualityProfileItemDragSource,
           isBefore && styles.isDraggingUp,
