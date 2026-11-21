@@ -49,7 +49,7 @@ function ReconciliationPreview({ preview }) {
   } = preview;
 
   return (
-    <div>
+    <div style={{ overflowWrap: 'anywhere' }}>
       <h3>Reconciliation preview</h3>
       <p>
         Move the listed recordings from <strong>{source.name}</strong> ({source.foreignAuthorId})
@@ -281,13 +281,13 @@ function AuthorReconciliationModal({ sourceAuthorId, onModalClose, onReconciled 
         </ModalBody>
         <ModalFooter>
           <Button isDisabled={isApplying} onPress={close}>Cancel</Button>
-          <SpinnerButton isDisabled={!canReview || isApplying} isSpinning={isReviewing} onPress={review}>
-            Review reconciliation
+          <SpinnerButton aria-label="Review reconciliation" isDisabled={!canReview || isApplying} isSpinning={isReviewing} onPress={review}>
+            Review
           </SpinnerButton>
           {
             preview &&
-              <SpinnerButton kind={kinds.DANGER} isDisabled={!canApply || isReviewing} isSpinning={isApplying} onPress={apply}>
-                Apply reconciliation
+              <SpinnerButton aria-label="Apply reconciliation" kind={kinds.DANGER} isDisabled={!canApply || isReviewing} isSpinning={isApplying} onPress={apply}>
+                Apply
               </SpinnerButton>
           }
         </ModalFooter>
