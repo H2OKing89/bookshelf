@@ -81,11 +81,13 @@ class CustomFormats extends Component {
 
             <Card
               className={styles.addCustomFormat}
+              aria-label={translate('AddCustomFormat')}
               onPress={this.onEditCustomFormatPress}
             >
               <div className={styles.center}>
                 <Icon
                   name={icons.ADD}
+                  aria-hidden={true}
                   size={45}
                 />
               </div>

@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { Component, Fragment } from 'react';
+import translate from 'Utilities/String/translate';
 import TableOptionsModal from './TableOptionsModal';
 
 class TableOptionsModalWrapper extends Component {
@@ -39,7 +40,10 @@ class TableOptionsModalWrapper extends Component {
     return (
       <Fragment>
         {
-          React.cloneElement(children, { onPress: this.onTableOptionsPress })
+          React.cloneElement(children, {
+            'aria-label': translate('TableOptions'),
+            onPress: this.onTableOptionsPress
+          })
         }
 
         <TableOptionsModal

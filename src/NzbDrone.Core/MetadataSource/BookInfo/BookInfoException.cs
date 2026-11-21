@@ -6,6 +6,14 @@ namespace NzbDrone.Core.MetadataSource.BookInfo
 {
     public class BookInfoException : NzbDroneClientException
     {
+        internal MetadataProviderIssue ProviderIssue { get; }
+
+        internal BookInfoException(MetadataProviderIssue issue, string message)
+            : this(message)
+        {
+            ProviderIssue = issue;
+        }
+
         public BookInfoException(string message)
             : base(HttpStatusCode.ServiceUnavailable, message)
         {
@@ -19,6 +27,7 @@ namespace NzbDrone.Core.MetadataSource.BookInfo
         public BookInfoException(string message, Exception innerException, params object[] args)
             : base(HttpStatusCode.ServiceUnavailable, message, innerException, args)
         {
+            ProviderIssue = (innerException as BookInfoException)?.ProviderIssue;
         }
     }
 }

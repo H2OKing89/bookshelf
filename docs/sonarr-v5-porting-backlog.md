@@ -98,8 +98,8 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D28](#d28) | P3 | Planned | M | Coalesce media-server refreshes for multipart imports |
 | [D29](#d29) | P2 | Planned | M | Support explicit qBittorrent total versus inactive seed time |
 | [D30](#d30) | P3 | Planned | L | Defer scripted import replacement; study an explicit extension boundary |
-| [U01](#u01) | P1 | Planned | S | Correct accessible names on icon actions |
-| [U02](#u02) | P1 | Planned | M | Named, semantic dialogs |
+| [U01](#u01) | P1 | In progress | S | Correct accessible names on icon actions |
+| [U02](#u02) | P1 | In progress | M | Named, semantic dialogs |
 | [U03](#u03) | P1 | Planned | M | Keyboard-operated, viewport-aware menus |
 | [U04](#u04) | P1 | Planned | M | Connect form labels, help and validation to inputs |
 | [U05](#u05) | P2 | Planned | S | Announce asynchronous action results |
@@ -126,7 +126,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [B04](#b04) | P1 | Verified | L | Add audio-specific custom-format rules from trustworthy media evidence |
 | [B05](#b05) | P2 | Verified | M | Version probe metadata and invalidate stale analysis deliberately |
 | [B06](#b06) | P2 | Planned | L | Complete the local-recording metadata lifecycle |
-| [B07](#b07) | P1 | Planned | M | Expose metadata-provider health and partial-result provenance |
+| [B07](#b07) | P1 | In progress | M | Expose metadata-provider health and partial-result provenance |
 | [B08](#b08) | P1 | Planned | M | Explain and resolve unmapped or conflicting recording evidence |
 | [B09](#b09) | P2 | Planned | M | Add book-native library diagnostics and collection statistics |
 
@@ -2561,6 +2561,11 @@ See [local validation](local-validation.md#d19-b05-and-d26-verification-2026-11-
 
 Port the caller-owned naming pattern and audit monitor, refresh, delete, download, file-browser and table-option actions. No React/router migration is required to correct the JS primitive. **Dependencies:** translations/caller inventory only. **Acceptance:** screen-reader names describe each action; no generic table-options name outside that action; decorative icons are hidden; keyboard activation and disabled behavior stay intact. Do not merely remove the default and leave unlabeled callers.
 
+**2026-11-21 implementation.** Icon actions use their caller's action label
+or localized title. Monitoring buttons report their pressed state. File actions,
+folder browsing, table options and grab controls have distinct names. Icons
+inside named controls are decorative for assistive technology.
+
 ### U02
 
 **Named, semantic dialogs**
@@ -2575,6 +2580,11 @@ Port the caller-owned naming pattern and audit monitor, refresh, delete, downloa
 **P1; small/medium; partial; available in pinned v5; tactical adaptation.** S5 `Components/Modal/Modal.tsx:172-201` and `ModalHeader.tsx:16-26` join dialog `aria-labelledby` to a generated header id and add dialog/modal semantics. B `Components/Modal/Modal.js:184-212` already has portals, focus locking, nested-modal ordering, backdrop/escape handling and iOS scroll locking, but the content container has no dialog role/name.
 
 Add shared title wiring while preserving the established modal behavior. **Dependencies:** U01 for close buttons; a generated unique-id mechanism can precede React 18. **Acceptance:** every open dialog has a unique accessible title, nested confirm dialogs are named, focus remains contained and returns appropriately, only the top modal closes on Escape, backdrop dragging does not close unexpectedly, scroll position survives close on phone. Include local-recording and destructive confirmation dialogs.
+
+**2026-11-21 implementation.** Dialogs connect their heading to a unique
+accessible name. The top dialog owns keyboard focus and Escape. Closing it
+returns focus to its opener when available. Destructive confirmations initially
+focus Cancel and Enter activates the focused control.
 
 ### U03
 
@@ -3039,6 +3049,14 @@ Extend the existing local-recording feature with a supported metadata editor and
 Keep Audnexus/audible-rs and optional publisher sources as book-native adapters. Surface whether a refresh was complete, cached, partial, rate-limited, unavailable or awaiting identity review. Retain last-known good data through provider failures and show per-field/record freshness when useful. A short keyword result is not a complete author bibliography; a missing regional result is not authority to delete a recording. Sonarr's refresh orchestration offers operational patterns, not a replacement book catalog.
 
 **Acceptance:** 429/timeout/5xx, confirmed missing records, repeated pages, incomplete pagination, author-credit changes and sparse metadata have distinct outcomes. No outage deletes books, silently changes owners or erases richer chapters/covers. Recovery clears or updates health state without repeated alerts; cancellation does not masquerade as a successful empty refresh.
+
+**2026-11-21 implementation.** **System → Status → Metadata Providers** shows
+the latest observation for each provider and operation, with an explanation,
+last complete time and retry time when available. Observations start empty
+after restart and may show an earlier fetch time for a cached response. The
+authenticated status API reads saved observations in memory. Audnexus keyword
+bibliographies are marked partial. Incomplete catalog responses and provider
+failures retain Bookshelf's existing identity and catalog safeguards.
 
 ### B08
 

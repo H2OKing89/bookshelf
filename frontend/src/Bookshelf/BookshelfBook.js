@@ -42,6 +42,7 @@ class BookshelfBook extends Component {
       <div className={styles.book}>
         <div className={styles.info}>
           <MonitorToggleButton
+            aria-label={translate('MonitorBook')}
             monitored={monitored}
             isSaving={isSaving}
             onPress={this.onBookMonitoredPress}

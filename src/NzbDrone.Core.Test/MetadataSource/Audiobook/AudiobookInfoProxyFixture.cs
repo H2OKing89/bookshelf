@@ -10,6 +10,7 @@ using NzbDrone.Core.Books;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.Messaging.Commands;
+using NzbDrone.Core.MetadataSource;
 using NzbDrone.Core.MetadataSource.Audible;
 using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.MetadataSource.Audnexus;
@@ -24,10 +25,13 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
     {
         private const string AuthorId = "audible:us:B0GVW7FF1Q";
         private List<AudnexusBookResource> _resources;
+        private MetadataProviderStatusService _status;
 
         [SetUp]
         public void Setup()
         {
+            _status = new MetadataProviderStatusService();
+            Mocker.SetConstant<IMetadataProviderStatusService>(_status);
             Mocker.GetMock<IAudiobookMetadataOverrideRepository>().Setup(r => r.All()).Returns(AudiobookMetadataOverrideSeed.Read());
             Mocker.SetConstant<IAudiobookMetadataOverrideService>(Mocker.Resolve<AudiobookMetadataOverrideService>());
             _resources = new List<AudnexusBookResource> { Recording("B0H8F9D4GD", "Volume 1"), Recording("B0HMVRXW3C", "Volume 2") };
@@ -429,6 +433,7 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
             result.Books.Value.Should().HaveCount(3);
             result.Books.Value.Should().Contain(b => b.ForeignBookId == known.ForeignBookId);
             result.Metadata.Value.Id.Should().Be(6);
+            _status.GetStatus().Should().ContainSingle(status => status.Operation == MetadataProviderOperation.AuthorRefresh && status.State == MetadataProviderState.Partial);
         }
 
         [Test]
@@ -449,6 +454,7 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
             Mocker.GetMock<IAudibleCatalogProxy>().Setup(x => x.GetAuthorBooks("Yu Omiya", "us"))
                 .Throws(new BookInfoException("Incomplete catalog"));
             Assert.Throws<BookInfoException>(() => Subject.GetAuthorInfo(AuthorId));
+            _status.GetStatus().Should().ContainSingle(status => status.Operation == MetadataProviderOperation.AuthorRefresh && status.State == MetadataProviderState.Unavailable);
         }
 
         [Test]
@@ -671,6 +677,7 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
             Mocker.GetMock<IAudnexusProxy>().Setup(x => x.GetBook(asin, "us")).Returns(details);
 
             Assert.Throws<BookInfoException>(() => Subject.GetAuthorInfo(AuthorId));
+            _status.GetStatus().Should().ContainSingle(status => status.Operation == MetadataProviderOperation.AuthorRefresh && status.State == MetadataProviderState.IdentityReview);
         }
 
         [Test]
@@ -810,6 +817,7 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
 
             Assert.Throws<BookInfoException>(() => Subject.GetBookInfo(stored.ForeignBookId));
             stored.AuthorMetadata.Value.ForeignAuthorId.Should().Be(AuthorId);
+            _status.GetStatus().Should().ContainSingle(status => status.Operation == MetadataProviderOperation.RecordingRefresh && status.State == MetadataProviderState.IdentityReview);
         }
 
         [Test]

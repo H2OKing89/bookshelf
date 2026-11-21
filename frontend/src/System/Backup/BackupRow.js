@@ -117,6 +117,7 @@ class BackupRow extends Component {
         <TableRowCell className={styles.actions}>
           <IconButton
             name={icons.RESTORE}
+            aria-label={translate('RestoreBackup')}
             onPress={this.onRestorePress}
           />
 

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import SpinnerIconButton from 'Components/Link/SpinnerIconButton';
 import { icons } from 'Helpers/Props';
+import translate from 'Utilities/String/translate';
 import styles from './MonitorToggleButton.css';
 
 function getTooltip(monitored, isDisabled) {
@@ -51,6 +52,8 @@ class MonitorToggleButton extends Component {
         )}
         name={iconName}
         size={size}
+        aria-label={translate('Monitor')}
+        aria-pressed={monitored}
         title={getTooltip(monitored, isDisabled)}
         isDisabled={isDisabled}
         isSpinning={isSaving}

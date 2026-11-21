@@ -55,11 +55,13 @@ class ReleaseProfiles extends Component {
           <div className={styles.releaseProfiles}>
             <Card
               className={styles.addReleaseProfile}
+              aria-label={translate('AddReleaseProfile')}
               onPress={this.onAddReleaseProfilePress}
             >
               <div className={styles.center}>
                 <Icon
                   name={icons.ADD}
+                  aria-hidden={true}
                   size={45}
                 />
               </div>

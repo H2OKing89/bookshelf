@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Net;
+using Newtonsoft.Json;
 using NzbDrone.Common.Http;
 using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Configuration;
@@ -30,12 +30,14 @@ namespace NzbDrone.Core.MetadataSource.Audnexus
 
         private readonly ICachedHttpResponseService _httpClient;
         private readonly IConfigService _configService;
-        private DateTime _unavailableUntil;
+        private readonly IMetadataProviderStatusService _status;
+        private MetadataProviderIssue _cooldown;
 
-        public AudnexusProxy(ICachedHttpResponseService httpClient, IConfigService configService)
+        public AudnexusProxy(ICachedHttpResponseService httpClient, IConfigService configService, IMetadataProviderStatusService status)
         {
             _httpClient = httpClient;
             _configService = configService;
+            _status = status;
         }
 
         public AudnexusBookResource GetBook(string asin, string region)
@@ -45,13 +47,11 @@ namespace NzbDrone.Core.MetadataSource.Audnexus
                 return null;
             }
 
-            var book = Read<AudnexusBookResource>($"books/{asin}", region, TimeSpan.FromDays(1));
-            if (book != null && (book.Asin != asin || book.Region != region))
-            {
-                throw new BookInfoException("Audnexus returned metadata for a different ASIN or marketplace.");
-            }
-
-            return book;
+            return Read<AudnexusBookResource>($"books/{asin}",
+                region,
+                TimeSpan.FromDays(1),
+                MetadataProviderOperation.RecordingDetails,
+                matches: book => book.Asin == asin && book.Region == region);
         }
 
         public List<AudnexusBookResource> SearchBooks(string query, string region)
@@ -61,7 +61,7 @@ namespace NzbDrone.Core.MetadataSource.Audnexus
                 return new List<AudnexusBookResource>();
             }
 
-            return Read<List<AudnexusBookResource>>("books/search", region, TimeSpan.FromHours(1), "q", query.Trim())
+            return Read<List<AudnexusBookResource>>("books/search", region, TimeSpan.FromHours(1), MetadataProviderOperation.BookSearch, "q", query.Trim())
                 ?? throw new BookInfoException("Audnexus book search returned no response.");
         }
 
@@ -72,24 +72,20 @@ namespace NzbDrone.Core.MetadataSource.Audnexus
                 return null;
             }
 
-            var chapters = Read<AudnexusChapterResource>($"books/{asin}/chapters", region, TimeSpan.FromDays(1));
-            if (chapters != null && (chapters.Asin != asin || chapters.Region != region))
-            {
-                throw new BookInfoException("Audnexus returned chapters for a different ASIN or marketplace.");
-            }
-
-            return chapters;
+            return Read<AudnexusChapterResource>($"books/{asin}/chapters",
+                region,
+                TimeSpan.FromDays(1),
+                MetadataProviderOperation.Chapters,
+                matches: chapters => chapters.Asin == asin && chapters.Region == region);
         }
 
         public AudnexusAuthorResource GetAuthor(string asin, string region)
         {
-            var author = Read<AudnexusAuthorResource>($"authors/{asin}", region, TimeSpan.FromDays(1));
-            if (author != null && (author.Asin != asin || author.Region != region))
-            {
-                throw new BookInfoException("Audnexus returned a different author or marketplace.");
-            }
-
-            return author;
+            return Read<AudnexusAuthorResource>($"authors/{asin}",
+                region,
+                TimeSpan.FromDays(1),
+                MetadataProviderOperation.AuthorProfile,
+                matches: author => author.Asin == asin && author.Region == region);
         }
 
         public List<AudnexusContributorResource> SearchAuthors(string name, string region)
@@ -99,23 +95,46 @@ namespace NzbDrone.Core.MetadataSource.Audnexus
                 return new List<AudnexusContributorResource>();
             }
 
-            return Read<List<AudnexusContributorResource>>("authors", region, TimeSpan.FromHours(1), "name", name.Trim())
+            return Read<List<AudnexusContributorResource>>("authors", region, TimeSpan.FromHours(1), MetadataProviderOperation.AuthorSearch, "name", name.Trim())
                 ?? throw new BookInfoException("Audnexus author search returned no response.");
         }
 
-        private T Read<T>(string route, string region, TimeSpan ttl, string queryName = null, string queryValue = null)
+        private T Read<T>(string route,
+                         string region,
+                         TimeSpan ttl,
+                         MetadataProviderOperation operation,
+                         string queryName = null,
+                         string queryValue = null,
+                         Func<T, bool> matches = null)
+            where T : class, new()
+        {
+            return MetadataProviderObservation.Observe(_status,
+                MetadataProvider.Audnexus,
+                operation,
+                observation => Read(route, region, ttl, queryName, queryValue, matches, observation));
+        }
+
+        private T Read<T>(string route,
+                         string region,
+                         TimeSpan ttl,
+                         string queryName,
+                         string queryValue,
+                         Func<T, bool> matches,
+                         MetadataProviderObservation observation)
             where T : class, new()
         {
             var cancellationToken = CommandExecutionContext.CancellationToken;
             cancellationToken.ThrowIfCancellationRequested();
             if (region == null || !Regions.Contains(region))
             {
-                throw new BookInfoException("Choose a supported Audible marketplace in Settings → Metadata.");
+                throw new BookInfoException(new MetadataProviderIssue(MetadataProviderState.Unavailable, MetadataProviderReason.Configuration),
+                    "Choose a supported Audible marketplace in Settings → Metadata.");
             }
 
-            if (DateTime.UtcNow < _unavailableUntil)
+            var cooldown = _cooldown;
+            if (cooldown?.RetryAfterUtc > DateTime.UtcNow)
             {
-                throw new BookInfoException("Audnexus is temporarily unavailable. Retry after {0:u}.", _unavailableUntil);
+                throw new BookInfoException(cooldown, $"Audnexus is temporarily unavailable. Retry after {cooldown.RetryAfterUtc:u}.");
             }
 
             try
@@ -136,27 +155,31 @@ namespace NzbDrone.Core.MetadataSource.Audnexus
                 cancellationToken.ThrowIfCancellationRequested();
                 if (response.StatusCode == HttpStatusCode.NotFound)
                 {
+                    observation.Flag(MetadataProviderState.Missing, MetadataProviderReason.ConfirmedMissing);
                     return null;
                 }
 
                 if (response.HasHttpError || response.HasHttpRedirect)
                 {
-                    _unavailableUntil = DateTime.UtcNow.AddMinutes(1);
-                    var retryAfter = response.Headers.GetSingleValue("Retry-After");
-                    if (int.TryParse(retryAfter, out var seconds) && seconds > 0)
-                    {
-                        _unavailableUntil = DateTime.UtcNow.AddSeconds(seconds);
-                    }
-                    else if (DateTime.TryParse(retryAfter, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var retryDate) && retryDate > _unavailableUntil)
-                    {
-                        _unavailableUntil = retryDate;
-                    }
-
-                    throw new BookInfoException("Audnexus returned HTTP {0}. Retry after {1:u}.", (int)response.StatusCode, _unavailableUntil);
+                    _cooldown = MetadataProviderIssue.FromHttpStatus((int)response.StatusCode, MetadataProviderIssue.RetryAfter(response.Headers));
+                    throw new BookInfoException(_cooldown, $"Audnexus returned HTTP {(int)response.StatusCode}. Retry after {_cooldown.RetryAfterUtc:u}.");
                 }
 
-                return Json.Deserialize<T>(response.Content)
-                    ?? throw new BookInfoException("Audnexus returned an empty metadata response.");
+                var result = Json.Deserialize<T>(response.Content)
+                    ?? throw new BookInfoException(new MetadataProviderIssue(MetadataProviderState.Unavailable, MetadataProviderReason.InvalidResponse),
+                        "Audnexus returned an empty metadata response.");
+                if (matches != null && !matches(result))
+                {
+                    throw new BookInfoException(new MetadataProviderIssue(MetadataProviderState.IdentityReview, MetadataProviderReason.IdentityConflict),
+                        "Audnexus returned metadata for a different identity or marketplace.");
+                }
+
+                if (response.CachedAtUtc.HasValue)
+                {
+                    observation.UseCached(response.CachedAtUtc.Value);
+                }
+
+                return result;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -166,10 +189,15 @@ namespace NzbDrone.Core.MetadataSource.Audnexus
             {
                 throw;
             }
+            catch (JsonException)
+            {
+                _cooldown = new MetadataProviderIssue(MetadataProviderState.Unavailable, MetadataProviderReason.InvalidResponse, DateTime.UtcNow.AddMinutes(1));
+                throw new BookInfoException(_cooldown, "Audnexus returned invalid metadata.");
+            }
             catch (Exception ex)
             {
-                _unavailableUntil = DateTime.UtcNow.AddMinutes(1);
-                throw new BookInfoException("Unable to read audiobook metadata from Audnexus.", ex);
+                _cooldown = MetadataProviderIssue.FromTransport(ex, DateTime.UtcNow.AddMinutes(1));
+                throw new BookInfoException(_cooldown, "Unable to read audiobook metadata from Audnexus.");
             }
         }
     }

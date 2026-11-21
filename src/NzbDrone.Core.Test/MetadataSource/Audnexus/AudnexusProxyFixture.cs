@@ -8,6 +8,7 @@ using NzbDrone.Common.Http;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Http;
 using NzbDrone.Core.Messaging.Commands;
+using NzbDrone.Core.MetadataSource;
 using NzbDrone.Core.MetadataSource.Audnexus;
 using NzbDrone.Core.MetadataSource.BookInfo;
 using NzbDrone.Core.Test.Framework;
@@ -25,15 +26,18 @@ namespace NzbDrone.Core.Test.MetadataSource.Audnexus
             ""releaseDate"": ""2021-05-04T00:00:00.000Z"",
             ""narrators"": [{""name"": ""Ray Porter""}]
         }";
+        private MetadataProviderStatusService _status;
 
         [SetUp]
         public void Setup()
         {
+            _status = new MetadataProviderStatusService();
+            Mocker.SetConstant<IMetadataProviderStatusService>(_status);
             Mocker.GetMock<IConfigService>().SetupGet(x => x.AudnexusUrl).Returns("https://audnexus.example/api/");
             GivenResponse(BookJson);
         }
 
-        private void GivenResponse(string body, HttpStatusCode status = HttpStatusCode.OK, string retryAfter = null)
+        private void GivenResponse(string body, HttpStatusCode status = HttpStatusCode.OK, string retryAfter = null, DateTime? cachedAtUtc = null)
         {
             var headers = new HttpHeader();
             if (retryAfter != null)
@@ -43,7 +47,7 @@ namespace NzbDrone.Core.Test.MetadataSource.Audnexus
 
             Mocker.GetMock<ICachedHttpResponseService>()
                 .Setup(x => x.Get(It.IsAny<HttpRequest>(), true, TimeSpan.FromDays(1)))
-                .Returns((HttpRequest request, bool cache, TimeSpan ttl) => new HttpResponse(request, headers, body, status));
+                .Returns((HttpRequest request, bool cache, TimeSpan ttl) => new HttpResponse(request, headers, body, status) { CachedAtUtc = cachedAtUtc });
         }
 
         [Test]
@@ -63,7 +67,10 @@ namespace NzbDrone.Core.Test.MetadataSource.Audnexus
                 Assert.Throws<OperationCanceledException>(() => Subject.GetBook(Asin, "us"));
             }
 
+            _status.GetStatus().Should().ContainSingle().Which.State.Should().Be(MetadataProviderState.Cancelled);
+
             Subject.GetBook(Asin, "us").Title.Should().Be("Project Hail Mary");
+            _status.GetStatus().Should().ContainSingle().Which.State.Should().Be(MetadataProviderState.Complete);
         }
 
         [Test]
@@ -140,12 +147,16 @@ namespace NzbDrone.Core.Test.MetadataSource.Audnexus
         {
             GivenResponse(@"{""error"":{""code"":""REGION_UNAVAILABLE""}}", HttpStatusCode.NotFound);
             Subject.GetBook(Asin, "us").Should().BeNull();
+            var observed = _status.GetStatus().Should().ContainSingle().Which;
+            observed.State.Should().Be(MetadataProviderState.Missing);
+            observed.Reason.Should().Be(MetadataProviderReason.ConfirmedMissing);
+            observed.LastCompleteAtUtc.Should().BeNull();
         }
 
-        [TestCase(HttpStatusCode.TooManyRequests)]
-        [TestCase(HttpStatusCode.InternalServerError)]
-        [TestCase(HttpStatusCode.ServiceUnavailable)]
-        public void should_back_off_after_provider_errors(HttpStatusCode status)
+        [TestCase(HttpStatusCode.TooManyRequests, MetadataProviderState.RateLimited, MetadataProviderReason.TooManyRequests)]
+        [TestCase(HttpStatusCode.InternalServerError, MetadataProviderState.Unavailable, MetadataProviderReason.ServerError)]
+        [TestCase(HttpStatusCode.ServiceUnavailable, MetadataProviderState.Unavailable, MetadataProviderReason.ServerError)]
+        public void should_back_off_after_provider_errors(HttpStatusCode status, MetadataProviderState expected, MetadataProviderReason reason)
         {
             GivenResponse("unavailable", status, "120");
 
@@ -153,6 +164,35 @@ namespace NzbDrone.Core.Test.MetadataSource.Audnexus
             Assert.Throws<BookInfoException>(() => Subject.GetBook("1978650817", "us"));
 
             Mocker.GetMock<ICachedHttpResponseService>().Verify(x => x.Get(It.IsAny<HttpRequest>(), true, TimeSpan.FromDays(1)), Times.Once());
+            var observed = _status.GetStatus().Should().ContainSingle().Which;
+            observed.State.Should().Be(expected);
+            observed.Reason.Should().Be(reason);
+            observed.RetryAfterUtc.Should().BeAfter(observed.ObservedAtUtc);
+        }
+
+        [Test]
+        public void a_cached_response_preserves_when_the_source_was_read()
+        {
+            var fetched = DateTime.UtcNow.AddMinutes(-10);
+            GivenResponse(BookJson, cachedAtUtc: fetched);
+
+            Subject.GetBook(Asin, "us").Should().NotBeNull();
+            var observed = _status.GetStatus().Should().ContainSingle().Which;
+            observed.State.Should().Be(MetadataProviderState.Cached);
+            observed.LastCompleteAtUtc.Should().Be(fetched);
+        }
+
+        [Test]
+        public void should_report_a_timeout_distinct_from_an_empty_result()
+        {
+            Mocker.GetMock<ICachedHttpResponseService>()
+                .Setup(x => x.Get(It.IsAny<HttpRequest>(), true, TimeSpan.FromDays(1)))
+                .Throws(new WebException("Synthetic timeout", WebExceptionStatus.Timeout));
+
+            Assert.Throws<BookInfoException>(() => Subject.GetBook(Asin, "us"));
+            var observed = _status.GetStatus().Should().ContainSingle().Which;
+            observed.State.Should().Be(MetadataProviderState.Unavailable);
+            observed.Reason.Should().Be(MetadataProviderReason.Timeout);
         }
 
         [TestCase("not json")]

@@ -129,6 +129,7 @@ class AuthorDetailsSeries extends Component {
       >
         <div className={styles.seriesTitle}>
           <MonitorToggleButton
+            aria-label={translate('MonitorSeries')}
             size={24}
             monitored={this.isSeriesMonitored(this.props)}
             isDisabled={!authorMonitored}

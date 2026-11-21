@@ -353,6 +353,7 @@ class QueueRow extends Component {
                     showInteractiveImport &&
                       <IconButton
                         name={icons.INTERACTIVE}
+                        aria-label={translate('ManualImport')}
                         onPress={this.onInteractiveImportPress}
                       />
                   }
@@ -363,6 +364,7 @@ class QueueRow extends Component {
                         name={icons.DOWNLOAD}
                         kind={grabError ? kinds.DANGER : kinds.DEFAULT}
                         isSpinning={isGrabbing}
+                        aria-label={translate('GrabRelease')}
                         onPress={onGrabPress}
                       />
                   }

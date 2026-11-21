@@ -11,6 +11,7 @@ using NzbDrone.Common.Disk;
 using NzbDrone.Common.Http;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Messaging.Commands;
+using NzbDrone.Core.MetadataSource;
 using NzbDrone.Core.MetadataSource.Audible;
 using NzbDrone.Core.MetadataSource.BookInfo;
 using NzbDrone.Core.Test.Framework;
@@ -21,10 +22,13 @@ namespace NzbDrone.Core.Test.MetadataSource.Audible
     public class AudibleCatalogProxyFixture : CoreTest<AudibleCatalogProxy>
     {
         private readonly List<JObject> _requests = new List<JObject>();
+        private MetadataProviderStatusService _status;
 
         [SetUp]
         public void Setup()
         {
+            _status = new MetadataProviderStatusService();
+            Mocker.SetConstant<IMetadataProviderStatusService>(_status);
             _requests.Clear();
             Mocker.GetMock<IConfigService>().SetupGet(x => x.AudibleRsEnabled).Returns(true);
             Mocker.GetMock<IConfigService>().SetupGet(x => x.AudibleRsUrl).Returns("https://agent.example");
@@ -97,16 +101,22 @@ namespace NzbDrone.Core.Test.MetadataSource.Audible
             Assert.Throws<BookInfoException>(() => Subject.GetAuthorBooks("Yu Omiya", "us"));
             Assert.Throws<BookInfoException>(() => Subject.GetAuthorBooks("Yu Omiya", "us"));
             _requests.Should().ContainSingle();
+            var observed = _status.GetStatus().Should().ContainSingle().Which;
+            observed.State.Should().Be(MetadataProviderState.RateLimited);
+            observed.Reason.Should().Be(MetadataProviderReason.TooManyRequests);
         }
 
-        [TestCase("{\"status\":200,\"body\":{\"total_results\":1,\"products\":[]}}")]
-        [TestCase("{\"status\":200,\"body\":{\"products\":[]}}")]
-        [TestCase("{\"status\":200,\"body\":{\"total_results\":1001,\"products\":[]}}")]
-        [TestCase("not json")]
-        public void should_reject_incomplete_catalogs(string envelope)
+        [TestCase("{\"status\":200,\"body\":{\"total_results\":1,\"products\":[]}}", MetadataProviderState.Partial, MetadataProviderReason.IncompletePagination)]
+        [TestCase("{\"status\":200,\"body\":{\"products\":[]}}", MetadataProviderState.Partial, MetadataProviderReason.IncompletePagination)]
+        [TestCase("{\"status\":200,\"body\":{\"total_results\":1001,\"products\":[]}}", MetadataProviderState.Partial, MetadataProviderReason.CatalogLimit)]
+        [TestCase("not json", MetadataProviderState.Unavailable, MetadataProviderReason.InvalidResponse)]
+        public void should_reject_incomplete_catalogs(string envelope, MetadataProviderState state, MetadataProviderReason reason)
         {
             GivenPages(envelope);
             Assert.Throws<BookInfoException>(() => Subject.GetAuthorBooks("Yu Omiya", "us"));
+            var observed = _status.GetStatus().Should().ContainSingle().Which;
+            observed.State.Should().Be(state);
+            observed.Reason.Should().Be(reason);
         }
 
         [Test]
@@ -115,6 +125,9 @@ namespace NzbDrone.Core.Test.MetadataSource.Audible
             GivenPages("{\"status\":200,\"body\":{\"total_results\":2,\"products\":[{\"asin\":\"B0H8F9D4GD\",\"title\":\"Volume 1\"}]}}");
             Assert.Throws<BookInfoException>(() => Subject.GetAuthorBooks("Yu Omiya", "us"));
             _requests.Should().HaveCount(2);
+            var observed = _status.GetStatus().Should().ContainSingle().Which;
+            observed.State.Should().Be(MetadataProviderState.Partial);
+            observed.Reason.Should().Be(MetadataProviderReason.RepeatedPage);
         }
 
         [Test]
@@ -138,8 +151,10 @@ namespace NzbDrone.Core.Test.MetadataSource.Audible
                 "{\"status\":200,\"body\":{\"product\":{\"asin\":\"B0H8F9D4GD\",\"title\":\"Volume 1\"}}}");
 
             Subject.GetBook("B0F14RFHS6", "us").Should().BeNull();
+            _status.GetStatus().Should().ContainSingle().Which.State.Should().Be(MetadataProviderState.Missing);
             Subject.GetBook("B0H8F9D4GD", "us").Asin.Should().Be("B0H8F9D4GD");
             _requests.Should().HaveCount(2);
+            _status.GetStatus().Should().ContainSingle().Which.State.Should().Be(MetadataProviderState.Complete);
         }
 
         [Test]

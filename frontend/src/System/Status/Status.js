@@ -5,6 +5,7 @@ import translate from 'Utilities/String/translate';
 import AboutConnector from './About/AboutConnector';
 import DiskSpaceConnector from './DiskSpace/DiskSpaceConnector';
 import HealthConnector from './Health/HealthConnector';
+import MetadataProviders from './MetadataProviders/MetadataProviders';
 import MoreInfo from './MoreInfo/MoreInfo';
 
 class Status extends Component {
@@ -17,6 +18,7 @@ class Status extends Component {
       <PageContent title={translate('Status')}>
         <PageContentBody>
           <HealthConnector />
+          <MetadataProviders />
           <DiskSpaceConnector />
           <AboutConnector />
           <MoreInfo />

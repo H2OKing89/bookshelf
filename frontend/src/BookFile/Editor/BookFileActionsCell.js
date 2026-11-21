@@ -67,6 +67,7 @@ class BookFileActionsCell extends Component {
           path &&
             <IconButton
               name={icons.INFO}
+              aria-label={translate('FileDetails')}
               onPress={this.onDetailsPress}
             />
         }
@@ -74,6 +75,7 @@ class BookFileActionsCell extends Component {
           path &&
             <IconButton
               name={icons.DELETE}
+              aria-label={translate('DeleteBookFile')}
               onPress={this.onDeleteFilePress}
             />
         }

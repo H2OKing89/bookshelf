@@ -150,6 +150,7 @@ class BlocklistRow extends Component {
                 >
                   <IconButton
                     name={icons.INFO}
+                    aria-label={translate('BlocklistDetails')}
                     onPress={this.onDetailsPress}
                   />
 

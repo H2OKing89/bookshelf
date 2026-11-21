@@ -2942,6 +2942,29 @@
         }
       }
     },
+    "/api/v1/metadataproviderstatus": {
+      "get": {
+        "tags": [
+          "MetadataProviderStatus"
+        ],
+        "description": "Returns the latest observations for provider operations since Bookshelf started. Reading this endpoint does not contact a provider.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MetadataProviderStatus"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/health": {
       "get": {
         "tags": [
@@ -10429,6 +10452,86 @@
           "bookReleaseDate"
         ],
         "type": "string"
+      },
+      "MetadataProviderStatus": {
+        "type": "object",
+        "required": [
+          "provider",
+          "operation",
+          "state",
+          "observedAtUtc"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "audnexus",
+              "audible"
+            ]
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "authorCatalog",
+              "bookSearch",
+              "authorSearch",
+              "authorProfile",
+              "recordingDetails",
+              "chapters",
+              "authorRefresh",
+              "recordingRefresh"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "complete",
+              "cached",
+              "partial",
+              "rateLimited",
+              "unavailable",
+              "missing",
+              "identityReview",
+              "cancelled"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "keywordCoverage",
+              "sparseMetadata",
+              "repeatedPage",
+              "incompletePagination",
+              "catalogLimit",
+              "tooManyRequests",
+              "timeout",
+              "serverError",
+              "httpError",
+              "invalidResponse",
+              "configuration",
+              "transport",
+              "identityConflict",
+              "confirmedMissing",
+              null
+            ]
+          },
+          "observedAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastCompleteAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "retryAfterUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "HealthCheckResult": {
         "enum": [

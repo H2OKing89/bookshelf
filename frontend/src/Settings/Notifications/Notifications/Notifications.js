@@ -81,11 +81,13 @@ class Notifications extends Component {
 
             <Card
               className={styles.addNotification}
+              aria-label={translate('AddConnection')}
               onPress={this.onAddNotificationPress}
             >
               <div className={styles.center}>
                 <Icon
                   name={icons.ADD}
+                  aria-hidden={true}
                   size={45}
                 />
               </div>

@@ -4,6 +4,7 @@ import keyboardShortcuts, { shortcuts } from 'Components/keyboardShortcuts';
 import IconButton from 'Components/Link/IconButton';
 import Link from 'Components/Link/Link';
 import { icons } from 'Helpers/Props';
+import translate from 'Utilities/String/translate';
 import AuthorSearchInputConnector from './AuthorSearchInputConnector';
 import KeyboardShortcutsModal from './KeyboardShortcutsModal';
 import styles from './PageHeader.css';
@@ -63,6 +64,7 @@ class PageHeader extends Component {
           <IconButton
             id="sidebar-toggle-button"
             name={icons.NAVBAR_COLLAPSE}
+            aria-label={translate('ToggleNavigation')}
             onPress={onSidebarToggle}
           />
         </div>

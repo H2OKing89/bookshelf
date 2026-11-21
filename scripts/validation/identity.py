@@ -153,8 +153,9 @@ def check_api(fixture, contract, label):
                   mapping["alternateAsins"] == [contract["author"]["alternateAsin"]] and mapping["enabled"] is True)
 
 
-def _browser_process(configuration, output):
+def _browser_process(configuration, output, browser=None):
     """Reserve the owned leader until its full process group is stopped."""
+    browser = browser or BROWSER
     process = None
     timed_out = False
     stdout = output / "stdout.json"
@@ -164,7 +165,7 @@ def _browser_process(configuration, output):
         stderr.chmod(0o600)
         try:
             with media._defer_termination_signals():
-                process = subprocess.Popen(["node", str(BROWSER)], stdin=subprocess.PIPE, stdout=log,
+                process = subprocess.Popen(["node", str(browser)], stdin=subprocess.PIPE, stdout=log,
                                            stderr=errors, start_new_session=True, preexec_fn=media._disable_core_dumps)
             process.stdin.write(json.dumps(configuration).encode())
             process.stdin.close()
@@ -176,7 +177,7 @@ def _browser_process(configuration, output):
         raise ValidationFailure("identity_browser_timeout")
     if stdout.stat().st_size > 1024 * 1024:
         raise ValidationFailure("identity_browser_report_too_large")
-    return subprocess.CompletedProcess(["node", str(BROWSER)], process.returncode, stdout.read_text(), "")
+    return subprocess.CompletedProcess(["node", str(browser)], process.returncode, stdout.read_text(), "")
 
 
 def browser(fixture, contract, output, playwright_module):

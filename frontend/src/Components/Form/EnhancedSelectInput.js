@@ -15,6 +15,7 @@ import { icons, scrollDirections, sizes } from 'Helpers/Props';
 import { isMobile as isMobileUtil } from 'Utilities/browser';
 import * as keyCodes from 'Utilities/Constants/keyCodes';
 import getUniqueElememtId from 'Utilities/getUniqueElementId';
+import translate from 'Utilities/String/translate';
 import HintedSelectInputOption from './HintedSelectInputOption';
 import HintedSelectInputSelectedValue from './HintedSelectInputSelectedValue';
 import TextInput from './TextInput';
@@ -515,6 +516,7 @@ class EnhancedSelectInput extends Component {
         {
           isMobile ?
             <Modal
+              aria-label={translate('Options')}
               className={styles.optionsModal}
               size={sizes.EXTRA_SMALL}
               isOpen={isOpen}
@@ -529,11 +531,13 @@ class EnhancedSelectInput extends Component {
                   <div className={styles.mobileCloseButtonContainer}>
                     <Link
                       className={styles.mobileCloseButton}
+                      aria-label={translate('Close')}
                       onPress={this.onOptionsModalClose}
                     >
                       <Icon
                         name={icons.CLOSE}
                         size={18}
+                        aria-hidden={true}
                       />
                     </Link>
                   </div>

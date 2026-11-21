@@ -121,6 +121,7 @@ class BookRow extends Component {
                   className={styles.monitored}
                 >
                   <MonitorToggleButton
+                    aria-label={translate('MonitorBook')}
                     monitored={monitored}
                     isDisabled={!authorMonitored}
                     isSaving={isSaving}

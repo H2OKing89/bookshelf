@@ -1,0 +1,45 @@
+.heading {
+  margin: 0;
+  font: inherit;
+}
+
+.observations {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+}
+
+.observation {
+  padding: 12px;
+  border: 1px solid var(--borderColor);
+  border-radius: 4px;
+}
+
+.result {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.operation {
+  display: block;
+}
+
+.reason {
+  margin-block: 8px;
+}
+
+.times {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 8px 0 0;
+  gap: 8px 16px;
+
+  dd {
+    margin: 0;
+  }
+}

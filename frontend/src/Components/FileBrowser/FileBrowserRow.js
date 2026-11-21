@@ -42,7 +42,7 @@ class FileBrowserRow extends Component {
     return (
       <TableRowButton onPress={this.onPress}>
         <TableRowCell className={styles.type}>
-          <Icon name={getIconName(type)} />
+          <Icon name={getIconName(type)} aria-hidden={true} />
         </TableRowCell>
 
         <TableRowCell>{name}</TableRowCell>

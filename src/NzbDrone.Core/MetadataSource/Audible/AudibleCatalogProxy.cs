@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.Extensions;
@@ -31,20 +32,28 @@ namespace NzbDrone.Core.MetadataSource.Audible
         private readonly IHttpClient _httpClient;
         private readonly IDiskProvider _diskProvider;
         private readonly IConfigService _configService;
-        private DateTime _unavailableUntil;
+        private readonly IMetadataProviderStatusService _status;
+        private MetadataProviderIssue _cooldown;
 
-        public AudibleCatalogProxy(IHttpClient httpClient, IDiskProvider diskProvider, IConfigService configService)
+        public AudibleCatalogProxy(IHttpClient httpClient, IDiskProvider diskProvider, IConfigService configService, IMetadataProviderStatusService status)
         {
             _httpClient = httpClient;
             _diskProvider = diskProvider;
             _configService = configService;
+            _status = status;
         }
 
         public List<AudnexusBookResource> GetAuthorBooks(string name, string region)
         {
+            return MetadataProviderObservation.Observe(_status, MetadataProvider.Audible, MetadataProviderOperation.AuthorCatalog, _ => ReadAuthorBooks(name, region));
+        }
+
+        private List<AudnexusBookResource> ReadAuthorBooks(string name, string region)
+        {
             const int pageSize = 50;
             var products = new List<AudnexusBookResource>();
             var seen = new HashSet<string>();
+            int? expectedTotal = null;
             for (var page = 0; page < 20; page++)
             {
                 CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
@@ -54,23 +63,34 @@ namespace NzbDrone.Core.MetadataSource.Audible
                     { "products_sort_by", "ReleaseDate" }, { "response_groups", ResponseGroups },
                     { "image_sizes", ImageSizes }
                 });
-                if (body["products"] is not JArray items || body["total_results"]?.Type != JTokenType.Integer)
+                if (body["products"] is not JArray items || body["total_results"]?.Type != JTokenType.Integer || items.Count > pageSize)
                 {
-                    throw new BookInfoException("audible-rs returned an incomplete catalog page.");
+                    throw PartialCatalog(MetadataProviderReason.IncompletePagination, "audible-rs returned an incomplete catalog page.");
                 }
 
-                var total = body.Value<int>("total_results");
-                if (total < 0 || total > 1000)
+                var total = body.Value<long>("total_results");
+                if (total > 1000)
                 {
-                    throw new BookInfoException("This author catalog exceeds the 1,000-recording limit. Existing recordings have been retained.");
+                    throw PartialCatalog(MetadataProviderReason.CatalogLimit, "This author catalog exceeds the 1,000-recording limit. Existing recordings have been retained.");
                 }
 
+                if (total < seen.Count + items.Count || (expectedTotal.HasValue && total != expectedTotal))
+                {
+                    throw PartialCatalog(MetadataProviderReason.IncompletePagination, "The audible-rs catalog count changed while reading pages. Existing recordings have been retained.");
+                }
+
+                expectedTotal = (int)total;
                 foreach (var item in items)
                 {
-                    var product = MapProduct(item, region);
+                    var product = ReadProduct(item, region);
+                    if (!AudiobookId.IsAsin(product.Asin))
+                    {
+                        throw PartialCatalog(MetadataProviderReason.IncompletePagination, "audible-rs returned a catalog product without a valid ASIN. Existing recordings have been retained.");
+                    }
+
                     if (!seen.Add(product.Asin))
                     {
-                        throw new BookInfoException("audible-rs repeated a catalog page. Existing recordings have been retained.");
+                        throw PartialCatalog(MetadataProviderReason.RepeatedPage, "audible-rs repeated a catalog page. Existing recordings have been retained.");
                     }
 
                     if (AudiobookCatalogPolicy.IsRecording(product))
@@ -87,14 +107,24 @@ namespace NzbDrone.Core.MetadataSource.Audible
 
                 if (items.Count == 0)
                 {
-                    throw new BookInfoException("audible-rs returned a truncated catalog. Existing recordings have been retained.");
+                    throw PartialCatalog(MetadataProviderReason.IncompletePagination, "audible-rs returned a truncated catalog. Existing recordings have been retained.");
                 }
             }
 
-            throw new BookInfoException("Unable to finish reading this author catalog. Existing recordings have been retained.");
+            throw PartialCatalog(MetadataProviderReason.IncompletePagination, "Unable to finish reading this author catalog. Existing recordings have been retained.");
+        }
+
+        private static BookInfoException PartialCatalog(MetadataProviderReason reason, string message)
+        {
+            return new BookInfoException(new MetadataProviderIssue(MetadataProviderState.Partial, reason), message);
         }
 
         public AudnexusBookResource GetBook(string asin, string region)
+        {
+            return MetadataProviderObservation.Observe(_status, MetadataProvider.Audible, MetadataProviderOperation.RecordingDetails, observation => ReadBook(asin, region, observation));
+        }
+
+        private AudnexusBookResource ReadBook(string asin, string region, MetadataProviderObservation observation)
         {
             var body = Read(
                 "/1.0/catalog/products/" + asin,
@@ -106,15 +136,23 @@ namespace NzbDrone.Core.MetadataSource.Audible
                 allowMissing: true);
             if (body == null)
             {
+                observation.Flag(MetadataProviderState.Missing, MetadataProviderReason.ConfirmedMissing);
                 return null;
             }
 
-            if (body["product"] is not JObject product || product.Value<string>("asin") != asin)
+            if (body["product"] is not JObject product || string.IsNullOrWhiteSpace(product.Value<string>("asin")))
             {
-                throw new BookInfoException("audible-rs returned a different recording or an incomplete product.");
+                throw new BookInfoException(new MetadataProviderIssue(MetadataProviderState.Partial, MetadataProviderReason.SparseMetadata),
+                    "audible-rs returned an incomplete product.");
             }
 
-            var recording = MapProduct(product, region);
+            if (product.Value<string>("asin") != asin)
+            {
+                throw new BookInfoException(new MetadataProviderIssue(MetadataProviderState.IdentityReview, MetadataProviderReason.IdentityConflict),
+                    "audible-rs returned a different recording.");
+            }
+
+            var recording = ReadProduct(product, region);
             return AudiobookCatalogPolicy.IsRecording(recording) ? recording : null;
         }
 
@@ -122,9 +160,16 @@ namespace NzbDrone.Core.MetadataSource.Audible
         {
             var cancellationToken = CommandExecutionContext.CancellationToken;
             cancellationToken.ThrowIfCancellationRequested();
-            if (!_configService.AudibleRsEnabled || DateTime.UtcNow < _unavailableUntil)
+            if (!_configService.AudibleRsEnabled)
             {
-                throw new BookInfoException("audible-rs is disabled or temporarily unavailable. Check Settings → Metadata.");
+                throw new BookInfoException(new MetadataProviderIssue(MetadataProviderState.Unavailable, MetadataProviderReason.Configuration),
+                    "audible-rs is disabled. Check Settings → Metadata.");
+            }
+
+            var cooldown = _cooldown;
+            if (cooldown?.RetryAfterUtc > DateTime.UtcNow)
+            {
+                throw new BookInfoException(cooldown, "audible-rs is temporarily unavailable. Check Settings → Metadata.");
             }
 
             try
@@ -132,13 +177,15 @@ namespace NzbDrone.Core.MetadataSource.Audible
                 var origin = new Uri(_configService.AudibleRsUrl.TrimEnd('/'));
                 if (origin.Scheme != "https" && !(origin.Scheme == "http" && origin.IsLoopback))
                 {
-                    throw new BookInfoException("audible-rs requires HTTPS, or HTTP on localhost.");
+                    throw new BookInfoException(new MetadataProviderIssue(MetadataProviderState.Unavailable, MetadataProviderReason.Configuration),
+                        "audible-rs requires HTTPS, or HTTP on localhost.");
                 }
 
                 var token = _diskProvider.ReadAllText(_configService.AudibleRsTokenFile).Trim();
                 if (token.IsNullOrWhiteSpace() || token.Contains('\r') || token.Contains('\n'))
                 {
-                    throw new BookInfoException("The audible-rs token file must contain one API token.");
+                    throw new BookInfoException(new MetadataProviderIssue(MetadataProviderState.Unavailable, MetadataProviderReason.Configuration),
+                        "The audible-rs token file must contain one API token.");
                 }
 
                 var builder = new HttpRequestBuilder(origin.AbsoluteUri.TrimEnd('/') + "/v1/api/request")
@@ -162,7 +209,8 @@ namespace NzbDrone.Core.MetadataSource.Audible
                 cancellationToken.ThrowIfCancellationRequested();
                 if (response.HasHttpError || response.HasHttpRedirect)
                 {
-                    throw new BookInfoException("audible-rs returned HTTP {0}. Check its connection, token, account, and lock state.", (int)response.StatusCode);
+                    _cooldown = MetadataProviderIssue.FromHttpStatus((int)response.StatusCode, MetadataProviderIssue.RetryAfter(response.Headers));
+                    throw new BookInfoException(_cooldown, $"audible-rs returned HTTP {(int)response.StatusCode}. Check its connection, token, account, and lock state.");
                 }
 
                 var envelope = JObject.Parse(response.Content);
@@ -176,7 +224,9 @@ namespace NzbDrone.Core.MetadataSource.Audible
 
                 if (envelope.Value<int?>("status") != 200 || envelope["body"] is not JObject body)
                 {
-                    throw new BookInfoException("Audible catalog request failed with status {0}.", envelope.Value<int?>("status"));
+                    var status = envelope["status"]?.Type == JTokenType.Integer ? envelope.Value<int?>("status") : null;
+                    _cooldown = MetadataProviderIssue.FromHttpStatus(status, MetadataProviderIssue.RetryAfter(response.Headers));
+                    throw new BookInfoException(_cooldown, "Audible catalog request could not be completed.");
                 }
 
                 return body;
@@ -185,21 +235,47 @@ namespace NzbDrone.Core.MetadataSource.Audible
             {
                 throw;
             }
-            catch (BookInfoException)
+            catch (BookInfoException error)
             {
-                _unavailableUntil = DateTime.UtcNow.AddMinutes(1);
+                var issue = error.ProviderIssue;
+                if (issue?.RetryAfterUtc == null)
+                {
+                    _cooldown = new MetadataProviderIssue(issue?.State ?? MetadataProviderState.Unavailable,
+                        issue?.Reason ?? MetadataProviderReason.InvalidResponse,
+                        DateTime.UtcNow.AddMinutes(1));
+                }
+
                 throw;
             }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
             {
-                throw new BookInfoException("Unable to read the audible-rs API token file. Check its server path and permissions.");
+                throw new BookInfoException(new MetadataProviderIssue(MetadataProviderState.Unavailable, MetadataProviderReason.Configuration),
+                    "Unable to read the audible-rs API token file. Check its server path and permissions.");
             }
-            catch (Exception)
+            catch (JsonException)
             {
-                _unavailableUntil = DateTime.UtcNow.AddMinutes(1);
+                _cooldown = new MetadataProviderIssue(MetadataProviderState.Unavailable, MetadataProviderReason.InvalidResponse, DateTime.UtcNow.AddMinutes(1));
+                throw new BookInfoException(_cooldown, "audible-rs returned an invalid response.");
+            }
+            catch (Exception error)
+            {
+                _cooldown = MetadataProviderIssue.FromTransport(error, DateTime.UtcNow.AddMinutes(1));
 
                 // Do not include credential-bearing requests or response bodies in errors.
-                throw new BookInfoException("Unable to read catalog data from audible-rs.");
+                throw new BookInfoException(_cooldown, "Unable to read catalog data from audible-rs.");
+            }
+        }
+
+        private static AudnexusBookResource ReadProduct(JToken item, string region)
+        {
+            try
+            {
+                return MapProduct(item, region);
+            }
+            catch (Exception ex) when (ex is JsonException or FormatException or InvalidCastException or OverflowException)
+            {
+                throw new BookInfoException(new MetadataProviderIssue(MetadataProviderState.Unavailable, MetadataProviderReason.InvalidResponse),
+                    "audible-rs returned an invalid catalog product.");
             }
         }
 
@@ -207,7 +283,8 @@ namespace NzbDrone.Core.MetadataSource.Audible
         {
             if (item is not JObject product)
             {
-                throw new BookInfoException("audible-rs returned an invalid catalog product.");
+                throw new BookInfoException(new MetadataProviderIssue(MetadataProviderState.Unavailable, MetadataProviderReason.InvalidResponse),
+                    "audible-rs returned an invalid catalog product.");
             }
 
             var images = product["product_images"] as JObject;

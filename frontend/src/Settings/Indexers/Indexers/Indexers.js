@@ -91,11 +91,13 @@ class Indexers extends Component {
 
             <Card
               className={styles.addIndexer}
+              aria-label={translate('AddIndexer')}
               onPress={this.onAddIndexerPress}
             >
               <div className={styles.center}>
                 <Icon
                   name={icons.ADD}
+                  aria-hidden={true}
                   size={45}
                 />
               </div>

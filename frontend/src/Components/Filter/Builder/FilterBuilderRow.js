@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import SelectInput from 'Components/Form/SelectInput';
 import IconButton from 'Components/Link/IconButton';
 import { filterBuilderTypes, filterBuilderValueTypes, icons } from 'Helpers/Props';
+import translate from 'Utilities/String/translate';
 import AuthorStatusFilterBuilderRowValue from './AuthorStatusFilterBuilderRowValue';
 import BoolFilterBuilderRowValue from './BoolFilterBuilderRowValue';
 import DateFilterBuilderRowValue from './DateFilterBuilderRowValue';
@@ -259,11 +260,13 @@ class FilterBuilderRow extends Component {
           <IconButton
             name={icons.SUBTRACT}
             isDisabled={filterCount === 1}
+            aria-label={translate('RemoveFilterCondition')}
             onPress={this.onRemovePress}
           />
 
           <IconButton
             name={icons.ADD}
+            aria-label={translate('AddFilterCondition')}
             onPress={this.onAddPress}
           />
         </div>

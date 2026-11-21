@@ -114,6 +114,7 @@ class BookDetailsHeader extends Component {
                 <div className={styles.titleContainer}>
                   <div className={styles.toggleMonitoredContainer}>
                     <MonitorToggleButton
+                      aria-label={translate('MonitorBook')}
                       className={styles.monitorToggleButton}
                       monitored={monitored}
                       isSaving={isSaving}

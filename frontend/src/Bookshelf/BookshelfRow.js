@@ -6,6 +6,7 @@ import Icon from 'Components/Icon';
 import MonitorToggleButton from 'Components/MonitorToggleButton';
 import VirtualTableRowCell from 'Components/Table/Cells/VirtualTableRowCell';
 import VirtualTableSelectCell from 'Components/Table/Cells/VirtualTableSelectCell';
+import translate from 'Utilities/String/translate';
 import BookshelfBook from './BookshelfBook';
 import styles from './BookshelfRow.css';
 
@@ -43,6 +44,7 @@ class BookshelfRow extends Component {
 
         <VirtualTableRowCell className={styles.monitored}>
           <MonitorToggleButton
+            aria-label={translate('MonitorAuthor')}
             monitored={monitored}
             size={14}
             isSaving={isSaving}

@@ -46,7 +46,10 @@ namespace NzbDrone.Core.Http
             if (useCache && cached != null && cached.Expiry > DateTime.UtcNow)
             {
                 _logger.Trace($"Returning cached response for [GET] {request.Url}");
-                return new HttpResponse(request, new HttpHeader(), cached.Value, (HttpStatusCode)cached.StatusCode);
+                return new HttpResponse(request, new HttpHeader(), cached.Value, (HttpStatusCode)cached.StatusCode)
+                {
+                    CachedAtUtc = cached.LastRefresh
+                };
             }
 
             var result = cancellationToken.CanBeCanceled

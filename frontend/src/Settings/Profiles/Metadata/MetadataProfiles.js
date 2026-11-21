@@ -74,11 +74,13 @@ class MetadataProfiles extends Component {
 
             <Card
               className={styles.addMetadataProfile}
+              aria-label={translate('AddMetadataProfile')}
               onPress={this.onEditMetadataProfilePress}
             >
               <div className={styles.center}>
                 <Icon
                   name={icons.ADD}
+                  aria-hidden={true}
                   size={45}
                 />
               </div>

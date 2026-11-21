@@ -97,6 +97,21 @@ Restoration rolls data back through the candidate's backup API; it does not
 attempt a binary downgrade across database schemas. Candidate preparation
 requires a complete passing identity receipt in addition to the other checks.
 
+## Check provider status and accessible interactions
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --playwright-module /path/to/installed/playwright \
+  --checks metadataaccessibility
+```
+
+This check uses Chromium and FFmpeg to exercise the packaged application with
+a synthetic library and a loopback metadata provider. It checks completed and
+cached searches, confirmed missing metadata, and rate limits. The browser
+checks accessible names, keyboard activation, and focus in recording and
+confirmation dialogs at desktop and phone widths.
+
 ## Check refresh cancellation and shutdown
 
 Run the cancellation proof against a package containing P10:

@@ -9,6 +9,7 @@ import ModalContent from 'Components/Modal/ModalContent';
 import ModalFooter from 'Components/Modal/ModalFooter';
 import ModalHeader from 'Components/Modal/ModalHeader';
 import { kinds } from 'Helpers/Props';
+import translate from 'Utilities/String/translate';
 
 function formatBookFiles(items, book) {
 
@@ -62,20 +63,12 @@ class ConfirmImportModalContent extends Component {
       isPopulated
     } = this.props;
 
-    // don't render if nothing to do
-    if (!isFetching && isPopulated && !items.length) {
-      return null;
-    }
+    const showConfirmation = !isFetching && isPopulated && items.length > 0;
 
     return (
       <ModalContent onModalClose={onModalClose}>
 
-        {
-          !isFetching && isPopulated &&
-            <ModalHeader>
-              Are you sure?
-            </ModalHeader>
-        }
+        <ModalHeader>{translate('ConfirmImport')}</ModalHeader>
 
         <ModalBody>
           {
@@ -84,7 +77,7 @@ class ConfirmImportModalContent extends Component {
           }
 
           {
-            !isFetching && isPopulated &&
+            showConfirmation &&
               <div>
                 <Alert>
                   You already have files imported for the books listed below.  If you continue, the existing files <b>will be deleted</b> and the new files imported in their place.
@@ -102,7 +95,7 @@ class ConfirmImportModalContent extends Component {
         </ModalBody>
 
         {
-          !isFetching && isPopulated &&
+          showConfirmation &&
             <ModalFooter>
               <Button onPress={onModalClose}>
                 Cancel

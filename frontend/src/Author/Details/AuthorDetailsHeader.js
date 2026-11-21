@@ -130,6 +130,7 @@ class AuthorDetailsHeader extends Component {
               <div className={styles.titleContainer}>
                 <div className={styles.toggleMonitoredContainer}>
                   <MonitorToggleButton
+                    aria-label={translate('MonitorAuthor')}
                     className={styles.monitorToggleButton}
                     monitored={monitored}
                     isSaving={isSaving}

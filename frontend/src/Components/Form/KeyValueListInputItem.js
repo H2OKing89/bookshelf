@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import IconButton from 'Components/Link/IconButton';
 import { icons } from 'Helpers/Props';
+import translate from 'Utilities/String/translate';
 import TextInput from './TextInput';
 import styles from './KeyValueListInputItem.css';
 
@@ -94,6 +95,7 @@ class KeyValueListInputItem extends Component {
               <IconButton
                 name={icons.REMOVE}
                 tabIndex={-1}
+                aria-label={translate('RemoveEntry')}
                 onPress={this.onRemovePress}
               />
           }

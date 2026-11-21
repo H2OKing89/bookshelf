@@ -5,6 +5,7 @@ import IconButton from 'Components/Link/IconButton';
 import Link from 'Components/Link/Link';
 import { icons, kinds } from 'Helpers/Props';
 import tagShape from 'Helpers/Props/Shapes/tagShape';
+import translate from 'Utilities/String/translate';
 import styles from './TagInputTag.css';
 
 class TagInputTag extends Component {
@@ -73,6 +74,7 @@ class TagInputTag extends Component {
                   className={styles.editButton}
                   name={icons.EDIT}
                   size={9}
+                  aria-label={translate('EditTag')}
                   onPress={this.onEdit}
                 />
               </div> :

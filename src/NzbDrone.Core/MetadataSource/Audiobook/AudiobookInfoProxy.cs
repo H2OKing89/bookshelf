@@ -28,6 +28,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         private readonly ICached<AuthorMetadata> _authors;
         private readonly ICached<MetadataLookup<AudnexusBookResource>> _details;
         private readonly ICached<MetadataLookup<AudiobookChapterMetadata>> _chapters;
+        private readonly IMetadataProviderStatusService _status;
         private readonly Logger _logger;
 
         public AudiobookInfoProxy(IAudnexusProxy audnexus,
@@ -39,6 +40,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             ICacheManager cacheManager,
             IAudiobookMetadataOverrideService overrides,
             IMetadataProfileRepository metadataProfiles,
+            IMetadataProviderStatusService status,
             Logger logger)
         {
             _logger = logger;
@@ -50,6 +52,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             _bookService = bookService;
             _editionService = editionService;
             _metadataProfiles = metadataProfiles;
+            _status = status;
             _authors = cacheManager.GetCache<AuthorMetadata>(GetType(), "AudiobookAuthors");
             _details = cacheManager.GetCache<MetadataLookup<AudnexusBookResource>>(GetType(), "AudiobookRecordingDetails");
             _chapters = cacheManager.GetCache<MetadataLookup<AudiobookChapterMetadata>>(GetType(), "AudiobookRecordingChapters");
@@ -140,8 +143,18 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 throw new BookInfoException("A recording requires an Audible ASIN.");
             }
 
-            var resource = OptionalDetails(() => _audnexus.GetBook(identity.Value, identity.Region), id, "Audnexus");
-            var primaryError = _details.Find(DetailKey(id, "Audnexus"))?.Error;
+            return MetadataProviderObservation.Observe(_status,
+                MetadataProvider.Audnexus,
+                MetadataProviderOperation.RecordingRefresh,
+                observation => ReadBookInfo(id, identity, observation));
+        }
+
+        private Tuple<string, Book, List<AuthorMetadata>> ReadBookInfo(string id,
+                                                                     (string Region, string Value, bool IsName) identity,
+                                                                     MetadataProviderObservation observation)
+        {
+            var resource = OptionalDetails(() => _audnexus.GetBook(identity.Value, identity.Region), id, MetadataProvider.Audnexus, observation);
+            var primaryError = _details.Find(DetailKey(id, MetadataProvider.Audnexus))?.Error;
             ValidateRecordingIdentity(resource, identity.Value, identity.Region);
             if (resource != null && !AudiobookCatalogPolicy.IsRecording(resource))
             {
@@ -151,9 +164,14 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             var hasAudnexusDetails = HasRequiredRecordingMetadata(resource);
             if (!hasAudnexusDetails && _config.AudibleRsEnabled)
             {
-                var fallback = OptionalDetails(() => _audible.GetBook(identity.Value, identity.Region), id, "Audible");
-                var fallbackError = _details.Find(DetailKey(id, "Audible"))?.Error;
+                var fallback = OptionalDetails(() => _audible.GetBook(identity.Value, identity.Region), id, MetadataProvider.Audible, observation);
+                var fallbackError = _details.Find(DetailKey(id, MetadataProvider.Audible))?.Error;
                 ValidateRecordingIdentity(fallback, identity.Value, identity.Region);
+                if (fallback != null || fallbackError != null)
+                {
+                    observation.UseProvider(MetadataProvider.Audible);
+                }
+
                 resource = fallback ?? resource;
                 if (!HasRequiredRecordingMetadata(resource) && (primaryError != null || fallbackError != null))
                 {
@@ -176,16 +194,17 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             }
 
             var book = Map(resource, identity.Region);
+            ObserveSparseRecording(resource, observation);
             if (hasAudnexusDetails && NeedsDetails(book) && _config.AudibleRsEnabled)
             {
-                var details = OptionalDetails(() => _audible.GetBook(identity.Value, identity.Region), book.ForeignBookId, "Audible");
+                var details = OptionalDetails(() => _audible.GetBook(identity.Value, identity.Region), book.ForeignBookId, MetadataProvider.Audible, observation);
                 if (details != null)
                 {
-                    MergeDetails(book, details, identity.Region, false);
+                    MergeDetails(book, details, identity.Region, false, observation);
                 }
             }
 
-            EnrichChapters(book, identity.Region);
+            EnrichChapters(book, identity.Region, observation);
 
             var authors = AudiobookContributors.All(resource).Where(credit => credit.Role == "Author")
                 .Select(credit => MapAuthor(new AudnexusContributorResource { Asin = credit.Asin, Name = credit.Name, Role = credit.Role }, identity.Region))
@@ -199,6 +218,18 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             id = _overrides.CanonicalAuthorId(id);
             var identity = AudiobookId.Parse(id);
+            var provider = _config.AudibleRsEnabled ? MetadataProvider.Audible : MetadataProvider.Audnexus;
+            return MetadataProviderObservation.Observe(_status,
+                provider,
+                MetadataProviderOperation.AuthorRefresh,
+                observation => ReadAuthorInfo(id, identity, provider, observation));
+        }
+
+        private Author ReadAuthorInfo(string id,
+                                      (string Region, string Value, bool IsName) identity,
+                                      MetadataProvider provider,
+                                      MetadataProviderObservation observation)
+        {
             var local = _authorService.FindById(id);
             var profile = local == null ? null : _metadataProfiles.Get(local.MetadataProfileId);
             var metadata = local?.Metadata.Value ?? _authors.Find(id);
@@ -214,8 +245,9 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 {
                     authorProfile = _audnexus.GetAuthor(identity.Value, identity.Region);
                 }
-                catch (BookInfoException) when (metadata != null && _config.AudibleRsEnabled)
+                catch (BookInfoException error) when (metadata != null && provider == MetadataProvider.Audible)
                 {
+                    ObserveOptionalError(error, observation);
                     _logger.Debug("The known author profile is temporarily unavailable; retaining stored metadata for {0}.", id);
                     authorProfile = null;
                 }
@@ -227,6 +259,10 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                     AudiobookAuthorIdentity.PreferDisplayName(updated, metadata, _overrides.FindAuthor(authorProfile, identity.Region));
                     metadata = updated;
                 }
+                else if (metadata != null)
+                {
+                    observation.Partial(MetadataProviderReason.ConfirmedMissing);
+                }
             }
             else
             {
@@ -235,13 +271,14 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
             if (metadata == null)
             {
-                throw new BookInfoException("No author profile was found for this ASIN. Search for an audiobook title by this author first.");
+                throw new BookInfoException(new MetadataProviderIssue(MetadataProviderState.Missing, MetadataProviderReason.ConfirmedMissing),
+                    "No author profile was found for this ASIN. Search for an audiobook title by this author first.");
             }
 
             // Read every alias page before optional detail lookups, so a detail
             // outage cannot interrupt discovery of the rest of the bibliography.
             var resources = _overrides.AuthorSearchNames(metadata, identity.Region)
-                .SelectMany(name => _config.AudibleRsEnabled
+                .SelectMany(name => provider == MetadataProvider.Audible
                     ? _audible.GetAuthorBooks(name, identity.Region)
                     : _audnexus.SearchBooks(name, identity.Region))
                 .DistinctBy(resource => resource.Asin).ToList();
@@ -251,14 +288,36 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 Name = metadata.Name
             }, identity.Region);
             AudiobookAuthorIdentity.PreferDisplayName(metadata, local?.Metadata.Value, authorIdentity, resources);
-            var discovered = resources.Where(AudiobookCatalogPolicy.IsRecording)
-                .Where(resource => MatchesProfileLanguage(resource, profile))
-                .Where(resource => MatchesAuthor(resource, identity.Region, metadata))
-                .Select(resource => Enrich(resource, identity.Region, metadata))
-                .Where(b => b.AuthorMetadata.Value.ForeignAuthorId == id).ToList();
 
             // Neither a capped search nor a regional catalog is an authoritative deletion feed.
             var known = local == null ? new List<Book>() : _bookService.GetBooksByAuthorMetadataId(local.AuthorMetadataId);
+            var knownIds = known.Select(book => book.ForeignBookId).ToHashSet();
+            var discovered = new List<Book>();
+            foreach (var resource in resources.Where(AudiobookCatalogPolicy.IsRecording).Where(resource => MatchesProfileLanguage(resource, profile)))
+            {
+                CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
+                if (!MatchesAuthor(resource, identity.Region, metadata))
+                {
+                    if (knownIds.Contains(AudiobookId.ForAsin(identity.Region, resource.Asin)))
+                    {
+                        observation.Flag(MetadataProviderState.IdentityReview, MetadataProviderReason.IdentityConflict);
+                    }
+
+                    continue;
+                }
+
+                var book = Enrich(resource, identity.Region, metadata, observation);
+                if (book.AuthorMetadata.Value.ForeignAuthorId == id)
+                {
+                    discovered.Add(book);
+                }
+            }
+
+            if (provider == MetadataProvider.Audnexus)
+            {
+                observation.Partial(MetadataProviderReason.KeywordCoverage);
+            }
+
             foreach (var book in known)
             {
                 CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
@@ -357,7 +416,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             if (existing?.AuthorMetadata?.Value != null &&
                 _overrides.CanonicalAuthorId(existing.AuthorMetadata.Value.ForeignAuthorId) != _overrides.CanonicalAuthorId(metadata.ForeignAuthorId))
             {
-                throw new BookInfoException("The recording's author credits conflict with its established owner.");
+                throw IdentityConflict("The recording's author credits conflict with its established owner.");
             }
 
             RememberAuthor(metadata);
@@ -433,7 +492,8 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 .Select(credit => new AudnexusContributorResource { Asin = credit.Asin, Name = credit.Name, Role = credit.Role }).ToList();
             if (!contributors.Any())
             {
-                throw new BookInfoException("Audiobook metadata is missing its author.");
+                throw new BookInfoException(new MetadataProviderIssue(MetadataProviderState.Partial, MetadataProviderReason.SparseMetadata),
+                    "Audiobook metadata is missing its author.");
             }
 
             var expectedIdentity = AudiobookId.Parse(expectedAuthor.ForeignAuthorId);
@@ -450,44 +510,63 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                     string.Equals(AudiobookTextNormalizer.Text(name), AudiobookTextNormalizer.Text(contributor.Name), StringComparison.OrdinalIgnoreCase)));
         }
 
-        private Book Enrich(AudnexusBookResource resource, string region, AuthorMetadata expectedAuthor = null)
+        private Book Enrich(AudnexusBookResource resource, string region, AuthorMetadata expectedAuthor, MetadataProviderObservation observation)
         {
             var book = Map(resource, region, expectedAuthor, true);
 
             // A catalog can look complete while omitting another series, genres or
             // a fuller synopsis. Revisit details periodically even for rich records.
             // Cache absent optional fields and 404s as well as successful details.
-            var details = OptionalDetails(() => _audnexus.GetBook(resource.Asin, region), book.ForeignBookId, "Audnexus");
+            var details = OptionalDetails(() => _audnexus.GetBook(resource.Asin, region), book.ForeignBookId, MetadataProvider.Audnexus, observation);
             if (details != null)
             {
-                MergeDetails(book, details, region, true);
+                MergeDetails(book, details, region, true, observation);
             }
 
             if (NeedsDetails(book) && _config.AudibleRsEnabled)
             {
-                details = OptionalDetails(() => _audible.GetBook(resource.Asin, region), book.ForeignBookId, "Audible");
+                details = OptionalDetails(() => _audible.GetBook(resource.Asin, region), book.ForeignBookId, MetadataProvider.Audible, observation);
                 if (details != null)
                 {
-                    MergeDetails(book, details, region, false);
+                    MergeDetails(book, details, region, false, observation);
                 }
             }
 
-            EnrichChapters(book, region);
+            ObserveSparseRecording(resource, observation);
+            EnrichChapters(book, region, observation);
             return book;
         }
 
-        private AudnexusBookResource OptionalDetails(Func<AudnexusBookResource> lookup, string recordingId, string source)
-            => OptionalMetadata(lookup, recordingId, source, _details);
+        private AudnexusBookResource OptionalDetails(Func<AudnexusBookResource> lookup,
+                                                    string recordingId,
+                                                    MetadataProvider provider,
+                                                    MetadataProviderObservation observation)
+            => OptionalMetadata(lookup, recordingId, provider, MetadataProviderOperation.RecordingDetails, _details, observation);
 
-        private T OptionalMetadata<T>(Func<T> lookup, string recordingId, string source, ICached<MetadataLookup<T>> cache)
+        private T OptionalMetadata<T>(Func<T> lookup,
+                                      string recordingId,
+                                      MetadataProvider provider,
+                                      MetadataProviderOperation operation,
+                                      ICached<MetadataLookup<T>> cache,
+                                      MetadataProviderObservation observation)
             where T : class
         {
             var cancellationToken = CommandExecutionContext.CancellationToken;
             cancellationToken.ThrowIfCancellationRequested();
-            var key = DetailKey(recordingId, source);
+            var key = DetailKey(recordingId, provider);
             var cached = cache.Find(key);
             if (cached != null)
             {
+                if (cached.Error != null)
+                {
+                    ObserveOptionalError(cached.Error, observation);
+                }
+                else if (cached.Value != null)
+                {
+                    observation.UseCached();
+                    _status.Report(new MetadataProviderStatus(provider, operation, MetadataProviderState.Cached, null, DateTime.UtcNow, null, null));
+                }
+
                 return cached.Value;
             }
 
@@ -501,6 +580,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             catch (BookInfoException ex)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                ObserveOptionalError(ex, observation);
 
                 // An optional enrichment outage must not discard a successful
                 // author catalog or its stored metadata. Identity checks below
@@ -511,14 +591,28 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             }
         }
 
-        private void EnrichChapters(Book book, string region)
+        private static void ObserveOptionalError(BookInfoException error, MetadataProviderObservation observation)
+        {
+            if (error.ProviderIssue?.State == MetadataProviderState.IdentityReview)
+            {
+                observation.Flag(MetadataProviderState.IdentityReview, MetadataProviderReason.IdentityConflict);
+            }
+            else
+            {
+                observation.Partial(error.ProviderIssue?.Reason ?? MetadataProviderReason.Transport);
+            }
+        }
+
+        private void EnrichChapters(Book book, string region, MetadataProviderObservation observation)
         {
             var asin = AudiobookId.Parse(book.ForeignBookId).Value;
             var metadata = OptionalMetadata(
                 () => AudiobookMetadataMapper.Chapters(_audnexus.GetChapters(asin, region), asin, region),
                 book.ForeignBookId,
-                "Audnexus",
-                _chapters);
+                MetadataProvider.Audnexus,
+                MetadataProviderOperation.Chapters,
+                _chapters,
+                observation);
             if (metadata != null)
             {
                 var edition = book.Editions.Value.Single();
@@ -531,25 +625,26 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             }
         }
 
-        private string DetailKey(string recordingId, string source) => source + ":" +
-            (source == "Audnexus" ? _config.AudnexusUrl : _config.AudibleRsUrl + ":" + _config.AudibleRsAccount) + ":" + recordingId;
+        private string DetailKey(string recordingId, MetadataProvider provider) => provider + ":" +
+            (provider == MetadataProvider.Audnexus ? _config.AudnexusUrl : _config.AudibleRsUrl + ":" + _config.AudibleRsAccount) + ":" + recordingId;
 
-        private void MergeDetails(Book book, AudnexusBookResource details, string region, bool preferSeries)
+        private void MergeDetails(Book book, AudnexusBookResource details, string region, bool preferSeries, MetadataProviderObservation observation)
         {
             if (details.Asin != AudiobookId.Parse(book.ForeignBookId).Value || details.Region != region ||
                 !AudiobookCatalogPolicy.IsRecording(details))
             {
-                throw new BookInfoException("Audiobook details do not match this recording, marketplace, or author.");
+                throw IdentityConflict("Audiobook details do not match this recording, marketplace, or author.");
             }
 
             if (!HasRequiredRecordingMetadata(details))
             {
+                observation.Partial(MetadataProviderReason.SparseMetadata);
                 return;
             }
 
             if (!MatchesAuthor(details, region, book.AuthorMetadata.Value))
             {
-                throw new BookInfoException("Audiobook details do not match this recording, marketplace, or author.");
+                throw IdentityConflict("Audiobook details do not match this recording, marketplace, or author.");
             }
 
             var detailed = Map(details, region, book.AuthorMetadata.Value);
@@ -569,18 +664,32 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             AudiobookId.IsAsin(resource?.Asin) && resource.Title.IsNotNullOrWhiteSpace() &&
             AudiobookContributors.PrimaryAuthor(resource) != null;
 
+        private static void ObserveSparseRecording(AudnexusBookResource resource, MetadataProviderObservation observation)
+        {
+            if (resource.RuntimeLengthMin.GetValueOrDefault() <= 0 ||
+                (resource.Description.IsNullOrWhiteSpace() && resource.Summary.IsNullOrWhiteSpace()) ||
+                resource.Image.IsNullOrWhiteSpace())
+            {
+                observation.Partial(MetadataProviderReason.SparseMetadata);
+            }
+        }
+
+        private static BookInfoException IdentityConflict(string message) =>
+            new BookInfoException(new MetadataProviderIssue(MetadataProviderState.IdentityReview, MetadataProviderReason.IdentityConflict), message);
+
         private static void ValidateRecordingIdentity(AudnexusBookResource resource, string asin, string region)
         {
             if (resource != null && (resource.Asin != asin || resource.Region != region))
             {
-                throw new BookInfoException("The metadata response does not match this recording or marketplace.");
+                throw IdentityConflict("The metadata response does not match this recording or marketplace.");
             }
         }
 
         private sealed class IncompleteRecordingMetadataException : BookInfoException
         {
             public IncompleteRecordingMetadataException()
-                : base("Recording metadata is incomplete in this marketplace; a title and author are required to identify it.")
+                : base(new MetadataProviderIssue(MetadataProviderState.Partial, MetadataProviderReason.SparseMetadata),
+                    "Recording metadata is incomplete in this marketplace; a title and author are required to identify it.")
             {
             }
         }

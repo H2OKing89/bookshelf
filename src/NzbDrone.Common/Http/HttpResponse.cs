@@ -35,6 +35,7 @@ namespace NzbDrone.Common.Http
         public HttpStatusCode StatusCode { get; private set; }
         public Version Version { get; private set; }
         public byte[] ResponseData { get; private set; }
+        public DateTime? CachedAtUtc { get; init; }
 
         private string _content;
 

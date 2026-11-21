@@ -246,6 +246,7 @@ class InteractiveSearchRow extends Component {
               kind={getDownloadKind(isGrabbed, grabError, downloadAllowed)}
               title={getDownloadTooltip(isGrabbing, isGrabbed, grabError)}
               isSpinning={isGrabbing}
+              aria-label={translate('GrabRelease')}
               onPress={downloadAllowed ? this.onGrabPress : this.onConfirmGrabPress}
             />
           }
