@@ -4,6 +4,7 @@ import React from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 import Icon from 'Components/Icon';
 import { icons } from 'Helpers/Props';
+import formControlProps from './formControlProps';
 import FormInputButton from './FormInputButton';
 import TextInput from './TextInput';
 import styles from './CaptchaInput.css';
@@ -27,6 +28,7 @@ function CaptchaInput(props) {
     <div>
       <div className={styles.captchaInputWrapper}>
         <TextInput
+          {...formControlProps(props)}
           className={classNames(
             className,
             styles.hasButton,

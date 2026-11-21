@@ -544,6 +544,11 @@ namespace NzbDrone.Core.MediaFiles
             return tag.ToParsedTrackInfo();
         }
 
+        internal AudioRecordingEvidence GetRecordingEvidence(string path, bool preferPathAsin)
+        {
+            return AudioRecordingIdentifier.Inspect(path, _embeddedAsins, preferPathAsin);
+        }
+
         public ParsedTrackInfo ToParsedTrackInfo(bool preferPathAsin = false)
         {
             var tag = this;

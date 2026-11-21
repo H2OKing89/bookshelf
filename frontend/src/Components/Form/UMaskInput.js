@@ -2,6 +2,7 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import EnhancedSelectInput from './EnhancedSelectInput';
+import formControlProps from './formControlProps';
 import styles from './UMaskInput.css';
 
 const umaskOptions = [
@@ -87,6 +88,7 @@ class UMaskInput extends Component {
         <div className={styles.inputWrapper}>
           <div className={styles.inputUnitWrapper}>
             <EnhancedSelectInput
+              {...formControlProps(this.props)}
               name={name}
               value={value}
               values={values}

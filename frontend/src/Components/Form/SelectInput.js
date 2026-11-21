@@ -1,6 +1,7 @@
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
+import formControlProps from './formControlProps';
 import styles from './SelectInput.css';
 
 class SelectInput extends Component {
@@ -22,7 +23,6 @@ class SelectInput extends Component {
     const {
       className,
       disabledClassName,
-      id,
       name,
       value,
       values,
@@ -35,6 +35,7 @@ class SelectInput extends Component {
 
     return (
       <select
+        {...formControlProps(this.props)}
         className={classNames(
           className,
           hasError && styles.hasError,
@@ -42,7 +43,6 @@ class SelectInput extends Component {
           isDisabled && disabledClassName
         )}
         disabled={isDisabled}
-        id={id}
         name={name}
         value={value}
         autoFocus={autoFocus}

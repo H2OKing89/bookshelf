@@ -14,8 +14,9 @@ import Scroller from 'Components/Scroller/Scroller';
 import { icons, scrollDirections, sizes } from 'Helpers/Props';
 import { isMobile as isMobileUtil } from 'Utilities/browser';
 import * as keyCodes from 'Utilities/Constants/keyCodes';
-import getUniqueElememtId from 'Utilities/getUniqueElementId';
+import getUniqueElementId from 'Utilities/getUniqueElementId';
 import translate from 'Utilities/String/translate';
+import formControlProps from './formControlProps';
 import HintedSelectInputOption from './HintedSelectInputOption';
 import HintedSelectInputSelectedValue from './HintedSelectInputSelectedValue';
 import TextInput from './TextInput';
@@ -100,8 +101,9 @@ class EnhancedSelectInput extends Component {
     super(props, context);
 
     this._scheduleUpdate = null;
-    this._buttonId = getUniqueElememtId();
-    this._optionsId = getUniqueElememtId();
+    this._buttonId = getUniqueElementId();
+    this._optionsId = getUniqueElementId();
+    this._valueId = getUniqueElementId();
 
     this.state = {
       isOpen: false,
@@ -334,6 +336,9 @@ class EnhancedSelectInput extends Component {
       selectedValue = isMultiSelect ? [] : '';
     }
 
+    const controlProps = formControlProps(this.props);
+    const labelledBy = controlProps['aria-labelledby'];
+
     return (
       <div>
         <Manager>
@@ -353,6 +358,7 @@ class EnhancedSelectInput extends Component {
                         className={styles.editableContainer}
                       >
                         <TextInput
+                          {...controlProps}
                           className={className}
                           name={name}
                           value={value}
@@ -364,12 +370,15 @@ class EnhancedSelectInput extends Component {
                           onChange={onChange}
                         />
                         <Link
+                          aria-label={translate('Options')}
+                          aria-expanded={isOpen}
                           className={classNames(
                             styles.dropdownArrowContainerEditable,
                             isDisabled ?
                               styles.dropdownArrowContainerDisabled :
                               styles.dropdownArrowContainer)
                           }
+                          isDisabled={isDisabled}
                           onPress={this.onPress}
                         >
                           {
@@ -391,6 +400,9 @@ class EnhancedSelectInput extends Component {
                         </Link>
                       </div> :
                       <Link
+                        {...controlProps}
+                        aria-labelledby={labelledBy ? `${labelledBy} ${this._valueId}` : undefined}
+                        aria-expanded={isOpen}
                         className={classNames(
                           className,
                           hasError && styles.hasError,
@@ -407,6 +419,7 @@ class EnhancedSelectInput extends Component {
                           values={values}
                           {...selectedValueOptions}
                           {...selectedOption}
+                          id={this._valueId}
                           isDisabled={isDisabled}
                           isMultiSelect={isMultiSelect}
                         >

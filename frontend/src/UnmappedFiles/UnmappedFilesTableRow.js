@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import BookQuality from 'Book/BookQuality';
 import FileDetailsModal from 'BookFile/FileDetailsModal';
+import RecordingReviewModal from 'BookFile/RecordingReviewModal';
 import IconButton from 'Components/Link/IconButton';
 import ConfirmModal from 'Components/Modal/ConfirmModal';
 import RelativeDateCellConnector from 'Components/Table/Cells/RelativeDateCellConnector';
@@ -24,6 +25,8 @@ class UnmappedFilesTableRow extends Component {
     this.state = {
       isDetailsModalOpen: false,
       isInteractiveImportModalOpen: false,
+      isRecordingReviewModalOpen: false,
+      reviewSingleFile: false,
       isConfirmDeleteModalOpen: false
     };
   }
@@ -40,11 +43,37 @@ class UnmappedFilesTableRow extends Component {
   };
 
   onInteractiveImportPress = () => {
-    this.setState({ isInteractiveImportModalOpen: true });
+    this.setState({ isInteractiveImportModalOpen: true, reviewSingleFile: false });
   };
 
   onInteractiveImportModalClose = () => {
     this.setState({ isInteractiveImportModalOpen: false });
+  };
+
+  onRecordingReviewPress = () => {
+    this.setState({ isRecordingReviewModalOpen: true });
+  };
+
+  onRecordingReviewClose = () => {
+    this.setState({ isRecordingReviewModalOpen: false });
+  };
+
+  onRecordingReviewManualImport = () => {
+    this.setState({
+      isRecordingReviewModalOpen: false,
+      isInteractiveImportModalOpen: true,
+      reviewSingleFile: true
+    });
+  };
+
+  onRecordingReviewCreateLocal = (fileId) => {
+    this.onRecordingReviewClose();
+    this.props.onCreateLocalRecording(fileId);
+  };
+
+  onAssociated = (review) => {
+    this.onRecordingReviewClose();
+    this.props.onRecordingAssociated(review);
   };
 
   onDeleteFilePress = () => {
@@ -80,6 +109,8 @@ class UnmappedFilesTableRow extends Component {
     const {
       isInteractiveImportModalOpen,
       isDetailsModalOpen,
+      isRecordingReviewModalOpen,
+      reviewSingleFile,
       isConfirmDeleteModalOpen
     } = this.state;
 
@@ -162,6 +193,12 @@ class UnmappedFilesTableRow extends Component {
                   className={styles[name]}
                 >
                   <IconButton
+                    name={icons.SEARCH}
+                    aria-label={translate('RecordingReviewAction')}
+                    onPress={this.onRecordingReviewPress}
+                  />
+
+                  <IconButton
                     name={icons.INFO}
                     aria-label={translate('FileDetails')}
                     onPress={this.onDetailsPress}
@@ -189,7 +226,7 @@ class UnmappedFilesTableRow extends Component {
 
         <InteractiveImportModal
           isOpen={isInteractiveImportModalOpen}
-          folder={folder}
+          folder={reviewSingleFile ? path : folder}
           showFilterExistingFiles={true}
           filterExistingFiles={false}
           showImportMode={false}
@@ -203,6 +240,18 @@ class UnmappedFilesTableRow extends Component {
           onModalClose={this.onDetailsModalClose}
           id={id}
         />
+
+        {
+          isRecordingReviewModalOpen &&
+            <RecordingReviewModal
+              isOpen={true}
+              fileId={id}
+              onModalClose={this.onRecordingReviewClose}
+              onManualImport={this.onRecordingReviewManualImport}
+              onCreateLocalRecording={this.onRecordingReviewCreateLocal}
+              onAssociated={this.onAssociated}
+            />
+        }
 
         <ConfirmModal
           isOpen={isConfirmDeleteModalOpen}
@@ -229,6 +278,8 @@ UnmappedFilesTableRow.propTypes = {
   columns: PropTypes.arrayOf(PropTypes.object).isRequired,
   isSelected: PropTypes.bool,
   onSelectedChange: PropTypes.func.isRequired,
+  onCreateLocalRecording: PropTypes.func.isRequired,
+  onRecordingAssociated: PropTypes.func.isRequired,
   deleteUnmappedFile: PropTypes.func.isRequired
 };
 

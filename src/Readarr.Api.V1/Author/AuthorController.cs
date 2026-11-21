@@ -32,6 +32,7 @@ namespace Readarr.Api.V1.Author
                                 IHandle<AuthorUpdatedEvent>,
                                 IHandle<AuthorEditedEvent>,
                                 IHandle<AuthorDeletedEvent>,
+                                IHandle<AuthorReconciledEvent>,
                                 IHandle<AuthorRenamedEvent>,
                                 IHandle<MediaCoversUpdatedEvent>
     {
@@ -275,6 +276,13 @@ namespace Readarr.Api.V1.Author
         public void Handle(AuthorDeletedEvent message)
         {
             BroadcastResourceChange(ModelAction.Deleted, message.Author.ToResource());
+        }
+
+        [NonAction]
+        public void Handle(AuthorReconciledEvent message)
+        {
+            BroadcastResourceChange(ModelAction.Deleted, message.SourceAuthorId);
+            BroadcastResourceChange(ModelAction.Updated, message.TargetAuthorId);
         }
 
         [NonAction]

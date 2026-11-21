@@ -236,6 +236,7 @@ class AuthorDetails extends Component {
       nextAuthor,
       onRefreshPress,
       onSearchPress,
+      onReconcileAuthorPress,
       isSaving,
       saveError,
       isDeleting,
@@ -331,6 +332,15 @@ class AuthorDetails extends Component {
               iconName={icons.EDIT}
               onPress={this.onEditAuthorPress}
             />
+
+            {
+              onReconcileAuthorPress &&
+                <PageToolbarButton
+                  label="Reconcile Author"
+                  iconName={icons.INTERACTIVE}
+                  onPress={onReconcileAuthorPress}
+                />
+            }
 
             <PageToolbarButton
               label={translate('Delete')}
@@ -638,6 +648,7 @@ AuthorDetails.propTypes = {
   onMonitorTogglePress: PropTypes.func.isRequired,
   onRefreshPress: PropTypes.func.isRequired,
   onSearchPress: PropTypes.func.isRequired,
+  onReconcileAuthorPress: PropTypes.func,
   isSaving: PropTypes.bool.isRequired,
   saveError: PropTypes.object,
   isDeleting: PropTypes.bool.isRequired,

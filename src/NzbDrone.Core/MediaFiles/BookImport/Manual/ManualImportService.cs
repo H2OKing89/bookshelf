@@ -128,10 +128,11 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
                     PreserveExistingReleaseGroups = true
                 };
 
-                var decision = _importDecisionMaker.GetImportDecisions(files, null, null, config);
-                var result = MapItem(decision.First(), downloadId, replaceExistingFiles, false, downloadClientId);
-
-                return new List<ManualImportItem> { result };
+                var decisions = _importDecisionMaker.GetImportDecisions(files, null, null, config);
+                var decision = decisions.FirstOrDefault(item => item.Item.Path.PathEquals(path));
+                return decision == null
+                    ? new List<ManualImportItem>()
+                    : new List<ManualImportItem> { MapItem(decision, downloadId, replaceExistingFiles, false, downloadClientId) };
             }
 
             return ProcessFolder(path, downloadId, author, filter, replaceExistingFiles, downloadClientId);

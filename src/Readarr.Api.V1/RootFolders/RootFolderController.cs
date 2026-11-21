@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using NzbDrone.Common.Disk;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Http;
 using NzbDrone.Core.Books.Calibre;
@@ -50,7 +51,8 @@ namespace Readarr.Api.V1.RootFolders
                 .SetValidator(folderWritableValidator);
 
             PostValidator.RuleFor(c => c.Path)
-                .SetValidator(rootFolderValidator);
+                .SetValidator(rootFolderValidator)
+                .When(c => c.Path?.IsPathValid(PathValidationType.CurrentOs) == true);
 
             SharedValidator.RuleFor(c => c)
                 .Must(x => CalibreLibraryOnlyUsedOnce(x))

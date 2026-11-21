@@ -120,6 +120,122 @@
         }
       }
     },
+    "/api/v1/authorreconciliation/candidates": {
+      "get": {
+        "tags": [
+          "AuthorReconciliation"
+        ],
+        "parameters": [
+          {
+            "name": "sourceAuthorId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuthorReconciliationCandidate"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid source author"
+          }
+        }
+      }
+    },
+    "/api/v1/authorreconciliation/preview": {
+      "post": {
+        "tags": [
+          "AuthorReconciliation"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorReconciliationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Review prepared",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorReconciliationPreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid review"
+          },
+          "404": {
+            "description": "Author not found"
+          }
+        }
+      }
+    },
+    "/api/v1/authorreconciliation": {
+      "post": {
+        "tags": [
+          "AuthorReconciliation"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorReconciliationConfirmation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Reconciliation queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "commandId"
+                  ],
+                  "properties": {
+                    "commandId": {
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid review"
+          },
+          "409": {
+            "description": "Review no longer applies"
+          }
+        }
+      }
+    },
     "/api/v1/author": {
       "get": {
         "tags": [
@@ -1156,6 +1272,77 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/bookfile/{id}/recordingreview": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "RecordingReview"
+        ],
+        "description": "Read identification evidence and local catalog matches for a stored file.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingReviewResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "File not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "RecordingReview"
+        ],
+        "description": "Associate an unchanged unmapped file with the single reviewed catalog edition.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordingAssociationResource"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Associated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingReviewResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid association"
+          },
+          "404": {
+            "description": "File not found"
+          },
+          "409": {
+            "description": "File or catalog evidence changed, or the target is unavailable"
           }
         }
       }
@@ -10452,6 +10639,408 @@
           "bookReleaseDate"
         ],
         "type": "string"
+      },
+      "RecordingReviewTarget": {
+        "type": "object",
+        "properties": {
+          "editionId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bookId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "authorId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "author": {
+            "type": "string",
+            "nullable": true
+          },
+          "recordingId": {
+            "type": "string",
+            "nullable": true
+          },
+          "asin": {
+            "type": "string",
+            "nullable": true
+          },
+          "region": {
+            "type": "string",
+            "nullable": true
+          },
+          "narrators": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "revision": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecordingReviewResult": {
+        "type": "object",
+        "properties": {
+          "fileId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "preferPathAsin": {
+            "type": "boolean"
+          },
+          "filenameAsins": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "folderAsins": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "embeddedAsins": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "malformedEmbeddedAsin": {
+            "type": "boolean"
+          },
+          "effectiveAsin": {
+            "type": "string",
+            "nullable": true
+          },
+          "tagTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "tagAuthors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tagNarrators": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "unsupportedFile",
+              "fileUnavailable",
+              "fileChanged",
+              "identifierConflict",
+              "catalogMissing",
+              "alreadyAssociated",
+              "differentPerformance",
+              "authorMissing",
+              "insufficientEvidence",
+              "ambiguousCatalogMatch",
+              "existingOrMultipartRecording",
+              "outsideAuthorFolder",
+              "exactCatalogMatch"
+            ]
+          },
+          "currentRecording": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecordingReviewTarget"
+              }
+            ]
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordingReviewTarget"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecordingAssociationResource": {
+        "type": "object",
+        "required": [
+          "editionId",
+          "revision"
+        ],
+        "properties": {
+          "editionId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "revision": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuthorReconciliationRequest": {
+        "type": "object",
+        "required": [
+          "sourceAuthorId",
+          "targetAuthorId",
+          "evidenceUrl",
+          "reason"
+        ],
+        "properties": {
+          "sourceAuthorId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "targetAuthorId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "evidenceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuthorReconciliationConfirmation": {
+        "type": "object",
+        "required": [
+          "sourceAuthorId",
+          "targetAuthorId",
+          "evidenceUrl",
+          "reason",
+          "previewToken"
+        ],
+        "properties": {
+          "sourceAuthorId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "targetAuthorId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "evidenceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "previewToken": {
+            "type": "string"
+          },
+          "keepCanonicalSettings": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuthorReconciliationCandidate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "foreignAuthorId": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuthorReconciliationProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "foreignAuthorId": {
+            "type": "string"
+          },
+          "authorMetadataId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "path": {
+            "type": "string",
+            "nullable": true
+          },
+          "titleSlug": {
+            "type": "string",
+            "nullable": true
+          },
+          "qualityProfileId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "metadataProfileId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "monitored": {
+            "type": "boolean"
+          },
+          "monitorNewItems": {
+            "$ref": "#/components/schemas/NewItemMonitorTypes"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuthorReconciliationRecording": {
+        "type": "object",
+        "properties": {
+          "bookId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "foreignBookId": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "editionId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "foreignEditionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "asin": {
+            "type": "string",
+            "nullable": true
+          },
+          "audibleRegion": {
+            "type": "string",
+            "nullable": true
+          },
+          "monitored": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuthorReconciliationFile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "editionId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "path": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuthorReconciliationReference": {
+        "type": "object",
+        "properties": {
+          "table": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuthorReconciliationPreview": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/AuthorReconciliationProfile"
+          },
+          "target": {
+            "$ref": "#/components/schemas/AuthorReconciliationProfile"
+          },
+          "recordings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuthorReconciliationRecording"
+            }
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuthorReconciliationFile"
+            }
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuthorReconciliationReference"
+            }
+          },
+          "settingsDifferences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "existingOverrideId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "previewToken": {
+            "type": "string",
+            "nullable": true
+          },
+          "canApply": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
       },
       "MetadataProviderStatus": {
         "type": "object",

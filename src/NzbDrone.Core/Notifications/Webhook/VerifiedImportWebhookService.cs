@@ -284,7 +284,7 @@ namespace NzbDrone.Core.Notifications.Webhook
             {
                 receipt.DownloadClientId,
                 receipt.DownloadId,
-                receipt.AuthorId,
+                AuthorId = receipt.OriginalAuthorId ?? receipt.AuthorId,
                 GrabId = grab?.Id,
                 GrabUtc = grab?.Date.ToUniversalTime(),
                 Files = receipt.Files.OrderBy(file => file.FileId).Select(file => new { file.FileId, file.BookId, file.EditionId, file.Part, file.PartCount })

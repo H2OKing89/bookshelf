@@ -1,6 +1,7 @@
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
+import formControlProps from './formControlProps';
 import styles from './TextInput.css';
 
 class TextInput extends Component {
@@ -128,7 +129,6 @@ class TextInput extends Component {
       readOnly,
       autoFocus,
       placeholder,
-      id,
       name,
       value,
       hasError,
@@ -143,6 +143,7 @@ class TextInput extends Component {
 
     return (
       <input
+        {...formControlProps(this.props)}
         ref={this.setInputRef}
         type={type}
         readOnly={readOnly}
@@ -155,7 +156,6 @@ class TextInput extends Component {
           hasWarning && styles.hasWarning,
           hasButton && styles.hasButton
         )}
-        id={id}
         name={name}
         value={value}
         step={step}

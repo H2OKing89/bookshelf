@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Icon from 'Components/Icon';
 import { icons, kinds } from 'Helpers/Props';
+import formControlProps from './formControlProps';
 import FormInputHelpText from './FormInputHelpText';
 import styles from './CheckInput.css';
 
@@ -69,7 +70,7 @@ class CheckInput extends Component {
   };
 
   onClick = (event) => {
-    if (this.props.isDisabled) {
+    if (this.props.isDisabled || event.target === this._checkbox) {
       return;
     }
 
@@ -99,7 +100,9 @@ class CheckInput extends Component {
       checkedValue,
       uncheckedValue,
       helpText,
+      helpTextId,
       helpTextWarning,
+      helpTextWarningId,
       isDisabled,
       kind
     } = this.props;
@@ -116,6 +119,7 @@ class CheckInput extends Component {
           onClick={this.onClick}
         >
           <input
+            {...formControlProps(this.props)}
             ref={this.setRef}
             className={styles.checkbox}
             type="checkbox"
@@ -148,6 +152,7 @@ class CheckInput extends Component {
             helpText &&
               <FormInputHelpText
                 className={styles.helpText}
+                id={helpTextId}
                 text={helpText}
               />
           }
@@ -156,6 +161,7 @@ class CheckInput extends Component {
             !helpText && helpTextWarning &&
               <FormInputHelpText
                 className={styles.helpText}
+                id={helpTextWarningId}
                 text={helpTextWarning}
                 isWarning={true}
               />
@@ -174,7 +180,9 @@ CheckInput.propTypes = {
   uncheckedValue: PropTypes.bool,
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
   helpText: PropTypes.string,
+  helpTextId: PropTypes.string,
   helpTextWarning: PropTypes.string,
+  helpTextWarningId: PropTypes.string,
   isDisabled: PropTypes.bool,
   kind: PropTypes.oneOf(kinds.all).isRequired,
   onChange: PropTypes.func.isRequired

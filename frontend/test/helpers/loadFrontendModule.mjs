@@ -50,5 +50,7 @@ export function loadFrontendModule(relativePath, replacements = {}) {
     return module.exports;
   }
 
-  return load(resolve(sourceRoot, relativePath));
+  return Array.isArray(relativePath)
+    ? relativePath.map((path) => load(resolve(sourceRoot, path)))
+    : load(resolve(sourceRoot, relativePath));
 }

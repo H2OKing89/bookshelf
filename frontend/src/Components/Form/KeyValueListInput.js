@@ -1,6 +1,7 @@
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
+import formControlProps from './formControlProps';
 import KeyValueListInputItem from './KeyValueListInputItem';
 import styles from './KeyValueListInput.css';
 
@@ -104,20 +105,28 @@ class KeyValueListInput extends Component {
     } = this.props;
 
     const { isFocused } = this.state;
+    const {
+      id,
+      ...attributes
+    } = formControlProps(this.props);
 
     return (
-      <div className={classNames(
-        className,
-        isFocused && styles.isFocused,
-        hasError && styles.hasError,
-        hasWarning && styles.hasWarning
-      )}
+      <div
+        {...attributes}
+        role="group"
+        className={classNames(
+          className,
+          isFocused && styles.isFocused,
+          hasError && styles.hasError,
+          hasWarning && styles.hasWarning
+        )}
       >
         {
           [...value, { key: '', value: '' }].map((v, index) => {
             return (
               <KeyValueListInputItem
                 key={index}
+                id={index === 0 ? id : undefined}
                 index={index}
                 keyValue={v.key}
                 value={v.value}

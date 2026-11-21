@@ -1,14 +1,18 @@
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useState } from 'react';
 import FormGroup from 'Components/Form/FormGroup';
 import FormInputGroup from 'Components/Form/FormInputGroup';
 import FormInputHelpText from 'Components/Form/FormInputHelpText';
 import FormLabel from 'Components/Form/FormLabel';
 import { inputTypes } from 'Helpers/Props';
+import getUniqueElementId from 'Utilities/getUniqueElementId';
 import translate from 'Utilities/String/translate';
 import styles from './NotificationEventItems.css';
 
 function NotificationEventItems(props) {
+  const [id] = useState(getUniqueElementId);
+  const labelId = `${id}-label`;
+  const helpId = `${id}-help`;
   const {
     item,
     onInputChange
@@ -46,12 +50,13 @@ function NotificationEventItems(props) {
   } = item;
 
   return (
-    <FormGroup>
-      <FormLabel>
+    <FormGroup role="group" aria-labelledby={labelId} aria-describedby={helpId}>
+      <FormLabel id={labelId} component="span">
         {translate('NotificationTriggers')}
       </FormLabel>
       <div>
         <FormInputHelpText
+          id={helpId}
           text="Select which events should trigger this notification"
           link="https://wiki.servarr.com/readarr/settings#connections"
         />

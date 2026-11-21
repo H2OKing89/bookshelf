@@ -101,7 +101,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [U01](#u01) | P1 | Verified | S | Correct accessible names on icon actions |
 | [U02](#u02) | P1 | Verified | M | Named, semantic dialogs |
 | [U03](#u03) | P1 | Planned | M | Keyboard-operated, viewport-aware menus |
-| [U04](#u04) | P1 | Planned | M | Connect form labels, help and validation to inputs |
+| [U04](#u04) | P1 | In progress | M | Connect form labels, help and validation to inputs |
 | [U05](#u05) | P2 | Planned | S | Announce asynchronous action results |
 | [U06](#u06) | P1 | Planned | M | Upgrade React independently to 18/createRoot |
 | [U07](#u07) | P1 | Planned | L | Strict TypeScript and explicit frontend type checking |
@@ -121,13 +121,13 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [U21](#u21) | P2 | Planned | M | Simplify existing library virtualization after measuring it |
 | [U22](#u22) | P2 | Planned | L | Vite/HMR and a separately verified asset pipeline |
 | [B01](#b01) | P0 | Verified | M | Make audiobook identity and upgrade invariants the porting contract |
-| [B02](#b02) | P1 | Planned | L | Provide a supported author reconciliation and correction workflow |
+| [B02](#b02) | P1 | In progress | L | Provide a supported author reconciliation and correction workflow |
 | [B03](#b03) | P2 | Planned | XL | Represent publisher-pack membership without collapsing recording identities |
 | [B04](#b04) | P1 | Verified | L | Add audio-specific custom-format rules from trustworthy media evidence |
 | [B05](#b05) | P2 | Verified | M | Version probe metadata and invalidate stale analysis deliberately |
 | [B06](#b06) | P2 | Planned | L | Complete the local-recording metadata lifecycle |
 | [B07](#b07) | P1 | Verified | M | Expose metadata-provider health and partial-result provenance |
-| [B08](#b08) | P1 | Planned | M | Explain and resolve unmapped or conflicting recording evidence |
+| [B08](#b08) | P1 | In progress | M | Explain and resolve unmapped or conflicting recording evidence |
 | [B09](#b09) | P2 | Planned | M | Add book-native library diagnostics and collection statistics |
 
 ### Release group follow-up index
@@ -2622,6 +2622,11 @@ Implement the accessible interaction contract independently or port the componen
 
 Adapt those semantics to Bookshelf's controls first, retaining audiobook/edition/profile/device input types. **Dependencies:** U02 ids; do not require wholesale form replacement. **Acceptance:** clicking labels focuses the right input; duplicate forms/modal fields do not duplicate ids; screen readers announce relevant help/errors; advanced-field hiding and explicit false/zero values are preserved; provider and local-recording forms retain server validation. Check every composite select/tag/password control, not only TextInput.
 
+**2026-11-21 implementation.** Shared form rows connect labels to the actual
+input and link help, warnings, and server errors. Local-recording inputs use
+unique IDs per dialog. Invalid relative root-folder paths return a field error
+that the Path input can describe.
+
 ### U05
 
 **Announce asynchronous action results**
@@ -2948,6 +2953,14 @@ The Sonarr entity lifecycle is a reference for explicit operations, not proof th
 
 **Acceptance:** Preview lists exact authors, recordings and reference changes. Existing histories, series links, profiles, tags, monitoring and file ownership are preserved according to the reviewed policy. A stale preview or injected DB error leaves both profiles intact. Restart and subsequent metadata lookups reuse the canonical author; similarly named distinct authors remain separate.
 
+**2026-11-21 implementation.** **Reconcile Author** previews a name-only
+profile's association with a reviewed canonical author in the same region.
+The profiles must use the same author folder. When settings differ, the user
+must confirm keeping the canonical settings. The command moves the existing
+recording and history references and saves the reviewed metadata correction in
+one transaction. Active download work, conflicting identities, and stale
+reviews block the change.
+
 ### B03
 
 **Represent publisher-pack membership without collapsing recording identities**
@@ -3081,6 +3094,13 @@ Verified with a loopback provider and the authenticated packaged UI. See
 Show the current recording identity alongside filename, nearest recording-folder, embedded-tag and catalog evidence, including the configured filename preference. Distinguish missing catalog coverage, contradictory identifiers, absent author identity, different performance and insufficient evidence. Link to exact-ASIN lookup, explicit manual selection, author-correction review or Create local recording as appropriate. Keep a bulk review operation bounded to the selected file/recording IDs; do not convert a higher fuzzy score into permission to reassign a recording.
 
 **Acceptance:** A user can understand each rejection and preview the exact resulting association. US/UK editions, numbered volumes, full casts, publisher packs and non-Audible files remain distinct. Review actions revalidate stale file/DB state, preserve provenance, and provide useful errors without revealing credentials or changing audio as a side effect.
+
+**2026-11-21 implementation.** **Review Recording** shows the recording evidence
+for one stored file, including the filename, nearest identified folder, embedded
+tags, path ASIN preference, and exact local catalog results. A unique match can
+be previewed and associated in place when the target is empty, the file is inside
+the author folder, and its evidence remains current. Other results guide the
+user to an exact lookup, manual import, or local recording as applicable.
 
 ### B09
 

@@ -11,6 +11,7 @@ import PageContentBody from 'Components/Page/PageContentBody';
 import getErrorMessage from 'Utilities/Object/getErrorMessage';
 import translate from 'Utilities/String/translate';
 import AuthorDetailsConnector from './AuthorDetailsConnector';
+import AuthorReconciliationModal from './AuthorReconciliationModal';
 import styles from './AuthorDetails.css';
 
 function createMapStateToProps() {
@@ -29,10 +30,12 @@ function createMapStateToProps() {
       const authorIndex = _.findIndex(items, { titleSlug });
 
       if (authorIndex > -1) {
+        const author = items[authorIndex];
         return {
           isFetching,
           isPopulated,
-          titleSlug
+          titleSlug,
+          nameOnlyAuthorId: /^audible:[a-z]{2}:name:.+/.test(author.foreignAuthorId) ? author.id : null
         };
       }
 
@@ -51,15 +54,31 @@ const mapDispatchToProps = {
 
 class AuthorDetailsPageConnector extends Component {
 
+  state = {
+    reconciliationAuthorId: null
+  };
+
   //
   // Lifecycle
 
   componentDidUpdate(prevProps) {
-    if (!this.props.titleSlug) {
+    if (!this.props.titleSlug && !this.state.reconciliationAuthorId) {
       this.props.push(`${window.Readarr.urlBase}/`);
       return;
     }
   }
+
+  onReconcileAuthorPress = () => {
+    this.setState({ reconciliationAuthorId: this.props.nameOnlyAuthorId });
+  };
+
+  onAuthorReconciliationClose = () => {
+    this.setState({ reconciliationAuthorId: null });
+  };
+
+  onAuthorReconciled = (titleSlug) => {
+    window.location.assign(`${window.Readarr.urlBase}/author/${encodeURIComponent(titleSlug)}`);
+  };
 
   //
   // Render
@@ -69,8 +88,10 @@ class AuthorDetailsPageConnector extends Component {
       titleSlug,
       isFetching,
       isPopulated,
-      error
+      error,
+      nameOnlyAuthorId
     } = this.props;
+    const { reconciliationAuthorId } = this.state;
 
     if (isFetching && !isPopulated) {
       return (
@@ -90,7 +111,7 @@ class AuthorDetailsPageConnector extends Component {
       );
     }
 
-    if (!titleSlug) {
+    if (!titleSlug && !reconciliationAuthorId) {
       return (
         <NotFound
           message={translate('SorryThatAuthorCannotBeFound')}
@@ -99,15 +120,30 @@ class AuthorDetailsPageConnector extends Component {
     }
 
     return (
-      <AuthorDetailsConnector
-        titleSlug={titleSlug}
-      />
+      <>
+        {
+          titleSlug &&
+            <AuthorDetailsConnector
+              titleSlug={titleSlug}
+              onReconcileAuthorPress={nameOnlyAuthorId ? this.onReconcileAuthorPress : undefined}
+            />
+        }
+        {
+          reconciliationAuthorId &&
+            <AuthorReconciliationModal
+              sourceAuthorId={reconciliationAuthorId}
+              onModalClose={this.onAuthorReconciliationClose}
+              onReconciled={this.onAuthorReconciled}
+            />
+        }
+      </>
     );
   }
 }
 
 AuthorDetailsPageConnector.propTypes = {
   titleSlug: PropTypes.string,
+  nameOnlyAuthorId: PropTypes.number,
   isFetching: PropTypes.bool.isRequired,
   isPopulated: PropTypes.bool.isRequired,
   error: PropTypes.object,

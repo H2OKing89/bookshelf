@@ -15,6 +15,7 @@ import ModalFooter from 'Components/Modal/ModalFooter';
 import ModalHeader from 'Components/Modal/ModalHeader';
 import { kinds, sizes } from 'Helpers/Props';
 import createAjaxRequest from 'Utilities/createAjaxRequest';
+import getUniqueElementId from 'Utilities/getUniqueElementId';
 import getErrorMessage from 'Utilities/Object/getErrorMessage';
 import styles from './CreateLocalRecordingModal.css';
 
@@ -34,7 +35,8 @@ class CreateLocalRecordingModal extends Component {
     this._previewGeneration = 0;
     this._abortPreview = null;
     this._saveInFlight = false;
-    this.state = { isLoading: false, isSaving: false, error: null, preview: null, fields: {} };
+    this._fieldId = getUniqueElementId();
+    this.state = { isLoading: false, isSaving: false, error: null, preview: null, fields: {}, fieldErrors: {} };
   }
 
   componentDidMount() {
@@ -68,7 +70,7 @@ class CreateLocalRecordingModal extends Component {
   loadPreview = () => {
     this.cancelPreview();
     const generation = this._previewGeneration;
-    this.setState({ isLoading: true, error: null, preview: null, fields: {} });
+    this.setState({ isLoading: true, error: null, preview: null, fields: {}, fieldErrors: {} });
     const { request, abortRequest } = createAjaxRequest({
       url: '/localrecording',
       data: { fileIds: this.props.files.map((file) => file.id) },
@@ -101,7 +103,11 @@ class CreateLocalRecordingModal extends Component {
   };
 
   onInputChange = ({ name, value }) => {
-    this.setState((state) => ({ fields: { ...state.fields, [name]: value }, error: null }));
+    this.setState((state) => ({
+      fields: { ...state.fields, [name]: value },
+      fieldErrors: { ...state.fieldErrors, [name]: undefined },
+      error: null
+    }));
   };
 
   onFieldChange = (event) => {
@@ -125,17 +131,23 @@ class CreateLocalRecordingModal extends Component {
       return;
     }
     const year = fields.year.trim();
-    if (!fields.title.trim() || !this.props.authors.some((author) => author.id === fields.authorId)) {
-      this.setState({ error: 'Enter a title and choose an author from your library.' });
-      return;
+    const fieldErrors = {};
+    if (!fields.title.trim()) {
+      fieldErrors.title = 'Enter a title.';
+    }
+    if (!this.props.authors.some((author) => author.id === fields.authorId)) {
+      fieldErrors.authorId = 'Choose an author from your library.';
     }
     if (year && (!/^\d{1,4}$/.test(year) || Number(year) === 0)) {
-      this.setState({ error: 'Enter a year from 1 to 9999, or leave it blank.' });
+      fieldErrors.year = 'Enter a year from 1 to 9999, or leave it blank.';
+    }
+    if (Object.keys(fieldErrors).length) {
+      this.setState({ error: Object.values(fieldErrors).join(' '), fieldErrors });
       return;
     }
 
     this._saveInFlight = true;
-    this.setState({ isSaving: true, error: null });
+    this.setState({ isSaving: true, error: null, fieldErrors: {} });
     const { request } = createAjaxRequest({
       url: '/localrecording',
       method: 'POST',
@@ -168,18 +180,24 @@ class CreateLocalRecordingModal extends Component {
 
   renderField(name, label, options = {}) {
     const { type = 'text', helpText, values, ...otherOptions } = options;
+    const id = `${this._fieldId}-${name}`;
+    const error = this.state.fieldErrors[name];
+    const helpId = helpText ? `${id}-help` : undefined;
+    const errorId = error ? `${id}-error` : undefined;
     const inputProps = {
-      id: `local-recording-${name}`,
+      id,
       name,
       value: this.state.fields[name],
       disabled: this.state.isSaving,
+      'aria-describedby': [errorId, helpId].filter(Boolean).join(' ') || undefined,
+      'aria-invalid': error ? true : undefined,
       onChange: this.onFieldChange,
       ...otherOptions
     };
 
     return (
       <FormGroup>
-        <FormLabel name={`local-recording-${name}`}>{label}</FormLabel>
+        <FormLabel htmlFor={id} hasError={!!error}>{label}</FormLabel>
         <div className={styles.field}>
           {
             type === 'select' &&
@@ -189,7 +207,8 @@ class CreateLocalRecordingModal extends Component {
           }
           {type === 'textarea' && <textarea className={styles.textarea} rows={3} {...inputProps} />}
           {type !== 'select' && type !== 'textarea' && <input className={styles.input} type={type} {...inputProps} />}
-          {helpText && <FormInputHelpText text={helpText} />}
+          {error && <FormInputHelpText id={errorId} text={error} isError={true} />}
+          {helpText && <FormInputHelpText id={helpId} text={helpText} />}
         </div>
       </FormGroup>
     );
@@ -216,7 +235,7 @@ class CreateLocalRecordingModal extends Component {
               </ul>
             </details>
             {isLoading && <LoadingIndicator />}
-            {error && <Alert kind={kinds.DANGER}>{error}</Alert>}
+            {error && <Alert kind={kinds.DANGER} role="alert">{error}</Alert>}
             {!isLoading && error && !preview && <Button onPress={this.onRetryPress}>Retry</Button>}
             {
               preview && !isLoading &&
@@ -226,7 +245,6 @@ class CreateLocalRecordingModal extends Component {
                   {this.renderField('authorId', 'Author', {
                     type: 'select',
                     values: authorOptions,
-                    'aria-label': 'Author',
                     helpText: preview.authorName ? `File author: ${preview.authorName}` : 'Choose the author who should own this recording.'
                   })}
                   <details>

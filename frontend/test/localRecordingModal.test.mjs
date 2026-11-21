@@ -119,8 +119,14 @@ test('creation requires a reviewed title, an existing author and a valid optiona
     component.setState({ fields: { ...component.state.fields, title: 'Course', authorId: 4, year: '', [name]: value } });
     component.onCreatePress();
     assert.ok(component.state.error);
+    assert.ok(component.state.fieldErrors[name]);
     assert.equal(requests.length, 1);
   }
+  const [label, content] = component.renderField('year', 'Year').props.children;
+  const [input, error] = content.props.children.filter(Boolean);
+  assert.equal(label.props.htmlFor, input.props.id);
+  assert.equal(input.props['aria-invalid'], true);
+  assert.equal(input.props['aria-describedby'], error.props.id);
 });
 
 test('Unmapped exposes selection without changing the shared file-table column settings', () => {

@@ -112,6 +112,20 @@ cached searches, confirmed missing metadata, and rate limits. The browser
 checks accessible names, keyboard activation, and focus in recording and
 confirmation dialogs at desktop and phone widths.
 
+## Check recording review and author reconciliation
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --playwright-module /path/to/installed/playwright \
+  --checks libraryreview
+```
+
+The check generates audiobook files with FFmpeg and uses Chromium to review
+them at desktop and phone widths. It exercises an exact recording association,
+identity conflicts, stale previews and an atomic author reconciliation.
+It checks the resulting recording, history and file identities after restart.
+
 ## Check refresh cancellation and shutdown
 
 Run the cancellation proof against a package containing P10:

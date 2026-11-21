@@ -1,0 +1,38 @@
+.evidence {
+  margin: 10px 0;
+}
+
+.evidence > div {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 2fr;
+  gap: 8px;
+
+  padding: 5px 0;
+}
+
+.evidence dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.target {
+  margin: 12px 0;
+  padding: 8px 12px 12px;
+  border: 1px solid var(--borderColor);
+  border-radius: 4px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  margin-top: 12px;
+}
+
+@media only screen and (max-width: $breakpointSmall) {
+  .evidence > div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

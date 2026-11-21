@@ -55,6 +55,7 @@ class KeyValueListInputItem extends Component {
 
   render() {
     const {
+      id,
       keyValue,
       value,
       keyPlaceholder,
@@ -66,6 +67,8 @@ class KeyValueListInputItem extends Component {
       <div className={styles.itemContainer}>
         <div className={styles.inputWrapper}>
           <TextInput
+            id={id}
+            aria-label={keyPlaceholder}
             className={styles.keyInput}
             name="key"
             value={keyValue}
@@ -78,6 +81,7 @@ class KeyValueListInputItem extends Component {
 
         <div className={styles.inputWrapper}>
           <TextInput
+            aria-label={valuePlaceholder}
             className={styles.valueInput}
             name="value"
             value={value}
@@ -106,6 +110,7 @@ class KeyValueListInputItem extends Component {
 }
 
 KeyValueListInputItem.propTypes = {
+  id: PropTypes.string,
   index: PropTypes.number,
   keyValue: PropTypes.string.isRequired,
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,

@@ -4,6 +4,7 @@ import React, { Component } from 'react';
 import Autosuggest from 'react-autosuggest';
 import { Manager, Popper, Reference } from 'react-popper';
 import Portal from 'Components/Portal';
+import getUniqueElementId from 'Utilities/getUniqueElementId';
 import styles from './AutoSuggestInput.css';
 
 class AutoSuggestInput extends Component {
@@ -15,6 +16,7 @@ class AutoSuggestInput extends Component {
     super(props, context);
 
     this._scheduleUpdate = null;
+    this._id = getUniqueElementId();
   }
 
   componentDidUpdate(prevProps) {
@@ -154,7 +156,12 @@ class AutoSuggestInput extends Component {
       forwardedRef,
       className,
       inputContainerClassName,
+      id,
       name,
+      'aria-label': ariaLabel,
+      'aria-labelledby': labelledBy,
+      'aria-describedby': describedBy,
+      'aria-invalid': invalid,
       value,
       placeholder,
       suggestions,
@@ -171,8 +178,14 @@ class AutoSuggestInput extends Component {
       onSuggestionSelected,
       ...otherProps
     } = this.props;
+    const inputId = id ?? this._id;
 
     const inputProps = {
+      id: inputId,
+      'aria-label': ariaLabel,
+      'aria-labelledby': labelledBy,
+      'aria-describedby': describedBy,
+      'aria-invalid': invalid,
       className: classNames(
         className,
         hasError && styles.hasError,
@@ -203,7 +216,7 @@ class AutoSuggestInput extends Component {
         <Autosuggest
           {...otherProps}
           ref={forwardedRef}
-          id={name}
+          id={inputId}
           inputProps={inputProps}
           theme={theme}
           suggestions={suggestions}
@@ -224,7 +237,12 @@ AutoSuggestInput.propTypes = {
   forwardedRef: PropTypes.func,
   className: PropTypes.string.isRequired,
   inputContainerClassName: PropTypes.string.isRequired,
+  id: PropTypes.string,
   name: PropTypes.string.isRequired,
+  'aria-label': PropTypes.string,
+  'aria-labelledby': PropTypes.string,
+  'aria-describedby': PropTypes.string,
+  'aria-invalid': PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
   placeholder: PropTypes.string,
   suggestions: PropTypes.array.isRequired,

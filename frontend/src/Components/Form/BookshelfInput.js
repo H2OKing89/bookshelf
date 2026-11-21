@@ -11,6 +11,7 @@ import tagShape from 'Helpers/Props/Shapes/tagShape';
 import getSelectedIds from 'Utilities/Table/getSelectedIds';
 import selectAll from 'Utilities/Table/selectAll';
 import toggleSelected from 'Utilities/Table/toggleSelected';
+import formControlProps from './formControlProps';
 import styles from './BookshelfInput.css';
 
 const columns = [
@@ -96,7 +97,11 @@ class BookshelfInput extends Component {
     } = this.state;
 
     return (
-      <div className={className}>
+      <div
+        {...formControlProps(this.props)}
+        className={className}
+        role="group"
+      >
         {
           isFetching &&
             <LoadingIndicator />

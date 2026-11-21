@@ -1,9 +1,9 @@
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useContext, useState } from 'react';
 import Link from 'Components/Link/Link';
 import { inputTypes, kinds } from 'Helpers/Props';
+import getUniqueElementId from 'Utilities/getUniqueElementId';
 import translate from 'Utilities/String/translate';
-// import translate from 'Utilities/String/translate';
 import AutoCompleteInput from './AutoCompleteInput';
 import BookEditionSelectInputConnector from './BookEditionSelectInputConnector';
 import BookshelfInputConnector from './BookshelfInputConnector';
@@ -13,6 +13,7 @@ import DeviceInputConnector from './DeviceInputConnector';
 import DownloadClientSelectInputConnector from './DownloadClientSelectInputConnector';
 import EnhancedSelectInput from './EnhancedSelectInput';
 import EnhancedSelectInputConnector from './EnhancedSelectInputConnector';
+import FormGroupContext from './FormGroupContext';
 import FormInputHelpText from './FormInputHelpText';
 import IndexerFlagsSelectInput from './IndexerFlagsSelectInput';
 import IndexerSelectInputConnector from './IndexerSelectInputConnector';
@@ -125,6 +126,8 @@ function FormInputGroup(props) {
     containerClassName,
     inputClassName,
     type,
+    id,
+    name,
     unit,
     buttons,
     helpText,
@@ -134,8 +137,17 @@ function FormInputGroup(props) {
     pending,
     errors,
     warnings,
+    'aria-describedby': describedBy,
+    'aria-invalid': invalid,
+    'aria-label': ariaLabel,
+    'aria-labelledby': labelledBy,
     ...otherProps
   } = props;
+  const association = useContext(FormGroupContext);
+  const [generatedId] = useState(getUniqueElementId);
+  const hasRowLabel = association !== null && association.name === name;
+  const inputId = id ?? (hasRowLabel ? association.inputId : generatedId);
+  const labelIds = labelledBy ?? (!ariaLabel && hasRowLabel ? association.labelId : undefined);
 
   const InputComponent = getComponent(type);
   const checkInput = type === inputTypes.CHECK;
@@ -144,6 +156,19 @@ function FormInputGroup(props) {
   const buttonsArray = React.Children.toArray(buttons);
   const lastButtonIndex = buttonsArray.length - 1;
   const hasButton = !!buttonsArray.length;
+  const helpId = helpText ? `${inputId}-help` : undefined;
+  const helpWarningId = helpTextWarning ? `${inputId}-help-warning` : undefined;
+  const descriptions = [
+    ...(describedBy?.split(/\s+/) ?? []),
+    // A standalone checkbox uses its inline text as its name. A checkbox
+    // with a separate row label uses the same text as a description.
+    (!checkInput || labelIds || ariaLabel) && helpId,
+    (!checkInput || labelIds || ariaLabel || helpText) && helpWarningId,
+    ...(checkInput ? [] : helpTexts.map((_, index) => `${inputId}-help-${index}`)),
+    ...errors.map((_, index) => `${inputId}-error-${index}`),
+    ...warnings.map((_, index) => `${inputId}-warning-${index}`)
+  ];
+  const checkedHelp = checkInput ? { helpTextId: helpId, helpTextWarningId: helpWarningId } : {};
 
   return (
     <div className={containerClassName}>
@@ -151,12 +176,19 @@ function FormInputGroup(props) {
         <div className={styles.inputContainer}>
           <InputComponent
             className={inputClassName}
+            id={inputId}
+            name={name}
+            aria-describedby={Array.from(new Set(descriptions.filter(Boolean))).join(' ') || undefined}
+            aria-invalid={hasError ? true : invalid}
+            aria-label={ariaLabel}
+            aria-labelledby={labelIds}
             helpText={helpText}
             helpTextWarning={helpTextWarning}
             hasError={hasError}
             hasWarning={hasWarning}
             hasButton={hasButton}
             {...otherProps}
+            {...checkedHelp}
           />
 
           {
@@ -199,6 +231,7 @@ function FormInputGroup(props) {
       {
         !checkInput && helpText &&
           <FormInputHelpText
+            id={helpId}
             text={helpText}
           />
       }
@@ -211,6 +244,7 @@ function FormInputGroup(props) {
                 return (
                   <FormInputHelpText
                     key={index}
+                    id={`${inputId}-help-${index}`}
                     text={text}
                     isCheckInput={checkInput}
                   />
@@ -223,6 +257,7 @@ function FormInputGroup(props) {
       {
         (!checkInput || helpText) && helpTextWarning &&
           <FormInputHelpText
+            id={helpWarningId}
             text={helpTextWarning}
             isWarning={true}
           />
@@ -242,6 +277,7 @@ function FormInputGroup(props) {
           return (
             <FormInputHelpText
               key={index}
+              id={`${inputId}-error-${index}`}
               text={error.message}
               link={error.link}
               tooltip={error.detailedMessage}
@@ -257,6 +293,7 @@ function FormInputGroup(props) {
           return (
             <FormInputHelpText
               key={index}
+              id={`${inputId}-warning-${index}`}
               text={warning.message}
               link={warning.link}
               tooltip={warning.detailedMessage}
@@ -274,7 +311,12 @@ FormInputGroup.propTypes = {
   className: PropTypes.string.isRequired,
   containerClassName: PropTypes.string.isRequired,
   inputClassName: PropTypes.string,
+  id: PropTypes.string,
   name: PropTypes.string.isRequired,
+  'aria-describedby': PropTypes.string,
+  'aria-invalid': PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+  'aria-label': PropTypes.string,
+  'aria-labelledby': PropTypes.string,
   value: PropTypes.any,
   values: PropTypes.arrayOf(PropTypes.any),
   isDisabled: PropTypes.bool,

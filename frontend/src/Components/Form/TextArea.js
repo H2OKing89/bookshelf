@@ -1,6 +1,7 @@
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
+import formControlProps from './formControlProps';
 import styles from './TextArea.css';
 
 class TextArea extends Component {
@@ -123,6 +124,7 @@ class TextArea extends Component {
 
     return (
       <textarea
+        {...formControlProps(this.props)}
         ref={this.setInputRef}
         readOnly={readOnly}
         autoFocus={autoFocus}

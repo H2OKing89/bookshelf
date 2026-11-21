@@ -36,6 +36,7 @@ class UnmappedFilesTable extends Component {
       lastToggled: null,
       selectedState: {},
       localRecordingFiles: null,
+      associatedRecording: null,
       createdRecording: null
     };
   }
@@ -147,6 +148,18 @@ class UnmappedFilesTable extends Component {
     this.setState({ localRecordingFiles: null });
   };
 
+  onReviewLocalRecording = (fileId) => {
+    const file = this.props.items.find((item) => item.id === fileId);
+    if (file) {
+      this.setState({ localRecordingFiles: [file] });
+    }
+  };
+
+  onRecordingAssociated = (review) => {
+    this.setState({ associatedRecording: review });
+    this.props.onRecordingAssociated(review);
+  };
+
   onLocalRecordingCreated = (book) => {
     this.setState({ localRecordingFiles: null, createdRecording: book });
     this.onSelectAllChange({ value: false });
@@ -176,6 +189,8 @@ class UnmappedFilesTable extends Component {
           columns={columns}
           isSelected={selectedState[item.id]}
           onSelectedChange={this.onSelectedChange}
+          onCreateLocalRecording={this.onReviewLocalRecording}
+          onRecordingAssociated={this.onRecordingAssociated}
           deleteUnmappedFile={deleteUnmappedFile}
           {...item}
         />
@@ -208,6 +223,7 @@ class UnmappedFilesTable extends Component {
       allUnselected,
       selectedState,
       localRecordingFiles,
+      associatedRecording,
       createdRecording
     } = this.state;
 
@@ -257,6 +273,15 @@ class UnmappedFilesTable extends Component {
         <PageContentBody
           registerScroller={this.setScrollerRef}
         >
+          {
+            associatedRecording &&
+              <Alert kind={kinds.SUCCESS} role="status">
+                {translate('RecordingReviewAssociationSaved', {
+                  fileName: associatedRecording.fileName,
+                  title: associatedRecording.currentRecording.title
+                })}
+              </Alert>
+          }
           {
             createdRecording &&
               <Alert kind={kinds.SUCCESS}>
@@ -327,6 +352,7 @@ UnmappedFilesTable.propTypes = {
   onSortPress: PropTypes.func.isRequired,
   deleteUnmappedFile: PropTypes.func.isRequired,
   deleteUnmappedFiles: PropTypes.func.isRequired,
+  onRecordingAssociated: PropTypes.func.isRequired,
   isScanningFolders: PropTypes.bool.isRequired,
   onAddMissingAuthorsPress: PropTypes.func.isRequired,
   onLocalRecordingCreated: PropTypes.func.isRequired

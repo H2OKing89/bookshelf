@@ -12,6 +12,10 @@ namespace NzbDrone.Core.Download
         public string DownloadId { get; set; }
         public int DownloadClientId { get; set; }
         public int AuthorId { get; set; }
+
+        // Reconciliation updates live ownership while retaining the identity
+        // used when the original completion notification was claimed.
+        public int? OriginalAuthorId { get; set; }
         public string OutputPath { get; set; }
         public bool KeepSourceFiles { get; set; }
         public List<int> BookIds { get; set; } = new List<int>();

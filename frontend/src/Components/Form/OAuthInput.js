@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import SpinnerErrorButton from 'Components/Link/SpinnerErrorButton';
 import { kinds } from 'Helpers/Props';
+import formControlProps from './formControlProps';
 
 function OAuthInput(props) {
   const {
@@ -14,6 +15,9 @@ function OAuthInput(props) {
   return (
     <div>
       <SpinnerErrorButton
+        {...formControlProps(props)}
+        aria-labelledby={undefined}
+        aria-label={label}
         kind={kinds.PRIMARY}
         isSpinning={authorizing}
         error={error}

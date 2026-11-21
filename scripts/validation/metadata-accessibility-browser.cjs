@@ -67,6 +67,9 @@ async function verify(config) {
           };
         });
         const inDialog = element => element.evaluate(node => node.contains(document.activeElement));
+        const descriptions = control => control.evaluate(node =>
+          (node.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean).map(id =>
+            document.getElementById(id)?.textContent.trim() || ''));
 
         failureStep = layout + '_sign_in';
         await go('/system/status');
@@ -146,6 +149,8 @@ async function verify(config) {
         await create.getByLabel('Title', { exact: true }).waitFor();
         check('local_recording_reads_owned_tags',
           await create.getByLabel('Title', { exact: true }).inputValue() === 'Synthetic Unmapped Recording');
+        check('local_recording_author_help_is_associated', (await descriptions(create.getByLabel('Author', { exact: true })))
+          .some(text => text.includes('File author')));
         await page.screenshot({ path: path.join(output, layout + '-local-recording-dialog.png'), fullPage: true });
         await page.keyboard.press('Escape');
         await create.waitFor({ state: 'hidden' });
@@ -159,11 +164,49 @@ async function verify(config) {
         await rootFolder.waitFor();
         const browse = button('Browse Folders', rootFolder);
         check('folder_picker_has_an_action_name', await browse.isVisible());
+        const name = rootFolder.getByLabel('Name', { exact: true });
+        const folderPath = rootFolder.getByLabel('Path', { exact: true });
+        const profile = rootFolder.getByLabel('Quality Profile', { exact: true });
+        await rootFolder.locator('label').filter({ hasText: /^Name$/ }).click();
+        await waitForFocus(name);
+        check('root_folder_label_focuses_associated_input', await name.getAttribute('name') === 'name');
+        check('profile_label_and_help_reach_the_select',
+          await profile.getAttribute('name') === 'defaultQualityProfileId' &&
+          (await descriptions(profile)).some(text => text.includes('authors detected')));
+        check('path_help_reaches_the_autosuggest_input',
+          await folderPath.getAttribute('name') === 'path' &&
+          (await descriptions(folderPath)).some(text => text.includes('your book library')));
+        await name.fill('Synthetic Invalid Folder');
+        await folderPath.fill('synthetic-invalid-relative-path');
+        await folderPath.blur();
+        failureStep = layout + '_server_validates_relative_root';
+        const [invalidFolder] = await Promise.all([
+          page.waitForResponse(response => response.request().method() === 'POST' &&
+            new URL(response.url()).pathname.toLowerCase().endsWith('/rootfolder')),
+          button('Save', rootFolder).click()
+        ]);
+        check('invalid_root_folder_request_is_rejected', invalidFolder.status() === 400);
+        failureStep = layout + '_path_receives_server_error';
+        await folderPath.locator('xpath=self::*[@aria-invalid="true"]').waitFor();
+        const invalidDescriptions = await descriptions(folderPath);
+        check('path_describes_help_and_server_error',
+          invalidDescriptions.some(text => text.includes('your book library')) &&
+          invalidDescriptions.length > 1 && invalidDescriptions.every(Boolean));
         await page.keyboard.press('Escape');
         await rootFolder.waitFor({ state: 'hidden' });
 
         failureStep = layout + '_nested_confirmation';
         await go('/settings/downloadclients');
+        const clientCard = page.locator('div:has(> button[class*="underlay"])')
+          .filter({ has: page.getByText(config.downloadClientName, { exact: true }) });
+        await clientCard.locator(':scope > button[class*="underlay"]').click();
+        const providerEditor = page.getByRole('dialog', { name: /Edit Download Client/ });
+        await providerEditor.waitFor();
+        const password = providerEditor.getByLabel('Password', { exact: true });
+        check('provider_password_label_reaches_password_control',
+          await password.getAttribute('type') === 'password' && await password.getAttribute('name') === 'password');
+        await page.keyboard.press('Escape');
+        await providerEditor.waitFor({ state: 'hidden' });
         const opener = button('Manage Clients');
         await opener.click();
         const manager = dialog('Manage Download Clients');

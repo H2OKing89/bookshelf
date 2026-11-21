@@ -5,6 +5,9 @@ using FluentValidation;
 using FluentValidation.Results;
 using NzbDrone.Common.Cache;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.Books.Events;
+using NzbDrone.Core.Messaging;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.MetadataSource.Audnexus;
 
 namespace NzbDrone.Core.MetadataSource.Audiobook
@@ -23,7 +26,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         string NarratorName(string name, string region);
     }
 
-    public class AudiobookMetadataOverrideService : IAudiobookMetadataOverrideService
+    public class AudiobookMetadataOverrideService : IAudiobookMetadataOverrideService, IHandle<AuthorReconciledEvent>
     {
         private readonly IAudiobookMetadataOverrideRepository _repository;
         private readonly IAudiobookMetadataCleanupRuleService _cleanupRules;
@@ -79,6 +82,12 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         public void Delete(int id)
         {
             _repository.Delete(id);
+            _cache.Clear();
+        }
+
+        [EventHandleOrder(EventHandleOrder.First)]
+        public void Handle(AuthorReconciledEvent message)
+        {
             _cache.Clear();
         }
 

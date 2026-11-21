@@ -66,20 +66,19 @@ class PathInput extends Component {
   };
 
   onInputKeyDown = (event) => {
-    if (event.key === 'Tab') {
-      event.preventDefault();
-      const path = this.props.paths[0];
+    const path = this.props.paths[0];
+    if (event.key !== 'Tab' || event.shiftKey || !path || path.path === this.state.value) {
+      return;
+    }
 
-      if (path) {
-        this.props.onChange({
-          name: this.props.name,
-          value: path.path
-        });
+    event.preventDefault();
+    this.props.onChange({
+      name: this.props.name,
+      value: path.path
+    });
 
-        if (path.type !== 'file') {
-          this.props.onFetchPaths(path.path);
-        }
-      }
+    if (path.type !== 'file') {
+      this.props.onFetchPaths(path.path);
     }
   };
 

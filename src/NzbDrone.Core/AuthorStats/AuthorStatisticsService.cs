@@ -18,6 +18,7 @@ namespace NzbDrone.Core.AuthorStats
         IHandle<AuthorAddedEvent>,
         IHandle<AuthorUpdatedEvent>,
         IHandle<AuthorDeletedEvent>,
+        IHandle<AuthorReconciledEvent>,
         IHandle<BookAddedEvent>,
         IHandle<BookDeletedEvent>,
         IHandle<BookImportedEvent>,
@@ -89,6 +90,14 @@ namespace NzbDrone.Core.AuthorStats
         {
             _cache.Remove("AllAuthors");
             _cache.Remove(message.Author.Id.ToString());
+        }
+
+        [EventHandleOrder(EventHandleOrder.First)]
+        public void Handle(AuthorReconciledEvent message)
+        {
+            _cache.Remove("AllAuthors");
+            _cache.Remove(message.SourceAuthorId.ToString());
+            _cache.Remove(message.TargetAuthorId.ToString());
         }
 
         [EventHandleOrder(EventHandleOrder.First)]

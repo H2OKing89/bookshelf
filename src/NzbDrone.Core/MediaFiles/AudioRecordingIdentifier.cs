@@ -9,6 +9,16 @@ using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.MediaFiles
 {
+    internal class AudioRecordingEvidence
+    {
+        public List<string> FilenameAsins { get; set; } = new List<string>();
+        public List<string> FolderAsins { get; set; } = new List<string>();
+        public List<string> EmbeddedAsins { get; set; } = new List<string>();
+        public bool MalformedEmbeddedAsin { get; set; }
+        public bool IdentifierConflict { get; set; }
+        public string EffectiveAsin { get; set; }
+    }
+
     public static class AudioRecordingIdentifier
     {
         private static readonly Regex FilenameAsin = new Regex(@"\[([A-Z0-9]{10})\]", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromMilliseconds(100));
@@ -21,10 +31,17 @@ namespace NzbDrone.Core.MediaFiles
 
         public static void Apply(ParsedTrackInfo tags, string path, IEnumerable<string> embeddedAsins)
         {
+            var evidence = Inspect(path, embeddedAsins, tags.PreferPathAsin, tags.Asin);
+            tags.Asin = evidence.EffectiveAsin;
+            tags.AsinConflict |= evidence.IdentifierConflict;
+        }
+
+        internal static AudioRecordingEvidence Inspect(string path, IEnumerable<string> embeddedAsins, bool preferPathAsin, string existingAsin = null)
+        {
             var embeddedValues = (embeddedAsins ?? Enumerable.Empty<string>()).ToList();
             var malformed = embeddedValues.Any(value => !string.IsNullOrWhiteSpace(value) && Normalize(value) == null);
             var embedded = embeddedValues
-                .Append(tags.Asin)
+                .Append(existingAsin)
                 .Select(Normalize)
                 .Where(value => value != null)
                 .Distinct()
@@ -46,20 +63,28 @@ namespace NzbDrone.Core.MediaFiles
                 parent = Path.GetDirectoryName(parent);
             }
 
+            var evidence = new AudioRecordingEvidence
+            {
+                FilenameAsins = filename,
+                FolderAsins = folder,
+                EmbeddedAsins = embedded,
+                MalformedEmbeddedAsin = malformed
+            };
             var pathAsins = filename.Concat(folder).Distinct().ToList();
-            if (tags.PreferPathAsin && pathAsins.Any())
+            if (preferPathAsin && pathAsins.Any())
             {
                 // An explicit library preference can trust curated paths over embedded tags.
                 // Different filename and recording-folder IDs still require review.
-                tags.Asin = pathAsins.Count == 1 ? pathAsins[0] : null;
-                tags.AsinConflict = tags.AsinConflict || pathAsins.Count > 1;
-                return;
+                evidence.EffectiveAsin = pathAsins.Count == 1 ? pathAsins[0] : null;
+                evidence.IdentifierConflict = pathAsins.Count > 1;
+                return evidence;
             }
 
             // Preserve a valid embedded identifier for inspection, but never silently choose
             // between different recording identifiers during automatic identification.
-            tags.Asin = embedded.Count == 1 ? embedded[0] : filename.Count == 1 ? filename[0] : folder.Count == 1 ? folder[0] : null;
-            tags.AsinConflict = tags.AsinConflict || malformed || embedded.Concat(filename).Concat(folder).Distinct().Count() > 1;
+            evidence.EffectiveAsin = embedded.Count == 1 ? embedded[0] : filename.Count == 1 ? filename[0] : folder.Count == 1 ? folder[0] : null;
+            evidence.IdentifierConflict = malformed || embedded.Concat(filename).Concat(folder).Distinct().Count() > 1;
+            return evidence;
         }
 
         internal static List<string> ReadBracketedAsins(string value)

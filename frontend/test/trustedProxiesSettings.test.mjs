@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server.js';
 import { loadFrontendModule } from './helpers/loadFrontendModule.mjs';
 
 const props = {
@@ -9,16 +10,24 @@ const props = {
   sizes: { SMALL: 'small', MEDIUM: 'medium', all: ['small', 'medium'] }
 };
 const translate = (key) => key;
+let renderedInput;
+function FormInputGroup(props) {
+  renderedInput = props;
+  return null;
+}
+const FormLabel = () => null;
 const { default: FormGroup } = loadFrontendModule('Components/Form/FormGroup.js', {
   'Helpers/Props': props,
-  'Helpers/elementChildren': { map: React.Children.map }
+  'Helpers/elementChildren': { map: React.Children.map },
+  './FormGroup.css': { group: 'group' },
+  './FormInputGroup': FormInputGroup,
+  './FormLabel': FormLabel
 });
-function FormInputGroup() {}
 const { default: HostSettings } = loadFrontendModule('Settings/General/HostSettings.js', {
   'Components/FieldSet': () => null,
   'Components/Form/FormGroup': FormGroup,
   'Components/Form/FormInputGroup': FormInputGroup,
-  'Components/Form/FormLabel': () => null,
+  'Components/Form/FormLabel': FormLabel,
   'Helpers/Props': props,
   'Utilities/String/translate': translate
 });
@@ -43,14 +52,13 @@ test('trusted proxy input is advanced and preserves values and API validation er
   const setting = { value: '192.0.2.10,2001:db8::10', errors: validationErrors };
   const hidden = trustedProxyGroup(false, setting, () => {});
   assert.ok(hidden);
-  assert.equal(FormGroup(hidden.props), null);
+  assert.equal(renderToStaticMarkup(hidden), '');
 
-  const visible = FormGroup(trustedProxyGroup(true, setting, () => {}).props);
-  const input = React.Children.toArray(visible.props.children).find((child) => child.type === FormInputGroup);
-  assert.equal(input.props.name, 'trustedNetworks');
-  assert.equal(input.props.value, setting.value);
-  assert.equal(input.props.errors, validationErrors);
-  assert.equal(input.props.helpTextWarning, 'RestartRequiredHelpTextWarning');
+  renderToStaticMarkup(trustedProxyGroup(true, setting, () => {}));
+  assert.equal(renderedInput.name, 'trustedNetworks');
+  assert.equal(renderedInput.value, setting.value);
+  assert.equal(renderedInput.errors, validationErrors);
+  assert.equal(renderedInput.helpTextWarning, 'RestartRequiredHelpTextWarning');
 });
 
 test('trusted proxy input sends an explicit empty string when cleared', () => {

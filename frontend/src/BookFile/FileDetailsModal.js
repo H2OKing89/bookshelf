@@ -1,12 +1,14 @@
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useState } from 'react';
 import Button from 'Components/Link/Button';
 import Modal from 'Components/Modal/Modal';
 import ModalBody from 'Components/Modal/ModalBody';
 import ModalContent from 'Components/Modal/ModalContent';
 import ModalFooter from 'Components/Modal/ModalFooter';
 import ModalHeader from 'Components/Modal/ModalHeader';
+import translate from 'Utilities/String/translate';
 import FileDetailsConnector from './FileDetailsConnector';
+import RecordingReviewModal from './RecordingReviewModal';
 
 function FileDetailsModal(props) {
   const {
@@ -14,6 +16,7 @@ function FileDetailsModal(props) {
     onModalClose,
     id
   } = props;
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   return (
     <Modal
@@ -34,10 +37,21 @@ function FileDetailsModal(props) {
         </ModalBody>
 
         <ModalFooter>
+          <Button onPress={() => setIsReviewOpen(true)}>
+            {translate('RecordingReviewAction')}
+          </Button>
           <Button onPress={onModalClose}>
             Close
           </Button>
         </ModalFooter>
+        {
+          isReviewOpen &&
+            <RecordingReviewModal
+              isOpen={true}
+              fileId={id}
+              onModalClose={() => setIsReviewOpen(false)}
+            />
+        }
       </ModalContent>
     </Modal>
   );

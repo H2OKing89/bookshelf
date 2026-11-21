@@ -26,6 +26,7 @@ namespace Readarr.Api.V1.Books
     [V1ApiController]
     public class BookController : BookControllerWithSignalR,
         IHandle<BookGrabbedEvent>,
+        IHandle<AuthorReconciledEvent>,
         IHandle<BookEditedEvent>,
         IHandle<BookUpdatedEvent>,
         IHandle<BookDeletedEvent>,
@@ -248,6 +249,12 @@ namespace Readarr.Api.V1.Books
         public void Handle(BookEditedEvent message)
         {
             BroadcastResourceChange(ModelAction.Updated, MapToResource(message.Book, true));
+        }
+
+        [NonAction]
+        public void Handle(AuthorReconciledEvent message)
+        {
+            BroadcastResourceChange(ModelAction.Sync);
         }
 
         [NonAction]

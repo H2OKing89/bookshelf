@@ -66,6 +66,13 @@ function createMapDispatchToProps(dispatch, props) {
       dispatch(fetchBookFiles({ unmapped: true }));
     },
 
+    onRecordingAssociated(review) {
+      const authorId = review.currentRecording.authorId;
+      dispatch(fetchBooks({ authorId }));
+      dispatch(fetchAuthor({ id: authorId }));
+      dispatch(fetchBookFiles({ unmapped: true }));
+    },
+
     deleteUnmappedFile(id) {
       dispatch(deleteBookFile({ id }));
     },

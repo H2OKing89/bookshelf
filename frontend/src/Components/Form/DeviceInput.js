@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import Icon from 'Components/Icon';
 import { icons } from 'Helpers/Props';
 import tagShape from 'Helpers/Props/Shapes/tagShape';
+import formControlProps from './formControlProps';
 import FormInputButton from './FormInputButton';
 import TagInput from './TagInput';
 import styles from './DeviceInput.css';
@@ -59,6 +60,7 @@ class DeviceInput extends Component {
     return (
       <div className={className}>
         <TagInput
+          {...formControlProps(this.props)}
           inputContainerClassName={styles.input}
           name={name}
           tags={selectedDevices}
