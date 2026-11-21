@@ -5,7 +5,6 @@ using System.Xml.Linq;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Indexers.Exceptions;
 using NzbDrone.Core.Languages;
-using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.Indexers.Newznab
@@ -106,26 +105,13 @@ namespace NzbDrone.Core.Indexers.Newznab
 
         protected override List<Language> GetLanguages(XElement item)
         {
-            var languages = TryGetMultipleNewznabAttributes(item, "language");
-            var results = new List<Language>();
-
-            // Try to find <language> elements for some indexers that suck at following the rules.
-            if (languages.Count == 0)
+            var values = TryGetMultipleNewznabAttributes(item, "language");
+            if (!values.Any(value => !string.IsNullOrWhiteSpace(value)))
             {
-                languages = item.Elements("language").Select(e => e.Value).ToList();
+                values = item.Elements("language").Select(element => element.Value).ToList();
             }
 
-            foreach (var language in languages)
-            {
-                var mappedLanguage = IsoLanguages.FindByName(language)?.Language ?? null;
-
-                if (mappedLanguage != null)
-                {
-                    results.Add(mappedLanguage);
-                }
-            }
-
-            return results;
+            return RecordingLanguageEvidence.Parse(values.ToArray());
         }
 
         protected override long GetSize(XElement item)
@@ -155,7 +141,7 @@ namespace NzbDrone.Core.Indexers.Newznab
         protected override List<int> GetCategories(XElement item)
         {
             var values = item.Elements(ns + "attr")
-                .Where(e => e.Attribute("name").Value.Equals("category", StringComparison.OrdinalIgnoreCase) &&
+                .Where(e => string.Equals((string)e.Attribute("name"), "category", StringComparison.OrdinalIgnoreCase) &&
                             e.Attribute("value")?.Value != null)
                 .Select(e => e.Attribute("value").Value);
 
@@ -197,7 +183,7 @@ namespace NzbDrone.Core.Indexers.Newznab
 
         protected string TryGetNewznabAttribute(XElement item, string key, string defaultValue = "")
         {
-            var attrElement = item.Elements(ns + "attr").FirstOrDefault(e => e.Attribute("name").Value.Equals(key, StringComparison.OrdinalIgnoreCase));
+            var attrElement = item.Elements(ns + "attr").FirstOrDefault(e => string.Equals((string)e.Attribute("name"), key, StringComparison.OrdinalIgnoreCase));
             if (attrElement != null)
             {
                 var attrValue = attrElement.Attribute("value");
@@ -212,7 +198,7 @@ namespace NzbDrone.Core.Indexers.Newznab
 
         protected List<string> TryGetMultipleNewznabAttributes(XElement item, string key)
         {
-            var attrElements = item.Elements(ns + "attr").Where(e => e.Attribute("name").Value.Equals(key, StringComparison.OrdinalIgnoreCase));
+            var attrElements = item.Elements(ns + "attr").Where(e => string.Equals((string)e.Attribute("name"), key, StringComparison.OrdinalIgnoreCase));
             var results = new List<string>();
 
             foreach (var element in attrElements)

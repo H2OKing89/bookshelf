@@ -1,8 +1,11 @@
 using System.Collections.Generic;
+using System.Linq;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Annotations;
+using NzbDrone.Core.CustomFormats;
+using NzbDrone.Core.Languages;
 using NzbDrone.Core.Localization;
 using NzbDrone.Test.Common;
 using Readarr.Http.ClientSchema;
@@ -61,6 +64,18 @@ namespace NzbDrone.Api.Test.ClientSchemaTests
             schema.Should().Contain(c => c.Order == 0 && c.Name == "name.firstName" && c.Label == "First Name" && c.HelpText == "Your First Name" && c.HelpTextWarning == "Mandatory First Name" && (string)c.Value == "Bob");
             schema.Should().Contain(c => c.Order == 1 && c.Name == "name.lastName" && c.Label == "Last Name" && c.HelpText == "Your Last Name" && c.HelpTextWarning == "Mandatory Last Name" && (string)c.Value == "Poop");
             schema.Should().Contain(c => c.Order == 2 && c.Name == "quote" && c.Label == "Quote" && c.HelpText == "Your Favorite Quote");
+        }
+
+        [Test]
+        public void language_schema_should_offer_selected_edition_and_preserve_explicit_unknown()
+        {
+            var schema = SchemaBuilder.ToSchema(new LanguageSpecification { Value = Language.Unknown.Id });
+            var language = schema.Single(field => field.Name == "value");
+
+            language.SelectOptions.Should().Contain(option => option.Value == LanguageSpecification.SelectedEdition && option.Name == "Selected edition language");
+            language.SelectOptions.Should().Contain(option => option.Value == Language.Unknown.Id)
+                .And.NotContain(option => option.Value == Language.Any.Id);
+            SchemaBuilder.ReadFromSchema<LanguageSpecification>(schema).Value.Should().Be(Language.Unknown.Id);
         }
     }
 

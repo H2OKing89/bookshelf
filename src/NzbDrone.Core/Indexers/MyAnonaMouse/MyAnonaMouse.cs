@@ -18,6 +18,7 @@ using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Annotations;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Indexers.Exceptions;
+using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
@@ -261,6 +262,7 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
                 var flags = new List<string>();
 
                 var languageCode = item.LanguageCode;
+                release.Languages = RecordingLanguageEvidence.Parse(languageCode);
                 if (!string.IsNullOrEmpty(languageCode))
                 {
                     flags.Add(languageCode);

@@ -199,6 +199,20 @@ namespace Readarr.Http.ClientSchema
 
         private static List<SelectOption> GetSelectOptions(Type selectOptions)
         {
+            if (typeof(ISelectOptionsConverter).IsAssignableFrom(selectOptions))
+            {
+                var converter = (ISelectOptionsConverter)Activator.CreateInstance(selectOptions);
+                return converter.GetSelectOptions().OrderBy(option => option.Order)
+                    .Select(option => new SelectOption
+                    {
+                        Value = option.Value,
+                        Name = option.Name,
+                        Order = option.Order,
+                        Hint = option.Hint
+                    })
+                    .ToList();
+            }
+
             if (selectOptions.IsEnum)
             {
                 var options = selectOptions

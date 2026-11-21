@@ -45,13 +45,14 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Specifications
             foreach (var bookFile in files)
             {
                 var qualityCompare = qualityComparer.Compare(item.Quality.Quality, bookFile.Quality.Quality);
+                var revisionCompare = item.Quality.Revision.CompareTo(bookFile.Quality.Revision);
                 if (qualityCompare < 0)
                 {
                     return Decision.RejectCode(RejectionCode.QualityNotUpgrade, "Not an upgrade for existing book file(s)");
                 }
 
                 if (qualityCompare == 0 && downloadPropersAndRepacks != ProperDownloadTypes.DoNotPrefer &&
-                    item.Quality.Revision.CompareTo(bookFile.Quality.Revision) < 0)
+                    revisionCompare < 0)
                 {
                     return Decision.RejectCode(RejectionCode.RevisionNotUpgrade, "Not a quality revision upgrade for existing book file(s)");
                 }
@@ -86,6 +87,17 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Specifications
                         "Custom format score {0} is below existing recording part score {1}",
                         candidate.IntendedScore,
                         currentScore);
+                }
+
+                // Preferred revisions keep their existing precedence, including the downgrade guard above.
+                if ((revisionCompare <= 0 || downloadPropersAndRepacks == ProperDownloadTypes.DoNotPrefer) &&
+                    !qualityProfile.MeetsMinimumUpgradeFormatScore(currentScore, candidate.IntendedScore))
+                {
+                    return Decision.RejectCode(RejectionCode.CustomFormatUpgradeBelowMinimum,
+                        "Custom format score after renaming must improve recording part score {0} by at least {1}; intended score is {2}",
+                        currentScore,
+                        qualityProfile.MinUpgradeFormatScore,
+                        candidate.IntendedScore);
                 }
             }
 

@@ -165,6 +165,24 @@ class MediaManagement extends Component {
                         size={sizes.MEDIUM}
                       >
                         <FormLabel>
+                          {translate('CheckFreeSpaceWhenGrabbing')}
+                        </FormLabel>
+
+                        <FormInputGroup
+                          type={inputTypes.CHECK}
+                          name="checkFreeSpaceWhenGrabbing"
+                          helpText={translate('CheckFreeSpaceWhenGrabbingHelpText')}
+                          onChange={onInputChange}
+                          {...settings.checkFreeSpaceWhenGrabbing}
+                        />
+                      </FormGroup>
+
+                      <FormGroup
+                        advancedSettings={advancedSettings}
+                        isAdvanced={true}
+                        size={sizes.MEDIUM}
+                      >
+                        <FormLabel>
                           {translate('MinimumFreeSpace')}
                         </FormLabel>
 

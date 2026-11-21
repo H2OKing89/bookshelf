@@ -2,6 +2,7 @@ using NLog;
 using NzbDrone.Common.Cache;
 using NzbDrone.Common.TPL;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Download.Clients;
 using NzbDrone.Core.Download.History;
@@ -176,10 +177,11 @@ internal static class DownloadFailoverProbe
         catch (T) { return true; }
     }
 
-    private sealed class ClientState
+    internal sealed class ClientState
     {
         public DownloadClientDefinition Definition;
         public IDownloadClient Client;
+        public DownloadClientInfo Status = new();
         public Exception StatusFailure;
         public Exception AddFailure;
         public Exception PollFailure;
@@ -190,7 +192,7 @@ internal static class DownloadFailoverProbe
         public bool MarkerBeforeAdd;
     }
 
-    private sealed class AttemptScenario
+    internal sealed class AttemptScenario
     {
         public readonly Program.Store Store;
         public readonly RemoteBook Book;
@@ -208,7 +210,7 @@ internal static class DownloadFailoverProbe
         private readonly IDownloadHistoryRepository _repository;
         private DownloadService _service;
 
-        public AttemptScenario(string root, string name, DownloadProtocol protocol = DownloadProtocol.Usenet)
+        public AttemptScenario(string root, string name, DownloadProtocol protocol = DownloadProtocol.Usenet, IDownloadGrabSpaceService grabSpace = null)
         {
             var folder = Directory.CreateDirectory(Path.Combine(root, "d09-" + name)).FullName;
             var author = new Author { Id = 5, Name = "Owned failover author", Tags = new HashSet<int>() };
@@ -259,6 +261,7 @@ internal static class DownloadFailoverProbe
             });
             _services[typeof(IRateLimitService)] = Program.Fake<IRateLimitService>((method, _) => method.Name == "WaitAndPulseAsync" ? Task.CompletedTask : Program.Unexpected(method));
             _services[typeof(ISeedConfigProvider)] = Program.Fake<ISeedConfigProvider>((method, _) => method.Name == "GetSeedConfiguration" ? new TorrentSeedConfiguration() : Program.Unexpected(method));
+            _services[typeof(IDownloadGrabSpaceService)] = grabSpace ?? Program.Fake<IDownloadGrabSpaceService>((method, _) => method.Name == "Check" ? new GrabSpaceAssessment(Decision.Accept()) : Program.Unexpected(method));
             _services[typeof(IEventAggregator)] = Program.Fake<IEventAggregator>((method, arguments) =>
             {
                 if (method.Name != "PublishEvent" || arguments[0] is not BookGrabbedEvent grabbed) return Program.Unexpected(method);
@@ -298,6 +301,7 @@ internal static class DownloadFailoverProbe
         }
 
         public void Run(int? clientId = null) => _service.DownloadReport(Book, clientId).GetAwaiter().GetResult();
+        public void Run(int clientId, DownloadSpaceBudget budget) => _service.DownloadReport(Book, clientId, budget).GetAwaiter().GetResult();
         private object DeleteMarker(DownloadHistory marker) { Store.Delete(marker); return null; }
         private object RecordClientSuccess()
         {
@@ -310,7 +314,7 @@ internal static class DownloadFailoverProbe
         {
             client.StatusCalls++;
             if (client.StatusFailure != null) throw client.StatusFailure;
-            return new DownloadClientInfo();
+            return client.Status;
         }
         private Task<string> Add(ClientState client)
         {

@@ -12,6 +12,7 @@ using NzbDrone.Core.Books;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Indexers.MyAnonaMouse;
 using NzbDrone.Core.IndexerSearch.Definitions;
+using NzbDrone.Core.Languages;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Test.Framework;
 
@@ -83,6 +84,7 @@ namespace NzbDrone.Core.Test.IndexerTests.MyAnonaMouseTests
             var releases = await Subject.Fetch(new BookSearchCriteria { Author = new Author { Name = "Example Author" }, BookTitle = "Example Series" });
 
             releases.Should().HaveCount(101);
+            releases.Should().OnlyContain(release => release.Languages.Count == 1 && release.Languages[0] == Language.English);
             _requests.Select(request => request["tor"].Value<int>("startNumber")).Should().Equal(0, 100);
             _requests[0]["tor"]["main_cat"].Values<int>().Should().Equal(13);
             _requests[0].Value<int>("perpage").Should().Be(100);

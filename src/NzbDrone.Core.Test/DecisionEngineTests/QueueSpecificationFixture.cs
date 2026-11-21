@@ -7,9 +7,11 @@ using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.CustomFormats;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.DecisionEngine.Specifications;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.Parser.Model;
+using NzbDrone.Core.Profiles;
 using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Queue;
@@ -208,6 +210,30 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
 
             GivenQueue(new List<RemoteBook> { remoteBook });
             Subject.IsSatisfiedBy(_remoteBook, null).Accepted.Should().BeTrue();
+        }
+
+        [TestCase(9, false)]
+        [TestCase(10, true)]
+        public void a_queued_release_requires_the_same_minimum_score_improvement(int score, bool accepted)
+        {
+            var candidate = new CustomFormat { Id = 1 };
+            var profile = _author.QualityProfile.Value;
+            profile.CutoffFormatScore = 100;
+            profile.MinUpgradeFormatScore = 10;
+            profile.FormatItems = new List<ProfileFormatItem> { new ProfileFormatItem { Format = candidate, Score = score } };
+            _remoteBook.CustomFormats = new List<CustomFormat> { candidate };
+            GivenQueue(new List<RemoteBook>
+            {
+                new RemoteBook { Author = _author, Books = new List<Book> { _book }, ParsedBookInfo = _remoteBook.ParsedBookInfo }
+            });
+
+            var decision = Subject.IsSatisfiedBy(_remoteBook, null);
+
+            decision.Accepted.Should().Be(accepted);
+            if (!accepted)
+            {
+                decision.Code.Should().Be(RejectionCode.CustomFormatUpgradeBelowMinimum);
+            }
         }
 
         [Test]

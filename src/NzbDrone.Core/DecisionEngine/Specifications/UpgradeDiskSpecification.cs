@@ -41,8 +41,14 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                                                            file.Quality,
                                                            customFormats,
                                                            subject.ParsedBookInfo.Quality,
-                                                           subject.CustomFormats))
+                                                           subject.CustomFormats,
+                                                           out var belowMinimumScoreImprovement))
                 {
+                    if (belowMinimumScoreImprovement)
+                    {
+                        return Decision.RejectCode(RejectionCode.CustomFormatUpgradeBelowMinimum, "Upgrade over the existing file requires a custom format score improvement of at least {0}", subject.Author.QualityProfile.Value.MinUpgradeFormatScore);
+                    }
+
                     return Decision.RejectCode(RejectionCode.DiskHigherPreference, "Existing files on disk is of equal or higher preference: {0}", file.Quality.Quality.Name);
                 }
             }

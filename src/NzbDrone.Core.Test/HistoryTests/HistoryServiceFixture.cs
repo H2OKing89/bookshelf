@@ -8,6 +8,7 @@ using NzbDrone.Core.Books;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.History;
 using NzbDrone.Core.Indexers;
+using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Parser.Model;
@@ -96,6 +97,28 @@ namespace NzbDrone.Core.Test.HistoryTests
             saved.Data["PartCount"].Should().Be("3");
             saved.Data["DownloadClientId"].Should().Be("6");
             saved.Data["SourceModifiedUtc"].Should().Be(modified.ToString("O"));
+        }
+
+        [Test]
+        public void grab_history_should_save_actual_language_evidence_and_the_selected_edition()
+        {
+            var release = new RemoteBook
+            {
+                Release = new ReleaseInfo { Languages = new List<Language> { Language.French, Language.English } },
+                ParsedBookInfo = new ParsedBookInfo { Quality = new QualityModel() },
+                Books = new List<Book>
+                {
+                    new Book { Id = 2, Editions = new List<Edition> { new Edition { Language = "fra", Monitored = true } } }
+                }
+            };
+            EntityHistory saved = null;
+            Mocker.GetMock<IHistoryRepository>().Setup(repository => repository.Insert(It.IsAny<EntityHistory>()))
+                .Callback<EntityHistory>(history => saved = history);
+
+            Subject.Handle(new BookGrabbedEvent(release) { DownloadId = "owned", DownloadClientId = 4 });
+
+            saved.Data[RecordingLanguageEvidence.LanguagesKey].Should().Be("2,1");
+            saved.Data[RecordingLanguageEvidence.EditionLanguageKey].Should().Be("2");
         }
     }
 }

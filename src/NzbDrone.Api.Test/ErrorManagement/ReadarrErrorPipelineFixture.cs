@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Http;
 using NUnit.Framework;
 using NzbDrone.Common.Instrumentation;
 using NzbDrone.Core.Datastore;
+using NzbDrone.Core.DecisionEngine;
+using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Test.Common;
 using Readarr.Http.ErrorManagement;
@@ -56,7 +58,15 @@ namespace NzbDrone.Api.Test.ErrorManagement
             ExceptionVerification.ExpectedErrors(1);
         }
 
-        private async Task VerifyResponse(Exception exception, string method, HttpStatusCode expectedStatus)
+        [Test]
+        public async Task should_return_actionable_conflict_for_a_grab_space_rejection()
+        {
+            var exception = new DownloadGrabSpaceException(Decision.RejectCode(RejectionCode.MinimumFreeSpace, "Insufficient space"));
+
+            await VerifyResponse(exception, "POST", HttpStatusCode.Conflict, RejectionCode.MinimumFreeSpace);
+        }
+
+        private async Task VerifyResponse(Exception exception, string method, HttpStatusCode expectedStatus, string rejectionCode = null)
         {
             using (var body = new MemoryStream())
             {
@@ -79,6 +89,11 @@ namespace NzbDrone.Api.Test.ErrorManagement
                 using (var content = await JsonDocument.ParseAsync(body))
                 {
                     content.RootElement.GetProperty("message").GetString().Should().Be(exception.Message);
+                    if (rejectionCode != null)
+                    {
+                        content.RootElement.GetProperty("content").GetProperty("code").GetString().Should().Be(rejectionCode);
+                        content.RootElement.GetProperty("description").GetString().Should().Be(exception.Message);
+                    }
                 }
             }
         }

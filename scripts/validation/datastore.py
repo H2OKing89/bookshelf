@@ -31,7 +31,10 @@ from . import docker, restore
 
 IMAGE = "postgres:16-alpine"
 MARKER = ".bookshelf-migration-tests"
-HISTORY = set(range(1, 34)) | set(range(35, 49)) | {158}
+LEGACY_HISTORY = set(range(1, 34)) | set(range(35, 49)) | {158}
+HISTORY = LEGACY_HISTORY | {159, 160}
+ACQUISITION_COLUMNS = {("QualityProfiles", "MinUpgradeFormatScore"), ("BookFiles", "TaggedLanguage"),
+                       ("Blocklist", "RecordingLanguages"), ("Blocklist", "SelectedEditionLanguageId")}
 TABLES = restore.TABLES + ("AudiobookMetadataOverrides", "AudiobookMetadataCleanupRules")
 SETTING_KEYS = restore.SETTING_KEYS + ("rescanafterrefresh",)
 DATABASE_KINDS = ("main", "log", "cache")
@@ -325,6 +328,25 @@ def postgres_schema(postgres: OwnedPostgres, names: dict):
     return result
 
 
+def expected_acquisition_sqlite_snapshot(snapshot):
+    files = snapshot["BookFiles"]
+    return {**snapshot, "BookFiles": {"columns": files["columns"] + ["TaggedLanguage"],
+                                      "rows": [row + (None,) for row in files["rows"]]}}
+
+
+def expected_acquisition_postgres_snapshot(snapshot):
+    return {**snapshot, "BookFiles": [{**row, "TaggedLanguage": None} for row in snapshot["BookFiles"]]}
+
+
+def postgres_preserved_schema(before, after):
+    added = {(column["table_name"], column["column_name"]) for column in after["main"]["columns"]
+             if (column["table_name"], column["column_name"]) in ACQUISITION_COLUMNS}
+    remaining = [column for column in after["main"]["columns"]
+                 if (column["table_name"], column["column_name"]) not in ACQUISITION_COLUMNS]
+    baseline = {**after, "main": {**after["main"], "columns": logical_columns(remaining)}}
+    return added == ACQUISITION_COLUMNS and before == baseline
+
+
 def transfer_seed(postgres: OwnedPostgres, names: dict, source: Fixture):
     for kind, filename, tables in (("main", "readarr.db", TABLES), ("cache", "cache.db", ("HttpResponse",)), ("log", "logs.db", ("Logs",))):
         statements = ["BEGIN;"]
@@ -406,7 +428,7 @@ def run(runtime: Path, output: Path, baseline_runtime: Path | None = None) -> di
         fixtures.append(sqlite)
         sqlite.configure_home()
         sqlite.start()
-        check("old_binary_created_complete_sqlite_history", all(value == HISTORY for value in sqlite_history(sqlite.home).values()))
+        check("old_binary_created_complete_sqlite_history", all(value == LEGACY_HISTORY for value in sqlite_history(sqlite.home).values()))
         restore.seed_library(sqlite)
         seed_extra(sqlite)
         sqlite.start()
@@ -417,7 +439,10 @@ def run(runtime: Path, output: Path, baseline_runtime: Path | None = None) -> di
         sqlite.runtime = runtime
         sqlite.start()
         check("candidate_reads_preserved_sqlite_book", sqlite.api("book/13")["id"] == 13)
+        check("sqlite_saved_quality_profiles_default_to_zero_upgrade_delta",
+              all(profile["minUpgradeFormatScore"] == 0 for profile in sqlite.api("qualityprofile")))
         sqlite.stop()
+        golden_sqlite = expected_acquisition_sqlite_snapshot(golden_sqlite)
         check("sqlite_catalog_overrides_narrators_dates_and_ids_survive_engine_upgrade", sqlite_snapshot(sqlite) == golden_sqlite)
         check("sqlite_history_is_not_renumbered", all(value == HISTORY for value in sqlite_history(sqlite.home).values()))
         check("sqlite_owned_media_survives_engine_upgrade", restore.media_unchanged(sqlite))
@@ -439,7 +464,7 @@ def run(runtime: Path, output: Path, baseline_runtime: Path | None = None) -> di
         fixtures.append(application)
         configure_postgres(application, postgres, names)
         application.start()
-        check("old_binary_created_complete_postgres_history", all(value == HISTORY for value in postgres_history(postgres, names).values()))
+        check("old_binary_created_complete_postgres_history", all(value == LEGACY_HISTORY for value in postgres_history(postgres, names).values()))
         application.stop()
         transfer_seed(postgres, names, sqlite)
         application.media_hashes = dict(sqlite.media_hashes)
@@ -455,9 +480,13 @@ def run(runtime: Path, output: Path, baseline_runtime: Path | None = None) -> di
         application.runtime = runtime
         application.start()
         check("candidate_reads_preserved_postgres_recording", application.api("book/13")["id"] == 13)
+        check("postgres_saved_quality_profiles_default_to_zero_upgrade_delta",
+              all(profile["minUpgradeFormatScore"] == 0 for profile in application.api("qualityprofile")))
         application.stop()
+        golden = expected_acquisition_postgres_snapshot(golden)
+        upgraded_schema = postgres_schema(postgres, names)
         check("postgres_catalog_overrides_narrators_dates_guids_and_ids_survive_engine_upgrade", postgres_snapshot(postgres, names) == golden)
-        check("postgres_columns_defaults_indexes_and_constraints_survive_engine_upgrade", postgres_schema(postgres, names) == schema)
+        check("postgres_columns_defaults_indexes_and_constraints_survive_engine_upgrade", postgres_preserved_schema(schema, upgraded_schema))
         check("postgres_main_log_cache_history_is_not_renumbered", all(value == HISTORY for value in postgres_history(postgres, names).values()))
         check("postgres_owned_media_survives_engine_upgrade", restore.media_unchanged(application))
         check("postgres_release_dates_and_utc_instants_are_preserved", postgres.json(names["main"],
@@ -475,7 +504,7 @@ def run(runtime: Path, output: Path, baseline_runtime: Path | None = None) -> di
         application.start()
         check("point_in_time_postgres_backup_starts_after_failure", application.api("book/13")["id"] == 13)
         application.stop()
-        check("point_in_time_postgres_restore_preserves_data_and_schema", postgres_snapshot(postgres, names) == golden and postgres_schema(postgres, names) == schema)
+        check("point_in_time_postgres_restore_preserves_data_and_schema", postgres_snapshot(postgres, names) == golden and postgres_schema(postgres, names) == upgraded_schema)
         check("point_in_time_postgres_restore_preserves_all_owned_media", restore.media_unchanged(application))
 
         stage = "sqlite_failure_recovery"

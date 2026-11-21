@@ -7,11 +7,13 @@ using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.CustomFormats;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.DecisionEngine.Specifications;
 using NzbDrone.Core.DecisionEngine.Specifications.RssSync;
 using NzbDrone.Core.History;
 using NzbDrone.Core.IndexerSearch.Definitions;
 using NzbDrone.Core.Parser.Model;
+using NzbDrone.Core.Profiles;
 using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Test.CustomFormats;
@@ -183,6 +185,27 @@ namespace NzbDrone.Core.Test.DecisionEngineTests.RssSync
             GivenMostRecentForBook(FIRST_ALBUM_ID, string.Empty, _upgradableQuality, DateTime.UtcNow, EntityHistoryEventType.Grabbed);
 
             _upgradeHistory.IsSatisfiedBy(_parseResultSingle, null).Accepted.Should().BeFalse();
+        }
+
+        [TestCase(9, false)]
+        [TestCase(10, true)]
+        public void rss_history_requires_the_same_minimum_score_improvement(int score, bool accepted)
+        {
+            var candidate = new CustomFormat { Id = 1 };
+            var profile = _fakeAuthor.QualityProfile.Value;
+            profile.CutoffFormatScore = 100;
+            profile.MinUpgradeFormatScore = 10;
+            profile.FormatItems = new List<ProfileFormatItem> { new ProfileFormatItem { Format = candidate, Score = score } };
+            _parseResultSingle.CustomFormats = new List<CustomFormat> { candidate };
+            GivenMostRecentForBook(FIRST_ALBUM_ID, string.Empty, _notupgradableQuality, DateTime.UtcNow, EntityHistoryEventType.Grabbed);
+
+            var decision = _upgradeHistory.IsSatisfiedBy(_parseResultSingle, null);
+
+            decision.Accepted.Should().Be(accepted);
+            if (!accepted)
+            {
+                decision.Code.Should().Be(RejectionCode.CustomFormatUpgradeBelowMinimum);
+            }
         }
 
         [Test]

@@ -24,6 +24,7 @@ namespace NzbDrone.Core.Download
     public interface IDownloadService
     {
         Task DownloadReport(RemoteBook remoteBook, int? downloadClientId);
+        Task DownloadReport(RemoteBook remoteBook, int? downloadClientId, DownloadSpaceBudget budget);
     }
 
     public class DownloadService : IDownloadService
@@ -37,6 +38,7 @@ namespace NzbDrone.Core.Download
         private readonly ISeedConfigProvider _seedConfigProvider;
         private readonly Logger _logger;
         private readonly IDownloadSubmissionGuard _submissionGuard;
+        private readonly IDownloadGrabSpaceService _grabSpaceService;
 
         public DownloadService(IProvideDownloadClient downloadClientProvider,
                                IDownloadClientStatusService downloadClientStatusService,
@@ -46,6 +48,7 @@ namespace NzbDrone.Core.Download
                                IEventAggregator eventAggregator,
                                ISeedConfigProvider seedConfigProvider,
                                IDownloadSubmissionGuard submissionGuard,
+                               IDownloadGrabSpaceService grabSpaceService,
                                Logger logger)
         {
             _downloadClientProvider = downloadClientProvider;
@@ -57,9 +60,15 @@ namespace NzbDrone.Core.Download
             _seedConfigProvider = seedConfigProvider;
             _logger = logger;
             _submissionGuard = submissionGuard;
+            _grabSpaceService = grabSpaceService;
         }
 
-        public async Task DownloadReport(RemoteBook remoteBook, int? downloadClientId)
+        public Task DownloadReport(RemoteBook remoteBook, int? downloadClientId)
+        {
+            return DownloadReport(remoteBook, downloadClientId, null);
+        }
+
+        public async Task DownloadReport(RemoteBook remoteBook, int? downloadClientId, DownloadSpaceBudget budget)
         {
             Ensure.That(remoteBook.Author, () => remoteBook.Author).IsNotNull();
             Ensure.That(remoteBook.Books, () => remoteBook.Books).HasItems();
@@ -73,12 +82,13 @@ namespace NzbDrone.Core.Download
 
             foreach (var client in clients.DistinctBy(candidate => candidate.Definition.Id))
             {
+                DownloadClientInfo clientInfo;
                 try
                 {
                     // This read-only stage is the only failover boundary. Once
                     // Download is entered, even an UnavailableException can mean
                     // the add succeeded and a later category/priority call failed.
-                    client.GetStatus();
+                    clientInfo = client.GetStatus();
                 }
                 catch (Exception ex) when (IsPreflightUnavailable(ex))
                 {
@@ -87,7 +97,7 @@ namespace NzbDrone.Core.Download
                     continue;
                 }
 
-                await DownloadReport(remoteBook, client);
+                await SubmitReport(remoteBook, client, budget, clientInfo);
                 return;
             }
 
@@ -117,7 +127,7 @@ namespace NzbDrone.Core.Download
                 SocketException or IOException or TimeoutException or OperationCanceledException;
         }
 
-        private async Task DownloadReport(RemoteBook remoteBook, IDownloadClient downloadClient)
+        private async Task SubmitReport(RemoteBook remoteBook, IDownloadClient downloadClient, DownloadSpaceBudget budget, DownloadClientInfo clientInfo)
         {
             Ensure.That(remoteBook.Author, () => remoteBook.Author).IsNotNull();
             Ensure.That(remoteBook.Books, () => remoteBook.Books).HasItems();
@@ -144,6 +154,12 @@ namespace NzbDrone.Core.Download
             if (remoteBook.Release.IndexerId > 0)
             {
                 indexer = _indexerFactory.GetInstance(_indexerFactory.Get(remoteBook.Release.IndexerId));
+            }
+
+            var space = _grabSpaceService.Check(remoteBook, budget, clientInfo);
+            if (!space.Decision.Accepted)
+            {
+                throw new DownloadGrabSpaceException(space.Decision);
             }
 
             var attemptId = _submissionGuard.Begin(remoteBook, downloadClient);
@@ -190,6 +206,7 @@ namespace NzbDrone.Core.Download
                 downloadClientId = ReconcileSubmission(downloadClient, expectedId);
                 if (downloadClientId == null)
                 {
+                    budget?.RecordSubmission(space);
                     _submissionGuard.MarkUncertain(attemptId, expectedId);
                     _downloadClientStatusService.RecordFailure(downloadClient.Definition.Id);
                     throw new DownloadClientSubmissionUncertainException(
@@ -201,6 +218,8 @@ namespace NzbDrone.Core.Download
 
                 _logger.Debug("Confirmed accepted download {0} on client {1} after the add response failed", downloadClientId, downloadClient.Definition.Name);
             }
+
+            budget?.RecordSubmission(space);
 
             try
             {

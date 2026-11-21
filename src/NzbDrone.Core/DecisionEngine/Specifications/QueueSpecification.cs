@@ -74,8 +74,14 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                                                            remoteBook.ParsedBookInfo.Quality,
                                                            queuedItemCustomFormats,
                                                            subject.ParsedBookInfo.Quality,
-                                                           subject.CustomFormats))
+                                                           subject.CustomFormats,
+                                                           out var belowMinimumScoreImprovement))
                 {
+                    if (belowMinimumScoreImprovement)
+                    {
+                        return Decision.RejectCode(RejectionCode.CustomFormatUpgradeBelowMinimum, "Upgrade over the queued release requires a custom format score improvement of at least {0}", qualityProfile.MinUpgradeFormatScore);
+                    }
+
                     return Decision.RejectCode(RejectionCode.QueueHigherPreference, "Release in queue is of equal or higher preference: {0}", remoteBook.ParsedBookInfo.Quality);
                 }
 

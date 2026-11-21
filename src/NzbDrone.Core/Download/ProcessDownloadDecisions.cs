@@ -43,6 +43,7 @@ namespace NzbDrone.Core.Download
             var pending = new List<DownloadDecision>();
             var rejected = decisions.Where(d => d.Rejected).ToList();
             var uncertain = new List<DownloadDecision>();
+            var spaceBudget = new DownloadSpaceBudget();
 
             var pendingAddQueue = new List<Tuple<DownloadDecision, PendingReleaseReason>>();
 
@@ -72,7 +73,7 @@ namespace NzbDrone.Core.Download
                     continue;
                 }
 
-                var result = await ProcessDecisionInternal(report);
+                var result = await ProcessDecisionInternal(report, spaceBudget: spaceBudget);
 
                 switch (result)
                 {
@@ -199,20 +200,33 @@ namespace NzbDrone.Core.Download
             pending.Add(report);
         }
 
-        private async Task<ProcessedDecisionResult> ProcessDecisionInternal(DownloadDecision decision, int? downloadClientId = null)
+        private async Task<ProcessedDecisionResult> ProcessDecisionInternal(DownloadDecision decision, int? downloadClientId = null, DownloadSpaceBudget spaceBudget = null)
         {
             var remoteBook = decision.RemoteBook;
 
             try
             {
                 _logger.Trace("Grabbing from Indexer {0} at priority {1}.", remoteBook.Release.Indexer, remoteBook.Release.IndexerPriority);
-                await _downloadService.DownloadReport(remoteBook, downloadClientId);
+                if (spaceBudget == null)
+                {
+                    await _downloadService.DownloadReport(remoteBook, downloadClientId);
+                }
+                else
+                {
+                    await _downloadService.DownloadReport(remoteBook, downloadClientId, spaceBudget);
+                }
 
                 return ProcessedDecisionResult.Grabbed;
             }
             catch (ReleaseUnavailableException)
             {
                 _logger.Warn("Failed to download release from indexer, no longer available. " + remoteBook);
+                return ProcessedDecisionResult.Rejected;
+            }
+            catch (DownloadGrabSpaceException ex)
+            {
+                decision.AddRejection(new Rejection(ex.Message, code: ex.RejectionCode));
+                _logger.Debug("Grab blocked before submission: {0}", ex.Message);
                 return ProcessedDecisionResult.Rejected;
             }
             catch (DownloadClientSubmissionUncertainException ex)

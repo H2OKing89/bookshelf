@@ -24,7 +24,7 @@ namespace NzbDrone.Core.Test.Datastore.Migration
     public class MigrationCompatibilityFixture : MigrationCompatibilityTestBase
     {
         private static readonly long[] HistoricalVersions = Enumerable.Range(1, 48)
-            .Where(version => version != 34).Select(version => (long)version).Concat(new long[] { 158 }).ToArray();
+            .Where(version => version != 34).Select(version => (long)version).Concat(new long[] { 158, 159, 160 }).ToArray();
 
         public MigrationCompatibilityFixture(DatabaseType databaseType)
             : base(databaseType)

@@ -50,6 +50,20 @@ namespace NzbDrone.Api.Test
                 values => values.ContainsKey("UserRejectedExtensions") && values["UserRejectedExtensions"] == null)), Times.Once());
         }
 
+        [TestCase("{}", null)]
+        [TestCase("{\"checkFreeSpaceWhenGrabbing\":false}", false)]
+        [TestCase("{\"checkFreeSpaceWhenGrabbing\":true}", true)]
+        public void preserve_omission_and_explicit_grab_space_policy_on_save(string json, bool? enabled)
+        {
+            var resource = STJson.Deserialize<MediaManagementConfigResource>(json);
+            resource.MinimumFreeSpaceWhenImporting = 100;
+
+            Subject.SaveConfig(resource);
+
+            Mocker.GetMock<IConfigService>().Verify(config => config.SaveConfigDictionary(It.Is<Dictionary<string, object>>(
+                values => Equals(values["CheckFreeSpaceWhenGrabbing"], enabled))), Times.Once());
+        }
+
         public class TestMediaManagementConfigController : MediaManagementConfigController
         {
             public TestMediaManagementConfigController(IConfigService configService,

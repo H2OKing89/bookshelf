@@ -187,6 +187,7 @@ namespace NzbDrone.Core.MediaFiles
                     DateAdded = DateTime.UtcNow,
                     Quality = decision.Item.Quality,
                     MediaInfo = decision.Item.FileTrackInfo.MediaInfo,
+                    TaggedLanguage = decision.Item.FileTrackInfo.Language,
                     Edition = decision.Item.Edition,
                     LastRemoteSearchTime = decision.Item.LastRemoteSearchTime
                 })
@@ -208,12 +209,14 @@ namespace NzbDrone.Core.MediaFiles
                       PathEqualityComparer.Instance)
                 .Where(x => x.File.Size != x.Item.Size ||
                        Math.Abs((x.File.Modified - x.Item.Modified).TotalSeconds) > 1 ||
-                       x.File.LastRemoteSearchTime != x.Item.LastRemoteSearchTime)
+                       x.File.LastRemoteSearchTime != x.Item.LastRemoteSearchTime ||
+                       x.File.TaggedLanguage != x.Item.FileTrackInfo?.Language)
                 .Select(x =>
                 {
                     x.File.Size = x.Item.Size;
                     x.File.Modified = x.Item.Modified;
                     x.File.MediaInfo = x.Item.FileTrackInfo.MediaInfo;
+                    x.File.TaggedLanguage = x.Item.FileTrackInfo?.Language;
                     x.File.Quality = x.Item.Quality;
                     x.File.LastRemoteSearchTime = x.Item.LastRemoteSearchTime;
                     return x.File;

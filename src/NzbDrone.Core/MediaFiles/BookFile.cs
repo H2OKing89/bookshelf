@@ -20,6 +20,7 @@ namespace NzbDrone.Core.MediaFiles
         public QualityModel Quality { get; set; }
         public IndexerFlags IndexerFlags { get; set; }
         public MediaInfoModel MediaInfo { get; set; }
+        public string TaggedLanguage { get; set; }
         public int EditionId { get; set; }
         public int CalibreId { get; set; }
         public int Part { get; set; }

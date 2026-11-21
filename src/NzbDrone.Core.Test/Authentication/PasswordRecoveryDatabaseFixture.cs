@@ -1,6 +1,7 @@
 using System;
 using System.Data.SQLite;
 using System.IO;
+using System.Linq;
 using Dapper;
 using FluentAssertions;
 using NUnit.Framework;
@@ -47,9 +48,12 @@ namespace NzbDrone.Core.Test.Authentication
         public void compatible_main_database_should_keep_rows_and_history_when_opened_for_recovery()
         {
             Migrate(MigrationType.Main);
+            const string versionsQuery = "SELECT \"Version\" FROM \"VersionInfo\" ORDER BY \"Version\"";
+            long[] versions;
             using (var connection = Open())
             {
                 connection.Execute("INSERT INTO \"Config\" (\"Key\", \"Value\") VALUES ('owned-recovery-marker', 'preserved')");
+                versions = connection.Query<long>(versionsQuery).ToArray();
             }
 
             var database = PasswordRecoveryDatabase.Create(Info());
@@ -57,7 +61,7 @@ namespace NzbDrone.Core.Test.Authentication
 
             using var recovered = database.OpenConnection();
             recovered.ExecuteScalar<string>("SELECT \"Value\" FROM \"Config\" WHERE \"Key\" = 'owned-recovery-marker'").Should().Be("preserved");
-            recovered.ExecuteScalar<long>("SELECT MAX(\"Version\") FROM \"VersionInfo\"").Should().Be(158);
+            recovered.Query<long>(versionsQuery).Should().Equal(versions);
             using var reopenedConnection = reopened.OpenConnection();
             reopenedConnection.ExecuteScalar<string>("SELECT \"Value\" FROM \"Config\" WHERE \"Key\" = 'owned-recovery-marker'").Should().Be("preserved");
         }
@@ -68,7 +72,7 @@ namespace NzbDrone.Core.Test.Authentication
             Migrate(MigrationType.Main);
             using (var connection = Open())
             {
-                connection.Execute("UPDATE \"VersionInfo\" SET \"Version\" = 999 WHERE \"Version\" = 158");
+                connection.Execute("UPDATE \"VersionInfo\" SET \"Version\" = 999 WHERE \"Version\" = (SELECT MAX(\"Version\") FROM \"VersionInfo\")");
             }
 
             Assert.Throws<InvalidOperationException>(() => PasswordRecoveryDatabase.Create(Info()));

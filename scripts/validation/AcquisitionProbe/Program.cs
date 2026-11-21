@@ -18,6 +18,7 @@ using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.History;
 using NzbDrone.Core.Indexers;
+using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.BookImport;
 using NzbDrone.Core.MediaFiles.Events;
@@ -68,6 +69,7 @@ internal static class Program
             Metadata["downloadClientNetworkUsed"] = false;
             VerifyClientTags();
             VerifyCustomFormatUpgrades(fixture);
+            VerifyRecordingLanguage();
             foreach (var name in new[] { "two_books_one_recording", "two_books_one_ebook", "declared_missing_part", "duplicate_parts", "different_editions", "unrepresented_source", "manual_subset", "rejected_part" })
                 VerifyIncomplete(fixture, name);
             VerifyWriteFailure(fixture);
@@ -85,6 +87,7 @@ internal static class Program
             VerifyBlockedRecovery(fixture);
             VerifyManualIntervention(fixture);
             DownloadFailoverProbe.Verify(fixture);
+            GrabSpaceProbe.Verify(fixture);
             DownloadTrackingProbe.Verify(fixture);
             Check("published_probe_uses_only_declared_boundaries", BoundaryProxy.Unexpected.Count == 0);
         }
@@ -216,6 +219,33 @@ internal static class Program
         Check("published_quality_upgrade_retains_precedence_over_format_score", spec.IsSatisfiedBy(item, null).Accepted);
         Check("published_format_preview_preserves_recording_identity", item.Edition.Asin == "B000000083" && item.Edition.ForeignEditionId == "audible:us:B000000083" && item.Edition.AudibleRegion == "us");
         Check("published_format_decisions_leave_source_and_library_bytes_unchanged", before.All(pair => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(pair.Key))) == pair.Value));
+
+        var improved = new CustomFormat("Improved filename", new ReleaseTitleSpecification { Value = "Improved" }) { Id = 101 };
+        var comparison = new NzbDrone.Core.DecisionEngine.Specifications.UpgradableSpecification(config, LogManager.GetLogger("OwnedFormatProbe"));
+        var quality = new QualityModel(Quality.MP3);
+        profile.MinUpgradeFormatScore = 10;
+        profile.FormatItems.Add(new ProfileFormatItem { Format = improved, Score = 109 });
+        Check("published_profile_rejects_nine_point_upgrade", !comparison.IsUpgradable(profile, quality, new() { preferred }, quality, new() { improved }, out var below) && below);
+        profile.FormatItems.Last().Score = 110;
+        Check("published_profile_accepts_exact_ten_point_upgrade", comparison.IsUpgradable(profile, quality, new() { preferred }, quality, new() { improved }));
+        profile.MinUpgradeFormatScore = 0;
+        profile.FormatItems.Last().Score = 101;
+        Check("published_zero_threshold_retains_small_positive_upgrade", comparison.IsUpgradable(profile, quality, new() { preferred }, quality, new() { improved }));
+    }
+
+    private static void VerifyRecordingLanguage()
+    {
+        Phase = "recording_language_formats";
+        var languages = RecordingLanguageEvidence.Parse("English, fra", " en-US ", "unrecognized");
+        Check("published_recording_language_parser_retains_known_and_unknown_values", languages.Select(language => language.Id).Order().SequenceEqual(new[] { 0, 1, 2 }));
+        var input = new CustomFormatInput { Languages = languages, SelectedEditionLanguageId = Language.French.Id };
+        Check("published_bilingual_recording_matches_both_languages", new LanguageSpecification { Value = Language.English.Id }.IsSatisfiedBy(input) &&
+            new LanguageSpecification { Value = Language.French.Id }.IsSatisfiedBy(input));
+        Check("published_language_can_match_selected_edition", new LanguageSpecification { Value = LanguageSpecification.SelectedEdition }.IsSatisfiedBy(input));
+        Check("published_partial_unknown_cannot_satisfy_negated_language", !new LanguageSpecification { Value = Language.Spanish.Id, Negate = true }.IsSatisfiedBy(input));
+        input.Languages = new[] { Language.Unknown };
+        Check("published_unknown_requires_explicit_unknown_condition", new LanguageSpecification { Value = Language.Unknown.Id }.IsSatisfiedBy(input) &&
+            !new LanguageSpecification { Value = Language.English.Id, ExceptLanguage = true }.IsSatisfiedBy(input));
     }
 
     private static IDownloadClient FakeClient(DownloadClientDefinition definition)

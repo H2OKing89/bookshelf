@@ -12,6 +12,7 @@ using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download.History;
 using NzbDrone.Core.History;
+using NzbDrone.Core.Languages;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
@@ -290,6 +291,13 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                     {
                         trackedDownload.RemoteBook.Release ??= new ReleaseInfo();
                         trackedDownload.RemoteBook.Release.IndexerFlags = flags;
+                    }
+
+                    var languages = RecordingLanguageEvidence.ReadHistory(grabbedEvent?.Data, RecordingLanguageEvidence.LanguagesKey);
+                    if (trackedDownload.RemoteBook != null && languages != null)
+                    {
+                        trackedDownload.RemoteBook.RecordedLanguages = RecordingLanguageEvidence.ParseStored(languages);
+                        trackedDownload.RemoteBook.SelectedEditionLanguageId = RecordingLanguageEvidence.ReadEditionLanguage(grabbedEvent.Data);
                     }
                 }
 

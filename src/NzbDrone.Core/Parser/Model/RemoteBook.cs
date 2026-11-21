@@ -4,6 +4,7 @@ using System.Linq;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.Download.Clients;
+using NzbDrone.Core.Languages;
 
 namespace NzbDrone.Core.Parser.Model
 {
@@ -17,6 +18,8 @@ namespace NzbDrone.Core.Parser.Model
         public TorrentSeedConfiguration SeedConfiguration { get; set; }
         public List<CustomFormat> CustomFormats { get; set; }
         public int CustomFormatScore { get; set; }
+        public List<Language> RecordedLanguages { get; set; }
+        public int? SelectedEditionLanguageId { get; set; }
         public ReleaseSourceType ReleaseSource { get; set; }
 
         public RemoteBook()

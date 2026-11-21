@@ -8,6 +8,7 @@ using NzbDrone.Core.Books;
 using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.ImportLists;
 using NzbDrone.Core.Lifecycle;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.RootFolders;
@@ -39,8 +40,28 @@ namespace NzbDrone.Core.Test.Profiles
             added.Should().NotBeNull();
             added.Name.Should().Be("Audiobooks");
             added.Cutoff.Should().Be(Quality.MP3.Id);
+            added.MinUpgradeFormatScore.Should().Be(0);
             added.Items.Where(item => item.Allowed).SelectMany(item => item.GetQualities())
                 .Should().BeEquivalentTo(Quality.UnknownAudio, Quality.MP3, Quality.M4B, Quality.FLAC);
+        }
+
+        [TestCase(9, 10, 1)]
+        [TestCase(10, 10, 0)]
+        [TestCase(10, 0, 1)]
+        public void refreshes_pending_decisions_only_when_the_saved_minimum_changes(int previous, int updated, int publishes)
+        {
+            var saved = false;
+            var profile = new QualityProfile { Id = 2, MinUpgradeFormatScore = updated };
+            Mocker.GetMock<IProfileRepository>().Setup(repository => repository.Get(profile.Id))
+                .Returns(new QualityProfile { Id = profile.Id, MinUpgradeFormatScore = previous });
+            Mocker.GetMock<IProfileRepository>().Setup(repository => repository.Update(profile)).Callback(() => saved = true);
+            Mocker.GetMock<IEventAggregator>().Setup(events => events.PublishEvent(It.IsAny<MinimumUpgradeFormatScoreChangedEvent>()))
+                .Callback<MinimumUpgradeFormatScoreChangedEvent>(_ => saved.Should().BeTrue());
+
+            Subject.Update(profile);
+
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.Is<MinimumUpgradeFormatScoreChangedEvent>(change =>
+                change.QualityProfileId == profile.Id)), Times.Exactly(publishes));
         }
 
         [Test]

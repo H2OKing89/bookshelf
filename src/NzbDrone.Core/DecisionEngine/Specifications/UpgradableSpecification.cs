@@ -64,6 +64,12 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
 
         public bool IsUpgradable(QualityProfile qualityProfile, QualityModel currentQualities, List<CustomFormat> currentCustomFormats, QualityModel newQuality, List<CustomFormat> newCustomFormats)
         {
+            return IsUpgradable(qualityProfile, currentQualities, currentCustomFormats, newQuality, newCustomFormats, out _);
+        }
+
+        public bool IsUpgradable(QualityProfile qualityProfile, QualityModel currentQualities, List<CustomFormat> currentCustomFormats, QualityModel newQuality, List<CustomFormat> newCustomFormats, out bool belowMinimumScoreImprovement)
+        {
+            belowMinimumScoreImprovement = false;
             var qualityUpgrade = IsQualityUpgradable(qualityProfile, currentQualities, newQuality);
 
             if (qualityUpgrade == ProfileComparisonResult.Upgrade)
@@ -87,6 +93,16 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                               newCustomFormats.ConcatToString(),
                               currentCustomFormats.ConcatToString());
 
+                return false;
+            }
+
+            if (!qualityProfile.MeetsMinimumUpgradeFormatScore(currentFormatScore, newFormatScore))
+            {
+                belowMinimumScoreImprovement = true;
+                _logger.Debug("Custom format score improvement from {0} to {1} is below the required {2}",
+                    currentFormatScore,
+                    newFormatScore,
+                    qualityProfile.MinUpgradeFormatScore);
                 return false;
             }
 

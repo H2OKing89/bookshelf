@@ -68,7 +68,7 @@ namespace NzbDrone.Core.Test.Download.DownloadApprovedReportsTests
             decisions.Add(new DownloadDecision(remoteBook));
 
             await Subject.ProcessDecisions(decisions);
-            Mocker.GetMock<IDownloadService>().Verify(v => v.DownloadReport(It.IsAny<RemoteBook>(), null), Times.Once());
+            Mocker.GetMock<IDownloadService>().Verify(v => v.DownloadReport(It.IsAny<RemoteBook>(), null, It.IsAny<DownloadSpaceBudget>()), Times.Once());
         }
 
         [Test]
@@ -82,7 +82,7 @@ namespace NzbDrone.Core.Test.Download.DownloadApprovedReportsTests
             decisions.Add(new DownloadDecision(remoteBook));
 
             await Subject.ProcessDecisions(decisions);
-            Mocker.GetMock<IDownloadService>().Verify(v => v.DownloadReport(It.IsAny<RemoteBook>(), null), Times.Once());
+            Mocker.GetMock<IDownloadService>().Verify(v => v.DownloadReport(It.IsAny<RemoteBook>(), null, It.IsAny<DownloadSpaceBudget>()), Times.Once());
         }
 
         [Test]
@@ -101,7 +101,7 @@ namespace NzbDrone.Core.Test.Download.DownloadApprovedReportsTests
             decisions.Add(new DownloadDecision(remoteBook2));
 
             await Subject.ProcessDecisions(decisions);
-            Mocker.GetMock<IDownloadService>().Verify(v => v.DownloadReport(It.IsAny<RemoteBook>(), null), Times.Once());
+            Mocker.GetMock<IDownloadService>().Verify(v => v.DownloadReport(It.IsAny<RemoteBook>(), null, It.IsAny<DownloadSpaceBudget>()), Times.Once());
         }
 
         [Test]
@@ -172,7 +172,7 @@ namespace NzbDrone.Core.Test.Download.DownloadApprovedReportsTests
             var decisions = new List<DownloadDecision>();
             decisions.Add(new DownloadDecision(remoteBook));
 
-            Mocker.GetMock<IDownloadService>().Setup(s => s.DownloadReport(It.IsAny<RemoteBook>(), null)).Throws(new Exception());
+            Mocker.GetMock<IDownloadService>().Setup(s => s.DownloadReport(It.IsAny<RemoteBook>(), null, It.IsAny<DownloadSpaceBudget>())).Throws(new Exception());
 
             var result = await Subject.ProcessDecisions(decisions);
 
@@ -201,7 +201,7 @@ namespace NzbDrone.Core.Test.Download.DownloadApprovedReportsTests
             decisions.Add(new DownloadDecision(remoteBook, new Rejection("Failure!", RejectionType.Temporary)));
 
             await Subject.ProcessDecisions(decisions);
-            Mocker.GetMock<IDownloadService>().Verify(v => v.DownloadReport(It.IsAny<RemoteBook>(), null), Times.Never());
+            Mocker.GetMock<IDownloadService>().Verify(v => v.DownloadReport(It.IsAny<RemoteBook>(), null, It.IsAny<DownloadSpaceBudget>()), Times.Never());
         }
 
         [Test]
@@ -242,11 +242,11 @@ namespace NzbDrone.Core.Test.Download.DownloadApprovedReportsTests
             decisions.Add(new DownloadDecision(remoteBook));
             decisions.Add(new DownloadDecision(remoteBook));
 
-            Mocker.GetMock<IDownloadService>().Setup(s => s.DownloadReport(It.IsAny<RemoteBook>(), null))
+            Mocker.GetMock<IDownloadService>().Setup(s => s.DownloadReport(It.IsAny<RemoteBook>(), null, It.IsAny<DownloadSpaceBudget>()))
                   .Throws(new DownloadClientUnavailableException("Download client failed"));
 
             await Subject.ProcessDecisions(decisions);
-            Mocker.GetMock<IDownloadService>().Verify(v => v.DownloadReport(It.IsAny<RemoteBook>(), null), Times.Once());
+            Mocker.GetMock<IDownloadService>().Verify(v => v.DownloadReport(It.IsAny<RemoteBook>(), null, It.IsAny<DownloadSpaceBudget>()), Times.Once());
         }
 
         [Test]
@@ -260,12 +260,12 @@ namespace NzbDrone.Core.Test.Download.DownloadApprovedReportsTests
             decisions.Add(new DownloadDecision(remoteBook));
             decisions.Add(new DownloadDecision(remoteBook2));
 
-            Mocker.GetMock<IDownloadService>().Setup(s => s.DownloadReport(It.Is<RemoteBook>(r => r.Release.DownloadProtocol == DownloadProtocol.Usenet), null))
+            Mocker.GetMock<IDownloadService>().Setup(s => s.DownloadReport(It.Is<RemoteBook>(r => r.Release.DownloadProtocol == DownloadProtocol.Usenet), null, It.IsAny<DownloadSpaceBudget>()))
                   .Throws(new DownloadClientUnavailableException("Download client failed"));
 
             await Subject.ProcessDecisions(decisions);
-            Mocker.GetMock<IDownloadService>().Verify(v => v.DownloadReport(It.Is<RemoteBook>(r => r.Release.DownloadProtocol == DownloadProtocol.Usenet), null), Times.Once());
-            Mocker.GetMock<IDownloadService>().Verify(v => v.DownloadReport(It.Is<RemoteBook>(r => r.Release.DownloadProtocol == DownloadProtocol.Torrent), null), Times.Once());
+            Mocker.GetMock<IDownloadService>().Verify(v => v.DownloadReport(It.Is<RemoteBook>(r => r.Release.DownloadProtocol == DownloadProtocol.Usenet), null, It.IsAny<DownloadSpaceBudget>()), Times.Once());
+            Mocker.GetMock<IDownloadService>().Verify(v => v.DownloadReport(It.Is<RemoteBook>(r => r.Release.DownloadProtocol == DownloadProtocol.Torrent), null, It.IsAny<DownloadSpaceBudget>()), Times.Once());
         }
 
         [Test]
@@ -278,7 +278,7 @@ namespace NzbDrone.Core.Test.Download.DownloadApprovedReportsTests
             decisions.Add(new DownloadDecision(remoteBook));
 
             Mocker.GetMock<IDownloadService>()
-                  .Setup(s => s.DownloadReport(It.IsAny<RemoteBook>(), null))
+                  .Setup(s => s.DownloadReport(It.IsAny<RemoteBook>(), null, It.IsAny<DownloadSpaceBudget>()))
                   .Throws(new ReleaseUnavailableException(remoteBook.Release, "That 404 Error is not just a Quirk"));
 
             var result = await Subject.ProcessDecisions(decisions);
@@ -295,7 +295,7 @@ namespace NzbDrone.Core.Test.Download.DownloadApprovedReportsTests
             var books = new List<Book> { GetBook(1) };
             var first = GetRemoteBook(books, new QualityModel(Quality.MP3));
             var alternate = GetRemoteBook(books, new QualityModel(Quality.MP3), DownloadProtocol.Torrent);
-            Mocker.GetMock<IDownloadService>().Setup(service => service.DownloadReport(first, null))
+            Mocker.GetMock<IDownloadService>().Setup(service => service.DownloadReport(first, null, It.IsAny<DownloadSpaceBudget>()))
                 .Throws(new DownloadClientSubmissionUncertainException("Review the client"));
 
             var result = await Subject.ProcessDecisions(new List<DownloadDecision>
@@ -305,7 +305,7 @@ namespace NzbDrone.Core.Test.Download.DownloadApprovedReportsTests
 
             result.Grabbed.Should().BeEmpty();
             result.Pending.Should().BeEmpty();
-            Mocker.GetMock<IDownloadService>().Verify(service => service.DownloadReport(alternate, null), Times.Never());
+            Mocker.GetMock<IDownloadService>().Verify(service => service.DownloadReport(alternate, null, It.IsAny<DownloadSpaceBudget>()), Times.Never());
             Mocker.GetMock<IPendingReleaseService>().Verify(service => service.AddMany(It.IsAny<List<Tuple<DownloadDecision, PendingReleaseReason>>>()), Times.Never());
             ExceptionVerification.ExpectedWarns(1);
         }
@@ -322,6 +322,26 @@ namespace NzbDrone.Core.Test.Download.DownloadApprovedReportsTests
             result.Should().Be(ProcessedDecisionResult.SubmissionUncertain);
             Mocker.GetMock<IPendingReleaseService>().Verify(service => service.Add(It.IsAny<DownloadDecision>(), It.IsAny<PendingReleaseReason>()), Times.Never());
             ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
+        public async Task space_rejection_does_not_pause_the_protocol_or_create_automatic_pending_retries()
+        {
+            var first = GetRemoteBook(new List<Book> { GetBook(1) }, new QualityModel(Quality.MP3));
+            var second = GetRemoteBook(new List<Book> { GetBook(2) }, new QualityModel(Quality.MP3));
+            var decisions = new List<DownloadDecision> { new DownloadDecision(first), new DownloadDecision(second) };
+            DownloadSpaceBudget budget = null;
+            Mocker.GetMock<IDownloadService>().Setup(service => service.DownloadReport(first, null, It.IsAny<DownloadSpaceBudget>()))
+                .Callback<RemoteBook, int?, DownloadSpaceBudget>((_, _, value) => budget = value)
+                .ThrowsAsync(new DownloadGrabSpaceException(Decision.RejectCode(RejectionCode.MinimumFreeSpace, "Insufficient space")));
+
+            var result = await Subject.ProcessDecisions(decisions);
+
+            result.Grabbed.Should().ContainSingle().Which.RemoteBook.Should().BeSameAs(second);
+            result.Rejected.Should().ContainSingle().Which.Rejections.Should().ContainSingle().Which.Code.Should().Be(RejectionCode.MinimumFreeSpace);
+            result.Pending.Should().BeEmpty();
+            budget.Should().NotBeNull();
+            Mocker.GetMock<IDownloadService>().Verify(service => service.DownloadReport(second, null, budget), Times.Once());
         }
     }
 }

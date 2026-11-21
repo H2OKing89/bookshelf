@@ -7,6 +7,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser;
+using NzbDrone.Core.Profiles.Qualities;
 
 namespace NzbDrone.Core.Books
 {
@@ -33,7 +34,7 @@ namespace NzbDrone.Core.Books
         void RemoveAddOptions(Author author);
     }
 
-    public class AuthorService : IAuthorService
+    public class AuthorService : IAuthorService, IHandle<MinimumUpgradeFormatScoreChangedEvent>
     {
         private readonly IAuthorRepository _authorRepository;
         private readonly IEventAggregator _eventAggregator;
@@ -184,6 +185,11 @@ namespace NzbDrone.Core.Books
         public List<Author> GetAllAuthors()
         {
             return _cache.Get("GetAllAuthors", () => _authorRepository.All().ToList(), TimeSpan.FromSeconds(30));
+        }
+
+        public void Handle(MinimumUpgradeFormatScoreChangedEvent message)
+        {
+            _cache.Clear();
         }
 
         public Dictionary<int, List<int>> GetAllAuthorTags()

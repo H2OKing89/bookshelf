@@ -10,6 +10,7 @@ using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Download.History;
+using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
@@ -141,6 +142,8 @@ namespace NzbDrone.Core.History
 
         public void Handle(BookGrabbedEvent message)
         {
+            var languages = RecordingLanguageEvidence.ForRelease(message.Book);
+            var selectedEditionLanguage = message.Book.SelectedEditionLanguageId ?? RecordingLanguageEvidence.SelectedEditionLanguage(message.Book.Books);
             foreach (var book in message.Book.Books)
             {
                 var history = new EntityHistory
@@ -172,6 +175,7 @@ namespace NzbDrone.Core.History
                 history.Data.Add("CustomFormatScore", message.Book.CustomFormatScore.ToString());
                 history.Data.Add("ReleaseSource", message.Book.ReleaseSource.ToString());
                 history.Data.Add("IndexerFlags", message.Book.Release.IndexerFlags.ToString());
+                RecordingLanguageEvidence.WriteHistory(history.Data, languages, selectedEditionLanguage);
 
                 if (!message.Book.ParsedBookInfo.ReleaseHash.IsNullOrWhiteSpace())
                 {
@@ -254,6 +258,10 @@ namespace NzbDrone.Core.History
             history.Data.Add("ReleaseGroup", message.BookInfo.ReleaseGroup);
             history.Data.Add("Size", message.BookInfo.Size.ToString());
             history.Data.Add("IndexerFlags", message.BookInfo.IndexerFlags.ToString());
+            var edition = message.BookInfo.Edition ?? message.ImportedBook.Edition?.Value;
+            RecordingLanguageEvidence.WriteHistory(history.Data,
+                RecordingLanguageEvidence.ForFile(message.ImportedBook.MediaInfo, message.ImportedBook.TaggedLanguage, edition),
+                RecordingLanguageEvidence.EditionLanguage(edition));
 
             _historyRepository.Insert(history);
         }
@@ -281,6 +289,8 @@ namespace NzbDrone.Core.History
                 history.Data.Add("ReleaseGroup", message.TrackedDownload?.RemoteBook?.ParsedBookInfo?.ReleaseGroup ?? message.Data.GetValueOrDefault(EntityHistory.RELEASE_GROUP));
                 history.Data.Add("Size", message.TrackedDownload?.DownloadItem.TotalSize.ToString() ?? message.Data.GetValueOrDefault(EntityHistory.SIZE));
                 history.Data.Add("Indexer", message.TrackedDownload?.RemoteBook?.Release?.Indexer ?? message.Data.GetValueOrDefault(EntityHistory.INDEXER));
+                history.Data[RecordingLanguageEvidence.LanguagesKey] = RecordingLanguageEvidence.ReadHistory(message.Data, RecordingLanguageEvidence.LanguagesKey);
+                history.Data[RecordingLanguageEvidence.EditionLanguageKey] = RecordingLanguageEvidence.ReadHistory(message.Data, RecordingLanguageEvidence.EditionLanguageKey);
 
                 _historyRepository.Insert(history);
             }

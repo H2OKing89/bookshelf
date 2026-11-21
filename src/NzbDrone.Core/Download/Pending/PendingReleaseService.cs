@@ -9,6 +9,8 @@ using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.DecisionEngine;
+using NzbDrone.Core.DecisionEngine.Specifications;
+using NzbDrone.Core.DecisionEngine.Specifications.RssSync;
 using NzbDrone.Core.Download.Aggregation;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Jobs;
@@ -16,6 +18,7 @@ using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Profiles.Delay;
+using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.Qualities;
 
 namespace NzbDrone.Core.Download.Pending
@@ -35,7 +38,8 @@ namespace NzbDrone.Core.Download.Pending
     public class PendingReleaseService : IPendingReleaseService,
                                          IHandle<AuthorDeletedEvent>,
                                          IHandle<BookGrabbedEvent>,
-                                         IHandle<RssSyncCompleteEvent>
+                                         IHandle<RssSyncCompleteEvent>,
+                                         IHandle<MinimumUpgradeFormatScoreChangedEvent>
     {
         private readonly IIndexerStatusService _indexerStatusService;
         private readonly IPendingReleaseRepository _repository;
@@ -49,6 +53,7 @@ namespace NzbDrone.Core.Download.Pending
         private readonly IDownloadClientFactory _downloadClientFactory;
         private readonly IIndexerFactory _indexerFactory;
         private readonly IEventAggregator _eventAggregator;
+        private readonly IDecisionEngineSpecification[] _upgradeChecks;
         private readonly Logger _logger;
 
         public PendingReleaseService(IIndexerStatusService indexerStatusService,
@@ -63,6 +68,9 @@ namespace NzbDrone.Core.Download.Pending
                                     IDownloadClientFactory downloadClientFactory,
                                     IIndexerFactory indexerFactory,
                                     IEventAggregator eventAggregator,
+                                    UpgradeDiskSpecification diskUpgrade,
+                                    QueueSpecification queueUpgrade,
+                                    HistorySpecification historyUpgrade,
                                     Logger logger)
         {
             _indexerStatusService = indexerStatusService;
@@ -77,6 +85,7 @@ namespace NzbDrone.Core.Download.Pending
             _downloadClientFactory = downloadClientFactory;
             _indexerFactory = indexerFactory;
             _eventAggregator = eventAggregator;
+            _upgradeChecks = new IDecisionEngineSpecification[] { diskUpgrade, queueUpgrade, historyUpgrade };
             _logger = logger;
         }
 
@@ -297,7 +306,7 @@ namespace NzbDrone.Core.Download.Pending
             return IncludeRemoteBooks(_repository.AllByAuthorId(authorId).ToList());
         }
 
-        private List<PendingRelease> IncludeRemoteBooks(List<PendingRelease> releases, Dictionary<string, RemoteBook> knownRemoteBooks = null)
+        private List<PendingRelease> IncludeRemoteBooks(List<PendingRelease> releases, Dictionary<string, RemoteBook> knownRemoteBooks = null, int? qualityProfileId = null)
         {
             var result = new List<PendingRelease>();
 
@@ -326,7 +335,12 @@ namespace NzbDrone.Core.Download.Pending
                 // Just in case the author was removed, but wasn't cleaned up yet (housekeeper will clean it up)
                 if (author == null)
                 {
-                    return null;
+                    continue;
+                }
+
+                if (qualityProfileId.HasValue && author.QualityProfileId != qualityProfileId.Value)
+                {
+                    continue;
                 }
 
                 List<Book> books;
@@ -431,6 +445,14 @@ namespace NzbDrone.Core.Download.Pending
 
             foreach (var rejectedRelease in rejected)
             {
+                var permanentRejections = rejectedRelease.Rejections.Where(rejection => rejection.Type == RejectionType.Permanent).ToList();
+                if (permanentRejections.Count > 0 && permanentRejections.All(rejection =>
+                    rejection.Code == RejectionCode.MinimumFreeSpace || rejection.Code == RejectionCode.GrabFreeSpaceUnverified))
+                {
+                    // A space rejection can pass on the next RSS sync without a new feed report.
+                    continue;
+                }
+
                 var matching = pending.Where(MatchingReleasePredicate(rejectedRelease.RemoteBook.Release));
 
                 foreach (var pendingRelease in matching)
@@ -476,6 +498,23 @@ namespace NzbDrone.Core.Download.Pending
         public void Handle(RssSyncCompleteEvent message)
         {
             RemoveRejected(message.ProcessedDecisions.Rejected);
+        }
+
+        public void Handle(MinimumUpgradeFormatScoreChangedEvent message)
+        {
+            var pending = IncludeRemoteBooks(_repository.All().ToList(), qualityProfileId: message.QualityProfileId);
+            var belowMinimum = pending.Where(release =>
+            {
+                var book = release.RemoteBook;
+                return book.Author.QualityProfile.Value.MinUpgradeFormatScore > 0 && book.Books.Any() &&
+                    _upgradeChecks.Any(specification => specification.IsSatisfiedBy(book, null).Code == RejectionCode.CustomFormatUpgradeBelowMinimum);
+            }).Select(release => release.Id).ToList();
+
+            if (belowMinimum.Count > 0)
+            {
+                _repository.DeleteMany(belowMinimum);
+                _eventAggregator.PublishEvent(new PendingReleasesUpdatedEvent());
+            }
         }
 
         private static Func<PendingRelease, bool> MatchingReleasePredicate(ReleaseInfo release)

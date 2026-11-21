@@ -32,6 +32,7 @@ namespace NzbDrone.Core.Parser
                                                                new IsoLanguage("ko", "", "kor", "Korean", Language.Korean),
                                                                new IsoLanguage("hu", "", "hun", "Hungarian", Language.Hungarian),
                                                                new IsoLanguage("he", "", "heb", "Hebrew", Language.Hebrew),
+                                                               new IsoLanguage("lt", "", "lit", "Lithuanian", Language.Lithuanian),
                                                                new IsoLanguage("cs", "", "ces", "Czech", Language.Czech),
                                                                new IsoLanguage("hi", "", "hin", "Hindi", Language.Hindi),
                                                                new IsoLanguage("th", "", "tha", "Thai", Language.Thai),

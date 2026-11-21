@@ -61,6 +61,17 @@ namespace NzbDrone.Core.Test.MediaFiles
         }
 
         [Test]
+        public void existing_file_should_store_language_tag_evidence_when_rescanned()
+        {
+            var file = Subject.GetFilesByAuthor(_author.Id).First();
+            file.TaggedLanguage = "en-US, fre";
+
+            Subject.Update(file);
+
+            Subject.Get(file.Id).TaggedLanguage.Should().Be("en-US, fre");
+        }
+
+        [Test]
         public void get_files_by_author()
         {
             VerifyData();

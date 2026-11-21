@@ -6,6 +6,7 @@ using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Indexers;
+using NzbDrone.Core.Languages;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser.Model;
@@ -85,7 +86,9 @@ namespace NzbDrone.Core.Blocklisting
                                 Size = remoteEpisode.Release.Size,
                                 Indexer = remoteEpisode.Release.Indexer,
                                 Protocol = remoteEpisode.Release.DownloadProtocol,
-                                Message = message
+                                Message = message,
+                                RecordingLanguages = RecordingLanguageEvidence.FormatStored(RecordingLanguageEvidence.ForRelease(remoteEpisode)),
+                                SelectedEditionLanguageId = remoteEpisode.SelectedEditionLanguageId ?? RecordingLanguageEvidence.SelectedEditionLanguage(remoteEpisode.Books)
                             };
 
             if (remoteEpisode.Release is TorrentInfo torrentRelease)
@@ -185,7 +188,9 @@ namespace NzbDrone.Core.Blocklisting
                 Indexer = message.Data.GetValueOrDefault("indexer"),
                 Protocol = (DownloadProtocol)Convert.ToInt32(message.Data.GetValueOrDefault("protocol")),
                 Message = message.Message,
-                TorrentInfoHash = message.Data.GetValueOrDefault("torrentInfoHash")
+                TorrentInfoHash = message.Data.GetValueOrDefault("torrentInfoHash"),
+                RecordingLanguages = RecordingLanguageEvidence.ReadHistory(message.Data, RecordingLanguageEvidence.LanguagesKey),
+                SelectedEditionLanguageId = RecordingLanguageEvidence.ReadEditionLanguage(message.Data)
             };
 
             if (Enum.TryParse(message.Data.GetValueOrDefault("indexerFlags"), true, out IndexerFlags flags))

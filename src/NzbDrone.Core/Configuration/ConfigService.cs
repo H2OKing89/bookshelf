@@ -201,6 +201,12 @@ namespace NzbDrone.Core.Configuration
             set { SetValue("SkipFreeSpaceCheckWhenImporting", value); }
         }
 
+        public bool CheckFreeSpaceWhenGrabbing
+        {
+            get { return GetValueBoolean(nameof(CheckFreeSpaceWhenGrabbing)); }
+            set { SetValue(nameof(CheckFreeSpaceWhenGrabbing), value); }
+        }
+
         public int MinimumFreeSpaceWhenImporting
         {
             get { return GetValueInt("MinimumFreeSpaceWhenImporting", 100); }

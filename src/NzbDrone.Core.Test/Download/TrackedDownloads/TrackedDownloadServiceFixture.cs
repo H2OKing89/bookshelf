@@ -12,6 +12,7 @@ using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.History;
 using NzbDrone.Core.Indexers;
+using NzbDrone.Core.Languages;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Test.Framework;
@@ -87,6 +88,35 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
             refreshed.ImportCompletionAnnounced.Should().BeFalse();
             refreshed.Status.Should().Be(TrackedDownloadStatus.Warning);
             refreshed.DownloadClient.Should().Be(client.Id);
+        }
+
+        [Test]
+        public void tracked_download_should_restore_only_its_own_grab_language_evidence()
+        {
+            var remote = new RemoteBook
+            {
+                Author = new Author { Id = 5 },
+                Books = new List<Book> { new Book { Id = 4 } },
+                Release = new ReleaseInfo { MediaInfo = new MediaInfoModel { Language = "English" } }
+            };
+            var grab = new EntityHistory { EventType = EntityHistoryEventType.Grabbed };
+            RecordingLanguageEvidence.WriteHistory(grab.Data, new[] { Language.French, Language.Unknown }, 2);
+            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId("shared-download", 2))
+                .Returns(new List<EntityHistory> { grab });
+            Mocker.GetMock<IParsingService>().Setup(service => service.Map(It.IsAny<ParsedBookInfo>(), null)).Returns(remote);
+            var item = new DownloadClientItem
+            {
+                DownloadId = "shared-download",
+                Title = "Audio Author - Audio Book [2018 - FLAC]",
+                DownloadClientInfo = new DownloadClientItemClientInfo { Id = 2, Name = "owned" }
+            };
+
+            var tracked = Subject.TrackDownload(new DownloadClientDefinition { Id = 2 }, item);
+
+            RecordingLanguageEvidence.ForRelease(tracked.RemoteBook).Should().Equal(Language.French, Language.Unknown);
+            tracked.RemoteBook.SelectedEditionLanguageId.Should().Be(2);
+            tracked.RemoteBook.Release.MediaInfo.Language.Should().Be("English");
+            Mocker.GetMock<IHistoryService>().Verify(service => service.FindByDownloadId("shared-download", 2), Times.Once);
         }
 
         [TestCase(false)]

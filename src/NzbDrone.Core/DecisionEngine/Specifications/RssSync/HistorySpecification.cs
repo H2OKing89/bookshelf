@@ -75,7 +75,8 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
                         mostRecent.Quality,
                         customFormats,
                         subject.ParsedBookInfo.Quality,
-                        subject.CustomFormats);
+                        subject.CustomFormats,
+                        out var belowMinimumScoreImprovement);
 
                     if (!cutoffUnmet)
                     {
@@ -89,6 +90,11 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
 
                     if (!upgradeable)
                     {
+                        if (belowMinimumScoreImprovement)
+                        {
+                            return Decision.RejectCode(RejectionCode.CustomFormatUpgradeBelowMinimum, "Upgrade over the previously grabbed release requires a custom format score improvement of at least {0}", subject.Author.QualityProfile.Value.MinUpgradeFormatScore);
+                        }
+
                         if (recent)
                         {
                             return Decision.RejectCode(RejectionCode.HistoryHigherPreference, "Recent grab event in history is of equal or higher quality: {0}", mostRecent.Quality);

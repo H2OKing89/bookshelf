@@ -123,6 +123,7 @@ class EditQualityProfileModalContent extends Component {
       cutoff,
       minFormatScore,
       cutoffFormatScore,
+      minUpgradeFormatScore,
       items,
       formatItems
     } = item;
@@ -232,6 +233,24 @@ class EditQualityProfileModalContent extends Component {
                               name="cutoffFormatScore"
                               {...cutoffFormatScore}
                               helpText={translate('CutoffFormatScoreHelpText')}
+                              onChange={onInputChange}
+                            />
+                          </FormGroup>
+                      }
+
+                      {
+                        upgradeAllowed.value && formatItems.value.length > 0 &&
+                          <FormGroup size={sizes.EXTRA_SMALL}>
+                            <FormLabel size={sizes.SMALL}>
+                              {translate('MinUpgradeFormatScore')}
+                            </FormLabel>
+
+                            <FormInputGroup
+                              type={inputTypes.NUMBER}
+                              name="minUpgradeFormatScore"
+                              min={0}
+                              {...minUpgradeFormatScore}
+                              helpText={translate('MinUpgradeFormatScoreHelpText')}
                               onChange={onInputChange}
                             />
                           </FormGroup>

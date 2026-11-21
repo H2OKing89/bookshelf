@@ -39,6 +39,7 @@ namespace Readarr.Api.V1.Queue
         [Consumes("application/json")]
         public async Task<object> Grab([FromBody] QueueBulkResource resource)
         {
+            var spaceBudget = new DownloadSpaceBudget();
             foreach (var id in resource.Ids)
             {
                 var pendingRelease = _pendingReleaseService.FindPendingQueueItem(id);
@@ -48,7 +49,7 @@ namespace Readarr.Api.V1.Queue
                     throw new NotFoundException();
                 }
 
-                await _downloadService.DownloadReport(pendingRelease.RemoteBook, null);
+                await _downloadService.DownloadReport(pendingRelease.RemoteBook, null, spaceBudget);
             }
 
             return new { };

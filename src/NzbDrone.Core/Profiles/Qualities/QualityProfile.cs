@@ -18,6 +18,7 @@ namespace NzbDrone.Core.Profiles.Qualities
         public int Cutoff { get; set; }
         public int MinFormatScore { get; set; }
         public int CutoffFormatScore { get; set; }
+        public int MinUpgradeFormatScore { get; set; }
         public List<ProfileFormatItem> FormatItems { get; set; }
         public List<QualityProfileQualityItem> Items { get; set; }
 
@@ -90,6 +91,11 @@ namespace NzbDrone.Core.Profiles.Qualities
         public int CalculateCustomFormatScore(List<CustomFormat> formats)
         {
             return FormatItems.Where(x => formats.Contains(x.Format)).Sum(x => x.Score);
+        }
+
+        public bool MeetsMinimumUpgradeFormatScore(int currentScore, int candidateScore)
+        {
+            return (long)candidateScore - currentScore >= MinUpgradeFormatScore;
         }
     }
 }

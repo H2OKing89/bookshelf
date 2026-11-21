@@ -9,6 +9,7 @@ using Moq;
 using NUnit.Framework;
 using NzbDrone.Common.Http;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Download.Clients;
 using NzbDrone.Core.Exceptions;
@@ -29,6 +30,10 @@ namespace NzbDrone.Core.Test.Download
         public void Setup()
         {
             _downloadClients = new List<IDownloadClient>();
+
+            Mocker.GetMock<IDownloadGrabSpaceService>()
+                .Setup(service => service.Check(It.IsAny<RemoteBook>(), It.IsAny<DownloadSpaceBudget>(), It.IsAny<DownloadClientInfo>()))
+                .Returns(new GrabSpaceAssessment(Decision.Accept()));
 
             Mocker.GetMock<IProvideDownloadClient>()
                 .Setup(v => v.GetDownloadClients(It.IsAny<bool>()))
@@ -100,6 +105,53 @@ namespace NzbDrone.Core.Test.Download
             await Subject.DownloadReport(_parseResult, null);
 
             mock.Verify(s => s.Download(It.IsAny<RemoteBook>(), It.IsAny<IIndexer>()), Times.Once());
+        }
+
+        [Test]
+        public void direct_grab_rechecks_space_before_creating_a_submission_marker_or_contacting_add()
+        {
+            var client = WithUsenetClient();
+            Mocker.GetMock<IDownloadGrabSpaceService>()
+                .Setup(service => service.Check(_parseResult, null, It.IsAny<DownloadClientInfo>()))
+                .Returns(new GrabSpaceAssessment(Decision.RejectCode(RejectionCode.MinimumFreeSpace, "Not enough space")));
+
+            var failure = Assert.ThrowsAsync<DownloadGrabSpaceException>(
+                () => Subject.DownloadReport(_parseResult, client.Object.Definition.Id));
+
+            failure.RejectionCode.Should().Be(RejectionCode.MinimumFreeSpace);
+            client.Verify(value => value.Download(It.IsAny<RemoteBook>(), It.IsAny<IIndexer>()), Times.Never());
+            Mocker.GetMock<IDownloadSubmissionGuard>().Verify(guard => guard.Begin(It.IsAny<RemoteBook>(), It.IsAny<IDownloadClient>()), Times.Never());
+            VerifyEventNotPublished<BookGrabbedEvent>();
+        }
+
+        [TestCase("accepted", 17L)]
+        [TestCase("uncertain", 17L)]
+        [TestCase("not_added", 0L)]
+        public async Task batch_budget_should_count_accepted_and_uncertain_adds_but_not_proven_failures(string outcome, long submittedBytes)
+        {
+            var client = WithUsenetClient();
+            var budget = new DownloadSpaceBudget();
+            Mocker.GetMock<IDownloadGrabSpaceService>()
+                .Setup(service => service.Check(_parseResult, budget, It.IsAny<DownloadClientInfo>()))
+                .Returns(new GrabSpaceAssessment(Decision.Accept(), TempFolder, 17));
+
+            if (outcome == "uncertain")
+            {
+                client.Setup(value => value.Download(It.IsAny<RemoteBook>(), It.IsAny<IIndexer>())).ThrowsAsync(new TimeoutException());
+                Assert.ThrowsAsync<DownloadClientSubmissionUncertainException>(() => Subject.DownloadReport(_parseResult, null, budget));
+            }
+            else if (outcome == "not_added")
+            {
+                client.Setup(value => value.Download(It.IsAny<RemoteBook>(), It.IsAny<IIndexer>()))
+                    .ThrowsAsync(new ReleaseUnavailableException(_parseResult.Release, "Release has gone"));
+                Assert.ThrowsAsync<ReleaseUnavailableException>(() => Subject.DownloadReport(_parseResult, null, budget));
+            }
+            else
+            {
+                await Subject.DownloadReport(_parseResult, null, budget);
+            }
+
+            budget.GetSubmittedBytes(TempFolder).Should().Be(submittedBytes);
         }
 
         [Test]

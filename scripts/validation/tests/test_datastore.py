@@ -44,7 +44,8 @@ class DatastoreFixtureValueTests(unittest.TestCase):
                 datastore.mount(Path(invalid), "/validation/data")
 
     def test_historical_migration_158_is_preserved_without_inventing_34(self):
-        self.assertEqual(len(datastore.HISTORY), 48)
+        self.assertEqual(len(datastore.LEGACY_HISTORY), 48)
+        self.assertEqual(datastore.HISTORY - datastore.LEGACY_HISTORY, {159, 160})
         self.assertIn(158, datastore.HISTORY)
         self.assertNotIn(34, datastore.HISTORY)
         self.assertIn(48, datastore.HISTORY)

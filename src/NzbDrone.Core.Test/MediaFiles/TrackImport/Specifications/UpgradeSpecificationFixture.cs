@@ -98,6 +98,33 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport.Specifications
             Subject.IsSatisfiedBy(_item, null).Accepted.Should().Be(accepted);
         }
 
+        [TestCase(109, false)]
+        [TestCase(110, true)]
+        public void score_improvement_is_measured_after_renaming(int intended, bool accepted)
+        {
+            _item.Author.QualityProfile.Value.MinUpgradeFormatScore = 10;
+            _candidate.OriginalScore = 120;
+            _candidate.IntendedScore = intended;
+
+            var decision = Subject.IsSatisfiedBy(_item, null);
+
+            decision.Accepted.Should().Be(accepted);
+            if (!accepted)
+            {
+                decision.Code.Should().Be(RejectionCode.CustomFormatUpgradeBelowMinimum);
+            }
+        }
+
+        [Test]
+        public void a_preferred_revision_remains_an_upgrade_at_the_same_format_score()
+        {
+            _item.Author.QualityProfile.Value.MinUpgradeFormatScore = 10;
+            _item.Quality = new QualityModel(Quality.MP3, new Revision(version: 2));
+            _candidate.IntendedScore = 100;
+
+            Subject.IsSatisfiedBy(_item, null).Accepted.Should().BeTrue();
+        }
+
         [Test]
         public void no_existing_files_should_not_require_a_quality_profile_or_filename_preview()
         {

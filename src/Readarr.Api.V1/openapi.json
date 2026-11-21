@@ -11516,6 +11516,10 @@
             "type": "string",
             "nullable": true
           },
+          "checkFreeSpaceWhenGrabbing": {
+            "type": "boolean",
+            "nullable": true
+          },
           "skipFreeSpaceCheckWhenImporting": {
             "type": "boolean"
           },
@@ -12336,6 +12340,11 @@
             "type": "integer",
             "format": "int32"
           },
+          "minUpgradeFormatScore": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
           "cutoffFormatScore": {
             "type": "integer",
             "format": "int32"
@@ -12452,6 +12461,12 @@
           "minFormatScore": {
             "type": "integer",
             "format": "int32"
+          },
+          "minUpgradeFormatScore": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           },
           "cutoffFormatScore": {
             "type": "integer",

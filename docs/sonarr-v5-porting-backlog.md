@@ -80,15 +80,15 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D10](#d10) | P1 | Verified | M | Remove disappeared tracked items and refresh client configuration promptly |
 | [D11](#d11) | P1 | Verified | M | Separate blocked import state from terminal failure |
 | [D12](#d12) | P1 | Verified | M | Notify once when manual intervention is required |
-| [D13](#d13) | P1 | Planned | M | Add minimum custom-format score improvement for upgrades |
-| [D14](#d14) | P1 | Planned | M | Add language custom formats using audiobook evidence |
+| [D13](#d13) | P1 | In progress | M | Add minimum custom-format score improvement for upgrades |
+| [D14](#d14) | P1 | In progress | M | Add language custom formats using audiobook evidence |
 | [D15](#d15) | P1 | Planned | L | Implement meaningful audiobook size policy, including per-profile limits |
 | [D16](#d16) | P2 | Planned | M | Rank near preferred audiobook size instead of always favoring the largest |
-| [D17](#d17) | P1 | Planned | M | Check library free space before grabbing |
+| [D17](#d17) | P1 | In progress | M | Check library free space before grabbing |
 | [D18](#d18) | P2 | Planned | L | Represent one queued download with multiple books |
 | [D19](#d19) | P2 | Planned | M | Refresh pending decisions when policy or metadata changes |
 | [D20](#d20) | P2 | Planned | M | Sort library/history quality according to each profile |
-| [D21](#d21) | P1 | Planned | S | Backport narrow RSS parser fixes, retain existing feed machinery |
+| [D21](#d21) | P1 | In progress | S | Backport narrow RSS parser fixes, retain existing feed machinery |
 | [D22](#d22) | P1 | Planned | L | Persist successful import-list membership snapshots |
 | [D23](#d23) | P2 | Planned | M | Add additive and synchronized tags for existing list entries |
 | [D24](#d24) | P2 | Planned | M | Offer non-destructive cleanup when books leave all lists |
@@ -2213,6 +2213,16 @@ unpublished. See [local validation](local-validation.md#d10-d09-and-d12-verifica
 
 **P1 · partial · adapt · D02 optional, D05 complementary · M.** S:`src/NzbDrone.Core/Profiles/Qualities/QualityProfile.cs:21` `MinUpgradeFormatScore`; S:`src/NzbDrone.Core/DecisionEngine/Specifications/UpgradableSpecification.cs:104` rejects increments below the configured delta and returns a distinct reason. B:`src/NzbDrone.Core/Profiles/Qualities/QualityProfile.cs:19` already has minimum and cutoff scores, and B:`src/NzbDrone.Core/DecisionEngine/Specifications/UpgradableSpecification.cs:65` accepts any higher custom-format score. Add one profile value across migration/API/UI/export and use it consistently for RSS/history/queue/on-disk comparison. Acceptance: at delta 10, 100→109 rejects and 100→110 accepts; quality/revision upgrades keep documented precedence; negative scores and cutoff behavior work; existing profiles preserve current behavior via a default of zero.
 
+**2026-11-20 implementation.** Quality profiles now have a **Minimum Custom
+Format Score Improvement** setting. Zero preserves prior behavior. A threshold
+of 10 rejects a move from 100 to 109 and accepts a move from 100 to 110 when
+custom formats determine the upgrade. Quality/revision precedence and existing
+cutoffs remain in effect. Automatic import compares the intended renamed file
+against each recording part it would replace. An older API request that omits
+the field preserves the saved setting. Saving a changed threshold rechecks
+pending releases for the affected profile using current disk, queue and history
+comparisons. It does not start a search or download.
+
 ### D14
 
 **Add language custom formats using audiobook evidence**
@@ -2225,6 +2235,17 @@ unpublished. See [local validation](local-validation.md#d10-d09-and-d12-verifica
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/CustomFormats/CustomFormatInput.cs](../src/NzbDrone.Core/CustomFormats/CustomFormatInput.cs#L6).
 
 **P1 · missing specification, partial language model · adapt · reliable edition/recording language provenance · M.** S:`src/NzbDrone.Core/CustomFormats/Specifications/LanguageSpecification.cs:23` validates language IDs and supports negation/“except”; S:`src/NzbDrone.Core/CustomFormats/CustomFormatInput.cs` includes languages. B:`src/NzbDrone.Core/CustomFormats/CustomFormatInput.cs:6` has commented-out language constructors; no language specification exists in its specifications directory. Populate language from the best available release/edition/audio evidence and preserve Unknown. Acceptance: English-only, bilingual, unknown, negated, and original-language cases behave deterministically; “original language” means edition/work policy chosen for books rather than Sonarr's series field; existing regex/size/indexer-flag formats retain behavior. Source/Resolution/ReleaseType TV specifications are not audio formats.
+
+**2026-11-20 implementation.** The Language custom format supports a specific
+language, Unknown, and Selected Edition Language. Multiple known languages
+can match one release. Except Language requires evidence of a known difference,
+and missing evidence cannot satisfy a negated known-language condition.
+Selected Edition Language compares with the language of the selected edition
+when the release can be mapped unambiguously. It does not infer a work's original
+language from its translation or marketplace. Recording evidence comes from
+reported audio streams, explicit indexer metadata, local tags, and exact edition
+links where applicable. Scoped grab history and blocklist entries retain the
+language evidence used for scoring. File tags persist across scans and restarts.
 
 ### D15
 
@@ -2264,6 +2285,18 @@ unpublished. See [local validation](local-validation.md#d10-d09-and-d12-verifica
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/MediaFiles/BookImport/Specifications/FreeSpaceSpecification.cs](../src/NzbDrone.Core/MediaFiles/BookImport/Specifications/FreeSpaceSpecification.cs#L25).
 
 **P1 · missing pre-grab stage, import check exists · adapt · D01 · M.** S:`src/NzbDrone.Core/DecisionEngine/Specifications/FreeSpaceSpecification.cs:32` estimates post-import remaining space, caches five seconds, and honors an opt-out. B:`src/NzbDrone.Core/MediaFiles/BookImport/Specifications/FreeSpaceSpecification.cs:25` checks only at import. Add an advisory/rejection policy before grab, but budget peak space for Bookshelf's staged replacement instead of subtracting old files early. Acceptance: root path resolution, missing/inaccessible mounts, unknown sizes, minimum reserve, batch grabs, copy/hardlink/move differences, and temporary staged duplicates are covered; this never replaces the final import-time check. Avoid claiming cache-based checks reserve disk space across concurrent grabs.
+
+**2026-11-20 implementation.** Advanced Media Management has an opt-in
+**Check Free Space Before Grabbing** setting. It compares known release bytes
+and the configured minimum reserve with available space on the destination
+filesystem. Staged copying budgets the full release without crediting existing
+files or assuming a hardlink. When the client reports local output on the same
+filesystem, the final check budgets both the download and the staged copy.
+An opted-in check blocks unknown sizes and unavailable library space with a
+typed reason. The check runs before a client add, including manual grabs, and
+tracks estimated bytes from accepted or ambiguous submissions within the batch.
+Other batches and processes can still use the same space. The final import-time
+check remains separate.
 
 ### D18
 
@@ -2316,6 +2349,12 @@ unpublished. See [local validation](local-validation.md#d10-d09-and-d12-verifica
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/Indexers/Newznab/NewznabRssParser.cs](../src/NzbDrone.Core/Indexers/Newznab/NewznabRssParser.cs#L107).
 
 **P1 · partial · port narrow parser delta; skip wholesale RSS rewrite · no dependency · S.** S:`src/NzbDrone.Core/Indexers/Newznab/NewznabRssParser.cs:110` splits comma-separated language values with trimming; B:`src/NzbDrone.Core/Indexers/Newznab/NewznabRssParser.cs:107` maps each whole language attribute, so `English, French` is not recognized as two values. S also sets indexer flags at line 95; inspect book-provider flags individually before extending B's parser. `FetchAndParseRssService.cs` was text-identical between the inspected checkouts, and generic `HttpIndexerBase` acquisition differences were chiefly localization/TV criteria. Acceptance: repeated language elements, comma values, case/whitespace, malformed attributes and existing audiobook/ebook author/book fields all work; rate-limit/backoff/pagination regressions are avoided.
+
+**2026-11-20 implementation.** Newznab and Torznab split comma-separated and
+repeated language values, trim whitespace, and retain recognized language codes
+for D14. Unknown input remains unknown. The parser retains existing book author,
+title and edition fields. Feed fetching, rate limits, pagination and indexer
+flag expansion are outside this parser change.
 
 ### D22
 

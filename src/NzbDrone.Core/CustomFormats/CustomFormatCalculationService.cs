@@ -7,6 +7,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Blocklisting;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.History;
+using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Parser.Model;
 
@@ -35,6 +36,7 @@ namespace NzbDrone.Core.CustomFormats
 
         public List<CustomFormat> ParseCustomFormat(RemoteBook remoteBook, long size)
         {
+            var formats = _formatService.All();
             var input = new CustomFormatInput
             {
                 BookInfo = remoteBook.ParsedBookInfo,
@@ -43,7 +45,13 @@ namespace NzbDrone.Core.CustomFormats
                 IndexerFlags = remoteBook.Release?.IndexerFlags ?? 0
             };
 
-            return ParseCustomFormat(input);
+            if (UsesRecordingLanguage(formats))
+            {
+                input.Languages = RecordingLanguageEvidence.ForRelease(remoteBook);
+                input.SelectedEditionLanguageId = remoteBook.SelectedEditionLanguageId ?? RecordingLanguageEvidence.SelectedEditionLanguage(remoteBook.Books);
+            }
+
+            return ParseCustomFormat(input, formats);
         }
 
         public List<CustomFormat> ParseCustomFormat(BookFile bookFile, Author author)
@@ -73,7 +81,9 @@ namespace NzbDrone.Core.CustomFormats
                 BookInfo = bookInfo,
                 Author = author,
                 Size = blocklist.Size ?? 0,
-                IndexerFlags = blocklist.IndexerFlags
+                IndexerFlags = blocklist.IndexerFlags,
+                Languages = RecordingLanguageEvidence.ParseStored(blocklist.RecordingLanguages),
+                SelectedEditionLanguageId = blocklist.SelectedEditionLanguageId ?? 0
             };
 
             return ParseCustomFormat(input);
@@ -99,7 +109,9 @@ namespace NzbDrone.Core.CustomFormats
                 BookInfo = bookInfo,
                 Author = author,
                 Size = size,
-                IndexerFlags = indexerFlags
+                IndexerFlags = indexerFlags,
+                Languages = RecordingLanguageEvidence.ParseStored(RecordingLanguageEvidence.ReadHistory(history.Data, RecordingLanguageEvidence.LanguagesKey)),
+                SelectedEditionLanguageId = RecordingLanguageEvidence.ReadEditionLanguage(history.Data)
             };
 
             return ParseCustomFormat(input);
@@ -121,6 +133,8 @@ namespace NzbDrone.Core.CustomFormats
                 Author = localBook.Author,
                 Size = localBook.Size,
                 IndexerFlags = localBook.IndexerFlags,
+                Languages = RecordingLanguageEvidence.ForFile(localBook.FileTrackInfo?.MediaInfo, localBook.FileTrackInfo?.Language, localBook.Edition),
+                SelectedEditionLanguageId = RecordingLanguageEvidence.EditionLanguage(localBook.Edition)
             };
 
             return ParseCustomFormat(input);
@@ -129,6 +143,11 @@ namespace NzbDrone.Core.CustomFormats
         private List<CustomFormat> ParseCustomFormat(CustomFormatInput input)
         {
             return ParseCustomFormat(input, _formatService.All());
+        }
+
+        private static bool UsesRecordingLanguage(IEnumerable<CustomFormat> formats)
+        {
+            return formats.Any(format => format.Specifications.Any(specification => specification is LanguageSpecification));
         }
 
         private static List<CustomFormat> ParseCustomFormat(CustomFormatInput input, List<CustomFormat> allCustomFormats)
@@ -190,6 +209,13 @@ namespace NzbDrone.Core.CustomFormats
                 IndexerFlags = bookFile.IndexerFlags,
                 Filename = Path.GetFileName(bookFile.Path)
             };
+
+            if (UsesRecordingLanguage(allCustomFormats))
+            {
+                var edition = bookFile.EditionId > 0 ? bookFile.Edition?.Value : null;
+                input.Languages = RecordingLanguageEvidence.ForFile(bookFile.MediaInfo, bookFile.TaggedLanguage, edition);
+                input.SelectedEditionLanguageId = RecordingLanguageEvidence.EditionLanguage(edition);
+            }
 
             return ParseCustomFormat(input, allCustomFormats);
         }

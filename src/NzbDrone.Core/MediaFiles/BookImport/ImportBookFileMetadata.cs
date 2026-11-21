@@ -25,6 +25,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                 ReleaseGroup = localBook.ReleaseGroupOverride ?? localBook.ReleaseGroup,
                 Quality = localBook.Quality,
                 MediaInfo = localBook.FileTrackInfo?.MediaInfo,
+                TaggedLanguage = localBook.FileTrackInfo?.Language,
                 EditionId = localBook.Edition.Id,
                 Author = localBook.Author,
                 Edition = localBook.Edition

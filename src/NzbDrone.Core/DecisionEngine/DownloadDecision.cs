@@ -33,6 +33,11 @@ namespace NzbDrone.Core.DecisionEngine
             Rejections = rejections.ToList();
         }
 
+        internal void AddRejection(Rejection rejection)
+        {
+            Rejections = Rejections.Append(rejection).ToList();
+        }
+
         public override string ToString()
         {
             if (Approved)

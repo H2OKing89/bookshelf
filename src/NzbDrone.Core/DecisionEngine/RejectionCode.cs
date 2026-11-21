@@ -28,7 +28,9 @@ namespace NzbDrone.Core.DecisionEngine
         public const string CustomFormatDowngrade = "custom_format_downgrade";
         public const string CustomFormatLostAfterRename = "custom_format_lost_after_rename";
         public const string CustomFormatMinimumScore = "custom_format_minimum_score";
+        public const string CustomFormatUpgradeBelowMinimum = "custom_format_upgrade_below_minimum";
         public const string MinimumFreeSpace = "insufficient_free_space";
+        public const string GrabFreeSpaceUnverified = "grab_free_space_unverified";
         public const string SameFile = "same_file";
         public const string SourceUnpacking = "source_unpacking";
         public const string RootFolderMissing = "root_folder_missing";

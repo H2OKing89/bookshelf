@@ -34,6 +34,7 @@ namespace NzbDrone.Core.Profiles.Qualities
         private readonly IImportListFactory _importListFactory;
         private readonly ICustomFormatService _formatService;
         private readonly IRootFolderService _rootFolderService;
+        private readonly IEventAggregator _eventAggregator;
         private readonly Logger _logger;
 
         public QualityProfileService(IProfileRepository profileRepository,
@@ -41,12 +42,14 @@ namespace NzbDrone.Core.Profiles.Qualities
                                      IImportListFactory importListFactory,
                                      ICustomFormatService formatService,
                                      IRootFolderService rootFolderService,
+                                     IEventAggregator eventAggregator,
                                      Logger logger)
         {
             _profileRepository = profileRepository;
             _authorService = authorService;
             _importListFactory = importListFactory;
             _rootFolderService = rootFolderService;
+            _eventAggregator = eventAggregator;
             _formatService = formatService;
             _logger = logger;
         }
@@ -58,7 +61,13 @@ namespace NzbDrone.Core.Profiles.Qualities
 
         public void Update(QualityProfile profile)
         {
+            var previousScore = _profileRepository.Get(profile.Id)?.MinUpgradeFormatScore ?? 0;
             _profileRepository.Update(profile);
+
+            if (profile.MinUpgradeFormatScore != previousScore)
+            {
+                _eventAggregator.PublishEvent(new MinimumUpgradeFormatScoreChangedEvent(profile.Id));
+            }
         }
 
         public void Delete(int id)

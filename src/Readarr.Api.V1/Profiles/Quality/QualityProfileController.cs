@@ -24,6 +24,7 @@ namespace Readarr.Api.V1.Profiles.Quality
             SharedValidator.RuleFor(c => c.Name).NotEmpty();
             SharedValidator.RuleFor(c => c.Cutoff).ValidCutoff();
             SharedValidator.RuleFor(c => c.Items).ValidItems();
+            SharedValidator.RuleFor(c => c.MinUpgradeFormatScore).GreaterThanOrEqualTo(0);
 
             SharedValidator.RuleFor(c => c.FormatItems).Must(items =>
             {
@@ -61,6 +62,10 @@ namespace Readarr.Api.V1.Profiles.Quality
         public ActionResult<QualityProfileResource> Update(QualityProfileResource resource)
         {
             var model = resource.ToModel();
+            if (!resource.MinUpgradeFormatScore.HasValue)
+            {
+                model.MinUpgradeFormatScore = _qualityProfileService.Get(resource.Id).MinUpgradeFormatScore;
+            }
 
             _qualityProfileService.Update(model);
 
