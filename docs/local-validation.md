@@ -1082,3 +1082,36 @@ Popper, drag-and-drop and virtualizer.
 
 Local evidence is under `_temp/u03-u05-u06-20261121/`, including builds,
 source results, package summaries and screenshots from synthetic homes.
+
+## U07, U08 and U09 verification (2026-11-21)
+
+Clean source `7ed24552a` produced the glibc and musl Linux x64 packages
+with matching source provenance. The implementation commits are
+`23d5321c3` for type checking, `b8a495d95` for Fetch, and `7ed24552a` for Query.
+
+- Fresh frozen Yarn install, standalone typecheck, full frontend lint, and
+  **75 frontend tests** passed on Node **20.11.1**. The frontend tests also
+  passed on Node 24.22.3, and **148 Python tooling tests** passed.
+- The production build passed CSS declaration verification. The same check
+  rejected a deliberately stale `BookRow.css.d.ts` in a disposable worktree.
+- The Fetch and Query browser runs each passed **125 provider and
+  accessibility checks**. The new cases covered the URL-base-prefixed
+  authenticated request, invalid data, HTTP and expired-authentication
+  errors, retained observations, cancellation on navigation, and recovery
+  after returning to Status.
+- Query tests used two observers of the production query options to verify
+  request sharing, cancellation when the last observer leaves, data retention
+  on background failure, and isolation from a prior API root's late result.
+- The clean packages passed **612 delivery checks**, including **305
+  acquisition checks** and **56 musl Docker checks**. **62 library review**,
+  **262 identity**, **112 authentication**, **41 datastore**, and **46
+  webhook and clipboard checks** also passed.
+
+The TypeScript compiler follows the pinned Sonarr v5 version, 5.9.3.
+The TypeScript ESLint pair uses 8.55.0 for compatibility with that compiler
+and the repository's pinned Node version. Strict checking covers the new
+identity and API slice. The existing mixed project continues to cover other
+TypeScript files.
+
+Local evidence is under `_temp/u07-u08-u09-20261121/`, including package
+summaries, browser reports, and the CSS declaration check.

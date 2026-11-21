@@ -104,9 +104,9 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [U04](#u04) | P1 | Verified | M | Connect form labels, help and validation to inputs |
 | [U05](#u05) | P2 | Verified | S | Announce asynchronous action results |
 | [U06](#u06) | P1 | Verified | M | Upgrade React independently to 18/createRoot |
-| [U07](#u07) | P1 | Planned | L | Strict TypeScript and explicit frontend type checking |
-| [U08](#u08) | P1 | Planned | M | Typed fetch transport with cancellation and structured errors |
-| [U09](#u09) | P1 | Planned | M | Introduce Query for one server-owned state slice |
+| [U07](#u07) | P1 | In progress | L | Strict TypeScript and explicit frontend type checking |
+| [U08](#u08) | P1 | Verified | M | Typed fetch transport with cancellation and structured errors |
+| [U09](#u09) | P1 | Verified | M | Introduce Query for one server-owned state slice |
 | [U10](#u10) | P1 | Planned | M | Keyed pagination that retains previous rows |
 | [U11](#u11) | P1 | Planned | L | Deliberate SignalR-to-cache synchronization |
 | [U12](#u12) | P1 | Planned | M | Preserve preferences while splitting state into small stores |
@@ -2698,6 +2698,14 @@ warnings remain for [U07](#u07). `react-virtualized` can still call
 
 Add a CI typecheck command, migrate shared models/API boundaries/new code in coherent slices, then raise strictness for those slices and ratchet the remainder. **Dependencies:** declared book/edition/recording/local-recording types; CSS declaration strategy. **Acceptance:** typecheck fails on invalid field names/nullable state/identity mixups and stale CSS names; conversions contain no broad `any`/unchecked `as` that erase the boundary; JS files remain explicitly tracked because `allowJs:true, checkJs:false` does not validate them. Preserve retained ebook fields rather than deleting them to satisfy new audiobook-centric types.
 
+**2026-11-21 first slice.** `yarn typecheck` checks the existing TypeScript
+project and a strict project covering recording identities, the author catalog
+label, typed Fetch, and Metadata Providers. Compile-time tests cover book and
+edition ID mixups, nullable identity fields, marketplace differences, and
+invalid CSS class names. Webpack's `--env verifyCssTypes` mode checks generated
+CSS declarations. The remaining frontend migration is staged in subsequent
+slices. See [local validation](local-validation.md#u07-u08-and-u09-verification-2026-11-21).
+
 ### U08
 
 **Typed fetch transport with cancellation and structured errors**
@@ -2713,6 +2721,13 @@ Add a CI typecheck command, migrate shared models/API boundaries/new code in coh
 
 Introduce a transport behind one read-only screen while preserving Bookshelf's initialization/API root and auth/CSRF contract. **Dependencies:** U07 typed errors; transport regression fixtures. **Acceptance:** urlBase/root deployment, auth expiry, 400 validation arrays, JSON/text/empty errors, network error, 204, timeout and unmount abort behave correctly; API key never goes to an external URL; stale requests cannot overwrite newer state. Adapt rather than copy S5's hardcoded `/api/v5` at `fetchJson.ts:37`; use a defined body check rather than `body ?` (`:58`) when false/zero/null can be valid; clear timeouts/listeners in failure paths as well as successful responses. TypeScript casts alone are not runtime response validation.
 
+**2026-11-21 implementation.** Metadata Providers reads typed observations
+through Fetch. The transport validates response data, preserves status and
+validation details, and distinguishes timeouts, cancellation, network failures,
+and invalid responses. It sends the API key only to the initialized same-origin
+API and honors the URL base. See
+[local validation](local-validation.md#u07-u08-and-u09-verification-2026-11-21).
+
 ### U09
 
 **Introduce Query for one server-owned state slice**
@@ -2727,6 +2742,13 @@ Introduce a transport behind one read-only screen while preserving Bookshelf's i
 **P1; medium; missing locally; available in pinned v5.** S5 `Helpers/Hooks/useApiQuery.ts:20-45` provides path/params keys, query options and AbortSignal; `useApiMutation.ts:33-64,70-108` handles mutations and validation failures. B `Store/Actions/Creators/createFetchHandler.js:5-42` uses shared Redux fetch flags and update callbacks.
 
 Use a temporary Query-plus-Redux composition as a proposed migration design: start with read-only health/system data, then move one feature at a time. This incremental composition is a Bookshelf adaptation, rather than the final v5 App structure. Keep one authoritative owner per resource and bridge old consumers deliberately. **Dependencies:** U06/U08; cache-key convention including resource/query identities; explicit retry/stale/focus behavior. **Acceptance:** duplicate consumers share a request; unmounted queries abort; stale results cannot replace different-resource results; errors/loading are coherent; library identity keys use local ids/full marketplace-qualified foreign identity, never title or ASIN alone. Remove the converted Redux handlers only after all consumers are migrated.
+
+**2026-11-21 implementation.** TanStack Query 5.104.1 owns Metadata Providers
+observations. The key includes the API root. The panel refreshes every 30 seconds
+while mounted and retains the last valid observations during refresh and after
+an error. Observers share in-flight work, and the final observer's departure
+cancels the request. See
+[local validation](local-validation.md#u07-u08-and-u09-verification-2026-11-21).
 
 ### U10
 

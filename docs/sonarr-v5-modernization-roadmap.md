@@ -1295,3 +1295,17 @@ legacy virtualizer are tracked in U07 and U21.
 **Verified** using synthetic application homes, with browser checks on the
 glibc package and Docker checks on the musl package. See
 [local validation](local-validation.md#u03-u05-and-u06-verification-2026-11-21).
+
+### U07, U08 and U09 typed identities, transport and status cache — 2026-11-21
+
+U07's first strict TypeScript slice distinguishes book, edition, marketplace,
+and local recording identities. `yarn typecheck` and the CSS declaration check
+run locally on the pinned Node toolchain.
+
+U08 and U09 move **System → Status → Metadata Providers** onto validated Fetch
+responses and a Query cache. The panel retains the last valid observations
+during refresh and cancels its pending request on navigation. Concurrent
+observers share a request.
+
+The three slices are in `23d5321c3`, `b8a495d95`, and `7ed24552a`.
+See [local validation](local-validation.md#u07-u08-and-u09-verification-2026-11-21).
