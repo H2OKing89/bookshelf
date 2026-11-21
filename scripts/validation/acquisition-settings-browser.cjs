@@ -83,6 +83,10 @@ const path = require('path');
           page.waitForURL(current => !current.pathname.endsWith('/login')),
           page.locator('#login-button').click()
         ]);
+        const openCard = async (title, scope = page) => {
+          const card = scope.locator('div:has(> [class*="underlay"])').filter({ has: page.getByText(title, { exact: true }) });
+          await card.locator(':scope > [class*="underlay"]').click();
+        };
         step = 'profile_setup';
         const profile = (await request('qualityprofile')).find(item => item.id === cfg.profileId);
         const profilePath = 'qualityprofile/' + profile.id;
@@ -91,16 +95,19 @@ const path = require('path');
         const threshold = page.locator('input[name="minUpgradeFormatScore"]');
         const openProfile = async () => {
           await page.goto(url + '/settings/profiles');
-          await page.getByText(profile.name, { exact: true }).click();
+          step = 'profile_open_card';
+          await openCard(profile.name);
+          step = 'profile_threshold_visible';
           await threshold.waitFor({ state: 'visible' });
         };
         step = 'profile_browser_save';
         await openProfile();
+        step = 'profile_fill_and_save';
         await threshold.fill('10');
         await threshold.scrollIntoViewIfNeeded();
         await page.screenshot({ path: path.join(output, name + '-score.png'), fullPage: true });
         const [saveScore] = await Promise.all([
-          page.waitForResponse(response => response.request().method() === 'PUT' && response.url() === apiUrl + profilePath),
+          page.waitForResponse(response => response.request().method() === 'PUT' && new URL(response.url()).pathname.endsWith('/' + profilePath)),
           page.getByRole('button', { name: 'Save', exact: true }).click()
         ]);
         check(name + '_profile_browser_saves_threshold', saveScore.status() === 202 && saveScore.request().postDataJSON().minUpgradeFormatScore === 10);
@@ -116,8 +123,10 @@ const path = require('path');
         check(name + '_explicit_zero_clears_threshold', (await request(profilePath)).minUpgradeFormatScore === 0);
         step = 'language_browser';
         await page.goto(url + '/settings/customformats');
-        await page.getByText(formatName, { exact: true }).click();
-        await page.getByText(conditionName, { exact: true }).click();
+        await openCard(formatName);
+        step = 'language_condition';
+        const formatModal = page.locator('div[class*="modalContent"]').filter({ has: page.getByText('Edit Custom Format', { exact: true }) });
+        await openCard(conditionName, formatModal);
         const english = page.getByText('English', { exact: true }).first();
         await english.waitFor({ state: 'visible' });
         check(name + '_saved_language_condition_opens_with_english', await english.isVisible());
@@ -137,7 +146,7 @@ const path = require('path');
         await page.screenshot({ path: path.join(output, name + '-space.png'), fullPage: true });
         const [saveSpace] = await Promise.all([
           page.waitForResponse(response => response.request().method() === 'PUT' &&
-            response.url().replace(/\/\d+$/, '') === apiUrl + spacePath),
+            new URL(response.url()).pathname.replace(/\/\d+$/, '').endsWith('/' + spacePath)),
           page.getByRole('button', { name: 'Save Changes', exact: true }).click()
         ]);
         check(name + '_browser_enables_pre_grab_check', saveSpace.status() === 202 && saveSpace.request().postDataJSON().checkFreeSpaceWhenGrabbing === true);

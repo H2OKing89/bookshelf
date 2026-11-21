@@ -228,9 +228,15 @@ def exercise(fixture: Fixture, storage: Storage, check, prefix: str) -> None:
     other = next(key for key, row in before.items() if row["Username"] == fixture.current_username)
     original_key = fixture.xml_value("ApiKey")
     golden = storage.preserved()
+    legacy_schema = not storage.postgres and {row[0] for row in golden["mainVersions"]} == datastore.LEGACY_HISTORY
+    if legacy_schema:
+        golden = datastore.expected_acquisition_sqlite_snapshot(golden)
+        golden["mainVersions"] = [(version,) for version in sorted(datastore.HISTORY)]
     fixture.set_xml({"AuthenticationMethod": "Forms", "AuthenticationRequired": "Enabled"})
     fixture.start()
     check(prefix + "_upgrade_preserves_all_credential_encodings_before_login", storage.users() == before)
+    if legacy_schema:
+        check(prefix + "_upgrade_applies_only_expected_catalog_and_version_changes", storage.preserved() == golden)
     if getattr(fixture, "baseline_cookie", None):
         check(prefix + "_pre_stamp_cookie_requires_fresh_login", ui_status(fixture, {"Cookie": fixture.baseline_cookie}) in (302, 401))
     current_cookie = auth(fixture, fixture.current_username, fixture.current_password, check, prefix + "_salted_forms_login")

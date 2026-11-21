@@ -80,15 +80,15 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D10](#d10) | P1 | Verified | M | Remove disappeared tracked items and refresh client configuration promptly |
 | [D11](#d11) | P1 | Verified | M | Separate blocked import state from terminal failure |
 | [D12](#d12) | P1 | Verified | M | Notify once when manual intervention is required |
-| [D13](#d13) | P1 | In progress | M | Add minimum custom-format score improvement for upgrades |
-| [D14](#d14) | P1 | In progress | M | Add language custom formats using audiobook evidence |
+| [D13](#d13) | P1 | Verified | M | Add minimum custom-format score improvement for upgrades |
+| [D14](#d14) | P1 | Verified | M | Add language custom formats using audiobook evidence |
 | [D15](#d15) | P1 | Planned | L | Implement meaningful audiobook size policy, including per-profile limits |
 | [D16](#d16) | P2 | Planned | M | Rank near preferred audiobook size instead of always favoring the largest |
-| [D17](#d17) | P1 | In progress | M | Check library free space before grabbing |
+| [D17](#d17) | P1 | Verified | M | Check library free space before grabbing |
 | [D18](#d18) | P2 | Planned | L | Represent one queued download with multiple books |
 | [D19](#d19) | P2 | Planned | M | Refresh pending decisions when policy or metadata changes |
 | [D20](#d20) | P2 | Planned | M | Sort library/history quality according to each profile |
-| [D21](#d21) | P1 | In progress | S | Backport narrow RSS parser fixes, retain existing feed machinery |
+| [D21](#d21) | P1 | Verified | S | Backport narrow RSS parser fixes, retain existing feed machinery |
 | [D22](#d22) | P1 | Planned | L | Persist successful import-list membership snapshots |
 | [D23](#d23) | P2 | Planned | M | Add additive and synchronized tags for existing list entries |
 | [D24](#d24) | P2 | Planned | M | Offer non-destructive cleanup when books leave all lists |
@@ -2223,6 +2223,10 @@ the field preserves the saved setting. Saving a changed threshold rechecks
 pending releases for the affected profile using current disk, queue and history
 comparisons. It does not start a search or download.
 
+**Verified** on `e191326ba` with **5,687 passing source tests**, **569
+package delivery checks**, **41 datastore checks**, and **60
+desktop and phone settings checks**. See [local validation](local-validation.md#d13-d14-d21-language-parsing-and-d17-verification-2026-11-20).
+
 ### D14
 
 **Add language custom formats using audiobook evidence**
@@ -2246,6 +2250,10 @@ language from its translation or marketplace. Recording evidence comes from
 reported audio streams, explicit indexer metadata, local tags, and exact edition
 links where applicable. Scoped grab history and blocklist entries retain the
 language evidence used for scoring. File tags persist across scans and restarts.
+
+**Verified** on `e191326ba` with **5,687 passing source tests**, **569
+package delivery checks**, **41 datastore checks**, and **60
+desktop and phone settings checks**. See [local validation](local-validation.md#d13-d14-d21-language-parsing-and-d17-verification-2026-11-20).
 
 ### D15
 
@@ -2297,6 +2305,10 @@ typed reason. The check runs before a client add, including manual grabs, and
 tracks estimated bytes from accepted or ambiguous submissions within the batch.
 Other batches and processes can still use the same space. The final import-time
 check remains separate.
+
+**Verified** on `e191326ba` with **5,687 passing source tests**, **569
+package delivery checks**, **41 datastore checks**, and **60
+desktop and phone settings checks**. See [local validation](local-validation.md#d13-d14-d21-language-parsing-and-d17-verification-2026-11-20).
 
 ### D18
 
@@ -2355,6 +2367,10 @@ repeated language values, trim whitespace, and retain recognized language codes
 for D14. Unknown input remains unknown. The parser retains existing book author,
 title and edition fields. Feed fetching, rate limits, pagination and indexer
 flag expansion are outside this parser change.
+
+**Verified** on `e191326ba` with **5,687 passing source tests**, **569
+package delivery checks**, **41 datastore checks**, and **60
+desktop and phone settings checks**. See [local validation](local-validation.md#d13-d14-d21-language-parsing-and-d17-verification-2026-11-20).
 
 ### D22
 

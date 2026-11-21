@@ -1182,3 +1182,25 @@ actual musl Docker**), **111 authentication**, **262 identity-preservation**,
 packages build with matching source provenance. Inputs and owned-process cleanup
 remain intact. The dev service was not restarted and the candidate remains
 unsigned/unpublished. See [local validation](local-validation.md#d10-d09-and-d12-verification-2026-11-19).
+
+
+### D13, D14 and D17 acquisition policy — 2026-11-20
+
+Quality profiles now set the minimum custom-format improvement for upgrades.
+A zero threshold preserves previous behavior. Changed thresholds refresh
+pending comparisons for the affected profile, and automatic replacement checks
+the intended filename and each replaced recording part.
+
+Language custom formats use available recording evidence and support bilingual
+and unknown recordings. Selected Edition Language compares against the assigned
+edition. The D21 feed parser fix preserves comma-separated and repeated language
+values. Grabs, queue scoring and local import retain the appropriate evidence.
+
+An opt-in check estimates the destination bytes and reserve before each grab.
+It budgets a staging copy, plus the download when reported local output shares
+the library filesystem. Accepted and uncertain adds count against the estimate
+for that batch. The import check continues to verify actual space when needed.
+
+**Verified** on `e191326ba` with **5,687 passing source tests**, **569
+package delivery checks**, **41 datastore checks**, and **60
+desktop and phone settings checks**. See [local validation](local-validation.md#d13-d14-d21-language-parsing-and-d17-verification-2026-11-20).

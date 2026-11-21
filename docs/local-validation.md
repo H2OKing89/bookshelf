@@ -833,3 +833,42 @@ Private local evidence is under `_temp/d09-d10-d12-20261119/`:
 screenshots), and `release-candidate-proof/summary.json`. The earlier mixed
 bootstrap proof is smoke evidence only; the clean delivery above is authoritative.
 The running development service remains on its original process/runtime.
+
+## D13, D14, D21 language parsing and D17 verification (2026-11-20)
+
+Source `e191326ba` produced version `10.0.0.38747`. The glibc and musl packages
+carry matching clean provenance. The Sonarr comparison uses only the pinned
+v5 source `c018578e4b79ee048575c02d7a8aa2b929e4b837`.
+
+- **5,687 source tests** passed with **94 existing skips**, including
+  SQLite and PostgreSQL migration cases. **148 Python tooling tests** and **42
+  frontend Node tests** passed, as did targeted ESLint.
+- **569 delivery checks** passed, including **268 acquisition checks** and
+  **53 musl Docker checks**. The acquisition probe uses synthetic files, owned
+  SQLite repository fixtures, and controlled client and filesystem responses.
+  The new checks exercise the score threshold at its boundary, language scoring,
+  and exact and insufficient space budgets through the pre-add path.
+- **41 datastore checks** passed using SQLite and PostgreSQL 16. The
+  retained pre-P12 binary created the original schemas and data. The new package
+  applied migrations 159 and 160 while preserving the saved catalog and the
+  original migration identities, including historical 158. Existing profiles
+  gained a zero threshold and existing files gained nullable language evidence.
+- **60 settings browser and API checks** passed at desktop and 390px.
+  An owned home from the previous Bookshelf build verifies the profile default,
+  score save, omission and explicit reset, language condition rendering, and
+  space check save, omission and explicit disable.
+- **112 authentication checks** and **262 identity preservation
+  checks** passed.
+
+D17 uses the library staging requirement when client output cannot be verified.
+Reported local output on the same mount adds a second copy to the estimate. The
+batch estimate creates no storage reservation. The import check still applies.
+A directory left behind by an unavailable mount can resolve to its parent
+filesystem unless the operating system reports the mount failure.
+D14's Selected Edition Language uses the assigned edition from Bookshelf and
+requires usable language evidence. Bookshelf has no authoritative work-level
+original-language metadata.
+
+Local evidence is under `_temp/d13-d14-d17-20261120/`. It includes the source
+suites, proof summaries, synthetic desktop and phone screenshots, and both package builds. The mixed bootstrap run is a smoke check. The clean
+packaged delivery is the artifact used for verification.
