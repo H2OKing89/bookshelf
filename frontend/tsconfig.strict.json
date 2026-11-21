@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "moduleResolution": "bundler"
+  },
+  "include": [
+    "./typings/*.d.ts",
+    "./src/Book/BookIdentity.ts",
+    "./src/Author/Details/RecordingCatalogLabel.tsx",
+    "./src/Utilities/Book/recordingIdentity.ts",
+    "./src/Utilities/Fetch/**/*.ts",
+    "./src/System/Status/MetadataProviders/**/*.ts",
+    "./src/System/Status/MetadataProviders/**/*.tsx",
+    "./test/types/**/*.ts"
+  ]
+}

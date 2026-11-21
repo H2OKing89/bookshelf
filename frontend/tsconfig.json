@@ -19,8 +19,6 @@
   },
   "include": [
       "./src/**/*",
-      "./.eslintrc.js",
-      "./build/webpack.config.js",
       "./typings/*.ts"
   ],
   "exclude": [

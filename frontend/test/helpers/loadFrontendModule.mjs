@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,6 +6,7 @@ import { transformSync } from '@babel/core';
 
 const require = createRequire(import.meta.url);
 const sourceRoot = fileURLToPath(new URL('../../src/', import.meta.url));
+const sourceExtensions = ['.ts', '.tsx', '.js'];
 
 // Execute production components and selectors with explicitly supplied UI/store
 // boundaries. Utilities and selector dependencies still run their real code.
@@ -13,7 +14,14 @@ export function loadFrontendModule(relativePath, replacements = {}) {
   const modules = new Map();
 
   function load(path) {
-    const filename = path.endsWith('.js') ? path : `${path}.js`;
+    const filename = sourceExtensions.some((extension) => path.endsWith(extension))
+      ? path
+      : sourceExtensions.map((extension) => path + extension).find(existsSync);
+
+    if (!filename) {
+      throw new Error(`Frontend module not found: ${path}`);
+    }
+
     if (modules.has(filename)) {
       return modules.get(filename).exports;
     }
@@ -26,7 +34,8 @@ export function loadFrontendModule(relativePath, replacements = {}) {
       babelrc: false,
       presets: [
         ['@babel/preset-env', { targets: { node: 'current' } }],
-        '@babel/preset-react'
+        '@babel/preset-react',
+        '@babel/preset-typescript'
       ]
     });
 
@@ -40,7 +49,7 @@ export function loadFrontendModule(relativePath, replacements = {}) {
       if (specifier.startsWith('.')) {
         return load(resolve(dirname(filename), specifier));
       }
-      if (/^(Utilities|Store\/Selectors)\//.test(specifier)) {
+      if (/^(Book|System|Utilities|Store\/Selectors)\//.test(specifier)) {
         return load(resolve(sourceRoot, specifier));
       }
       return require(specifier);

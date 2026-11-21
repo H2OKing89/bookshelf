@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { loadFrontendModule } from './helpers/loadFrontendModule.mjs';
 
-const source = await readFile(new URL('../src/Utilities/Book/recordingIdentity.js', import.meta.url), 'utf8');
-const { getRecordingIdentity, summarizeSeriesRecordings } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+const { getRecordingIdentity, parseRecordingIdentity, summarizeSeriesRecordings } =
+  loadFrontendModule('Utilities/Book/recordingIdentity.ts');
 
 const recording = (id, asin, files = 0, region = 'us') => ({
   id,
@@ -65,9 +65,26 @@ test('does not claim file ownership while statistics are unavailable', () => {
 });
 
 test('retains legacy book counts and rejects author identities or malformed recording IDs', () => {
-  for (const id of [null, '', '12345', 'audible:us:name:J.K.%20Rowling', 'audible:us:B0F14PK33J:extra']) {
+  for (const id of [null, '', '12345', 'audible:us:name:J.K.%20Rowling', 'audible:us:B0F14PK33J:extra', 'audible:zz:B0F14PK33J']) {
     assert.equal(getRecordingIdentity(id), null);
     assert.equal(summarizeSeriesRecordings([{ id: 1, foreignBookId: id }], { 1: '1' }), null);
   }
   assert.equal(summarizeSeriesRecordings([], {}), null);
+});
+
+test('parses local and marketplace IDs independently and retains restored local IDs', () => {
+  const localIds = [
+    'local:recording:01a2781fd6c14f41821ad36307456f47',
+    'local:recording:01a2781f-d6c1-4f41-821a-d36307456f47'
+  ];
+  for (const id of localIds) {
+    assert.deepEqual(parseRecordingIdentity(id), { source: 'local', id });
+    assert.equal(getRecordingIdentity(id), null);
+  }
+
+  const asin = 'B0F14RPXHR';
+  for (const marketplace of ['uk', 'us']) {
+    const id = `audible:${marketplace}:${asin}`;
+    assert.deepEqual(parseRecordingIdentity(id), { source: 'audible', id, marketplace, asin });
+  }
 });

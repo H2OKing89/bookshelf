@@ -219,7 +219,10 @@ module.exports = (env) => {
           exclude: /(node_modules|globals.css)/,
           use: [
             { loader: MiniCssExtractPlugin.loader },
-            { loader: 'css-modules-typescript-loader' },
+            {
+              loader: 'css-modules-typescript-loader',
+              options: { mode: env.verifyCssTypes ? 'verify' : 'emit' },
+            },
             {
               loader: 'css-loader',
               options: {

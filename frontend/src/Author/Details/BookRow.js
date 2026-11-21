@@ -15,6 +15,7 @@ import { icons, kinds, tooltipPositions } from 'Helpers/Props';
 import { getRecordingIdentity } from 'Utilities/Book/recordingIdentity';
 import translate from 'Utilities/String/translate';
 import BookStatus from './BookStatus';
+import RecordingCatalogLabel from './RecordingCatalogLabel';
 import styles from './BookRow.css';
 
 class BookRow extends Component {
@@ -142,12 +143,7 @@ class BookRow extends Component {
                     title={title}
                     displayTitle={displayTitle}
                   />
-                  {
-                    recording &&
-                      <div className={styles.recordingIdentity}>
-                        ASIN {recording.asin} · {translate('RecordingCatalogLabel', { marketplace: recording.marketplace })}
-                      </div>
-                  }
+                  <RecordingCatalogLabel recording={recording} />
                 </TableRowCell>
               );
             }

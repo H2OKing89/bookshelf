@@ -57,8 +57,41 @@ function assertEmpty(button) {
     '<span role="alert" aria-atomic="true"></span>');
 }
 
+function mockFeedbackClock(context) {
+  let now = 0;
+  const pending = new Map();
+  context.mock.method(globalThis, 'setTimeout', (callback, delay) => {
+    const handle = Symbol();
+    pending.set(handle, { callback, due: now + delay });
+    return handle;
+  });
+  context.mock.method(globalThis, 'clearTimeout', (handle) => pending.delete(handle));
+
+  return (elapsed) => {
+    now += elapsed;
+    for (const [handle, { callback, due }] of pending) {
+      if (due <= now) {
+        pending.delete(handle);
+        callback();
+      }
+    }
+  };
+}
+
+function mockNavigator(context, value) {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value });
+  context.after(() => {
+    if (previous) {
+      Object.defineProperty(globalThis, 'navigator', previous);
+    } else {
+      delete globalThis.navigator;
+    }
+  });
+}
+
 test('test progress and results use one live region and replace expired feedback', (context) => {
-  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const tick = mockFeedbackClock(context);
   const button = mount(SpinnerErrorButton, { action: 'test', isSpinning: false, children: 'Test' });
   assertEmpty(button);
   updateTest(button, true);
@@ -70,12 +103,12 @@ test('test progress and results use one live region and replace expired feedback
   updateTest(button, false);
   assertAnnouncement(button, 'status', 'TestSucceeded');
 
-  context.mock.timers.tick(2000);
+  tick(2000);
   updateTest(button, true);
   updateTest(button, false, { status: 400, responseJSON: [{ isWarning: true }] });
-  context.mock.timers.tick(1000);
+  tick(1000);
   assertAnnouncement(button, 'status', 'TestCompletedWithWarnings');
-  context.mock.timers.tick(2000);
+  tick(2000);
   assertEmpty(button);
 
   updateTest(button, true);
@@ -83,11 +116,11 @@ test('test progress and results use one live region and replace expired feedback
   assertAnnouncement(button, 'alert', 'TestFailed');
   button.componentWillUnmount();
   button.setState = () => assert.fail('unmounted button received a timer update');
-  context.mock.timers.tick(3000);
+  tick(3000);
 });
 
 test('aborted actions stay silent and save buttons leave the successful announcement to the app', (context) => {
-  context.mock.timers.enable({ apis: ['setTimeout'] });
+  mockFeedbackClock(context);
   const button = mount(SpinnerErrorButton, { action: 'save', isSpinning: false, children: 'Save' });
   updateTest(button, true);
   assertAnnouncement(button, 'status', 'SavingSettings');
@@ -103,11 +136,11 @@ test('aborted actions stay silent and save buttons leave the successful announce
 });
 
 test('clipboard reports resolved writes and permission failures without exposing the copied value', async (context) => {
-  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const tick = mockFeedbackClock(context);
   const clipboardText = 'fixture clipboard value';
   let resolveWrite;
   const writeText = context.mock.fn(() => new Promise((resolve) => { resolveWrite = resolve; }));
-  context.mock.getter(globalThis, 'navigator', () => ({ clipboard: { writeText } }));
+  mockNavigator(context, { clipboard: { writeText } });
   const button = mount(ClipboardButton, { value: clipboardText });
   assert.equal(button.render().props.children[0].props['aria-label'], 'CopyToClipboard');
   const write = button.onCopyPress({ currentTarget: {} });
@@ -119,7 +152,7 @@ test('clipboard reports resolved writes and permission failures without exposing
   await write;
   assertAnnouncement(button, 'status', 'CopiedToClipboard');
   assert.ok(!renderStatus(button).includes(clipboardText));
-  context.mock.timers.tick(3000);
+  tick(3000);
   assertEmpty(button);
 
   writeText.mock.mockImplementation(() => Promise.reject(new Error('permission denied')));
@@ -130,12 +163,12 @@ test('clipboard reports resolved writes and permission failures without exposing
   assert.equal(writeText.mock.callCount(), 2);
   button.componentWillUnmount();
   button.setState = () => assert.fail('unmounted clipboard received a timer update');
-  context.mock.timers.tick(3000);
+  tick(3000);
 });
 
 test('legacy clipboard failure removes the temporary input and restores keyboard focus', async (context) => {
-  context.mock.timers.enable({ apis: ['setTimeout'] });
-  context.mock.getter(globalThis, 'navigator', () => ({}));
+  mockFeedbackClock(context);
+  mockNavigator(context, {});
   const operations = [];
   const input = {
     select: () => operations.push('select'),
