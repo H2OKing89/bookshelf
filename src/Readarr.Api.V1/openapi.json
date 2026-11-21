@@ -11432,6 +11432,16 @@
           "audioSampleRate": {
             "type": "integer",
             "format": "int32"
+          },
+          "mediaFileSizeBytes": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "containerDurationSeconds": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         },
         "additionalProperties": false

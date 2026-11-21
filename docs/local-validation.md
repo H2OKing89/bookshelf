@@ -872,3 +872,41 @@ original-language metadata.
 Local evidence is under `_temp/d13-d14-d17-20261120/`. It includes the source
 suites, proof summaries, synthetic desktop and phone screenshots, and both package builds. The mixed bootstrap run is a smoke check. The clean
 packaged delivery is the artifact used for verification.
+
+## D15, D16 and B04 verification (2026-11-20)
+
+Clean source `9bc7dc65a` produced version `10.0.0.39747`. The glibc and musl
+packages carry matching source provenance. The Sonarr comparison remains pinned
+to v5 `c018578e4b79ee048575c02d7a8aa2b929e4b837`.
+
+- **5,740 .NET tests** passed with **94 existing skips**, including
+  SQLite and PostgreSQL migration cases. **148 Python tests**, **42 frontend
+  Node tests**, and targeted ESLint passed.
+- **589 delivery checks** passed, including **288 acquisition
+  checks** and **53 musl Docker checks**. The packaged acquisition probe covers
+  long audiobooks, ebook limits, unknown duration, grouped settings, quality
+  precedence, and size tie-breaking. Audio coverage compares structured indexer
+  evidence, measured files, scoped history and individual stream characteristics.
+- **41 datastore checks**, **112 authentication checks**, and
+  **262 identity preservation checks** passed. Upgrading an owned
+  SQLite or PostgreSQL home retains previous data. Migration 161 adds a nullable
+  audio snapshot field for blocklist rows. Size fields are stored in each
+  profile's existing quality data.
+- **34 desktop and phone browser/API checks** passed. An owned home
+  created by the previous build verifies legacy profiles, per-quality audio and
+  ebook units, decimal input, saved values on old API requests, invalid partial
+  updates, and intentional clears. The custom format editor displays the saved
+  xHE-AAC condition and the codec API lists USAC and Atmos separately.
+
+Use **Settings → Profiles** to edit a quality profile and open **Release Size
+Rules**. Blank or zero disables an individual rule. Audio size checks need a
+trusted duration. If a candidate has no usable measured target, it retains the
+fallback ordering at the size tie-break. The global indexer size cap remains a
+separate check. Use **Settings → Custom Formats** to choose Audio Codec, Audio
+Channels, Audio Bitrate Mode, Audio Sample Rate, or Narrator. These use structured
+metadata and file measurements. A title alone supplies no audio confirmation.
+
+Local evidence is under `_temp/d15-d16-b04-20261120/`, including source and
+package results, isolated migration and acquisition receipts, and synthetic
+screenshots. The mixed bootstrap run is a smoke check. The clean package is the
+artifact used for delivery verification.

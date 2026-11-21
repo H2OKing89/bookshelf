@@ -1204,3 +1204,23 @@ for that batch. The import check continues to verify actual space when needed.
 **Verified** on `e191326ba` with **5,687 passing source tests**, **569
 package delivery checks**, **41 datastore checks**, and **60
 desktop and phone settings checks**. See [local validation](local-validation.md#d13-d14-d21-language-parsing-and-d17-verification-2026-11-20).
+
+
+### D15, D16 and B04 release size and audio preferences — 2026-11-20
+
+Quality profiles can set a minimum, preferred and maximum release size for
+individual qualities. Audiobooks use a rate per hour from trusted duration.
+Ebooks use the full release size. Older profiles have no active rules. The
+current profile is checked before adding a download. Ranking uses distance from
+the preferred size after quality, custom format and other existing priorities.
+
+Audio custom formats extend scoring to codec, channel count, bitrate mode,
+sample rate and narrator. Audio conditions use one stream and preserve the
+origin of the evidence through search, grab history, queue and file scoring.
+The codec options distinguish AAC profiles, xHE-AAC and USAC, carriers with
+Atmos, Opus and lossless formats. Tests cover missing and contradictory data.
+
+**Verified** on `9bc7dc65a` with **5,740 passing .NET tests**, **589
+package checks** including **288 acquisition checks**, **41
+datastore checks**, and **34 desktop and phone settings checks**. See
+[local validation](local-validation.md#d15-d16-and-b04-verification-2026-11-20).

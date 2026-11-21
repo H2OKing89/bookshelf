@@ -82,8 +82,8 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D12](#d12) | P1 | Verified | M | Notify once when manual intervention is required |
 | [D13](#d13) | P1 | Verified | M | Add minimum custom-format score improvement for upgrades |
 | [D14](#d14) | P1 | Verified | M | Add language custom formats using audiobook evidence |
-| [D15](#d15) | P1 | In progress | L | Implement meaningful audiobook size policy, including per-profile limits |
-| [D16](#d16) | P2 | In progress | M | Rank near preferred audiobook size instead of always favoring the largest |
+| [D15](#d15) | P1 | Verified | L | Implement meaningful audiobook size policy, including per-profile limits |
+| [D16](#d16) | P2 | Verified | M | Rank near preferred audiobook size instead of always favoring the largest |
 | [D17](#d17) | P1 | Verified | M | Check library free space before grabbing |
 | [D18](#d18) | P2 | Planned | L | Represent one queued download with multiple books |
 | [D19](#d19) | P2 | Planned | M | Refresh pending decisions when policy or metadata changes |
@@ -123,7 +123,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [B01](#b01) | P0 | Verified | M | Make audiobook identity and upgrade invariants the porting contract |
 | [B02](#b02) | P1 | Planned | L | Provide a supported author reconciliation and correction workflow |
 | [B03](#b03) | P2 | Planned | XL | Represent publisher-pack membership without collapsing recording identities |
-| [B04](#b04) | P1 | In progress | L | Add audio-specific custom-format rules from trustworthy media evidence |
+| [B04](#b04) | P1 | Verified | L | Add audio-specific custom-format rules from trustworthy media evidence |
 | [B05](#b05) | P2 | Planned | M | Version probe metadata and invalidate stale analysis deliberately |
 | [B06](#b06) | P2 | Planned | L | Complete the local-recording metadata lifecycle |
 | [B07](#b07) | P1 | Planned | M | Expose metadata-provider health and partial-result provenance |
@@ -2282,6 +2282,11 @@ corroborated recording inventories and keep editions separate. Unknown duration
 or release size leaves this rule undecided. Before an add, Bookshelf checks the
 current profile again and returns a typed reason if the release is out of bounds.
 
+**Verified** on `9bc7dc65a` with **5,740 passing .NET tests**, **589
+package checks** including **288 acquisition checks**, **41
+datastore checks**, and **34 desktop and phone settings checks**. See
+[local validation](local-validation.md#d15-d16-and-b04-verification-2026-11-20).
+
 ### D16
 
 **Rank near preferred audiobook size instead of always favoring the largest**
@@ -2301,6 +2306,11 @@ quality's target. This lets short and long recordings use the same rate policy.
 Equal distances favor the smaller download. Candidates without a usable target
 follow the existing size ordering, after candidates with measured preferences
 at this tie-break. Exact ties preserve input order.
+
+**Verified** on `9bc7dc65a` with **5,740 passing .NET tests**, **589
+package checks** including **288 acquisition checks**, **41
+datastore checks**, and **34 desktop and phone settings checks**. See
+[local validation](local-validation.md#d15-d16-and-b04-verification-2026-11-20).
 
 ### D17
 
@@ -2942,6 +2952,11 @@ client, edition or stream. Search previews use existing custom-format scores and
 rejection details. File-verified characteristics and release evidence remain
 separate. Narrator matching uses reported names without inferring performance
 style from release titles.
+
+**Verified** on `9bc7dc65a` with **5,740 passing .NET tests**, **589
+package checks** including **288 acquisition checks**, **41
+datastore checks**, and **34 desktop and phone settings checks**. See
+[local validation](local-validation.md#d15-d16-and-b04-verification-2026-11-20).
 
 ### B05
 
