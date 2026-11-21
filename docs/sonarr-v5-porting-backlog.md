@@ -100,10 +100,10 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D30](#d30) | P3 | Planned | L | Defer scripted import replacement; study an explicit extension boundary |
 | [U01](#u01) | P1 | Verified | S | Correct accessible names on icon actions |
 | [U02](#u02) | P1 | Verified | M | Named, semantic dialogs |
-| [U03](#u03) | P1 | Planned | M | Keyboard-operated, viewport-aware menus |
+| [U03](#u03) | P1 | Verified | M | Keyboard-operated, viewport-aware menus |
 | [U04](#u04) | P1 | Verified | M | Connect form labels, help and validation to inputs |
-| [U05](#u05) | P2 | Planned | S | Announce asynchronous action results |
-| [U06](#u06) | P1 | Planned | M | Upgrade React independently to 18/createRoot |
+| [U05](#u05) | P2 | Verified | S | Announce asynchronous action results |
+| [U06](#u06) | P1 | Verified | M | Upgrade React independently to 18/createRoot |
 | [U07](#u07) | P1 | Planned | L | Strict TypeScript and explicit frontend type checking |
 | [U08](#u08) | P1 | Planned | M | Typed fetch transport with cancellation and structured errors |
 | [U09](#u09) | P1 | Planned | M | Introduce Query for one server-owned state slice |
@@ -2607,6 +2607,13 @@ Verified with a local-recording preview and nested delete confirmation. See
 
 Implement the accessible interaction contract independently or port the component set together; avoid copying only the positioning wrapper. **Dependencies:** U01, menu primitive typing; Floating UI only if selected. **Acceptance:** keyboard open, arrow wrap, Home/End, Enter, Escape, focus return, selected-state announcement and outside dismissal work in filters/sorts/toolbar overflow; the menu stays in the viewport at 200% zoom and on phone. No hidden/disabled item receives focus.
 
+**2026-11-21 implementation.** Shared menus use the existing Popper
+dependency, announce selected choices, and keep arrow-key focus on enabled,
+visible items. Escape restores trigger focus. Tab continues through the
+toolbar, and outside interactions dismiss the menu. Menus inside dialogs
+stay within the dialog's focus boundary. See
+[local validation](local-validation.md#u03-u05-and-u06-verification-2026-11-21).
+
 ### U04
 
 **Connect form labels, help and validation to inputs**
@@ -2646,6 +2653,12 @@ dialogs. See
 
 Apply to provider test, save, clipboard and similar asynchronous operations. **Dependencies:** U01; localized success/warning/error text. **Acceptance:** successful, warning and failed results each announce once; decorative icons do not repeat the message; completion timeout is cleaned on unmount; long-running operations remain understandable without color alone.
 
+**2026-11-21 implementation.** Provider tests and clipboard actions report
+progress and outcomes through live regions. Successful provider saves
+announce after the dialog closes. Copy feedback follows the browser's
+result, including the legacy copy path for insecure HTTP. See
+[local validation](local-validation.md#u03-u05-and-u06-verification-2026-11-21).
+
 ### U06
 
 **Upgrade React independently to 18/createRoot**
@@ -2660,6 +2673,15 @@ Apply to provider test, save, clipboard and similar asynchronous operations. **D
 **P1; medium; missing; available in pinned v5; bounded platform port.** S5 `bootstrap.tsx:7-13` uses createRoot. B `bootstrap.tsx:9-16` uses `react-dom.render`, while runtime React 17 differs from installed React 18 type packages (`package.json`).
 
 Align runtime and type versions and change the entry point without changing router, Redux or styling simultaneously. This can be a bounded adaptation of the entry point without replacing the rest of the app providers. **Dependencies:** baseline browser coverage; compatibility review of focus/measure/virtualization/DnD dependencies. **Acceptance:** library, settings, local-recording preview/save, modal stacks, drag actions, SignalR reconnect and route navigation work; no duplicate requests/listeners/subscriptions or relevant runtime warnings. Do not port S5 `index.ts:12-36`, which suppresses React defaultProps/findDOMNode warnings globally; resolve or explicitly track those instead.
+
+**2026-11-21 implementation.** React and React DOM 18.3.1 use
+`createRoot`, and React Redux 7.2.9 supplies React 18 peer support. Native
+refs are used for the sidebar and drag targets, and virtualized library views
+register their measurement placeholders. Function-component `defaultProps`
+warnings remain for [U07](#u07). `react-virtualized` can still call
+`findDOMNode` during ref changes. Track that library behavior in
+[U21](#u21). See
+[local validation](local-validation.md#u03-u05-and-u06-verification-2026-11-21).
 
 ### U07
 

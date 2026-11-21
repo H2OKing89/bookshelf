@@ -1043,3 +1043,42 @@ settings differ, the review requires confirmation of the canonical settings.
 
 Local evidence is under `_temp/b08-b02-u04-20261121/`, including source
 results, package summaries, and synthetic desktop and phone screenshots.
+
+## U03, U05 and U06 verification (2026-11-21)
+
+Clean source `3f21f7b6a` produced the glibc and musl Linux x64 packages.
+Both packages carry the same source provenance. The menus and action
+feedback are in `6bec254fa`, and the React 18.3.1 upgrade is in its own
+commit.
+
+- **112 provider and accessibility checks** and **62 library review
+  checks** passed on both the React 17 baseline and the React 18 package.
+  They covered menu selection, Tab order, focus restoration, phone
+  overflow actions, nested dialogs, a synthetic local recording save,
+  column dragging, and one refresh of authors, commands and the active
+  page after SignalR reconnect.
+- **46 webhook and clipboard browser/API checks** passed on both React
+  versions. The browser exercised a real loopback Test and provider save,
+  controlled warning and error responses, and controlled clipboard
+  success and failure.
+- **612 delivery checks** passed, including **305 acquisition checks** and
+  **56 musl Docker checks**. **262 identity**, **112 authentication**, and
+  **41 datastore checks** passed.
+- **5,793 .NET test executions** passed with **94 existing skips**.
+  **148 Python tooling tests** and **61 frontend Node tests** passed.
+  The changed frontend source passed scoped ESLint.
+
+Browser checks ran in Chromium at desktop width and with iPhone 13
+emulation. The 640×480 CSS-pixel desktop viewport exercises the layout
+available at 200% zoom. A separate placement check moved the View trigger
+to the bottom edge and confirmed that its popup opened above it.
+
+React 18 development checks reported zero legacy-render warnings.
+Function-component `defaultProps` warnings are tracked under U07.
+The installed `react-virtualized` WindowScroller still reported one
+`findDOMNode` warning per layout, tracked under U21. The locked install
+also reported legacy peer ranges in dependencies including the router,
+Popper, drag-and-drop and virtualizer.
+
+Local evidence is under `_temp/u03-u05-u06-20261121/`, including builds,
+source results, package summaries and screenshots from synthetic homes.

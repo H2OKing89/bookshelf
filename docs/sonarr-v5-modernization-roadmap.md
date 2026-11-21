@@ -1279,3 +1279,19 @@ provider and local-recording dialogs use the same accessible form behavior.
 **Verified** with **5,793 .NET test executions**, including the SQLite and
 PostgreSQL review cases, and packaged desktop and phone browser checks.
 See [local validation](local-validation.md#b08-b02-and-u04-verification-2026-11-21).
+
+### U03, U05 and U06 menus, action feedback and React 18 — 2026-11-21
+
+Library menus support keyboard selection and keep their popups within the
+available viewport. Provider tests, provider saves and clipboard actions
+announce progress or results as appropriate.
+
+React 18.3.1 boots with `createRoot` in its own commit, `3f21f7b6a`.
+The browser checks cover library navigation, local recording saves, nested
+settings dialogs, column dragging and a single refresh after SignalR
+reconnect. Development warnings from function-component defaults and the
+legacy virtualizer are tracked in U07 and U21.
+
+**Verified** using synthetic application homes, with browser checks on the
+glibc package and Docker checks on the musl package. See
+[local validation](local-validation.md#u03-u05-and-u06-verification-2026-11-21).
