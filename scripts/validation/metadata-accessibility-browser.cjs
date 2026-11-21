@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { verifyMetadataStatusTransport } = require('./metadata-status-transport-browser.cjs');
 const { observeReactWarnings, observeSignalR, verifySignalRResync, verifyTableOptionsReorder } = require('./react-compatibility-browser.cjs');
 
 async function verify(config) {
@@ -90,6 +91,9 @@ async function verify(config) {
         await page.getByText('Missing', { exact: true }).first().waitFor();
         check('provider_diagnostics_show_latest_outcomes', (await page.getByText('Audnexus', { exact: true }).count()) >= 2);
         await page.screenshot({ path: path.join(output, layout + '-metadata-status.png'), fullPage: true });
+        if (layout === 'desktop') {
+          await verifyMetadataStatusTransport(context, base, check, step => { failureStep = layout + '_' + step; });
+        }
 
         failureStep = layout + '_monitor';
         await go('/book/synthetic-identity-us');

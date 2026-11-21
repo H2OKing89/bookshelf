@@ -3,6 +3,7 @@ declare module '*.module.css';
 interface Window {
   Readarr: {
     apiKey: string;
+    apiRoot: string;
     instanceName: string;
     theme: string;
     urlBase: string;
