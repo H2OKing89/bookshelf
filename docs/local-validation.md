@@ -1010,3 +1010,36 @@ refreshes the local observations every 30 seconds while open.
 
 Local evidence is under `_temp/b07-u01-u02-20261121/`, including the source
 results, package summaries, and synthetic desktop and phone screenshots.
+
+## B08, B02 and U04 verification (2026-11-21)
+
+Clean source `4dbb32991` produced version `10.0.0.22035` on .NET 10.0.15.
+Both Linux x64 packages carry matching source provenance. The source suites
+ran against the backend in `6f7a20fdc`. The next commit adjusts the author
+reconciliation dialog's layout on phone screens.
+
+- **5,793 .NET test executions** passed with **94 existing skips**. The SQLite
+  and PostgreSQL suites exercised recording association, stale previews,
+  author references, ambiguous identities, and transactional rollback.
+  **148 Python tooling tests** and **53 frontend Node tests** passed.
+- **59 library review checks** passed, including **24 browser checks** at
+  desktop and phone widths. The proof exercised conflicting and region-specific
+  evidence, stale evidence refresh, exact association, immediate book file
+  counts, reviewed author reconciliation, and canonical navigation. Restart
+  preserved the associations, series links, file IDs, bytes, history, and saved
+  author correction.
+- **83 provider and accessibility checks** passed. Browser checks covered label
+  focus, native select and password names, path suggestions, and links from
+  root-folder validation and local-recording help to their respective fields.
+  A relative root-folder path receives a field validation error.
+- **612 delivery checks**, **262 identity checks**, **112 authentication
+  checks**, **41 datastore checks**, and **26 webhook browser/API checks** passed.
+
+In-place association requires an unchanged file in the author folder and a
+single eligible, unoccupied local recording. Reconciliation requires a unique
+same-marketplace canonical identity and equivalent author folders. Related
+active downloads and unresolved submissions block reconciliation. When
+settings differ, the review requires confirmation of the canonical settings.
+
+Local evidence is under `_temp/b08-b02-u04-20261121/`, including source
+results, package summaries, and synthetic desktop and phone screenshots.

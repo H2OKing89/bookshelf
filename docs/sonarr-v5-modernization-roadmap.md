@@ -1259,3 +1259,23 @@ Cancel when opened.
 packaged provider and accessibility checks**, including **47 desktop and
 phone browser checks**. See
 [local validation](local-validation.md#b07-u01-and-u02-verification-2026-11-21).
+
+### B08, B02 and U04 library review and accessible forms — 2026-11-21
+
+**Review Recording** shows why a file is unmapped or conflicts with its
+assignment. It presents filename, folder, tag, and catalog evidence together.
+An unchanged file with one eligible recording can be associated in place
+after reviewing the exact edition. The dialog guides other cases to the
+appropriate existing workflow.
+
+**Reconcile Author** previews a reviewed name-only profile's move to its
+canonical author. Existing recording identifiers, file paths, series links,
+and history are preserved. Profiles must use the same folder, and differing
+settings require confirmation before using the canonical profile's settings.
+
+Shared form rows connect labels, help and validation to inputs. Root-folder,
+provider and local-recording dialogs use the same accessible form behavior.
+
+**Verified** with **5,793 .NET test executions**, including the SQLite and
+PostgreSQL review cases, and packaged desktop and phone browser checks.
+See [local validation](local-validation.md#b08-b02-and-u04-verification-2026-11-21).

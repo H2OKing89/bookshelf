@@ -101,7 +101,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [U01](#u01) | P1 | Verified | S | Correct accessible names on icon actions |
 | [U02](#u02) | P1 | Verified | M | Named, semantic dialogs |
 | [U03](#u03) | P1 | Planned | M | Keyboard-operated, viewport-aware menus |
-| [U04](#u04) | P1 | In progress | M | Connect form labels, help and validation to inputs |
+| [U04](#u04) | P1 | Verified | M | Connect form labels, help and validation to inputs |
 | [U05](#u05) | P2 | Planned | S | Announce asynchronous action results |
 | [U06](#u06) | P1 | Planned | M | Upgrade React independently to 18/createRoot |
 | [U07](#u07) | P1 | Planned | L | Strict TypeScript and explicit frontend type checking |
@@ -121,13 +121,13 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [U21](#u21) | P2 | Planned | M | Simplify existing library virtualization after measuring it |
 | [U22](#u22) | P2 | Planned | L | Vite/HMR and a separately verified asset pipeline |
 | [B01](#b01) | P0 | Verified | M | Make audiobook identity and upgrade invariants the porting contract |
-| [B02](#b02) | P1 | In progress | L | Provide a supported author reconciliation and correction workflow |
+| [B02](#b02) | P1 | Verified | L | Provide a supported author reconciliation and correction workflow |
 | [B03](#b03) | P2 | Planned | XL | Represent publisher-pack membership without collapsing recording identities |
 | [B04](#b04) | P1 | Verified | L | Add audio-specific custom-format rules from trustworthy media evidence |
 | [B05](#b05) | P2 | Verified | M | Version probe metadata and invalidate stale analysis deliberately |
 | [B06](#b06) | P2 | Planned | L | Complete the local-recording metadata lifecycle |
 | [B07](#b07) | P1 | Verified | M | Expose metadata-provider health and partial-result provenance |
-| [B08](#b08) | P1 | In progress | M | Explain and resolve unmapped or conflicting recording evidence |
+| [B08](#b08) | P1 | Verified | M | Explain and resolve unmapped or conflicting recording evidence |
 | [B09](#b09) | P2 | Planned | M | Add book-native library diagnostics and collection statistics |
 
 ### Release group follow-up index
@@ -2627,6 +2627,10 @@ input and link help, warnings, and server errors. Local-recording inputs use
 unique IDs per dialog. Invalid relative root-folder paths return a field error
 that the Path input can describe.
 
+Verified with packaged root-folder, download-client, and local-recording
+dialogs. See
+[local validation](local-validation.md#b08-b02-and-u04-verification-2026-11-21).
+
 ### U05
 
 **Announce asynchronous action results**
@@ -2961,6 +2965,10 @@ recording and history references and saves the reviewed metadata correction in
 one transaction. Active download work, conflicting identities, and stale
 reviews block the change.
 
+Verified with SQLite and PostgreSQL transactions and packaged author
+reconciliation through restart. See
+[local validation](local-validation.md#b08-b02-and-u04-verification-2026-11-21).
+
 ### B03
 
 **Represent publisher-pack membership without collapsing recording identities**
@@ -3101,6 +3109,10 @@ tags, path ASIN preference, and exact local catalog results. A unique match can
 be previewed and associated in place when the target is empty, the file is inside
 the author folder, and its evidence remains current. Other results guide the
 user to an exact lookup, manual import, or local recording as applicable.
+
+Verified with synthetic regional and conflicting identifiers, stale recovery,
+and a packaged association. See
+[local validation](local-validation.md#b08-b02-and-u04-verification-2026-11-21).
 
 ### B09
 
