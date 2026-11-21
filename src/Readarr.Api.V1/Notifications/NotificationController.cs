@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Core.Notifications;
 using NzbDrone.Core.Notifications.Webhook;
@@ -28,6 +29,7 @@ namespace Readarr.Api.V1.Notifications
                 var completionField = previous.Fields.FirstOrDefault(field => field.Name == completionFieldName);
                 if (completionField != null)
                 {
+                    completionField.Value = JsonSerializer.SerializeToElement(completionField.Value);
                     providerResource.Fields.Add(completionField);
                 }
             }
