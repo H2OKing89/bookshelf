@@ -8,6 +8,13 @@ The current bundle uses [MediaInfo 26.10](https://github.com/MediaArea/MediaInfo
 
 New scans and imports automatically probe local audio files. For files already in the library, use **Refresh media info** on the book page. The refresh reads the media and updates only the database's embedded `mediaInfo` document; it does not reimport, rename, or retag files. If probing fails because a file or executable is missing, a file is corrupt, or the process times out, scans retain TagLib's available details and refreshes preserve the existing stored details.
 
+Bookshelf tracks the analysis revision, bundled tool build, file size, and
+modification time. **Refresh Stale Media Info** runs hourly and probes up to
+30 files whose saved analysis needs refreshing. A failed probe waits 24 hours
+before retrying the same file and tool state. A manual refresh can retry
+immediately. Existing measurements can remain visible with a refresh-needed
+label while Bookshelf waits for a usable result.
+
 The same action is available through `POST /api/v1/command`:
 
 ```json

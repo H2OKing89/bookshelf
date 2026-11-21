@@ -1224,3 +1224,22 @@ Atmos, Opus and lossless formats. Tests cover missing and contradictory data.
 package checks** including **288 acquisition checks**, **41
 datastore checks**, and **34 desktop and phone settings checks**. See
 [local validation](local-validation.md#d15-d16-and-b04-verification-2026-11-20).
+
+### D19, B05 and D26 pending decisions, media analysis and completion webhooks — 2026-11-20
+
+Pending releases reflect saved cutoff, size, format, delay and routing changes
+while preserving their original delay. New rows persist their work identity
+so a metadata refresh cannot silently assign them to a different work.
+
+MediaInfo analysis records its parser revision, bundled tool build and file
+state. A bounded hourly task refreshes stale measurements and backs off on
+failed reads. The file view can label saved measurements that need a refresh.
+
+Webhook connections can opt into the versioned `ImportComplete` event. The
+verified receipt supplies recording and part identities. Saved history supplies
+available custom-format score evidence. Bookshelf records the delivery attempt
+before sending so restart and cleanup retries preserve its event identity.
+
+**Verified** on `f9ad59d0f` with **612 package delivery checks**, including
+**305 acquisition checks**, and **26 desktop and phone browser/API checks**.
+See [local validation](local-validation.md#d19-b05-and-d26-verification-2026-11-20).

@@ -910,3 +910,44 @@ Local evidence is under `_temp/d15-d16-b04-20261120/`, including source and
 package results, isolated migration and acquisition receipts, and synthetic
 screenshots. The mixed bootstrap run is a smoke check. The clean package is the
 artifact used for delivery verification.
+
+## D19, B05 and D26 verification (2026-11-20)
+
+Clean source `f9ad59d0f` produced version `10.0.0.40681` on .NET 10.0.15.
+Both Linux x64 packages carry matching source provenance. The Sonarr
+comparison remains pinned to v5 `c018578e4b79ee048575c02d7a8aa2b929e4b837`.
+
+- **5,768 .NET tests** passed with **94 existing skips**, including SQLite and
+  PostgreSQL migration cases. **148 Python tooling tests**, **43 frontend Node
+  tests**, and targeted ESLint passed.
+- **612 delivery checks** passed, including **305 acquisition checks**, **45
+  native media checks**, and **56 musl Docker checks**. The bundled MediaInfo
+  CLI analyzed a synthetic WAV and saved the current analysis revision. A
+  timestamp change invalidated that evidence. The acquisition probe exercised
+  the hourly batch limit, retry delay, file changes during analysis, and
+  retention of useful stream measurements.
+- The acquisition probe exercised partial imports, failed receipt writes,
+  opt-in, durable attempt recording, exact multipart identities and safe
+  filenames. Restart retained the completion and suppressed a duplicate
+  attempt. The synthetic probe uses an owned SQLite store and a fake webhook
+  transport.
+- **26 browser and API checks** passed at desktop and 390px. A loopback receiver
+  accepted test events from the packaged UI. The saved setting survived an
+  older API update that omitted it, and an explicit false turned it off.
+- **41 datastore checks**, **112 authentication checks**, and **262 identity
+  preservation checks** passed. Both database backends retained the previous
+  schema and data.
+
+D19 regression cases exercise saved cutoff and size changes, client routing,
+original delay and work identity, and targeted pending release removal. Legacy
+rows carry their original author association and resolve work using their
+stored release metadata.
+
+The completion webhook has at-most-once attempt semantics. A crash or provider
+failure after the saved attempt can leave delivery incomplete. See the
+[webhook contract](download-completion.md#verified-import-completion-webhooks)
+and [MediaInfo behavior](mediainfo.md#reading-media-details).
+
+Local evidence is under `_temp/d19-b05-d26-20261120/`, including package
+summaries, owned source suites, synthetic desktop and phone screenshots, and
+proof of unchanged package inputs.

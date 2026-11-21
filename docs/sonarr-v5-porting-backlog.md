@@ -86,14 +86,14 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D16](#d16) | P2 | Verified | M | Rank near preferred audiobook size instead of always favoring the largest |
 | [D17](#d17) | P1 | Verified | M | Check library free space before grabbing |
 | [D18](#d18) | P2 | Planned | L | Represent one queued download with multiple books |
-| [D19](#d19) | P2 | In progress | M | Refresh pending decisions when policy or metadata changes |
+| [D19](#d19) | P2 | Verified | M | Refresh pending decisions when policy or metadata changes |
 | [D20](#d20) | P2 | Planned | M | Sort library/history quality according to each profile |
 | [D21](#d21) | P1 | Verified | S | Backport narrow RSS parser fixes, retain existing feed machinery |
 | [D22](#d22) | P1 | Planned | L | Persist successful import-list membership snapshots |
 | [D23](#d23) | P2 | Planned | M | Add additive and synchronized tags for existing list entries |
 | [D24](#d24) | P2 | Planned | M | Offer non-destructive cleanup when books leave all lists |
 | [D25](#d25) | P2 | Planned | M | Add a documented generic JSON import-list endpoint |
-| [D26](#d26) | P2 | In progress | M | Enrich webhooks with committed completion and score provenance |
+| [D26](#d26) | P2 | Verified | M | Enrich webhooks with committed completion and score provenance |
 | [D27](#d27) | P2 | Planned | M | Send health-restored notifications |
 | [D28](#d28) | P3 | Planned | M | Coalesce media-server refreshes for multipart imports |
 | [D29](#d29) | P2 | Planned | M | Support explicit qBittorrent total versus inactive seed time |
@@ -124,7 +124,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [B02](#b02) | P1 | Planned | L | Provide a supported author reconciliation and correction workflow |
 | [B03](#b03) | P2 | Planned | XL | Represent publisher-pack membership without collapsing recording identities |
 | [B04](#b04) | P1 | Verified | L | Add audio-specific custom-format rules from trustworthy media evidence |
-| [B05](#b05) | P2 | In progress | M | Version probe metadata and invalidate stale analysis deliberately |
+| [B05](#b05) | P2 | Verified | M | Version probe metadata and invalidate stale analysis deliberately |
 | [B06](#b06) | P2 | Planned | L | Complete the local-recording metadata lifecycle |
 | [B07](#b07) | P1 | Planned | M | Expose metadata-provider health and partial-result provenance |
 | [B08](#b08) | P1 | Planned | M | Explain and resolve unmapped or conflicting recording evidence |
@@ -2376,6 +2376,9 @@ become eligible again using their original added time. The settings event
 refreshes the view without fetching an indexer feed or sending a download.
 Existing grab, rejection and cleanup safeguards still apply.
 
+Verified with policy refresh regression tests and clean package delivery checks.
+See [local validation](local-validation.md#d19-b05-and-d26-verification-2026-11-20).
+
 ### D20
 
 **Sort library/history quality according to each profile**
@@ -2484,6 +2487,10 @@ The payload identifies the client, release, work, edition, recording and
 committed parts. It includes allowlisted audio and score evidence when available.
 Legacy import notifications keep their own setting. Older API updates that omit
 the new checkbox preserve its saved value. See the [webhook contract](download-completion.md#verified-import-completion-webhooks).
+
+Verified with a synthetic import receipt, stored attempt and restart, plus the
+legacy and current settings API at desktop and phone widths.
+See [local validation](local-validation.md#d19-b05-and-d26-verification-2026-11-20).
 
 ### D27
 
@@ -2999,6 +3006,9 @@ useful saved values on partial or failed reads and protect against publishing
 an analysis after a file changed. File details label stale and partial values.
 Advertised indexer data remains separate from measured file evidence. Old
 measurements for the same file can still protect against a score downgrade.
+
+Verified with the packaged MediaInfo CLI, synthetic file changes and stale
+analysis refresh cases. See [local validation](local-validation.md#d19-b05-and-d26-verification-2026-11-20).
 
 ### B06
 
