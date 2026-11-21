@@ -966,3 +966,33 @@ and [MediaInfo behavior](mediainfo.md#reading-media-details).
 Local evidence is under `_temp/d19-b05-d26-20261120/`, including package
 summaries, owned source suites, synthetic desktop and phone screenshots, and
 proof of unchanged package inputs.
+
+## B07, U01 and U02 verification (2026-11-21)
+
+Clean source `e53d0e4c5` produced version `10.0.0.19884` on .NET 10.0.15.
+The glibc and musl Linux x64 packages carry matching source provenance.
+
+- **5,771 .NET tests** passed with **94 existing skips**, including the SQLite
+  and PostgreSQL migration suites. **148 Python tooling tests** and **49
+  frontend Node tests** passed. Targeted ESLint and Stylelint passed.
+- **69 provider and accessibility checks** passed, plus the unchanged package
+  input check. The owned provider exercised complete and cached searches, a
+  confirmed missing recording, and a rate limit. The authenticated status API
+  reported the outcomes and preserved the last success time. Reading status
+  generated no additional provider requests.
+- **47 of those checks** exercised the packaged browser interface at desktop
+  and 390px in Chromium with iPhone emulation. They covered the provider cards,
+  named controls, Enter and Space, local-recording preview, safe confirmation,
+  nested Escape, focus containment and return, and backdrop dragging. A source
+  regression covers iOS scroll restoration when dialogs close out of order.
+- **612 delivery checks** passed, including **305 acquisition checks** and
+  **56 musl Docker checks**. **262 identity**, **112 authentication**, **41
+  datastore**, and **26 webhook browser/API checks** also passed.
+
+Provider tests cover timeouts, server failures, cancellation, incomplete and
+repeated pages, sparse metadata, recovery and conflicting author credits.
+Observations represent the latest operations since startup. The status panel
+refreshes the local observations every 30 seconds while open.
+
+Local evidence is under `_temp/b07-u01-u02-20261121/`, including the source
+results, package summaries, and synthetic desktop and phone screenshots.

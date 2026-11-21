@@ -98,8 +98,8 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D28](#d28) | P3 | Planned | M | Coalesce media-server refreshes for multipart imports |
 | [D29](#d29) | P2 | Planned | M | Support explicit qBittorrent total versus inactive seed time |
 | [D30](#d30) | P3 | Planned | L | Defer scripted import replacement; study an explicit extension boundary |
-| [U01](#u01) | P1 | In progress | S | Correct accessible names on icon actions |
-| [U02](#u02) | P1 | In progress | M | Named, semantic dialogs |
+| [U01](#u01) | P1 | Verified | S | Correct accessible names on icon actions |
+| [U02](#u02) | P1 | Verified | M | Named, semantic dialogs |
 | [U03](#u03) | P1 | Planned | M | Keyboard-operated, viewport-aware menus |
 | [U04](#u04) | P1 | Planned | M | Connect form labels, help and validation to inputs |
 | [U05](#u05) | P2 | Planned | S | Announce asynchronous action results |
@@ -126,7 +126,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [B04](#b04) | P1 | Verified | L | Add audio-specific custom-format rules from trustworthy media evidence |
 | [B05](#b05) | P2 | Verified | M | Version probe metadata and invalidate stale analysis deliberately |
 | [B06](#b06) | P2 | Planned | L | Complete the local-recording metadata lifecycle |
-| [B07](#b07) | P1 | In progress | M | Expose metadata-provider health and partial-result provenance |
+| [B07](#b07) | P1 | Verified | M | Expose metadata-provider health and partial-result provenance |
 | [B08](#b08) | P1 | Planned | M | Explain and resolve unmapped or conflicting recording evidence |
 | [B09](#b09) | P2 | Planned | M | Add book-native library diagnostics and collection statistics |
 
@@ -2566,6 +2566,9 @@ or localized title. Monitoring buttons report their pressed state. File actions,
 folder browsing, table options and grab controls have distinct names. Icons
 inside named controls are decorative for assistive technology.
 
+Verified in the packaged UI at desktop and phone widths. See
+[local validation](local-validation.md#b07-u01-and-u02-verification-2026-11-21).
+
 ### U02
 
 **Named, semantic dialogs**
@@ -2585,6 +2588,9 @@ Add shared title wiring while preserving the established modal behavior. **Depen
 accessible name. The top dialog owns keyboard focus and Escape. Closing it
 returns focus to its opener when available. Destructive confirmations initially
 focus Cancel and Enter activates the focused control.
+
+Verified with a local-recording preview and nested delete confirmation. See
+[local validation](local-validation.md#b07-u01-and-u02-verification-2026-11-21).
 
 ### U03
 
@@ -3057,6 +3063,9 @@ after restart and may show an earlier fetch time for a cached response. The
 authenticated status API reads saved observations in memory. Audnexus keyword
 bibliographies are marked partial. Incomplete catalog responses and provider
 failures retain Bookshelf's existing identity and catalog safeguards.
+
+Verified with a loopback provider and the authenticated packaged UI. See
+[local validation](local-validation.md#b07-u01-and-u02-verification-2026-11-21).
 
 ### B08
 

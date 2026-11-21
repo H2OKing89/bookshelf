@@ -1243,3 +1243,19 @@ before sending so restart and cleanup retries preserve its event identity.
 **Verified** on `f9ad59d0f` with **612 package delivery checks**, including
 **305 acquisition checks**, and **26 desktop and phone browser/API checks**.
 See [local validation](local-validation.md#d19-b05-and-d26-verification-2026-11-20).
+
+### B07, U01 and U02 provider status and keyboard accessibility — 2026-11-21
+
+**System → Status → Metadata Providers** shows the latest recorded provider
+outcomes and their timestamps. It distinguishes missing metadata, incomplete
+catalog coverage, cached responses, and unavailable providers.
+
+Icon actions have localized names and monitoring buttons expose their pressed
+state. Dialogs expose their title, keep keyboard focus in the active dialog,
+and return focus to its opener. Destructive confirmations place focus on
+Cancel when opened.
+
+**Verified** on `e53d0e4c5` with **5,771 passing .NET tests** and **69
+packaged provider and accessibility checks**, including **47 desktop and
+phone browser checks**. See
+[local validation](local-validation.md#b07-u01-and-u02-verification-2026-11-21).
