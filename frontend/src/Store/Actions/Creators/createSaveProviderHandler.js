@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import _ from 'lodash';
 import { batchActions } from 'redux-batched-actions';
+import { announceSettingsSaved } from 'Components/ActionStatus';
 import createAjaxRequest from 'Utilities/createAjaxRequest';
 import getProviderState from 'Utilities/State/getProviderState';
 import { removeItem, set, updateItem } from '../baseActions';
@@ -72,6 +73,8 @@ function createSaveProviderHandler(section, url, options = {}, removeStale = fal
             pendingChanges: {}
           })
         )));
+
+      announceSettingsSaved();
     });
 
     request.fail((xhr) => {

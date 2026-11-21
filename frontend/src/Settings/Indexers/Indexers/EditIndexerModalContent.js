@@ -221,6 +221,7 @@ function EditIndexerModalContent(props) {
         />
 
         <SpinnerErrorButton
+          action="test"
           isSpinning={isTesting}
           error={saveError}
           onPress={onTestPress}
@@ -235,6 +236,7 @@ function EditIndexerModalContent(props) {
         </Button>
 
         <SpinnerErrorButton
+          action="save"
           isSpinning={isSaving}
           error={saveError}
           onPress={onSavePress}

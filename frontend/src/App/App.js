@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import DocumentTitle from 'react-document-title';
 import { Provider } from 'react-redux';
+import { SavedSettingsStatus } from 'Components/ActionStatus';
 import PageConnector from 'Components/Page/PageConnector';
 import ApplyTheme from './ApplyTheme';
 import AppRoutes from './AppRoutes';
@@ -13,9 +14,12 @@ function App({ store, history }) {
       <Provider store={store}>
         <ConnectedRouter history={history}>
           <ApplyTheme>
-            <PageConnector>
-              <AppRoutes app={App} />
-            </PageConnector>
+            <>
+              <PageConnector>
+                <AppRoutes app={App} />
+              </PageConnector>
+              <SavedSettingsStatus />
+            </>
           </ApplyTheme>
         </ConnectedRouter>
       </Provider>

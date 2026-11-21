@@ -1,41 +1,51 @@
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import React, { useCallback, useContext } from 'react';
 import Link from 'Components/Link/Link';
+import MenuContext from './MenuContext';
 import styles from './MenuItem.css';
 
-class MenuItem extends Component {
+function MenuItem(props) {
+  const {
+    className,
+    children,
+    isDisabled,
+    to,
+    onPress,
+    ...otherProps
+  } = props;
+  const menu = useContext(MenuContext);
 
-  //
-  // Render
+  const select = useCallback((event) => {
+    menu?.closeMenu();
+    onPress?.(event);
+  }, [menu, onPress]);
 
-  render() {
-    const {
-      className,
-      children,
-      isDisabled,
-      ...otherProps
-    } = this.props;
-
-    return (
-      <Link
-        className={classNames(
-          className,
-          isDisabled && styles.isDisabled
-        )}
-        isDisabled={isDisabled}
-        {...otherProps}
-      >
-        {children}
-      </Link>
-    );
-  }
+  return (
+    <Link
+      className={classNames(
+        className,
+        isDisabled && styles.isDisabled
+      )}
+      role="menuitem"
+      {...otherProps}
+      tabIndex={-1}
+      aria-disabled={isDisabled || undefined}
+      isDisabled={isDisabled}
+      to={isDisabled ? undefined : to}
+      onPress={select}
+    >
+      {children}
+    </Link>
+  );
 }
 
 MenuItem.propTypes = {
   className: PropTypes.string,
   children: PropTypes.node.isRequired,
-  isDisabled: PropTypes.bool.isRequired
+  isDisabled: PropTypes.bool.isRequired,
+  to: PropTypes.string,
+  onPress: PropTypes.func
 };
 
 MenuItem.defaultProps = {

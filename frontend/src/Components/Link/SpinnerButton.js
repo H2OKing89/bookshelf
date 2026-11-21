@@ -28,6 +28,7 @@ function SpinnerButton(props) {
     >
       <span className={styles.spinnerContainer}>
         <Icon
+          aria-hidden={true}
           className={styles.spinner}
           name={spinnerIcon}
           isSpinning={true}

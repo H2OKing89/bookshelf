@@ -15,6 +15,7 @@ function PageMenuButton(props) {
   return (
     <MenuButton
       className={styles.menuButton}
+      aria-label={text}
       {...otherProps}
     >
       <Icon

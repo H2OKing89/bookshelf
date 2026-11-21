@@ -4,6 +4,10 @@
   position: relative;
 }
 
+.copyInput {
+  composes: visuallyHidden from '~Components/ActionStatus.css';
+}
+
 .stateIconContainer {
   position: absolute;
   top: 50%;

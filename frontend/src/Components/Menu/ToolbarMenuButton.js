@@ -17,6 +17,7 @@ function ToolbarMenuButton(props) {
   return (
     <MenuButton
       className={styles.menuButton}
+      aria-label={text}
       {...otherProps}
     >
       <div>

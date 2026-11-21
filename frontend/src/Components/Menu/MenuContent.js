@@ -1,55 +1,39 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import React from 'react';
 import Scroller from 'Components/Scroller/Scroller';
-import getUniqueElementId from 'Utilities/getUniqueElementId';
 import styles from './MenuContent.css';
 
-class MenuContent extends Component {
+function MenuContent(props) {
+  const {
+    forwardedRef,
+    className,
+    children,
+    ...otherProps
+  } = props;
 
-  //
-  // Render
-
-  render() {
-    const {
-      forwardedRef,
-      className,
-      id,
-      children,
-      style,
-      isOpen
-    } = this.props;
-
-    return (
-      <div
-        id={id}
-        ref={forwardedRef}
-        className={className}
-        style={style}
-      >
-        {
-          isOpen ?
-            <Scroller className={styles.scroller}>
-              {children}
-            </Scroller> :
-            null
-        }
-      </div>
-    );
-  }
+  return (
+    <div
+      ref={forwardedRef}
+      className={className}
+      role="menu"
+      tabIndex={-1}
+      {...otherProps}
+    >
+      <Scroller className={styles.scroller} autoFocus={false}>
+        {children}
+      </Scroller>
+    </div>
+  );
 }
 
 MenuContent.propTypes = {
   forwardedRef: PropTypes.func,
   className: PropTypes.string,
-  id: PropTypes.string.isRequired,
-  children: PropTypes.node.isRequired,
-  style: PropTypes.object,
-  isOpen: PropTypes.bool
+  children: PropTypes.node.isRequired
 };
 
 MenuContent.defaultProps = {
-  className: styles.menuContent,
-  id: getUniqueElementId()
+  className: styles.menuContent
 };
 
 export default MenuContent;

@@ -33,12 +33,15 @@ class SelectedMenuItem extends Component {
     return (
       <MenuItem
         {...otherProps}
+        role="menuitemradio"
+        aria-checked={isSelected}
         onPress={this.onPress}
       >
         <div className={styles.item}>
           {children}
 
           <Icon
+            aria-hidden={true}
             className={isSelected ? styles.isSelected : styles.isNotSelected}
             name={selectedIconName}
           />

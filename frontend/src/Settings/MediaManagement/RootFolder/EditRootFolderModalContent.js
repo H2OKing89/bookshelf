@@ -437,6 +437,7 @@ function EditRootFolderModalContent(props) {
         </Button>
 
         <SpinnerErrorButton
+          action="save"
           isSpinning={isSaving}
           error={saveError}
           onPress={onSavePress}

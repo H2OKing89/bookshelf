@@ -66,11 +66,13 @@ def seed_unmapped_file(fixture):
     data = file.read_bytes()
     fixture.media_hashes[file] = hashlib.sha256(data).hexdigest()
     now = datetime.now(timezone.utc).isoformat()
+    # Match System.Data.SQLite's UTC representation for the guarded file update.
+    modified = datetime.fromtimestamp(file.stat().st_mtime, timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
     with sqlite3.connect(fixture.home / "readarr.db") as database:
         restore.insert(database, "BookFiles", {
             "Id": 9101, "EditionId": 0, "Quality": '{"quality":12,"revision":{"version":1}}',
             "Part": 1, "CalibreId": 0, "Path": str(file), "DateAdded": now,
-            "Modified": now, "Size": len(data), "IndexerFlags": 0,
+            "Modified": modified, "Size": len(data), "IndexerFlags": 0,
         })
 
 
@@ -157,6 +159,10 @@ def run(runtime, output, playwright_module):
         fixture.check("browser_preserves_owned_files", restore.media_unchanged(fixture))
         fixture.check("browser_preserves_disabled_client", any(value["name"] == CLIENT_NAME and value["enable"] is False
                                                                for value in fixture.api("downloadclient")))
+        local = [book for book in fixture.api("book") if book["title"] == "Synthetic Unmapped Recording"]
+        fixture.check("local_recording_persists_one_owned_file", len(local) == 1
+                      and local[0]["foreignBookId"].startswith("local:recording:")
+                      and [file["id"] for file in fixture.api(f"bookfile?bookId={local[0]['id']}")] == [9101])
         fixture.check("browser_preserves_monitoring", fixture.api("book/101")["monitored"] is False)
         fixture.check("browser_does_not_add_provider_requests", requests == {"empty": 1, "missing": 1, "limited": 1})
         completed = True

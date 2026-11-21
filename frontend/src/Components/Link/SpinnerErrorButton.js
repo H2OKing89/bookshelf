@@ -1,165 +1,132 @@
-import _ from 'lodash';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
+import ActionStatus from 'Components/ActionStatus';
 import Icon from 'Components/Icon';
 import SpinnerButton from 'Components/Link/SpinnerButton';
 import { icons, kinds } from 'Helpers/Props';
+import translate from 'Utilities/String/translate';
 import styles from './SpinnerErrorButton.css';
 
-function getTestResult(error) {
-  if (!error) {
-    return {
-      wasSuccessful: true,
-      hasWarning: false,
-      hasError: false
-    };
+const resultLabels = {
+  action: {
+    pending: 'ActionInProgress',
+    success: 'ActionSucceeded',
+    warning: 'ActionCompletedWithWarnings',
+    error: 'ActionFailed'
+  },
+  save: {
+    pending: 'SavingSettings',
+    warning: 'SaveCompletedWithWarnings',
+    error: 'SaveFailed'
+  },
+  test: {
+    pending: 'TestingConnection',
+    success: 'TestSucceeded',
+    warning: 'TestCompletedWithWarnings',
+    error: 'TestFailed'
+  }
+};
+
+function getResult(error) {
+  if (error?.aborted) {
+    return null;
   }
 
-  if (error.status !== 400) {
-    return {
-      wasSuccessful: false,
-      hasWarning: false,
-      hasError: true
-    };
+  if (!error) {
+    return 'success';
   }
 
   const failures = error.responseJSON;
-
-  const hasWarning = _.some(failures, { isWarning: true });
-  const hasError = _.some(failures, (failure) => !failure.isWarning);
-
-  return {
-    wasSuccessful: false,
-    hasWarning,
-    hasError
-  };
+  return error.status === 400 && Array.isArray(failures) && failures.length &&
+    failures.every((failure) => failure?.isWarning === true) ?
+    'warning' :
+    'error';
 }
 
 class SpinnerErrorButton extends Component {
 
-  //
-  // Lifecycle
+  state = { result: null };
 
-  constructor(props, context) {
-    super(props, context);
+  componentDidUpdate(previous) {
+    const { isSpinning, error } = this.props;
 
-    this._testResultTimeout = null;
+    if (previous.isSpinning === isSpinning) {
+      return;
+    }
 
-    this.state = {
-      wasSuccessful: false,
-      hasWarning: false,
-      hasError: false
-    };
-  }
+    clearTimeout(this._resultTimeout);
 
-  componentDidUpdate(prevProps) {
-    const {
-      isSpinning,
-      error
-    } = this.props;
+    const result = isSpinning ? null : getResult(error);
+    this.setState({ result });
 
-    if (prevProps.isSpinning && !isSpinning) {
-      const testResult = getTestResult(error);
-
-      this.setState(testResult, () => {
-        const {
-          wasSuccessful,
-          hasWarning,
-          hasError
-        } = testResult;
-
-        if (wasSuccessful || hasWarning || hasError) {
-          this._testResultTimeout = setTimeout(this.resetState, 3000);
-        }
-      });
+    if (result) {
+      this._resultTimeout = setTimeout(() => this.setState({ result: null }), 3000);
     }
   }
 
   componentWillUnmount() {
-    if (this._testResultTimeout) {
-      clearTimeout(this._testResultTimeout);
-    }
+    clearTimeout(this._resultTimeout);
   }
-
-  //
-  // Control
-
-  resetState = () => {
-    this.setState({
-      wasSuccessful: false,
-      hasWarning: false,
-      hasError: false
-    });
-  };
-
-  //
-  // Render
 
   render() {
     const {
+      action,
       kind,
       isSpinning,
       error,
       children,
       ...otherProps
     } = this.props;
-
-    const {
-      wasSuccessful,
-      hasWarning,
-      hasError
-    } = this.state;
-
-    const showIcon = wasSuccessful || hasWarning || hasError;
+    const result = isSpinning ? 'pending' : this.state.result;
+    const showIcon = result && result !== 'pending';
+    const label = resultLabels[action][result];
 
     let iconName = icons.CHECK;
     let iconKind = kind === kinds.PRIMARY ? kinds.DEFAULT : kinds.SUCCESS;
 
-    if (hasWarning) {
+    if (result === 'warning') {
       iconName = icons.WARNING;
       iconKind = kinds.WARNING;
-    }
-
-    if (hasError) {
+    } else if (result === 'error') {
       iconName = icons.DANGER;
       iconKind = kinds.DANGER;
     }
 
     return (
-      <SpinnerButton
-        kind={kind}
-        isSpinning={isSpinning}
-        {...otherProps}
-      >
-        <span className={showIcon ? styles.showIcon : undefined}>
-          {
-            showIcon &&
-              <span className={styles.iconContainer}>
-                <Icon
-                  name={iconName}
-                  kind={iconKind}
-                />
-              </span>
-          }
-
-          {
-            <span className={styles.label}>
-              {
-                children
-              }
-            </span>
-          }
-        </span>
-      </SpinnerButton>
+      <>
+        <SpinnerButton
+          kind={kind}
+          isSpinning={isSpinning}
+          aria-label={typeof children === 'string' ? children : undefined}
+          aria-busy={isSpinning || undefined}
+          {...otherProps}
+        >
+          <span className={showIcon ? styles.showIcon : undefined}>
+            {
+              showIcon &&
+                <span className={styles.iconContainer}>
+                  <Icon name={iconName} kind={iconKind} aria-hidden={true} />
+                </span>
+            }
+            <span className={styles.label}>{children}</span>
+          </span>
+        </SpinnerButton>
+        <ActionStatus message={label ? translate(label) : undefined} isError={result === 'error'} />
+      </>
     );
   }
 }
 
 SpinnerErrorButton.propTypes = {
+  action: PropTypes.oneOf(Object.keys(resultLabels)),
   kind: PropTypes.oneOf(kinds.all),
   isSpinning: PropTypes.bool.isRequired,
   error: PropTypes.object,
   children: PropTypes.node.isRequired
+};
+
+SpinnerErrorButton.defaultProps = {
+  action: 'action'
 };
 
 export default SpinnerErrorButton;

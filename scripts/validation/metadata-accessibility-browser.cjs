@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { observeReactWarnings, observeSignalR, verifySignalRResync, verifyTableOptionsReorder } = require('./react-compatibility-browser.cjs');
 
 async function verify(config) {
   const base = new URL(config.url);
@@ -14,6 +15,7 @@ async function verify(config) {
   const { chromium, devices } = require(config.playwrightModule);
   const browser = await chromium.launch({ headless: true });
   const checks = {};
+  const reactWarnings = process.env.BOOKSHELF_TRACK_REACT_WARNINGS === '1' ? {} : undefined;
   let failureCheck;
   let failureStep;
   let failureType;
@@ -48,6 +50,9 @@ async function verify(config) {
         });
         const page = await context.newPage();
         page.setDefaultTimeout(12000);
+        if (reactWarnings) {
+          reactWarnings[layout] = observeReactWarnings(page);
+        }
         const pageErrors = [];
         page.on('pageerror', error => pageErrors.push(error.name));
         const go = route => page.goto(config.url + route);
@@ -107,7 +112,89 @@ async function verify(config) {
         });
         check('space_restores_monitoring', await monitor.getAttribute('aria-pressed') === 'false');
 
+        failureStep = layout + '_sort_menu_keyboard';
+        await go('/books');
+        const sort = button('Sort');
+        const sortMenu = page.getByRole('menu', { name: 'Sort', exact: true });
+        const sortItems = sortMenu.getByRole('menuitemradio');
+        const firstSort = sortItems.first();
+        const lastSort = sortItems.last();
+        await sort.locator('xpath=self::*[not(@disabled)]').waitFor();
+        await sort.focus();
+        await page.keyboard.press('ArrowDown');
+        await waitForFocus(firstSort);
+        check('sort_exposes_popup_and_selected_choice', await sort.getAttribute('aria-expanded') === 'true' &&
+          await sort.getAttribute('aria-controls') === await sortMenu.getAttribute('id') &&
+          await sortMenu.getByRole('menuitemradio', { name: 'Title', exact: true }).getAttribute('aria-checked') === 'true');
+        await page.keyboard.press('ArrowUp');
+        await waitForFocus(lastSort);
+        await page.keyboard.press('ArrowDown');
+        await waitForFocus(firstSort);
+        await page.keyboard.press('End');
+        await waitForFocus(lastSort);
+        await page.keyboard.press('Home');
+        await waitForFocus(firstSort);
+        await page.keyboard.press('Enter');
+        await sortMenu.waitFor({ state: 'hidden' });
+        await waitForFocus(sort);
+        await page.keyboard.press('Enter');
+        await waitForFocus(firstSort);
+        check('keyboard_selects_sort_and_restores_focus', await firstSort.getAttribute('aria-checked') === 'true');
+
+        failureStep = layout + '_menu_dismissal';
+        await button('Filter').click();
+        await sortMenu.waitFor({ state: 'hidden' });
+        const filterMenu = page.getByRole('menu', { name: 'Filter', exact: true });
+        await filterMenu.waitFor();
+        check('opening_filter_dismisses_sort', await sort.getAttribute('aria-expanded') === 'false' &&
+          await filterMenu.getByRole('menuitemradio', { checked: true }).count() === 1);
+        await page.mouse.click(1, page.viewportSize().height - 2);
+        await filterMenu.waitFor({ state: 'hidden' });
+        check('outside_pointer_dismisses_filter', await button('Filter').getAttribute('aria-expanded') === 'false');
+
+        failureStep = layout + '_menu_viewport';
+        const originalViewport = page.viewportSize();
+        if (layout === 'desktop') {
+          await page.setViewportSize({ width: 640, height: 480 });
+          await go('/books');
+          await sort.locator('xpath=self::*[not(@disabled)]').waitFor();
+        }
+        await sort.focus();
+        await page.keyboard.press('ArrowUp');
+        await waitForFocus(lastSort);
+        await page.waitForFunction(node => {
+          const rect = node.getBoundingClientRect();
+          const viewport = window.visualViewport;
+          const left = viewport?.offsetLeft ?? 0;
+          const top = viewport?.offsetTop ?? 0;
+          return rect.width > 0 && rect.height > 0 && rect.left >= left - 1 && rect.top >= top - 1 &&
+            rect.right <= left + (viewport?.width ?? window.innerWidth) + 1 &&
+            rect.bottom <= top + (viewport?.height ?? window.innerHeight) + 1;
+        }, await sortMenu.elementHandle(), { timeout: 5000 });
+        check('sort_fits_the_available_viewport', true);
+        await page.keyboard.press('Escape');
+        await sortMenu.waitFor({ state: 'hidden' });
+        await waitForFocus(sort);
+        check('escape_collapses_sort_and_restores_focus', await sort.getAttribute('aria-expanded') === 'false');
+
+        failureStep = layout + '_menu_tab_order';
+        await sort.press('ArrowDown');
+        await waitForFocus(firstSort);
+        await page.keyboard.press('Tab');
+        await sortMenu.waitFor({ state: 'hidden' });
+        await waitForFocus(button('Filter'));
+        await sort.press('ArrowDown');
+        await waitForFocus(firstSort);
+        await page.keyboard.press('Shift+Tab');
+        await sortMenu.waitFor({ state: 'hidden' });
+        await waitForFocus(button('View'));
+        check('tab_and_shift_tab_continue_in_toolbar_order', true);
+        if (layout === 'desktop') {
+          await page.setViewportSize(originalViewport);
+        }
+
         failureStep = layout + '_file_actions';
+        const signalR = await observeSignalR(page, base);
         await go('/unmapped');
         const local = button('Create local recording');
         await local.waitFor();
@@ -121,6 +208,13 @@ async function verify(config) {
         const tableOptions = button('Table Options');
         check('table_options_has_an_action_name',
           await tableOptions.count() > 0 && await page.locator('[aria-label="Table Options Button"]').count() === 0);
+        failureStep = layout + '_signalr_reconnect';
+        await verifySignalRResync(page, base, signalR, check);
+        if (layout === 'desktop') {
+          failureStep = layout + '_table_options_reorder';
+          await verifyTableOptionsReorder(page, tableOptions.first(), check);
+        }
+        failureStep = layout + '_file_delete_confirmation';
         await deleteFile.focus();
         await page.keyboard.press('Enter');
         const deletion = dialog('Delete Book File');
@@ -156,6 +250,21 @@ async function verify(config) {
         await create.waitFor({ state: 'hidden' });
         await waitForFocus(local);
         check('local_dialog_restores_its_opener', await create.count() === 0);
+
+        if (layout === 'phone') {
+          failureStep = layout + '_save_local_recording';
+          await local.click();
+          await create.getByLabel('Title', { exact: true }).waitFor();
+          const [saved] = await Promise.all([
+            page.waitForResponse(response => response.request().method() === 'POST' &&
+              new URL(response.url()).pathname.toLowerCase().endsWith('/localrecording')),
+            button('Create recording', create).click()
+          ]);
+          check('creates_local_recording', saved.ok() && /^local:recording:[a-f0-9]{32}$/.test((await saved.json()).foreignBookId));
+          await create.waitFor({ state: 'hidden' });
+          await page.getByRole('link', { name: 'Synthetic Unmapped Recording', exact: true }).waitFor();
+          check('local_recording_links_to_created_book', true);
+        }
 
         failureStep = layout + '_folder_picker';
         await go('/settings/mediamanagement');
@@ -265,7 +374,7 @@ async function verify(config) {
   } finally {
     await browser.close();
   }
-  return { checks, completed, failureType, failureCheck, failureStep: completed ? undefined : failureStep };
+  return { checks, completed, failureType, failureCheck, failureStep: completed ? undefined : failureStep, reactWarnings };
 }
 
 (async () => {

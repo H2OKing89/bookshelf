@@ -7,6 +7,7 @@ import MenuContent from 'Components/Menu/MenuContent';
 import MenuItem from 'Components/Menu/MenuItem';
 import MenuItemSeparator from 'Components/Menu/MenuItemSeparator';
 import { align, icons, kinds } from 'Helpers/Props';
+import translate from 'Utilities/String/translate';
 import styles from './PageHeaderActionsMenu.css';
 
 function PageHeaderActionsMenu(props) {
@@ -20,7 +21,7 @@ function PageHeaderActionsMenu(props) {
   return (
     <div>
       <Menu alignMenu={align.RIGHT}>
-        <MenuButton className={styles.menuButton} aria-label="Menu Button">
+        <MenuButton className={styles.menuButton} aria-label={translate('ApplicationActions')}>
           <Icon
             name={icons.INTERACTIVE}
           />
@@ -56,7 +57,7 @@ function PageHeaderActionsMenu(props) {
 
           {
             formsAuth &&
-              <div className={styles.separator} />
+              <div className={styles.separator} role="separator" />
           }
 
           {

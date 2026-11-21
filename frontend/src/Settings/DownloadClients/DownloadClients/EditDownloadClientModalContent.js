@@ -214,6 +214,7 @@ class EditDownloadClientModalContent extends Component {
           />
 
           <SpinnerErrorButton
+            action="test"
             isSpinning={isTesting}
             error={saveError}
             onPress={onTestPress}
@@ -228,6 +229,7 @@ class EditDownloadClientModalContent extends Component {
           </Button>
 
           <SpinnerErrorButton
+            action="save"
             isSpinning={isSaving}
             error={saveError}
             onPress={onSavePress}

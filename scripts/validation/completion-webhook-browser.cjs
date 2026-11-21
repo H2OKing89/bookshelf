@@ -62,6 +62,18 @@ const path = require('path');
       const context = await browser.newContext({ viewport });
       try {
         let externalRequests = 0;
+        await context.addInitScript(() => {
+          window.ownedClipboardTest = { reject: false, writes: 0 };
+          Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            value: {
+              async writeText() {
+                window.ownedClipboardTest.writes++;
+                if (window.ownedClipboardTest.reject) throw new DOMException('Synthetic denial', 'NotAllowedError');
+              }
+            }
+          });
+        });
         await context.route('**/*', route => {
           const destination = new URL(route.request().url());
           if (destination.origin === base.origin || ['data:', 'blob:'].includes(destination.protocol)) return route.continue();
@@ -113,8 +125,47 @@ const path = require('path');
             .filter({ has: page.getByText(connectionName, { exact: true }) });
           await card.locator(':scope > [class*="underlay"]').click();
         };
-        step = name + '_opt_in';
+        const announcement = async (nameSuffix, role, message) => {
+          const matching = page.getByRole(role).filter({ hasText: message });
+          await matching.first().waitFor({ state: 'attached' });
+          check(name + '_' + nameSuffix, await matching.count() === 1);
+        };
+        step = name + '_provider_test_feedback';
         await open();
+        const testButton = page.getByRole('button', { name: 'Test', exact: true });
+        const testEndpoint = /\/api\/v1\/notification\/test(?:\?|$)/;
+        let testValidationWarning;
+        let releaseTest;
+        const testGate = new Promise(resolve => { releaseTest = resolve; });
+        await page.route(testEndpoint, async route => {
+          if (testValidationWarning === undefined) {
+            await testGate;
+            return route.continue();
+          }
+          return route.fulfill({
+            status: 400,
+            json: [{ propertyName: 'Url', errorMessage: 'Synthetic webhook validation', isWarning: testValidationWarning }]
+          });
+        });
+        const tested = page.waitForResponse(response => testEndpoint.test(response.url()));
+        try {
+          await testButton.press('Enter');
+          await announcement('test_announces_progress_once', 'status', /^Testing connection…$/);
+          check(name + '_pending_test_keeps_name_and_disables_activation', await testButton.isDisabled() &&
+            await testButton.getAttribute('aria-busy') === 'true');
+        } finally {
+          releaseTest();
+        }
+        check(name + '_real_test_request_succeeds', (await tested).ok());
+        await announcement('test_announces_success_once', 'status', /^Test succeeded\.$/);
+        testValidationWarning = true;
+        await testButton.click();
+        await announcement('test_announces_warning_once', 'status', /^Test completed with warnings\.$/);
+        testValidationWarning = false;
+        await testButton.click();
+        await announcement('test_announces_error_once', 'alert', /^Test failed\.$/);
+        await page.unroute(testEndpoint);
+        step = name + '_opt_in';
         const checkbox = page.locator(`input[name="${optIn}"]`);
         await checkbox.waitFor({ state: 'visible' });
         await checkbox.locator('..').click();
@@ -126,6 +177,8 @@ const path = require('path');
           page.getByRole('button', { name: 'Save', exact: true }).click()
         ]);
         check(name + '_browser_saves_completion_opt_in', saved.status() === 202 && completion(saved.request().postDataJSON()) === true);
+        await testButton.waitFor({ state: 'hidden' });
+        await announcement('save_announces_success_once_after_modal_closes', 'status', /^Settings saved\.$/);
         const opted = await request(endpoint);
         check(name + '_completion_opt_in_is_independent_of_legacy_import', completion(opted) === true && opted.onReleaseImport === false);
         step = name + '_compatibility_and_off';
@@ -137,6 +190,16 @@ const path = require('path');
         }, 202);
         const disabled = await request(endpoint);
         check(name + '_explicit_false_turns_trigger_off', completion(disabled) === false && disabled.onReleaseImport === false);
+        step = name + '_clipboard_feedback';
+        await page.goto(url + '/settings/general');
+        const copy = page.getByRole('button', { name: 'Copy to clipboard', exact: true });
+        await copy.press('Space');
+        await announcement('clipboard_announces_success_once', 'status', /^Copied to clipboard\.$/);
+        await page.evaluate(() => { window.ownedClipboardTest.reject = true; });
+        await copy.press('Enter');
+        await announcement('clipboard_announces_failure_once', 'alert', /^Could not copy to clipboard\.$/);
+        check(name + '_clipboard_remains_a_named_keyboard_action', await copy.evaluate(element => element === document.activeElement) &&
+          await page.evaluate(() => window.ownedClipboardTest.writes) === 2);
         check(name + '_no_browser_errors_or_external_requests', errors.length === 0 && externalRequests === 0);
       } finally {
         await context.close();

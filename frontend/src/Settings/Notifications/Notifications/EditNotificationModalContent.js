@@ -149,6 +149,7 @@ function EditNotificationModalContent(props) {
         />
 
         <SpinnerErrorButton
+          action="test"
           isSpinning={isTesting}
           error={saveError}
           onPress={onTestPress}
@@ -163,6 +164,7 @@ function EditNotificationModalContent(props) {
         </Button>
 
         <SpinnerErrorButton
+          action="save"
           isSpinning={isSaving}
           error={saveError}
           onPress={onSavePress}

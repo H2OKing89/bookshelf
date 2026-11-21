@@ -123,15 +123,40 @@ const path = require('path');
         failureStep = name + '_author_reconciliation';
         await page.goto(config.url + '/author/synthetic-name-variant');
         const openAuthorReview = button('Reconcile Author');
-        const moreActions = page.getByRole('button', { name: /^More\b/ }).first();
+        const moreActions = button('More').first();
         failureStep = name + '_author_toolbar';
         await openAuthorReview.or(moreActions).first().waitFor();
-        if (!await openAuthorReview.isVisible()) {
+        if (name === 'phone' || !await openAuthorReview.isVisible()) {
           failureStep = name + '_overflow_actions';
-          await moreActions.click();
+          const overflowMenu = page.getByRole('menu', { name: 'More', exact: true });
+          await moreActions.focus();
+          await page.keyboard.press('Space');
+          await overflowMenu.waitFor();
+          const reviewItem = overflowMenu.getByRole('menuitem', { name: 'Reconcile Author', exact: true });
+          await reviewItem.waitFor();
+          check('overflow_menu_links_its_trigger_and_actions', await moreActions.getAttribute('aria-expanded') === 'true' &&
+            await moreActions.getAttribute('aria-controls') === await overflowMenu.getAttribute('id'));
+          await page.keyboard.press('Escape');
+          await overflowMenu.waitFor({ state: 'hidden' });
+          check('escape_restores_overflow_trigger_focus', await moreActions.evaluate(node => document.activeElement === node));
+
+          failureStep = name + '_overflow_select';
+          await page.keyboard.press('ArrowDown');
+          await overflowMenu.waitFor();
+          await page.waitForFunction(node => node.contains(document.activeElement),
+            await overflowMenu.elementHandle(), { timeout: 5000 });
+          const actions = overflowMenu.getByRole('menuitem', { disabled: false });
+          const actionCount = await actions.count();
+          for (let index = 0; index < actionCount && !await reviewItem.evaluate(node => document.activeElement === node); index++) {
+            await page.keyboard.press('ArrowDown');
+          }
+          check('overflow_action_is_reachable_with_arrows', await reviewItem.evaluate(node => document.activeElement === node));
+          await page.keyboard.press('Enter');
+          await overflowMenu.waitFor({ state: 'hidden' });
+        } else {
+          failureStep = name + '_author_review_opener';
+          await openAuthorReview.click();
         }
-        failureStep = name + '_author_review_opener';
-        await openAuthorReview.click();
         const authorDialog = dialog('Reconcile Author');
         await authorDialog.waitFor();
         failureStep = name + '_author_evidence_form';
@@ -171,7 +196,9 @@ const path = require('path');
         } else {
           await page.keyboard.press('Escape');
           await authorDialog.waitFor({ state: 'hidden' });
-          check('author_preview_can_be_cancelled', true);
+          await page.waitForFunction(node => document.activeElement === node,
+            await moreActions.elementHandle(), { timeout: 5000 });
+          check('author_preview_can_be_cancelled', await moreActions.getAttribute('aria-expanded') === 'false');
         }
         check('only_owned_browser_requests', unexpectedRequests === 0);
         check('no_page_errors', errors.length === 0);

@@ -3,6 +3,7 @@
 interface CssExports {
   'button': string;
   'clipboardIconContainer': string;
+  'copyInput': string;
   'showStateIcon': string;
   'stateIconContainer': string;
 }
