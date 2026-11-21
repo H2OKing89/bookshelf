@@ -17,6 +17,15 @@ namespace NzbDrone.Core.Profiles.Qualities
         public List<QualityProfileQualityItem> Items { get; set; }
         public bool Allowed { get; set; }
 
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public decimal? MinSize { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public decimal? PreferredSize { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public decimal? MaxSize { get; set; }
+
         public QualityProfileQualityItem()
         {
             Items = new List<QualityProfileQualityItem>();

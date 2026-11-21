@@ -12,6 +12,8 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Http;
 using NzbDrone.Common.Instrumentation.Extensions;
 using NzbDrone.Common.TPL;
+using NzbDrone.Core.Books;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download.Clients;
 using NzbDrone.Core.Download.Pending;
 using NzbDrone.Core.Exceptions;
@@ -39,6 +41,7 @@ namespace NzbDrone.Core.Download
         private readonly Logger _logger;
         private readonly IDownloadSubmissionGuard _submissionGuard;
         private readonly IDownloadGrabSpaceService _grabSpaceService;
+        private readonly IAuthorService _authorService;
 
         public DownloadService(IProvideDownloadClient downloadClientProvider,
                                IDownloadClientStatusService downloadClientStatusService,
@@ -49,6 +52,7 @@ namespace NzbDrone.Core.Download
                                ISeedConfigProvider seedConfigProvider,
                                IDownloadSubmissionGuard submissionGuard,
                                IDownloadGrabSpaceService grabSpaceService,
+                               IAuthorService authorService,
                                Logger logger)
         {
             _downloadClientProvider = downloadClientProvider;
@@ -61,6 +65,7 @@ namespace NzbDrone.Core.Download
             _logger = logger;
             _submissionGuard = submissionGuard;
             _grabSpaceService = grabSpaceService;
+            _authorService = authorService;
         }
 
         public Task DownloadReport(RemoteBook remoteBook, int? downloadClientId)
@@ -160,6 +165,17 @@ namespace NzbDrone.Core.Download
             if (!space.Decision.Accepted)
             {
                 throw new DownloadGrabSpaceException(space.Decision);
+            }
+
+            // Interactive search and pending releases can retain an older author/profile snapshot.
+            if (remoteBook.Release.Size > 0 && ReleaseSizePolicy.GetSizeUnit(remoteBook.ParsedBookInfo?.Quality?.Quality) != null)
+            {
+                var author = remoteBook.Author.Id > 0 ? _authorService.GetAuthor(remoteBook.Author.Id) : remoteBook.Author;
+                var sizeDecision = ReleaseSizePolicy.Evaluate(remoteBook, author?.QualityProfile?.Value);
+                if (!sizeDecision.Accepted)
+                {
+                    throw new DownloadSizePolicyException(sizeDecision);
+                }
             }
 
             var attemptId = _submissionGuard.Begin(remoteBook, downloadClient);

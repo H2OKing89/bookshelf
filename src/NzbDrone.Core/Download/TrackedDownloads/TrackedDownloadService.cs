@@ -299,6 +299,12 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                         trackedDownload.RemoteBook.RecordedLanguages = RecordingLanguageEvidence.ParseStored(languages);
                         trackedDownload.RemoteBook.SelectedEditionLanguageId = RecordingLanguageEvidence.ReadEditionLanguage(grabbedEvent.Data);
                     }
+
+                    var audio = AudioFormatEvidence.FromHistory(grabbedEvent?.Data);
+                    if (trackedDownload.RemoteBook != null && audio?.Origin == AudioEvidenceOrigin.Release)
+                    {
+                        trackedDownload.RemoteBook.RecordedAudioFormatEvidence = audio;
+                    }
                 }
 
                 // Calculate custom formats

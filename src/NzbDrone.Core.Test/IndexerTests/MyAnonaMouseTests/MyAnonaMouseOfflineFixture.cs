@@ -23,12 +23,14 @@ namespace NzbDrone.Core.Test.IndexerTests.MyAnonaMouseTests
     {
         private readonly List<JObject> _requests = new List<JObject>();
         private JToken _mediaInfo;
+        private JToken _reportedFileCount;
 
         [SetUp]
         public void Setup()
         {
             _requests.Clear();
             _mediaInfo = null;
+            _reportedFileCount = null;
             Subject.Definition = new IndexerDefinition
             {
                 Name = "MAM fixture",
@@ -67,6 +69,11 @@ namespace NzbDrone.Core.Test.IndexerTests.MyAnonaMouseTests
                         if (_mediaInfo != null)
                         {
                             item["mediainfo"] = _mediaInfo.DeepClone();
+                        }
+
+                        if (_reportedFileCount != null)
+                        {
+                            item["numfiles"] = _reportedFileCount.DeepClone();
                         }
 
                         return item;
@@ -192,6 +199,35 @@ namespace NzbDrone.Core.Test.IndexerTests.MyAnonaMouseTests
             release.MediaInfo.AudioChannels.Should().Be(2);
             release.MediaInfo.Source.Should().Be("MyAnonaMouse");
             release.Title.Should().Contain("[ENG / M4B]");
+        }
+
+        [TestCase("1", 100, true, true)]
+        [TestCase("2", 100, true, false)]
+        [TestCase(null, 100, true, true)]
+        [TestCase(null, 20, true, false)]
+        [TestCase("many", 100, true, false)]
+        [TestCase("1", 100, false, false)]
+        public async Task should_quarantine_partial_or_ambiguous_audio_duration(string reportedFileCount, int mediaFileMib, bool hasContainerDuration, bool proven)
+        {
+            _reportedFileCount = reportedFileCount == null ? null : new JValue(reportedFileCount);
+            var general = new JObject { ["FileSize"] = mediaFileMib * 1024L * 1024 };
+            if (hasContainerDuration)
+            {
+                general["Duration"] = 3600;
+            }
+
+            _mediaInfo = new JObject
+            {
+                ["General"] = general,
+                ["Audio1"] = new JObject { ["Format"] = "AAC", ["Duration"] = 1200, ["Default"] = "Yes" },
+                ["Audio2"] = new JObject { ["Format"] = "AAC", ["Duration"] = 3600 }
+            };
+            GivenPages(1);
+
+            var release = (await Subject.FetchRecent()).Single();
+
+            release.MediaInfo.DurationSeconds.Should().Be(1200, "the default stream duration stays available independently");
+            release.AudioDurationSeconds.Should().Be(proven ? 3600d : (double?)null);
         }
 
         [TestCase(null)]

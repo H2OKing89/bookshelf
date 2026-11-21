@@ -17,6 +17,7 @@ import dimensions from 'Styles/Variables/dimensions';
 import translate from 'Utilities/String/translate';
 import QualityProfileFormatItems from './QualityProfileFormatItems';
 import QualityProfileItems from './QualityProfileItems';
+import QualityProfileSizeRules from './QualityProfileSizeRules';
 import styles from './EditQualityProfileModalContent.css';
 
 const MODAL_BODY_PADDING = parseInt(dimensions.modalBodyPadding);
@@ -269,6 +270,7 @@ class EditQualityProfileModalContent extends Component {
                         warnings={items.warnings}
                         {...otherProps}
                       />
+                        <QualityProfileSizeRules items={items.value} onInputChange={onInputChange} />
                     </div>
 
                     <div className={styles.formatItemSmall}>

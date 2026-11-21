@@ -19,6 +19,7 @@ namespace NzbDrone.Core.Parser.Model
         public List<CustomFormat> CustomFormats { get; set; }
         public int CustomFormatScore { get; set; }
         public List<Language> RecordedLanguages { get; set; }
+        public AudioFormatEvidence RecordedAudioFormatEvidence { get; set; }
         public int? SelectedEditionLanguageId { get; set; }
         public ReleaseSourceType ReleaseSource { get; set; }
 

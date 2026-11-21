@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using NzbDrone.Core.Datastore;
 
 namespace NzbDrone.Core.Parser.Model
@@ -26,9 +27,24 @@ namespace NzbDrone.Core.Parser.Model
     public class MediaInfoModel : AudioStreamInfo, IEmbeddedDocument
     {
         public string ContainerFormat { get; set; }
+        public long? MediaFileSizeBytes { get; set; }
+        public double? ContainerDurationSeconds { get; set; }
         public string Source { get; set; }
         public string SourceVersion { get; set; }
         public List<AudioStreamInfo> AudioStreams { get; set; } = new List<AudioStreamInfo>();
+
+        public double? GetFileDurationSeconds()
+        {
+            if (ContainerDurationSeconds > 0)
+            {
+                return ContainerDurationSeconds;
+            }
+
+            // Alternate streams run in parallel and can have different lengths.
+            // With no container duration, use a duration agreed by all streams.
+            var durations = AudioStreams?.Select(stream => stream?.DurationSeconds).Distinct().Take(2).ToArray();
+            return durations?.Length == 1 ? durations[0] : null;
+        }
 
         public void SetPrimaryStream(AudioStreamInfo stream)
         {

@@ -223,7 +223,7 @@ namespace NzbDrone.Core.Download
                 _logger.Warn("Failed to download release from indexer, no longer available. " + remoteBook);
                 return ProcessedDecisionResult.Rejected;
             }
-            catch (DownloadGrabSpaceException ex)
+            catch (DownloadPolicyRejectionException ex)
             {
                 decision.AddRejection(new Rejection(ex.Message, code: ex.RejectionCode));
                 _logger.Debug("Grab blocked before submission: {0}", ex.Message);

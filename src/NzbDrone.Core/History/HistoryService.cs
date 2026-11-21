@@ -7,6 +7,7 @@ using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Books.Events;
+using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Download.History;
@@ -144,6 +145,7 @@ namespace NzbDrone.Core.History
         {
             var languages = RecordingLanguageEvidence.ForRelease(message.Book);
             var selectedEditionLanguage = message.Book.SelectedEditionLanguageId ?? RecordingLanguageEvidence.SelectedEditionLanguage(message.Book.Books);
+            var audio = AudioFormatEvidence.ForRelease(message.Book).ToStored();
             foreach (var book in message.Book.Books)
             {
                 var history = new EntityHistory
@@ -176,6 +178,7 @@ namespace NzbDrone.Core.History
                 history.Data.Add("ReleaseSource", message.Book.ReleaseSource.ToString());
                 history.Data.Add("IndexerFlags", message.Book.Release.IndexerFlags.ToString());
                 RecordingLanguageEvidence.WriteHistory(history.Data, languages, selectedEditionLanguage);
+                history.Data[AudioFormatEvidence.HistoryKey] = audio;
 
                 if (!message.Book.ParsedBookInfo.ReleaseHash.IsNullOrWhiteSpace())
                 {
@@ -262,6 +265,7 @@ namespace NzbDrone.Core.History
             RecordingLanguageEvidence.WriteHistory(history.Data,
                 RecordingLanguageEvidence.ForFile(message.ImportedBook.MediaInfo, message.ImportedBook.TaggedLanguage, edition),
                 RecordingLanguageEvidence.EditionLanguage(edition));
+            history.Data[AudioFormatEvidence.HistoryKey] = AudioFormatEvidence.ForFile(message.ImportedBook.MediaInfo, edition).ToStored();
 
             _historyRepository.Insert(history);
         }
@@ -291,6 +295,7 @@ namespace NzbDrone.Core.History
                 history.Data.Add("Indexer", message.TrackedDownload?.RemoteBook?.Release?.Indexer ?? message.Data.GetValueOrDefault(EntityHistory.INDEXER));
                 history.Data[RecordingLanguageEvidence.LanguagesKey] = RecordingLanguageEvidence.ReadHistory(message.Data, RecordingLanguageEvidence.LanguagesKey);
                 history.Data[RecordingLanguageEvidence.EditionLanguageKey] = RecordingLanguageEvidence.ReadHistory(message.Data, RecordingLanguageEvidence.EditionLanguageKey);
+                history.Data[AudioFormatEvidence.HistoryKey] = RecordingLanguageEvidence.ReadHistory(message.Data, AudioFormatEvidence.HistoryKey);
 
                 _historyRepository.Insert(history);
             }

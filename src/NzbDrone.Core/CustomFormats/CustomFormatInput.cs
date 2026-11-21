@@ -13,6 +13,7 @@ namespace NzbDrone.Core.CustomFormats
         public long Size { get; set; }
         public IndexerFlags IndexerFlags { get; set; }
         public string Filename { get; set; }
+        public AudioFormatEvidence Audio { get; set; }
 
         public IReadOnlyCollection<Language> Languages { get; set; } = Array.Empty<Language>();
         public int SelectedEditionLanguageId { get; set; }

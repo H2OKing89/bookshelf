@@ -62,7 +62,7 @@ namespace NzbDrone.Core.MediaFiles
             tags.AsinConflict = tags.AsinConflict || malformed || embedded.Concat(filename).Concat(folder).Distinct().Count() > 1;
         }
 
-        private static List<string> ReadBracketedAsins(string value)
+        internal static List<string> ReadBracketedAsins(string value)
         {
             return FilenameAsin.Matches(value ?? string.Empty)
                 .Select(match => Normalize(match.Groups[1].Value))
@@ -91,6 +91,11 @@ namespace NzbDrone.Core.MediaFiles
                 return true;
             }
 
+            return MatchesAsin(asin, edition);
+        }
+
+        internal static bool MatchesAsin(string asin, Edition edition)
+        {
             // An explicit recording identity is a constraint, never just a distance
             // penalty. Check both fields so inconsistent catalog rows fail safely.
             var editionAsin = Normalize(edition?.Asin);

@@ -166,8 +166,22 @@ namespace NzbDrone.Core.DecisionEngine
 
         private int CompareSize(DownloadDecision x, DownloadDecision y)
         {
-            // TODO: Is smaller better? Smaller for usenet could mean no par2 files.
-            return CompareBy(x.RemoteBook, y.RemoteBook, remoteBook => remoteBook.Release.Size.Round(200.Megabytes()));
+            var left = ReleaseSizePolicy.GetPreferredDeviation(x.RemoteBook);
+            var right = ReleaseSizePolicy.GetPreferredDeviation(y.RemoteBook);
+
+            // Compare a fixed tier first so an unmeasurable release cannot make the ordering nontransitive.
+            var measured = left.HasValue.CompareTo(right.HasValue);
+            if (measured != 0)
+            {
+                return measured;
+            }
+
+            if (left.HasValue && right.HasValue)
+            {
+                return CompareAll(right.Value.CompareTo(left.Value), y.RemoteBook.Release.Size.CompareTo(x.RemoteBook.Release.Size));
+            }
+
+            return CompareBy(x.RemoteBook, y.RemoteBook, remoteBook => Math.Max(0, remoteBook.Release.Size).Round(200.Megabytes()));
         }
     }
 }

@@ -25,5 +25,6 @@ namespace NzbDrone.Core.Blocklisting
         public string TorrentInfoHash { get; set; }
         public string RecordingLanguages { get; set; }
         public int? SelectedEditionLanguageId { get; set; }
+        public string AudioFormatEvidence { get; set; }
     }
 }

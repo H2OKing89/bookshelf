@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NzbDrone.Core.CustomFormats;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Profiles;
 using NzbDrone.Core.Profiles.Qualities;
 using Readarr.Http.REST;
@@ -25,6 +26,10 @@ namespace Readarr.Api.V1.Profiles.Quality
         public NzbDrone.Core.Qualities.Quality Quality { get; set; }
         public List<QualityProfileQualityItemResource> Items { get; set; }
         public bool Allowed { get; set; }
+        public decimal? MinSize { get; set; }
+        public decimal? PreferredSize { get; set; }
+        public decimal? MaxSize { get; set; }
+        public string SizeUnit { get; set; }
 
         public QualityProfileQualityItemResource()
         {
@@ -75,7 +80,11 @@ namespace Readarr.Api.V1.Profiles.Quality
                 Name = model.Name,
                 Quality = model.Quality,
                 Items = model.Items.ConvertAll(ToResource),
-                Allowed = model.Allowed
+                Allowed = model.Allowed,
+                MinSize = model.MinSize,
+                PreferredSize = model.PreferredSize,
+                MaxSize = model.MaxSize,
+                SizeUnit = ReleaseSizePolicy.GetSizeUnit(model.Quality)
             };
         }
 
@@ -123,7 +132,10 @@ namespace Readarr.Api.V1.Profiles.Quality
                 Name = resource.Name,
                 Quality = resource.Quality != null ? (NzbDrone.Core.Qualities.Quality)resource.Quality.Id : null,
                 Items = resource.Items.ConvertAll(ToModel),
-                Allowed = resource.Allowed
+                Allowed = resource.Allowed,
+                MinSize = resource.MinSize,
+                PreferredSize = resource.PreferredSize,
+                MaxSize = resource.MaxSize
             };
         }
 

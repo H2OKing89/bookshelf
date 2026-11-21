@@ -12402,6 +12402,24 @@
           },
           "allowed": {
             "type": "boolean"
+          },
+          "minSize": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000,
+            "nullable": true
+          },
+          "preferredSize": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000,
+            "nullable": true
+          },
+          "maxSize": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000,
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -12429,6 +12447,29 @@
           },
           "allowed": {
             "type": "boolean"
+          },
+          "minSize": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000,
+            "nullable": true
+          },
+          "preferredSize": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000,
+            "nullable": true
+          },
+          "maxSize": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000,
+            "nullable": true
+          },
+          "sizeUnit": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
           }
         },
         "additionalProperties": false

@@ -70,6 +70,8 @@ internal static class Program
             VerifyClientTags();
             VerifyCustomFormatUpgrades(fixture);
             VerifyRecordingLanguage();
+            ReleaseSizeRankingProbe.Verify();
+            AudioFormatProbe.Verify();
             foreach (var name in new[] { "two_books_one_recording", "two_books_one_ebook", "declared_missing_part", "duplicate_parts", "different_editions", "unrepresented_source", "manual_subset", "rejected_part" })
                 VerifyIncomplete(fixture, name);
             VerifyWriteFailure(fixture);

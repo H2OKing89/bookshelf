@@ -296,6 +296,14 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
                 release.Peers = item.Leechers + release.Seeders;
                 release.Size = RssParser.ParseSize(item.Size, true);
 
+                // A MAM MediaInfo entry can describe only one file from a multipart torrent.
+                var countIsKnown = int.TryParse(item.NumFiles?.ToString(), NumberStyles.None, CultureInfo.InvariantCulture, out var count);
+                if ((countIsKnown && count == 1) ||
+                    (item.NumFiles == null && release.Size > 0 && release.MediaInfo?.MediaFileSizeBytes == release.Size))
+                {
+                    release.AudioDurationSeconds = release.MediaInfo?.GetFileDurationSeconds();
+                }
+
                 releaseInfos.Add(release);
             }
 
@@ -605,6 +613,8 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
         public int Seeders { get; set; }
         public int Leechers { get; set; }
         public string Size { get; set; }
+        [JsonProperty(PropertyName = "numfiles")]
+        public JToken NumFiles { get; set; }
     }
 
     public class MyAnonaMouseResponse

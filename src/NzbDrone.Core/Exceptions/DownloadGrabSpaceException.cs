@@ -1,16 +1,12 @@
-using System.Net;
 using NzbDrone.Core.DecisionEngine;
 
 namespace NzbDrone.Core.Exceptions
 {
-    public class DownloadGrabSpaceException : NzbDroneClientException
+    public class DownloadGrabSpaceException : DownloadPolicyRejectionException
     {
         public DownloadGrabSpaceException(Decision decision)
-            : base(HttpStatusCode.Conflict, decision.Reason)
+            : base(decision)
         {
-            RejectionCode = decision.Code;
         }
-
-        public string RejectionCode { get; }
     }
 }

@@ -85,12 +85,21 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
             {
                 Source = source,
                 ContainerFormat = Text(general, "Format"),
+                MediaFileSizeBytes = ReadFileSize(general),
+                ContainerDurationSeconds = Duration(general),
                 AudioStreams = streams
             };
             var meaningfulStreams = streams.Where(x => !string.IsNullOrWhiteSpace(x.AudioFormat)).ToList();
             model.SetPrimaryStream(meaningfulStreams.FirstOrDefault(x => x.IsDefault == true) ?? meaningfulStreams[0]);
-            model.DurationSeconds ??= Duration(general);
+            model.DurationSeconds ??= model.ContainerDurationSeconds;
             return model;
+        }
+
+        private static long? ReadFileSize(JObject general)
+        {
+            return long.TryParse(Text(general, "FileSize"), NumberStyles.None, CultureInfo.InvariantCulture, out var bytes) && bytes > 0
+                ? bytes
+                : null;
         }
 
         private static AudioStreamInfo ReadStream(JObject track, int index)

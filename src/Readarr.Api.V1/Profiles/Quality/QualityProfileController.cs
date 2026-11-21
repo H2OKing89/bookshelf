@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.CustomFormats;
+using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Http.REST.Attributes;
 using Readarr.Http;
@@ -48,6 +50,7 @@ namespace Readarr.Api.V1.Profiles.Quality
         public ActionResult<QualityProfileResource> Create(QualityProfileResource resource)
         {
             var model = resource.ToModel();
+            ValidateSizeRules(model.Items);
             model = _qualityProfileService.Add(model);
             return Created(model.Id);
         }
@@ -62,11 +65,14 @@ namespace Readarr.Api.V1.Profiles.Quality
         public ActionResult<QualityProfileResource> Update(QualityProfileResource resource)
         {
             var model = resource.ToModel();
-            if (!resource.MinUpgradeFormatScore.HasValue)
+            var saved = _qualityProfileService.Get(resource.Id);
+            if (saved != null)
             {
-                model.MinUpgradeFormatScore = _qualityProfileService.Get(resource.Id).MinUpgradeFormatScore;
+                model.MinUpgradeFormatScore = resource.MinUpgradeFormatScore ?? saved.MinUpgradeFormatScore;
+                PreserveSizeRules(model.Items, saved.Items);
             }
 
+            ValidateSizeRules(model.Items);
             _qualityProfileService.Update(model);
 
             return Accepted(model.Id);
@@ -81,6 +87,55 @@ namespace Readarr.Api.V1.Profiles.Quality
         public List<QualityProfileResource> GetAll()
         {
             return _qualityProfileService.All().ToResource();
+        }
+
+        private static IEnumerable<QualityProfileQualityItem> ProfileItems(IEnumerable<QualityProfileQualityItem> items)
+        {
+            return items.SelectMany(item => new[] { item }.Concat(ProfileItems(item.Items)));
+        }
+
+        private static void PreserveSizeRules(IEnumerable<QualityProfileQualityItem> items, IEnumerable<QualityProfileQualityItem> saved)
+        {
+            var previous = ProfileItems(saved).Where(item => item.Quality != null).ToLookup(item => item.Quality.Id);
+            foreach (var item in ProfileItems(items).Where(item => item.Quality != null))
+            {
+                var prior = previous[item.Quality.Id].FirstOrDefault();
+                item.MinSize ??= prior?.MinSize;
+                item.PreferredSize ??= prior?.PreferredSize;
+                item.MaxSize ??= prior?.MaxSize;
+            }
+        }
+
+        private static void ValidateSizeRules(IEnumerable<QualityProfileQualityItem> items)
+        {
+            const decimal largestSetting = 1000000;
+            var failures = new List<ValidationFailure>();
+            foreach (var item in ProfileItems(items))
+            {
+                var limits = new[] { item.MinSize, item.PreferredSize, item.MaxSize };
+                var name = item.Quality?.Name ?? item.Name ?? "Quality group";
+                if (limits.Any(limit => limit < 0 || limit > largestSetting))
+                {
+                    failures.Add(new ValidationFailure("Items", $"Size settings for {name} must be between 0 and {largestSetting}."));
+                }
+                else if (limits.Any(limit => limit > 0) && ReleaseSizePolicy.GetSizeUnit(item.Quality) == null)
+                {
+                    failures.Add(new ValidationFailure("Items", $"Size settings require an individual audiobook or ebook quality. Remove size settings from {name}."));
+                }
+                else
+                {
+                    var configured = limits.Where(limit => limit > 0).ToArray();
+                    if (!configured.SequenceEqual(configured.OrderBy(limit => limit)))
+                    {
+                        failures.Add(new ValidationFailure("Items", $"Minimum, preferred and maximum size for {name} must be in ascending order."));
+                    }
+                }
+            }
+
+            if (failures.Count > 0)
+            {
+                throw new ValidationException(failures);
+            }
         }
     }
 }

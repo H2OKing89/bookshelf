@@ -5,6 +5,7 @@ using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.History;
 using NzbDrone.Core.Indexers;
@@ -82,7 +83,11 @@ namespace NzbDrone.Core.Test.HistoryTests
                 Path = Path.Combine(TempFolder, "source.m4b"), Author = new Author { Id = 1 }, Book = new Book { Id = 2 },
                 Part = 2, PartCount = 3, Size = 100, Modified = modified
             };
-            var imported = new BookFile { Id = 4, EditionId = 5, Part = 2, Path = Path.Combine(TempFolder, "imported.m4b") };
+            var imported = new BookFile
+            {
+                Id = 4, EditionId = 5, Part = 2, Path = Path.Combine(TempFolder, "imported.m4b"),
+                MediaInfo = new MediaInfoModel { Source = "MediaInfo", AudioFormat = "FLAC", AudioChannels = 1 }
+            };
             EntityHistory saved = null;
             Mocker.GetMock<IHistoryRepository>().Setup(repository => repository.Insert(It.IsAny<EntityHistory>()))
                 .Callback<EntityHistory>(history => saved = history);
@@ -97,14 +102,22 @@ namespace NzbDrone.Core.Test.HistoryTests
             saved.Data["PartCount"].Should().Be("3");
             saved.Data["DownloadClientId"].Should().Be("6");
             saved.Data["SourceModifiedUtc"].Should().Be(modified.ToString("O"));
+            var evidence = AudioFormatEvidence.FromHistory(saved.Data);
+            evidence.Origin.Should().Be(AudioEvidenceOrigin.File);
+            evidence.Codec.Should().Be(AudioCodecKind.Flac);
+            evidence.Channels.Should().Be(1);
         }
 
         [Test]
-        public void grab_history_should_save_actual_language_evidence_and_the_selected_edition()
+        public void grab_history_should_save_language_and_advertised_audio_evidence()
         {
             var release = new RemoteBook
             {
-                Release = new ReleaseInfo { Languages = new List<Language> { Language.French, Language.English } },
+                Release = new ReleaseInfo
+                {
+                    Languages = new List<Language> { Language.French, Language.English },
+                    MediaInfo = new MediaInfoModel { Source = "MyAnonaMouse", AudioFormat = "USAC", AudioAdditionalFeatures = "xHE-AAC" }
+                },
                 ParsedBookInfo = new ParsedBookInfo { Quality = new QualityModel() },
                 Books = new List<Book>
                 {
@@ -119,6 +132,9 @@ namespace NzbDrone.Core.Test.HistoryTests
 
             saved.Data[RecordingLanguageEvidence.LanguagesKey].Should().Be("2,1");
             saved.Data[RecordingLanguageEvidence.EditionLanguageKey].Should().Be("2");
+            var evidence = AudioFormatEvidence.FromHistory(saved.Data);
+            evidence.Origin.Should().Be(AudioEvidenceOrigin.Release);
+            evidence.Codec.Should().Be(AudioCodecKind.XheAac);
         }
     }
 }

@@ -89,11 +89,11 @@ namespace Readarr.Http.ErrorManagement
                 await response.WriteAsync(STJson.ToJson(failures));
                 return;
             }
-            else if (exception is DownloadGrabSpaceException grabSpaceException)
+            else if (exception is DownloadPolicyRejectionException policyException)
             {
-                statusCode = grabSpaceException.StatusCode;
-                errorModel.Description = grabSpaceException.Message;
-                errorModel.Content = new { Code = grabSpaceException.RejectionCode };
+                statusCode = policyException.StatusCode;
+                errorModel.Description = policyException.Message;
+                errorModel.Content = new { Code = policyException.RejectionCode };
             }
             else if (exception is NzbDroneClientException clientException)
             {

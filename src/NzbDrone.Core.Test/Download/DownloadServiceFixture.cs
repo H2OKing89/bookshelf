@@ -15,6 +15,8 @@ using NzbDrone.Core.Download.Clients;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Parser.Model;
+using NzbDrone.Core.Profiles.Qualities;
+using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.Download
@@ -119,6 +121,34 @@ namespace NzbDrone.Core.Test.Download
                 () => Subject.DownloadReport(_parseResult, client.Object.Definition.Id));
 
             failure.RejectionCode.Should().Be(RejectionCode.MinimumFreeSpace);
+            client.Verify(value => value.Download(It.IsAny<RemoteBook>(), It.IsAny<IIndexer>()), Times.Never());
+            Mocker.GetMock<IDownloadSubmissionGuard>().Verify(guard => guard.Begin(It.IsAny<RemoteBook>(), It.IsAny<IDownloadClient>()), Times.Never());
+            VerifyEventNotPublished<BookGrabbedEvent>();
+        }
+
+        [Test]
+        public void direct_grab_rechecks_current_size_profile_without_mutating_the_cached_release()
+        {
+            var client = WithUsenetClient();
+            _parseResult.Release.Size = 10 * 1024 * 1024;
+            _parseResult.ParsedBookInfo = new ParsedBookInfo { Quality = new QualityModel(Quality.EPUB) };
+            var cachedProfile = new QualityProfile { Items = new List<QualityProfileQualityItem> { new () { Quality = Quality.EPUB } } };
+            _parseResult.Author.QualityProfile = cachedProfile;
+            var currentAuthor = new Author
+            {
+                Id = _parseResult.Author.Id,
+                QualityProfile = new QualityProfile
+                {
+                    Items = new List<QualityProfileQualityItem> { new () { Quality = Quality.EPUB, MaxSize = 8 } }
+                }
+            };
+            Mocker.GetMock<IAuthorService>().Setup(service => service.GetAuthor(_parseResult.Author.Id)).Returns(currentAuthor);
+
+            var failure = Assert.ThrowsAsync<DownloadSizePolicyException>(
+                () => Subject.DownloadReport(_parseResult, client.Object.Definition.Id));
+
+            failure.RejectionCode.Should().Be(RejectionCode.AboveMaximumSize);
+            _parseResult.Author.QualityProfile.Value.Should().BeSameAs(cachedProfile);
             client.Verify(value => value.Download(It.IsAny<RemoteBook>(), It.IsAny<IIndexer>()), Times.Never());
             Mocker.GetMock<IDownloadSubmissionGuard>().Verify(guard => guard.Begin(It.IsAny<RemoteBook>(), It.IsAny<IDownloadClient>()), Times.Never());
             VerifyEventNotPublished<BookGrabbedEvent>();

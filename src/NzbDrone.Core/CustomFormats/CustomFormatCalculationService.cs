@@ -51,6 +51,11 @@ namespace NzbDrone.Core.CustomFormats
                 input.SelectedEditionLanguageId = remoteBook.SelectedEditionLanguageId ?? RecordingLanguageEvidence.SelectedEditionLanguage(remoteBook.Books);
             }
 
+            if (UsesAudioEvidence(formats))
+            {
+                input.Audio = AudioFormatEvidence.ForRelease(remoteBook);
+            }
+
             return ParseCustomFormat(input, formats);
         }
 
@@ -83,7 +88,8 @@ namespace NzbDrone.Core.CustomFormats
                 Size = blocklist.Size ?? 0,
                 IndexerFlags = blocklist.IndexerFlags,
                 Languages = RecordingLanguageEvidence.ParseStored(blocklist.RecordingLanguages),
-                SelectedEditionLanguageId = blocklist.SelectedEditionLanguageId ?? 0
+                SelectedEditionLanguageId = blocklist.SelectedEditionLanguageId ?? 0,
+                Audio = AudioFormatEvidence.FromStored(blocklist.AudioFormatEvidence)
             };
 
             return ParseCustomFormat(input);
@@ -111,7 +117,8 @@ namespace NzbDrone.Core.CustomFormats
                 Size = size,
                 IndexerFlags = indexerFlags,
                 Languages = RecordingLanguageEvidence.ParseStored(RecordingLanguageEvidence.ReadHistory(history.Data, RecordingLanguageEvidence.LanguagesKey)),
-                SelectedEditionLanguageId = RecordingLanguageEvidence.ReadEditionLanguage(history.Data)
+                SelectedEditionLanguageId = RecordingLanguageEvidence.ReadEditionLanguage(history.Data),
+                Audio = AudioFormatEvidence.FromHistory(history.Data)
             };
 
             return ParseCustomFormat(input);
@@ -134,7 +141,8 @@ namespace NzbDrone.Core.CustomFormats
                 Size = localBook.Size,
                 IndexerFlags = localBook.IndexerFlags,
                 Languages = RecordingLanguageEvidence.ForFile(localBook.FileTrackInfo?.MediaInfo, localBook.FileTrackInfo?.Language, localBook.Edition),
-                SelectedEditionLanguageId = RecordingLanguageEvidence.EditionLanguage(localBook.Edition)
+                SelectedEditionLanguageId = RecordingLanguageEvidence.EditionLanguage(localBook.Edition),
+                Audio = AudioFormatEvidence.ForFile(localBook.FileTrackInfo?.MediaInfo, localBook.Edition)
             };
 
             return ParseCustomFormat(input);
@@ -148,6 +156,11 @@ namespace NzbDrone.Core.CustomFormats
         private static bool UsesRecordingLanguage(IEnumerable<CustomFormat> formats)
         {
             return formats.Any(format => format.Specifications.Any(specification => specification is LanguageSpecification));
+        }
+
+        private static bool UsesAudioEvidence(IEnumerable<CustomFormat> formats)
+        {
+            return formats.Any(format => format.Specifications.Any(specification => specification is AudioFormatSpecificationBase));
         }
 
         private static List<CustomFormat> ParseCustomFormat(CustomFormatInput input, List<CustomFormat> allCustomFormats)
@@ -210,11 +223,21 @@ namespace NzbDrone.Core.CustomFormats
                 Filename = Path.GetFileName(bookFile.Path)
             };
 
-            if (UsesRecordingLanguage(allCustomFormats))
+            var usesLanguage = UsesRecordingLanguage(allCustomFormats);
+            var usesAudio = UsesAudioEvidence(allCustomFormats);
+            if (usesLanguage || usesAudio)
             {
                 var edition = bookFile.EditionId > 0 ? bookFile.Edition?.Value : null;
-                input.Languages = RecordingLanguageEvidence.ForFile(bookFile.MediaInfo, bookFile.TaggedLanguage, edition);
-                input.SelectedEditionLanguageId = RecordingLanguageEvidence.EditionLanguage(edition);
+                if (usesLanguage)
+                {
+                    input.Languages = RecordingLanguageEvidence.ForFile(bookFile.MediaInfo, bookFile.TaggedLanguage, edition);
+                    input.SelectedEditionLanguageId = RecordingLanguageEvidence.EditionLanguage(edition);
+                }
+
+                if (usesAudio)
+                {
+                    input.Audio = AudioFormatEvidence.ForFile(bookFile.MediaInfo, edition);
+                }
             }
 
             return ParseCustomFormat(input, allCustomFormats);

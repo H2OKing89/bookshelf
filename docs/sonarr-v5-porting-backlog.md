@@ -82,8 +82,8 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D12](#d12) | P1 | Verified | M | Notify once when manual intervention is required |
 | [D13](#d13) | P1 | Verified | M | Add minimum custom-format score improvement for upgrades |
 | [D14](#d14) | P1 | Verified | M | Add language custom formats using audiobook evidence |
-| [D15](#d15) | P1 | Planned | L | Implement meaningful audiobook size policy, including per-profile limits |
-| [D16](#d16) | P2 | Planned | M | Rank near preferred audiobook size instead of always favoring the largest |
+| [D15](#d15) | P1 | In progress | L | Implement meaningful audiobook size policy, including per-profile limits |
+| [D16](#d16) | P2 | In progress | M | Rank near preferred audiobook size instead of always favoring the largest |
 | [D17](#d17) | P1 | Verified | M | Check library free space before grabbing |
 | [D18](#d18) | P2 | Planned | L | Represent one queued download with multiple books |
 | [D19](#d19) | P2 | Planned | M | Refresh pending decisions when policy or metadata changes |
@@ -123,7 +123,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [B01](#b01) | P0 | Verified | M | Make audiobook identity and upgrade invariants the porting contract |
 | [B02](#b02) | P1 | Planned | L | Provide a supported author reconciliation and correction workflow |
 | [B03](#b03) | P2 | Planned | XL | Represent publisher-pack membership without collapsing recording identities |
-| [B04](#b04) | P1 | Planned | L | Add audio-specific custom-format rules from trustworthy media evidence |
+| [B04](#b04) | P1 | In progress | L | Add audio-specific custom-format rules from trustworthy media evidence |
 | [B05](#b05) | P2 | Planned | M | Version probe metadata and invalidate stale analysis deliberately |
 | [B06](#b06) | P2 | Planned | L | Complete the local-recording metadata lifecycle |
 | [B07](#b07) | P1 | Planned | M | Expose metadata-provider health and partial-result provenance |
@@ -2268,6 +2268,20 @@ desktop and phone settings checks**. See [local validation](local-validation.md#
 
 **P1 · quality/duration-based enforcement disabled; global cap already enforced · adapt mathematical pattern only · trusted duration model · L.** B:`src/NzbDrone.Core/DecisionEngine/Specifications/AcceptableSizeSpecification.cs:22` logs “size restriction not implemented” and always accepts; its old code is commented out. S:`src/NzbDrone.Core/DecisionEngine/Specifications/AcceptableSizeSpecification.cs:23` scales size by runtime; S:`src/NzbDrone.Core/Profiles/Qualities/QualityProfileQualityItem.cs:19` has per-profile min/max/preferred limits. Build audio size/bitrate bounds from reliable recording duration and format, with separate ebook rules and explicit unknown-duration behavior. Preserve the existing global indexer maximum enforced by B:`src/NzbDrone.Core/DecisionEngine/Specifications/MaximumSizeSpecification.cs:23` as a separate cap. Acceptance: a 30-hour audiobook is not rejected using a 45-minute TV fallback; multipart duration sums once; MAM structured duration and local probe provenance are respected; unknown duration/size is handled explicitly; null/unlimited/zero and existing profiles preserve intent. Never port season/special/pilot runtime fallbacks.
 
+**2026-11-20 implementation.** Quality profiles have **Release Size Rules**
+for each individual quality, including qualities inside groups. Audiobook limits
+use MiB per hour when reliable duration is available. Ebook limits use total
+MiB. Zero and empty settings leave that bound disabled. The rules preserve
+existing profiles and the global indexer maximum. Older clients that omit a
+bound preserve its saved value. A new value must fit the remaining bounds.
+
+Audiobook duration can come from structured whole-release evidence or a unique
+exact recording match. A single MediaInfo entry from a multipart release does
+not establish the full duration. Local measurements only count complete or
+corroborated recording inventories and keep editions separate. Unknown duration
+or release size leaves this rule undecided. Before an add, Bookshelf checks the
+current profile again and returns a typed reason if the release is out of bounds.
+
 ### D16
 
 **Rank near preferred audiobook size instead of always favoring the largest**
@@ -2280,6 +2294,13 @@ desktop and phone settings checks**. See [local validation](local-validation.md#
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/DecisionEngine/DownloadDecisionComparer.cs](../src/NzbDrone.Core/DecisionEngine/DownloadDecisionComparer.cs#L167).
 
 **P2 · partial · adapt · D15 · M.** S:`src/NzbDrone.Core/DecisionEngine/DownloadDecisionComparer.cs:182` `CompareSize` favors distance from preferred size × runtime; B:`src/NzbDrone.Core/DecisionEngine/DownloadDecisionComparer.cs:167` ranks size in fixed 200 MB buckets, effectively preferring larger releases. Choose audio-appropriate bitrate/size tolerances and apply size only after quality/custom format/protocol priorities. Acceptance: a preferred bitrate can favor a sensible encoding over padded/lossless oversize, long and short recordings compare correctly, no-duration releases use a documented fallback, and deterministic tie-breaking is retained. Sonarr's 200 MB rounding is far too coarse for many ebooks and short audio releases.
+
+**2026-11-20 implementation.** At the existing size tie-break, candidates with
+usable preferred-size measurements rank by fractional distance to their own
+quality's target. This lets short and long recordings use the same rate policy.
+Equal distances favor the smaller download. Candidates without a usable target
+follow the existing size ordering, after candidates with measured preferences
+at this tie-break. Exact ties preserve input order.
 
 ### D17
 
@@ -2906,6 +2927,21 @@ Sonarr's file-to-multiple-episodes relationship and multi-season handling are co
 Use Sonarr's custom-format specification pattern rather than its TV resolution/source criteria. Bookshelf already stores format, profile, codec ID, additional features, commercial name, channels, bitrate mode, sample rate and all audio streams from bundled MediaInfo. Add conditions for AAC LC, HE-AAC, xHE-AAC/USAC, E-AC-3/Atmos, Opus, lossless formats, narrator/performance attributes and channel configuration where supported by evidence. Separate release-advertised metadata from file-verified metadata; unknown values must not match as confirmed. Acquisition preferences are user-defined, not a universal bitrate or channel ranking.
 
 **Acceptance:** Fixtures distinguish AAC profiles, USAC, Atmos, multistream/default-stream choices, mono/stereo/multichannel, VBR/CBR and unknown data. Search predictions cannot overwrite file measurements. Existing custom-format IDs, scores and profiles survive migration; score simulation explains each match and upgrade outcome before a grab.
+
+**2026-11-20 implementation.** Audio custom formats support codec, channels,
+bitrate mode, sample rate and narrator conditions. Codec matching distinguishes
+AAC LC, HE-AAC and HE-AAC v2, xHE-AAC, unqualified USAC, E-AC-3 and TrueHD with
+Atmos, Opus and lossless formats. Conditions for one release or file use the
+same default audio stream, or the first reported stream if no default is known.
+Missing or ambiguous evidence cannot satisfy a negated known-value condition.
+
+Release scoring reads structured indexer metadata. Local scoring reads file
+analysis and exact linked recording metadata. Scoped history and blocklist rows
+retain the relevant evidence so later scoring does not borrow data from another
+client, edition or stream. Search previews use existing custom-format scores and
+rejection details. File-verified characteristics and release evidence remain
+separate. Narrator matching uses reported names without inferring performance
+style from release titles.
 
 ### B05
 

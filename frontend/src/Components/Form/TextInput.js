@@ -128,6 +128,7 @@ class TextInput extends Component {
       readOnly,
       autoFocus,
       placeholder,
+      id,
       name,
       value,
       hasError,
@@ -154,6 +155,7 @@ class TextInput extends Component {
           hasWarning && styles.hasWarning,
           hasButton && styles.hasButton
         )}
+        id={id}
         name={name}
         value={value}
         step={step}
@@ -179,6 +181,7 @@ TextInput.propTypes = {
   readOnly: PropTypes.bool,
   autoFocus: PropTypes.bool,
   placeholder: PropTypes.string,
+  id: PropTypes.string,
   name: PropTypes.string.isRequired,
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.array]).isRequired,
   hasError: PropTypes.bool,

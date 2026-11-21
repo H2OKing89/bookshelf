@@ -70,6 +70,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
                   });
         }
 
+        private static void GivenPreferredSize(RemoteBook book, decimal preferredSize, double? durationSeconds = null)
+        {
+            var quality = book.ParsedBookInfo.Quality.Quality;
+            book.Author.QualityProfile.Value.Items.Single(item => item.Quality == quality).PreferredSize = preferredSize;
+            book.Release.AudioDurationSeconds = durationSeconds;
+        }
+
         [Test]
         public void should_put_reals_before_non_reals()
         {
@@ -128,6 +135,84 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
 
             var qualifiedReports = Subject.PrioritizeDecisions(decisions);
             qualifiedReports.First().RemoteBook.Should().Be(remoteBookHdLargeYoung);
+        }
+
+        [Test]
+        public void preferred_size_distinguishes_releases_in_the_same_legacy_size_bucket()
+        {
+            var larger = GivenRemoteBook(new List<Book> { GivenBook(1) }, new QualityModel(Quality.MP3), size: 145.Megabytes());
+            var closer = GivenRemoteBook(new List<Book> { GivenBook(1) }, new QualityModel(Quality.MP3), size: 110.Megabytes());
+            GivenPreferredSize(larger, 100, durationSeconds: 3600);
+            GivenPreferredSize(closer, 100, durationSeconds: 3600);
+
+            var ranked = Subject.PrioritizeDecisions(new List<DownloadDecision> { new DownloadDecision(larger), new DownloadDecision(closer) });
+
+            ranked.Select(decision => decision.RemoteBook).Should().Equal(closer, larger);
+        }
+
+        [Test]
+        public void preferred_size_compares_fractional_distance_across_different_recording_lengths()
+        {
+            var shortRecording = GivenRemoteBook(new List<Book> { GivenBook(1) }, new QualityModel(Quality.MP3), size: 120.Megabytes());
+            var longRecording = GivenRemoteBook(new List<Book> { GivenBook(1) }, new QualityModel(Quality.MP3), size: 3300.Megabytes());
+            GivenPreferredSize(shortRecording, 100, durationSeconds: 3600);
+            GivenPreferredSize(longRecording, 100, durationSeconds: 30 * 3600);
+
+            var ranked = Subject.PrioritizeDecisions(new List<DownloadDecision> { new DownloadDecision(shortRecording), new DownloadDecision(longRecording) });
+
+            ranked.Select(decision => decision.RemoteBook).Should().Equal(longRecording, shortRecording);
+        }
+
+        [Test]
+        public void equidistant_ebook_sizes_prefer_the_smaller_release_without_a_duration()
+        {
+            var larger = GivenRemoteBook(new List<Book> { GivenBook(1) }, new QualityModel(Quality.EPUB), size: 5.Megabytes());
+            var smaller = GivenRemoteBook(new List<Book> { GivenBook(1) }, new QualityModel(Quality.EPUB), size: 3.Megabytes());
+            GivenPreferredSize(larger, 4);
+            GivenPreferredSize(smaller, 4);
+
+            var ranked = Subject.PrioritizeDecisions(new List<DownloadDecision> { new DownloadDecision(larger), new DownloadDecision(smaller) });
+
+            ranked.Select(decision => decision.RemoteBook).Should().Equal(smaller, larger);
+        }
+
+        [Test]
+        public void unknown_duration_does_not_change_the_relative_order_of_measured_releases()
+        {
+            var unknownDuration = GivenRemoteBook(new List<Book> { GivenBook(1) }, new QualityModel(Quality.MP3), size: 400.Megabytes());
+            var oversized = GivenRemoteBook(new List<Book> { GivenBook(1) }, new QualityModel(Quality.MP3), size: 600.Megabytes());
+            var exactTarget = GivenRemoteBook(new List<Book> { GivenBook(1) }, new QualityModel(Quality.MP3), size: 100.Megabytes());
+            var invalidSize = GivenRemoteBook(new List<Book> { GivenBook(1) }, new QualityModel(Quality.MP3), size: long.MinValue);
+            GivenPreferredSize(unknownDuration, 100);
+            GivenPreferredSize(oversized, 100, durationSeconds: 3600);
+            GivenPreferredSize(exactTarget, 100, durationSeconds: 3600);
+            GivenPreferredSize(invalidSize, 100, durationSeconds: 3600);
+
+            var ranked = Subject.PrioritizeDecisions(new List<DownloadDecision>
+            {
+                new DownloadDecision(unknownDuration), new DownloadDecision(oversized), new DownloadDecision(invalidSize), new DownloadDecision(exactTarget)
+            });
+
+            ranked.Select(decision => decision.RemoteBook).Should().Equal(exactTarget, oversized, unknownDuration, invalidSize);
+        }
+
+        [Test]
+        public void preferred_size_does_not_override_custom_format_scores_or_protocol_preferences()
+        {
+            var poorerMatch = GivenRemoteBook(new List<Book> { GivenBook(1) }, new QualityModel(Quality.MP3), size: 150.Megabytes());
+            var exactTarget = GivenRemoteBook(new List<Book> { GivenBook(1) }, new QualityModel(Quality.MP3), size: 100.Megabytes());
+            GivenPreferredSize(poorerMatch, 100, durationSeconds: 3600);
+            GivenPreferredSize(exactTarget, 100, durationSeconds: 3600);
+            var decisions = new List<DownloadDecision> { new DownloadDecision(exactTarget), new DownloadDecision(poorerMatch) };
+
+            poorerMatch.CustomFormatScore = 1;
+
+            Subject.PrioritizeDecisions(decisions).First().RemoteBook.Should().Be(poorerMatch);
+
+            poorerMatch.CustomFormatScore = 0;
+            exactTarget.Release.DownloadProtocol = DownloadProtocol.Torrent;
+
+            Subject.PrioritizeDecisions(decisions).First().RemoteBook.Should().Be(poorerMatch);
         }
 
         [Test]

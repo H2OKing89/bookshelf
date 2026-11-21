@@ -262,6 +262,7 @@ internal static class DownloadFailoverProbe
             _services[typeof(IRateLimitService)] = Program.Fake<IRateLimitService>((method, _) => method.Name == "WaitAndPulseAsync" ? Task.CompletedTask : Program.Unexpected(method));
             _services[typeof(ISeedConfigProvider)] = Program.Fake<ISeedConfigProvider>((method, _) => method.Name == "GetSeedConfiguration" ? new TorrentSeedConfiguration() : Program.Unexpected(method));
             _services[typeof(IDownloadGrabSpaceService)] = grabSpace ?? Program.Fake<IDownloadGrabSpaceService>((method, _) => method.Name == "Check" ? new GrabSpaceAssessment(Decision.Accept()) : Program.Unexpected(method));
+            _services[typeof(IAuthorService)] = Program.Fake<IAuthorService>((method, _) => method.Name == "GetAuthor" ? author : Program.Unexpected(method));
             _services[typeof(IEventAggregator)] = Program.Fake<IEventAggregator>((method, arguments) =>
             {
                 if (method.Name != "PublishEvent" || arguments[0] is not BookGrabbedEvent grabbed) return Program.Unexpected(method);
