@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import React from 'react';
 import FieldSet from 'Components/FieldSet';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import translate from 'Utilities/String/translate';
 import {
-  fetchMetadataProviderStatus,
-  MetadataProviderStatus,
   operations,
   reasons,
   states,
 } from './metadataProviderStatus';
+import metadataProviderStatusQueryOptions from './metadataProviderStatusQueryOptions';
 import styles from './MetadataProviders.css';
 
 const localTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
@@ -29,46 +29,11 @@ function StatusTime({ label, value }: { label: string; value?: string | null }) 
 }
 
 function MetadataProviders() {
-  const [items, setItems] = useState<MetadataProviderStatus[] | null>(null);
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    let request: AbortController | null = null;
-
-    async function readStatus() {
-      if (request) {
-        return;
-      }
-
-      const controller = new AbortController();
-      request = controller;
-
-      try {
-        const result = await fetchMetadataProviderStatus(controller.signal);
-        if (!controller.signal.aborted) {
-          setItems(result);
-          setFailed(false);
-        }
-      } catch {
-        if (!controller.signal.aborted) {
-          setFailed(true);
-        }
-      } finally {
-        request = null;
-      }
-    }
-
-    readStatus();
-    const refresh = setInterval(readStatus, 30000);
-    return () => {
-      clearInterval(refresh);
-      request?.abort();
-    };
-  }, []);
+  const { data: items, isError: failed, isPending } = useQuery(metadataProviderStatusQueryOptions());
 
   return (
     <FieldSet legend={<h2 className={styles.heading}>{translate('MetadataProviders')}</h2>}>
-      {items === null && !failed && <LoadingIndicator />}
+      {isPending && <LoadingIndicator />}
       {failed && <p role="alert">{translate('MetadataProviderStatusUnavailable')}</p>}
       {items?.length === 0 && !failed && <p>{translate('MetadataProviderNoObservations')}</p>}
       {
