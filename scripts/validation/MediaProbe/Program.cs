@@ -18,6 +18,7 @@ using NLog;
 using NzbDrone.Common.Disk;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
 
@@ -178,6 +179,18 @@ internal static class Program
                 Check("bundled_mediainfo_version_matches_bundle", expectedVersion.Success && actualVersion == expectedVersion.Groups["version"].Value);
                 var tracks = jsonInfo.RootElement.GetProperty("media").GetProperty("track").EnumerateArray();
                 Check("bundled_mediainfo_reads_synthetic_pcm", tracks.Any(track => track.GetProperty("@type").GetString() == "Audio" && track.GetProperty("Format").GetString() == "PCM"));
+
+                var probe = new MediaInfoProbe(new MediaInfoProcessRunner(), LogManager.GetLogger("OwnedFileAnalysisProbe"));
+                var measured = probe.Read(wave);
+                var file = new FileInfo(wave);
+                Check("published_file_probe_records_current_analysis_revision",
+                    measured?.Analysis?.Revision == MediaInfoAnalysis.CurrentRevision &&
+                    MediaInfoAnalysis.GetStatus(measured, file.Length, file.LastWriteTimeUtc) == "current");
+                File.SetLastWriteTimeUtc(wave, file.LastWriteTimeUtc.AddMinutes(1));
+                file.Refresh();
+                Check("changed_file_timestamp_invalidates_the_saved_analysis",
+                    MediaInfoAnalysis.GetStatus(measured, file.Length, file.LastWriteTimeUtc) == "stale");
+                Check("native_file_analysis_preserves_the_owned_audio", waveHash.SequenceEqual(Hash(wave)));
             }
 
             var databaseConnection = new SQLiteConnectionStringBuilder

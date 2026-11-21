@@ -52,7 +52,10 @@ namespace NzbDrone.Core.Test.Download.Pending.PendingReleaseServiceTests
 
             _author.QualityProfile = new LazyLoaded<QualityProfile>(_profile);
 
-            _release = Builder<ReleaseInfo>.CreateNew().Build();
+            _release = Builder<ReleaseInfo>.CreateNew()
+                .With(release => release.PendingReleaseId = null)
+                .With(release => release.PendingAuthorId = null)
+                .Build();
 
             _parsedBookInfo = Builder<ParsedBookInfo>.CreateNew().Build();
             _parsedBookInfo.Quality = new QualityModel(Quality.MP3);
@@ -74,7 +77,7 @@ namespace NzbDrone.Core.Test.Download.Pending.PendingReleaseServiceTests
                   .Returns(_author);
 
             Mocker.GetMock<IAuthorService>()
-                  .Setup(s => s.GetAuthors(It.IsAny<IEnumerable<int>>()))
+                  .Setup(s => s.FindAuthors(It.IsAny<IEnumerable<int>>()))
                   .Returns(new List<Author> { _author });
 
             Mocker.GetMock<IParsingService>()
@@ -126,6 +129,40 @@ namespace NzbDrone.Core.Test.Download.Pending.PendingReleaseServiceTests
                                                                            new List<DownloadDecision> { _temporarilyRejected })));
 
             VerifyNoDelete();
+        }
+
+        [TestCase(RejectionCode.AboveMaximumSize)]
+        [TestCase(RejectionCode.CustomFormatMinimumScore)]
+        [TestCase(RejectionCode.NoMatchingIndexerTag)]
+        [TestCase(RejectionCode.MinimumFreeSpace)]
+        public void should_keep_the_existing_delay_when_the_rejection_can_change(string code)
+        {
+            GivenHeldRelease(_release.Title, _release.Indexer, _release.PublishDate);
+            var rejected = new DownloadDecision(_temporarilyRejected.RemoteBook, new Rejection("Owned policy reason", code: code));
+
+            Subject.Handle(new RssSyncCompleteEvent(new ProcessedDecisions(new List<DownloadDecision>(),
+                                                                           new List<DownloadDecision>(),
+                                                                           new List<DownloadDecision> { rejected })));
+
+            VerifyNoDelete();
+        }
+
+        [Test]
+        public void should_only_remove_the_rejected_pending_row_when_release_identity_is_shared()
+        {
+            var original = new PendingRelease { Id = 7, AuthorId = _author.Id, Title = _release.Title, Release = _release.JsonClone() };
+            var current = new PendingRelease { Id = 8, AuthorId = _author.Id, Title = _release.Title, Release = _release.JsonClone() };
+            var repository = Mocker.GetMock<IPendingReleaseRepository>();
+            repository.Setup(service => service.All()).Returns(new List<PendingRelease> { original, current });
+            _release.PendingReleaseId = original.Id;
+            var rejected = new DownloadDecision(_remoteBook, new Rejection("Original book was deleted", code: RejectionCode.UnknownBook));
+
+            Subject.Handle(new RssSyncCompleteEvent(new ProcessedDecisions(new List<DownloadDecision>(),
+                                                                           new List<DownloadDecision>(),
+                                                                           new List<DownloadDecision> { rejected })));
+
+            repository.Verify(service => service.Delete(original), Times.Once());
+            repository.Verify(service => service.Delete(current), Times.Never());
         }
 
         [Test]

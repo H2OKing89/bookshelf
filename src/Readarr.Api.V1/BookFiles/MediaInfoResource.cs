@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Parser.Model;
 using Readarr.Http.REST;
 
@@ -27,6 +29,8 @@ namespace Readarr.Api.V1.BookFiles
         public string ContainerFormat { get; set; }
         public string Source { get; set; }
         public string SourceVersion { get; set; }
+        public int? AnalysisRevision { get; set; }
+        public string AnalysisStatus { get; set; }
         public List<AudioStreamInfoResource> AudioStreams { get; set; }
     }
 
@@ -53,7 +57,7 @@ namespace Readarr.Api.V1.BookFiles
 
     public static class MediaInfoResourceMapper
     {
-        public static MediaInfoResource ToResource(this MediaInfoModel model)
+        public static MediaInfoResource ToResource(this MediaInfoModel model, long? fileSize = null, DateTime? fileModified = null)
         {
             if (model == null)
             {
@@ -81,6 +85,8 @@ namespace Readarr.Api.V1.BookFiles
                 ContainerFormat = model.ContainerFormat,
                 Source = model.Source,
                 SourceVersion = model.SourceVersion,
+                AnalysisRevision = model.Analysis?.Revision,
+                AnalysisStatus = MediaInfoAnalysis.GetStatus(model, fileSize, fileModified),
                 AudioStreams = model.AudioStreams?.Where(stream => stream != null).Select(ToResource).ToList() ?? new List<AudioStreamInfoResource>()
             };
         }

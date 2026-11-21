@@ -56,6 +56,7 @@ class Notification extends Component {
     const {
       id,
       name,
+      fields,
       onGrab,
       onReleaseImport,
       onUpgrade,
@@ -87,6 +88,7 @@ class Notification extends Component {
       tags,
       tagList
     } = this.props;
+    const onImportComplete = fields?.some((field) => field.name === 'onImportComplete' && field.value === true);
 
     return (
       <Card
@@ -211,7 +213,15 @@ class Notification extends Component {
         }
 
         {
-          !onGrab && !onReleaseImport && !onRename && !onBookRetag && !onHealthIssue && !onDownloadFailure && !onImportFailure ?
+          onImportComplete ?
+            <Label kind={kinds.SUCCESS}>
+              {translate('WebhookOnImportComplete')}
+            </Label> :
+            null
+        }
+
+        {
+          !onGrab && !onReleaseImport && !onRename && !onBookRetag && !onHealthIssue && !onDownloadFailure && !onImportFailure && !onImportComplete ?
             <Label
               kind={kinds.DISABLED}
               outline={true}
@@ -250,6 +260,7 @@ class Notification extends Component {
 Notification.propTypes = {
   id: PropTypes.number.isRequired,
   name: PropTypes.string.isRequired,
+  fields: PropTypes.arrayOf(PropTypes.object),
   onGrab: PropTypes.bool.isRequired,
   onReleaseImport: PropTypes.bool.isRequired,
   onUpgrade: PropTypes.bool.isRequired,

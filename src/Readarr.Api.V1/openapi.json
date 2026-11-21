@@ -11472,6 +11472,16 @@
           "audioSampleRate": {
             "type": "string",
             "nullable": true
+          },
+          "analysisRevision": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "analysisStatus": {
+            "type": "string",
+            "nullable": true,
+            "enum": ["current", "stale", "partial", "advertised"]
           }
         },
         "additionalProperties": false

@@ -7,6 +7,7 @@ using NzbDrone.Common;
 using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Datastore.Events;
 using NzbDrone.Core.MediaFiles.Events;
+using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.RootFolders;
 
@@ -158,8 +159,7 @@ namespace NzbDrone.Core.MediaFiles
             if (filter == FilterFilesType.Known)
             {
                 unwanted = combined
-                    .Where(x => x.DiskFile.Length == x.DbFile.Size &&
-                           Math.Abs((x.DiskFile.LastWriteTimeUtc - x.DbFile.Modified.ToUniversalTime()).TotalSeconds) <= 1)
+                    .Where(x => IsUnchanged(x.DiskFile, x.DbFile))
                     .Select(x => x.DiskFile)
                     .ToList();
                 _logger.Trace($"{unwanted.Count} unchanged existing files");
@@ -169,8 +169,7 @@ namespace NzbDrone.Core.MediaFiles
                 unwanted = combined
                     .Where(x =>
                     {
-                        var unchanged = x.DiskFile.Length == x.DbFile.Size &&
-                                        Math.Abs((x.DiskFile.LastWriteTimeUtc - x.DbFile.Modified.ToUniversalTime()).TotalSeconds) <= 1;
+                        var unchanged = IsUnchanged(x.DiskFile, x.DbFile);
                         var matched = x.DbFile.Edition == null || (x.DbFile.Edition.IsLoaded && x.DbFile.Edition.Value != null);
                         var alreadyRemoteSearched = x.DbFile.LastRemoteSearchTime.HasValue;
 
@@ -247,7 +246,7 @@ namespace NzbDrone.Core.MediaFiles
 
         public void UpdateMediaInfo(List<BookFile> bookFiles)
         {
-            _mediaFileRepository.SetFields(bookFiles, t => t.MediaInfo);
+            _mediaFileRepository.UpdateMediaInfo(bookFiles);
         }
 
         public void Handle(AuthorMovedEvent message)
@@ -282,6 +281,17 @@ namespace NzbDrone.Core.MediaFiles
                 var files = GetFilesWithBasePath(message.Model.Path);
                 DeleteMany(files, DeleteMediaFileReason.Manual);
             }
+        }
+
+        private static bool IsUnchanged(IFileInfo diskFile, BookFile storedFile)
+        {
+            var metadata = storedFile.MediaInfo;
+            var hasAnalysis = metadata?.Analysis != null || metadata?.LastAnalysisAttempt != null;
+            var tolerance = hasAnalysis ? MediaInfoAnalysis.StoredTimestampToleranceMilliseconds : 1000;
+            var modified = hasAnalysis && storedFile.Modified.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(storedFile.Modified, DateTimeKind.Utc)
+                : storedFile.Modified.ToUniversalTime();
+            return diskFile.Length == storedFile.Size && Math.Abs((diskFile.LastWriteTimeUtc - modified).TotalMilliseconds) <= tolerance;
         }
     }
 }

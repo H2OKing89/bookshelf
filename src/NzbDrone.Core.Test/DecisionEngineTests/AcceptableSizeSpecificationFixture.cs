@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using FluentAssertions;
@@ -6,6 +7,7 @@ using NzbDrone.Core.Books;
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.DecisionEngine.Specifications;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.Qualities;
@@ -143,6 +145,9 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             ReleaseSizePolicy.GetPreferredDeviation(subject).Should().Be(0, "invalid local paths leave the catalog runtime usable");
             edition.RuntimeLengthMinutes = null;
             first.Path = firstPath;
+            first.Modified = first.Modified.AddHours(1);
+            ReleaseSizePolicy.GetPreferredDeviation(subject).Should().BeNull("older measurements cannot establish duration after a file changes");
+            first.Modified = first.MediaInfo.Analysis.ModifiedUtc;
             second.Part = 1;
             ReleaseSizePolicy.GetPreferredDeviation(subject).Should().BeNull("duplicated part numbers do not prove completeness");
             second.Part = 2;
@@ -189,13 +194,28 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
 
         private static BookFile LocalPart(int editionId, int part, double duration)
         {
+            var modified = new DateTime(2026, 11, 20, 12, 0, 0, DateTimeKind.Utc);
             return new BookFile
             {
                 EditionId = editionId,
                 Path = Path.Combine(Path.GetTempPath(), "owned-size-policy", $"part{part}.m4b"),
                 Part = part,
                 PartCount = 2,
-                MediaInfo = new MediaInfoModel { Source = "MediaInfo", ContainerDurationSeconds = duration }
+                Size = Mib,
+                Modified = modified,
+                MediaInfo = new MediaInfoModel
+                {
+                    Source = "MediaInfo",
+                    ContainerDurationSeconds = duration,
+                    Analysis = new MediaAnalysisStamp
+                    {
+                        Revision = MediaInfoAnalysis.CurrentRevision,
+                        BundleId = MediaInfoAnalysis.BundleId,
+                        Complete = true,
+                        ModifiedUtc = modified,
+                        Size = Mib
+                    }
+                }
             };
         }
     }

@@ -7,6 +7,7 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
 {
     public interface IMediaInfoProbe
     {
+        string BundleId { get; }
         MediaInfoModel Read(string path);
     }
 
@@ -21,6 +22,8 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
             _logger = logger;
         }
 
+        public string BundleId => MediaInfoAnalysis.BundleId;
+
         public MediaInfoModel Read(string path)
         {
             var executable = Path.Combine(AppContext.BaseDirectory, "tools", "mediainfo", "mediainfo");
@@ -31,12 +34,20 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
 
             try
             {
-                return MediaInfoJsonParser.ParseCli(_runner.Read(executable, path));
+                var before = MediaInfoAnalysis.Capture(path, BundleId);
+                var result = MediaInfoJsonParser.ParseCli(_runner.Read(executable, path));
+                if (result == null || !MediaInfoAnalysis.SameFile(before, MediaInfoAnalysis.Capture(path, BundleId)))
+                {
+                    return null;
+                }
+
+                MediaInfoAnalysis.Stamp(result, before, DateTime.UtcNow);
+                return result;
             }
             catch (Exception ex)
             {
                 // Neither tag values nor the tool's stdout/stderr belong in the log.
-                _logger.Debug("MediaInfo could not inspect {0} ({1}); retaining tag metadata", path, ex.GetType().Name);
+                _logger.Debug("MediaInfo could not inspect an audio file ({0}); retaining tag metadata", ex.GetType().Name);
                 return null;
             }
         }

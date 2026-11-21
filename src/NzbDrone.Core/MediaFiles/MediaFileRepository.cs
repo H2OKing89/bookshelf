@@ -24,6 +24,7 @@ namespace NzbDrone.Core.MediaFiles
         void DeleteFilesByBook(int bookId);
         void UnlinkFilesByBook(int bookId);
         void ImportFiles(List<BookFile> added, List<BookFile> updated, List<BookFile> replaced);
+        void UpdateMediaInfo(IList<BookFile> snapshots);
     }
 
     public class MediaFileRepository : BasicRepository<BookFile>, IMediaFileRepository
@@ -114,6 +115,27 @@ namespace NzbDrone.Core.MediaFiles
         public List<BookFile> GetFilesByAuthorMetadataId(int authorMetadataId)
         {
             return Query(Builder().Where<Book>(b => b.AuthorMetadataId == authorMetadataId));
+        }
+
+        public void UpdateMediaInfo(IList<BookFile> snapshots)
+        {
+            var changed = new List<BookFile>();
+            using (var connection = _database.OpenConnection())
+            using (var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted))
+            {
+                foreach (var snapshot in snapshots)
+                {
+                    const string sql = "UPDATE \"BookFiles\" SET \"MediaInfo\" = @MediaInfo WHERE \"Id\" = @Id AND \"Path\" = @Path AND \"Size\" = @Size AND \"Modified\" = @Modified";
+                    if (connection.Execute(sql, new { snapshot.MediaInfo, snapshot.Id, snapshot.Path, snapshot.Size, snapshot.Modified }, transaction) == 1)
+                    {
+                        changed.Add(snapshot);
+                    }
+                }
+
+                transaction.Commit();
+            }
+
+            changed.ForEach(file => ModelUpdated(file));
         }
 
         public List<BookFile> GetFilesByBook(int bookId)

@@ -86,14 +86,14 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D16](#d16) | P2 | Verified | M | Rank near preferred audiobook size instead of always favoring the largest |
 | [D17](#d17) | P1 | Verified | M | Check library free space before grabbing |
 | [D18](#d18) | P2 | Planned | L | Represent one queued download with multiple books |
-| [D19](#d19) | P2 | Planned | M | Refresh pending decisions when policy or metadata changes |
+| [D19](#d19) | P2 | In progress | M | Refresh pending decisions when policy or metadata changes |
 | [D20](#d20) | P2 | Planned | M | Sort library/history quality according to each profile |
 | [D21](#d21) | P1 | Verified | S | Backport narrow RSS parser fixes, retain existing feed machinery |
 | [D22](#d22) | P1 | Planned | L | Persist successful import-list membership snapshots |
 | [D23](#d23) | P2 | Planned | M | Add additive and synchronized tags for existing list entries |
 | [D24](#d24) | P2 | Planned | M | Offer non-destructive cleanup when books leave all lists |
 | [D25](#d25) | P2 | Planned | M | Add a documented generic JSON import-list endpoint |
-| [D26](#d26) | P2 | Planned | M | Enrich webhooks with committed completion and score provenance |
+| [D26](#d26) | P2 | In progress | M | Enrich webhooks with committed completion and score provenance |
 | [D27](#d27) | P2 | Planned | M | Send health-restored notifications |
 | [D28](#d28) | P3 | Planned | M | Coalesce media-server refreshes for multipart imports |
 | [D29](#d29) | P2 | Planned | M | Support explicit qBittorrent total versus inactive seed time |
@@ -124,7 +124,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [B02](#b02) | P1 | Planned | L | Provide a supported author reconciliation and correction workflow |
 | [B03](#b03) | P2 | Planned | XL | Represent publisher-pack membership without collapsing recording identities |
 | [B04](#b04) | P1 | Verified | L | Add audio-specific custom-format rules from trustworthy media evidence |
-| [B05](#b05) | P2 | Planned | M | Version probe metadata and invalidate stale analysis deliberately |
+| [B05](#b05) | P2 | In progress | M | Version probe metadata and invalidate stale analysis deliberately |
 | [B06](#b06) | P2 | Planned | L | Complete the local-recording metadata lifecycle |
 | [B07](#b07) | P1 | Planned | M | Expose metadata-provider health and partial-result provenance |
 | [B08](#b08) | P1 | Planned | M | Explain and resolve unmapped or conflicting recording evidence |
@@ -2367,6 +2367,15 @@ desktop and phone settings checks**. See [local validation](local-validation.md#
 
 **P2 · partial · adapt · D13–16 when those land · M.** S:`src/NzbDrone.Core/Download/Pending/PendingReleaseService.cs:43` handles series edits/updates, quality-profile updates, configuration saves, and startup in addition to grab/RSS events; its in-memory pending cache is rebuilt by `UpdatePendingReleases`. B:`src/NzbDrone.Core/Download/Pending/PendingReleaseService.cs:466` onward handles author deletion, grabs and RSS completion only; it already deduplicates pending releases and calculates delay. Add targeted invalidation/augmentation for author tags, quality/custom-format/delay changes and book identity refreshes. Acceptance: editing a cutoff or routing tag updates pending eligibility without a restart/new feed item; duplicates remain deduplicated; no stale metadata resurrects deleted books; queued RSS delays do not reset unexpectedly.
 
+**2026-11-20 implementation.** Saved policy, routing and relevant catalog
+changes refresh pending views. Pending candidates are rebuilt from current
+author, profile, format and delay settings. New rows carry the original work
+and author IDs. Older rows retain their saved author association and resolve
+the work from the saved release metadata. Temporarily ineligible rows can
+become eligible again using their original added time. The settings event
+refreshes the view without fetching an indexer feed or sending a download.
+Existing grab, rejection and cleanup safeguards still apply.
+
 ### D20
 
 **Sort library/history quality according to each profile**
@@ -2467,6 +2476,14 @@ desktop and phone settings checks**. See [local validation](local-validation.md#
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/Notifications/Webhook/WebhookBase.cs](../src/NzbDrone.Core/Notifications/Webhook/WebhookBase.cs#L39).
 
 **P2 · partial · adapt · D01, D04, D05, D12 · M.** S:`src/NzbDrone.Core/Notifications/Webhook/WebhookBase.cs:48,72` includes custom-format info; `BuildOnImportCompletePayload:87`; S:`src/NzbDrone.Core/Notifications/Webhook/WebhookImportCompletePayload.cs:5` contains full download files/source/destination; S:`src/NzbDrone.Core/Notifications/Webhook/WebhookCustomFormatInfo.cs:7`. B:`src/NzbDrone.Core/Notifications/Webhook/WebhookBase.cs:39` already sends import events with books/files/deleted files; B:`src/NzbDrone.Core/Notifications/Webhook/WebhookBookFile.cs:24` lacks audiobook recording/part/media-information and CF fields. Add versioned fields and a completion event after the staged batch commits. Acceptance: an incomplete/rolled-back multipart import cannot emit a “complete” webhook; consumers can identify work/edition/recording/parts, before/after scores, release source, and client once; retain existing event compatibility and protect credentials.
+
+**2026-11-20 implementation.** Webhook connections can opt into the new
+versioned `ImportComplete` event. After Bookshelf verifies the scoped receipt
+and handles source retirement, it records a delivery attempt before sending.
+The payload identifies the client, release, work, edition, recording and
+committed parts. It includes allowlisted audio and score evidence when available.
+Legacy import notifications keep their own setting. Older API updates that omit
+the new checkbox preserve its saved value. See the [webhook contract](download-completion.md#verified-import-completion-webhooks).
 
 ### D27
 
@@ -2972,6 +2989,16 @@ datastore checks**, and **34 desktop and phone settings checks**. See
 Sonarr stores a MediaInfo schema revision and stream data. Add an explicit parsed-analysis revision and well-defined invalidation rules around Bookshelf's file state and bundled tool version. Preserve the existing MediaInfo 26.10 CLI isolation, primary-stream logic and fresh TagLib fallback. Persist only bounded data needed for diagnostics; do not copy whole tool stdout into normal logs or API list responses. Provider-advertised audio information is a separate source from measured file analysis.
 
 **Acceptance:** A tool/parser revision schedules the intended reanalysis once; unchanged current files are not reprobed continuously. Partial/failed probes retain useful stored values, changed files invalidate appropriate fields, and multistream data remains associated with the correct stream. Raw private paths/tags never leak through debug logging or broad list payloads.
+
+**2026-11-20 implementation.** File analysis now records the parser revision,
+the bundled tool build and the measured file size and timestamp. The hourly
+refresh probes up to 30 stale files. A failed attempt on an unchanged target
+waits 24 hours. Changing the file or tool makes the target eligible again. The
+manual refresh still supports all files, an author or a book. Rechecks retain
+useful saved values on partial or failed reads and protect against publishing
+an analysis after a file changed. File details label stale and partial values.
+Advertised indexer data remains separate from measured file evidence. Old
+measurements for the same file can still protect against a score downgrade.
 
 ### B06
 

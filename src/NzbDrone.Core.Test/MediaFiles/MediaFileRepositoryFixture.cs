@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using FizzWare.NBuilder;
@@ -5,6 +6,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Test.Common;
@@ -188,6 +190,36 @@ namespace NzbDrone.Core.Test.MediaFiles
 
             Db.All<BookFile>().Select(file => new { file.Id, file.Path }).Should()
                 .BeEquivalentTo(existing.Select(file => new { file.Id, file.Path }));
+        }
+
+        [Test]
+        public void should_store_analysis_for_the_exact_row_and_skip_a_changed_row()
+        {
+            var snapshot = Subject.GetFilesByAuthor(_author.Id).First();
+            snapshot.Modified = new DateTime(2026, 11, 20, 12, 0, 0, DateTimeKind.Utc);
+            snapshot.Size = 1234;
+            Subject.SetFields(snapshot, file => file.Modified, file => file.Size);
+            snapshot = Subject.Get(snapshot.Id);
+            snapshot.MediaInfo = new MediaInfoModel
+            {
+                AudioFormat = "AAC",
+                Analysis = new MediaAnalysisStamp { Revision = 1, Size = snapshot.Size, ModifiedUtc = snapshot.Modified }
+            };
+
+            Subject.UpdateMediaInfo(new[] { snapshot });
+
+            var changed = Subject.Get(snapshot.Id);
+            changed.MediaInfo.Analysis.Revision.Should().Be(1);
+            changed.EditionId.Should().Be(snapshot.EditionId);
+            changed.Modified = changed.Modified.AddHours(1);
+            Subject.SetFields(changed, file => file.Modified);
+
+            snapshot.MediaInfo.AudioFormat = "stale result";
+            Subject.UpdateMediaInfo(new[] { snapshot });
+
+            var stored = Subject.Get(snapshot.Id);
+            stored.MediaInfo.AudioFormat.Should().Be("AAC");
+            stored.Modified.Should().Be(changed.Modified);
         }
 
         private void VerifyData()

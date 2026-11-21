@@ -104,6 +104,12 @@ namespace NzbDrone.Core.Jobs
 
                     new ScheduledTask
                     {
+                        Interval = 60,
+                        TypeName = typeof(RefreshStaleMediaInfoCommand).FullName
+                    },
+
+                    new ScheduledTask
+                    {
                         Interval = 24 * 60,
                         TypeName = typeof(HousekeepingCommand).FullName
                     },

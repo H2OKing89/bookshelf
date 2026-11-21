@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Parser.Model;
 
@@ -21,5 +22,7 @@ namespace NzbDrone.Core.Download.Pending
     public class PendingReleaseAdditionalInfo
     {
         public ReleaseSourceType ReleaseSource { get; set; }
+        public List<int> BookIds { get; set; }
+        public IndexerFlags? IndexerFlags { get; set; }
     }
 }

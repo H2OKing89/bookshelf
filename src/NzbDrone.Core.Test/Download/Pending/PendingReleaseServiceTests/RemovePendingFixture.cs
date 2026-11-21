@@ -39,7 +39,7 @@ namespace NzbDrone.Core.Test.Download.Pending.PendingReleaseServiceTests
                   .Returns(new Author());
 
             Mocker.GetMock<IAuthorService>()
-                  .Setup(s => s.GetAuthors(It.IsAny<IEnumerable<int>>()))
+                  .Setup(s => s.FindAuthors(It.IsAny<IEnumerable<int>>()))
                   .Returns(new List<Author> { new Author() });
 
             Mocker.GetMock<IParsingService>()

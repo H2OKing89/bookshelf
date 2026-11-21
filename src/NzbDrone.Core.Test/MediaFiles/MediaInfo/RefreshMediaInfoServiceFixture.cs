@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
+using NzbDrone.Common.Disk;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Commands;
 using NzbDrone.Core.MediaFiles.MediaInfo;
@@ -17,21 +19,33 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaInfo
     [TestFixture]
     public class RefreshMediaInfoServiceFixture : CoreTest<RefreshMediaInfoService>
     {
+        private const string BundleId = "owned-bundle";
+        private static readonly DateTime Modified = new DateTime(2026, 11, 20, 12, 0, 0, DateTimeKind.Utc);
         private BookFile _file;
         private MediaInfoModel _previousMediaInfo;
         private MediaInfoModel _probedMediaInfo;
+        private DateTime _modified;
 
         [SetUp]
         public void Setup()
         {
             _previousMediaInfo = new MediaInfoModel { AudioFormat = "old codec", AudioBitrate = 64 };
-            _probedMediaInfo = new MediaInfoModel { AudioFormat = "AAC", AudioBitrate = 126, Source = "MediaInfo" };
+            _probedMediaInfo = new MediaInfoModel
+            {
+                AudioFormat = "AAC",
+                AudioBitrate = 126,
+                Source = "MediaInfo",
+                AudioStreams = new List<AudioStreamInfo> { new AudioStreamInfo { AudioFormat = "AAC", AudioChannels = 2, AudioSampleRate = 44100 } }
+            };
+            _modified = Modified;
             _file = new BookFile
             {
                 Id = 10,
                 EditionId = 20,
                 Path = "/library/book.m4b",
                 OriginalFilePath = "/downloads/original.m4b",
+                Size = 1000,
+                Modified = Modified,
                 Quality = new QualityModel(Quality.M4B),
                 SceneName = "Original release",
                 MediaInfo = _previousMediaInfo
@@ -39,6 +53,12 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaInfo
 
             Mocker.GetMock<IMediaFileService>().Setup(service => service.GetFiles()).Returns(new List<BookFile> { _file });
             Mocker.GetMock<IAudioTagService>().Setup(probe => probe.ReadAudioTag(_file.Path)).Returns(new AudioTag { MediaInfo = _probedMediaInfo });
+            var observed = new Mock<IFileInfo>();
+            observed.SetupGet(file => file.Exists).Returns(true);
+            observed.SetupGet(file => file.Length).Returns(1000);
+            observed.SetupGet(file => file.LastWriteTimeUtc).Returns(() => _modified);
+            Mocker.GetMock<IDiskProvider>().Setup(disk => disk.GetFileInfo(It.IsAny<string>())).Returns(observed.Object);
+            Mocker.GetMock<IMediaInfoProbe>().SetupGet(probe => probe.BundleId).Returns(BundleId);
         }
 
         [Test]
@@ -92,8 +112,10 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaInfo
 
             Subject.Execute(new RefreshMediaInfoCommand());
 
-            _file.MediaInfo.Should().BeSameAs(_previousMediaInfo);
-            Mocker.GetMock<IMediaFileService>().Verify(service => service.UpdateMediaInfo(It.IsAny<List<BookFile>>()), Times.Never());
+            _file.MediaInfo.AudioFormat.Should().Be(_previousMediaInfo.AudioFormat);
+            _file.MediaInfo.AudioBitrate.Should().Be(_previousMediaInfo.AudioBitrate);
+            _file.MediaInfo.LastAnalysisAttempt.Target.BundleId.Should().Be(BundleId);
+            Mocker.GetMock<IMediaFileService>().Verify(service => service.UpdateMediaInfo(It.IsAny<List<BookFile>>()), Times.Once());
         }
 
         [Test]
@@ -129,9 +151,9 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaInfo
 
             Subject.Execute(new RefreshMediaInfoCommand());
 
-            unreadable.MediaInfo.Should().BeSameAs(_previousMediaInfo);
+            unreadable.MediaInfo.AudioFormat.Should().Be(_previousMediaInfo.AudioFormat);
             _file.MediaInfo.Should().BeSameAs(_probedMediaInfo);
-            Mocker.GetMock<IMediaFileService>().Verify(service => service.UpdateMediaInfo(It.Is<List<BookFile>>(files => files.Count == 1 && files[0] == _file)), Times.Once());
+            Mocker.GetMock<IMediaFileService>().Verify(service => service.UpdateMediaInfo(It.Is<List<BookFile>>(files => files.Count == 2)), Times.Once());
         }
 
         [Test]
@@ -178,6 +200,64 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaInfo
             batches.Select(batch => batch.Count).Should().Equal(100, 100, 5);
             batches.SelectMany(batch => batch).Should().Equal(files);
             files.Should().OnlyContain(file => file.MediaInfo == _probedMediaInfo);
+        }
+
+        [Test]
+        public void should_probe_an_older_revision_once_then_skip_the_unchanged_file()
+        {
+            Subject.Execute(new RefreshStaleMediaInfoCommand());
+            Subject.Execute(new RefreshStaleMediaInfoCommand());
+
+            var reader = Mocker.GetMock<IAudioTagService>();
+            reader.Verify(service => service.ReadAudioTag(_file.Path), Times.Once());
+            _file.MediaInfo.Analysis.Revision.Should().Be(MediaInfoAnalysis.CurrentRevision);
+            _file.MediaInfo.Analysis.Complete.Should().BeTrue();
+
+            _file.MediaInfo.Analysis.BundleId = "older-bundle";
+            reader.Setup(service => service.ReadAudioTag(_file.Path)).Returns(() => new AudioTag
+            {
+                MediaInfo = new MediaInfoModel { AudioFormat = "AAC", Source = "MediaInfo", AudioStreams = _probedMediaInfo.AudioStreams }
+            });
+
+            Subject.Execute(new RefreshStaleMediaInfoCommand());
+            reader.Verify(service => service.ReadAudioTag(_file.Path), Times.Exactly(2));
+        }
+
+        [Test]
+        public void should_retain_partial_technical_details_and_back_off_an_unchanged_failed_target()
+        {
+            _previousMediaInfo.AudioStreams.Add(new AudioStreamInfo { Index = 0, AudioFormat = "AAC" });
+            _previousMediaInfo.AudioStreams.Add(new AudioStreamInfo { Index = 1, AudioFormat = "Opus" });
+            var reader = Mocker.GetMock<IAudioTagService>();
+            reader.Setup(service => service.ReadAudioTag(_file.Path)).Returns(new AudioTag { MediaInfo = new MediaInfoModel { Source = "TagLib" } });
+
+            Subject.Execute(new RefreshStaleMediaInfoCommand());
+            Subject.Execute(new RefreshStaleMediaInfoCommand());
+
+            reader.Verify(service => service.ReadAudioTag(_file.Path), Times.Once());
+            _file.MediaInfo.AudioStreams.Select(stream => stream.AudioFormat).Should().Equal("AAC", "Opus");
+
+            _modified = Modified.AddHours(1);
+            _file.Modified = _modified;
+            Subject.Execute(new RefreshStaleMediaInfoCommand());
+
+            reader.Verify(service => service.ReadAudioTag(_file.Path), Times.Exactly(2));
+            MediaInfoAnalysis.IsInvalidatedByFileState(_file.MediaInfo, _file.Size, _file.Modified).Should().BeTrue();
+        }
+
+        [Test]
+        public void should_discard_results_if_the_file_changes_during_analysis()
+        {
+            Mocker.GetMock<IAudioTagService>().Setup(service => service.ReadAudioTag(_file.Path)).Returns(() =>
+            {
+                _modified = Modified.AddHours(1);
+                return new AudioTag { MediaInfo = _probedMediaInfo };
+            });
+
+            Subject.Execute(new RefreshMediaInfoCommand());
+
+            _file.MediaInfo.Should().BeSameAs(_previousMediaInfo);
+            Mocker.GetMock<IMediaFileService>().Verify(service => service.UpdateMediaInfo(It.IsAny<List<BookFile>>()), Times.Never());
         }
 
         [TestCase(0, null)]

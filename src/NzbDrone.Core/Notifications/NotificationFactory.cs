@@ -22,6 +22,7 @@ namespace NzbDrone.Core.Notifications
         List<INotification> OnBookFileDeleteForUpgradeEnabled(bool filterBlockedNotifications = true);
         List<INotification> OnDownloadFailureEnabled(bool filterBlockedNotifications = true);
         List<INotification> OnImportFailureEnabled(bool filterBlockedNotifications = true);
+        List<Webhook.Webhook> OnImportCompleteEnabled();
         List<INotification> OnBookRetagEnabled(bool filterBlockedNotifications = true);
         List<INotification> OnApplicationUpdateEnabled(bool filterBlockedNotifications = true);
     }
@@ -161,6 +162,13 @@ namespace NzbDrone.Core.Notifications
             }
 
             return GetAvailableProviders().Where(n => ((NotificationDefinition)n.Definition).OnImportFailure).ToList();
+        }
+
+        public List<Webhook.Webhook> OnImportCompleteEnabled()
+        {
+            return FilterBlockedNotifications(GetAvailableProviders().OfType<Webhook.Webhook>()
+                .Where(notification => notification.Definition.Settings is Webhook.WebhookSettings { OnImportComplete: true }))
+                .OfType<Webhook.Webhook>().ToList();
         }
 
         public List<INotification> OnBookRetagEnabled(bool filterBlockedNotifications = true)

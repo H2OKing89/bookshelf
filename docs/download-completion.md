@@ -127,3 +127,26 @@ malformed tokens and oversized values are rejected before saving. The default
 is empty; an explicit empty string clears the policy, while omitted/null values
 preserve it. New imports, including explicit manual imports, enforce the policy
 before staging. Existing-file rescans retain their files and identities.
+
+## Verified import completion webhooks
+
+Edit a Webhook connection in **Settings → Connect** and enable **On Verified
+Import Completion** to receive the `ImportComplete` event with `schemaVersion`
+`1`. It uses its own setting. The **On Release Import** setting still controls
+legacy `Download` payloads.
+
+An `ImportComplete` payload contains a stable `eventId`, the completion time,
+client identity, and indexer and release source when known. The `recordings`
+array identifies the work, edition, recording, Audible region where applicable,
+and committed parts. Each part can include size, quality, safe source and
+imported filenames, and measured audio properties with freshness status.
+`customFormatScores` captures the active profile, each replaced file's score,
+and the newly committed file's score at import. Older or unavailable evidence
+leaves the score data absent. The payload omits directories, raw tags, provider
+settings, credentials, and request URLs.
+
+Bookshelf claims the delivery attempt after it verifies the committed files and
+handles source retirement. A partial import, rollback, or invalid receipt cannot
+trigger this event. Claims are scoped to the client and completion, so cleanup
+retries and restarts do not repeat the attempt. A crash or provider failure after
+the claim can leave the event undelivered.

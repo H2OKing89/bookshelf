@@ -16,6 +16,7 @@ using NzbDrone.Core.Download;
 using NzbDrone.Core.Extras;
 using NzbDrone.Core.History;
 using NzbDrone.Core.MediaFiles.Events;
+using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.MetadataSource.Audiobook;
@@ -238,6 +239,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                             bookFile.ReleaseGroup = localTrack.ReleaseGroupOverride ?? previousFile.ReleaseGroup;
                             bookFile.IndexerFlags = previousFile.IndexerFlags;
                             bookFile.LastRemoteSearchTime = previousFile.LastRemoteSearchTime;
+                            bookFile.MediaInfo = MediaInfoAnalysis.PreserveOnScan(previousFile, bookFile.MediaInfo);
 
                             if (bookFile.CalibreId == 0 && previousFile.CalibreId != 0)
                             {

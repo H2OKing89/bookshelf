@@ -57,7 +57,7 @@ namespace Readarr.Api.V1.BookFiles
                 Quality = model.Quality,
                 ReleaseGroup = model.ReleaseGroup,
                 QualityWeight = QualityWeight(model.Quality),
-                MediaInfo = model.MediaInfo.ToResource()
+                MediaInfo = model.MediaInfo.ToResource(model.Size, model.Modified)
             };
         }
 
@@ -80,7 +80,7 @@ namespace Readarr.Api.V1.BookFiles
                 Quality = model.Quality,
                 ReleaseGroup = model.ReleaseGroup,
                 QualityWeight = QualityWeight(model.Quality),
-                MediaInfo = model.MediaInfo.ToResource(),
+                MediaInfo = model.MediaInfo.ToResource(model.Size, model.Modified),
                 QualityCutoffNotMet = upgradableSpecification.QualityCutoffNotMet(author.QualityProfile.Value, model.Quality),
                 IndexerFlags = (int)model.IndexerFlags
             };

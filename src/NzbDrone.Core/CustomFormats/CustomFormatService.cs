@@ -49,6 +49,7 @@ namespace NzbDrone.Core.CustomFormats
         {
             _formatRepository.Update(customFormat);
             _cache.Clear();
+            _eventAggregator.PublishEvent(new CustomFormatUpdatedEvent(customFormat.Id));
         }
 
         public CustomFormat Insert(CustomFormat customFormat)
@@ -71,6 +72,7 @@ namespace NzbDrone.Core.CustomFormats
 
             _formatRepository.Delete(id);
             _cache.Clear();
+            _eventAggregator.PublishEvent(new CustomFormatUpdatedEvent(id, removed: true));
         }
     }
 }

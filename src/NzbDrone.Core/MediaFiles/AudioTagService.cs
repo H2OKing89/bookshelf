@@ -64,6 +64,8 @@ namespace NzbDrone.Core.MediaFiles
 
         public AudioTag ReadAudioTag(string path)
         {
+            var bundleId = _mediaInfoProbe.BundleId;
+            var before = MediaInfoAnalysis.Capture(_diskProvider, path, bundleId);
             var tag = new AudioTag(path);
             var mediaInfo = _mediaInfoProbe.Read(path);
             if (mediaInfo != null)
@@ -87,6 +89,17 @@ namespace NzbDrone.Core.MediaFiles
                 {
                     tag.Duration = TimeSpan.FromSeconds(mediaInfo.DurationSeconds.Value);
                 }
+            }
+
+            var after = MediaInfoAnalysis.Capture(_diskProvider, path, bundleId);
+            if (MediaInfoAnalysis.SameFile(before, after))
+            {
+                MediaInfoAnalysis.Stamp(tag.MediaInfo, before, DateTime.UtcNow);
+            }
+            else if (before != null)
+            {
+                tag.MediaInfo.Analysis = null;
+                tag.MediaInfo.LastAnalysisAttempt = new MediaAnalysisAttempt { Target = after ?? before, AttemptedAtUtc = DateTime.UtcNow };
             }
 
             return tag;

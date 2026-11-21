@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NzbDrone.Common.Cache;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Core.Messaging.Events;
 
 namespace NzbDrone.Core.Profiles.Delay
 {
@@ -22,11 +23,13 @@ namespace NzbDrone.Core.Profiles.Delay
     public class DelayProfileService : IDelayProfileService
     {
         private readonly IDelayProfileRepository _repo;
+        private readonly IEventAggregator _events;
         private readonly ICached<DelayProfile> _bestForTagsCache;
 
-        public DelayProfileService(IDelayProfileRepository repo, ICacheManager cacheManager)
+        public DelayProfileService(IDelayProfileRepository repo, ICacheManager cacheManager, IEventAggregator events)
         {
             _repo = repo;
+            _events = events;
             _bestForTagsCache = cacheManager.GetCache<DelayProfile>(GetType(), "best");
         }
 
@@ -36,19 +39,24 @@ namespace NzbDrone.Core.Profiles.Delay
 
             var result = _repo.Insert(profile);
             _bestForTagsCache.Clear();
+            _events.PublishEvent(new DelayProfilesUpdatedEvent(profile.Tags.Count > 0 ? profile.Tags.ToHashSet() : null));
 
             return result;
         }
 
         public DelayProfile Update(DelayProfile profile)
         {
+            var oldTags = _repo.Find(profile.Id)?.Tags;
             var result = _repo.Update(profile);
             _bestForTagsCache.Clear();
+            var tags = profile.Tags.Count > 0 && oldTags?.Count > 0 ? profile.Tags.Union(oldTags).ToHashSet() : null;
+            _events.PublishEvent(new DelayProfilesUpdatedEvent(tags));
             return result;
         }
 
         public void Delete(int id)
         {
+            var tags = _repo.Find(id)?.Tags;
             _repo.Delete(id);
 
             var all = All().OrderBy(d => d.Order).ToList();
@@ -65,6 +73,7 @@ namespace NzbDrone.Core.Profiles.Delay
 
             _repo.UpdateMany(all);
             _bestForTagsCache.Clear();
+            _events.PublishEvent(new DelayProfilesUpdatedEvent(tags?.Count > 0 ? tags.ToHashSet() : null));
         }
 
         public List<DelayProfile> All()
@@ -146,6 +155,8 @@ namespace NzbDrone.Core.Profiles.Delay
             }
 
             _repo.UpdateMany(all);
+            _bestForTagsCache.Clear();
+            _events.PublishEvent(new DelayProfilesUpdatedEvent());
 
             return All();
         }

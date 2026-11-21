@@ -1184,6 +1184,8 @@
   "WriteTagsNew": "For new downloads only",
   "WriteTagsNo": "Never",
   "WriteTagsSync": "All files; keep in sync with audiobook metadata",
+  "WebhookOnImportComplete": "On Verified Import Completion",
+  "WebhookOnImportCompleteHelpText": "Send one completion event for a verified download. This trigger is separate from On Release Import.",
   "Year": "Year",
   "Yes": "Yes",
   "YesCancel": "Yes, Cancel",

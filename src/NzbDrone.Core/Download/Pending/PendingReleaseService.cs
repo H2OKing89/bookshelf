@@ -7,7 +7,9 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Configuration.Events;
 using NzbDrone.Core.CustomFormats;
+using NzbDrone.Core.CustomFormats.Events;
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.DecisionEngine.Specifications;
 using NzbDrone.Core.DecisionEngine.Specifications.RssSync;
@@ -20,6 +22,7 @@ using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Profiles.Delay;
 using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.Qualities;
+using NzbDrone.Core.ThingiProvider.Events;
 
 namespace NzbDrone.Core.Download.Pending
 {
@@ -39,8 +42,33 @@ namespace NzbDrone.Core.Download.Pending
                                          IHandle<AuthorDeletedEvent>,
                                          IHandle<BookGrabbedEvent>,
                                          IHandle<RssSyncCompleteEvent>,
-                                         IHandle<MinimumUpgradeFormatScoreChangedEvent>
+                                         IHandle<MinimumUpgradeFormatScoreChangedEvent>,
+                                         IHandle<QualityProfileUpdatedEvent>,
+                                         IHandle<CustomFormatUpdatedEvent>,
+                                         IHandle<DelayProfilesUpdatedEvent>,
+                                         IHandle<ConfigSavedEvent>,
+                                         IHandle<AuthorEditedEvent>,
+                                         IHandle<AuthorsEditedEvent>,
+                                         IHandle<AuthorRefreshCompleteEvent>,
+                                         IHandle<BookAddedEvent>,
+                                         IHandle<BookEditedEvent>,
+                                         IHandle<BookMetadataRefreshedEvent>,
+                                         IHandle<BookDeletedEvent>,
+                                         IHandle<ProviderUpdatedEvent<IIndexer>>,
+                                         IHandle<ProviderDeletedEvent<IIndexer>>,
+                                         IHandle<ProviderAddedEvent<IDownloadClient>>,
+                                         IHandle<ProviderUpdatedEvent<IDownloadClient>>,
+                                         IHandle<ProviderDeletedEvent<IDownloadClient>>
     {
+        private static readonly HashSet<string> PendingConfigKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            nameof(IConfigService.MinimumAge),
+            nameof(IConfigService.MaximumSize),
+            nameof(IConfigService.RssSyncInterval),
+            nameof(IConfigService.DownloadPropersAndRepacks),
+            nameof(IConfigService.EnableCompletedDownloadHandling)
+        };
+
         private readonly IIndexerStatusService _indexerStatusService;
         private readonly IPendingReleaseRepository _repository;
         private readonly IAuthorService _authorService;
@@ -53,6 +81,7 @@ namespace NzbDrone.Core.Download.Pending
         private readonly IDownloadClientFactory _downloadClientFactory;
         private readonly IIndexerFactory _indexerFactory;
         private readonly IEventAggregator _eventAggregator;
+        private readonly IPendingReleasePolicy _policy;
         private readonly IDecisionEngineSpecification[] _upgradeChecks;
         private readonly Logger _logger;
 
@@ -68,6 +97,7 @@ namespace NzbDrone.Core.Download.Pending
                                     IDownloadClientFactory downloadClientFactory,
                                     IIndexerFactory indexerFactory,
                                     IEventAggregator eventAggregator,
+                                    IPendingReleasePolicy policy,
                                     UpgradeDiskSpecification diskUpgrade,
                                     QueueSpecification queueUpgrade,
                                     HistorySpecification historyUpgrade,
@@ -85,6 +115,7 @@ namespace NzbDrone.Core.Download.Pending
             _downloadClientFactory = downloadClientFactory;
             _indexerFactory = indexerFactory;
             _eventAggregator = eventAggregator;
+            _policy = policy;
             _upgradeChecks = new IDecisionEngineSpecification[] { diskUpgrade, queueUpgrade, historyUpgrade };
             _logger = logger;
         }
@@ -102,19 +133,14 @@ namespace NzbDrone.Core.Download.Pending
                 var alreadyPending = _repository.AllByAuthorId(author.Id);
 
                 alreadyPending = IncludeRemoteBooks(alreadyPending, authorDecisions.ToDictionaryIgnoreDuplicates(v => v.Item1.RemoteBook.Release.Title, v => v.Item1.RemoteBook));
-                var alreadyPendingByBook = CreateBookLookup(alreadyPending);
-
                 foreach (var pair in authorDecisions)
                 {
                     var decision = pair.Item1;
                     var reason = pair.Item2;
 
-                    var bookIds = decision.RemoteBook.Books.Select(e => e.Id);
-
-                    var existingReports = bookIds.SelectMany(v => alreadyPendingByBook[v])
-                                                    .Distinct().ToList();
-
-                    var matchingReports = existingReports.Where(MatchingReleasePredicate(decision.RemoteBook.Release)).ToList();
+                    var bookIds = decision.RemoteBook.Books.Select(book => book.Id).ToHashSet();
+                    var matchingReports = alreadyPending.Where(pending => bookIds.SetEquals(pending.RemoteBook.Books.Select(book => book.Id)))
+                        .Where(MatchingReleasePredicate(decision.RemoteBook.Release)).OrderBy(pending => pending.Added).ThenBy(pending => pending.Id).ToList();
 
                     if (matchingReports.Any())
                     {
@@ -146,7 +172,6 @@ namespace NzbDrone.Core.Download.Pending
                             {
                                 _repository.Delete(duplicate.Id);
                                 alreadyPending.Remove(duplicate);
-                                alreadyPendingByBook = CreateBookLookup(alreadyPending);
                             }
                         }
 
@@ -154,7 +179,7 @@ namespace NzbDrone.Core.Download.Pending
                     }
 
                     _logger.Debug("Adding release {0} to pending releases with reason {1}", decision.RemoteBook, reason);
-                    Insert(decision, reason);
+                    alreadyPending.Add(Insert(decision, reason));
                 }
             }
         }
@@ -166,6 +191,10 @@ namespace NzbDrone.Core.Download.Pending
                 var release = p.Release;
 
                 release.PendingReleaseReason = p.Reason;
+                release.PendingReleaseId = p.Id;
+                release.PendingAuthorId = p.AuthorId > 0 ? p.AuthorId : null;
+                release.PendingBookIds = p.AdditionalInfo?.BookIds;
+                release.IndexerFlags = p.AdditionalInfo?.IndexerFlags ?? release.IndexerFlags;
 
                 return release;
             }).ToList();
@@ -173,6 +202,9 @@ namespace NzbDrone.Core.Download.Pending
             if (releases.Any())
             {
                 releases = FilterBlockedIndexers(releases);
+                var active = releases.Where(release => release.IndexerId > 0).Select(release => release.IndexerId).Distinct()
+                    .Where(indexerId => _indexerFactory.Find(indexerId)?.Enable == true).ToHashSet();
+                releases = releases.Where(release => release.IndexerId <= 0 || active.Contains(release.IndexerId)).ToList();
             }
 
             return releases;
@@ -180,7 +212,7 @@ namespace NzbDrone.Core.Download.Pending
 
         public List<RemoteBook> GetPendingRemoteBooks(int authorId)
         {
-            return IncludeRemoteBooks(_repository.AllByAuthorId(authorId)).Select(v => v.RemoteBook).ToList();
+            return IncludeRemoteBooks(_repository.AllByAuthorId(authorId)).Select(v => v.RemoteBook).Where(_policy.IsEligible).ToList();
         }
 
         public List<Queue.Queue> GetPendingQueue()
@@ -189,7 +221,7 @@ namespace NzbDrone.Core.Download.Pending
 
             var nextRssSync = new Lazy<DateTime>(() => _taskManager.GetNextExecution(typeof(RssSyncCommand)));
 
-            var pendingReleases = IncludeRemoteBooks(_repository.WithoutFallback());
+            var pendingReleases = IncludeRemoteBooks(_repository.WithoutFallback()).Where(pending => _policy.IsEligible(pending.RemoteBook));
             foreach (var pendingRelease in pendingReleases)
             {
                 foreach (var book in pendingRelease.RemoteBook.Books)
@@ -244,15 +276,10 @@ namespace NzbDrone.Core.Download.Pending
                 }
             }
 
-            //Return best quality release for each book
-            var deduped = queued.GroupBy(q => q.Book.Id).Select(g =>
-            {
-                var author = g.First().Author;
-
-                return g.OrderByDescending(e => e.Quality, new QualityModelComparer(author.QualityProfile))
-                        .ThenBy(q => PrioritizeDownloadProtocol(q.Author, q.Protocol))
-                        .First();
-            });
+            // Retain the same score and preferred-size ordering used when evaluating RSS reports.
+            var comparer = new DownloadDecisionComparer(_configService, _delayProfileService);
+            var deduped = queued.GroupBy(item => (item.Author.Id, item.Book.Id))
+                .Select(group => group.OrderByDescending(item => new DownloadDecision(item.RemoteBook), comparer).First());
 
             return deduped.ToList();
         }
@@ -278,15 +305,8 @@ namespace NzbDrone.Core.Download.Pending
             var authorReleases = GetPendingReleases(authorId);
 
             return authorReleases.Select(r => r.RemoteBook)
-                                 .Where(r => r.Books.Select(e => e.Id).Intersect(bookIds).Any())
+                                 .Where(r => r.Books.Select(e => e.Id).Intersect(bookIds).Any() && _policy.IsEligible(r))
                                  .MaxBy(p => p.Release.AgeHours);
-        }
-
-        private ILookup<int, PendingRelease> CreateBookLookup(IEnumerable<PendingRelease> alreadyPending)
-        {
-            return alreadyPending.SelectMany(v => v.RemoteBook.Books
-                                                   .Select(d => new { Book = d, PendingRelease = v }))
-                                 .ToLookup(v => v.Book.Id, v => v.PendingRelease);
         }
 
         private List<ReleaseInfo> FilterBlockedIndexers(List<ReleaseInfo> releases)
@@ -323,7 +343,12 @@ namespace NzbDrone.Core.Download.Pending
                 }
             }
 
-            foreach (var author in _authorService.GetAuthors(releases.Select(v => v.AuthorId).Distinct().Where(v => !authorMap.ContainsKey(v))))
+            if (releases.Count == 0)
+            {
+                return result;
+            }
+
+            foreach (var author in _authorService.FindAuthors(releases.Select(v => v.AuthorId).Distinct().Where(v => !authorMap.ContainsKey(v))))
             {
                 authorMap[author.Id] = author;
             }
@@ -351,9 +376,22 @@ namespace NzbDrone.Core.Download.Pending
                 }
                 else
                 {
+                    if (release.Release.HasStructuredBookIdentity())
+                    {
+                        // The stored parsed model omits its reference to the structured release.
+                        release.ParsedBookInfo.StructuredRelease = release.Release;
+                    }
+
                     books = _parsingService.GetBooks(release.ParsedBookInfo, author);
                 }
 
+                if (books == null || books.Count == 0 ||
+                    (release.AdditionalInfo?.BookIds != null && !books.Select(book => book.Id).ToHashSet().SetEquals(release.AdditionalInfo.BookIds)))
+                {
+                    continue;
+                }
+
+                release.Release.IndexerFlags = release.AdditionalInfo?.IndexerFlags ?? release.Release.IndexerFlags;
                 release.RemoteBook = new RemoteBook
                 {
                     Author = author,
@@ -364,7 +402,8 @@ namespace NzbDrone.Core.Download.Pending
                 };
 
                 _aggregationService.Augment(release.RemoteBook);
-                release.RemoteBook.CustomFormats = _formatCalculator.ParseCustomFormat(release.RemoteBook, release.Release.Size);
+                release.RemoteBook.CustomFormats = _formatCalculator.ParseCustomFormat(release.RemoteBook, release.Release.Size) ?? new List<CustomFormat>();
+                release.RemoteBook.CustomFormatScore = author.QualityProfile?.Value?.CalculateCustomFormatScore(release.RemoteBook.CustomFormats) ?? 0;
 
                 result.Add(release);
             }
@@ -372,9 +411,9 @@ namespace NzbDrone.Core.Download.Pending
             return result;
         }
 
-        private void Insert(DownloadDecision decision, PendingReleaseReason reason)
+        private PendingRelease Insert(DownloadDecision decision, PendingReleaseReason reason)
         {
-            _repository.Insert(new PendingRelease
+            var pending = new PendingRelease
             {
                 AuthorId = decision.RemoteBook.Author.Id,
                 ParsedBookInfo = decision.RemoteBook.ParsedBookInfo,
@@ -382,13 +421,18 @@ namespace NzbDrone.Core.Download.Pending
                 Title = decision.RemoteBook.Release.Title,
                 Added = DateTime.UtcNow,
                 Reason = reason,
+                RemoteBook = decision.RemoteBook,
                 AdditionalInfo = new PendingReleaseAdditionalInfo
                 {
-                    ReleaseSource = decision.RemoteBook.ReleaseSource
+                    ReleaseSource = decision.RemoteBook.ReleaseSource,
+                    BookIds = decision.RemoteBook.Books.Select(book => book.Id).Distinct().ToList(),
+                    IndexerFlags = decision.RemoteBook.Release.IndexerFlags
                 }
-            });
+            };
 
+            _repository.Insert(pending);
             _eventAggregator.PublishEvent(new PendingReleasesUpdatedEvent());
+            return pending;
         }
 
         private void Delete(PendingRelease pendingRelease)
@@ -441,24 +485,28 @@ namespace NzbDrone.Core.Download.Pending
         private void RemoveRejected(List<DownloadDecision> rejected)
         {
             _logger.Debug("Removing failed releases from pending");
-            var pending = GetPendingReleases();
+            var pending = _repository.All().ToList();
 
             foreach (var rejectedRelease in rejected)
             {
                 var permanentRejections = rejectedRelease.Rejections.Where(rejection => rejection.Type == RejectionType.Permanent).ToList();
-                if (permanentRejections.Count > 0 && permanentRejections.All(rejection =>
-                    rejection.Code == RejectionCode.MinimumFreeSpace || rejection.Code == RejectionCode.GrabFreeSpaceUnverified))
+                if (permanentRejections.Count > 0 && permanentRejections.All(rejection => PendingReleasePolicy.CanReconsider(rejection.Code)))
                 {
-                    // A space rejection can pass on the next RSS sync without a new feed report.
+                    // Keep the original delay clock when the reason may be cleared by a later policy change.
                     continue;
                 }
 
-                var matching = pending.Where(MatchingReleasePredicate(rejectedRelease.RemoteBook.Release));
+                var report = rejectedRelease.RemoteBook.Release;
+                var authorId = report.PendingAuthorId ?? rejectedRelease.RemoteBook.Author?.Id;
+                var matching = pending.Where(release => !authorId.HasValue || release.AuthorId == authorId)
+                    .Where(release => !report.PendingReleaseId.HasValue || release.Id == report.PendingReleaseId)
+                    .Where(MatchingReleasePredicate(report)).ToList();
 
                 foreach (var pendingRelease in matching)
                 {
                     _logger.Debug("Removing previously pending release, as it has now been rejected.");
                     Delete(pendingRelease);
+                    pending.Remove(pendingRelease);
                 }
             }
         }
@@ -473,21 +521,10 @@ namespace NzbDrone.Core.Download.Pending
             return HashConverter.GetHashInt31(string.Format("pending-{0}-book{1}", pendingRelease.Id, book.Id));
         }
 
-        private int PrioritizeDownloadProtocol(Author author, DownloadProtocol downloadProtocol)
-        {
-            var delayProfile = _delayProfileService.BestForTags(author.Tags);
-
-            if (downloadProtocol == delayProfile.PreferredProtocol)
-            {
-                return 0;
-            }
-
-            return 1;
-        }
-
         public void Handle(AuthorDeletedEvent message)
         {
             _repository.DeleteByAuthorId(message.Author.Id);
+            _eventAggregator.PublishEvent(new PendingReleasesUpdatedEvent());
         }
 
         public void Handle(BookGrabbedEvent message)
@@ -513,6 +550,148 @@ namespace NzbDrone.Core.Download.Pending
             if (belowMinimum.Count > 0)
             {
                 _repository.DeleteMany(belowMinimum);
+                _eventAggregator.PublishEvent(new PendingReleasesUpdatedEvent());
+            }
+            else
+            {
+                NotifyPendingAuthors(author => author.QualityProfileId == message.QualityProfileId);
+            }
+        }
+
+        public void Handle(QualityProfileUpdatedEvent message)
+        {
+            NotifyPendingAuthors(author => author.QualityProfileId == message.QualityProfileId);
+        }
+
+        public void Handle(CustomFormatUpdatedEvent message)
+        {
+            if (message.Removed)
+            {
+                NotifyIfPending();
+                return;
+            }
+
+            NotifyPendingAuthors(author => author.QualityProfile?.Value?.FormatItems.Any(item =>
+                item.Format.Id == message.FormatId && item.Score != 0) == true);
+        }
+
+        public void Handle(DelayProfilesUpdatedEvent message)
+        {
+            if (message.Tags == null)
+            {
+                NotifyIfPending();
+                return;
+            }
+
+            NotifyPendingAuthors(author => author.Tags.Overlaps(message.Tags));
+        }
+
+        public void Handle(ConfigSavedEvent message)
+        {
+            if (message.ChangedKeys != null && PendingConfigKeys.Overlaps(message.ChangedKeys))
+            {
+                NotifyIfPending();
+            }
+        }
+
+        public void Handle(AuthorEditedEvent message)
+        {
+            var current = message.Author;
+            var old = message.OldAuthor;
+            if (current.QualityProfileId != old.QualityProfileId || current.Monitored != old.Monitored ||
+                !current.Tags.SetEquals(old.Tags) || current.AuthorMetadataId != old.AuthorMetadataId)
+            {
+                NotifyPendingIds(new[] { current.Id });
+            }
+        }
+
+        public void Handle(AuthorsEditedEvent message)
+        {
+            NotifyPendingIds(message.AuthorIds);
+        }
+
+        public void Handle(AuthorRefreshCompleteEvent message)
+        {
+            NotifyPendingAuthors(author => author.AuthorMetadataId == message.Author.AuthorMetadataId);
+        }
+
+        public void Handle(BookAddedEvent message)
+        {
+            NotifyBookChanged(message.Book);
+        }
+
+        public void Handle(BookEditedEvent message)
+        {
+            NotifyBookChanged(message.Book);
+            if (message.OldBook.AuthorMetadataId != message.Book.AuthorMetadataId)
+            {
+                NotifyBookChanged(message.OldBook);
+            }
+        }
+
+        public void Handle(BookMetadataRefreshedEvent message)
+        {
+            NotifyPendingAuthors(author => author.AuthorMetadataId == message.AuthorMetadataId);
+        }
+
+        public void Handle(BookDeletedEvent message)
+        {
+            NotifyBookChanged(message.Book);
+        }
+
+        public void Handle(ProviderUpdatedEvent<IIndexer> message)
+        {
+            NotifyIfPending();
+        }
+
+        public void Handle(ProviderDeletedEvent<IIndexer> message)
+        {
+            NotifyIfPending();
+        }
+
+        public void Handle(ProviderAddedEvent<IDownloadClient> message)
+        {
+            NotifyIfPending();
+        }
+
+        public void Handle(ProviderUpdatedEvent<IDownloadClient> message)
+        {
+            NotifyIfPending();
+        }
+
+        public void Handle(ProviderDeletedEvent<IDownloadClient> message)
+        {
+            NotifyIfPending();
+        }
+
+        private void NotifyBookChanged(Book book)
+        {
+            // Multiple author profiles can share the same work metadata.
+            NotifyPendingAuthors(author => author.AuthorMetadataId == book.AuthorMetadataId);
+        }
+
+        private void NotifyPendingAuthors(Func<Author, bool> affected)
+        {
+            var authorIds = _repository.GetAuthorIds();
+            if (authorIds?.Count > 0 && _authorService.FindAuthors(authorIds).Any(affected))
+            {
+                _eventAggregator.PublishEvent(new PendingReleasesUpdatedEvent());
+            }
+        }
+
+        private void NotifyPendingIds(IEnumerable<int> ids)
+        {
+            var authorIds = _repository.GetAuthorIds();
+            if (authorIds?.Intersect(ids).Any() == true)
+            {
+                _eventAggregator.PublishEvent(new PendingReleasesUpdatedEvent());
+            }
+        }
+
+        private void NotifyIfPending()
+        {
+            if (_repository.HasItems())
+            {
                 _eventAggregator.PublishEvent(new PendingReleasesUpdatedEvent());
             }
         }

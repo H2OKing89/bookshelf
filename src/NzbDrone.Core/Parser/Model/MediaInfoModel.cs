@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NzbDrone.Core.Datastore;
@@ -32,6 +33,16 @@ namespace NzbDrone.Core.Parser.Model
         public string Source { get; set; }
         public string SourceVersion { get; set; }
         public List<AudioStreamInfo> AudioStreams { get; set; } = new List<AudioStreamInfo>();
+        public MediaAnalysisStamp Analysis { get; set; }
+        public MediaAnalysisAttempt LastAnalysisAttempt { get; set; }
+
+        internal MediaInfoModel WithAnalysis(MediaAnalysisStamp analysis, MediaAnalysisAttempt attempt)
+        {
+            var copy = (MediaInfoModel)MemberwiseClone();
+            copy.Analysis = analysis;
+            copy.LastAnalysisAttempt = attempt;
+            return copy;
+        }
 
         public double? GetFileDurationSeconds()
         {
@@ -65,5 +76,20 @@ namespace NzbDrone.Core.Parser.Model
             Title = stream.Title;
             IsDefault = stream.IsDefault;
         }
+    }
+
+    public sealed class MediaAnalysisStamp
+    {
+        public int Revision { get; set; }
+        public string BundleId { get; set; }
+        public long Size { get; set; }
+        public DateTime ModifiedUtc { get; set; }
+        public bool Complete { get; set; }
+    }
+
+    public sealed class MediaAnalysisAttempt
+    {
+        public MediaAnalysisStamp Target { get; set; }
+        public DateTime AttemptedAtUtc { get; set; }
     }
 }

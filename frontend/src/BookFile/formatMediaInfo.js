@@ -19,15 +19,22 @@ export function getMediaInfoSource(mediaInfo = {}) {
     return 'Reported by MAM';
   }
 
-  if (mediaInfo.source === 'MediaInfo') {
-    return `Read from file · MediaInfo${mediaInfo.sourceVersion ? ` ${mediaInfo.sourceVersion}` : ''}`;
+  if (mediaInfo.source !== 'MediaInfo' && mediaInfo.source !== 'TagLib') {
+    return '';
   }
 
-  if (mediaInfo.source === 'TagLib') {
-    return 'Read from file · TagLib';
+  const tool = mediaInfo.source === 'MediaInfo' && mediaInfo.sourceVersion ?
+    `MediaInfo ${mediaInfo.sourceVersion}` : mediaInfo.source;
+
+  if (mediaInfo.analysisStatus === 'stale') {
+    return `Saved file analysis · ${tool} · Refresh needed`;
   }
 
-  return '';
+  if (mediaInfo.analysisStatus === 'partial') {
+    return `Partial file analysis · ${tool}`;
+  }
+
+  return `Read from file · ${tool}`;
 }
 
 export function getMediaInfoDetails(stream = {}) {

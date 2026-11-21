@@ -456,6 +456,43 @@ namespace NzbDrone.Core.Test.MediaFiles
         }
 
         [Test]
+        public void should_retain_measured_streams_when_remapping_an_existing_path_with_a_partial_probe()
+        {
+            var track = _approvedDecisions.First().Item;
+            track.ExistingFile = true;
+            track.Size = 123456;
+            track.Modified = new DateTime(2026, 11, 12, 0, 0, 0, DateTimeKind.Utc);
+            var target = new MediaAnalysisStamp { Size = track.Size, ModifiedUtc = track.Modified };
+            track.FileTrackInfo.MediaInfo = new MediaInfoModel
+            {
+                Source = "TagLib",
+                AudioBitrate = 64000,
+                Analysis = target,
+                LastAnalysisAttempt = new MediaAnalysisAttempt { Target = target, AttemptedAtUtc = track.Modified }
+            };
+            var previous = new BookFile
+            {
+                Id = 42,
+                Path = track.Path,
+                EditionId = 999,
+                Size = track.Size,
+                Modified = track.Modified,
+                MediaInfo = new MediaInfoModel { Source = "MediaInfo", AudioFormat = "AAC", AudioBitrate = 128000 }
+            };
+            Mocker.GetMock<IMediaFileService>().Setup(service => service.GetFileWithPath(track.Path)).Returns(previous);
+            List<BookFile> updated = null;
+            Mocker.GetMock<IMediaFileService>().Setup(service => service.Update(It.IsAny<List<BookFile>>()))
+                .Callback<List<BookFile>>(files => updated = files);
+
+            Subject.Import(_approvedDecisions, false).Should().ContainSingle(result => result.Result == ImportResultType.Imported);
+
+            var saved = updated.Should().ContainSingle().Which;
+            saved.EditionId.Should().Be(track.Edition.Id);
+            saved.MediaInfo.AudioBitrate.Should().Be(128000);
+            saved.MediaInfo.LastAnalysisAttempt.Target.Should().BeSameAs(target);
+        }
+
+        [Test]
         public void should_leave_previous_file_row_intact_when_same_path_tag_update_fails()
         {
             var track = _approvedDecisions.First();

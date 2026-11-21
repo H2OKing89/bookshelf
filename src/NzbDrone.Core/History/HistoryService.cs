@@ -13,6 +13,7 @@ using NzbDrone.Core.Download;
 using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.MediaFiles.BookImport;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser.Model;
@@ -50,12 +51,14 @@ namespace NzbDrone.Core.History
     {
         private readonly IHistoryRepository _historyRepository;
         private readonly IDownloadHistoryRepository _downloadHistory;
+        private readonly ICustomFormatCalculationService _formatCalculator;
         private readonly Logger _logger;
 
-        public HistoryService(IHistoryRepository historyRepository, Logger logger, IDownloadHistoryRepository downloadHistory = null)
+        public HistoryService(IHistoryRepository historyRepository, Logger logger, IDownloadHistoryRepository downloadHistory = null, ICustomFormatCalculationService formatCalculator = null)
         {
             _historyRepository = historyRepository;
             _downloadHistory = downloadHistory;
+            _formatCalculator = formatCalculator;
             _logger = logger;
         }
 
@@ -266,6 +269,23 @@ namespace NzbDrone.Core.History
                 RecordingLanguageEvidence.ForFile(message.ImportedBook.MediaInfo, message.ImportedBook.TaggedLanguage, edition),
                 RecordingLanguageEvidence.EditionLanguage(edition));
             history.Data[AudioFormatEvidence.HistoryKey] = AudioFormatEvidence.ForFile(message.ImportedBook.MediaInfo, edition).ToStored();
+
+            if (message.DownloadClientInfo?.Id > 0 && message.DownloadId.IsNotNullOrWhiteSpace())
+            {
+                try
+                {
+                    var scores = CommittedImportScores.Capture(message, _formatCalculator);
+                    if (scores != null)
+                    {
+                        history.Data[CommittedImportScores.HistoryKey] = scores;
+                    }
+                }
+                catch (Exception error)
+                {
+                    // Optional scoring must not prevent the committed file from receiving its history row.
+                    _logger.Debug("Unable to capture committed import scores ({0})", error.GetType().Name);
+                }
+            }
 
             _historyRepository.Insert(history);
         }

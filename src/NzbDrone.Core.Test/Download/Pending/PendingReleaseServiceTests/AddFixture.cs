@@ -80,7 +80,7 @@ namespace NzbDrone.Core.Test.Download.Pending.PendingReleaseServiceTests
                   .Returns(_author);
 
             Mocker.GetMock<IAuthorService>()
-                  .Setup(s => s.GetAuthors(It.IsAny<IEnumerable<int>>()))
+                  .Setup(s => s.FindAuthors(It.IsAny<IEnumerable<int>>()))
                   .Returns(new List<Author> { _author });
 
             Mocker.GetMock<IParsingService>()
@@ -116,6 +116,20 @@ namespace NzbDrone.Core.Test.Download.Pending.PendingReleaseServiceTests
             Subject.Add(_temporarilyRejected, PendingReleaseReason.Delay);
 
             VerifyInsert();
+        }
+
+        [Test]
+        public void should_deduplicate_same_batch_and_store_original_book_ids()
+        {
+            Subject.AddMany(new List<Tuple<DownloadDecision, PendingReleaseReason>>
+            {
+                Tuple.Create(_temporarilyRejected, PendingReleaseReason.Delay),
+                Tuple.Create(_temporarilyRejected, PendingReleaseReason.Delay)
+            });
+
+            Mocker.GetMock<IPendingReleaseRepository>()
+                .Verify(repository => repository.Insert(It.Is<PendingRelease>(pending =>
+                    pending.AdditionalInfo.BookIds.SequenceEqual(new[] { _book.Id }))), Times.Once());
         }
 
         [Test]

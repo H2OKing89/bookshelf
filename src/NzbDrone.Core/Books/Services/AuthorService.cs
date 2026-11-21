@@ -16,6 +16,7 @@ namespace NzbDrone.Core.Books
         Author GetAuthor(int authorId);
         Author GetAuthorByMetadataId(int authorMetadataId);
         List<Author> GetAuthors(IEnumerable<int> authorIds);
+        List<Author> FindAuthors(IEnumerable<int> authorIds);
         Author AddAuthor(Author newAuthor, bool doRefresh);
         List<Author> AddAuthors(List<Author> newAuthors, bool doRefresh);
         Author FindById(string foreignAuthorId);
@@ -34,7 +35,7 @@ namespace NzbDrone.Core.Books
         void RemoveAddOptions(Author author);
     }
 
-    public class AuthorService : IAuthorService, IHandle<MinimumUpgradeFormatScoreChangedEvent>
+    public class AuthorService : IAuthorService, IHandle<MinimumUpgradeFormatScoreChangedEvent>, IHandle<QualityProfileUpdatedEvent>
     {
         private readonly IAuthorRepository _authorRepository;
         private readonly IEventAggregator _eventAggregator;
@@ -192,6 +193,11 @@ namespace NzbDrone.Core.Books
             _cache.Clear();
         }
 
+        public void Handle(QualityProfileUpdatedEvent message)
+        {
+            _cache.Clear();
+        }
+
         public Dictionary<int, List<int>> GetAllAuthorTags()
         {
             return _authorRepository.AllAuthorTags();
@@ -221,6 +227,12 @@ namespace NzbDrone.Core.Books
         public List<Author> GetAuthors(IEnumerable<int> authorIds)
         {
             return _authorRepository.Get(authorIds).ToList();
+        }
+
+        public List<Author> FindAuthors(IEnumerable<int> authorIds)
+        {
+            var ids = authorIds.Distinct().ToList();
+            return ids.Count == 0 ? new List<Author>() : _authorRepository.FindByIds(ids);
         }
 
         public void RemoveAddOptions(Author author)
@@ -265,6 +277,7 @@ namespace NzbDrone.Core.Books
             }
 
             _authorRepository.UpdateMany(author);
+            _eventAggregator.PublishEvent(new AuthorsEditedEvent(author.Select(item => item.Id).ToList()));
             _logger.Debug("{0} authors updated", author.Count);
 
             return author;

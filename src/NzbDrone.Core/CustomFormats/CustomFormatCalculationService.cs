@@ -9,6 +9,7 @@ using NzbDrone.Core.Books;
 using NzbDrone.Core.History;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.CustomFormats
@@ -228,15 +229,16 @@ namespace NzbDrone.Core.CustomFormats
             if (usesLanguage || usesAudio)
             {
                 var edition = bookFile.EditionId > 0 ? bookFile.Edition?.Value : null;
+                var mediaInfo = MediaInfoAnalysis.IsInvalidatedByFileState(bookFile.MediaInfo, bookFile.Size, bookFile.Modified) ? null : bookFile.MediaInfo;
                 if (usesLanguage)
                 {
-                    input.Languages = RecordingLanguageEvidence.ForFile(bookFile.MediaInfo, bookFile.TaggedLanguage, edition);
+                    input.Languages = RecordingLanguageEvidence.ForFile(mediaInfo, bookFile.TaggedLanguage, edition);
                     input.SelectedEditionLanguageId = RecordingLanguageEvidence.EditionLanguage(edition);
                 }
 
                 if (usesAudio)
                 {
-                    input.Audio = AudioFormatEvidence.ForFile(bookFile.MediaInfo, edition);
+                    input.Audio = AudioFormatEvidence.ForFile(mediaInfo, edition);
                 }
             }
 

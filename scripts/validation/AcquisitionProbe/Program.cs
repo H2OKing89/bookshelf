@@ -72,6 +72,7 @@ internal static class Program
             VerifyRecordingLanguage();
             ReleaseSizeRankingProbe.Verify();
             AudioFormatProbe.Verify();
+            MediaAnalysisFreshnessProbe.Verify(fixture);
             foreach (var name in new[] { "two_books_one_recording", "two_books_one_ebook", "declared_missing_part", "duplicate_parts", "different_editions", "unrepresented_source", "manual_subset", "rejected_part" })
                 VerifyIncomplete(fixture, name);
             VerifyWriteFailure(fixture);
@@ -88,6 +89,7 @@ internal static class Program
             VerifyFileDiagnostics(fixture);
             VerifyBlockedRecovery(fixture);
             VerifyManualIntervention(fixture);
+            ImportCompleteWebhookProbe.Verify(fixture);
             DownloadFailoverProbe.Verify(fixture);
             GrabSpaceProbe.Verify(fixture);
             DownloadTrackingProbe.Verify(fixture);
@@ -1055,7 +1057,7 @@ internal static class Program
             _author = author;
             _connectionString = new SQLiteConnectionStringBuilder { DataSource = path, Pooling = false, DefaultTimeout = 5 }.ConnectionString;
             Execute("CREATE TABLE EntityHistory (Id INTEGER PRIMARY KEY, BookId INTEGER, AuthorId INTEGER, DownloadId TEXT, EventType INTEGER, Date TEXT, SourceTitle TEXT, Data TEXT)");
-            Execute("CREATE TABLE DownloadHistory (Id INTEGER PRIMARY KEY, AuthorId INTEGER, DownloadClientId INTEGER, DownloadId TEXT, EventType INTEGER, Date TEXT, SourceTitle TEXT, Data TEXT)");
+            Execute("CREATE TABLE DownloadHistory (Id INTEGER PRIMARY KEY, AuthorId INTEGER, DownloadClientId INTEGER, DownloadId TEXT, EventType INTEGER, Date TEXT, SourceTitle TEXT NOT NULL, Data TEXT)");
             Execute("CREATE TABLE BookFiles (Id INTEGER PRIMARY KEY, BookId INTEGER, EditionId INTEGER, Part INTEGER, PartCount INTEGER, Path TEXT, Size INTEGER)");
         }
 

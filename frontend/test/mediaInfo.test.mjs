@@ -67,6 +67,14 @@ test('keeps tracker reports distinct from locally read media information', () =>
   assert.doesNotMatch(html, /Read from file/);
 });
 
+test('labels stale and partial file evidence while keeping the measured values visible', () => {
+  const stale = render({ source: 'MediaInfo', sourceVersion: '26.10', audioCodec: 'AAC LC', analysisStatus: 'stale' });
+  assert.match(stale, /AAC LC/);
+  assert.match(stale, /Saved file analysis · MediaInfo 26.10 · Refresh needed/);
+  assert.equal(getMediaInfoSource({ source: 'TagLib', analysisStatus: 'partial' }), 'Partial file analysis · TagLib');
+  assert.equal(getMediaInfoSource({ source: 'TagLib', analysisStatus: 'stale' }), 'Saved file analysis · TagLib · Refresh needed');
+});
+
 test('renders all audio streams behind a native keyboard accessible disclosure and escapes untrusted titles', () => {
   const html = render({
     source: 'MediaInfo',

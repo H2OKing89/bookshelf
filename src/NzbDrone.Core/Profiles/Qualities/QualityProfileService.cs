@@ -68,6 +68,10 @@ namespace NzbDrone.Core.Profiles.Qualities
             {
                 _eventAggregator.PublishEvent(new MinimumUpgradeFormatScoreChangedEvent(profile.Id));
             }
+            else
+            {
+                _eventAggregator.PublishEvent(new QualityProfileUpdatedEvent(profile.Id));
+            }
         }
 
         public void Delete(int id)
@@ -127,7 +131,7 @@ namespace NzbDrone.Core.Profiles.Qualities
                     Format = message.CustomFormat
                 });
 
-                Update(profile);
+                _profileRepository.Update(profile);
             }
         }
 
@@ -144,7 +148,7 @@ namespace NzbDrone.Core.Profiles.Qualities
                     profile.CutoffFormatScore = 0;
                 }
 
-                Update(profile);
+                _profileRepository.Update(profile);
             }
         }
 

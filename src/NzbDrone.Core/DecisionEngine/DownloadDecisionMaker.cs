@@ -74,9 +74,9 @@ namespace NzbDrone.Core.DecisionEngine
                 try
                 {
                     ParsedBookInfo parsedBookInfo;
-                    if (!string.IsNullOrWhiteSpace(report.Book) && report.BookAuthors?.Any() == true)
+                    if (report.HasStructuredBookIdentity())
                     {
-                        var names = report.BookAuthors.Any() ? report.BookAuthors : new List<string> { report.Author };
+                        var names = report.BookAuthors;
                         var expectedNames = searchCriteria == null ? new List<string>() :
                             searchCriteria.Author.Metadata.Value.Aliases.Append(searchCriteria.Author.Name).Select(name => name.CleanAuthorName()).ToList();
                         parsedBookInfo = new ParsedBookInfo
@@ -138,7 +138,12 @@ namespace NzbDrone.Core.DecisionEngine
                             remoteBook.ParsedBookInfo.Quality = QualityParser.ParseQuality(report.Title, null, report.Categories);
                         }
 
-                        if (remoteBook.Author == null)
+                        if (report.PendingAuthorId.HasValue && (report.PendingAuthorId != remoteBook.Author?.Id ||
+                            (report.PendingBookIds != null && !remoteBook.Books.Select(book => book.Id).ToHashSet().SetEquals(report.PendingBookIds))))
+                        {
+                            decision = new DownloadDecision(remoteBook, new Rejection("Pending release no longer matches the original books", code: RejectionCode.UnknownBook));
+                        }
+                        else if (remoteBook.Author == null)
                         {
                             decision = new DownloadDecision(remoteBook, new Rejection("Unknown Author", code: RejectionCode.UnknownAuthor));
 

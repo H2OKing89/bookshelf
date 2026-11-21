@@ -57,8 +57,6 @@ namespace NzbDrone.Core.MediaFiles
 
         public void Read(string path)
         {
-            Logger.Debug($"Starting tag read for {path}");
-
             _path = path;
             _embeddedAsins.Clear();
 
@@ -188,10 +186,7 @@ namespace NzbDrone.Core.MediaFiles
                             bitrate = EstimateBitrate(file, path);
                         }
 
-                        Logger.Debug("Audio Properties: " + acodec.Description + ", Bitrate: " + bitrate + ", Sample Size: " +
-                                     file.Properties.BitsPerSample + ", SampleRate: " + acodec.AudioSampleRate + ", Channels: " + acodec.AudioChannels);
-
-                        Quality = QualityParser.ParseQuality(file.Name, acodec.Description);
+                        Quality = QualityParser.ParseFileQuality(file.Name, acodec.Description);
                         Logger.Debug($"Quality parsed: {Quality}, Source: {Quality.QualityDetectionSource}");
 
                         MediaInfo = new MediaInfoModel
@@ -210,14 +205,7 @@ namespace NzbDrone.Core.MediaFiles
             }
             catch (Exception ex)
             {
-                if (ex is CorruptFileException)
-                {
-                    Logger.Warn(ex, $"Tag reading failed for {path}.  File is corrupt");
-                }
-                else
-                {
-                    Logger.Error(ex, "Tag reading failed for {0}", path);
-                }
+                Logger.Log(ex is CorruptFileException ? LogLevel.Warn : LogLevel.Error, "Tag reading failed ({0})", ex.GetType().Name);
             }
             finally
             {
@@ -227,8 +215,8 @@ namespace NzbDrone.Core.MediaFiles
             // make sure these are initialized to avoid errors later on
             if (Quality == null)
             {
-                Quality = QualityParser.ParseQuality(path);
-                Logger.Debug($"Unable to parse qulity from tag, Quality parsed from file path: {Quality}, Source: {Quality.QualityDetectionSource}");
+                Quality = QualityParser.ParseFileQuality(path);
+                Logger.Debug($"Quality parsed from file path: {Quality}, Source: {Quality.QualityDetectionSource}");
             }
 
             MediaInfo = MediaInfo ?? new MediaInfoModel();

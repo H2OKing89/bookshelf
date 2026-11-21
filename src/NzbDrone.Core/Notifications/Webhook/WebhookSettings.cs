@@ -35,6 +35,9 @@ namespace NzbDrone.Core.Notifications.Webhook
         [FieldDefinition(3, Label = "Password", Type = FieldType.Password, Privacy = PrivacyLevel.Password)]
         public string Password { get; set; }
 
+        [FieldDefinition(4, Label = "WebhookOnImportComplete", HelpText = "WebhookOnImportCompleteHelpText", Type = FieldType.Checkbox)]
+        public bool OnImportComplete { get; set; }
+
         public NzbDroneValidationResult Validate()
         {
             return new NzbDroneValidationResult(Validator.Validate(this));

@@ -49,6 +49,20 @@ namespace NzbDrone.Core.Parser.Model
         [JsonIgnore]
         public PendingReleaseReason? PendingReleaseReason { get; set; }
 
+        [JsonIgnore]
+        public int? PendingReleaseId { get; set; }
+
+        [JsonIgnore]
+        public int? PendingAuthorId { get; set; }
+
+        [JsonIgnore]
+        public IReadOnlyList<int> PendingBookIds { get; set; }
+
+        public bool HasStructuredBookIdentity()
+        {
+            return !string.IsNullOrWhiteSpace(Book) && BookAuthors?.Count > 0;
+        }
+
         public int Age
         {
             get { return DateTime.UtcNow.Subtract(PublishDate).Days; }

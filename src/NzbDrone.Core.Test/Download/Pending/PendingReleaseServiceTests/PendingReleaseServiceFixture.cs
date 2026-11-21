@@ -26,6 +26,7 @@ namespace NzbDrone.Core.Test.Download.Pending.PendingReleaseServiceTests
     {
         private void GivenPendingRelease()
         {
+            Mocker.GetMock<IIndexerFactory>().Setup(factory => factory.Find(1)).Returns(new IndexerDefinition { EnableRss = true });
             Mocker.GetMock<IPendingReleaseRepository>()
                               .Setup(v => v.All())
                               .Returns(new List<PendingRelease>
@@ -91,7 +92,7 @@ namespace NzbDrone.Core.Test.Download.Pending.PendingReleaseServiceTests
             var current = new BookFile { Quality = new QualityModel(Quality.MP3) };
             Mocker.GetMock<IPendingReleaseRepository>().Setup(repository => repository.All())
                 .Returns(new List<PendingRelease> { tooSmall, eligible, unrelated });
-            Mocker.GetMock<IAuthorService>().Setup(service => service.GetAuthors(It.IsAny<IEnumerable<int>>()))
+            Mocker.GetMock<IAuthorService>().Setup(service => service.FindAuthors(It.IsAny<IEnumerable<int>>()))
                 .Returns(new List<Author> { author, new Author { Id = unrelated.AuthorId, QualityProfileId = 12 } });
             Mocker.GetMock<IParsingService>().Setup(service => service.GetBooks(It.IsAny<ParsedBookInfo>(), author))
                 .Returns(new List<Book> { new Book { Id = 31, BookFiles = new List<BookFile> { current } } });

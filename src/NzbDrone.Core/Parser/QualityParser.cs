@@ -32,7 +32,16 @@ namespace NzbDrone.Core.Parser
         public static QualityModel ParseQuality(string name, string desc = null, List<int> categories = null)
         {
             Logger.Debug("Trying to parse quality for '{0}'", name);
+            return ParseQualityCore(name, desc, categories);
+        }
 
+        internal static QualityModel ParseFileQuality(string path, string desc = null)
+        {
+            return ParseQualityCore(path, desc, null);
+        }
+
+        private static QualityModel ParseQualityCore(string name, string desc, List<int> categories)
+        {
             if (name.IsNullOrWhiteSpace() && desc.IsNullOrWhiteSpace())
             {
                 return new QualityModel { Quality = Quality.Unknown };

@@ -26,7 +26,7 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
 
             var general = tracks.OfType<JObject>().FirstOrDefault(x => Text(x, "@type") == "General");
             var streams = tracks.OfType<JObject>().Where(x => Text(x, "@type") == "Audio")
-                .Take(64).Select((track, index) => ReadStream(track, index)).ToList();
+                .Take(MediaInfoAnalysis.MaximumAudioStreams).Select((track, index) => ReadStream(track, index)).ToList();
             var model = FromStreams(streams, general, "MediaInfo");
             if (model != null)
             {
@@ -46,7 +46,7 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
 
             var streams = root.Properties().Where(x => AudioKey.IsMatch(x.Name) && x.Value is JObject)
                 .OrderBy(x => int.TryParse(AudioKey.Match(x.Name).Groups["index"].Value, out var index) ? index : int.MaxValue)
-                .Take(64).Select((property, index) => ReadStream((JObject)property.Value, index)).ToList();
+                .Take(MediaInfoAnalysis.MaximumAudioStreams).Select((property, index) => ReadStream((JObject)property.Value, index)).ToList();
             return FromStreams(streams, root["General"] as JObject ?? root["General1"] as JObject, "MyAnonaMouse");
         }
 

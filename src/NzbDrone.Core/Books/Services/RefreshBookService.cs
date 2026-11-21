@@ -516,6 +516,11 @@ namespace NzbDrone.Core.Books
                 PublishEntityUpdatedEvent(book);
             }
 
+            if (updated || seriesUpdated)
+            {
+                _eventAggregator.PublishEvent(new BookMetadataRefreshedEvent(book.AuthorMetadataId));
+            }
+
             CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             if (AudiobookId.IsNative(book.ForeignBookId))
             {

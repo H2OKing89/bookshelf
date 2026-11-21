@@ -62,6 +62,7 @@ namespace NzbDrone.Core.Configuration
             }
 
             var allWithDefaults = AllWithDefaults();
+            var changedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var configValue in configValues)
             {
@@ -76,10 +77,11 @@ namespace NzbDrone.Core.Configuration
                 if (!equal)
                 {
                     SetValue(configValue.Key, configValue.Value.ToString());
+                    changedKeys.Add(configValue.Key);
                 }
             }
 
-            _eventAggregator.PublishEvent(new ConfigSavedEvent());
+            _eventAggregator.PublishEvent(new ConfigSavedEvent(changedKeys));
         }
 
         public bool IsDefined(string key)

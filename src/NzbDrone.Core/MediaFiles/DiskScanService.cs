@@ -17,6 +17,7 @@ using NzbDrone.Core.Configuration;
 using NzbDrone.Core.MediaFiles.BookImport;
 using NzbDrone.Core.MediaFiles.Commands;
 using NzbDrone.Core.MediaFiles.Events;
+using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.RootFolders;
@@ -210,12 +211,13 @@ namespace NzbDrone.Core.MediaFiles
                 .Where(x => x.File.Size != x.Item.Size ||
                        Math.Abs((x.File.Modified - x.Item.Modified).TotalSeconds) > 1 ||
                        x.File.LastRemoteSearchTime != x.Item.LastRemoteSearchTime ||
-                       x.File.TaggedLanguage != x.Item.FileTrackInfo?.Language)
+                       x.File.TaggedLanguage != x.Item.FileTrackInfo?.Language ||
+                       x.Item.FileTrackInfo?.MediaInfo?.Analysis != null)
                 .Select(x =>
                 {
+                    x.File.MediaInfo = MediaInfoAnalysis.PreserveOnScan(x.File, x.Item.FileTrackInfo?.MediaInfo);
                     x.File.Size = x.Item.Size;
                     x.File.Modified = x.Item.Modified;
-                    x.File.MediaInfo = x.Item.FileTrackInfo.MediaInfo;
                     x.File.TaggedLanguage = x.Item.FileTrackInfo?.Language;
                     x.File.Quality = x.Item.Quality;
                     x.File.LastRemoteSearchTime = x.Item.LastRemoteSearchTime;

@@ -10,6 +10,7 @@ using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Test.Common;
 
@@ -68,6 +69,25 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaFileServiceTests
                 }).ToList());
 
             Subject.FilterUnchangedFiles(files, filter).Should().BeEmpty();
+        }
+
+        [TestCase(FilterFilesType.Known)]
+        [TestCase(FilterFilesType.Matched)]
+        public void filter_should_detect_subsecond_changes_for_files_with_analysis(FilterFilesType filter)
+        {
+            var files = GivenFiles(new[] { "C:\\legacy.m4b".AsOsAgnostic(), "C:\\analyzed.m4b".AsOsAgnostic() });
+            var stored = files.Select(file => new BookFile
+            {
+                Path = file.FullName,
+                Size = file.Length,
+                Modified = file.LastWriteTimeUtc.AddMilliseconds(-200)
+            }).ToList();
+            stored[1].MediaInfo = new MediaInfoModel { Analysis = new MediaAnalysisStamp() };
+            Mocker.GetMock<IMediaFileRepository>()
+                .Setup(repository => repository.GetFileWithPath(It.IsAny<List<string>>()))
+                .Returns(stored);
+
+            Subject.FilterUnchangedFiles(files, filter).Should().Equal(files[1]);
         }
 
         [TestCase(FilterFilesType.Known)]

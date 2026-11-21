@@ -8,6 +8,7 @@ using NzbDrone.Common.Disk;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.DecisionEngine
@@ -82,7 +83,9 @@ namespace NzbDrone.Core.DecisionEngine
             var measured = 0m;
             foreach (var file in files)
             {
-                var duration = file.MediaInfo?.Source == "MediaInfo" ? ValidSeconds(file.MediaInfo.GetFileDurationSeconds()) : null;
+                var duration = file.MediaInfo?.Source == "MediaInfo" && MediaInfoAnalysis.GetStatus(file.MediaInfo, file.Size, file.Modified) == "current"
+                    ? ValidSeconds(file.MediaInfo.GetFileDurationSeconds())
+                    : null;
                 if (!duration.HasValue)
                 {
                     return catalogSeconds;

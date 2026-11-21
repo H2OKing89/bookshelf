@@ -294,6 +294,7 @@ namespace NzbDrone.Core.Download.History
             history.Data.Add("DownloadClient", message.DownloadClient);
             history.Data.Add("DownloadClientName", message.DownloadClientName);
             history.Data.Add("CustomFormatScore", message.Book.CustomFormatScore.ToString());
+            history.Data.Add("ReleaseSource", message.Book.ReleaseSource.ToString());
             history.Data.Add("BookIds", STJson.ToJson(message.Book.Books.Select(book => book.Id).Where(id => id > 0).Distinct().OrderBy(id => id).ToList()));
 
             _repository.Insert(history);
