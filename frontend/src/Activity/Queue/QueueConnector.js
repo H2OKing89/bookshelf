@@ -16,6 +16,7 @@ import queuePageQuery, {
   scheduleQueueRefresh,
   submitQueueAction
 } from './queuePageQuery';
+import { setQueuePage, setQueueSort, setQueueTableOptions, useQueuePreferences } from './queuePreferences';
 
 const emptyRecords = [];
 
@@ -23,45 +24,31 @@ function createMapStateToProps() {
   return createSelector(
     (state) => state.authors,
     (state) => state.books,
-    (state) => state.queue.options,
-    (state) => state.queue.paged,
     createCommandExecutingSelector(commandNames.REFRESH_MONITORED_DOWNLOADS),
-    (authors, books, options, queue, isRefreshMonitoredDownloadsExecuting) => ({
+    (authors, books, isRefreshMonitoredDownloadsExecuting) => ({
       isAuthorFetching: authors.isFetching,
       isAuthorPopulated: authors.isPopulated,
       isBooksFetching: books.isFetching,
       isBooksPopulated: books.isPopulated,
       booksError: books.error,
-      isRefreshMonitoredDownloadsExecuting,
-      ...options,
-      ...queue
+      isRefreshMonitoredDownloadsExecuting
     })
   );
 }
 
 const mapDispatchToProps = {
   fetchQueueStatus: queueActions.fetchQueueStatus,
-  setQueuePage: queueActions.setQueuePage,
-  setQueueSort: queueActions.setQueueSort,
-  setQueueTableOption: queueActions.setQueueTableOption,
   executeCommand: commandActions.executeCommand
 };
 
 function QueueConnector({
   useCurrentPage,
-  page: storedPage,
-  pageSize,
-  sortKey,
-  sortDirection,
-  includeUnknownAuthorItems,
   isRefreshMonitoredDownloadsExecuting,
   fetchQueueStatus,
-  setQueuePage,
-  setQueueSort,
-  setQueueTableOption,
   executeCommand,
   ...otherProps
 }) {
+  const { page: storedPage, pageSize, sortKey, sortDirection, includeUnknownAuthorItems, columns } = useQueuePreferences();
   const [pageInitialized, setPageInitialized] = useState(useCurrentPage);
   const [actionRejected, setActionRejected] = useState(false);
   const page = pageInitialized ? storedPage : 1;
@@ -95,7 +82,7 @@ function QueueConnector({
     } else if (needsClamp) {
       setQueuePage(totalPages);
     }
-  }, [needsClamp, pageInitialized, setQueuePage, totalPages]);
+  }, [needsClamp, pageInitialized, totalPages]);
 
   useEffect(() => {
     fetchQueueStatus();
@@ -138,11 +125,11 @@ function QueueConnector({
   const onPreviousPagePress = () => goToPage(page - 1);
   const onNextPagePress = () => goToPage(page + 1);
   const onLastPagePress = () => goToPage(totalPages);
-  const onSortPress = (nextKey, nextDirection) => setQueueSort({ sortKey: nextKey, sortDirection: nextDirection });
 
   return (
     <Queue
       {...otherProps}
+      columns={columns}
       items={items}
       page={page}
       pageKey={pageKey}
@@ -165,24 +152,16 @@ function QueueConnector({
       onNextPagePress={onNextPagePress}
       onLastPagePress={onLastPagePress}
       onPageSelect={goToPage}
-      onSortPress={onSortPress}
-      onTableOptionChange={setQueueTableOption}
+      onSortPress={setQueueSort}
+      onTableOptionChange={setQueueTableOptions}
     />
   );
 }
 
 QueueConnector.propTypes = {
   useCurrentPage: PropTypes.bool.isRequired,
-  page: PropTypes.number.isRequired,
-  pageSize: PropTypes.number.isRequired,
-  sortKey: PropTypes.string.isRequired,
-  sortDirection: PropTypes.string.isRequired,
-  includeUnknownAuthorItems: PropTypes.bool.isRequired,
   isRefreshMonitoredDownloadsExecuting: PropTypes.bool.isRequired,
   fetchQueueStatus: PropTypes.func.isRequired,
-  setQueuePage: PropTypes.func.isRequired,
-  setQueueSort: PropTypes.func.isRequired,
-  setQueueTableOption: PropTypes.func.isRequired,
   executeCommand: PropTypes.func.isRequired
 };
 

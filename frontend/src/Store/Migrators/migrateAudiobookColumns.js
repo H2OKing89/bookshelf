@@ -22,7 +22,7 @@ export default function migrateAudiobookColumns(persistedState) {
 
   const isLegacyDefault = columns.every((column, index) => {
     const [name, isVisible] = legacyColumns[index];
-    return column.name === name && column.isVisible === isVisible;
+    return column?.name === name && column.isVisible === isVisible;
   });
 
   if (isLegacyDefault) {

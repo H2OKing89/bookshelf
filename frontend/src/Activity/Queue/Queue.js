@@ -15,7 +15,7 @@ import TablePager from 'Components/Table/TablePager';
 import { align, icons, kinds } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
 import toggleSelected from 'Utilities/Table/toggleSelected';
-import QueueOptionsConnector from './QueueOptionsConnector';
+import QueueOptions from './QueueOptions';
 import { holdQueueRefresh, queueTarget, queueTargetsAreCurrent } from './queuePageQuery';
 import QueueRowConnector from './QueueRowConnector';
 import RemoveQueueItemModal from './RemoveQueueItemModal';
@@ -212,7 +212,7 @@ class Queue extends Component {
             <TableOptionsModalWrapper
               columns={columns}
               {...otherProps}
-              optionsComponent={QueueOptionsConnector}
+              optionsComponent={QueueOptions}
             >
               <PageToolbarButton
                 label={translate('Options')}
@@ -248,7 +248,7 @@ class Queue extends Component {
                   allUnselected={selectedCount === 0}
                   isSelectAllDisabled={!canUseRowActions}
                   {...otherProps}
-                  optionsComponent={QueueOptionsConnector}
+                  optionsComponent={QueueOptions}
                   onSelectAllChange={this.onSelectAllChange}
                 >
                   <TableBody>

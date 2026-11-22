@@ -39,6 +39,87 @@ function queueBurst(connection) {
   return connection.socket.send(`${event}\x1e`.repeat(5));
 }
 
+async function verifyQueuePreferences(page, base, { check, step }) {
+  const legacyQueue = {
+    options: { includeUnknownAuthorItems: false },
+    paged: {
+      pageSize: 37,
+      sortKey: 'books.title',
+      sortDirection: 'descending',
+      columns: [
+        { name: 'status', isVisible: true },
+        { name: 'books.title', isVisible: true },
+        { name: 'authorMetadata.sortName', isVisible: true },
+        { name: 'books.releaseDate', isVisible: false },
+        { name: 'protocol', isVisible: true, label: 'Old saved label' },
+        { name: 'quality', isVisible: false },
+        { name: 'obsolete-column', isVisible: true },
+        { name: 'actions', isVisible: true }
+      ]
+    }
+  };
+  const key = `bookshelf:queue-preferences:${new URL(api(base, 'queue')).pathname.replace(/\/queue$/, '')}`;
+  await page.addInitScript(({ key, legacyQueue }) => {
+    const marker = 'owned-legacy-queue-seeded';
+    if (!sessionStorage.getItem(marker)) {
+      sessionStorage.setItem(marker, '1');
+      const saved = JSON.parse(localStorage.getItem('readarr') ?? '{}');
+      localStorage.setItem('readarr', JSON.stringify({ ...saved, queue: legacyQueue }));
+      localStorage.removeItem(key);
+    }
+  }, { key, legacyQueue });
+
+  step('queue_reads_legacy_table_preferences_on_upgrade');
+  const matches = (args, direction) => args.get('pageSize') === '37' && args.get('sortKey') === 'book.title' &&
+    args.get('sortDirection') === direction && args.get('includeUnknownAuthorItems') === 'false';
+  const migrated = responseFor(page, base, 'queue', args => matches(args, 'descending'));
+  await page.reload();
+  await migrated;
+  const headers = page.getByRole('table').getByRole('columnheader');
+  await headers.filter({ hasText: 'Protocol' }).waitFor();
+  const names = (await headers.allTextContents()).map(name => name.trim());
+  check('legacy_layout_and_visibility_are_retained', names.indexOf('Book Title') >= 0 &&
+    names.indexOf('Author') > names.indexOf('Book Title') && !names.includes('Quality') && !names.includes('Old saved label'));
+  check('legacy_page_size_sort_and_explicit_false_reach_the_queue_request', await selection(page, 799).count() === 0);
+
+  step('queue_reloads_changes_from_its_versioned_preference_store');
+  const ascending = responseFor(page, base, 'queue', args => matches(args, 'ascending'));
+  await headers.filter({ hasText: 'Book Title' }).click();
+  await ascending;
+  await page.getByRole('button', { name: 'Table Options', exact: true }).first().click();
+  const options = page.getByRole('dialog', { name: 'Table Options', exact: true });
+  const unknown = options.locator('input[name="includeUnknownAuthorItems"]');
+  await unknown.waitFor();
+  check('legacy_unknown_author_setting_is_off_in_table_options', !await unknown.isChecked());
+  await setCheckbox(options.locator('input[name="protocol"]'), false);
+  await page.keyboard.press('Escape');
+  const reloaded = responseFor(page, base, 'queue', args => matches(args, 'ascending'));
+  await page.reload();
+  await reloaded;
+  await headers.filter({ hasText: 'Book Title' }).waitFor();
+  check('queue_changes_survive_reload_in_the_versioned_store', await headers.filter({ hasText: 'Protocol' }).count() === 0 &&
+    await page.evaluate(({ key, legacyQueue }) => {
+      const next = JSON.parse(localStorage.getItem(key));
+      const legacy = JSON.parse(localStorage.getItem('readarr')).queue;
+      return next.version === 1 && next.includeUnknownAuthorItems === false &&
+        next.columns.find(({ name }) => name === 'protocol')?.isVisible === false &&
+        JSON.stringify(legacy) === JSON.stringify(legacyQueue);
+    }, { key, legacyQueue }));
+
+  step('queue_recovers_from_corrupt_browser_preferences');
+  await page.addInitScript((key) => {
+    localStorage.setItem('readarr', '{bad legacy preferences');
+    localStorage.setItem(key, '{bad Queue preferences');
+  }, key);
+  const defaulted = responseFor(page, base, 'queue', args => args.get('pageSize') === '20' &&
+    args.get('sortKey') === 'timeleft' && args.get('sortDirection') === 'ascending' && args.get('includeUnknownAuthorItems') === 'true');
+  await page.reload();
+  await defaulted;
+  await selection(page, 799).waitFor();
+  check('corrupt_storage_opens_the_queue_with_defaults', await headers.filter({ hasText: 'Quality' }).isVisible() &&
+    await headers.filter({ hasText: 'Protocol' }).count() === 0);
+}
+
 async function verifyQueue(page, base, config, { check, step, output }) {
   const hub = await observeHub(page, base);
   const readCalls = [];
@@ -178,6 +259,7 @@ async function verifyQueue(page, base, config, { check, step, output }) {
   check('manual_refresh_waits_for_the_real_command_then_fetches_once', issued.ok() && status.ok() &&
     (await status.json()).status === 'completed' && readCalls.length === beforeManualRefresh + 1);
   await page.screenshot({ path: path.join(output, 'owned-activity-queue.png'), fullPage: true });
+  await verifyQueuePreferences(page, base, { check, step });
 }
 
 report(config => runBrowser(config, verifyQueue));

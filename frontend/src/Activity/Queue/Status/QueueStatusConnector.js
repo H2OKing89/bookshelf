@@ -4,12 +4,13 @@ import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import PageSidebarStatus from 'Components/Page/Sidebar/PageSidebarStatus';
 import { fetchQueueStatus } from 'Store/Actions/queueActions';
+import { useIncludeUnknownAuthorItems } from '../queuePreferences';
 
 function createMapStateToProps() {
   return createSelector(
     (state) => state.app,
     (state) => state.queue.status,
-    (state) => state.queue.options.includeUnknownAuthorItems,
+    (_state, props) => props.includeUnknownAuthorItems,
     (app, status, includeUnknownAuthorItems) => {
       const {
         errors,
@@ -37,7 +38,7 @@ const mapDispatchToProps = {
   fetchQueueStatus
 };
 
-class QueueStatusConnector extends Component {
+class QueueStatus extends Component {
 
   //
   // Lifecycle
@@ -58,19 +59,21 @@ class QueueStatusConnector extends Component {
   // Render
 
   render() {
-    return (
-      <PageSidebarStatus
-        {...this.props}
-      />
-    );
+    return <PageSidebarStatus {...this.props} />;
   }
 }
 
-QueueStatusConnector.propTypes = {
+QueueStatus.propTypes = {
   isConnected: PropTypes.bool.isRequired,
   isReconnecting: PropTypes.bool.isRequired,
   isPopulated: PropTypes.bool.isRequired,
   fetchQueueStatus: PropTypes.func.isRequired
 };
 
-export default connect(createMapStateToProps, mapDispatchToProps)(QueueStatusConnector);
+const ConnectedQueueStatus = connect(createMapStateToProps, mapDispatchToProps)(QueueStatus);
+
+export default function QueueStatusConnector() {
+  const includeUnknownAuthorItems = useIncludeUnknownAuthorItems();
+
+  return <ConnectedQueueStatus includeUnknownAuthorItems={includeUnknownAuthorItems} />;
+}
