@@ -8,6 +8,7 @@ import RelativeDateCellConnector from 'Components/Table/Cells/RelativeDateCellCo
 import TableRowCell from 'Components/Table/Cells/TableRowCell';
 import TableSelectCell from 'Components/Table/Cells/TableSelectCell';
 import TableRow from 'Components/Table/TableRow';
+import WantedBookDetails from '../WantedBookDetails';
 
 function MissingRow(props) {
   const {
@@ -20,6 +21,9 @@ function MissingRow(props) {
     disambiguation,
     isSelected,
     columns,
+    canUseRowActions,
+    isQueued,
+    qualities,
     onSelectedChange
   } = props;
 
@@ -32,6 +36,7 @@ function MissingRow(props) {
       <TableSelectCell
         id={id}
         isSelected={isSelected}
+        isDisabled={!canUseRowActions}
         onSelectedChange={onSelectedChange}
       />
 
@@ -65,6 +70,7 @@ function MissingRow(props) {
                   title={title}
                   disambiguation={disambiguation}
                 />
+                <WantedBookDetails isQueued={isQueued} qualities={qualities} />
               </TableRowCell>
             );
           }
@@ -92,6 +98,7 @@ function MissingRow(props) {
               <BookSearchCellConnector
                 key={name}
                 bookId={id}
+                isDisabled={!canUseRowActions}
                 authorId={author.id}
                 bookTitle={title}
                 authorName={author.authorName}
@@ -111,13 +118,16 @@ function MissingRow(props) {
 MissingRow.propTypes = {
   id: PropTypes.number.isRequired,
   author: PropTypes.object.isRequired,
-  releaseDate: PropTypes.string.isRequired,
+  releaseDate: PropTypes.string,
   titleSlug: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   lastSearchTime: PropTypes.string,
   disambiguation: PropTypes.string,
   isSelected: PropTypes.bool,
   columns: PropTypes.arrayOf(PropTypes.object).isRequired,
+  canUseRowActions: PropTypes.bool.isRequired,
+  isQueued: PropTypes.bool.isRequired,
+  qualities: PropTypes.arrayOf(PropTypes.string),
   onSelectedChange: PropTypes.func.isRequired
 };
 

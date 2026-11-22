@@ -16,12 +16,11 @@ import TableOptionsModalWrapper from 'Components/Table/TableOptions/TableOptions
 import TablePager from 'Components/Table/TablePager';
 import { align, icons, kinds } from 'Helpers/Props';
 import getFilterValue from 'Utilities/Filter/getFilterValue';
-import hasDifferentItems from 'Utilities/Object/hasDifferentItems';
 import translate from 'Utilities/String/translate';
 import getSelectedIds from 'Utilities/Table/getSelectedIds';
-import removeOldSelectedState from 'Utilities/Table/removeOldSelectedState';
 import selectAll from 'Utilities/Table/selectAll';
 import toggleSelected from 'Utilities/Table/toggleSelected';
+import createWantedSelectionState from '../createWantedSelectionState';
 import CutoffUnmetRowConnector from './CutoffUnmetRowConnector';
 
 function getMonitoredValue(props) {
@@ -42,41 +41,51 @@ class CutoffUnmet extends Component {
     super(props, context);
 
     this.state = {
-      allSelected: false,
-      allUnselected: false,
-      lastToggled: null,
-      selectedState: {},
+      ...createWantedSelectionState(props.items, props.selectionScope),
       isConfirmSearchAllCutoffUnmetModalOpen: false,
       isInteractiveImportModalOpen: false
     };
   }
 
-  componentDidUpdate(prevProps) {
-    if (hasDifferentItems(prevProps.items, this.props.items)) {
-      this.setState((state) => {
-        return removeOldSelectedState(state, prevProps.items);
-      });
+  static getDerivedStateFromProps(props, state) {
+    if (props.selectionScope !== state.selectionScope) {
+      return {
+        ...createWantedSelectionState(props.items, props.selectionScope),
+        isConfirmSearchAllCutoffUnmetModalOpen: false
+      };
     }
+
+    if (!props.canUseRowActions && state.isConfirmSearchAllCutoffUnmetModalOpen) {
+      return { isConfirmSearchAllCutoffUnmetModalOpen: false };
+    }
+
+    return null;
   }
 
   //
   // Control
 
   getSelectedIds = () => {
-    return getSelectedIds(this.state.selectedState);
+    return this.props.canUseRowActions ? getSelectedIds(this.state.selectedState) : [];
   };
 
   //
   // Listeners
 
   onSelectAllChange = ({ value }) => {
-    this.setState(selectAll(this.state.selectedState, value));
+    if (this.props.canUseRowActions) {
+      this.setState(selectAll(this.state.selectedState, value));
+    }
   };
 
   onSelectedChange = ({ id, value, shiftKey = false }) => {
-    this.setState((state) => {
-      return toggleSelected(state, this.props.items, id, value, shiftKey);
-    });
+    if (!this.props.canUseRowActions || value == null || !Object.hasOwn(this.state.selectedState, id)) {
+      return;
+    }
+
+    this.setState((state) => (state.selectedState[id] === value ?
+      null :
+      toggleSelected(state, this.props.items, id, value, shiftKey)));
   };
 
   onSearchSelectedPress = () => {
@@ -86,12 +95,7 @@ class CutoffUnmet extends Component {
   };
 
   onToggleSelectedPress = () => {
-    const bookIds = this.getSelectedIds();
-
-    this.props.batchToggleCutoffUnmetBooks({
-      bookIds,
-      monitored: !getMonitoredValue(this.props)
-    });
+    this.props.onToggleSelectedPress(this.getSelectedIds());
   };
 
   onSearchAllCutoffUnmetPress = () => {
@@ -99,7 +103,7 @@ class CutoffUnmet extends Component {
   };
 
   onSearchAllCutoffUnmetConfirmed = () => {
-    this.props.onSearchAllCutoffUnmetPress();
+    this.props.onSearchAllPress();
     this.setState({ isConfirmSearchAllCutoffUnmetModalOpen: false });
   };
 
@@ -122,8 +126,13 @@ class CutoffUnmet extends Component {
       filters,
       columns,
       totalRecords,
-      isSearchingForCutoffUnmetBooks,
+      isSearching,
       isSaving,
+      canUseRowActions,
+      selectionScope,
+      queuedBookIds,
+      fileQualities,
+      monitorError,
       onFilterSelect,
       ...otherProps
     } = this.props;
@@ -148,14 +157,14 @@ class CutoffUnmet extends Component {
             <PageToolbarButton
               label={translate('SearchSelected')}
               iconName={icons.SEARCH}
-              isDisabled={!itemsSelected || isSearchingForCutoffUnmetBooks}
+              isDisabled={!itemsSelected || isSearching}
               onPress={this.onSearchSelectedPress}
             />
 
             <PageToolbarButton
               label={isShowingMonitored ? translate('IsShowingMonitoredUnmonitorSelected') : translate('IsShowingMonitoredMonitorSelected')}
               iconName={isShowingMonitored ? icons.UNMONITORED : icons.MONITORED}
-              isDisabled={!itemsSelected}
+              isDisabled={!itemsSelected || isSaving}
               isSpinning={isSaving}
               onPress={this.onToggleSelectedPress}
             />
@@ -165,8 +174,8 @@ class CutoffUnmet extends Component {
             <PageToolbarButton
               label={translate('SearchAll')}
               iconName={icons.SEARCH}
-              isDisabled={!items.length}
-              isSpinning={isSearchingForCutoffUnmetBooks}
+              isDisabled={!canUseRowActions || !items.length}
+              isSpinning={isSearching}
               onPress={this.onSearchAllCutoffUnmetPress}
             />
 
@@ -208,6 +217,13 @@ class CutoffUnmet extends Component {
           }
 
           {
+            monitorError &&
+              <Alert kind={kinds.DANGER}>
+                Could not change monitoring for the selected books.
+              </Alert>
+          }
+
+          {
             isAllPopulated && !error && !items.length &&
               <Alert kind={kinds.INFO}>
                 {translate('NoCutoffUnmetItems')}
@@ -220,6 +236,7 @@ class CutoffUnmet extends Component {
                 <Table
                   columns={columns}
                   selectAll={true}
+                  isSelectAllDisabled={!canUseRowActions}
                   allSelected={allSelected}
                   allUnselected={allUnselected}
                   {...otherProps}
@@ -234,6 +251,9 @@ class CutoffUnmet extends Component {
                             isSelected={selectedState[item.id]}
                             columns={columns}
                             {...item}
+                            canUseRowActions={canUseRowActions}
+                            isQueued={queuedBookIds.includes(item.id)}
+                            qualities={fileQualities[item.id]}
                             onSelectedChange={this.onSelectedChange}
                           />
                         );
@@ -285,12 +305,17 @@ CutoffUnmet.propTypes = {
   filters: PropTypes.arrayOf(PropTypes.object).isRequired,
   columns: PropTypes.arrayOf(PropTypes.object).isRequired,
   totalRecords: PropTypes.number,
-  isSearchingForCutoffUnmetBooks: PropTypes.bool.isRequired,
+  isSearching: PropTypes.bool.isRequired,
   isSaving: PropTypes.bool.isRequired,
   onFilterSelect: PropTypes.func.isRequired,
   onSearchSelectedPress: PropTypes.func.isRequired,
-  batchToggleCutoffUnmetBooks: PropTypes.func.isRequired,
-  onSearchAllCutoffUnmetPress: PropTypes.func.isRequired
+  canUseRowActions: PropTypes.bool.isRequired,
+  selectionScope: PropTypes.string.isRequired,
+  queuedBookIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+  fileQualities: PropTypes.object.isRequired,
+  monitorError: PropTypes.object,
+  onToggleSelectedPress: PropTypes.func.isRequired,
+  onSearchAllPress: PropTypes.func.isRequired
 };
 
 export default CutoffUnmet;

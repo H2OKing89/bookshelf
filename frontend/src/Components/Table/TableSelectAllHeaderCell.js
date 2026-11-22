@@ -18,6 +18,7 @@ function TableSelectAllHeaderCell(props) {
   const {
     allSelected,
     allUnselected,
+    isSelectAllDisabled,
     onSelectAllChange
   } = props;
 
@@ -32,6 +33,7 @@ function TableSelectAllHeaderCell(props) {
         className={styles.input}
         name="selectAll"
         value={value}
+        isDisabled={isSelectAllDisabled}
         onChange={onSelectAllChange}
       />
     </VirtualTableHeaderCell>
@@ -41,6 +43,7 @@ function TableSelectAllHeaderCell(props) {
 TableSelectAllHeaderCell.propTypes = {
   allSelected: PropTypes.bool.isRequired,
   allUnselected: PropTypes.bool.isRequired,
+  isSelectAllDisabled: PropTypes.bool,
   onSelectAllChange: PropTypes.func.isRequired
 };
 

@@ -15,6 +15,7 @@ import { fetchHealth } from 'Store/Actions/systemActions';
 import { fetchTagDetails, fetchTags } from 'Store/Actions/tagActions';
 import { repopulatePage } from 'Utilities/pagePopulator';
 import titleCase from 'Utilities/String/titleCase';
+import { clearWantedRefresh, refreshWantedPages, scheduleWantedQueueDetailsRefresh, scheduleWantedRefresh } from 'Wanted/wantedPageQuery';
 
 function getHandlerName(name) {
   name = titleCase(name);
@@ -129,6 +130,7 @@ class SignalRConnector extends Component {
 
   componentWillUnmount() {
     clearHistoryRefresh();
+    clearWantedRefresh();
     this.connection.stop();
     this.connection = null;
   }
@@ -196,11 +198,12 @@ class SignalRConnector extends Component {
           id: body.resource.id
         });
       }
-    } else if (action !== 'sync') {
+    } else if (action !== 'sync' && action !== 'created') {
       return;
     }
 
     scheduleHistoryRefresh();
+    scheduleWantedRefresh();
   };
 
   handleBookfile = (body) => {
@@ -209,13 +212,19 @@ class SignalRConnector extends Component {
     if (body.action === 'updated') {
       this.props.dispatchUpdateItem({ section, ...body.resource });
     } else if (body.action === 'deleted') {
-      this.props.dispatchRemoveItem({ section, id: body.resource.id });
+      if (body.resource) {
+        this.props.dispatchRemoveItem({ section, id: body.resource.id });
+      }
 
       repopulatePage('bookFileDeleted');
     }
 
     // Repopulate the page to handle recently imported file
     repopulatePage('bookFileUpdated');
+
+    if (['created', 'updated', 'deleted', 'sync'].includes(body.action)) {
+      scheduleWantedRefresh();
+    }
   };
 
   handleHealth = () => {
@@ -242,11 +251,12 @@ class SignalRConnector extends Component {
         this.props.dispatchRemoveItem({ section, id: body.resource.id });
         this.props.dispatchDeleteAuthorBooks({ authorId: body.resource.id });
       }
-    } else if (action !== 'sync') {
+    } else if (action !== 'sync' && action !== 'created') {
       return;
     }
 
     scheduleHistoryRefresh();
+    scheduleWantedRefresh();
   };
 
   handleQualitydefinition = () => {
@@ -261,6 +271,7 @@ class SignalRConnector extends Component {
 
   handleQueueDetails = () => {
     this.props.dispatchFetchQueueDetails();
+    scheduleWantedQueueDetailsRefresh();
   };
 
   handleQueueStatus = (body) => {
@@ -274,22 +285,14 @@ class SignalRConnector extends Component {
   };
 
   handleWantedCutoff = (body) => {
-    if (body.action === 'updated') {
-      this.props.dispatchUpdateItem({
-        section: 'wanted.cutoffUnmet',
-        updateOnly: true,
-        ...body.resource
-      });
+    if (['created', 'updated', 'deleted', 'sync'].includes(body?.action)) {
+      scheduleWantedRefresh('cutoffUnmet');
     }
   };
 
   handleWantedMissing = (body) => {
-    if (body.action === 'updated') {
-      this.props.dispatchUpdateItem({
-        section: 'wanted.missing',
-        updateOnly: true,
-        ...body.resource
-      });
+    if (['created', 'updated', 'deleted', 'sync'].includes(body?.action)) {
+      scheduleWantedRefresh('missing');
     }
   };
 
@@ -365,6 +368,7 @@ class SignalRConnector extends Component {
     dispatchFetchAuthor();
     dispatchFetchCommands();
     refreshHistoryPages();
+    refreshWantedPages();
     repopulatePage();
   };
 

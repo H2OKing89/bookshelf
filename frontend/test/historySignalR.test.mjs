@@ -47,6 +47,7 @@ function setup(t) {
     })
   });
   const legacy = [];
+  const wanted = [];
   const { default: Connector } = loadFrontendModule('Components/SignalRConnector', {
     '@microsoft/signalr/dist/browser/signalr.js': {},
     'react-redux': { connect: () => (component) => component },
@@ -61,11 +62,18 @@ function setup(t) {
     'Store/Actions/settingsActions': {},
     'Store/Actions/systemActions': {},
     'Store/Actions/tagActions': {},
-    'Utilities/pagePopulator': { repopulatePage: () => legacy.push('repopulate') }
+    'Utilities/pagePopulator': { repopulatePage: () => legacy.push('repopulate') },
+    'Wanted/wantedPageQuery': {
+      clearWantedRefresh: () => wanted.push('clear'),
+      refreshWantedPages: () => wanted.push('reconnect'),
+      scheduleWantedQueueDetailsRefresh: () => wanted.push('queue details'),
+      scheduleWantedRefresh: (kind) => wanted.push(kind ?? 'both')
+    }
   });
   const connector = new Connector({
     dispatchFetchAuthor: () => legacy.push('authors'),
     dispatchFetchCommands: () => legacy.push('commands'),
+    dispatchFetchQueueDetails: () => legacy.push('queue details'),
     dispatchSetAppValue: () => legacy.push('connection'),
     dispatchUpdateItem: (item) => legacy.push(item),
     dispatchRemoveItem: (item) => legacy.push(item),
@@ -90,7 +98,7 @@ function setup(t) {
     return observer;
   }
 
-  return { client, connector, legacy, options, requests, timers, watch, scheduleLocalRefresh: history.scheduleHistoryRefresh };
+  return { client, connector, legacy, options, requests, timers, wanted, watch, scheduleLocalRefresh: history.scheduleHistoryRefresh };
 }
 
 function nextTurn() {
@@ -154,4 +162,21 @@ test('reconnect invalidates inactive history, absorbs scheduled work, and preser
   connector.componentWillUnmount();
   assert.equal(timers.size, 0);
   assert.equal(legacy.at(-1), 'stop');
+});
+
+test('Wanted routes membership events and queue details to the matching query scopes', (t) => {
+  const { connector, legacy, wanted } = setup(t);
+  connector.handleMessage({ name: 'wanted/missing', body: { action: 'updated' } });
+  connector.handleMessage({ name: 'wanted/cutoff', body: { action: 'sync' } });
+  connector.handleMessage({ name: 'wanted/missing', body: { action: 'ignored' } });
+  connector.handleMessage({ name: 'bookfile', body: { action: 'updated', resource: { id: 11 } } });
+  connector.handleMessage({ name: 'book', body: { action: 'updated', resource: { id: 12 } } });
+  connector.handleMessage({ name: 'author', body: { action: 'sync' } });
+  connector.handleMessage({ name: 'queue/details', body: { action: 'sync' } });
+  connector.onReconnected();
+  connector.connection = { stop: () => {} };
+  connector.componentWillUnmount();
+
+  assert.deepEqual(wanted, ['missing', 'cutoffUnmet', 'both', 'both', 'both', 'queue details', 'reconnect', 'clear']);
+  assert.equal(legacy.filter((call) => call === 'queue details').length, 1);
 });

@@ -21,11 +21,19 @@ class BookSearchCell extends Component {
     };
   }
 
+  componentDidUpdate() {
+    if (this.props.isDisabled && this.state.isDetailsModalOpen) {
+      this.onDetailsModalClose();
+    }
+  }
+
   //
   // Listeners
 
   onManualSearchPress = () => {
-    this.setState({ isDetailsModalOpen: true });
+    if (!this.props.isDisabled) {
+      this.setState({ isDetailsModalOpen: true });
+    }
   };
 
   onDetailsModalClose = () => {
@@ -41,6 +49,7 @@ class BookSearchCell extends Component {
       bookTitle,
       authorName,
       isSearching,
+      isDisabled,
       onSearchPress,
       ...otherProps
     } = this.props;
@@ -50,18 +59,20 @@ class BookSearchCell extends Component {
         <SpinnerIconButton
           name={icons.SEARCH}
           isSpinning={isSearching}
+          isDisabled={isDisabled}
           aria-label={translate('SearchBook')}
-          onPress={onSearchPress}
+          onPress={isDisabled ? undefined : onSearchPress}
         />
 
         <IconButton
           name={icons.INTERACTIVE}
+          isDisabled={isDisabled}
           aria-label={translate('InteractiveSearchModalHeader')}
           onPress={this.onManualSearchPress}
         />
 
         <BookInteractiveSearchModalConnector
-          isOpen={this.state.isDetailsModalOpen}
+          isOpen={this.state.isDetailsModalOpen && !isDisabled}
           bookId={bookId}
           bookTitle={bookTitle}
           authorName={authorName}
@@ -80,6 +91,7 @@ BookSearchCell.propTypes = {
   bookTitle: PropTypes.string.isRequired,
   authorName: PropTypes.string.isRequired,
   isSearching: PropTypes.bool.isRequired,
+  isDisabled: PropTypes.bool,
   onSearchPress: PropTypes.func.isRequired
 };
 
