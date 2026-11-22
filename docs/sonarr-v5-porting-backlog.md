@@ -110,12 +110,12 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [U10](#u10) | P1 | Verified | M | Keyed pagination that retains previous rows |
 | [U11](#u11) | P1 | Verified | L | Deliberate SignalR-to-cache synchronization |
 | [U12](#u12) | P1 | Verified | M | Preserve preferences while splitting state into small stores |
-| [U13](#u13) | P2 | Planned | M | Local id-based selection with row subscriptions |
+| [U13](#u13) | P2 | Verified | M | Local id-based selection with row subscriptions |
 | [U14](#u14) | P1 | Verified | M | Typed isolated pending settings state |
 | [U15](#u15) | P1 | Verified | M | Unified route/close/unload protection for dirty forms |
-| [U16](#u16) | P2 | Planned | L | Data-router navigation with a single basename |
+| [U16](#u16) | P2 | Verified | L | Data-router navigation with a single basename |
 | [U17](#u17) | P1 | Verified | M | Keep Queue stable while a user acts, and coalesce refreshes |
-| [U18](#u18) | P2 | Planned | M | Rich Queue/History filter builders |
+| [U18](#u18) | P2 | Verified | M | Rich Queue/History filter builders |
 | [U19](#u19) | P2 | Planned | L | Responsive release cards with variable-height virtualization |
 | [U20](#u20) | P2 | Planned | M | Text filtering and intentional caching of interactive searches |
 | [U21](#u21) | P2 | Planned | M | Simplify existing library virtualization after measuring it |
@@ -2844,6 +2844,12 @@ Malformed storage falls back to available legacy data or defaults. See
 
 Adopt behavior/shared utilities first; Zustand is optional until profiling demonstrates rerender costs. **Dependencies:** U07, U21 if virtualization changes; stable local ids. **Acceptance:** select-all includes offscreen items within the documented scope, disabled rows stay disabled, sort/filter/row deletion/addition clears invalid anchors without losing surviving selections, and bulk operations never use grouped-volume ids or stale hidden rows. Keep the existing file deletion regression cases. Check S5's modern iterator-helper calls against supported browsers before copying them.
 
+**2026-11-22 Wanted slice.** Missing and Cutoff Unmet share a typed selection
+model keyed by local book IDs. Select All applies to the active page. Sorting
+keeps eligible selections that are still present and resets the Shift-select
+anchor. Placeholder rows stay inert during request transitions. See
+[local validation](local-validation.md#u13-u16-and-u18-selection-navigation-and-filters-verification-2026-11-22).
+
 ### U14
 
 **Typed isolated pending settings state**
@@ -2905,6 +2911,13 @@ installed router's fallback. See
 
 Do this separately from Query or Vite. Define compatibility for all existing Bookshelf URLs, author/book/recording details, current-page/scroll restoration and dirty-form navigation. **Dependencies:** U06, U15 browser fixtures; audit links/redirects/withRouter/connectors. **Acceptance:** direct links/reload/back/forward/query/hash and both root/subpath hosting work without duplicate prefixes; browser bookmarks preserve targets; not-found and auth redirects work; retained ebook and local-recording routes remain available. Do not move Sonarr route names into Bookshelf.
 
+**2026-11-22 implementation.** Bookshelf uses React Router 7.18.4 with one
+deployment basename. The data router keeps the existing URLs and uses its
+blocker for dirty settings and editor drafts. Browser history positions from
+U15 carry forward during an upgrade. Collection page and scroll restoration
+use the router's navigation type and location. See
+[local validation](local-validation.md#u13-u16-and-u18-selection-navigation-and-filters-verification-2026-11-22).
+
 ### U17
 
 **Keep Queue stable while a user acts, and coalesce refreshes**
@@ -2942,6 +2955,13 @@ before sending the first download. See
 **P2; medium; partial; available in pinned v5.** S5 `Activity/Queue/useQueue.ts:19-85` and `Activity/History/useHistory.ts:88-129` define rich custom filter builders. B Queue currently offers `includeUnknownAuthorItems` (`Store/Actions/queueActions.js:29-32,176-178`) without the richer builder; B History has fixed event presets (`historyActions.js:104-200`) rather than equivalent filterBuilderProps.
 
 Extend the existing filter framework to author/book-or-recording ids, status, protocol, quality, language and event type only where the API implements them. Add marketplace/narrator/local provenance filters as separate Bookshelf designs with server support. **Dependencies:** backend paging/filter contract, validation, U12 migration if persisted. **Acceptance:** combined filters round-trip, counts/paging use the same predicate, unknown-author items remain controllable, invalid/deleted saved filters recover safely, and empty/filtered-empty states stay clear. Never copy Sonarr event numbers: B import failure=7, retagged=9, ignored=10, while S5 History ignored=7 (`useHistory.ts:75-83`). Preserve Bookshelf's existing custom author/release filters.
+
+**2026-11-22 implementation.** Activity History can save a book and several
+event types alongside the existing quick presets. Activity Queue combines
+download status and protocol and preserves the unknown-author option. Queue
+applies its predicates before counting and paging tracked and pending items.
+Both tables distinguish filtered results with no matches from an empty table.
+See [local validation](local-validation.md#u13-u16-and-u18-selection-navigation-and-filters-verification-2026-11-22).
 
 ### U19
 

@@ -1218,3 +1218,38 @@ Use `validate-local.py --checks settingsdrafts queuepaging` with the runtime,
 Playwright, and output arguments. Evidence is under
 `_temp/u12-u14-u15-20261121/`. See `settings-verified/summary.json` and
 `paging-final/summary.json` for the browser results.
+
+## U13, U16 and U18 selection, navigation and filters verification (2026-11-22)
+
+`26b7e8e85` adds Wanted selection by local book ID. `38893c6a8` moves the
+application to React Router 7.18.4 and keeps the unsaved-draft guard.
+`6a099f7f3` adds History and Queue filters. The glibc and musl Linux x64
+packages carry matching clean provenance from `6a099f7f3`.
+
+- Both TypeScript projects, frontend lint, **114 frontend tests**, **75 API
+  tests**, and **149 Python tooling tests** passed. The production Webpack
+  build verified CSS types.
+- **36 navigation checks** passed with disposable homes at `/` and under
+  `/bookshelf-validation`. The browser checked login return URLs, direct
+  recording bookmarks, fragments and query strings, Back and Forward, the
+  recording-to-author link, Calendar, and the application not-found route.
+- **40 settings checks** passed with the new router, including dirty Back and
+  Forward, reload, same-route query and fragment changes, and dialog close on
+  desktop and phone.
+- **32 Wanted checks** passed, including Shift ranges, active-page Select All,
+  and preserving surviving book IDs through a sort. **39 History paging** and
+  **20 live-sync checks** passed, covering combined book and event filters,
+  saved filters, recovery from invalid storage, desktop and phone.
+- **32 Queue checks** passed. The browser verified filter round-trips,
+  filter-specific empty results, and the unknown-author preference. The
+  published endpoint accepted supported filters and rejected invalid values.
+  The API tests checked counts and page contents across tracked and pending
+  jobs. The browser table used synthetic rows.
+- **612 delivery checks** passed, including **305 acquisition** and **56 musl
+  Docker** checks. Identity, authentication, provider accessibility, and
+  library review verification also passed.
+
+Use `validate-local.py --checks routernavigation settingsdrafts queuepaging
+wantedpaging historypaging historysync` with the runtime, Playwright, and
+output arguments. See `navigation-verified/summary.json` and
+`paging-verified/summary.json` under `_temp/u13-u16-u18-20261122/`.

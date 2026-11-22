@@ -1344,3 +1344,14 @@ Settings protects dirty forms during navigation and reload. Closing the
 Add/Edit Download Client dialog can discard its edits while keeping the
 settings page's draft. See
 [local validation](local-validation.md#u12-u14-and-u15-preferences-and-settings-verification-2026-11-21).
+
+### U13, U16 and U18 selection, navigation and filters — 2026-11-22
+
+Wanted bulk selection follows local book IDs on the active page. Bookshelf
+uses the React Router data router with one deployment basename and carries
+forward dirty-form protection, bookmarks, and collection state restoration.
+
+History can combine a book with several event types and save the filter.
+Queue can combine download status with protocol. Both apply filters across
+the full results before counting and paging. See
+[local validation](local-validation.md#u13-u16-and-u18-selection-navigation-and-filters-verification-2026-11-22).
