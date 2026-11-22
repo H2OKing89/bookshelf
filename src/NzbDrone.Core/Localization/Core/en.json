@@ -1230,6 +1230,7 @@
   "UnableToLoadDownloadClients": "Unable to load download clients",
   "UnableToLoadGeneralSettings": "Unable to load General settings",
   "UnableToLoadHistory": "Unable to load history.",
+  "UnableToMarkHistoryAsFailed": "Unable to mark this history item as failed.",
   "UnableToLoadImportListExclusions": "Unable to load Import List Exclusions",
   "UnableToLoadIndexerOptions": "Unable to load indexer options",
   "UnableToLoadIndexers": "Unable to load Indexers",

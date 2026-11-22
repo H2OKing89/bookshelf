@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import Alert from 'Components/Alert';
 import Button from 'Components/Link/Button';
 import SpinnerButton from 'Components/Link/SpinnerButton';
 import Modal from 'Components/Modal/Modal';
@@ -8,6 +9,7 @@ import ModalContent from 'Components/Modal/ModalContent';
 import ModalFooter from 'Components/Modal/ModalFooter';
 import ModalHeader from 'Components/Modal/ModalHeader';
 import { kinds } from 'Helpers/Props';
+import translate from 'Utilities/String/translate';
 import HistoryDetails from './HistoryDetails';
 import styles from './HistoryDetailsModal.css';
 
@@ -43,6 +45,7 @@ function HistoryDetailsModal(props) {
     sourceTitle,
     data,
     isMarkingAsFailed,
+    markAsFailedError,
     shortDateFormat,
     timeFormat,
     onMarkAsFailedPress,
@@ -60,6 +63,12 @@ function HistoryDetailsModal(props) {
         </ModalHeader>
 
         <ModalBody>
+          {
+            markAsFailedError &&
+              <Alert kind={kinds.DANGER} role="alert">
+                {translate('UnableToMarkHistoryAsFailed')}
+              </Alert>
+          }
           <HistoryDetails
             eventType={eventType}
             sourceTitle={sourceTitle}
@@ -99,6 +108,7 @@ HistoryDetailsModal.propTypes = {
   sourceTitle: PropTypes.string.isRequired,
   data: PropTypes.object.isRequired,
   isMarkingAsFailed: PropTypes.bool.isRequired,
+  markAsFailedError: PropTypes.object,
   shortDateFormat: PropTypes.string.isRequired,
   timeFormat: PropTypes.string.isRequired,
   onMarkAsFailedPress: PropTypes.func.isRequired,

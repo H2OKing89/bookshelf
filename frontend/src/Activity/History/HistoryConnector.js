@@ -1,11 +1,14 @@
+import { useQuery } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import withCurrentPage from 'Components/withCurrentPage';
 import * as historyActions from 'Store/Actions/historyActions';
+import findSelectedFilters from 'Utilities/Filter/findSelectedFilters';
 import { registerPagePopulator, unregisterPagePopulator } from 'Utilities/pagePopulator';
 import History from './History';
+import historyPageQueryOptions, { invalidateHistoryPages } from './historyPageQuery';
 
 function createMapStateToProps() {
   return createSelector(
@@ -26,114 +29,105 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  ...historyActions
+  setHistoryFilter: historyActions.setHistoryFilter,
+  setHistoryPage: historyActions.setHistoryPage,
+  setHistorySort: historyActions.setHistorySort,
+  setHistoryTableOption: historyActions.setHistoryTableOption
 };
 
-class HistoryConnector extends Component {
+function HistoryConnector(props) {
+  const {
+    useCurrentPage,
+    page: storedPage,
+    pageSize,
+    sortKey,
+    sortDirection,
+    selectedFilterKey,
+    filters,
+    setHistoryFilter,
+    setHistoryPage,
+    setHistorySort,
+    setHistoryTableOption,
+    ...otherProps
+  } = props;
 
-  //
-  // Lifecycle
+  // Ignore the remembered page for a new visit, before the query can fetch it.
+  const [pageInitialized, setPageInitialized] = useState(useCurrentPage);
+  const page = pageInitialized ? storedPage : 1;
+  const eventTypes = findSelectedFilters(selectedFilterKey, filters)
+    .filter((filter) => filter.key === 'eventType')
+    .map((filter) => filter.value);
+  const query = useQuery(historyPageQueryOptions({ page, pageSize, sortKey, sortDirection, eventTypes }));
 
-  componentDidMount() {
-    const {
-      useCurrentPage,
-      fetchHistory,
-      gotoHistoryFirstPage
-    } = this.props;
+  const totalRecords = query.data?.totalRecords ?? 0;
+  const totalPages = Math.max(Math.ceil(totalRecords / (query.data?.pageSize ?? pageSize)), 1);
+  const needsClamp = query.isSuccess && !query.isPlaceholderData && page > totalPages;
 
-    registerPagePopulator(this.repopulate);
+  useLayoutEffect(() => {
+    if (!pageInitialized) {
+      setHistoryPage(1);
+      setPageInitialized(true);
+    } else if (needsClamp) {
+      setHistoryPage(totalPages);
+    }
+  }, [needsClamp, pageInitialized, setHistoryPage, totalPages]);
 
-    if (useCurrentPage) {
-      fetchHistory();
+  useEffect(() => {
+    registerPagePopulator(invalidateHistoryPages);
+    return () => unregisterPagePopulator(invalidateHistoryPages);
+  }, []);
+
+  const goToPage = (value) => setHistoryPage(Math.min(Math.max(value, 1), totalPages));
+
+  const onRefreshPress = () => {
+    if (page === 1) {
+      query.refetch();
     } else {
-      gotoHistoryFirstPage();
-    }
-  }
-
-  componentWillUnmount() {
-    unregisterPagePopulator(this.repopulate);
-    this.props.clearHistory();
-  }
-
-  //
-  // Control
-
-  repopulate = () => {
-    this.props.fetchHistory();
-  };
-
-  //
-  // Listeners
-
-  onFirstPagePress = () => {
-    this.props.gotoHistoryFirstPage();
-  };
-
-  onPreviousPagePress = () => {
-    this.props.gotoHistoryPreviousPage();
-  };
-
-  onNextPagePress = () => {
-    this.props.gotoHistoryNextPage();
-  };
-
-  onLastPagePress = () => {
-    this.props.gotoHistoryLastPage();
-  };
-
-  onPageSelect = (page) => {
-    this.props.gotoHistoryPage({ page });
-  };
-
-  onSortPress = (sortKey) => {
-    this.props.setHistorySort({ sortKey });
-  };
-
-  onFilterSelect = (selectedFilterKey) => {
-    this.props.setHistoryFilter({ selectedFilterKey });
-  };
-
-  onTableOptionChange = (payload) => {
-    this.props.setHistoryTableOption(payload);
-
-    if (payload.pageSize) {
-      this.props.gotoHistoryFirstPage();
+      goToPage(1);
     }
   };
 
-  //
-  // Render
-
-  render() {
-    return (
-      <History
-        onFirstPagePress={this.onFirstPagePress}
-        onPreviousPagePress={this.onPreviousPagePress}
-        onNextPagePress={this.onNextPagePress}
-        onLastPagePress={this.onLastPagePress}
-        onPageSelect={this.onPageSelect}
-        onSortPress={this.onSortPress}
-        onFilterSelect={this.onFilterSelect}
-        onTableOptionChange={this.onTableOptionChange}
-        {...this.props}
-      />
-    );
-  }
+  return (
+    <History
+      {...otherProps}
+      page={page}
+      pageSize={pageSize}
+      sortKey={sortKey}
+      sortDirection={sortDirection}
+      selectedFilterKey={selectedFilterKey}
+      filters={filters}
+      items={query.data?.records ?? []}
+      totalPages={Math.max(page, totalPages)}
+      totalRecords={totalRecords}
+      isFetching={query.isPending || query.isFetching || needsClamp}
+      isPopulated={!!query.data}
+      canUseRowActions={query.isSuccess && !query.isPlaceholderData && !needsClamp}
+      error={query.error}
+      onRefreshPress={onRefreshPress}
+      onFirstPagePress={() => goToPage(1)}
+      onPreviousPagePress={() => goToPage(page - 1)}
+      onNextPagePress={() => goToPage(page + 1)}
+      onLastPagePress={() => goToPage(totalPages)}
+      onPageSelect={goToPage}
+      onSortPress={(nextKey, nextDirection) => setHistorySort({ sortKey: nextKey, sortDirection: nextDirection })}
+      onFilterSelect={setHistoryFilter}
+      onTableOptionChange={setHistoryTableOption}
+    />
+  );
 }
 
 HistoryConnector.propTypes = {
   useCurrentPage: PropTypes.bool.isRequired,
-  items: PropTypes.arrayOf(PropTypes.object).isRequired,
-  fetchHistory: PropTypes.func.isRequired,
-  gotoHistoryFirstPage: PropTypes.func.isRequired,
-  gotoHistoryPreviousPage: PropTypes.func.isRequired,
-  gotoHistoryNextPage: PropTypes.func.isRequired,
-  gotoHistoryLastPage: PropTypes.func.isRequired,
-  gotoHistoryPage: PropTypes.func.isRequired,
-  setHistorySort: PropTypes.func.isRequired,
+  page: PropTypes.number.isRequired,
+  pageSize: PropTypes.number.isRequired,
+  sortKey: PropTypes.string.isRequired,
+  sortDirection: PropTypes.string.isRequired,
+  selectedFilterKey: PropTypes.string.isRequired,
+  filters: PropTypes.arrayOf(PropTypes.object).isRequired,
   setHistoryFilter: PropTypes.func.isRequired,
-  setHistoryTableOption: PropTypes.func.isRequired,
-  clearHistory: PropTypes.func.isRequired
+  setHistoryPage: PropTypes.func.isRequired,
+  setHistorySort: PropTypes.func.isRequired,
+  setHistoryTableOption: PropTypes.func.isRequired
 };
 
 export default withCurrentPage(

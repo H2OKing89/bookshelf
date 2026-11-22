@@ -1,11 +1,12 @@
+import { useIsMutating, useMutation, useQueryClient } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
-import { fetchHistory, markAsFailed } from 'Store/Actions/historyActions';
 import createAuthorSelector from 'Store/Selectors/createAuthorSelector';
 import createBookSelector from 'Store/Selectors/createBookSelector';
 import createUISettingsSelector from 'Store/Selectors/createUISettingsSelector';
+import { invalidateHistoryPages, markHistoryAsFailed } from './historyPageQuery';
 import HistoryRow from './HistoryRow';
 
 function createMapStateToProps() {
@@ -24,52 +25,38 @@ function createMapStateToProps() {
   );
 }
 
-const mapDispatchToProps = {
-  fetchHistory,
-  markAsFailed
-};
+function HistoryRowConnector({ id, canUseRowActions, ...otherProps }) {
+  const queryClient = useQueryClient();
+  const mutationKey = ['markHistoryAsFailed', window.Readarr.apiRoot, id];
+  const isMarkingAsFailed = useIsMutating({ mutationKey, exact: true }) > 0;
+  const mutation = useMutation({
+    mutationKey,
+    mutationFn: markHistoryAsFailed,
+    networkMode: 'always',
+    onSuccess: () => { invalidateHistoryPages(); }
+  });
 
-class HistoryRowConnector extends Component {
-
-  //
-  // Lifecycle
-
-  componentDidUpdate(prevProps) {
-    if (
-      prevProps.isMarkingAsFailed &&
-      !this.props.isMarkingAsFailed &&
-      !this.props.markAsFailedError
-    ) {
-      this.props.fetchHistory();
+  const onMarkAsFailedPress = () => {
+    if (canUseRowActions && !queryClient.isMutating({ mutationKey, exact: true })) {
+      mutation.mutate(id);
     }
-  }
-
-  //
-  // Listeners
-
-  onMarkAsFailedPress = () => {
-    this.props.markAsFailed({ id: this.props.id });
   };
 
-  //
-  // Render
-
-  render() {
-    return (
-      <HistoryRow
-        {...this.props}
-        onMarkAsFailedPress={this.onMarkAsFailedPress}
-      />
-    );
-  }
+  return (
+    <HistoryRow
+      id={id}
+      {...otherProps}
+      canUseRowActions={canUseRowActions}
+      isMarkingAsFailed={isMarkingAsFailed}
+      markAsFailedError={mutation.error}
+      onMarkAsFailedPress={onMarkAsFailedPress}
+    />
+  );
 }
 
 HistoryRowConnector.propTypes = {
   id: PropTypes.number.isRequired,
-  isMarkingAsFailed: PropTypes.bool,
-  markAsFailedError: PropTypes.object,
-  fetchHistory: PropTypes.func.isRequired,
-  markAsFailed: PropTypes.func.isRequired
+  canUseRowActions: PropTypes.bool.isRequired
 };
 
-export default connect(createMapStateToProps, mapDispatchToProps)(HistoryRowConnector);
+export default connect(createMapStateToProps)(HistoryRowConnector);

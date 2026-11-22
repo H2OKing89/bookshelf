@@ -25,6 +25,7 @@ class History extends Component {
     const {
       isFetching,
       isPopulated,
+      canUseRowActions,
       error,
       items,
       columns,
@@ -37,6 +38,7 @@ class History extends Component {
       isBooksPopulated,
       booksError,
       onFilterSelect,
+      onRefreshPress,
       onFirstPagePress,
       ...otherProps
     } = this.props;
@@ -53,7 +55,7 @@ class History extends Component {
               label={translate('Refresh')}
               iconName={icons.REFRESH}
               isSpinning={isFetching}
-              onPress={onFirstPagePress}
+              onPress={onRefreshPress}
             />
           </PageToolbarSection>
 
@@ -95,15 +97,15 @@ class History extends Component {
             // If history isPopulated and it's empty show no history found and don't
             // wait for the books to populate because they are never coming.
 
-            isPopulated && !hasError && !items.length &&
+            isPopulated && canUseRowActions && !hasError && !items.length &&
               <Alert kind={kinds.INFO}>
                 {translate('NoHistory')}
               </Alert>
           }
 
           {
-            isAllPopulated && !hasError && !!items.length &&
-              <div>
+            isAllPopulated && !booksError && !!items.length &&
+              <div aria-busy={isFetching}>
                 <Table
                   columns={columns}
                   {...otherProps}
@@ -116,6 +118,7 @@ class History extends Component {
                             key={item.id}
                             columns={columns}
                             {...item}
+                            canUseRowActions={canUseRowActions}
                           />
                         );
                       })
@@ -140,6 +143,7 @@ class History extends Component {
 History.propTypes = {
   isFetching: PropTypes.bool.isRequired,
   isPopulated: PropTypes.bool.isRequired,
+  canUseRowActions: PropTypes.bool.isRequired,
   error: PropTypes.object,
   items: PropTypes.arrayOf(PropTypes.object).isRequired,
   columns: PropTypes.arrayOf(PropTypes.object).isRequired,
@@ -152,6 +156,7 @@ History.propTypes = {
   isBooksPopulated: PropTypes.bool.isRequired,
   booksError: PropTypes.object,
   onFilterSelect: PropTypes.func.isRequired,
+  onRefreshPress: PropTypes.func.isRequired,
   onFirstPagePress: PropTypes.func.isRequired
 };
 

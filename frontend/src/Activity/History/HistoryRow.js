@@ -31,9 +31,9 @@ class HistoryRow extends Component {
 
   componentDidUpdate(prevProps) {
     if (
-      prevProps.isMarkingAsFailed &&
-      !this.props.isMarkingAsFailed &&
-      !this.props.markAsFailedError
+      this.state.isDetailsModalOpen &&
+      (!this.props.canUseRowActions ||
+        (prevProps.isMarkingAsFailed && !this.props.isMarkingAsFailed && !this.props.markAsFailedError))
     ) {
       this.setState({ isDetailsModalOpen: false });
     }
@@ -43,7 +43,9 @@ class HistoryRow extends Component {
   // Listeners
 
   onDetailsPress = () => {
-    this.setState({ isDetailsModalOpen: true });
+    if (this.props.canUseRowActions) {
+      this.setState({ isDetailsModalOpen: true });
+    }
   };
 
   onDetailsModalClose = () => {
@@ -65,7 +67,9 @@ class HistoryRow extends Component {
       sourceTitle,
       date,
       data,
+      canUseRowActions,
       isMarkingAsFailed,
+      markAsFailedError,
       columns,
       shortDateFormat,
       timeFormat,
@@ -223,6 +227,7 @@ class HistoryRow extends Component {
                     <IconButton
                       name={icons.INFO}
                       aria-label={translate('HistoryDetails')}
+                      isDisabled={!canUseRowActions}
                       onPress={this.onDetailsPress}
                     />
                   </div>
@@ -235,11 +240,12 @@ class HistoryRow extends Component {
         }
 
         <HistoryDetailsModal
-          isOpen={this.state.isDetailsModalOpen}
+          isOpen={this.state.isDetailsModalOpen && canUseRowActions}
           eventType={eventType}
           sourceTitle={sourceTitle}
           data={data}
           isMarkingAsFailed={isMarkingAsFailed}
+          markAsFailedError={markAsFailedError}
           shortDateFormat={shortDateFormat}
           timeFormat={timeFormat}
           onMarkAsFailedPress={onMarkAsFailedPress}
@@ -263,6 +269,7 @@ HistoryRow.propTypes = {
   sourceTitle: PropTypes.string.isRequired,
   date: PropTypes.string.isRequired,
   data: PropTypes.object.isRequired,
+  canUseRowActions: PropTypes.bool.isRequired,
   isMarkingAsFailed: PropTypes.bool,
   markAsFailedError: PropTypes.object,
   columns: PropTypes.arrayOf(PropTypes.object).isRequired,
