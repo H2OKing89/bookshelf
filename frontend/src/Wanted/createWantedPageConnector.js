@@ -38,6 +38,7 @@ function WantedPageConnector(props) {
     filters,
     selectedFilterKey,
     authorItemMap,
+    isAuthorPopulated,
     setWantedPage,
     setWantedFilter,
     setWantedSort,
@@ -71,7 +72,8 @@ function WantedPageConnector(props) {
     networkMode: 'always',
     onSuccess: () => refreshWantedPages()
   });
-  const canUseRowActions = isActivePage && !isSaving;
+  const selectionScope = isActivePage && isAuthorPopulated ? wantedViewKey(request) : null;
+  const canUseRowActions = selectionScope !== null && !isSaving;
 
   useLayoutEffect(() => {
     if (!pageInitialized) {
@@ -86,7 +88,6 @@ function WantedPageConnector(props) {
   const refresh = () => refreshWantedPages(kind);
   const areActiveIds = (ids) => canUseRowActions && ids.length > 0 &&
     ids.every((id) => activeIds.includes(id));
-  const selectionScope = `${wantedViewKey(request)}|${items.map(({ id }) => id).sort((a, b) => a - b).join(',')}`;
 
   return (
     <View
@@ -98,6 +99,7 @@ function WantedPageConnector(props) {
       filters={filters}
       selectedFilterKey={selectedFilterKey}
       items={items}
+      isAuthorPopulated={isAuthorPopulated}
       totalPages={Math.max(page, totalPages)}
       totalRecords={totalRecords}
       isFetching={query.isPending || query.isFetching || needsClamp}
@@ -147,6 +149,7 @@ WantedPageConnector.propTypes = {
   filters: PropTypes.arrayOf(PropTypes.object).isRequired,
   selectedFilterKey: PropTypes.string.isRequired,
   authorItemMap: PropTypes.object.isRequired,
+  isAuthorPopulated: PropTypes.bool.isRequired,
   setWantedPage: PropTypes.func.isRequired,
   setWantedFilter: PropTypes.func.isRequired,
   setWantedSort: PropTypes.func.isRequired,

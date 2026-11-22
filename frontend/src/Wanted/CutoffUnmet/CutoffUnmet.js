@@ -17,10 +17,7 @@ import TablePager from 'Components/Table/TablePager';
 import { align, icons, kinds } from 'Helpers/Props';
 import getFilterValue from 'Utilities/Filter/getFilterValue';
 import translate from 'Utilities/String/translate';
-import getSelectedIds from 'Utilities/Table/getSelectedIds';
-import selectAll from 'Utilities/Table/selectAll';
-import toggleSelected from 'Utilities/Table/toggleSelected';
-import createWantedSelectionState from '../createWantedSelectionState';
+import { emptyWantedSelection, reconcileWantedSelection, selectAllWantedBooks, toggleWantedBook } from '../wantedSelection';
 import CutoffUnmetRowConnector from './CutoffUnmetRowConnector';
 
 function getMonitoredValue(props) {
@@ -41,22 +38,19 @@ class CutoffUnmet extends Component {
     super(props, context);
 
     this.state = {
-      ...createWantedSelectionState(props.items, props.selectionScope),
+      selection: emptyWantedSelection,
       isConfirmSearchAllCutoffUnmetModalOpen: false,
       isInteractiveImportModalOpen: false
     };
   }
 
   static getDerivedStateFromProps(props, state) {
-    if (props.selectionScope !== state.selectionScope) {
+    const selection = reconcileWantedSelection(state.selection, props.selectionScope, props.items);
+    if (selection !== state.selection || (!props.canUseRowActions && state.isConfirmSearchAllCutoffUnmetModalOpen)) {
       return {
-        ...createWantedSelectionState(props.items, props.selectionScope),
+        selection,
         isConfirmSearchAllCutoffUnmetModalOpen: false
       };
-    }
-
-    if (!props.canUseRowActions && state.isConfirmSearchAllCutoffUnmetModalOpen) {
-      return { isConfirmSearchAllCutoffUnmetModalOpen: false };
     }
 
     return null;
@@ -66,7 +60,7 @@ class CutoffUnmet extends Component {
   // Control
 
   getSelectedIds = () => {
-    return this.props.canUseRowActions ? getSelectedIds(this.state.selectedState) : [];
+    return this.props.canUseRowActions ? [...this.state.selection.selectedIds].sort((left, right) => left - right) : [];
   };
 
   //
@@ -74,18 +68,17 @@ class CutoffUnmet extends Component {
 
   onSelectAllChange = ({ value }) => {
     if (this.props.canUseRowActions) {
-      this.setState(selectAll(this.state.selectedState, value));
+      this.setState(({ selection }) => ({ selection: selectAllWantedBooks(selection, value) }));
     }
   };
 
   onSelectedChange = ({ id, value, shiftKey = false }) => {
-    if (!this.props.canUseRowActions || value == null || !Object.hasOwn(this.state.selectedState, id)) {
-      return;
+    if (this.props.canUseRowActions && value != null) {
+      this.setState(({ selection }) => {
+        const nextSelection = toggleWantedBook(selection, id, value, shiftKey);
+        return nextSelection === selection ? null : { selection: nextSelection };
+      });
     }
-
-    this.setState((state) => (state.selectedState[id] === value ?
-      null :
-      toggleSelected(state, this.props.items, id, value, shiftKey)));
   };
 
   onSearchSelectedPress = () => {
@@ -138,16 +131,15 @@ class CutoffUnmet extends Component {
     } = this.props;
 
     const {
-      allSelected,
-      allUnselected,
-      selectedState,
+      selection,
       isConfirmSearchAllCutoffUnmetModalOpen
     } = this.state;
 
     const isAllPopulated = isPopulated && isAuthorPopulated;
     const isAnyFetching = isFetching || isAuthorFetching;
 
-    const itemsSelected = !!this.getSelectedIds().length;
+    const visibleSelectedCount = selectionScope === null ? 0 : selection.selectedIds.size;
+    const itemsSelected = canUseRowActions && visibleSelectedCount > 0;
     const isShowingMonitored = getMonitoredValue(this.props);
 
     return (
@@ -237,8 +229,8 @@ class CutoffUnmet extends Component {
                   columns={columns}
                   selectAll={true}
                   isSelectAllDisabled={!canUseRowActions}
-                  allSelected={allSelected}
-                  allUnselected={allUnselected}
+                  allSelected={visibleSelectedCount > 0 && visibleSelectedCount === selection.bookIds.length}
+                  allUnselected={visibleSelectedCount === 0}
                   {...otherProps}
                   onSelectAllChange={this.onSelectAllChange}
                 >
@@ -248,7 +240,7 @@ class CutoffUnmet extends Component {
                         return (
                           <CutoffUnmetRowConnector
                             key={item.id}
-                            isSelected={selectedState[item.id]}
+                            isSelected={selectionScope !== null && selection.selectedIds.has(item.id)}
                             columns={columns}
                             {...item}
                             canUseRowActions={canUseRowActions}
@@ -310,7 +302,7 @@ CutoffUnmet.propTypes = {
   onFilterSelect: PropTypes.func.isRequired,
   onSearchSelectedPress: PropTypes.func.isRequired,
   canUseRowActions: PropTypes.bool.isRequired,
-  selectionScope: PropTypes.string.isRequired,
+  selectionScope: PropTypes.string,
   queuedBookIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   fileQualities: PropTypes.object.isRequired,
   monitorError: PropTypes.object,

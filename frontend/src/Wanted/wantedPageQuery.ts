@@ -1,5 +1,6 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import queryClient from 'App/queryClient';
+import type { BookId } from 'Book/BookIdentity';
 import fetchJson from 'Utilities/Fetch/fetchJson';
 
 export type WantedKind = 'missing' | 'cutoffUnmet';
@@ -55,7 +56,7 @@ function parseWantedBook(value: unknown) {
   }
 
   return {
-    id,
+    id: id as BookId,
     authorId,
     title,
     titleSlug,

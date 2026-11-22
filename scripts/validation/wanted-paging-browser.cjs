@@ -15,6 +15,15 @@ function action(page, name) {
   return page.getByRole('button', { name, exact: true });
 }
 
+function selectAllBooks(page) {
+  return page.getByRole('table').locator('thead input[name="selectAll"]');
+}
+
+function selectedBookIds(page) {
+  return page.getByRole('table').locator('tbody input[type="checkbox"]:checked')
+    .evaluateAll(inputs => inputs.map(input => Number(input.name)));
+}
+
 async function associateOwnedRecording(page, base, { importFile, importBook }) {
   const resource = 'bookfile/' + importFile + '/recordingreview';
   const key = await page.evaluate(() => window.Readarr.apiKey);
@@ -84,11 +93,37 @@ async function verifyWanted(page, base, config, { check, step, output }) {
   step('missing_change_page_size');
   const resized = responseFor(page, base, missing, args => args.get('pageSize') === '5' && args.get('page') === '1');
   await options.getByLabel('Page Size', { exact: true }).fill('5');
-  await resized;
+  const descending = (await (await resized).json()).records.map(({ id }) => id);
   step('missing_close_options_and_select');
   await page.keyboard.press('Escape');
   await options.waitFor({ state: 'hidden' });
   await pageButton(page, 1, 2).waitFor();
+
+  step('missing_select_all_and_shift_range');
+  const allBooks = selectAllBooks(page);
+  await setCheckbox(allBooks, true);
+  check('missing_select_all_is_scoped_to_the_current_page', (await selectedBookIds(page)).join(',') === descending.join(',') &&
+    descending.length === 5);
+  await setCheckbox(allBooks, false);
+  await setCheckbox(selection(page, descending[0]), true);
+  await selection(page, descending[2]).locator('..').click({ modifiers: ['Shift'] });
+  check('missing_shift_select_uses_the_current_row_order', (await selectedBookIds(page)).join(',') === descending.slice(0, 3).join(','));
+
+  step('missing_sort_preserves_survivors_and_clears_shift_anchor');
+  const sort = page.getByRole('columnheader', { name: 'Release Date', exact: true });
+  const ascendingResponse = responseFor(page, base, missing, args => args.get('page') === '1' && args.get('sortDirection') === 'ascending');
+  await sort.click();
+  const ascending = (await (await ascendingResponse).json()).records.map(({ id }) => id);
+  await selection(page, ascending[0]).locator('xpath=self::*[not(@disabled)]').waitFor();
+  const survivors = ascending.filter(id => descending.slice(0, 3).includes(id));
+  check('missing_sort_keeps_only_selected_books_still_on_the_page', survivors.length === 2 &&
+    (await selectedBookIds(page)).join(',') === survivors.join(','));
+  await selection(page, ascending[1]).locator('..').click({ modifiers: ['Shift'] });
+  check('missing_sort_clears_the_previous_shift_anchor', (await selectedBookIds(page)).join(',') === [ascending[1], ...survivors].join(','));
+
+  await sort.click();
+  await selection(page, descending[0]).locator('xpath=self::*[not(@disabled)]').waitFor();
+  await setCheckbox(allBooks, false);
   await setCheckbox(selection(page, config.importBook), true);
   await action(page, 'Search Selected').locator('xpath=self::*[not(@disabled)]').waitFor();
 
@@ -115,6 +150,7 @@ async function verifyWanted(page, base, config, { check, step, output }) {
     await search.locator('xpath=self::*[@disabled or @aria-disabled="true"]').waitFor();
     check('placeholder_rows_cannot_search_or_change_monitoring', await rows(page).count() === 5 &&
       await selection(page, config.importBook).isVisible() && await search.isDisabled() && await unmonitor.isDisabled() &&
+      await allBooks.isDisabled() && await selection(page, config.importBook).isDisabled() &&
       await rows(page).first().getByRole('button', { name: 'Search Book', exact: true }).isDisabled());
     await search.evaluate(button => button.click());
     await unmonitor.evaluate(button => button.click());
@@ -213,6 +249,14 @@ async function verifyWanted(page, base, config, { check, step, output }) {
     files.map(file => file.bookId).sort((a, b) => a - b).join(',') === config.cutoffBooks.join(',') &&
     files.every(file => file.quality.quality.name === 'MP3') &&
     await secondCutoff.getByText('MP3', { exact: true }).isVisible());
+
+  step('cutoff_select_all_searches_only_active_books');
+  await setCheckbox(selectAllBooks(page), true);
+  const cutoffSearch = page.waitForResponse(response => requestArgs(base, response.request(), 'command', 'POST') !== null);
+  await action(page, 'Search Selected').click();
+  await cutoffSearch;
+  check('cutoff_select_all_sends_the_current_local_book_ids', searches.length === 2 &&
+    searches[1].name === 'BookSearch' && searches[1].bookIds?.join(',') === config.cutoffBooks.join(','));
 
   step('wanted_reconnect_catches_missed_monitoring');
   const missingAgain = responseFor(page, base, missing);
