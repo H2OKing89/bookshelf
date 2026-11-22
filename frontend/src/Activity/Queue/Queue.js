@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Alert from 'Components/Alert';
@@ -14,139 +13,140 @@ import TableBody from 'Components/Table/TableBody';
 import TableOptionsModalWrapper from 'Components/Table/TableOptions/TableOptionsModalWrapper';
 import TablePager from 'Components/Table/TablePager';
 import { align, icons, kinds } from 'Helpers/Props';
-import getRemovedItems from 'Utilities/Object/getRemovedItems';
-import hasDifferentItems from 'Utilities/Object/hasDifferentItems';
 import translate from 'Utilities/String/translate';
-import getSelectedIds from 'Utilities/Table/getSelectedIds';
-import removeOldSelectedState from 'Utilities/Table/removeOldSelectedState';
-import selectAll from 'Utilities/Table/selectAll';
 import toggleSelected from 'Utilities/Table/toggleSelected';
 import QueueOptionsConnector from './QueueOptionsConnector';
+import { holdQueueRefresh, queueTarget, queueTargetsAreCurrent } from './queuePageQuery';
 import QueueRowConnector from './QueueRowConnector';
 import RemoveQueueItemModal from './RemoveQueueItemModal';
 import SubmissionHolds from './SubmissionHolds';
 
 class Queue extends Component {
 
-  //
-  // Lifecycle
-
   constructor(props, context) {
     super(props, context);
 
-    this._shouldBlockRefresh = false;
-
     this.state = {
-      allSelected: false,
-      allUnselected: false,
       lastToggled: null,
-      selectedState: {},
-      isPendingSelected: false,
-      isConfirmRemoveModalOpen: false,
-      items: props.items
+      pageKey: props.pageKey,
+      removal: null,
+      selectedState: {}
     };
   }
 
-  shouldComponentUpdate() {
-    if (this._shouldBlockRefresh) {
-      return false;
-    }
-
-    return true;
+  static getDerivedStateFromProps({ pageKey }, state) {
+    return pageKey === state.pageKey ? null : { pageKey, lastToggled: null, selectedState: {} };
   }
 
   componentDidUpdate(prevProps) {
-    const {
-      items,
-      isFetching,
-      isBooksFetching
-    } = this.props;
-
-    if (
-      (!isBooksFetching && prevProps.isBooksFetching) ||
-      (!isFetching && prevProps.isFetching) ||
-      (hasDifferentItems(prevProps.items, items) && !items.some((e) => e.bookId))
-    ) {
+    const { items, canUseRowActions } = this.props;
+    if (canUseRowActions && (items !== prevProps.items || !prevProps.canUseRowActions)) {
       this.setState((state) => {
-        return {
-          ...removeOldSelectedState(state, getRemovedItems(prevProps.items, items)),
-          items
-        };
+        const ids = new Set(items.map(({ id }) => id));
+        const selectedEntries = Object.entries(state.selectedState);
+        const activeSelection = selectedEntries.filter(([id]) => ids.has(Number(id)));
+        const lastToggled = ids.has(state.lastToggled) ? state.lastToggled : null;
+
+        if (activeSelection.length !== selectedEntries.length || lastToggled !== state.lastToggled) {
+          return { selectedState: Object.fromEntries(activeSelection), lastToggled };
+        }
+
+        return null;
       });
-
-      return;
-    }
-
-    const nextState = {};
-
-    if (prevProps.items !== items) {
-      nextState.items = items;
-    }
-
-    const selectedIds = this.getSelectedIds();
-    const isPendingSelected = _.some(this.props.items, (item) => {
-      return selectedIds.indexOf(item.id) > -1 && item.status === 'delay';
-    });
-
-    if (isPendingSelected !== this.state.isPendingSelected) {
-      nextState.isPendingSelected = isPendingSelected;
-    }
-
-    if (!_.isEmpty(nextState)) {
-      this.setState(nextState);
     }
   }
 
-  //
-  // Control
+  componentWillUnmount() {
+    this.releaseRemovalHold?.();
+  }
 
-  getSelectedIds = () => {
-    return getSelectedIds(this.state.selectedState);
-  };
-
-  //
-  // Listeners
-
-  onQueueRowModalOpenOrClose = (isOpen) => {
-    this._shouldBlockRefresh = isOpen;
-  };
+  getSelectedItems() {
+    return this.props.items.filter(({ id }) => this.state.selectedState[id]);
+  }
 
   onSelectAllChange = ({ value }) => {
-    this.setState(selectAll(this.state.selectedState, value));
+    if (this.props.canUseRowActions) {
+      this.setState({
+        lastToggled: null,
+        selectedState: value ? Object.fromEntries(this.props.items.map(({ id }) => [id, true])) : {}
+      });
+    }
   };
 
   onSelectedChange = ({ id, value, shiftKey = false }) => {
-    this.setState((state) => {
-      return toggleSelected(state, this.props.items, id, value, shiftKey);
-    });
+    const { canUseRowActions, items } = this.props;
+    // TableSelectCell also calls this when mounting or unmounting.
+    if (!canUseRowActions || value == null || !items.some((item) => item.id === id)) {
+      return;
+    }
+
+    this.setState((state) => (value === !!state.selectedState[id] ?
+      null : toggleSelected(state, items, id, value, shiftKey)));
   };
+
+  grab(items, bulk) {
+    if (this.props.canUseRowActions && items.length) {
+      this.props.onQueueAction({ kind: 'grab', bulk, pageKey: this.props.pageKey, targets: items.map(queueTarget) });
+    }
+  }
 
   onGrabSelectedPress = () => {
-    this.props.onGrabSelectedPress(this.getSelectedIds());
+    const items = this.getSelectedItems();
+    if (items.every(({ status }) => status === 'delay')) {
+      this.grab(items, true);
+    }
   };
+
+  onGrabRowPress = (id) => {
+    this.grab(this.props.items.filter((item) => item.id === id), false);
+  };
+
+  openRemoval(items, bulk) {
+    if (!this.props.canUseRowActions || !items.length || this.releaseRemovalHold) {
+      return;
+    }
+
+    this.releaseRemovalHold = holdQueueRefresh();
+    this.setState({
+      removal: {
+        bulk,
+        pageKey: this.props.pageKey,
+        targets: items.map(queueTarget),
+        sourceTitle: bulk ? undefined : items[0].title,
+        canChangeCategory: items.every((item) => item.downloadClientHasPostImportCategory),
+        canIgnore: items.every((item) => item.authorId && (!bulk || item.bookId)),
+        isPending: items.every(({ status }) => status === 'delay' || status === 'downloadClientUnavailable')
+      }
+    });
+  }
 
   onRemoveSelectedPress = () => {
-    this.setState({ isConfirmRemoveModalOpen: true }, () => {
-      this._shouldBlockRefresh = true;
-    });
+    this.openRemoval(this.getSelectedItems(), true);
   };
 
-  onRemoveSelectedConfirmed = (payload) => {
-    this._shouldBlockRefresh = false;
-    this.props.onRemoveSelectedPress({ ids: this.getSelectedIds(), ...payload });
-    this.setState({ isConfirmRemoveModalOpen: false });
+  onRemoveRowPress = (id) => {
+    this.openRemoval(this.props.items.filter((item) => item.id === id), false);
   };
 
-  onConfirmRemoveModalClose = () => {
-    this._shouldBlockRefresh = false;
-    this.setState({ isConfirmRemoveModalOpen: false });
+  onRemoveConfirmed = (options) => {
+    const { removal } = this.state;
+    if (removal) {
+      const { bulk, pageKey, targets } = removal;
+      this.props.onQueueAction({ kind: 'remove', options, bulk, pageKey, targets });
+    }
+    this.onRemovalClose();
   };
 
-  //
-  // Render
+  onRemovalClose = () => {
+    this.releaseRemovalHold?.();
+    this.releaseRemovalHold = undefined;
+    this.setState({ removal: null });
+  };
 
   render() {
     const {
+      actionError,
+      canUseRowActions,
       isFetching,
       isPopulated,
       error,
@@ -156,29 +156,26 @@ class Queue extends Component {
       isBooksPopulated,
       booksError,
       columns,
+      items,
+      pageKey,
+      pendingAction,
       totalRecords,
-      isGrabbing,
-      isRemoving,
       isRefreshMonitoredDownloadsExecuting,
       onRefreshPress,
+      onQueueAction,
       ...otherProps
     } = this.props;
 
-    const {
-      allSelected,
-      allUnselected,
-      selectedState,
-      isConfirmRemoveModalOpen,
-      isPendingSelected,
-      items
-    } = this.state;
-
+    const { removal, selectedState } = this.state;
     const isRefreshing = isFetching || isAuthorFetching || isBooksFetching || isRefreshMonitoredDownloadsExecuting;
-    const isAllPopulated = isPopulated && ((isAuthorPopulated && isBooksPopulated) || !items.length || items.every((e) => !e.bookId));
+    const isAllPopulated = isPopulated && ((isAuthorPopulated && isBooksPopulated) || !items.length || items.every((item) => !item.bookId));
     const hasError = error || booksError;
-    const selectedIds = this.getSelectedIds();
-    const selectedCount = selectedIds.length;
-    const disableSelectedActions = selectedCount === 0;
+    const selectedItems = this.getSelectedItems();
+    const selectedCount = selectedItems.length;
+    const canActOnSelected = canUseRowActions && selectedCount > 0;
+    const pendingIds = new Set(pendingAction?.targets.map(({ id }) => id));
+    const confirmationIsStale = !!removal && (!canUseRowActions || pageKey !== removal.pageKey ||
+      !queueTargetsAreCurrent(items, removal.targets));
 
     return (
       <PageContent title={translate('Queue')}>
@@ -188,6 +185,7 @@ class Queue extends Component {
               label={translate('Refresh')}
               iconName={icons.REFRESH}
               isSpinning={isRefreshing}
+              isDisabled={!!pendingAction}
               onPress={onRefreshPress}
             />
 
@@ -196,23 +194,21 @@ class Queue extends Component {
             <PageToolbarButton
               label={translate('GrabSelected')}
               iconName={icons.DOWNLOAD}
-              isDisabled={disableSelectedActions || !isPendingSelected}
-              isSpinning={isGrabbing}
+              isDisabled={!canActOnSelected || !selectedItems.every(({ status }) => status === 'delay')}
+              isSpinning={pendingAction?.kind === 'grab' && pendingAction.bulk}
               onPress={this.onGrabSelectedPress}
             />
 
             <PageToolbarButton
               label={translate('RemoveSelected')}
               iconName={icons.REMOVE}
-              isDisabled={disableSelectedActions}
-              isSpinning={isRemoving}
+              isDisabled={!canActOnSelected}
+              isSpinning={pendingAction?.kind === 'remove' && pendingAction.bulk}
               onPress={this.onRemoveSelectedPress}
             />
           </PageToolbarSection>
 
-          <PageToolbarSection
-            alignContent={align.RIGHT}
-          >
+          <PageToolbarSection alignContent={align.RIGHT}>
             <TableOptionsModalWrapper
               columns={columns}
               {...otherProps}
@@ -228,55 +224,49 @@ class Queue extends Component {
 
         <PageContentBody>
           <SubmissionHolds isRefreshing={isRefreshing} />
+          {isRefreshing && !isAllPopulated && <LoadingIndicator />}
           {
-            isRefreshing && !isAllPopulated ?
-              <LoadingIndicator /> :
-              null
+            !isRefreshing && hasError &&
+              <Alert kind={kinds.DANGER}>{translate('FailedToLoadQueue')}</Alert>
+          }
+          {
+            actionError &&
+              <Alert kind={kinds.DANGER} role="alert">{translate('QueueActionFailed')}</Alert>
+          }
+          {
+            isAllPopulated && !hasError && !items.length &&
+              <Alert kind={kinds.INFO}>{translate('QueueIsEmpty')}</Alert>
           }
 
           {
-            !isRefreshing && hasError ?
-              <Alert kind={kinds.DANGER}>
-                {translate('FailedToLoadQueue')}
-              </Alert> :
-              null
-          }
-
-          {
-            isAllPopulated && !hasError && !items.length ?
-              <Alert kind={kinds.INFO}>
-                {translate('QueueIsEmpty')}
-              </Alert> :
-              null
-          }
-
-          {
-            isAllPopulated && !hasError && !!items.length ?
+            isAllPopulated && !!items.length &&
               <div>
                 <Table
                   columns={columns}
                   selectAll={true}
-                  allSelected={allSelected}
-                  allUnselected={allUnselected}
+                  allSelected={selectedCount === items.length}
+                  allUnselected={selectedCount === 0}
+                  isSelectAllDisabled={!canUseRowActions}
                   {...otherProps}
                   optionsComponent={QueueOptionsConnector}
                   onSelectAllChange={this.onSelectAllChange}
                 >
                   <TableBody>
                     {
-                      items.map((item) => {
-                        return (
-                          <QueueRowConnector
-                            key={item.id}
-                            bookId={item.bookId}
-                            isSelected={selectedState[item.id]}
-                            columns={columns}
-                            {...item}
-                            onSelectedChange={this.onSelectedChange}
-                            onQueueRowModalOpenOrClose={this.onQueueRowModalOpenOrClose}
-                          />
-                        );
-                      })
+                      items.map((item) => (
+                        <QueueRowConnector
+                          key={item.id}
+                          columns={columns}
+                          {...item}
+                          isSelected={!!selectedState[item.id]}
+                          canUseRowActions={canUseRowActions}
+                          isGrabbing={pendingAction?.kind === 'grab' && pendingIds.has(item.id)}
+                          isRemoving={pendingAction?.kind === 'remove' && pendingIds.has(item.id)}
+                          onSelectedChange={this.onSelectedChange}
+                          onGrabPress={this.onGrabRowPress}
+                          onRemoveQueueItemPress={this.onRemoveRowPress}
+                        />
+                      ))
                     }
                   </TableBody>
                 </Table>
@@ -286,41 +276,20 @@ class Queue extends Component {
                   isFetching={isRefreshing}
                   {...otherProps}
                 />
-              </div> :
-              null
+              </div>
           }
         </PageContentBody>
 
         <RemoveQueueItemModal
-          isOpen={isConfirmRemoveModalOpen}
-          selectedCount={selectedCount}
-          canChangeCategory={isConfirmRemoveModalOpen && (
-            selectedIds.every((id) => {
-              const item = items.find((i) => i.id === id);
-
-              return !!(item && item.downloadClientHasPostImportCategory);
-            })
-          )}
-          canIgnore={isConfirmRemoveModalOpen && (
-            selectedIds.every((id) => {
-              const item = items.find((i) => i.id === id);
-
-              return !!(item && item.authorId && item.bookId);
-            })
-          )}
-          pending={isConfirmRemoveModalOpen && (
-            selectedIds.every((id) => {
-              const item = items.find((i) => i.id === id);
-
-              if (!item) {
-                return false;
-              }
-
-              return item.status === 'delay' || item.status === 'downloadClientUnavailable';
-            })
-          )}
-          onRemovePress={this.onRemoveSelectedConfirmed}
-          onModalClose={this.onConfirmRemoveModalClose}
+          isOpen={!!removal}
+          sourceTitle={removal?.sourceTitle}
+          selectedCount={removal?.bulk ? removal.targets.length : undefined}
+          canChangeCategory={!!removal?.canChangeCategory}
+          canIgnore={!!removal?.canIgnore}
+          isPending={!!removal?.isPending}
+          isRemoveDisabled={confirmationIsStale}
+          onRemovePress={this.onRemoveConfirmed}
+          onModalClose={this.onRemovalClose}
         />
       </PageContent>
     );
@@ -332,6 +301,7 @@ Queue.propTypes = {
   isPopulated: PropTypes.bool.isRequired,
   error: PropTypes.object,
   items: PropTypes.arrayOf(PropTypes.object).isRequired,
+  pageKey: PropTypes.string.isRequired,
   isAuthorFetching: PropTypes.bool.isRequired,
   isAuthorPopulated: PropTypes.bool.isRequired,
   isBooksFetching: PropTypes.bool.isRequired,
@@ -339,16 +309,12 @@ Queue.propTypes = {
   booksError: PropTypes.object,
   columns: PropTypes.arrayOf(PropTypes.object).isRequired,
   totalRecords: PropTypes.number,
-  isGrabbing: PropTypes.bool.isRequired,
-  isRemoving: PropTypes.bool.isRequired,
+  canUseRowActions: PropTypes.bool.isRequired,
+  actionError: PropTypes.bool.isRequired,
+  pendingAction: PropTypes.object,
   isRefreshMonitoredDownloadsExecuting: PropTypes.bool.isRequired,
   onRefreshPress: PropTypes.func.isRequired,
-  onGrabSelectedPress: PropTypes.func.isRequired,
-  onRemoveSelectedPress: PropTypes.func.isRequired
-};
-
-Queue.defaultProps = {
-  count: 0
+  onQueueAction: PropTypes.func.isRequired
 };
 
 export default Queue;

@@ -27,12 +27,12 @@ function historyResponse(page, base, match = () => true) {
   });
 }
 
-async function signIn(page, config) {
-  await page.goto(config.url + '/activity/history');
+async function signIn(page, config, route = '/activity/history') {
+  await page.goto(config.url + route);
   await page.locator('input[name="username"]').fill(config.username);
   await page.locator('input[name="password"]').fill(config.password);
   await Promise.all([
-    page.waitForURL(url => url.pathname.endsWith('/activity/history')),
+    page.waitForURL(url => url.pathname.endsWith(route)),
     page.locator('#login-button').click()
   ]);
 }
@@ -340,4 +340,4 @@ if (require.main === module) {
   report(config => runBrowser(config, verifyPaging, verifyPhone));
 }
 
-module.exports = { historyApi, historyRequest, historyResponse, report, runBrowser, selectFilter, signIn };
+module.exports = { deferred, historyApi, historyRequest, historyResponse, pageButton, report, runBrowser, selectFilter, selectPage, signIn };

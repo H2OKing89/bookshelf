@@ -21,10 +21,11 @@ interface RemovePressProps {
 
 interface RemoveQueueItemModalProps {
   isOpen: boolean;
-  sourceTitle: string;
+  sourceTitle?: string;
   canChangeCategory: boolean;
   canIgnore: boolean;
   isPending: boolean;
+  isRemoveDisabled: boolean;
   selectedCount?: number;
   onRemovePress(props: RemovePressProps): void;
   onModalClose: () => void;
@@ -39,10 +40,11 @@ type BlocklistMethod =
 function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
   const {
     isOpen,
-    sourceTitle,
+    sourceTitle = '',
     canIgnore,
     canChangeCategory,
     isPending,
+    isRemoveDisabled,
     selectedCount,
     onRemovePress,
     onModalClose,
@@ -147,6 +149,10 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
   );
 
   const handleConfirmRemove = useCallback(() => {
+    if (isRemoveDisabled) {
+      return;
+    }
+
     onRemovePress({
       remove: removalMethod === 'removeFromClient',
       changeCategory: removalMethod === 'changeCategory',
@@ -157,6 +163,7 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
     setRemovalMethod('removeFromClient');
     setBlocklistMethod('doNotBlocklist');
   }, [
+    isRemoveDisabled,
     removalMethod,
     blocklistMethod,
     setRemovalMethod,
@@ -218,7 +225,7 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
         <ModalFooter>
           <Button onPress={handleModalClose}>{translate('Close')}</Button>
 
-          <Button kind={kinds.DANGER} onPress={handleConfirmRemove}>
+          <Button kind={kinds.DANGER} isDisabled={isRemoveDisabled} onPress={handleConfirmRemove}>
             {translate('Remove')}
           </Button>
         </ModalFooter>

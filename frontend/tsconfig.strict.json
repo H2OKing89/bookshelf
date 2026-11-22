@@ -10,6 +10,7 @@
   "include": [
     "./typings/*.d.ts",
     "./src/Activity/History/historyPageQuery.ts",
+    "./src/Activity/Queue/queuePageQuery.ts",
     "./src/App/queryClient.ts",
     "./src/Book/BookIdentity.ts",
     "./src/Author/Details/RecordingCatalogLabel.tsx",

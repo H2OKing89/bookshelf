@@ -12,7 +12,7 @@ import tempfile
 from validation import common
 
 
-CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "docker")
+CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "docker")
 
 
 def parser():
@@ -54,6 +54,9 @@ def main(argv=None):
         parser().error("--checks historypaging requires --playwright-module")
     if "historysync" in chosen and not arguments.playwright_module:
         parser().error("--checks historysync requires --playwright-module")
+    for check in ("wantedpaging", "queuepaging"):
+        if check in chosen and not arguments.playwright_module:
+            parser().error(f"--checks {check} requires --playwright-module")
     if "docker" in chosen and not arguments.docker_runtime:
         parser().error("--checks docker requires --docker-runtime (a musl package)")
     previous_umask = os.umask(0o077)
@@ -87,13 +90,13 @@ def main(argv=None):
             output = common.private_directory(arguments.output.expanduser().resolve())
         for label, runtime in inputs.items():
             snapshots[label] = common.snapshot_runtime(runtime)
-        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync")):
+        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging")):
             common.ensure_host_compatible(inputs["candidate"])
         for label in ("baseline", "legacy"):
             if label in inputs:
                 common.ensure_host_compatible(inputs[label])
         # Imports are deliberately after validation; modules never launch on import.
-        from validation import accesspolicy, acquisition, app, authpolicy, cancellation, datastore, docker, history_paging, identity, library_review, logstorage, media, metadata_accessibility, package, postgresconnections, releaseidentity, restore, sqlite, upgrade
+        from validation import accesspolicy, acquisition, app, authpolicy, cancellation, datastore, docker, history_paging, identity, library_review, logstorage, media, metadata_accessibility, operational_paging, package, postgresconnections, releaseidentity, restore, sqlite, upgrade
         callbacks = {
             "package": lambda: package.run(inputs["candidate"], output / "package", repo),
             "app": lambda: app.run(inputs["candidate"], output / "app"),
@@ -113,6 +116,8 @@ def main(argv=None):
             "libraryreview": lambda: library_review.run(inputs["candidate"], output / "libraryreview", arguments.playwright_module),
             "historypaging": lambda: history_paging.run(inputs["candidate"], output / "historypaging", arguments.playwright_module),
             "historysync": lambda: history_paging.run_sync(inputs["candidate"], output / "historysync", arguments.playwright_module),
+            "wantedpaging": lambda: operational_paging.run_wanted(inputs["candidate"], output / "wantedpaging", arguments.playwright_module),
+            "queuepaging": lambda: operational_paging.run_queue(inputs["candidate"], output / "queuepaging", arguments.playwright_module),
             "authpolicy": lambda: authpolicy.run(inputs["candidate"], output / "authpolicy", baseline_runtime=inputs["baseline"]),
             "docker": lambda: docker.run(inputs["docker"], output / "docker", repo),
         }

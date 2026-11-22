@@ -20,8 +20,8 @@ import InteractiveImportModal from 'InteractiveImport/InteractiveImportModal';
 import formatBytes from 'Utilities/Number/formatBytes';
 import formatCustomFormatScore from 'Utilities/Number/formatCustomFormatScore';
 import translate from 'Utilities/String/translate';
+import { holdQueueRefresh } from './queuePageQuery';
 import QueueStatusCell from './QueueStatusCell';
-import RemoveQueueItemModal from './RemoveQueueItemModal';
 import TimeleftCell from './TimeleftCell';
 import styles from './QueueRow.css';
 
@@ -33,47 +33,26 @@ class QueueRow extends Component {
   constructor(props, context) {
     super(props, context);
 
-    this.state = {
-      isRemoveQueueItemModalOpen: false,
-      isInteractiveImportModalOpen: false
-    };
+    this.state = { interactiveImport: null };
   }
 
-  //
-  // Listeners
-
-  onRemoveQueueItemPress = () => {
-    this.setState({ isRemoveQueueItemModalOpen: true });
-  };
-
-  onRemoveQueueItemModalConfirmed = (blocklist, skipRedownload) => {
-    const {
-      onRemoveQueueItemPress,
-      onQueueRowModalOpenOrClose
-    } = this.props;
-
-    onQueueRowModalOpenOrClose(false);
-    onRemoveQueueItemPress(blocklist, skipRedownload);
-
-    this.setState({ isRemoveQueueItemModalOpen: false });
-  };
-
-  onRemoveQueueItemModalClose = () => {
-    this.props.onQueueRowModalOpenOrClose(false);
-
-    this.setState({ isRemoveQueueItemModalOpen: false });
-  };
+  componentWillUnmount() {
+    this.releaseImportHold?.();
+  }
 
   onInteractiveImportPress = () => {
-    this.props.onQueueRowModalOpenOrClose(true);
+    const { canUseRowActions, downloadId, downloadClientId, title } = this.props;
 
-    this.setState({ isInteractiveImportModalOpen: true });
+    if (canUseRowActions && !this.releaseImportHold) {
+      this.releaseImportHold = holdQueueRefresh();
+      this.setState({ interactiveImport: { downloadId, downloadClientId, title } });
+    }
   };
 
   onInteractiveImportModalClose = () => {
-    this.props.onQueueRowModalOpenOrClose(false);
-
-    this.setState({ isInteractiveImportModalOpen: false });
+    this.releaseImportHold?.();
+    this.releaseImportHold = undefined;
+    this.setState({ interactiveImport: null });
   };
 
   //
@@ -82,8 +61,6 @@ class QueueRow extends Component {
   render() {
     const {
       id,
-      downloadId,
-      downloadClientId,
       downloadClientAvailable,
       title,
       status,
@@ -100,7 +77,6 @@ class QueueRow extends Component {
       indexer,
       outputPath,
       downloadClient,
-      downloadClientHasPostImportCategory,
       downloadForced,
       estimatedCompletionTime,
       timeleft,
@@ -110,18 +86,16 @@ class QueueRow extends Component {
       shortDateFormat,
       timeFormat,
       isGrabbing,
-      grabError,
       isRemoving,
       isSelected,
       columns,
+      canUseRowActions,
       onSelectedChange,
-      onGrabPress
+      onGrabPress,
+      onRemoveQueueItemPress
     } = this.props;
 
-    const {
-      isRemoveQueueItemModalOpen,
-      isInteractiveImportModalOpen
-    } = this.state;
+    const { interactiveImport } = this.state;
 
     const progress = 100 - (sizeleft / size * 100);
     const showInteractiveImport = downloadClientAvailable !== false && status === 'completed' && trackedDownloadStatus === 'warning';
@@ -132,6 +106,7 @@ class QueueRow extends Component {
         <TableSelectCell
           id={id}
           isSelected={isSelected}
+          isDisabled={!canUseRowActions}
           onSelectedChange={onSelectedChange}
         />
 
@@ -354,6 +329,7 @@ class QueueRow extends Component {
                       <IconButton
                         name={icons.INTERACTIVE}
                         aria-label={translate('ManualImport')}
+                        isDisabled={!canUseRowActions}
                         onPress={this.onInteractiveImportPress}
                       />
                   }
@@ -362,10 +338,10 @@ class QueueRow extends Component {
                     isPending &&
                       <SpinnerIconButton
                         name={icons.DOWNLOAD}
-                        kind={grabError ? kinds.DANGER : kinds.DEFAULT}
                         isSpinning={isGrabbing}
+                        isDisabled={!canUseRowActions}
                         aria-label={translate('GrabRelease')}
-                        onPress={onGrabPress}
+                        onPress={() => onGrabPress(id)}
                       />
                   }
 
@@ -373,7 +349,8 @@ class QueueRow extends Component {
                     title={translate('RemoveFromQueue')}
                     name={icons.REMOVE}
                     isSpinning={isRemoving}
-                    onPress={this.onRemoveQueueItemPress}
+                    isDisabled={!canUseRowActions}
+                    onPress={() => onRemoveQueueItemPress(id)}
                   />
                 </TableRowCell>
               );
@@ -384,23 +361,11 @@ class QueueRow extends Component {
         }
 
         <InteractiveImportModal
-          isOpen={isInteractiveImportModalOpen}
-          downloadId={downloadId}
-          downloadClientId={downloadClientId}
-          title={title}
+          isOpen={!!interactiveImport}
+          {...interactiveImport}
           onModalClose={this.onInteractiveImportModalClose}
           showReplaceExistingFiles={true}
           replaceExistingFiles={true}
-        />
-
-        <RemoveQueueItemModal
-          isOpen={isRemoveQueueItemModalOpen}
-          sourceTitle={title}
-          canChangeCategory={!!downloadClientHasPostImportCategory}
-          canIgnore={!!author}
-          isPending={isPending}
-          onRemovePress={this.onRemoveQueueItemModalConfirmed}
-          onModalClose={this.onRemoveQueueItemModalClose}
         />
       </TableRow>
     );
@@ -428,7 +393,6 @@ QueueRow.propTypes = {
   indexer: PropTypes.string,
   outputPath: PropTypes.string,
   downloadClient: PropTypes.string,
-  downloadClientHasPostImportCategory: PropTypes.bool,
   downloadForced: PropTypes.bool.isRequired,
   estimatedCompletionTime: PropTypes.string,
   timeleft: PropTypes.string,
@@ -438,14 +402,13 @@ QueueRow.propTypes = {
   shortDateFormat: PropTypes.string.isRequired,
   timeFormat: PropTypes.string.isRequired,
   isGrabbing: PropTypes.bool.isRequired,
-  grabError: PropTypes.object,
   isRemoving: PropTypes.bool.isRequired,
   isSelected: PropTypes.bool,
   columns: PropTypes.arrayOf(PropTypes.object).isRequired,
   onSelectedChange: PropTypes.func.isRequired,
   onGrabPress: PropTypes.func.isRequired,
   onRemoveQueueItemPress: PropTypes.func.isRequired,
-  onQueueRowModalOpenOrClose: PropTypes.func.isRequired
+  canUseRowActions: PropTypes.bool.isRequired
 };
 
 QueueRow.defaultProps = {

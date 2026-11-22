@@ -47,11 +47,17 @@ function setup(t) {
     })
   });
   const legacy = [];
+  const queue = [];
   const wanted = [];
   const { default: Connector } = loadFrontendModule('Components/SignalRConnector', {
     '@microsoft/signalr/dist/browser/signalr.js': {},
     'react-redux': { connect: () => (component) => component },
     'Activity/History/historyPageQuery': history,
+    'Activity/Queue/queuePageQuery': {
+      clearQueueRefresh: () => queue.push('clear'),
+      refreshQueuePages: () => queue.push('reconnect'),
+      scheduleQueueRefresh: () => queue.push('queue')
+    },
     'App/queryClient': client,
     'Store/Actions/appActions': {},
     'Store/Actions/authorActions': {},
@@ -75,6 +81,7 @@ function setup(t) {
     dispatchFetchCommands: () => legacy.push('commands'),
     dispatchFetchQueueDetails: () => legacy.push('queue details'),
     dispatchSetAppValue: () => legacy.push('connection'),
+    dispatchUpdate: (item) => legacy.push(item),
     dispatchUpdateItem: (item) => legacy.push(item),
     dispatchRemoveItem: (item) => legacy.push(item),
     dispatchDeleteAuthorBooks: (item) => legacy.push(item)
@@ -98,7 +105,7 @@ function setup(t) {
     return observer;
   }
 
-  return { client, connector, legacy, options, requests, timers, wanted, watch, scheduleLocalRefresh: history.scheduleHistoryRefresh };
+  return { client, connector, legacy, options, queue, requests, timers, wanted, watch, scheduleLocalRefresh: history.scheduleHistoryRefresh };
 }
 
 function nextTurn() {
@@ -179,4 +186,17 @@ test('Wanted routes membership events and queue details to the matching query sc
 
   assert.deepEqual(wanted, ['missing', 'cutoffUnmet', 'both', 'both', 'both', 'queue details', 'reconnect', 'clear']);
   assert.equal(legacy.filter((call) => call === 'queue details').length, 1);
+});
+
+test('Queue routes list events through its refresh coordinator and preserves status and details', (t) => {
+  const { connector, legacy, queue } = setup(t);
+  connector.handleMessage({ name: 'queue', body: { action: 'sync' } });
+  connector.handleMessage({ name: 'queue/details', body: { action: 'sync' } });
+  connector.handleMessage({ name: 'queue/status', body: { action: 'updated', resource: { totalCount: 2 } } });
+  connector.onReconnected();
+  connector.connection = { stop: () => {} };
+  connector.componentWillUnmount();
+
+  assert.deepEqual(queue, ['queue', 'reconnect', 'clear']);
+  assert.deepEqual(legacy.slice(0, 2), ['queue details', { section: 'queue.status', data: { totalCount: 2 } }]);
 });

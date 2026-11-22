@@ -39,16 +39,12 @@ namespace Readarr.Api.V1.Queue
         [Consumes("application/json")]
         public async Task<object> Grab([FromBody] QueueBulkResource resource)
         {
+            var pendingReleases = resource.Ids.ConvertAll(id =>
+                _pendingReleaseService.FindPendingQueueItem(id) ?? throw new NotFoundException());
             var spaceBudget = new DownloadSpaceBudget();
-            foreach (var id in resource.Ids)
+
+            foreach (var pendingRelease in pendingReleases)
             {
-                var pendingRelease = _pendingReleaseService.FindPendingQueueItem(id);
-
-                if (pendingRelease == null)
-                {
-                    throw new NotFoundException();
-                }
-
                 await _downloadService.DownloadReport(pendingRelease.RemoteBook, null, spaceBudget);
             }
 

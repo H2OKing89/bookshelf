@@ -913,6 +913,7 @@
   "QualitySettings": "Quality Settings",
   "QualitySettingsSummary": "Quality sizes and naming",
   "Queue": "Queue",
+  "QueueActionFailed": "Unable to complete the queue action. Review the current items and try again.",
   "QueueIsEmpty": "Queue is empty",
   "Queued": "Queued",
   "RSSSync": "RSS Sync",

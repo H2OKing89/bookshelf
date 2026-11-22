@@ -4,12 +4,13 @@ import { Component } from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import { clearHistoryRefresh, refreshHistoryPages, scheduleHistoryRefresh } from 'Activity/History/historyPageQuery';
+import { clearQueueRefresh, refreshQueuePages, scheduleQueueRefresh } from 'Activity/Queue/queuePageQuery';
 import { setAppValue, setVersion } from 'Store/Actions/appActions';
 import { fetchAuthor } from 'Store/Actions/authorActions';
 import { removeItem, update, updateItem } from 'Store/Actions/baseActions';
 import { deleteAuthorBooks } from 'Store/Actions/bookActions';
 import { fetchCommands, finishCommand, updateCommand } from 'Store/Actions/commandActions';
-import { fetchQueue, fetchQueueDetails } from 'Store/Actions/queueActions';
+import { fetchQueueDetails } from 'Store/Actions/queueActions';
 import { fetchQualityDefinitions, fetchRootFolders } from 'Store/Actions/settingsActions';
 import { fetchHealth } from 'Store/Actions/systemActions';
 import { fetchTagDetails, fetchTags } from 'Store/Actions/tagActions';
@@ -28,12 +29,10 @@ function createMapStateToProps() {
   return createSelector(
     (state) => state.app.isReconnecting,
     (state) => state.app.isDisconnected,
-    (state) => state.queue.paged.isPopulated,
-    (isReconnecting, isDisconnected, isQueuePopulated) => {
+    (isReconnecting, isDisconnected) => {
       return {
         isReconnecting,
-        isDisconnected,
-        isQueuePopulated
+        isDisconnected
       };
     }
   );
@@ -52,7 +51,6 @@ const mapDispatchToProps = {
   dispatchFetchAuthor: fetchAuthor,
   dispatchFetchHealth: fetchHealth,
   dispatchFetchQualityDefinitions: fetchQualityDefinitions,
-  dispatchFetchQueue: fetchQueue,
   dispatchFetchQueueDetails: fetchQueueDetails,
   dispatchFetchRootFolders: fetchRootFolders,
   dispatchFetchTags: fetchTags,
@@ -130,6 +128,7 @@ class SignalRConnector extends Component {
 
   componentWillUnmount() {
     clearHistoryRefresh();
+    clearQueueRefresh();
     clearWantedRefresh();
     this.connection.stop();
     this.connection = null;
@@ -264,9 +263,7 @@ class SignalRConnector extends Component {
   };
 
   handleQueue = () => {
-    if (this.props.isQueuePopulated) {
-      this.props.dispatchFetchQueue();
-    }
+    scheduleQueueRefresh();
   };
 
   handleQueueDetails = () => {
@@ -369,6 +366,7 @@ class SignalRConnector extends Component {
     dispatchFetchCommands();
     refreshHistoryPages();
     refreshWantedPages();
+    refreshQueuePages();
     repopulatePage();
   };
 
@@ -393,7 +391,6 @@ class SignalRConnector extends Component {
 SignalRConnector.propTypes = {
   isReconnecting: PropTypes.bool.isRequired,
   isDisconnected: PropTypes.bool.isRequired,
-  isQueuePopulated: PropTypes.bool.isRequired,
   dispatchFetchCommands: PropTypes.func.isRequired,
   dispatchUpdateCommand: PropTypes.func.isRequired,
   dispatchFinishCommand: PropTypes.func.isRequired,
@@ -406,7 +403,6 @@ SignalRConnector.propTypes = {
   dispatchFetchAuthor: PropTypes.func.isRequired,
   dispatchFetchHealth: PropTypes.func.isRequired,
   dispatchFetchQualityDefinitions: PropTypes.func.isRequired,
-  dispatchFetchQueue: PropTypes.func.isRequired,
   dispatchFetchQueueDetails: PropTypes.func.isRequired,
   dispatchFetchRootFolders: PropTypes.func.isRequired,
   dispatchFetchTags: PropTypes.func.isRequired,

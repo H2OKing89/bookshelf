@@ -8,6 +8,7 @@ using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.Queue;
 using NzbDrone.Test.Common;
 using Readarr.Api.V1.Queue;
+using Readarr.Http.REST;
 
 namespace NzbDrone.Api.Test
 {
@@ -51,6 +52,19 @@ namespace NzbDrone.Api.Test
             Subject.RemoveAction(1, removeFromClient: false);
 
             Mocker.GetMock<ITrackedDownloadService>().Verify(tracker => tracker.StopTracking(It.IsAny<string>(), It.IsAny<int>()), Times.Never());
+        }
+
+        [Test]
+        public void bulk_should_reject_a_stale_target_before_removing_any_jobs()
+        {
+            Add(1, 12);
+            var selection = new QueueBulkResource { Ids = new List<int> { 1, 2 } };
+
+            Assert.Throws<NotFoundException>(() => Subject.RemoveMany(selection, removeFromClient: false, blocklist: true));
+
+            Mocker.GetMock<ITrackedDownloadService>().Verify(tracker => tracker.StopTracking(It.IsAny<string>(), It.IsAny<int>()), Times.Never());
+            Mocker.GetMock<IFailedDownloadService>().VerifyNoOtherCalls();
+            Mocker.GetMock<IIgnoredDownloadService>().VerifyNoOtherCalls();
         }
 
         [Test]
