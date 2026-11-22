@@ -98,7 +98,8 @@ async function verifySync(page, base, config, { check, step }) {
 
   const [empty] = await Promise.all([historyResponse(page, base, failedFilter), selectFilter(page, 'Download Failed')]);
   check('inactive_filter_begins_with_cached_empty_result', (await empty.json()).totalRecords === 0);
-  await page.getByText('No history.', { exact: true }).waitFor();
+  const filteredEmpty = page.getByText('No history matches your filters.', { exact: true });
+  await filteredEmpty.waitFor();
   await Promise.all([historyResponse(page, base, allHistory), selectFilter(page, 'All')]);
   await page.getByRole('button', { name: '1 / 2', exact: true }).waitFor();
 
@@ -127,7 +128,7 @@ async function verifySync(page, base, config, { check, step }) {
   const [filtered] = await Promise.all([historyResponse(page, base, failedFilter), selectFilter(page, 'Download Failed')]);
   await failedHistory().first().waitFor();
   check('returning_to_previous_filter_shows_live_change', (await filtered.json()).totalRecords === 1 &&
-    await failedHistory().count() === 1 && await page.getByText('No history.', { exact: true }).count() === 0);
+    await failedHistory().count() === 1 && await filteredEmpty.count() === 0);
 
   step('missed_history_event');
   const startingCalls = requests.length;
@@ -148,7 +149,7 @@ async function verifySync(page, base, config, { check, step }) {
   check('reconnect_recovers_missed_history_without_duplicate_refresh', hub.connections.length === 2 &&
     requests.length === startingCalls + 1 && requests.at(-1) === '4' &&
     fresh.totalRecords === 2 && fresh.records[0].sourceTitle === 'Owned history row ' + config.secondGrab &&
-    await failedHistory().count() === 2 && await page.getByText('No history.', { exact: true }).count() === 0);
+    await failedHistory().count() === 2 && await filteredEmpty.count() === 0);
 }
 
 report(config => runBrowser(config, verifySync));

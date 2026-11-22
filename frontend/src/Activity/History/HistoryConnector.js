@@ -5,8 +5,11 @@ import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import withCurrentPage from 'Components/withCurrentPage';
 import * as historyActions from 'Store/Actions/historyActions';
+import { getPreferenceStorage } from 'Store/Middleware/preferenceStorage';
 import findSelectedFilters from 'Utilities/Filter/findSelectedFilters';
+import translate from 'Utilities/String/translate';
 import History from './History';
+import { hasHistoryFilters, readHistoryFilterPreference, savedHistoryFilterKey, saveHistoryFilterPreference } from './historyFilters';
 import historyPageQueryOptions from './historyPageQuery';
 
 function createMapStateToProps() {
@@ -21,7 +24,11 @@ function createMapStateToProps() {
         isBooksFetching: books.isFetching,
         isBooksPopulated: books.isPopulated,
         booksError: books.error,
-        ...history
+        booksForFilter: books.items,
+        authorsForFilter: authors.items,
+        ...history,
+        selectedFilterKey: history.filters.some(({ key }) => key === history.selectedFilterKey) ?
+          history.selectedFilterKey : 'all'
       };
     }
   );
@@ -49,14 +56,22 @@ function HistoryConnector(props) {
     setHistoryTableOption,
     ...otherProps
   } = props;
+  const apiRoot = window.Readarr.apiRoot;
+  const [saved, setSaved] = useState(() => readHistoryFilterPreference(getPreferenceStorage(), apiRoot));
 
   // Ignore the remembered page for a new visit, before the query can fetch it.
   const [pageInitialized, setPageInitialized] = useState(useCurrentPage);
   const page = pageInitialized ? storedPage : 1;
-  const eventTypes = findSelectedFilters(selectedFilterKey, filters)
+  const presetEventTypes = findSelectedFilters(selectedFilterKey, filters)
     .filter((filter) => filter.key === 'eventType')
     .map((filter) => filter.value);
-  const query = useQuery(historyPageQueryOptions({ page, pageSize, sortKey, sortDirection, eventTypes }));
+  const activeFilters = saved.active ? saved.filters : { eventTypes: presetEventTypes };
+  const hasSavedFilter = hasHistoryFilters(saved.filters);
+  const menuFilters = hasSavedFilter ? [
+    ...filters,
+    { key: savedHistoryFilterKey, label: () => translate('SavedHistoryFilter') }
+  ] : filters;
+  const query = useQuery(historyPageQueryOptions({ page, pageSize, sortKey, sortDirection, ...activeFilters }));
 
   const totalRecords = query.data?.totalRecords ?? 0;
   const totalPages = Math.max(Math.ceil(totalRecords / (query.data?.pageSize ?? pageSize)), 1);
@@ -73,6 +88,34 @@ function HistoryConnector(props) {
 
   const goToPage = (value) => setHistoryPage(Math.min(Math.max(value, 1), totalPages));
 
+  const updateSaved = (preference) => {
+    setSaved(preference);
+    saveHistoryFilterPreference(getPreferenceStorage(), apiRoot, preference);
+  };
+
+  const onFilterSelect = (key) => {
+    if (key === savedHistoryFilterKey) {
+      updateSaved({ ...saved, active: true });
+      setHistoryPage(1);
+    } else {
+      if (saved.active) {
+        updateSaved({ ...saved, active: false });
+      }
+      setHistoryFilter(key);
+    }
+  };
+
+  const onApplyFilters = (customFilters) => {
+    const active = hasHistoryFilters(customFilters);
+    updateSaved({ active, filters: customFilters });
+
+    if (active) {
+      setHistoryPage(1);
+    } else {
+      setHistoryFilter('all');
+    }
+  };
+
   const onRefreshPress = () => {
     if (page === 1) {
       query.refetch();
@@ -88,8 +131,10 @@ function HistoryConnector(props) {
       pageSize={pageSize}
       sortKey={sortKey}
       sortDirection={sortDirection}
-      selectedFilterKey={selectedFilterKey}
-      filters={filters}
+      selectedFilterKey={saved.active ? savedHistoryFilterKey : selectedFilterKey}
+      filters={menuFilters}
+      historyFilter={hasSavedFilter ? saved.filters : activeFilters}
+      hasActiveFilters={hasHistoryFilters(activeFilters)}
       items={query.data?.records ?? []}
       totalPages={Math.max(page, totalPages)}
       totalRecords={totalRecords}
@@ -104,7 +149,8 @@ function HistoryConnector(props) {
       onLastPagePress={() => goToPage(totalPages)}
       onPageSelect={goToPage}
       onSortPress={(nextKey, nextDirection) => setHistorySort({ sortKey: nextKey, sortDirection: nextDirection })}
-      onFilterSelect={setHistoryFilter}
+      onFilterSelect={onFilterSelect}
+      onApplyFilters={onApplyFilters}
       onTableOptionChange={setHistoryTableOption}
     />
   );

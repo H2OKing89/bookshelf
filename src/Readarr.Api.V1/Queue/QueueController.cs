@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Blocklisting;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Datastore.Events;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Download.Pending;
 using NzbDrone.Core.Download.TrackedDownloads;
+using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.Qualities;
@@ -25,6 +25,10 @@ namespace Readarr.Api.V1.Queue
     public class QueueController : RestControllerWithSignalR<QueueResource, NzbDrone.Core.Queue.Queue>,
                                IHandle<QueueUpdatedEvent>, IHandle<PendingReleasesUpdatedEvent>
     {
+        private static readonly HashSet<string> QueueStatuses = Enum.GetNames<DownloadItemStatus>()
+            .Concat(Enum.GetNames<PendingReleaseReason>())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         private readonly IQueueService _queueService;
         private readonly IPendingReleaseService _pendingReleaseService;
 
@@ -135,23 +139,39 @@ namespace Readarr.Api.V1.Queue
 
         [HttpGet]
         [Produces("application/json")]
-        public PagingResource<QueueResource> GetQueue([FromQuery] PagingRequestResource paging, bool includeUnknownAuthorItems = false, bool includeAuthor = false, bool includeBook = false)
+        public PagingResource<QueueResource> GetQueue([FromQuery] PagingRequestResource paging, bool includeUnknownAuthorItems = false, bool includeAuthor = false, bool includeBook = false, string status = null, DownloadProtocol? protocol = null)
         {
+            if (paging.Page is < 1 || paging.PageSize is < 1)
+            {
+                throw new BadRequestException(new { message = "Page and page size must be positive." });
+            }
+
+            if (status != null && !QueueStatuses.Contains(status))
+            {
+                throw new BadRequestException(new { message = "Invalid queue status." });
+            }
+
+            if (protocol.HasValue && !Enum.IsDefined(protocol.Value))
+            {
+                throw new BadRequestException(new { message = "Invalid download protocol." });
+            }
+
             var pagingResource = new PagingResource<QueueResource>(paging);
             var pagingSpec = pagingResource.MapToPagingSpec<QueueResource, NzbDrone.Core.Queue.Queue>("timeleft", SortDirection.Ascending);
 
-            return pagingSpec.ApplyToPage((spec) => GetQueue(spec, includeUnknownAuthorItems), (q) => MapToResource(q, includeAuthor, includeBook));
+            return pagingSpec.ApplyToPage(spec => GetQueue(spec, includeUnknownAuthorItems, status, protocol), q => MapToResource(q, includeAuthor, includeBook));
         }
 
-        private PagingSpec<NzbDrone.Core.Queue.Queue> GetQueue(PagingSpec<NzbDrone.Core.Queue.Queue> pagingSpec, bool includeUnknownAuthorItems)
+        private PagingSpec<NzbDrone.Core.Queue.Queue> GetQueue(PagingSpec<NzbDrone.Core.Queue.Queue> pagingSpec, bool includeUnknownAuthorItems, string status, DownloadProtocol? protocol)
         {
             var ascending = pagingSpec.SortDirection == SortDirection.Ascending;
             var orderByFunc = GetOrderByFunc(pagingSpec);
 
-            var queue = _queueService.GetQueue();
-            var filteredQueue = includeUnknownAuthorItems ? queue : queue.Where(q => q.Author != null);
-            var pending = _pendingReleaseService.GetPendingQueue();
-            var fullQueue = filteredQueue.Concat(pending).ToList();
+            var fullQueue = _queueService.GetQueue().Concat(_pendingReleaseService.GetPendingQueue())
+                .Where(q => (includeUnknownAuthorItems || q.Author != null) &&
+                            (status == null || string.Equals(q.Status, status, StringComparison.OrdinalIgnoreCase)) &&
+                            (!protocol.HasValue || q.Protocol == protocol.Value))
+                .ToList();
             IOrderedEnumerable<NzbDrone.Core.Queue.Queue> ordered;
 
             if (pagingSpec.SortKey == "timeleft")
@@ -198,14 +218,10 @@ namespace Readarr.Api.V1.Queue
 
             ordered = ordered.ThenByDescending(q => q.Size == 0 ? 0 : 100 - (q.Sizeleft / q.Size * 100));
 
-            pagingSpec.Records = ordered.Skip((pagingSpec.Page - 1) * pagingSpec.PageSize).Take(pagingSpec.PageSize).ToList();
             pagingSpec.TotalRecords = fullQueue.Count;
-
-            if (pagingSpec.Records.Empty() && pagingSpec.Page > 1)
-            {
-                pagingSpec.Page = (int)Math.Max(Math.Ceiling((decimal)(pagingSpec.TotalRecords / pagingSpec.PageSize)), 1);
-                pagingSpec.Records = ordered.Skip((pagingSpec.Page - 1) * pagingSpec.PageSize).Take(pagingSpec.PageSize).ToList();
-            }
+            var lastPage = (int)Math.Max(Math.Ceiling((decimal)pagingSpec.TotalRecords / pagingSpec.PageSize), 1);
+            pagingSpec.Page = Math.Min(pagingSpec.Page, lastPage);
+            pagingSpec.Records = ordered.Skip((pagingSpec.Page - 1) * pagingSpec.PageSize).Take(pagingSpec.PageSize).ToList();
 
             return pagingSpec;
         }

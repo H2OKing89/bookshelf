@@ -14,6 +14,7 @@ import TableOptionsModalWrapper from 'Components/Table/TableOptions/TableOptions
 import TablePager from 'Components/Table/TablePager';
 import { align, icons, kinds } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
+import HistoryFilterModal from './HistoryFilterModal';
 import HistoryRowConnector from './HistoryRowConnector';
 
 class History extends Component {
@@ -31,6 +32,10 @@ class History extends Component {
       columns,
       selectedFilterKey,
       filters,
+      historyFilter,
+      hasActiveFilters,
+      booksForFilter,
+      authorsForFilter,
       totalRecords,
       isAuthorFetching,
       isAuthorPopulated,
@@ -38,6 +43,7 @@ class History extends Component {
       isBooksPopulated,
       booksError,
       onFilterSelect,
+      onApplyFilters,
       onRefreshPress,
       onFirstPagePress,
       ...otherProps
@@ -75,6 +81,8 @@ class History extends Component {
               selectedFilterKey={selectedFilterKey}
               filters={filters}
               customFilters={[]}
+              filterModalConnectorComponent={HistoryFilterModal}
+              filterModalConnectorComponentProps={{ historyFilter, books: booksForFilter, authors: authorsForFilter, onApplyFilters }}
               onFilterSelect={onFilterSelect}
             />
           </PageToolbarSection>
@@ -99,7 +107,7 @@ class History extends Component {
 
             isPopulated && canUseRowActions && !hasError && !items.length &&
               <Alert kind={kinds.INFO}>
-                {translate('NoHistory')}
+                {translate(hasActiveFilters ? 'NoHistoryMatchingFilters' : 'NoHistory')}
               </Alert>
           }
 
@@ -149,6 +157,10 @@ History.propTypes = {
   columns: PropTypes.arrayOf(PropTypes.object).isRequired,
   selectedFilterKey: PropTypes.string.isRequired,
   filters: PropTypes.arrayOf(PropTypes.object).isRequired,
+  historyFilter: PropTypes.object.isRequired,
+  hasActiveFilters: PropTypes.bool.isRequired,
+  booksForFilter: PropTypes.arrayOf(PropTypes.object).isRequired,
+  authorsForFilter: PropTypes.arrayOf(PropTypes.object).isRequired,
   totalRecords: PropTypes.number,
   isAuthorFetching: PropTypes.bool.isRequired,
   isAuthorPopulated: PropTypes.bool.isRequired,
@@ -156,6 +168,7 @@ History.propTypes = {
   isBooksPopulated: PropTypes.bool.isRequired,
   booksError: PropTypes.object,
   onFilterSelect: PropTypes.func.isRequired,
+  onApplyFilters: PropTypes.func.isRequired,
   onRefreshPress: PropTypes.func.isRequired,
   onFirstPagePress: PropTypes.func.isRequired
 };

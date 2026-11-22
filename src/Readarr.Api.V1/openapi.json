@@ -6809,6 +6809,32 @@
             }
           },
           {
+            "name": "status",
+            "in": "query",
+            "description": "Download or pending release status. Combined with protocol before pagination.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "queued",
+                "paused",
+                "downloading",
+                "completed",
+                "failed",
+                "warning",
+                "delay",
+                "downloadClientUnavailable",
+                "fallback"
+              ]
+            }
+          },
+          {
+            "name": "protocol",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/DownloadProtocol"
+            }
+          },
+          {
             "name": "includeAuthor",
             "in": "query",
             "schema": {
@@ -6835,6 +6861,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid queue filter or pagination value"
           }
         }
       }

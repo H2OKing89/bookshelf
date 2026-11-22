@@ -1,6 +1,8 @@
 import { InvalidateQueryFilters, keepPreviousData, queryOptions } from '@tanstack/react-query';
 import queryClient from 'App/queryClient';
+import type { BookId } from 'Book/BookIdentity';
 import fetchJson from 'Utilities/Fetch/fetchJson';
+import { normalizeHistoryEventTypes, parseHistoryBookId } from './historyFilters';
 
 const historyRefreshDelay = 100;
 let historyRefreshTimer: ReturnType<typeof setTimeout> | null = null;
@@ -11,6 +13,7 @@ interface HistoryPageRequest {
   sortKey: string;
   sortDirection: 'ascending' | 'descending';
   eventTypes: readonly string[];
+  bookId?: BookId;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -169,7 +172,7 @@ export function markHistoryAsFailed(id: number) {
 }
 
 export default function historyPageQuery(request: HistoryPageRequest) {
-  const { page, pageSize, sortKey, sortDirection, eventTypes } = request;
+  const { page, pageSize, sortKey, sortDirection } = request;
   const params = new URLSearchParams({
     page: String(page),
     pageSize: String(pageSize),
@@ -177,8 +180,13 @@ export default function historyPageQuery(request: HistoryPageRequest) {
     sortDirection
   });
 
-  for (const eventType of eventTypes) {
+  for (const eventType of normalizeHistoryEventTypes(request.eventTypes)) {
     params.append('eventType', eventType);
+  }
+
+  const bookId = parseHistoryBookId(request.bookId);
+  if (bookId !== undefined) {
+    params.set('bookId', String(bookId));
   }
 
   const search = params.toString();

@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import mergeColumnPreferences from 'Store/Middleware/mergeColumnPreferences';
 import { getPreferenceStorage, isPreferenceRecord, readPreferenceStorage, writePreferenceStorage } from 'Store/Middleware/preferenceStorage';
 import queueColumns from './queueColumns';
+import { normalizeQueueFilters } from './queueFilters';
 
 type SortDirection = 'ascending' | 'descending';
 
@@ -60,19 +61,21 @@ export function createQueuePreferencesStore(storage: Storage | undefined, apiRoo
     sortKey: asSortKey(preferences.sortKey),
     sortDirection: preferences.sortDirection === 'descending' ? 'descending' as const : defaults.sortDirection,
     includeUnknownAuthorItems: typeof preferences.includeUnknownAuthorItems === 'boolean' ? preferences.includeUnknownAuthorItems : defaults.includeUnknownAuthorItems,
-    columns: mergeColumnPreferences(queueColumns, preferences.columns)
+    columns: mergeColumnPreferences(queueColumns, preferences.columns),
+    filters: normalizeQueueFilters(preferences.filters)
   };
   const listeners = new Set<() => void>();
 
   function save() {
     if (!futureVersion) {
-      const { pageSize, sortKey, sortDirection, includeUnknownAuthorItems, columns } = current;
+      const { pageSize, sortKey, sortDirection, includeUnknownAuthorItems, columns, filters } = current;
       writePreferenceStorage(storage, key, {
         version,
         pageSize,
         sortKey,
         sortDirection,
         includeUnknownAuthorItems,
+        filters,
         columns: columns.map(({ name, isVisible }) => ({ name, isVisible }))
       });
     }
@@ -122,6 +125,13 @@ export function createQueuePreferencesStore(storage: Storage | undefined, apiRoo
       if (includeUnknownAuthorItems !== current.includeUnknownAuthorItems) {
         update({ page: 1, includeUnknownAuthorItems });
       }
+    },
+    setFilters(value: unknown) {
+      const filters = normalizeQueueFilters(value);
+
+      if (filters.status !== current.filters.status || filters.protocol !== current.filters.protocol) {
+        update({ page: 1, filters });
+      }
     }
   };
 }
@@ -154,4 +164,8 @@ export function setQueueTableOptions(options: QueueTableOptions) {
 
 export function setQueueIncludeUnknownAuthorItems(includeUnknownAuthorItems: boolean) {
   store.setIncludeUnknownAuthorItems(includeUnknownAuthorItems);
+}
+
+export function setQueueFilters(value: unknown) {
+  store.setFilters(value);
 }

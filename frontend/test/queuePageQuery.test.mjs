@@ -146,6 +146,21 @@ test('queue refresh waits for all interaction holds and coalesces while a read i
   assert.equal(timers.size, 0);
 });
 
+test('queue fetch keys combine server-side filters and keep the unknown-author preference', (t) => {
+  const { options, requests, watch } = setup(t);
+  const combined = options(1, { filters: { status: 'delay', protocol: 'torrent' } });
+  const onlyStatus = options(1, { filters: { status: 'delay', protocol: '' } });
+  const all = options(1, { filters: { status: '', protocol: '' } });
+  watch(combined);
+  const { searchParams } = new URL(requests[0].path, 'https://example.test');
+
+  assert.equal(searchParams.get('status'), 'delay');
+  assert.equal(searchParams.get('protocol'), 'torrent');
+  assert.equal(searchParams.get('includeUnknownAuthorItems'), 'false');
+  assert.notDeepEqual(combined.queryKey, onlyStatus.queryKey);
+  assert.deepEqual(all.queryKey, options(1).queryKey);
+});
+
 test('queue action identity guards client changes and submits only the captured IDs and options', async (t) => {
   const { queue, requests, options } = setup(t);
   const first = record(11);

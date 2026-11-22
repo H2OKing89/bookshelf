@@ -109,6 +109,20 @@ test('history serializes all paging inputs and invalidates only the matching API
   assert.equal(client.getQueryState(alternate.queryKey).isInvalidated, false);
 });
 
+test('history applies a book and canonical event filters to the same paged request', async (t) => {
+  const { client, requests, options } = createFixture(t);
+  const selected = options(2, { bookId: 102, eventTypes: ['10', '7', '7', '9', '2', '1'] });
+  const sameSelection = options(2, { bookId: 102, eventTypes: ['1', '7', '9', '10'] });
+  assert.deepEqual(selected.queryKey, sameSelection.queryKey);
+  assert.notDeepEqual(selected.queryKey, options(2, { bookId: 103, eventTypes: ['1', '7', '9', '10'] }).queryKey);
+  const requested = client.fetchQuery(selected);
+  assert.equal(requests[0].url.searchParams.get('page'), '2');
+  assert.equal(requests[0].url.searchParams.get('bookId'), '102');
+  assert.deepEqual(requests[0].url.searchParams.getAll('eventType'), ['1', '7', '9', '10']);
+  requests[0].resolve(response(2, 201));
+  await requested;
+});
+
 test('invalid history records fail the query before rendering a row', async (t) => {
   const { client, requests, options } = createFixture(t);
   const requested = client.fetchQuery(options(1));

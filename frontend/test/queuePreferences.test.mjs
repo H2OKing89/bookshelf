@@ -49,7 +49,8 @@ function assertLegacyPreferences(store) {
     pageSize: 30,
     sortKey: 'authorMetadata.sortName',
     sortDirection: 'descending',
-    includeUnknownAuthorItems: false
+    includeUnknownAuthorItems: false,
+    filters: { status: '', protocol: '' }
   });
   const names = columns.map(({ name }) => name);
   assert.ok(names.indexOf('progress') < names.indexOf('protocol'));
@@ -140,6 +141,26 @@ test('the current tab still works when the browser rejects preference storage', 
   assertLegacyPreferences(store);
   store.setIncludeUnknownAuthorItems(true);
   assert.equal(store.getIncludeUnknownAuthorItems(), true);
+});
+
+test('saved Queue filters reset paging and reject obsolete values without losing other preferences', () => {
+  const storage = getStorage();
+  const store = createQueuePreferencesStore(storage, apiRoot, legacy);
+  store.setPage(5);
+  store.setFilters({ status: 'downloading', protocol: 'torrent' });
+  assert.equal(store.getSnapshot().page, 1);
+
+  const reloaded = createQueuePreferencesStore(storage, apiRoot, null);
+  assert.deepEqual(reloaded.getSnapshot().filters, { status: 'downloading', protocol: 'torrent' });
+  assert.equal(reloaded.getIncludeUnknownAuthorItems(), false);
+  reloaded.setPage(2);
+  reloaded.setFilters({ status: 'downloading', protocol: 'torrent' });
+  assert.equal(reloaded.getSnapshot().page, 2);
+
+  const saved = JSON.parse(storage.getItem(key));
+  storage.setItem(key, JSON.stringify({ ...saved, filters: { status: 'obsolete', protocol: 'usenet' } }));
+  assert.deepEqual(createQueuePreferencesStore(storage, apiRoot, null).getSnapshot().filters,
+    { status: '', protocol: 'usenet' });
 });
 
 test('Redux preference startup retains legacy rollback data and avoids restoring stale Queue state', (t) => {

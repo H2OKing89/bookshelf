@@ -120,6 +120,69 @@ async function verifyQueuePreferences(page, base, { check, step }) {
     await headers.filter({ hasText: 'Protocol' }).count() === 0);
 }
 
+async function verifyQueueFilters(page, base, apiKey, { check, step, output }) {
+  step('queue_filter_api_accepts_only_supported_values');
+  const request = search => page.context().request.get(api(base, 'queue') + '?' + search, {
+    headers: { 'X-Api-Key': apiKey }, maxRedirects: 0
+  });
+  const [valid, invalidStatus, invalidProtocol] = await Promise.all([
+    request('status=downloading&protocol=torrent&includeUnknownAuthorItems=false'),
+    request('status=obsolete'),
+    request('protocol=42')
+  ]);
+  check('queue_api_binds_filters_and_rejects_invalid_values', valid.ok() && (await valid.json()).totalRecords === 0 &&
+    invalidStatus.status() === 400 && invalidProtocol.status() === 400);
+
+  const filter = page.getByRole('button', { name: /^Queue Filters/ });
+  const dialog = page.getByRole('dialog', { name: 'Queue Filters', exact: true });
+  const status = dialog.getByLabel('Download Status', { exact: true });
+  const protocol = dialog.getByLabel('Protocol', { exact: true });
+  const apply = dialog.getByRole('button', { name: 'Apply Filters', exact: true });
+  const set = async (statusValue, protocolValue) => {
+    await filter.click();
+    await status.selectOption(statusValue);
+    await protocol.selectOption(protocolValue);
+  };
+
+  step('queue_combines_status_and_protocol');
+  await setCheckbox(selection(page, 704), true);
+  await set('downloading', 'torrent');
+  const combinedArgs = args => args.get('status') === 'downloading' && args.get('protocol') === 'torrent' &&
+    args.get('includeUnknownAuthorItems') === 'false' && args.get('page') === '1';
+  const combined = responseFor(page, base, 'queue', combinedArgs);
+  await apply.click();
+  const matched = await combined;
+  await selection(page, 704).locator('xpath=self::*[not(@disabled)]').waitFor();
+  check('combined_filters_select_a_new_authenticated_page_and_clear_selection', await isAuthenticatedFetch(page, matched.request()) &&
+    (await matched.json()).totalRecords === 1 && !await selection(page, 704).isChecked());
+
+  step('queue_restores_applied_filters_after_reload');
+  const restored = responseFor(page, base, 'queue', combinedArgs);
+  await page.reload();
+  await restored;
+  await filter.click();
+  await dialog.waitFor();
+  check('saved_filters_and_explicit_false_survive_reload', await status.inputValue() === 'downloading' &&
+    await protocol.inputValue() === 'torrent');
+  await page.screenshot({ path: path.join(output, 'owned-queue-filters.png'), fullPage: true });
+  await status.selectOption('failed');
+  const empty = responseFor(page, base, 'queue', args => args.get('status') === 'failed' && args.get('protocol') === 'torrent');
+  await apply.click();
+  await empty;
+  const noMatches = page.getByText('No queue items match these filters.', { exact: true });
+  await noMatches.waitFor();
+  check('filtered_empty_is_distinct_from_an_empty_queue', !await page.getByText('Queue is empty', { exact: true }).isVisible());
+
+  step('queue_clear_filters_keeps_unknown_author_preference');
+  await set('', '');
+  const unfiltered = responseFor(page, base, 'queue', args => !args.has('status') && !args.has('protocol') &&
+    args.get('includeUnknownAuthorItems') === 'false');
+  await apply.click();
+  await unfiltered;
+  await selection(page, 704).waitFor();
+  check('clearing_filters_restores_matching_unfiltered_rows', !await noMatches.isVisible() && !await selection(page, 799).isVisible());
+}
+
 async function verifyQueue(page, base, config, { check, step, output }) {
   const hub = await observeHub(page, base);
   const readCalls = [];
@@ -135,14 +198,17 @@ async function verifyQueue(page, base, config, { check, step, output }) {
       fixtureIsEmpty = data.totalRecords === 0 && data.records?.length === 0;
     }
     readCalls.push(args.get('includeUnknownAuthorItems'));
+    const status = args.get('status');
+    const protocol = args.get('protocol');
     const ids = args.get('includeUnknownAuthorItems') === 'true' ? [...known, 799] : known;
+    const records = ids.map(queueRecord).filter(item => (!status || item.status === status) && (!protocol || item.protocol === protocol));
     return route.fulfill({ json: {
       page: Number(args.get('page') || 1),
       pageSize: Number(args.get('pageSize') || 20),
       sortKey: args.get('sortKey') || 'timeleft',
       sortDirection: args.get('sortDirection') || 'ascending',
-      totalRecords: ids.length,
-      records: ids.map(queueRecord)
+      totalRecords: records.length,
+      records
     } });
   });
   await page.route(url => url.origin + url.pathname === api(base, 'queue/bulk'), route => {
@@ -259,6 +325,7 @@ async function verifyQueue(page, base, config, { check, step, output }) {
   check('manual_refresh_waits_for_the_real_command_then_fetches_once', issued.ok() && status.ok() &&
     (await status.json()).status === 'completed' && readCalls.length === beforeManualRefresh + 1);
   await page.screenshot({ path: path.join(output, 'owned-activity-queue.png'), fullPage: true });
+  await verifyQueueFilters(page, base, apiKey, { check, step, output });
   await verifyQueuePreferences(page, base, { check, step });
 }
 

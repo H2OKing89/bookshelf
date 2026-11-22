@@ -64,6 +64,14 @@ async function selectFilter(page, value) {
   await page.getByRole('menu', { name: 'Filter' }).getByRole('menuitemradio', { name: value, exact: true }).click();
 }
 
+async function openHistoryFilters(page) {
+  await page.getByRole('button', { name: 'Filter', exact: true }).click();
+  await page.getByRole('menu', { name: 'Filter' }).getByRole('menuitem', { name: 'Custom Filters', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'History Filters', exact: true });
+  await dialog.waitFor();
+  return dialog;
+}
+
 async function verifyPaging(page, base, config, { check, step, output }) {
   let injectedResponse;
   await page.route(url => url.origin + url.pathname === historyApi(base), async route => {
@@ -183,7 +191,7 @@ async function verifyPaging(page, base, config, { check, step, output }) {
     historyResponse(page, base, args => args.get('eventType') === '7'),
     selectFilter(page, 'Import Failed')
   ]);
-  const empty = page.getByText('No history.', { exact: true });
+  const empty = page.getByText('No history matches your filters.', { exact: true });
   await empty.waitFor();
   check('confirmed_empty_filter_has_empty_state', await table.count() === 0);
   await selectFilter(page, 'All');
@@ -245,6 +253,112 @@ async function verifyPaging(page, base, config, { check, step, output }) {
     await rows.count() === 2);
   await page.keyboard.press('Escape');
   await page.screenshot({ path: path.join(output, 'desktop-history-paging.png'), fullPage: true });
+  await verifyHistoryFilters(page, base, { check, step, output });
+}
+
+async function verifyHistoryFilters(page, base, { check, step, output }) {
+  const hasCombinedFilter = args => args.get('bookId') === '104' && args.getAll('eventType').join(',') === '1,3';
+  const table = page.getByRole('table');
+
+  step('apply_combined_filter_from_later_page');
+  await selectFilter(page, 'All');
+  await pageButton(page, 1, 3).waitFor();
+  await Promise.all([
+    historyResponse(page, base, args => args.get('page') === '3'),
+    selectPage(page, 1, 3, 3)
+  ]);
+  const details = table.getByRole('button', { name: 'History Details', exact: true }).first();
+  await details.locator('xpath=self::*[not(@disabled) and not(@aria-disabled="true")]').waitFor();
+  let dialog = await openHistoryFilters(page);
+  await dialog.getByRole('combobox', { name: 'Book', exact: true }).selectOption('104');
+  await dialog.getByRole('checkbox', { name: 'Grabbed', exact: true }).press('Space');
+  await dialog.getByRole('checkbox', { name: 'Book Imported', exact: true }).press('Space');
+  await page.screenshot({ path: path.join(output, 'desktop-history-filters.png'), fullPage: true });
+
+  const observedPages = [];
+  const capturePage = request => {
+    const args = historyRequest(base, request);
+    if (args && hasCombinedFilter(args)) observedPages.push(args.get('page'));
+  };
+  page.on('request', capturePage);
+  const [filtered] = await Promise.all([
+    historyResponse(page, base, hasCombinedFilter),
+    dialog.getByRole('button', { name: 'Apply Filters', exact: true }).click()
+  ]);
+  await pageButton(page, 1, 2).waitFor();
+  page.off('request', capturePage);
+  const records = await filtered.json();
+  check('combined_book_and_events_use_first_page_of_server_filtered_counts', observedPages.length === 1 && observedPages[0] === '1' &&
+    records.totalRecords === 20 && records.records.length === 10 && records.records.every(record => record.bookId === 104));
+
+  step('combined_filter_paging_and_reload');
+  const [next] = await Promise.all([
+    historyResponse(page, base, args => hasCombinedFilter(args) && args.get('page') === '2'),
+    selectPage(page, 1, 2, 2)
+  ]);
+  const later = await next.json();
+  check('later_page_keeps_the_same_predicates_and_exact_count', later.totalRecords === 20 && later.records.length === 10 &&
+    later.records.some(record => record.eventType === 'grabbed') && later.records.some(record => record.eventType === 'bookFileImported'));
+  const restored = historyResponse(page, base, args => hasCombinedFilter(args) && args.get('page') === '1' &&
+    args.get('sortDirection') === 'ascending' && args.get('pageSize') === '10');
+  await page.reload();
+  await restored;
+  await pageButton(page, 1, 2).waitFor();
+  await page.getByRole('button', { name: 'Filter', exact: true }).click();
+  check('active_saved_filter_sort_and_size_survive_reload', await page.getByRole('menuitemradio', { name: 'Saved History Filter', exact: true })
+    .getAttribute('aria-checked') === 'true');
+  await page.keyboard.press('Escape');
+
+  step('quick_presets_remain_independent_of_saved_filter');
+  const [grabbed] = await Promise.all([
+    historyResponse(page, base, args => !args.has('bookId') && args.getAll('eventType').join(',') === '1'),
+    selectFilter(page, 'Grabbed')
+  ]);
+  check('quick_filter_keeps_both_books_and_does_not_erase_saved_filter', (await grabbed.json()).totalRecords === 2);
+  await selectFilter(page, 'Saved History Filter');
+  await pageButton(page, 1, 2).waitFor();
+  dialog = await openHistoryFilters(page);
+  await dialog.getByRole('combobox', { name: 'Book', exact: true }).selectOption('105');
+  await dialog.getByRole('checkbox', { name: 'Grabbed', exact: true }).press('Space');
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  dialog = await openHistoryFilters(page);
+  check('cancel_keeps_the_saved_book_and_event_types', await dialog.getByRole('combobox', { name: 'Book', exact: true }).inputValue() === '104' &&
+    await dialog.getByRole('checkbox', { name: 'Grabbed', exact: true }).isChecked());
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+
+  step('saved_unavailable_book_stays_in_scope');
+  await page.evaluate(() => {
+    localStorage.setItem('bookshelf:history-filter:' + window.Readarr.apiRoot,
+      JSON.stringify({ version: 1, active: true, filters: { bookId: 2147483647, eventTypes: ['1'] } }));
+  });
+  const unavailable = historyResponse(page, base, args => args.get('bookId') === '2147483647' && args.get('eventType') === '1');
+  await page.reload();
+  await unavailable;
+  const empty = page.getByText('No history matches your filters.', { exact: true });
+  await empty.waitFor();
+  dialog = await openHistoryFilters(page);
+  check('unavailable_saved_book_keeps_its_id_and_shows_filtered_empty',
+    await dialog.getByRole('option', { name: 'Unavailable book (ID 2147483647)', exact: true }).count() === 1 &&
+    await dialog.getByRole('combobox', { name: 'Book', exact: true }).inputValue() === '2147483647');
+  await dialog.getByRole('button', { name: 'Clear', exact: true }).click();
+  const [cleared] = await Promise.all([
+    historyResponse(page, base, args => !args.has('bookId') && !args.has('eventType')),
+    dialog.getByRole('button', { name: 'Apply Filters', exact: true }).click()
+  ]);
+  check('clearing_custom_filter_restores_all_server_records', (await cleared.json()).totalRecords === 25);
+
+  step('invalid_saved_filter_recovers');
+  await page.evaluate(() => {
+    localStorage.setItem('bookshelf:history-filter:' + window.Readarr.apiRoot, '{invalid History preference');
+    const legacy = JSON.parse(localStorage.getItem('readarr'));
+    legacy.history.selectedFilterKey = 'missing-legacy-preset';
+    localStorage.setItem('readarr', JSON.stringify(legacy));
+  });
+  const recovered = historyResponse(page, base, args => !args.has('bookId') && !args.has('eventType'));
+  await page.reload();
+  const result = await recovered;
+  await pageButton(page, 1, 3).waitFor();
+  check('malformed_saved_filter_and_missing_preset_recover_to_all', (await result.json()).totalRecords === 25);
 }
 
 async function verifyPhone(page, base, config, { check, step, output }) {
@@ -261,6 +375,19 @@ async function verifyPhone(page, base, config, { check, step, output }) {
   await page.getByRole('table').getByRole('link', { name: shortPageBook, exact: true }).first().waitFor();
   check('phone_can_change_page', (await response.json()).records.length === 5 && await pageButton(page, 2, 2).isVisible());
   await page.screenshot({ path: path.join(output, 'phone-history-paging.png'), fullPage: true });
+
+  step('phone_combined_history_filter');
+  const filters = await openHistoryFilters(page);
+  await filters.getByRole('combobox', { name: 'Book', exact: true }).selectOption('105');
+  await filters.getByRole('checkbox', { name: 'Grabbed', exact: true }).press('Space');
+  const [filtered] = await Promise.all([
+    historyResponse(page, base, args => args.get('bookId') === '105' && args.get('eventType') === '1'),
+    filters.getByRole('button', { name: 'Apply Filters', exact: true }).click()
+  ]);
+  await pageButton(page, 1, 1).waitFor();
+  const pageResult = await filtered.json();
+  check('phone_applies_book_and_event_filters_through_the_api', pageResult.page === 1 &&
+    pageResult.totalRecords === 1 && pageResult.records[0].id === config.secondGrab);
 }
 
 async function runBrowser(config, verifyDesktop, verifyMobile) {

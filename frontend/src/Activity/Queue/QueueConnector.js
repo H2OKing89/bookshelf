@@ -48,11 +48,11 @@ function QueueConnector({
   executeCommand,
   ...otherProps
 }) {
-  const { page: storedPage, pageSize, sortKey, sortDirection, includeUnknownAuthorItems, columns } = useQueuePreferences();
+  const { page: storedPage, pageSize, sortKey, sortDirection, includeUnknownAuthorItems, columns, filters } = useQueuePreferences();
   const [pageInitialized, setPageInitialized] = useState(useCurrentPage);
   const [actionRejected, setActionRejected] = useState(false);
   const page = pageInitialized ? storedPage : 1;
-  const options = queuePageQuery({ page, pageSize, sortKey, sortDirection, includeUnknownAuthorItems });
+  const options = queuePageQuery({ page, pageSize, sortKey, sortDirection, includeUnknownAuthorItems, filters });
   const pageKey = JSON.stringify(options.queryKey);
   const query = useQuery(options);
   const queryClient = useQueryClient();
@@ -138,6 +138,7 @@ function QueueConnector({
       sortDirection={sortDirection}
       totalPages={Math.max(page, totalPages)}
       totalRecords={totalRecords}
+      hasQueueFilters={!!(filters.status || filters.protocol)}
       isFetching={query.isPending || query.isFetching || needsClamp}
       isPopulated={!!query.data}
       error={query.error}

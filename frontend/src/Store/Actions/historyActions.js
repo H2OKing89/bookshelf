@@ -1,5 +1,6 @@
 import React from 'react';
 import { createAction } from 'redux-actions';
+import { historyEventFilters } from 'Activity/History/historyFilters';
 import Icon from 'Components/Icon';
 import { filterTypes, icons, sortDirections } from 'Helpers/Props';
 import { set } from './baseActions';
@@ -101,94 +102,17 @@ export const defaultState = {
       label: 'All',
       filters: []
     },
-    {
-      key: 'grabbed',
-      label: 'Grabbed',
+    ...historyEventFilters.map(({ key, label, value }) => ({
+      key,
+      label,
       filters: [
         {
           key: 'eventType',
-          value: '1',
+          value,
           type: filterTypes.EQUAL
         }
       ]
-    },
-    {
-      key: 'bookFileImported',
-      label: 'Book Imported',
-      filters: [
-        {
-          key: 'eventType',
-          value: '3',
-          type: filterTypes.EQUAL
-        }
-      ]
-    },
-    {
-      key: 'failed',
-      label: 'Download Failed',
-      filters: [
-        {
-          key: 'eventType',
-          value: '4',
-          type: filterTypes.EQUAL
-        }
-      ]
-    },
-    {
-      key: 'importFailed',
-      label: 'Import Failed',
-      filters: [
-        {
-          key: 'eventType',
-          value: '7',
-          type: filterTypes.EQUAL
-        }
-      ]
-    },
-    {
-      key: 'deleted',
-      label: 'Deleted',
-      filters: [
-        {
-          key: 'eventType',
-          value: '5',
-          type: filterTypes.EQUAL
-        }
-      ]
-    },
-    {
-      key: 'renamed',
-      label: 'Renamed',
-      filters: [
-        {
-          key: 'eventType',
-          value: '6',
-          type: filterTypes.EQUAL
-        }
-      ]
-    },
-    {
-      key: 'retagged',
-      label: 'Retagged',
-      filters: [
-        {
-          key: 'eventType',
-          value: '9',
-          type: filterTypes.EQUAL
-        }
-      ]
-    },
-    {
-      key: 'ignored',
-      label: 'Ignored',
-      filters: [
-        {
-          key: 'eventType',
-          value: '10',
-          type: filterTypes.EQUAL
-        }
-      ]
-    }
+    }))
   ]
 
 };

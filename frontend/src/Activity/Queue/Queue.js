@@ -15,6 +15,7 @@ import TablePager from 'Components/Table/TablePager';
 import { align, icons, kinds } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
 import toggleSelected from 'Utilities/Table/toggleSelected';
+import QueueFilterButton from './QueueFilterButton';
 import QueueOptions from './QueueOptions';
 import { holdQueueRefresh, queueTarget, queueTargetsAreCurrent } from './queuePageQuery';
 import QueueRowConnector from './QueueRowConnector';
@@ -157,6 +158,7 @@ class Queue extends Component {
       booksError,
       columns,
       items,
+      hasQueueFilters,
       pageKey,
       pendingAction,
       totalRecords,
@@ -219,6 +221,8 @@ class Queue extends Component {
                 iconName={icons.TABLE}
               />
             </TableOptionsModalWrapper>
+
+            <QueueFilterButton />
           </PageToolbarSection>
         </PageToolbar>
 
@@ -234,8 +238,8 @@ class Queue extends Component {
               <Alert kind={kinds.DANGER} role="alert">{translate('QueueActionFailed')}</Alert>
           }
           {
-            isAllPopulated && !hasError && !items.length &&
-              <Alert kind={kinds.INFO}>{translate('QueueIsEmpty')}</Alert>
+            isAllPopulated && canUseRowActions && !hasError && !items.length &&
+              <Alert kind={kinds.INFO}>{translate(hasQueueFilters ? 'QueueNoMatches' : 'QueueIsEmpty')}</Alert>
           }
 
           {
@@ -301,6 +305,7 @@ Queue.propTypes = {
   isPopulated: PropTypes.bool.isRequired,
   error: PropTypes.object,
   items: PropTypes.arrayOf(PropTypes.object).isRequired,
+  hasQueueFilters: PropTypes.bool.isRequired,
   pageKey: PropTypes.string.isRequired,
   isAuthorFetching: PropTypes.bool.isRequired,
   isAuthorPopulated: PropTypes.bool.isRequired,

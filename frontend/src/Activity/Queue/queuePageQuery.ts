@@ -1,6 +1,7 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import queryClient from 'App/queryClient';
 import fetchJson from 'Utilities/Fetch/fetchJson';
+import type { QueueFilters } from './queueFilters';
 
 const refreshDelay = 100;
 const actionTimeout = 120_000;
@@ -21,6 +22,7 @@ interface QueuePageRequest {
   sortKey: string;
   sortDirection: 'ascending' | 'descending';
   includeUnknownAuthorItems: boolean;
+  filters?: QueueFilters;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -313,15 +315,25 @@ export default function queuePageQuery({
   pageSize,
   sortKey,
   sortDirection,
-  includeUnknownAuthorItems
+  includeUnknownAuthorItems,
+  filters
 }: QueuePageRequest) {
-  const search = new URLSearchParams({
+  const params = new URLSearchParams({
     page: String(page),
     pageSize: String(pageSize),
     sortKey: sortAliases[sortKey] ?? sortKey,
     sortDirection,
     includeUnknownAuthorItems: String(includeUnknownAuthorItems)
-  }).toString();
+  });
+
+  if (filters?.status) {
+    params.set('status', filters.status);
+  }
+  if (filters?.protocol) {
+    params.set('protocol', filters.protocol);
+  }
+
+  const search = params.toString();
 
   return queryOptions({
     queryKey: [...queuePageFamilyKey(), search] as const,
