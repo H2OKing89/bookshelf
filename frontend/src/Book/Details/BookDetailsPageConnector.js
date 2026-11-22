@@ -1,8 +1,8 @@
-import { push } from 'connected-react-router';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import { useParams } from 'react-router-dom';
 import { createSelector } from 'reselect';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import NotFound from 'Components/NotFound';
@@ -13,11 +13,10 @@ import BookDetailsConnector from './BookDetailsConnector';
 
 function createMapStateToProps() {
   return createSelector(
-    (state, { match }) => match,
+    (state, { requestedSlug }) => requestedSlug,
     (state) => state.books,
     (state) => state.authors,
-    (match, books, author) => {
-      const titleSlug = match.params.titleSlug;
+    (titleSlug, books, author) => {
       const isFetching = books.isFetching || author.isFetching;
       const isPopulated = books.isPopulated && author.isPopulated;
 
@@ -42,11 +41,7 @@ function createMapStateToProps() {
   );
 }
 
-const mapDispatchToProps = {
-  push
-};
-
-class BookDetailsPageConnector extends Component {
+class BookDetailsPage extends Component {
 
   constructor(props) {
     super(props);
@@ -105,12 +100,16 @@ class BookDetailsPageConnector extends Component {
   }
 }
 
-BookDetailsPageConnector.propTypes = {
+BookDetailsPage.propTypes = {
   titleSlug: PropTypes.string,
-  match: PropTypes.shape({ params: PropTypes.shape({ titleSlug: PropTypes.string.isRequired }).isRequired }).isRequired,
-  push: PropTypes.func.isRequired,
   isFetching: PropTypes.bool.isRequired,
   isPopulated: PropTypes.bool.isRequired
 };
 
-export default connect(createMapStateToProps, mapDispatchToProps)(BookDetailsPageConnector);
+const ConnectedBookDetailsPage = connect(createMapStateToProps)(BookDetailsPage);
+
+export default function BookDetailsPageConnector() {
+  const { titleSlug } = useParams();
+
+  return <ConnectedBookDetailsPage requestedSlug={titleSlug} />;
+}

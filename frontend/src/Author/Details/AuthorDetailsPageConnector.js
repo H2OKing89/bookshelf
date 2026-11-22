@@ -1,8 +1,8 @@
-import { push } from 'connected-react-router';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import { useNavigate, useParams } from 'react-router-dom';
 import { createSelector } from 'reselect';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import NotFound from 'Components/NotFound';
@@ -16,10 +16,9 @@ import styles from './AuthorDetails.css';
 
 function createMapStateToProps() {
   return createSelector(
-    (state, { match }) => match,
+    (state, { requestedSlug }) => requestedSlug,
     (state) => state.authors,
-    (match, authors) => {
-      const titleSlug = match.params.titleSlug;
+    (titleSlug, authors) => {
       const {
         isFetching,
         isPopulated,
@@ -48,11 +47,7 @@ function createMapStateToProps() {
   );
 }
 
-const mapDispatchToProps = {
-  push
-};
-
-class AuthorDetailsPageConnector extends Component {
+class AuthorDetailsPage extends Component {
 
   state = {
     reconciliationAuthorId: null
@@ -63,7 +58,7 @@ class AuthorDetailsPageConnector extends Component {
 
   componentDidUpdate(prevProps) {
     if (!this.props.titleSlug && !this.state.reconciliationAuthorId) {
-      this.props.push(`${window.Readarr.urlBase}/`);
+      this.props.navigate('/');
       return;
     }
   }
@@ -141,14 +136,20 @@ class AuthorDetailsPageConnector extends Component {
   }
 }
 
-AuthorDetailsPageConnector.propTypes = {
+AuthorDetailsPage.propTypes = {
   titleSlug: PropTypes.string,
   nameOnlyAuthorId: PropTypes.number,
   isFetching: PropTypes.bool.isRequired,
   isPopulated: PropTypes.bool.isRequired,
   error: PropTypes.object,
-  match: PropTypes.shape({ params: PropTypes.shape({ titleSlug: PropTypes.string.isRequired }).isRequired }).isRequired,
-  push: PropTypes.func.isRequired
+  navigate: PropTypes.func.isRequired
 };
 
-export default connect(createMapStateToProps, mapDispatchToProps)(AuthorDetailsPageConnector);
+const ConnectedAuthorDetailsPage = connect(createMapStateToProps)(AuthorDetailsPage);
+
+export default function AuthorDetailsPageConnector() {
+  const { titleSlug } = useParams();
+  const navigate = useNavigate();
+
+  return <ConnectedAuthorDetailsPage requestedSlug={titleSlug} navigate={navigate} />;
+}

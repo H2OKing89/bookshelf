@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { withRouter } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { createSelector } from 'reselect';
 import { fetchTranslations, saveDimensions, setIsSidebarVisible } from 'Store/Actions/appActions';
 import { fetchAuthor } from 'Store/Actions/authorActions';
@@ -222,7 +222,7 @@ function createMapDispatchToProps(dispatch, props) {
   };
 }
 
-class PageConnector extends Component {
+class PageLoader extends Component {
 
   //
   // Lifecycle
@@ -304,7 +304,7 @@ class PageConnector extends Component {
   }
 }
 
-PageConnector.propTypes = {
+PageLoader.propTypes = {
   isPopulated: PropTypes.bool.isRequired,
   hasError: PropTypes.bool.isRequired,
   isSidebarVisible: PropTypes.bool.isRequired,
@@ -323,6 +323,10 @@ PageConnector.propTypes = {
   onSidebarVisibleChange: PropTypes.func.isRequired
 };
 
-export default withRouter(
-  connect(createMapStateToProps, createMapDispatchToProps)(PageConnector)
-);
+const ConnectedPage = connect(createMapStateToProps, createMapDispatchToProps)(PageLoader);
+
+export default function PageConnector(props) {
+  const location = useLocation();
+
+  return <ConnectedPage {...props} location={location} />;
+}

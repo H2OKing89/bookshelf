@@ -1,8 +1,9 @@
-import { useLayoutEffect, useRef } from 'react';
-import { useHistory } from 'react-router-dom';
+import { createContext, useContext, useLayoutEffect, useRef } from 'react';
+
+export const UnsavedNavigationContext = createContext(null);
 
 export default function useUnsavedNavigation(isDirty, onDiscard) {
-  const { unsavedChanges } = useHistory();
+  const register = useContext(UnsavedNavigationContext);
   const discard = useRef(onDiscard);
 
   useLayoutEffect(() => {
@@ -11,7 +12,7 @@ export default function useUnsavedNavigation(isDirty, onDiscard) {
 
   useLayoutEffect(() => {
     if (isDirty) {
-      return unsavedChanges.register(() => discard.current?.());
+      return register(() => discard.current?.());
     }
-  }, [isDirty, unsavedChanges]);
+  }, [isDirty, register]);
 }

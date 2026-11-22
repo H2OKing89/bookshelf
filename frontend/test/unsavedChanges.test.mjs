@@ -1,16 +1,20 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { createBrowserRouter } from 'react-router-dom';
 import { loadFrontendModule } from './helpers/loadFrontendModule.mjs';
+
+const { createUnsavedChanges } = loadFrontendModule('Settings/UnsavedNavigationProvider.js', {
+  './PendingChangesModal': () => null
+});
+const { default: migrateBrowserHistory } = loadFrontendModule('App/migrateBrowserHistory.js');
 
 function browserHistory(snapshot) {
   const origin = 'http://localhost';
   const entries = snapshot?.entries.slice() ?? [{ url: new URL('/base/start', origin), state: null }];
   let index = snapshot?.index ?? 0;
   const browser = new EventTarget();
-  Object.assign(browser, {
-    document: { createElement: () => ({}) },
-    navigator: { userAgent: 'Synthetic Browser' }
-  });
+  browser.document = { createElement: () => ({}) };
+  browser.sessionStorage = { getItem: () => null };
   Object.defineProperty(browser, 'location', { get: () => entries[index].url });
   browser.snapshot = () => ({ entries, index });
   browser.history = {
@@ -26,97 +30,93 @@ function browserHistory(snapshot) {
     },
     go(delta) {
       const nextIndex = index + delta;
-
       if (nextIndex < 0 || nextIndex >= entries.length) {
         return;
       }
 
       index = nextIndex;
-      const event = new Event('popstate');
-      Object.defineProperty(event, 'state', { value: this.state });
-      browser.dispatchEvent(event);
+      browser.dispatchEvent(new Event('popstate'));
     }
   };
 
   return browser;
 }
 
-function historyFixture(t, browser = browserHistory()) {
-  globalThis.window = browser;
-  const { default: createAppHistory } = loadFrontendModule('App/createAppHistory.js');
-  const history = createAppHistory();
+function routerFixture(t, browser = browserHistory()) {
+  const updateEntry = migrateBrowserHistory(browser);
+  const router = createBrowserRouter([{ path: '*' }], { basename: '/base', window: browser, hydrationData: {} });
   const transitions = [];
-  const prompts = [];
-  const unlisten = history.listen((location, action) => transitions.push({ location, action }));
-  const unsubscribe = history.unsavedChanges.listen((open) => prompts.push(open));
-  t.after(() => {
-    globalThis.window = browser;
-    unsubscribe();
-    unlisten();
-    delete globalThis.window;
+  const dirtyTransitions = [];
+  const changes = createUnsavedChanges(browser, (dirty) => dirtyTransitions.push(dirty));
+  let location = router.state.location;
+  router.subscribe((state) => {
+    if (location !== state.location) {
+      location = state.location;
+      transitions.push(state.historyAction);
+      updateEntry?.();
+    }
   });
+  const blockerKey = 'unsaved';
+  router.getBlocker(blockerKey, changes.hasChanges);
+  t.after(() => router.dispose());
 
-  return { browser, history, transitions, prompts };
+  return { browser, router, changes, transitions, dirtyTransitions, blocker: () => router.state.blockers.get(blockerKey) };
 }
 
-test('confirmation completes the original push or replace once, with search, hash and state', (t) => {
-  const { browser, history, transitions, prompts } = historyFixture(t);
+test('one basename and the original push or replace preserve query, hash and state', async (t) => {
+  const { browser, router, changes, transitions, blocker } = routerFixture(t);
   let discarded = 0;
-  history.unsavedChanges.register(() => { discarded += 1; });
-  const destination = { pathname: '/base/books', search: '?page=2', hash: '#recording', state: { from: 'settings' } };
+  changes.register(() => { discarded += 1; });
+  const destination = '/books?page=2#recording';
+  const state = { from: 'settings' };
 
-  history.push(destination);
-  assert.equal(prompts.at(-1), true);
+  await router.navigate(destination, { state });
+  assert.equal(blocker().state, 'blocked');
   assert.equal(browser.location.pathname, '/base/start');
-  history.unsavedChanges.resolve(false);
+  blocker().reset();
   assert.equal(discarded, 0);
-  assert.equal(transitions.length, 0);
+  assert.deepEqual(transitions, []);
 
-  history.replace(destination);
-  history.unsavedChanges.resolve(true);
-  history.unsavedChanges.resolve(true);
+  await router.navigate(destination, { state, replace: true });
+  changes.discard();
+  blocker().proceed();
   assert.equal(discarded, 1);
-  assert.equal(transitions.length, 1);
-  assert.equal(transitions[0].action, 'REPLACE');
+  assert.deepEqual(transitions, ['REPLACE']);
   assert.equal(browser.history.length, 1);
-  assert.equal(browser.location.pathname, destination.pathname);
-  assert.equal(browser.location.search, destination.search);
-  assert.equal(browser.location.hash, destination.hash);
-  assert.deepEqual(history.location.state, destination.state);
+  assert.equal(browser.location.href, 'http://localhost/base/books?page=2#recording');
+  assert.deepEqual(router.state.location.state, state);
 });
 
-test('cancel restores the current browser entry and confirm completes the intended forward POP', (t) => {
-  const { browser, history, transitions, prompts } = historyFixture(t);
-  history.push('/base/settings?section=client#form');
-  history.push('/base/books?page=2#recording');
-  history.goBack();
+test('cancel restores the edited entry and confirm completes the requested Forward', async (t) => {
+  const { browser, router, changes, transitions, blocker } = routerFixture(t);
+  await router.navigate('/settings?section=client#form');
+  await router.navigate('/books?page=2#recording');
+  await router.navigate(-1);
   const original = browser.location.href;
-  const originalKey = history.location.key;
-  history.unsavedChanges.register();
+  const originalKey = router.state.location.key;
+  changes.register();
 
-  history.goBack();
-  assert.equal(prompts.at(-1), true);
-  assert.equal(history.location.key, originalKey);
-  history.unsavedChanges.resolve(false);
+  await router.navigate(-1);
+  assert.equal(blocker().state, 'blocked');
+  assert.equal(router.state.location.key, originalKey);
+  blocker().reset();
   assert.equal(browser.location.href, original);
-  assert.equal(history.location.key, originalKey);
 
   const count = transitions.length;
-  history.goForward();
-  assert.equal(prompts.at(-1), true);
-  history.unsavedChanges.resolve(true);
+  await router.navigate(1);
+  assert.equal(blocker().state, 'blocked');
+  blocker().proceed();
+  await Promise.resolve();
   assert.equal(transitions.length, count + 1);
-  assert.equal(transitions.at(-1).action, 'POP');
+  assert.equal(transitions.at(-1), 'POP');
   assert.equal(browser.location.href, 'http://localhost/base/books?page=2#recording');
   assert.equal(browser.history.length, 3);
 });
 
-test('dirty forms share unload protection and the last cleanup cancels an unresolved navigation', (t) => {
-  const { browser, history, prompts } = historyFixture(t);
-  const original = '/base/settings';
-  history.push(original);
-  const unregisterParent = history.unsavedChanges.register();
-  const unregisterEditor = history.unsavedChanges.register();
+test('the last dirty form removes the shared reload warning', (t) => {
+  const { browser, changes, dirtyTransitions } = routerFixture(t);
+  const unregisterParent = changes.register();
+  const unregisterEditor = changes.register();
   function isUnloadBlocked() {
     const event = new Event('beforeunload', { cancelable: true });
     Object.defineProperty(event, 'returnValue', { value: '', writable: true });
@@ -125,59 +125,85 @@ test('dirty forms share unload protection and the last cleanup cancels an unreso
   }
 
   assert.equal(isUnloadBlocked(), true);
-  history.goBack();
-  assert.equal(prompts.at(-1), true);
   unregisterEditor();
   assert.equal(isUnloadBlocked(), true);
-  assert.equal(prompts.at(-1), true);
+  assert.equal(changes.hasChanges(), true);
   unregisterParent();
-  assert.equal(prompts.at(-1), false);
   assert.equal(isUnloadBlocked(), false);
-  assert.equal(browser.location.pathname, original);
-  history.goBack();
-  assert.equal(history.location.pathname, '/base/start');
+  assert.equal(changes.hasChanges(), false);
+  assert.deepEqual(dirtyTransitions, [true, false]);
 });
 
-test('after reload cancellation can restore a native entry outside the new router session', (t) => {
-  const previous = historyFixture(t);
-  previous.history.push('/base/settings?section=client#form');
-  previous.history.push('/base/books?page=2#recording');
-  previous.history.goBack();
-  const { browser, history, prompts } = historyFixture(t, browserHistory(previous.browser.snapshot()));
+test('Back and Forward can be cancelled after reloading a data-router entry', async (t) => {
+  const previous = routerFixture(t);
+  await previous.router.navigate('/settings?section=client#form');
+  await previous.router.navigate('/books?page=2#recording');
+  await previous.router.navigate(-1);
+  const { browser, router, changes, blocker } = routerFixture(t, browserHistory(previous.browser.snapshot()));
   const original = browser.location.href;
-  history.unsavedChanges.register();
+  changes.register();
 
-  history.goBack();
-  assert.equal(browser.location.pathname, '/base/start');
-  assert.equal(prompts.at(-1), true);
-  history.unsavedChanges.resolve(false);
+  await router.navigate(-1);
+  assert.equal(blocker().state, 'blocked');
+  blocker().reset();
   assert.equal(browser.location.href, original);
-  assert.equal(history.location.pathname, '/base/settings');
-
-  history.goForward();
-  assert.equal(browser.location.pathname, '/base/books');
-  assert.equal(prompts.at(-1), true);
-  history.unsavedChanges.resolve(false);
+  await router.navigate(1);
+  assert.equal(blocker().state, 'blocked');
+  blocker().reset();
   assert.equal(browser.location.href, original);
   assert.equal(browser.history.length, 3);
 });
 
-test('a newer browser traversal supersedes the pending one without replaying stale history', (t) => {
-  const { browser, history, prompts } = historyFixture(t);
-  history.push('/base/other');
-  history.push('/base/settings');
-  history.unsavedChanges.register();
+test('positions written by the previous build still protect Back after a new entry and reload', async (t) => {
+  const origin = 'http://localhost';
+  const previous = browserHistory({
+    index: 1,
+    entries: ['/base/start', '/base/settings'].map((path, index) => ({
+      url: new URL(path, origin),
+      state: {
+        key: 'owned-' + index,
+        state: { index },
+        bookshelfNavigationPosition: { stack: 'owned-legacy', index }
+      }
+    }))
+  });
+  const beforeReload = routerFixture(t, previous);
+  assert.deepEqual(beforeReload.router.state.location.state, { index: 1 });
+  await beforeReload.router.navigate('/settings?section=client#form');
+  const { browser, router, changes, blocker } = routerFixture(t, browserHistory(previous.snapshot()));
+  changes.register();
+  await router.navigate(-2);
+  assert.equal(blocker().state, 'blocked');
+  assert.deepEqual(blocker().location.state, { index: 0 });
+  blocker().reset();
+  assert.equal(browser.location.href, 'http://localhost/base/settings?section=client#form');
+});
 
-  history.goBack();
-  history.goForward();
-  assert.equal(prompts.at(-1), false);
-  assert.equal(history.location.pathname, '/base/settings');
+test('collection pagination and scroll restore from router navigation state', () => {
+  let action = 'POP';
+  let state = null;
+  const replacements = {
+    'react-router-dom': {
+      useLocation: () => ({ state }),
+      useNavigationType: () => action
+    },
+    'Store/scrollPositions': { authors: 640 }
+  };
+  const [{ default: withCurrentPage }, { default: withScrollPosition }] = loadFrontendModule([
+    'Components/withCurrentPage.js', 'Components/withScrollPosition.js'
+  ], replacements);
+  const Collection = () => null;
+  const Paged = withCurrentPage(Collection);
+  const Scrolled = withScrollPosition(Collection, 'authors');
 
-  history.goBack();
-  history.goBack();
-  history.unsavedChanges.resolve(true);
-  assert.equal(history.location.pathname, '/base/start');
-  assert.equal(browser.location.pathname, '/base/start');
+  assert.equal(Paged({}).props.useCurrentPage, true);
+  assert.equal(Scrolled({}).props.scrollTop, 640);
+  action = 'PUSH';
+  assert.equal(Paged({}).props.useCurrentPage, false);
+  assert.equal(Scrolled({}).props.scrollTop, 0);
+  action = 'REPLACE';
+  state = { restoreScrollPosition: true };
+  assert.equal(Scrolled({}).props.scrollTop, 640);
 });
 
 test('download client modal marks changed schema fields dirty without treating reversions as edits', () => {

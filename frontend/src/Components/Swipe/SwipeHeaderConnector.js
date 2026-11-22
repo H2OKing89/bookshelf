@@ -1,7 +1,6 @@
-import { push } from 'connected-react-router';
-import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { createSelector } from 'reselect';
 import createDimensionsSelector from 'Store/Selectors/createDimensionsSelector';
 import SwipeHeader from './SwipeHeader';
@@ -17,30 +16,10 @@ function createMapStateToProps() {
   );
 }
 
-function createMapDispatchToProps(dispatch, props) {
-  return {
-    onGoTo(url) {
-      dispatch(push(`${window.Readarr.urlBase}${url}`));
-    }
-  };
+const ConnectedSwipeHeader = connect(createMapStateToProps)(SwipeHeader);
+
+export default function SwipeHeaderConnector(props) {
+  const navigate = useNavigate();
+
+  return <ConnectedSwipeHeader {...props} onGoTo={navigate} />;
 }
-
-class SwipeHeaderConnector extends Component {
-
-  //
-  // Render
-
-  render() {
-    return (
-      <SwipeHeader
-        {...this.props}
-      />
-    );
-  }
-}
-
-SwipeHeaderConnector.propTypes = {
-  onGoTo: PropTypes.func.isRequired
-};
-
-export default connect(createMapStateToProps, createMapDispatchToProps)(SwipeHeaderConnector);

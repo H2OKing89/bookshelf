@@ -6,7 +6,7 @@
       "baseUrl": "src",
       "jsx": "react",
       "module": "esnext",
-      "moduleResolution": "node",
+      "moduleResolution": "bundler",
       "noEmit": true,
       "esModuleInterop": true,
       "typeRoots": ["node_modules/@types", "typings"],

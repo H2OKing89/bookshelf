@@ -8,11 +8,7 @@ import React, {
 import { Link as RouterLink } from 'react-router-dom';
 import styles from './Link.css';
 
-interface ReactRouterLinkProps {
-  to?: string;
-}
-
-export interface LinkProps extends React.HTMLProps<HTMLAnchorElement> {
+export interface LinkProps extends React.AllHTMLAttributes<HTMLAnchorElement> {
   className?: string;
   component?:
     | string
@@ -39,58 +35,55 @@ function Link(props: LinkProps) {
 
   const onClick = useCallback(
     (event: SyntheticEvent) => {
-      if (!isDisabled && onPress) {
-        onPress(event);
+      if (isDisabled) {
+        event.preventDefault();
+      } else {
+        onPress?.(event);
       }
     },
     [isDisabled, onPress]
   );
 
-  const linkProps: React.HTMLProps<HTMLAnchorElement> & ReactRouterLinkProps = {
-    target,
-  };
-  let el = component;
-
-  if (to) {
-    if (/\w+?:\/\//.test(to)) {
-      el = 'a';
-      linkProps.href = to;
-      linkProps.target = target || '_blank';
-      linkProps.rel = 'noreferrer';
-    } else if (noRouter) {
-      el = 'a';
-      linkProps.href = to;
-      linkProps.target = target || '_self';
-    } else {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      el = RouterLink;
-      linkProps.to = `${window.Readarr.urlBase}/${to.replace(/^\//, '')}`;
-      linkProps.target = target;
-    }
-  }
-
-  if (el === 'button' || el === 'input') {
-    linkProps.type = type || 'button';
-    linkProps.disabled = isDisabled;
-  }
-
-  linkProps.className = classNames(
+  const linkClassName = classNames(
     className,
     styles.link,
     to && styles.to,
     isDisabled && 'isDisabled'
   );
+  const isExternal = to && /\w+:\/\//.test(to);
 
-  const elementProps = {
-    ...otherProps,
+  if (to && !isExternal && !noRouter) {
+    return (
+      <RouterLink
+        {...otherProps}
+        className={linkClassName}
+        to={`/${to.replace(/^\//, '')}`}
+        target={target}
+        type={type}
+        onClick={onClick}
+      />
+    );
+  }
+
+  const element = to ? 'a' : component;
+  const linkProps: React.AllHTMLAttributes<HTMLAnchorElement> = {
+    className: linkClassName,
+    target,
     type,
-    ...linkProps,
   };
 
-  elementProps.onClick = onClick;
+  if (to) {
+    linkProps.href = to;
+    linkProps.target = target || (isExternal ? '_blank' : '_self');
+    if (isExternal) {
+      linkProps.rel = 'noreferrer';
+    }
+  } else if (element === 'button' || element === 'input') {
+    linkProps.type = type || 'button';
+    linkProps.disabled = isDisabled;
+  }
 
-  return React.createElement(el, elementProps);
+  return React.createElement(element, { ...otherProps, ...linkProps, onClick });
 }
 
 export default Link;

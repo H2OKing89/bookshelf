@@ -438,8 +438,7 @@ class PageSidebar extends Component {
       transform
     } = this.state;
 
-    const urlBase = window.Readarr.urlBase;
-    const pathname = urlBase ? location.pathname.substr(urlBase.length) || '/' : location.pathname;
+    const { pathname } = location;
     const activeParent = getActiveParent(pathname);
 
     let containerStyle = {};

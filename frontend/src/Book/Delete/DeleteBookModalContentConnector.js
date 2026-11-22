@@ -1,7 +1,7 @@
-import { push } from 'connected-react-router';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { createSelector } from 'reselect';
 import { deleteBook } from 'Store/Actions/bookActions';
 import createBookSelector from 'Store/Selectors/createBookSelector';
@@ -17,11 +17,10 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  push,
   deleteBook
 };
 
-class DeleteBookModalContentConnector extends Component {
+class DeleteBookModalConnector extends Component {
 
   //
   // Listeners
@@ -35,7 +34,7 @@ class DeleteBookModalContentConnector extends Component {
 
     this.props.onModalClose(true);
 
-    this.props.push(`${window.Readarr.urlBase}/author/${this.props.authorSlug}`);
+    this.props.navigate(`/author/${this.props.authorSlug}`);
   };
 
   //
@@ -51,12 +50,18 @@ class DeleteBookModalContentConnector extends Component {
   }
 }
 
-DeleteBookModalContentConnector.propTypes = {
+DeleteBookModalConnector.propTypes = {
   bookId: PropTypes.number.isRequired,
   authorSlug: PropTypes.string.isRequired,
-  push: PropTypes.func.isRequired,
+  navigate: PropTypes.func.isRequired,
   onModalClose: PropTypes.func.isRequired,
   deleteBook: PropTypes.func.isRequired
 };
 
-export default connect(createMapStateToProps, mapDispatchToProps)(DeleteBookModalContentConnector);
+const ConnectedDeleteBook = connect(createMapStateToProps, mapDispatchToProps)(DeleteBookModalConnector);
+
+export default function DeleteBookModalContentConnector(props) {
+  const navigate = useNavigate();
+
+  return <ConnectedDeleteBook {...props} navigate={navigate} />;
+}

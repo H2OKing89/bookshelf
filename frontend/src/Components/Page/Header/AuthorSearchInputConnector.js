@@ -1,5 +1,6 @@
-import { push } from 'connected-react-router';
+import React from 'react';
 import { connect } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { createSelector } from 'reselect';
 import createAllAuthorSelector from 'Store/Selectors/createAllAuthorsSelector';
 import createDeepEqualSelector from 'Store/Selectors/createDeepEqualSelector';
@@ -83,20 +84,17 @@ function createMapStateToProps() {
   );
 }
 
-function createMapDispatchToProps(dispatch, props) {
-  return {
-    onGoToAuthor(titleSlug) {
-      dispatch(push(`${window.Readarr.urlBase}/author/${titleSlug}`));
-    },
+const ConnectedAuthorSearch = connect(createMapStateToProps)(AuthorSearchInput);
 
-    onGoToBook(titleSlug) {
-      dispatch(push(`${window.Readarr.urlBase}/book/${titleSlug}`));
-    },
+export default function AuthorSearchInputConnector(props) {
+  const navigate = useNavigate();
 
-    onGoToAddNewAuthor(query) {
-      dispatch(push(`${window.Readarr.urlBase}/add/search?term=${encodeURIComponent(query)}`));
-    }
-  };
+  return (
+    <ConnectedAuthorSearch
+      {...props}
+      onGoToAuthor={(titleSlug) => navigate(`/author/${titleSlug}`)}
+      onGoToBook={(titleSlug) => navigate(`/book/${titleSlug}`)}
+      onGoToAddNewAuthor={(query) => navigate(`/add/search?term=${encodeURIComponent(query)}`)}
+    />
+  );
 }
-
-export default connect(createMapStateToProps, createMapDispatchToProps)(AuthorSearchInput);
