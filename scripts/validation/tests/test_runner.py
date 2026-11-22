@@ -27,7 +27,7 @@ class RunnerResultTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.runtime = package(self.root / "runtime")
         self.modules = {"validation." + name: types.ModuleType("validation." + name)
-                        for name in ("accesspolicy", "acquisition", "app", "authpolicy", "cancellation", "datastore", "docker", "identity", "logstorage", "media", "package", "postgresconnections", "releaseidentity", "restore", "sqlite", "upgrade")}
+                        for name in ("accesspolicy", "acquisition", "app", "authpolicy", "cancellation", "datastore", "docker", "identity", "logstorage", "media", "package", "postgresconnections", "releaseidentity", "restore", "settings_drafts", "sqlite", "upgrade")}
         self.output = self.root / "results"
 
     @contextlib.contextmanager
@@ -104,6 +104,22 @@ class RunnerResultTests(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(calls, [((self.runtime.resolve(), self.output / "identity"),
                                   {"baseline_runtime": baseline.resolve(), "playwright_module": browser})])
+
+    def test_settings_drafts_requires_and_passes_the_browser_module(self):
+        browser = self.root / "playwright"
+        calls = []
+        self.modules["validation.settings_drafts"].run = lambda *args: (
+            calls.append(args) or {"checks": {"owned": True}, "passed": 1, "failed": 0, "completed": True})
+        console = io.StringIO()
+        arguments = ["--runtime", str(self.runtime), "--output", str(self.output), "--checks", "settingsdrafts"]
+        with (self.mocked_modules(), patch.object(runner.common, "ensure_host_compatible"),
+              contextlib.redirect_stdout(console), contextlib.redirect_stderr(console)):
+            with self.assertRaises(SystemExit):
+                runner.main(arguments)
+            self.assertFalse(self.output.exists())
+            status = runner.main([*arguments, "--playwright-module", str(browser)])
+        self.assertEqual(status, 0)
+        self.assertEqual(calls, [(self.runtime.resolve(), self.output / "settingsdrafts", browser)])
 
     def test_explicit_accesspolicy_check_uses_candidate_without_requiring_a_baseline(self):
         calls = []

@@ -6,6 +6,7 @@ import DocumentTitle from 'react-document-title';
 import { Provider } from 'react-redux';
 import { SavedSettingsStatus } from 'Components/ActionStatus';
 import PageConnector from 'Components/Page/PageConnector';
+import UnsavedNavigationModal from 'Settings/UnsavedNavigationModal';
 import ApplyTheme from './ApplyTheme';
 import AppRoutes from './AppRoutes';
 import queryClient from './queryClient';
@@ -22,6 +23,7 @@ function App({ store, history }) {
                   <AppRoutes app={App} />
                 </PageConnector>
                 <SavedSettingsStatus />
+                <UnsavedNavigationModal />
               </>
             </ApplyTheme>
           </ConnectedRouter>

@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect } from 'react';
-import keyboardShortcuts from 'Components/keyboardShortcuts';
+import React from 'react';
 import Button from 'Components/Link/Button';
 import Modal from 'Components/Modal/Modal';
 import ModalBody from 'Components/Modal/ModalBody';
@@ -9,23 +8,7 @@ import ModalFooter from 'Components/Modal/ModalFooter';
 import ModalHeader from 'Components/Modal/ModalHeader';
 import { kinds } from 'Helpers/Props';
 
-function PendingChangesModal(props) {
-  const {
-    isOpen,
-    onConfirm,
-    onCancel,
-    bindShortcut,
-    unbindShortcut
-  } = props;
-
-  useEffect(() => {
-    if (isOpen) {
-      bindShortcut('enter', onConfirm);
-
-      return () => unbindShortcut('enter', onConfirm);
-    }
-  }, [bindShortcut, unbindShortcut, isOpen, onConfirm]);
-
+function PendingChangesModal({ isOpen, isClosingEditor = false, onConfirm, onCancel }) {
   return (
     <Modal
       isOpen={isOpen}
@@ -35,23 +18,23 @@ function PendingChangesModal(props) {
         <ModalHeader>Unsaved Changes</ModalHeader>
 
         <ModalBody>
-          You have unsaved changes, are you sure you want to leave this page?
+          {isClosingEditor ? 'Discard the changes in this editor?' : 'You have unsaved changes. Leave this page?'}
         </ModalBody>
 
         <ModalFooter>
           <Button
+            autoFocus={true}
             kind={kinds.DEFAULT}
             onPress={onCancel}
           >
-            Stay and review changes
+            {isClosingEditor ? 'Keep editing' : 'Stay and review changes'}
           </Button>
 
           <Button
-            autoFocus={true}
             kind={kinds.DANGER}
             onPress={onConfirm}
           >
-            Discard changes and leave
+            {isClosingEditor ? 'Discard changes and close' : 'Discard changes and leave'}
           </Button>
         </ModalFooter>
       </ModalContent>
@@ -60,17 +43,10 @@ function PendingChangesModal(props) {
 }
 
 PendingChangesModal.propTypes = {
-  className: PropTypes.string,
   isOpen: PropTypes.bool.isRequired,
-  kind: PropTypes.oneOf(kinds.all),
+  isClosingEditor: PropTypes.bool,
   onConfirm: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired,
-  bindShortcut: PropTypes.func.isRequired,
-  unbindShortcut: PropTypes.func.isRequired
+  onCancel: PropTypes.func.isRequired
 };
 
-PendingChangesModal.defaultProps = {
-  kind: kinds.PRIMARY
-};
-
-export default keyboardShortcuts(PendingChangesModal);
+export default PendingChangesModal;

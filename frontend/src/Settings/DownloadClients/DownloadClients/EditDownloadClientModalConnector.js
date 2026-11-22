@@ -1,11 +1,36 @@
+import { isEqual } from 'lodash';
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import { connect } from 'react-redux';
+import PendingChangesModal from 'Settings/PendingChangesModal';
+import useUnsavedNavigation from 'Settings/useUnsavedNavigation';
 import { clearPendingChanges } from 'Store/Actions/baseActions';
 import { cancelSaveDownloadClient, cancelTestDownloadClient } from 'Store/Actions/settingsActions';
 import EditDownloadClientModal from './EditDownloadClientModal';
 
-function createMapDispatchToProps(dispatch, props) {
+function mapStateToProps(state, { id, isOpen }) {
+  if (!isOpen) {
+    return { isDirty: false };
+  }
+
+  const { items, selectedSchema, pendingChanges } = state.settings.downloadClients;
+  const saved = id ? items.find((item) => item.id === id) : { name: '', ...selectedSchema };
+  const isDirty = Object.entries(pendingChanges).some(([key, value]) => {
+    if (key !== 'fields') {
+      return !isEqual(saved?.[key], value);
+    }
+
+    return Object.entries(value).some(([name, fieldValue]) => {
+      const field = saved?.fields?.find((item) => item.name === name);
+
+      return !isEqual(field?.value, fieldValue);
+    });
+  });
+
+  return { isDirty };
+}
+
+function mapDispatchToProps(dispatch) {
   const section = 'settings.downloadClients';
 
   return {
@@ -23,43 +48,60 @@ function createMapDispatchToProps(dispatch, props) {
   };
 }
 
-class EditDownloadClientModalConnector extends Component {
+function EditDownloadClientModalConnector({
+  isOpen,
+  isDirty,
+  onModalClose,
+  dispatchClearPendingChanges,
+  dispatchCancelTestDownloadClient,
+  dispatchCancelSaveDownloadClient,
+  ...otherProps
+}) {
+  const [isConfirmingClose, setIsConfirmingClose] = useState(false);
 
-  //
-  // Listeners
-
-  onModalClose = () => {
-    this.props.dispatchClearPendingChanges();
-    this.props.dispatchCancelTestDownloadClient();
-    this.props.dispatchCancelSaveDownloadClient();
-    this.props.onModalClose();
+  const onCloseEditor = () => {
+    setIsConfirmingClose(false);
+    dispatchClearPendingChanges();
+    dispatchCancelTestDownloadClient();
+    dispatchCancelSaveDownloadClient();
+    onModalClose();
   };
 
-  //
-  // Render
+  useUnsavedNavigation(isDirty, onCloseEditor);
 
-  render() {
-    const {
-      dispatchClearPendingChanges,
-      dispatchCancelTestDownloadClient,
-      dispatchCancelSaveDownloadClient,
-      ...otherProps
-    } = this.props;
+  const onRequestClose = () => {
+    if (isDirty) {
+      setIsConfirmingClose(true);
+    } else {
+      onCloseEditor();
+    }
+  };
 
-    return (
+  return (
+    <>
       <EditDownloadClientModal
         {...otherProps}
-        onModalClose={this.onModalClose}
+        isOpen={isOpen}
+        onModalClose={onRequestClose}
+        onSaveSuccess={onCloseEditor}
       />
-    );
-  }
+      <PendingChangesModal
+        isOpen={isOpen && isConfirmingClose}
+        isClosingEditor={true}
+        onConfirm={onCloseEditor}
+        onCancel={() => setIsConfirmingClose(false)}
+      />
+    </>
+  );
 }
 
 EditDownloadClientModalConnector.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  isDirty: PropTypes.bool.isRequired,
   onModalClose: PropTypes.func.isRequired,
   dispatchClearPendingChanges: PropTypes.func.isRequired,
   dispatchCancelTestDownloadClient: PropTypes.func.isRequired,
   dispatchCancelSaveDownloadClient: PropTypes.func.isRequired
 };
 
-export default connect(null, createMapDispatchToProps)(EditDownloadClientModalConnector);
+export default connect(mapStateToProps, mapDispatchToProps)(EditDownloadClientModalConnector);

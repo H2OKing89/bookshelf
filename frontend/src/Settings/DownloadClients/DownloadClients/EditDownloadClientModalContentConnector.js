@@ -40,7 +40,7 @@ class EditDownloadClientModalContentConnector extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     if (prevProps.isSaving && !this.props.isSaving && !this.props.saveError) {
-      this.props.onModalClose();
+      this.props.onSaveSuccess();
     }
   }
 
@@ -71,9 +71,11 @@ class EditDownloadClientModalContentConnector extends Component {
   // Render
 
   render() {
+    const { onSaveSuccess, ...props } = this.props;
+
     return (
       <EditDownloadClientModalContent
-        {...this.props}
+        {...props}
         onSavePress={this.onSavePress}
         onTestPress={this.onTestPress}
         onAdvancedSettingsPress={this.onAdvancedSettingsPress}
@@ -95,7 +97,7 @@ EditDownloadClientModalContentConnector.propTypes = {
   saveDownloadClient: PropTypes.func.isRequired,
   testDownloadClient: PropTypes.func.isRequired,
   toggleAdvancedSettings: PropTypes.func.isRequired,
-  onModalClose: PropTypes.func.isRequired
+  onSaveSuccess: PropTypes.func.isRequired
 };
 
 export default connect(createMapStateToProps, mapDispatchToProps)(EditDownloadClientModalContentConnector);
