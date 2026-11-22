@@ -6,7 +6,7 @@ import { createSelector } from 'reselect';
 import createAuthorSelector from 'Store/Selectors/createAuthorSelector';
 import createBookSelector from 'Store/Selectors/createBookSelector';
 import createUISettingsSelector from 'Store/Selectors/createUISettingsSelector';
-import { invalidateHistoryPages, markHistoryAsFailed } from './historyPageQuery';
+import { markHistoryAsFailed, scheduleHistoryRefresh } from './historyPageQuery';
 import HistoryRow from './HistoryRow';
 
 function createMapStateToProps() {
@@ -33,7 +33,7 @@ function HistoryRowConnector({ id, canUseRowActions, ...otherProps }) {
     mutationKey,
     mutationFn: markHistoryAsFailed,
     networkMode: 'always',
-    onSuccess: () => { invalidateHistoryPages(); }
+    onSuccess: () => { scheduleHistoryRefresh(); }
   });
 
   const onMarkAsFailedPress = () => {

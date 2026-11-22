@@ -1,6 +1,6 @@
 import { createAction } from 'redux-actions';
 import { batchActions } from 'redux-batched-actions';
-import { invalidateHistoryPages } from 'Activity/History/historyPageQuery';
+import { scheduleHistoryRefresh } from 'Activity/History/historyPageQuery';
 import { sortDirections } from 'Helpers/Props';
 import { createThunk, handleThunks } from 'Store/thunks';
 import createAjaxRequest from 'Utilities/createAjaxRequest';
@@ -92,7 +92,7 @@ export const actionHandlers = handleThunks({
     }).request;
 
     promise.done(() => {
-      invalidateHistoryPages();
+      scheduleHistoryRefresh();
       dispatch(fetchBookHistory({ bookId }));
     });
   }

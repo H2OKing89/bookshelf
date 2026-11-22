@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using FizzWare.NBuilder;
@@ -12,6 +13,7 @@ using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.Qualities;
@@ -91,10 +93,13 @@ namespace NzbDrone.Core.Test.HistoryTests
             EntityHistory saved = null;
             Mocker.GetMock<IHistoryRepository>().Setup(repository => repository.Insert(It.IsAny<EntityHistory>()))
                 .Callback<EntityHistory>(history => saved = history);
+            Mocker.GetMock<IEventAggregator>().Setup(events => events.PublishEvent(It.IsAny<HistoryChangedEvent>()))
+                .Callback(() => saved.Should().NotBeNull());
             var client = new DownloadClientItem { DownloadId = "owned-download", DownloadClientInfo = new DownloadClientItemClientInfo { Id = 6 } };
 
             Subject.Handle(new TrackImportedEvent(local, imported, new List<BookFile>(), true, client));
 
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<HistoryChangedEvent>()), Times.Once());
             saved.BookId.Should().Be(2);
             saved.Data["FileId"].Should().Be("4");
             saved.Data["EditionId"].Should().Be("5");
@@ -135,6 +140,34 @@ namespace NzbDrone.Core.Test.HistoryTests
             var evidence = AudioFormatEvidence.FromHistory(saved.Data);
             evidence.Origin.Should().Be(AudioEvidenceOrigin.Release);
             evidence.Codec.Should().Be(AudioCodecKind.XheAac);
+        }
+
+        [Test]
+        public void should_publish_a_single_change_after_committed_bulk_update()
+        {
+            var items = new[] { new EntityHistory { Id = 1 }, new EntityHistory { Id = 2 } };
+            var saved = false;
+            Mocker.GetMock<IHistoryRepository>().Setup(repository => repository.UpdateMany(items))
+                .Callback(() => saved = true);
+            Mocker.GetMock<IEventAggregator>().Setup(events => events.PublishEvent(It.IsAny<HistoryChangedEvent>()))
+                .Callback(() => saved.Should().BeTrue());
+
+            Subject.UpdateMany(items);
+            Subject.UpdateMany(Array.Empty<EntityHistory>());
+
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<HistoryChangedEvent>()), Times.Once());
+        }
+
+        [Test]
+        public void should_not_publish_when_bulk_update_fails()
+        {
+            var items = new[] { new EntityHistory { Id = 1 } };
+            Mocker.GetMock<IHistoryRepository>().Setup(repository => repository.UpdateMany(items))
+                .Throws(new InvalidOperationException("Synthetic write failure"));
+
+            Assert.Throws<InvalidOperationException>(() => Subject.UpdateMany(items));
+
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<HistoryChangedEvent>()), Times.Never());
         }
     }
 }

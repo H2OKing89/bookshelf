@@ -12,7 +12,7 @@ import tempfile
 from validation import common
 
 
-CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "docker")
+CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "docker")
 
 
 def parser():
@@ -52,6 +52,8 @@ def main(argv=None):
         parser().error("--checks libraryreview requires --playwright-module")
     if "historypaging" in chosen and not arguments.playwright_module:
         parser().error("--checks historypaging requires --playwright-module")
+    if "historysync" in chosen and not arguments.playwright_module:
+        parser().error("--checks historysync requires --playwright-module")
     if "docker" in chosen and not arguments.docker_runtime:
         parser().error("--checks docker requires --docker-runtime (a musl package)")
     previous_umask = os.umask(0o077)
@@ -85,7 +87,7 @@ def main(argv=None):
             output = common.private_directory(arguments.output.expanduser().resolve())
         for label, runtime in inputs.items():
             snapshots[label] = common.snapshot_runtime(runtime)
-        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging")):
+        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync")):
             common.ensure_host_compatible(inputs["candidate"])
         for label in ("baseline", "legacy"):
             if label in inputs:
@@ -110,6 +112,7 @@ def main(argv=None):
             "metadataaccessibility": lambda: metadata_accessibility.run(inputs["candidate"], output / "metadataaccessibility", arguments.playwright_module),
             "libraryreview": lambda: library_review.run(inputs["candidate"], output / "libraryreview", arguments.playwright_module),
             "historypaging": lambda: history_paging.run(inputs["candidate"], output / "historypaging", arguments.playwright_module),
+            "historysync": lambda: history_paging.run_sync(inputs["candidate"], output / "historysync", arguments.playwright_module),
             "authpolicy": lambda: authpolicy.run(inputs["candidate"], output / "authpolicy", baseline_runtime=inputs["baseline"]),
             "docker": lambda: docker.run(inputs["docker"], output / "docker", repo),
         }

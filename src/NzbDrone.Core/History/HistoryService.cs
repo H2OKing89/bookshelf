@@ -50,13 +50,19 @@ namespace NzbDrone.Core.History
                                   IHandle<DownloadIgnoredEvent>
     {
         private readonly IHistoryRepository _historyRepository;
+        private readonly IEventAggregator _eventAggregator;
         private readonly IDownloadHistoryRepository _downloadHistory;
         private readonly ICustomFormatCalculationService _formatCalculator;
         private readonly Logger _logger;
 
-        public HistoryService(IHistoryRepository historyRepository, Logger logger, IDownloadHistoryRepository downloadHistory = null, ICustomFormatCalculationService formatCalculator = null)
+        public HistoryService(IHistoryRepository historyRepository,
+                              Logger logger,
+                              IEventAggregator eventAggregator,
+                              IDownloadHistoryRepository downloadHistory = null,
+                              ICustomFormatCalculationService formatCalculator = null)
         {
             _historyRepository = historyRepository;
+            _eventAggregator = eventAggregator;
             _downloadHistory = downloadHistory;
             _formatCalculator = formatCalculator;
             _logger = logger;
@@ -193,7 +199,7 @@ namespace NzbDrone.Core.History
                     history.Data.Add("TorrentInfoHash", torrentRelease.InfoHash);
                 }
 
-                _historyRepository.Insert(history);
+                AddHistory(history);
             }
         }
 
@@ -222,7 +228,7 @@ namespace NzbDrone.Core.History
                 history.Data.Add("ReleaseGroup", message.TrackedDownload?.RemoteBook?.ParsedBookInfo?.ReleaseGroup);
                 history.Data.Add("IndexerFlags", message.TrackedDownload?.RemoteBook?.Release?.IndexerFlags.ToString());
 
-                _historyRepository.Insert(history);
+                AddHistory(history);
             }
         }
 
@@ -287,7 +293,7 @@ namespace NzbDrone.Core.History
                 }
             }
 
-            _historyRepository.Insert(history);
+            AddHistory(history);
         }
 
         public void Handle(DownloadFailedEvent message)
@@ -317,7 +323,7 @@ namespace NzbDrone.Core.History
                 history.Data[RecordingLanguageEvidence.EditionLanguageKey] = RecordingLanguageEvidence.ReadHistory(message.Data, RecordingLanguageEvidence.EditionLanguageKey);
                 history.Data[AudioFormatEvidence.HistoryKey] = RecordingLanguageEvidence.ReadHistory(message.Data, AudioFormatEvidence.HistoryKey);
 
-                _historyRepository.Insert(history);
+                AddHistory(history);
             }
         }
 
@@ -348,7 +354,7 @@ namespace NzbDrone.Core.History
             history.Data.Add("ReleaseGroup", message.BookFile.ReleaseGroup);
             history.Data.Add("IndexerFlags", message.BookFile.IndexerFlags.ToString());
 
-            _historyRepository.Insert(history);
+            AddHistory(history);
         }
 
         public void Handle(BookFileRenamedEvent message)
@@ -372,7 +378,7 @@ namespace NzbDrone.Core.History
             history.Data.Add("Size", message.BookFile.Size.ToString());
             history.Data.Add("IndexerFlags", message.BookFile.IndexerFlags.ToString());
 
-            _historyRepository.Insert(history);
+            AddHistory(history);
         }
 
         public void Handle(BookFileRetaggedEvent message)
@@ -397,12 +403,13 @@ namespace NzbDrone.Core.History
                 NewValue = x.Value.Item2
             }).ToJson());
 
-            _historyRepository.Insert(history);
+            AddHistory(history);
         }
 
         public void Handle(AuthorDeletedEvent message)
         {
             _historyRepository.DeleteForAuthor(message.Author.Id);
+            _eventAggregator.PublishEvent(new HistoryChangedEvent());
         }
 
         public void Handle(DownloadIgnoredEvent message)
@@ -432,6 +439,17 @@ namespace NzbDrone.Core.History
             }
 
             _historyRepository.InsertMany(historyToAdd);
+
+            if (historyToAdd.Count > 0)
+            {
+                _eventAggregator.PublishEvent(new HistoryChangedEvent());
+            }
+        }
+
+        private void AddHistory(EntityHistory history)
+        {
+            _historyRepository.Insert(history);
+            _eventAggregator.PublishEvent(new HistoryChangedEvent());
         }
 
         public List<EntityHistory> FindByDownloadId(string downloadId, int downloadClientId)
@@ -472,6 +490,11 @@ namespace NzbDrone.Core.History
         public void UpdateMany(IList<EntityHistory> items)
         {
             _historyRepository.UpdateMany(items);
+
+            if (items.Count > 0)
+            {
+                _eventAggregator.PublishEvent(new HistoryChangedEvent());
+            }
         }
     }
 }

@@ -1,9 +1,11 @@
 using FizzWare.NBuilder;
 using FluentAssertions;
+using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.History;
 using NzbDrone.Core.Housekeeping.Housekeepers;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Test.Framework;
 
@@ -48,6 +50,7 @@ namespace NzbDrone.Core.Test.Housekeeping.Housekeepers
 
             Subject.Clean();
             AllStoredModels.Should().BeEmpty();
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<HistoryChangedEvent>()), Times.Once());
         }
 
         [Test]
@@ -63,6 +66,7 @@ namespace NzbDrone.Core.Test.Housekeeping.Housekeepers
 
             Subject.Clean();
             AllStoredModels.Should().BeEmpty();
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<HistoryChangedEvent>()), Times.Once());
         }
 
         [Test]
@@ -105,6 +109,14 @@ namespace NzbDrone.Core.Test.Housekeeping.Housekeepers
             Subject.Clean();
             AllStoredModels.Should().HaveCount(1);
             AllStoredModels.Should().Contain(h => h.BookId == _book.Id);
+        }
+
+        [Test]
+        public void should_not_publish_a_change_when_no_rows_are_removed()
+        {
+            Subject.Clean();
+
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<HistoryChangedEvent>()), Times.Never());
         }
     }
 }

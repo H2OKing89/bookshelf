@@ -16,6 +16,7 @@ using NzbDrone.Core.History;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.BookImport;
 using NzbDrone.Core.MediaFiles.Events;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Notifications;
 using NzbDrone.Core.Notifications.Webhook;
 using NzbDrone.Core.Parser.Model;
@@ -295,7 +296,7 @@ namespace NzbDrone.Core.Test.NotificationTests
             var repository = Mocker.GetMock<IHistoryRepository>();
             EntityHistory saved = null;
             repository.Setup(history => history.Insert(It.IsAny<EntityHistory>())).Callback<EntityHistory>(row => saved = row);
-            var historyService = new HistoryService(repository.Object, TestLogger, formatCalculator: calculator.Object);
+            var historyService = new HistoryService(repository.Object, TestLogger, Mocker.GetMock<IEventAggregator>().Object, formatCalculator: calculator.Object);
             var local = new LocalBook
             {
                 Author = author,

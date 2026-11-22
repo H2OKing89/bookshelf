@@ -2,6 +2,9 @@ import { InvalidateQueryFilters, keepPreviousData, queryOptions } from '@tanstac
 import queryClient from 'App/queryClient';
 import fetchJson from 'Utilities/Fetch/fetchJson';
 
+const historyRefreshDelay = 100;
+let historyRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+
 interface HistoryPageRequest {
   page: number;
   pageSize: number;
@@ -131,6 +134,29 @@ export function historyPageFamilyKey() {
 
 export function invalidateHistoryPages({ refetchType }: Pick<InvalidateQueryFilters, 'refetchType'> = {}) {
   return queryClient.invalidateQueries({ queryKey: historyPageFamilyKey(), refetchType });
+}
+
+export function clearHistoryRefresh() {
+  if (historyRefreshTimer !== null) {
+    clearTimeout(historyRefreshTimer);
+    historyRefreshTimer = null;
+  }
+}
+
+export async function refreshHistoryPages() {
+  clearHistoryRefresh();
+  // Invalidation alone can reuse an in-flight first read with no cached result.
+  await queryClient.cancelQueries({ queryKey: historyPageFamilyKey(), type: 'active' });
+  await invalidateHistoryPages();
+}
+
+export function scheduleHistoryRefresh() {
+  if (historyRefreshTimer === null) {
+    historyRefreshTimer = setTimeout(() => {
+      historyRefreshTimer = null;
+      refreshHistoryPages();
+    }, historyRefreshDelay);
+  }
 }
 
 export function markHistoryAsFailed(id: number) {

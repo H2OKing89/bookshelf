@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Component } from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
+import { clearHistoryRefresh, refreshHistoryPages, scheduleHistoryRefresh } from 'Activity/History/historyPageQuery';
 import { setAppValue, setVersion } from 'Store/Actions/appActions';
 import { fetchAuthor } from 'Store/Actions/authorActions';
 import { removeItem, update, updateItem } from 'Store/Actions/baseActions';
@@ -127,6 +128,7 @@ class SignalRConnector extends Component {
   }
 
   componentWillUnmount() {
+    clearHistoryRefresh();
     this.connection.stop();
     this.connection = null;
   }
@@ -188,11 +190,17 @@ class SignalRConnector extends Component {
         ...body.resource
       });
     } else if (action === 'deleted') {
-      this.props.dispatchRemoveItem({
-        section,
-        id: body.resource.id
-      });
+      if (body.resource) {
+        this.props.dispatchRemoveItem({
+          section,
+          id: body.resource.id
+        });
+      }
+    } else if (action !== 'sync') {
+      return;
     }
+
+    scheduleHistoryRefresh();
   };
 
   handleBookfile = (body) => {
@@ -214,16 +222,31 @@ class SignalRConnector extends Component {
     this.props.dispatchFetchHealth();
   };
 
+  handleHistory = (body) => {
+    if (body?.action === 'sync') {
+      scheduleHistoryRefresh();
+    }
+  };
+
   handleAuthor = (body) => {
     const action = body.action;
     const section = 'authors';
 
     if (action === 'updated') {
-      this.props.dispatchUpdateItem({ section, ...body.resource });
+      this.props.dispatchUpdateItem({
+        section,
+        ...body.resource
+      });
     } else if (action === 'deleted') {
-      this.props.dispatchRemoveItem({ section, id: body.resource.id });
-      this.props.dispatchDeleteAuthorBooks({ authorId: body.resource.id });
+      if (body.resource) {
+        this.props.dispatchRemoveItem({ section, id: body.resource.id });
+        this.props.dispatchDeleteAuthorBooks({ authorId: body.resource.id });
+      }
+    } else if (action !== 'sync') {
+      return;
     }
+
+    scheduleHistoryRefresh();
   };
 
   handleQualitydefinition = () => {
@@ -341,6 +364,7 @@ class SignalRConnector extends Component {
     // are in sync after reconnecting.
     dispatchFetchAuthor();
     dispatchFetchCommands();
+    refreshHistoryPages();
     repopulatePage();
   };
 

@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import withCurrentPage from 'Components/withCurrentPage';
 import * as historyActions from 'Store/Actions/historyActions';
 import findSelectedFilters from 'Utilities/Filter/findSelectedFilters';
-import { registerPagePopulator, unregisterPagePopulator } from 'Utilities/pagePopulator';
 import History from './History';
-import historyPageQueryOptions, { invalidateHistoryPages } from './historyPageQuery';
+import historyPageQueryOptions from './historyPageQuery';
 
 function createMapStateToProps() {
   return createSelector(
@@ -71,11 +70,6 @@ function HistoryConnector(props) {
       setHistoryPage(totalPages);
     }
   }, [needsClamp, pageInitialized, setHistoryPage, totalPages]);
-
-  useEffect(() => {
-    registerPagePopulator(invalidateHistoryPages);
-    return () => unregisterPagePopulator(invalidateHistoryPages);
-  }, []);
 
   const goToPage = (value) => setHistoryPage(Math.min(Math.max(value, 1), totalPages));
 

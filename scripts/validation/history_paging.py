@@ -9,6 +9,7 @@ from . import app, common, identity, restore, upgrade
 
 
 BROWSER = Path(__file__).with_name("history-paging-browser.cjs")
+SYNC_BROWSER = Path(__file__).with_name("history-sync-browser.cjs")
 FIRST_GRAB = 125
 SECOND_GRAB = 104
 TOTAL = 25
@@ -79,3 +80,7 @@ def run(runtime, output, playwright_module, *, browser=BROWSER, expected_failure
     value = app.result(fixture, completed, failure=failure)
     common.write_json(output / "result.json", value)
     return value
+
+
+def run_sync(runtime, output, playwright_module):
+    return run(runtime, output, playwright_module, browser=SYNC_BROWSER, expected_failures=2)
