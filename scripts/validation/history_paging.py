@@ -27,7 +27,8 @@ def seed_history(fixture):
             restore.insert(database, "History", {
                 "Id": history_id, "AuthorId": 11, "BookId": 104 if sequence > 5 else 105,
                 "SourceTitle": "Owned history row " + str(history_id),
-                "Date": (date + timedelta(minutes=sequence)).isoformat(),
+                # Match the SQLite provider's UTC bind so real events sort alongside seeded rows.
+                "Date": (date + timedelta(minutes=sequence)).strftime("%Y-%m-%d %H:%M:%SZ"),
                 "Quality": quality, "Data": "{}", "DownloadId": None,
                 "EventType": 1 if history_id in (FIRST_GRAB, SECOND_GRAB) else 3,
             })

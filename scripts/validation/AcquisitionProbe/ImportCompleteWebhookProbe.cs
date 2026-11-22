@@ -6,6 +6,7 @@ using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.History;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Notifications;
 using NzbDrone.Core.Notifications.Webhook;
 
@@ -21,7 +22,8 @@ internal static class ImportCompleteWebhookProbe
         var entityRepository = Program.Fake<IHistoryRepository>((method, args) => method.Name == "FindByDownloadId"
             ? fixture.Store.EntityRows((string)args[0])
             : Program.Unexpected(method));
-        var history = new HistoryService(entityRepository, logger, fixture.DownloadRepository);
+        var events = Program.Fake<IEventAggregator>((method, _) => Program.Unexpected(method));
+        var history = new HistoryService(entityRepository, logger, events, fixture.DownloadRepository);
         var downloadHistory = new DownloadHistoryService(fixture.DownloadRepository, history);
         var config = Program.Fake<IConfigFileProvider>((method, _) => method.Name == "get_InstanceName"
             ? "Owned candidate"

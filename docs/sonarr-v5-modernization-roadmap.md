@@ -1309,3 +1309,15 @@ observers share a request.
 
 The three slices are in `23d5321c3`, `b8a495d95`, and `7ed24552a`.
 See [local validation](local-validation.md#u07-u08-and-u09-verification-2026-11-21).
+
+### U10 and U11 History pagination and reconnect — 2026-11-21
+
+Activity → History keeps rows visible during a page, sort, or filter change.
+Details and mutation controls are disabled on retained rows until the active
+request completes. The page restores its position on Back and corrects it when
+the result set shrinks.
+
+History refreshes after committed changes and reconciles its cached pages on
+SignalR reconnect. The implementation is in `57652fae3` and `a7c852254`.
+Queue and Wanted remain separate migration slices. See
+[local validation](local-validation.md#u10-and-u11-history-verification-2026-11-21).

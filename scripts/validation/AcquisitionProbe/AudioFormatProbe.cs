@@ -6,6 +6,7 @@ using NzbDrone.Core.Download;
 using NzbDrone.Core.History;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.MediaInfo;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Profiles;
 using NzbDrone.Core.Profiles.Qualities;
@@ -63,7 +64,11 @@ internal static class AudioFormatProbe
             if (method.Name == "Insert") return saved = (EntityHistory)arguments[0];
             return Program.Unexpected(method);
         });
-        var historyService = new HistoryService(historyRepository, logger);
+        var events = Program.Fake<IEventAggregator>((method, arguments) =>
+            method.Name == "PublishEvent" && arguments[0] is HistoryChangedEvent && saved != null
+                ? null
+                : Program.Unexpected(method));
+        var historyService = new HistoryService(historyRepository, logger, events);
         historyService.Handle(new BookGrabbedEvent(release) { DownloadId = "owned-format-job", DownloadClientId = 42 });
         var savedAudio = AudioFormatEvidence.FromHistory(saved.Data);
         Program.Check("published_grab_history_retains_versioned_advertised_audio_evidence", savedAudio?.Origin == AudioEvidenceOrigin.Release &&

@@ -107,8 +107,8 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [U07](#u07) | P1 | In progress | L | Strict TypeScript and explicit frontend type checking |
 | [U08](#u08) | P1 | Verified | M | Typed fetch transport with cancellation and structured errors |
 | [U09](#u09) | P1 | Verified | M | Introduce Query for one server-owned state slice |
-| [U10](#u10) | P1 | Planned | M | Keyed pagination that retains previous rows |
-| [U11](#u11) | P1 | Planned | L | Deliberate SignalR-to-cache synchronization |
+| [U10](#u10) | P1 | In progress | M | Keyed pagination that retains previous rows |
+| [U11](#u11) | P1 | In progress | L | Deliberate SignalR-to-cache synchronization |
 | [U12](#u12) | P1 | Planned | M | Preserve preferences while splitting state into small stores |
 | [U13](#u13) | P2 | Planned | M | Local id-based selection with row subscriptions |
 | [U14](#u14) | P1 | Planned | M | Typed isolated pending settings state |
@@ -2765,6 +2765,13 @@ cancels the request. See
 
 Apply to History, Queue and Wanted after transport/query conventions are proven. **Dependencies:** U08/U09; existing API paging/filter semantics. **Acceptance:** rapid page/sort/filter changes with intentionally reordered responses show only the latest selection; changing page size/filter resets page appropriately; last-page deletion clamps/refetches the page; stale retained rows cannot trigger operations against the wrong page; empty vs initial vs background loading are distinct. Preserve Bookshelf's navigation/current-page behavior rather than blindly copying S5 `usePage.ts:32-35`, which resets on POP.
 
+**2026-11-21 History slice.** Activity → History uses Query keys that include the
+API root, page, page size, sort, and event filters. It keeps the last page visible
+while fetching and disables its row actions during that transition. Back
+restores the selected page. A reduced record count clamps an out-of-range page.
+Queue and Wanted are tracked as later slices. See
+[local validation](local-validation.md#u10-and-u11-history-verification-2026-11-21).
+
 ### U11
 
 **Deliberate SignalR-to-cache synchronization**
@@ -2779,6 +2786,13 @@ Apply to History, Queue and Wanted after transport/query conventions are proven.
 **P1; medium/large; existing behavior, new cache owner missing; available in pinned v5.** S5 `Components/SignalRListener.tsx:69-82,89-106,240-257` reconnects/invalidate/patches Query data; the rest of the file updates/removes matching resource ids. B `Components/SignalRConnector.js:136-149,230-244,325+` dispatches Redux updates and repopulates the active page.
 
 Each migrated resource needs an event-to-cache map and reconnect reconciliation; temporarily update legacy Redux only for still-legacy consumers. **Dependencies:** U09/U10 and backend event contract review. **Acceptance:** create/update/delete/import/command events update the affected list/detail/counts, alternate marketplace recordings stay separate, history remains attached to stable ids, disconnect/reconnect heals missed events, and unmount stops listeners. Do not copy S5's `version < 5` filter (`:104-106`), event names or episode/series DTO assumptions into Bookshelf. Never log credential-bearing resource bodies during debugging.
+
+**2026-11-21 History slice.** Committed History writes emit a `history/sync`
+notification without row data. History also responds to author and book changes
+that can affect the list. The refresh coalesces bursts, cancels obsolete reads,
+and marks inactive pages stale for the next visit. Reconnect refreshes the
+active History page to catch missed events. See
+[local validation](local-validation.md#u10-and-u11-history-verification-2026-11-21).
 
 ### U12
 

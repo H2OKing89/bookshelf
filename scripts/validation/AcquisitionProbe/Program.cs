@@ -777,8 +777,6 @@ internal static class Program
                 "Delete" => Store.Delete((DownloadHistory)arguments[0]),
                 _ => Unexpected(method)
             });
-            _history = new HistoryService(entityRepository, _logger, DownloadRepository);
-            _downloadHistory = new DownloadHistoryService(DownloadRepository, _history);
             DownloadImportSourceService publishedSources = null;
             var sources = Fake<IDownloadImportSourceService>((method, arguments) =>
             {
@@ -815,7 +813,6 @@ internal static class Program
             var roots = Fake<IRootFolderService>((method, _) => method.Name == "All" ? new List<RootFolder> { new() { Id = 1, Path = _library } } : Unexpected(method));
             var editions = Fake<IEditionService>((method, arguments) => method.Name == "GetEdition" ? Store.GetEdition((int)arguments[0]) : Unexpected(method));
             publishedSources = new DownloadImportSourceService(disk, roots, files, editions, importItems, _logger);
-            Completion = new DownloadImportCompletionService(sources, _history, _downloadHistory, files, disk, _logger);
             _events = Fake<IEventAggregator>((method, arguments) =>
             {
                 if (method.Name != "PublishEvent") return Unexpected(method);
@@ -842,6 +839,9 @@ internal static class Program
                 }
                 return null;
             });
+            _history = new HistoryService(entityRepository, _logger, _events, DownloadRepository);
+            _downloadHistory = new DownloadHistoryService(DownloadRepository, _history);
+            Completion = new DownloadImportCompletionService(sources, _history, _downloadHistory, files, disk, _logger);
             var notificationDefinition = new NotificationDefinition { Id = 31, Name = "Owned import notification" };
             var webhookDefinition = new NotificationDefinition { Id = 32, Name = "Owned webhook", Settings = new WebhookSettings() };
             _notificationDefinitions.AddRange(new[] { notificationDefinition, webhookDefinition });

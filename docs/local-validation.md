@@ -1115,3 +1115,35 @@ TypeScript files.
 
 Local evidence is under `_temp/u07-u08-u09-20261121/`, including package
 summaries, browser reports, and the CSS declaration check.
+
+## U10 and U11 History verification (2026-11-21)
+
+Clean source `a7c852254` produced matching glibc and musl Linux x64 packages.
+`57652fae3` contains the History pagination slice, and `a7c852254` adds
+SignalR-driven refresh and reconnect recovery.
+
+- Standalone typecheck, frontend lint, and **80 frontend tests** passed on
+  Node **20.11.1**. **148 Python tooling tests** passed.
+- **47 focused Core tests** and **67 API tests** passed. The new tests cover
+  successful writes, failed writes, orphan cleanup, and the payload-free
+  History notification.
+- **30 History pagination checks** passed. Desktop Chromium and iPhone
+  emulation covered retained rows, disabled actions, cancellation, filter
+  and sort changes, Back, page clamping, and saved table preferences.
+- **20 History sync checks** passed. Chromium observed the real
+  payload-free SignalR event, active-page refresh, a missed event, and
+  recovery through a single refresh after reconnect.
+- **612 delivery checks** passed, including **305 acquisition checks** and
+  **56 musl Docker checks**. The package also passed **125 provider and
+  accessibility**, **62 library review**, **262 identity**, **112
+  authentication**, **41 datastore**, and **46 webhook and clipboard checks**.
+
+The browser checks use disposable History rows and a disabled synthetic
+client and indexer. Seeded dates use SQLite's UTC format so they sort alongside
+real events. Run both with `validate-local.py --checks historypaging historysync`
+and the usual runtime, Playwright, and output arguments.
+
+Local evidence is under `_temp/u10-u11-history-20261121/`, including source
+test logs, package receipts, browser reports, and synthetic screenshots.
+The final delivery receipt is in `delivery-retest/` and the combined History
+report is in `history-fixed.mhr9sR/run/`.
