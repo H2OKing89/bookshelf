@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import Alert from 'Components/Alert';
 import FieldSet from 'Components/FieldSet';
@@ -9,16 +8,42 @@ import FormLabel from 'Components/Form/FormLabel';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import { inputTypes, kinds, sizes } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
+import {
+  type DownloadClientOption,
+  type DownloadClientOptionsDraft,
+  type DownloadClientOptionsResource,
+  downloadClientOptionValidation
+} from './downloadClientOptionsState';
 
-function DownloadClientOptions(props) {
-  const {
-    advancedSettings,
-    isFetching,
-    error,
-    settings,
-    hasSettings,
-    onInputChange
-  } = props;
+interface DownloadClientOptionsProps {
+  advancedSettings: boolean;
+  isFetching: boolean;
+  isSaving: boolean;
+  loadError: boolean;
+  saveError: Error | null;
+  saved: DownloadClientOptionsResource | undefined;
+  draft: DownloadClientOptionsDraft;
+  onInputChange: (event: { name: string; value: unknown }) => void;
+}
+
+function DownloadClientOptions({
+  advancedSettings,
+  isFetching,
+  isSaving,
+  loadError,
+  saveError,
+  saved,
+  draft,
+  onInputChange
+}: DownloadClientOptionsProps) {
+  function field(name: DownloadClientOption) {
+    return {
+      value: draft[name] ?? saved?.[name],
+      pending: draft[name] !== undefined,
+      isDisabled: isSaving,
+      ...downloadClientOptionValidation(saveError, name)
+    };
+  }
 
   return (
     <div>
@@ -28,14 +53,21 @@ function DownloadClientOptions(props) {
       }
 
       {
-        !isFetching && error &&
+        loadError &&
           <Alert kind={kinds.DANGER}>
             {translate('UnableToLoadDownloadClientOptions')}
           </Alert>
       }
 
       {
-        hasSettings && !isFetching && !error && advancedSettings &&
+        saveError &&
+          <div role="alert">
+            <Alert kind={kinds.DANGER}>{translate('SaveFailed')}</Alert>
+          </div>
+      }
+
+      {
+        saved && advancedSettings &&
           <div>
             <FieldSet legend={translate('CompletedDownloadHandling')}>
               <Form>
@@ -51,7 +83,7 @@ function DownloadClientOptions(props) {
                     name="enableCompletedDownloadHandling"
                     helpText={translate('EnableCompletedDownloadHandlingHelpText')}
                     onChange={onInputChange}
-                    {...settings.enableCompletedDownloadHandling}
+                    {...field('enableCompletedDownloadHandling')}
                   />
                 </FormGroup>
               </Form>
@@ -73,12 +105,12 @@ function DownloadClientOptions(props) {
                     name="autoRedownloadFailed"
                     helpText={translate('AutoRedownloadFailedHelpText')}
                     onChange={onInputChange}
-                    {...settings.autoRedownloadFailed}
+                    {...field('autoRedownloadFailed')}
                   />
                 </FormGroup>
 
                 {
-                  settings.autoRedownloadFailed.value ?
+                  (draft.autoRedownloadFailed ?? saved.autoRedownloadFailed) ?
                     <FormGroup
                       advancedSettings={advancedSettings}
                       isAdvanced={true}
@@ -91,7 +123,7 @@ function DownloadClientOptions(props) {
                         name="autoRedownloadFailedFromInteractiveSearch"
                         helpText={translate('AutoRedownloadFailedFromInteractiveSearchHelpText')}
                         onChange={onInputChange}
-                        {...settings.autoRedownloadFailedFromInteractiveSearch}
+                        {...field('autoRedownloadFailedFromInteractiveSearch')}
                       />
                     </FormGroup> :
                     null
@@ -107,14 +139,5 @@ function DownloadClientOptions(props) {
     </div>
   );
 }
-
-DownloadClientOptions.propTypes = {
-  advancedSettings: PropTypes.bool.isRequired,
-  isFetching: PropTypes.bool.isRequired,
-  error: PropTypes.object,
-  settings: PropTypes.object.isRequired,
-  hasSettings: PropTypes.bool.isRequired,
-  onInputChange: PropTypes.func.isRequired
-};
 
 export default DownloadClientOptions;

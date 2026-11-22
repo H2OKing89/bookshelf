@@ -5,7 +5,6 @@ import customFormats from './Settings/customFormats';
 import customFormatSpecifications from './Settings/customFormatSpecifications';
 import delayProfiles from './Settings/delayProfiles';
 import development from './Settings/development';
-import downloadClientOptions from './Settings/downloadClientOptions';
 import downloadClients from './Settings/downloadClients';
 import general from './Settings/general';
 import importListExclusions from './Settings/importListExclusions';
@@ -32,7 +31,6 @@ export * from './Settings/customFormatSpecifications.js';
 export * from './Settings/customFormats';
 export * from './Settings/delayProfiles';
 export * from './Settings/downloadClients';
-export * from './Settings/downloadClientOptions';
 export * from './Settings/general';
 export * from './Settings/importLists';
 export * from './Settings/importListExclusions';
@@ -70,7 +68,6 @@ export const defaultState = {
   customFormats: customFormats.defaultState,
   delayProfiles: delayProfiles.defaultState,
   downloadClients: downloadClients.defaultState,
-  downloadClientOptions: downloadClientOptions.defaultState,
   general: general.defaultState,
   indexerFlags: indexerFlags.defaultState,
   indexerOptions: indexerOptions.defaultState,
@@ -116,7 +113,6 @@ export const actionHandlers = handleThunks({
   ...customFormats.actionHandlers,
   ...delayProfiles.actionHandlers,
   ...downloadClients.actionHandlers,
-  ...downloadClientOptions.actionHandlers,
   ...general.actionHandlers,
   ...indexerFlags.actionHandlers,
   ...indexerOptions.actionHandlers,
@@ -153,7 +149,6 @@ export const reducers = createHandleActions({
   ...customFormats.reducers,
   ...delayProfiles.reducers,
   ...downloadClients.reducers,
-  ...downloadClientOptions.reducers,
   ...general.reducers,
   ...indexerFlags.reducers,
   ...indexerOptions.reducers,

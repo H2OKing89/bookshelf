@@ -66,6 +66,7 @@ class DownloadClientSettings extends Component {
     const {
       isSaving,
       hasPendingChanges,
+      onDiscardPendingChanges,
       isManageDownloadClientsOpen
     } = this.state;
 
@@ -74,6 +75,7 @@ class DownloadClientSettings extends Component {
         <SettingsToolbarConnector
           isSaving={isSaving}
           hasPendingChanges={hasPendingChanges}
+          onDiscardPendingChanges={onDiscardPendingChanges}
           additionalButtons={
             <Fragment>
               <PageToolbarSeparator />
