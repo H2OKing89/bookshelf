@@ -1,6 +1,6 @@
 const path = require('path');
 const { deferred, pageButton, report, runBrowser, selectPage, signIn } = require('./history-paging-browser.cjs');
-const { api, isAuthenticatedFetch, observeHub, putOwned, requestArgs, responseFor, rows, selection } = require('./operational-paging-browser.cjs');
+const { api, isAuthenticatedFetch, observeHub, putOwned, requestArgs, responseFor, rows, selection, setCheckbox } = require('./operational-paging-browser.cjs');
 
 const missing = 'wanted/missing';
 const cutoff = 'wanted/cutoff';
@@ -34,7 +34,7 @@ async function verifyWanted(page, base, config, { check, step, output }) {
   const monitoring = [];
   let held;
   let emptyCutoffQueueDetails;
-  await page.route(api(base, 'queue/details'), async route => {
+  await page.route(url => url.origin + url.pathname === api(base, 'queue/details'), async route => {
     const args = requestArgs(base, route.request(), 'queue/details');
     if (!args || !idsMatch(args, 'bookIds', config.cutoffBooks)) return route.fallback();
     const response = await route.fetch({ maxRedirects: 0 });
@@ -89,7 +89,7 @@ async function verifyWanted(page, base, config, { check, step, output }) {
   await page.keyboard.press('Escape');
   await options.waitFor({ state: 'hidden' });
   await pageButton(page, 1, 2).waitFor();
-  await selection(page, config.importBook).check();
+  await setCheckbox(selection(page, config.importBook), true);
   await action(page, 'Search Selected').locator('xpath=self::*[not(@disabled)]').waitFor();
 
   step('missing_stale_guard_and_out_of_order_page');
@@ -151,7 +151,7 @@ async function verifyWanted(page, base, config, { check, step, output }) {
 
   step('missing_actions_are_bound_to_the_current_selection');
   await selectPage(page, 2, 2, 1);
-  await selection(page, changedBook).check();
+  await setCheckbox(selection(page, changedBook), true);
   const found = page.waitForResponse(response => requestArgs(base, response.request(), 'command', 'POST') !== null);
   await action(page, 'Search Selected').click();
   await found;
@@ -198,7 +198,7 @@ async function verifyWanted(page, base, config, { check, step, output }) {
   await selection(page, missedId).waitFor();
   const dropped = deferred();
   hub.drop(event => {
-    const wanted = /^(book|wanted\/(missing|cutoff))$/i.test(event.name) && event.action === 'updated' && event.id === missedId;
+    const wanted = /^(book|wanted\/?(missing|cutoff))$/i.test(event.name) && event.action === 'updated' && event.id === missedId;
     if (wanted) dropped.resolve();
     return wanted;
   });

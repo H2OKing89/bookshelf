@@ -1147,3 +1147,37 @@ Local evidence is under `_temp/u10-u11-history-20261121/`, including source
 test logs, package receipts, browser reports, and synthetic screenshots.
 The final delivery receipt is in `delivery-retest/` and the combined History
 report is in `history-fixed.mhr9sR/run/`.
+
+## U10, U11 and U17 Wanted and Queue verification (2026-11-21)
+
+`e5e203f77` migrates Wanted Missing and Cutoff Unmet. `e48890a94` adds
+Queue pagination and confirmation safeguards. The glibc and musl Linux x64
+packages carry matching clean provenance from `e48890a94`.
+
+- Standalone typecheck, frontend lint, and **89 frontend tests** passed on
+  Node **20.11.1**. **148 Python tooling tests**, **50 focused Core tests**,
+  and **70 API tests** passed.
+- The packages passed **612 delivery checks**, including **305 acquisition**
+  and **56 musl Docker checks**. **50 History**, **125 provider and
+  accessibility**, **62 library review**, **262 identity**, **112
+  authentication**, **41 datastore**, and **46 webhook and clipboard**
+  checks also passed.
+- **27 Wanted checks** passed. Chromium exercised request cancellation,
+  actions gated to current results, Back navigation, real monitoring and
+  recording association, page-scoped Cutoff details, and recovery after
+  a missed monitoring event.
+- **22 Queue checks** passed. Chromium verified the saved unknown-author
+  setting, single and bulk confirmation holds, captured IDs and options,
+  stale-action feedback without retry, reconnect, and one list fetch after
+  the actual manual Refresh command.
+
+Chromium used the glibc package. The Queue browser fixture uses synthetic
+rows on the authenticated route and intercepts its removal request. The
+disposable backend has an empty Queue and zero configured download clients
+or indexers. API tests use in-memory collaborators to check stale targets
+and client scoping.
+
+Use `validate-local.py --checks wantedpaging queuepaging` with the runtime,
+Playwright, and output arguments. Evidence is under
+`_temp/u10-u11-wanted-queue-20261121/`, with the combined browser report in
+`wanted-queue-retest/summary.json`.

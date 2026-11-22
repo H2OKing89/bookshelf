@@ -107,14 +107,14 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [U07](#u07) | P1 | In progress | L | Strict TypeScript and explicit frontend type checking |
 | [U08](#u08) | P1 | Verified | M | Typed fetch transport with cancellation and structured errors |
 | [U09](#u09) | P1 | Verified | M | Introduce Query for one server-owned state slice |
-| [U10](#u10) | P1 | In progress | M | Keyed pagination that retains previous rows |
-| [U11](#u11) | P1 | In progress | L | Deliberate SignalR-to-cache synchronization |
+| [U10](#u10) | P1 | Verified | M | Keyed pagination that retains previous rows |
+| [U11](#u11) | P1 | Verified | L | Deliberate SignalR-to-cache synchronization |
 | [U12](#u12) | P1 | Planned | M | Preserve preferences while splitting state into small stores |
 | [U13](#u13) | P2 | Planned | M | Local id-based selection with row subscriptions |
 | [U14](#u14) | P1 | Planned | M | Typed isolated pending settings state |
 | [U15](#u15) | P1 | Planned | M | Unified route/close/unload protection for dirty forms |
 | [U16](#u16) | P2 | Planned | L | Data-router navigation with a single basename |
-| [U17](#u17) | P1 | Planned | M | Keep Queue stable while a user acts, and coalesce refreshes |
+| [U17](#u17) | P1 | Verified | M | Keep Queue stable while a user acts, and coalesce refreshes |
 | [U18](#u18) | P2 | Planned | M | Rich Queue/History filter builders |
 | [U19](#u19) | P2 | Planned | L | Responsive release cards with variable-height virtualization |
 | [U20](#u20) | P2 | Planned | M | Text filtering and intentional caching of interactive searches |
@@ -2772,6 +2772,13 @@ restores the selected page. A reduced record count clamps an out-of-range page.
 Queue and Wanted are tracked as later slices. See
 [local validation](local-validation.md#u10-and-u11-history-verification-2026-11-21).
 
+**2026-11-21 Wanted and Queue slices.** Missing and Cutoff Unmet share keyed
+pagination, preserve saved preferences, and restrict file and queue details to
+the active page's books. Queue includes the unknown-author option in its key.
+These screens retain rows during a page change and disable their actions until
+the selected results are available. See
+[local validation](local-validation.md#u10-u11-and-u17-wanted-and-queue-verification-2026-11-21).
+
 ### U11
 
 **Deliberate SignalR-to-cache synchronization**
@@ -2793,6 +2800,12 @@ that can affect the list. The refresh coalesces bursts, cancels obsolete reads,
 and marks inactive pages stale for the next visit. Reconnect refreshes the
 active History page to catch missed events. See
 [local validation](local-validation.md#u10-and-u11-history-verification-2026-11-21).
+
+**2026-11-21 Wanted and Queue slices.** Book, file, and author updates refresh
+Wanted membership. Queue detail events refresh the active Wanted detail query.
+Queue list events refresh the paged Queue cache. Reconnect revalidates active
+views and marks inactive pages stale. See
+[local validation](local-validation.md#u10-u11-and-u17-wanted-and-queue-verification-2026-11-21).
 
 ### U12
 
@@ -2883,6 +2896,14 @@ Do this separately from Query or Vite. Define compatibility for all existing Boo
 **P1; medium; partial; available in pinned v5.** S5 `Activity/Queue/queueRefresh.ts:4-29` throttles events to five seconds and remembers a blocked refresh; `Queue.tsx:248-274` blocks/unblocks refresh around interaction and forces a fresh query after the explicit refresh command completes. B `Components/SignalRConnector.js:233-244` and `Activity/Queue/QueueConnector.js:45-82,119-130` refresh via Redux/page populators; inspect selection/dialog conditions before defining the local block policy.
 
 Adapt the coordinator now to existing Redux if useful; do not require Query merely to avoid row churn. **Dependencies:** existing selection/dialog/mutation behavior tests; U13 only if replacing shared selection. **Acceptance:** bursts of progress events produce bounded fetches; a selected row/modal target does not jump or become a different item mid-confirmation; one pending refresh runs on release; manual Refresh completes visibly and refreshes once; leaving the page releases the block; stale or removed targets produce a safe server error. Refresh coordination must not silently conceal status indefinitely.
+
+**2026-11-21 implementation.** Queue captures the row identities and permitted
+options when a removal confirmation opens. Live refresh waits while the
+confirmation or action is active and coalesces pending refreshes on release.
+It checks the captured targets again before submitting and reconciles the page
+if the server refuses a stale action. Bulk Grab resolves every pending entry
+before sending the first download. See
+[local validation](local-validation.md#u10-u11-and-u17-wanted-and-queue-verification-2026-11-21).
 
 ### U18
 

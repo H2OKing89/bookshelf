@@ -1321,3 +1321,15 @@ History refreshes after committed changes and reconciles its cached pages on
 SignalR reconnect. The implementation is in `57652fae3` and `a7c852254`.
 Queue and Wanted remain separate migration slices. See
 [local validation](local-validation.md#u10-and-u11-history-verification-2026-11-21).
+
+### U10, U11 and U17 Wanted and Queue — 2026-11-21
+
+**Wanted → Missing** and **Wanted → Cutoff Unmet** use keyed pagination and
+refresh after library changes or reconnect. Bulk Search and Monitor use the
+active page's selection. Queue and file information follow the active books.
+
+**Activity → Queue** uses paged queries and captures the exact selection when
+a removal or blocklist confirmation opens. Live refresh waits until the
+interaction ends. A rejected action refreshes the page and shows an error.
+
+See [local validation](local-validation.md#u10-u11-and-u17-wanted-and-queue-verification-2026-11-21).

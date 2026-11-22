@@ -1,6 +1,6 @@
 const path = require('path');
 const { report, runBrowser, signIn } = require('./history-paging-browser.cjs');
-const { api, isAuthenticatedFetch, observeHub, requestArgs, responseFor, rows, selection } = require('./operational-paging-browser.cjs');
+const { api, isAuthenticatedFetch, observeHub, requestArgs, responseFor, rows, selection, setCheckbox } = require('./operational-paging-browser.cjs');
 
 function confirmedRow(page, id) {
   return rows(page).filter({ has: page.locator(`input[type="checkbox"][name="${id}"]`) });
@@ -45,7 +45,7 @@ async function verifyQueue(page, base, config, { check, step, output }) {
   const removalCalls = [];
   let known = [701, 702];
   let fixtureIsEmpty;
-  await page.route(api(base, 'queue'), async route => {
+  await page.route(url => url.origin + url.pathname === api(base, 'queue'), async route => {
     const args = requestArgs(base, route.request(), 'queue');
     if (!args) return route.fallback();
     if (fixtureIsEmpty === undefined) {
@@ -71,6 +71,12 @@ async function verifyQueue(page, base, config, { check, step, output }) {
     // The synthetic IDs exist in the browser response only. No removal reaches the backend.
     return route.fulfill({ status: 404, json: { message: 'Owned queue target has already left the client' } });
   });
+  await page.route(api(base, 'command'), route => {
+    if (route.request().method() === 'POST' && route.request().postDataJSON()?.name === 'RefreshMonitoredDownloads') {
+      return route.continue();
+    }
+    return route.fallback();
+  });
 
   step('queue_authenticated_read');
   const first = responseFor(page, base, 'queue');
@@ -84,7 +90,7 @@ async function verifyQueue(page, base, config, { check, step, output }) {
   await page.getByRole('button', { name: 'Table Options', exact: true }).first().click();
   const options = page.getByRole('dialog', { name: 'Table Options', exact: true });
   const excludes = responseFor(page, base, 'queue', args => args.get('includeUnknownAuthorItems') === 'false');
-  await options.getByLabel('Show Unknown Author Items', { exact: true }).uncheck();
+  await setCheckbox(options.locator('input[name="includeUnknownAuthorItems"]'), false);
   const reduced = await excludes;
   await page.keyboard.press('Escape');
   await options.waitFor({ state: 'hidden' });
@@ -109,20 +115,28 @@ async function verifyQueue(page, base, config, { check, step, output }) {
   check('closing_single_confirmation_releases_one_refresh', readCalls.length === readsWhileSingleOpen + 1 &&
     await selection(page, 701).count() === 0 && removalCalls.length === 0);
 
-  step('bulk_confirmation_keeps_client_scoped_selection_and_options');
-  await selection(page, 703).check();
-  await selection(page, 702).check();
+  step('bulk_confirmation_opens_for_two_selected_items');
+  await setCheckbox(selection(page, 703), true);
+  await setCheckbox(selection(page, 702), true);
   await page.getByRole('button', { name: 'Remove Selected', exact: true }).click();
   const bulk = page.getByRole('dialog', { name: 'Remove Selected Items', exact: true });
-  const blocklist = bulk.locator('select[name="blocklistMethod"]');
-  await blocklist.selectOption('blocklistOnly');
-  await bulk.locator('select[name="removalMethod"]').selectOption('changeCategory');
+  await bulk.waitFor();
+  step('bulk_confirmation_applies_clicked_removal_options');
+  await bulk.getByRole('button', { name: /Do not Blocklist/i }).click();
+  await page.getByText('Blocklist Only', { exact: true }).click();
+  await bulk.getByRole('button', { name: /Remove from Download Client/i }).click();
+  await page.getByText('Change Category', { exact: true }).click();
+  const blocklist = bulk.getByRole('button', { name: /Blocklist Only/i });
+  const changeCategory = bulk.getByRole('button', { name: /Change Category/i });
+  step('bulk_confirmation_keeps_client_scoped_selection_and_options');
   const readsWhileBulkOpen = readCalls.length;
   known = [704, 703];
   await queueBurst(hub.connections[0]);
   await page.waitForTimeout(350);
   check('bulk_confirmation_holds_original_row_set_and_options', await bulk.isVisible() &&
-    await selection(page, 702).isVisible() && readCalls.length === readsWhileBulkOpen && await blocklist.inputValue() === 'blocklistOnly');
+    await selection(page, 702).isVisible() && readCalls.length === readsWhileBulkOpen &&
+    await blocklist.isVisible() && await changeCategory.isVisible());
+  step('bulk_confirmation_sends_the_captured_removal');
   const removal = page.waitForResponse(response => requestArgs(base, response.request(), 'queue/bulk', 'DELETE') !== null);
   const afterConflict = responseFor(page, base, 'queue');
   await bulk.getByRole('button', { name: 'Remove', exact: true }).click();
@@ -146,6 +160,23 @@ async function verifyQueue(page, base, config, { check, step, output }) {
   await selection(page, 703).waitFor({ state: 'hidden' });
   check('queue_reconnect_uses_the_current_page_key', hub.connections.length === 2 &&
     (await reconnected.json()).totalRecords === 1 && await selection(page, 704).isVisible());
+
+  step('queue_toolbar_refresh_finishes_once');
+  const beforeManualRefresh = readCalls.length;
+  const command = page.waitForResponse(response => requestArgs(base, response.request(), 'command', 'POST') !== null);
+  const manualRead = responseFor(page, base, 'queue');
+  const refresh = page.getByRole('button', { name: 'Refresh', exact: true });
+  await refresh.click();
+  const [issued] = await Promise.all([command, manualRead]);
+  const issuedCommand = await issued.json();
+  const apiKey = await page.evaluate(() => window.Readarr.apiKey);
+  const status = await page.context().request.get(api(base, 'command/' + issuedCommand.id), {
+    headers: { 'X-Api-Key': apiKey }, maxRedirects: 0
+  });
+  await refresh.locator('xpath=self::*[not(@disabled)]').waitFor();
+  await page.waitForTimeout(200);
+  check('manual_refresh_waits_for_the_real_command_then_fetches_once', issued.ok() && status.ok() &&
+    (await status.json()).status === 'completed' && readCalls.length === beforeManualRefresh + 1);
   await page.screenshot({ path: path.join(output, 'owned-activity-queue.png'), fullPage: true });
 }
 

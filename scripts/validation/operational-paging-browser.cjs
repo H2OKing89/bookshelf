@@ -78,4 +78,14 @@ function selection(page, id) {
   return page.getByRole('table').locator(`tbody input[type="checkbox"][name="${id}"]`);
 }
 
-module.exports = { api, isAuthenticatedFetch, observeHub, putOwned, requestArgs, responseFor, rows, selection };
+async function setCheckbox(box, checked) {
+  await box.locator('xpath=self::*[not(@disabled)]').waitFor();
+  if (await box.isChecked() !== checked) {
+    await box.press('Space');
+  }
+  if (await box.isChecked() !== checked) {
+    throw new Error('OwnedFixtureCheckboxStateDidNotChange');
+  }
+}
+
+module.exports = { api, isAuthenticatedFetch, observeHub, putOwned, requestArgs, responseFor, rows, selection, setCheckbox };
