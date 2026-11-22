@@ -1333,3 +1333,14 @@ a removal or blocklist confirmation opens. Live refresh waits until the
 interaction ends. A rejected action refreshes the page and shows an error.
 
 See [local validation](local-validation.md#u10-u11-and-u17-wanted-and-queue-verification-2026-11-21).
+
+### U12, U14 and U15 preferences and settings — 2026-11-21
+
+Queue migrates the saved browser layout, sort, page size, and unknown-author
+option. Download Clients holds the global Completed and Failed Download
+Handling drafts locally and updates the saved values from the API response.
+
+Settings protects dirty forms during navigation and reload. Closing the
+Add/Edit Download Client dialog can discard its edits while keeping the
+settings page's draft. See
+[local validation](local-validation.md#u12-u14-and-u15-preferences-and-settings-verification-2026-11-21).

@@ -109,10 +109,10 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [U09](#u09) | P1 | Verified | M | Introduce Query for one server-owned state slice |
 | [U10](#u10) | P1 | Verified | M | Keyed pagination that retains previous rows |
 | [U11](#u11) | P1 | Verified | L | Deliberate SignalR-to-cache synchronization |
-| [U12](#u12) | P1 | Planned | M | Preserve preferences while splitting state into small stores |
+| [U12](#u12) | P1 | Verified | M | Preserve preferences while splitting state into small stores |
 | [U13](#u13) | P2 | Planned | M | Local id-based selection with row subscriptions |
-| [U14](#u14) | P1 | Planned | M | Typed isolated pending settings state |
-| [U15](#u15) | P1 | Planned | M | Unified route/close/unload protection for dirty forms |
+| [U14](#u14) | P1 | Verified | M | Typed isolated pending settings state |
+| [U15](#u15) | P1 | Verified | M | Unified route/close/unload protection for dirty forms |
 | [U16](#u16) | P2 | Planned | L | Data-router navigation with a single basename |
 | [U17](#u17) | P1 | Verified | M | Keep Queue stable while a user acts, and coalesce refreshes |
 | [U18](#u18) | P2 | Planned | M | Rich Queue/History filter builders |
@@ -2822,6 +2822,13 @@ views and marks inactive pages stale. See
 
 Split only when a feature migrates; preserve custom columns/filter keys/defaults through an explicit one-time migration, with versioning, validation, corrupt-storage recovery and a rollback policy. **Dependencies:** U07/U09; list of every persisted field. **Acceptance:** default, custom and old stored layouts preserve visibility/order including ebook Pages; removed columns disappear, new columns gain defined defaults, translations still refresh, false/zero survive, corrupt/partial data cannot prevent startup. Do not directly adopt instance-name-derived keys (`createPersist.ts:9-12`): renaming or duplicate instance names must not silently lose/collide with preferences. S5 `mergeColumns` assumes persisted columns exist (`:133-139`); guard malformed/missing data.
 
+**2026-11-21 Queue slice.** Queue migrates the saved column order and
+visibility, page size, sort, and explicit unknown-author setting into a
+versioned browser store scoped by API root. The sidebar and table share those
+preferences. The legacy Queue snapshot remains available to older builds.
+Malformed storage falls back to available legacy data or defaults. See
+[local validation](local-validation.md#u12-u14-and-u15-preferences-and-settings-verification-2026-11-21).
+
 ### U13
 
 **Local id-based selection with row subscriptions**
@@ -2852,6 +2859,13 @@ Adopt behavior/shared utilities first; Zustand is optional until profiling demon
 
 Migrate one settings form while retaining schema-driven providers, test/force-save behavior and credentials semantics. **Dependencies:** U08/U09; U04 for form associations. **Acceptance:** independent forms do not leak drafts; editing back to the original value clears dirty state; save failure retains edits; successful save uses canonical returned values; omitted/unchanged secrets stay unchanged; explicit false/zero and ordered audio metadata survive. Do not copy S5's Set-based array equality (`usePendingChangesStore.ts:15-20`) for ordered narrators, chapters, naming tokens or other order-significant values.
 
+**2026-11-21 settings pilot.** Download Clients → Completed and Failed
+Download Handling uses a typed draft, preserves `false`, and clears a reverted
+field from the draft. Errors retain edits and success uses the canonical API
+response. The pilot edits global Boolean options. The credential-bearing
+provider form and numeric profile settings keep their existing save paths. See
+[local validation](local-validation.md#u12-u14-and-u15-preferences-and-settings-verification-2026-11-21).
+
 ### U15
 
 **Unified route/close/unload protection for dirty forms**
@@ -2866,6 +2880,15 @@ Migrate one settings form while retaining schema-driven providers, test/force-sa
 **P1; medium; partial; available in pinned v5.** S5 `Helpers/Hooks/useUnsavedChanges.ts:10-49`, `useBeforeUnload.ts:3-17`, `useModalCloseGuard.ts:4-11`, `Components/Modal/Modal.tsx:73-82`, `Settings/useSettingsSave.ts:20-45` unify navigation blockers, close confirmation, unload and save-shortcut cleanup. B `Settings/SettingsToolbarConnector.js:35-108` already prompts for route changes but explicitly assumes every POP is back (`:94-98`); modal connectors often clear pending changes on close.
 
 First fix/cover current form loss paths, then use the data-router blocker when router migration is justified. **Dependencies:** U02/U14; U16 only for the exact v5 useBlocker implementation. **Acceptance:** cancel retains draft and position; confirm continues the actual link/back/forward action including query/hash; Escape/backdrop/X use the same guard; reload warns only while dirty; successful save removes the warning; nested modal close does not discard a parent draft; keyboard shortcuts/listeners clean up. Never use an unload prompt to replace a server conflict check.
+
+**2026-11-21 settings protection.** The shared Settings toolbar protects
+navigation and reload while dirty. The Add/Edit Download Client dialog uses
+the same discard prompt for Escape, backdrop, Close, and Cancel. Declining
+keeps the draft, and discarding the editor leaves the page's draft intact.
+Bookshelf records browser-history positions for exact cancellation across
+reload on entries tracked by this build. Older browser entries use the
+installed router's fallback. See
+[local validation](local-validation.md#u12-u14-and-u15-preferences-and-settings-verification-2026-11-21).
 
 ### U16
 

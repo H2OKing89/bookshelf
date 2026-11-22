@@ -1181,3 +1181,40 @@ Use `validate-local.py --checks wantedpaging queuepaging` with the runtime,
 Playwright, and output arguments. Evidence is under
 `_temp/u10-u11-wanted-queue-20261121/`, with the combined browser report in
 `wanted-queue-retest/summary.json`.
+
+## U12, U14 and U15 preferences and settings verification (2026-11-21)
+
+`b08ae123a` migrates the Queue table preferences. `c983beb2e` isolates the
+global Download Clients draft, and `789f28562` adds navigation and dialog
+protection to the current router and Add/Edit Download Client editor.
+The glibc and musl Linux x64 packages carry matching clean provenance from
+`789f28562`.
+
+- Standalone typecheck, frontend lint, **103 frontend tests** and **149 Python
+  tooling tests** passed. Frontend commands used Node **20.11.1**.
+- **27 Queue checks** passed, including five preference checks. A legacy
+  browser profile retained column order and visibility, page size, sort, and
+  an explicit `false` unknown-author option. Changes survived reload, and
+  corrupt storage opened Queue with defaults.
+- **40 settings checks** passed against the glibc package. Chromium verified
+  failed saves, duplicate submission protection, a real `202` save with an
+  explicit `false`, clean and dirty reload, and exact Back and Forward
+  navigation. Browser-generated history positions also covered cancellation
+  after reload. The dialog protected edits on all four close paths and kept
+  the parent draft on desktop and phone.
+- The packages passed **612 delivery checks**, including **305 acquisition**
+  and **56 musl Docker** checks. Identity, authentication, provider
+  accessibility, and library review verification also passed.
+- **27 Wanted** and **50 History** checks passed in the final paging replay.
+  The Wanted fixture now waits independently for the committed file event,
+  the resulting list response, and the row to disappear.
+
+The settings fixture used a disabled synthetic client. It intercepted one
+failed global settings save and let the valid retry write to the disposable
+database. Saved client credentials and an unrelated zero-valued quality
+threshold were unchanged.
+
+Use `validate-local.py --checks settingsdrafts queuepaging` with the runtime,
+Playwright, and output arguments. Evidence is under
+`_temp/u12-u14-u15-20261121/`. See `settings-verified/summary.json` and
+`paging-final/summary.json` for the browser results.

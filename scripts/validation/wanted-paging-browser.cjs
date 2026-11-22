@@ -165,11 +165,35 @@ async function verifyWanted(page, base, config, { check, step, output }) {
     monitoring[0].bookIds?.join(',') === String(changedBook) && (await refreshed.json()).totalRecords === 5);
 
   step('missing_live_recording_association');
-  const afterImport = responseFor(page, base, missing);
-  const [importPage] = await Promise.all([afterImport, associateOwnedRecording(page, base, config)]);
-  await selection(page, config.importBook).waitFor({ state: 'hidden' });
-  check('real_file_association_removes_the_missing_recording', (await importPage.json()).totalRecords === 4 &&
-    hub.messages.some(event => event.name.toLowerCase() === 'bookfile' && event.action === 'updated' && event.id === config.importFile));
+  // A refresh from the previous monitoring write can reach the browser before
+  // the association refresh. The page and SignalR event can also arrive in either order.
+  const afterImport = page.waitForResponse(async response => {
+    if (!response.ok() || !requestArgs(base, response.request(), missing)) return false;
+    try {
+      return (await response.json()).totalRecords === 4;
+    } catch {
+      return false;
+    }
+  });
+  const fileUpdated = deferred();
+  const isImportEvent = event => event.name.toLowerCase() === 'bookfile' &&
+    event.action === 'updated' && event.id === config.importFile;
+  hub.drop(event => {
+    if (isImportEvent(event)) fileUpdated.resolve();
+    return false;
+  });
+  try {
+    const [importPage] = await Promise.all([
+      afterImport,
+      associateOwnedRecording(page, base, config),
+      Promise.race([fileUpdated.promise, page.waitForTimeout(4500).then(() => { throw new Error('OwnedBookFileHubEventMissing'); })])
+    ]);
+    await selection(page, config.importBook).waitFor({ state: 'hidden' });
+    check('real_file_association_removes_the_missing_recording', (await importPage.json()).totalRecords === 4 &&
+      hub.messages.some(isImportEvent));
+  } finally {
+    hub.drop(() => false);
+  }
 
   step('cutoff_list_and_page_scoped_details');
   const cutoffRequest = responseFor(page, base, cutoff, args => args.get('page') === '1');

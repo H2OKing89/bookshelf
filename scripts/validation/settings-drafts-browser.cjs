@@ -11,8 +11,9 @@ function options(page) {
 }
 
 async function showOptions(page) {
-  const button = page.locator('button[title="Hidden, click to show"]').first();
-  if (await button.isVisible()) await button.click();
+  const button = page.locator('button[title="Hidden, click to show"], button[title="Shown, click to hide"]').first();
+  await button.waitFor();
+  if (await button.getAttribute('title') === 'Hidden, click to show') await button.click();
   await options(page).waitFor();
 }
 
