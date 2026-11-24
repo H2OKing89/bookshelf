@@ -27,7 +27,7 @@ function release(scope, generation, index) {
     infoUrl: 'https://synthetic.invalid/release',
     quality: { quality: { id: 12, name: 'M4B' }, revision: { version: 1 } },
     qualityWeight: 12,
-    mediaInfo: { audioCodec: 'AAC LC', audioChannels: 2, audioBitRate: '128 kbps', source: 'MyAnonaMouse' },
+    mediaInfo: { audioCodec: 'AAC LC', audioChannels: 2, audioBitRate: '128 kbps', language: 'eng', durationSeconds: 3600, source: 'MyAnonaMouse' },
     customFormats: [{ id: 1, name: 'Synthetic English' }],
     customFormatScore: 25,
     releaseWeight: index,
@@ -108,6 +108,21 @@ async function verifyDesktop(page, base, config, { check, step, output }) {
   check('filtered_empty_is_distinct_from_no_results', await page.getByText('All results are hidden by the applied filter', { exact: true }).isVisible());
   await view.filter.fill('');
   await view.showing(count, count).waitFor();
+  const filterMenu = view.panel.getByRole('button', { name: 'Filter', exact: true });
+  await filterMenu.click();
+  await page.getByRole('menuitemradio', { name: 'Discography', exact: true }).click();
+  await view.showing(0, count).waitFor();
+  await filterMenu.click();
+  await page.getByRole('menuitemradio', { name: 'All', exact: true }).click();
+  await view.showing(count, count).waitFor();
+  check('saved_filter_presets_still_filter_existing_results', view.searches.length === 1);
+  await filterMenu.click();
+  await page.getByRole('menuitem', { name: 'Custom Filters', exact: true }).click();
+  const custom = page.getByRole('dialog', { name: 'Custom Filter', exact: true });
+  await custom.waitFor();
+  await page.keyboard.press('Escape');
+  await custom.waitFor({ state: 'hidden' });
+  check('custom_filter_editor_remains_available_without_a_new_search', view.searches.length === 1);
   await view.region.getByRole('columnheader', { name: 'Title', exact: true }).click();
   check('sorting_does_not_search_again', view.searches.length === 1);
   // Restore the deterministic ascending title order for the scroll checks.
@@ -181,7 +196,7 @@ async function verifyPhone(page, base, config, { check, step, output }) {
   await rejected.waitFor();
   check('card_exposes_audio_format_score_and_rejections', await rejected.getByText('Synthetic rejected release', { exact: true }).isVisible() &&
     await rejected.getByText('Synthetic English', { exact: true }).isVisible() && await rejected.getByText(/AAC LC/).first().isVisible() &&
-    await rejected.getByRole('button', { name: 'Grab Release' }).isVisible());
+    await rejected.getByText('eng', { exact: true }).first().isVisible() && await rejected.getByRole('button', { name: 'Grab Release' }).isVisible());
   await page.screenshot({ path: path.join(output, 'owned-search-card.png'), fullPage: false });
   await view.filter.fill('');
   await view.showing(count, count).waitFor();

@@ -34,38 +34,56 @@ export function useSearchWidth() {
 export function useReleaseWindow(keys, width, cards, scope, confirmationKey) {
   const ref = useRef(null);
   const previous = useRef(null);
+  const pendingAdjustment = useRef(0);
   const [, setRevision] = useState(0);
-  const [view, setView] = useState({ top: 0, height: 600 });
+  const [view, setView] = useState({ top: 0, height: 600, atEnd: false });
   const [focusedKey, setFocusedKey] = useState(null);
   const { heights } = useMemo(() => ({ width, cards, scope, heights: new Map() }), [width, cards, scope]);
   const estimate = cards ? 240 : 84;
   const offsets = releaseOffsets(keys, heights, estimate);
   const virtualized = keys.length > windowThreshold;
+  const last = previous.current;
+  const reset = last && (last.scope !== scope || !sameOrder(last.keys, keys));
+  let windowTop = view.top;
+  if (reset) {
+    windowTop = 0;
+  } else if (view.atEnd) {
+    windowTop = Math.max(0, offsets[offsets.length - 1] - view.height);
+  }
   const indices = virtualized ?
-    releaseWindowIndices(offsets, view.top, view.height, overscan, [keys.indexOf(focusedKey), keys.indexOf(confirmationKey)]) :
+    releaseWindowIndices(offsets, windowTop, view.height, overscan, [keys.indexOf(focusedKey), keys.indexOf(confirmationKey)]) :
     keys.map((_key, index) => index);
 
   useLayoutEffect(() => {
     const viewport = ref.current;
-    const last = previous.current;
     previous.current = { keys, offsets, heights, scope };
 
     if (!viewport || !virtualized) {
       return undefined;
     }
 
-    if (last && (last.scope !== scope || !sameOrder(last.keys, keys))) {
+    if (reset) {
       viewport.scrollTop = 0;
+    } else if (view.atEnd) {
+      // The last rows may be taller or shorter than their estimates. Apply
+      // the new maximum after the measured spacers have been committed.
+      viewport.scrollTop = viewport.scrollHeight;
     } else if (last && last.heights !== heights && viewport.scrollTop > listTop(viewport)) {
       // Keep the release at the visible edge when a resize changes the layout.
       const anchor = releaseIndexAt(last.offsets, view.top);
       viewport.scrollTop = listTop(viewport) + offsets[anchor];
+    } else if (pendingAdjustment.current) {
+      viewport.scrollTop += pendingAdjustment.current;
     }
+    pendingAdjustment.current = 0;
 
     function updateView() {
-      const top = Math.max(0, viewport.scrollTop - listTop(viewport));
+      const top = Math.max(0, Math.round(viewport.scrollTop - listTop(viewport)));
       const height = viewport.clientHeight;
-      setView((current) => (current.top === top && current.height === height ? current : { top, height }));
+      const maximum = viewport.scrollHeight - height;
+      const atEnd = maximum > 2 && viewport.scrollTop >= maximum - 2;
+      setView((current) => (current.top === top && current.height === height && current.atEnd === atEnd ?
+        current : { top, height, atEnd }));
     }
 
     const rows = Array.from(viewport.querySelectorAll('[data-release-row]'));
@@ -87,14 +105,14 @@ export function useReleaseWindow(keys, width, cards, scope, confirmationKey) {
       if (changed) {
         const after = releaseOffsets(keys, heights, estimate);
         // Rows above the visible edge may expand or be measured for the first
-        // time. Compensate for that change before replacing the spacers.
+        // time. Restore that edge after the next spacer layout is committed.
         if (top > 0) {
-          viewport.scrollTop += after[anchor] - before[anchor];
+          pendingAdjustment.current += after[anchor] - before[anchor];
         }
         setRevision((current) => current + 1);
+      } else {
+        updateView();
       }
-
-      updateView();
     }
 
     let frame = 0;
@@ -107,7 +125,10 @@ export function useReleaseWindow(keys, width, cards, scope, confirmationKey) {
       }
     };
 
-    measureRows();
+    // Measuring newly mounted rows can change the window again. Schedule it
+    // outside the layout-effect commit so several estimates can converge
+    // without recursively nesting React updates in one render cycle.
+    scheduleMeasure();
     const observer = new ResizeObserver(scheduleMeasure);
     observer.observe(viewport);
     rows.forEach((row) => observer.observe(row));
