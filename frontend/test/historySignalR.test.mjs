@@ -59,6 +59,7 @@ function setup(t) {
       scheduleQueueRefresh: () => queue.push('queue')
     },
     'App/queryClient': client,
+    'InteractiveSearch/releaseSearchQuery': { invalidateReleaseSearches: () => client.invalidateQueries({ queryKey: ['interactiveRelease', '/fixture/api/v1'], refetchType: 'none' }) },
     'Store/Actions/appActions': {},
     'Store/Actions/authorActions': {},
     'Store/Actions/baseActions': {},

@@ -5,11 +5,9 @@ import { setAuthorReleasesFilter, setBookReleasesFilter } from 'Store/Actions/re
 
 function createMapStateToProps() {
   return createSelector(
-    (state) => state.releases.items,
     (state) => state.releases.filterBuilderProps,
-    (sectionItems, filterBuilderProps) => {
+    (filterBuilderProps) => {
       return {
-        sectionItems,
         filterBuilderProps,
         customFilterType: 'releases'
       };

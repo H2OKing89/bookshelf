@@ -15,7 +15,6 @@ import PageToolbarSection from 'Components/Page/Toolbar/PageToolbarSection';
 import PageToolbarSeparator from 'Components/Page/Toolbar/PageToolbarSeparator';
 import SwipeHeaderConnector from 'Components/Swipe/SwipeHeaderConnector';
 import { icons } from 'Helpers/Props';
-import InteractiveSearchFilterMenuConnector from 'InteractiveSearch/InteractiveSearchFilterMenuConnector';
 import InteractiveSearchTable from 'InteractiveSearch/InteractiveSearchTable';
 import OrganizePreviewModalConnector from 'Organize/OrganizePreviewModalConnector';
 import RetagPreviewModalConnector from 'Retag/RetagPreviewModalConnector';
@@ -273,15 +272,6 @@ class BookDetails extends Component {
                 >
                   {translate('FilesTotal', [bookFileCount])}
                 </Tab>
-
-                {
-                  selectedTabIndex === 1 &&
-                    <div className={styles.filterIcon}>
-                      <InteractiveSearchFilterMenuConnector
-                        type="book"
-                      />
-                    </div>
-                }
 
               </TabList>
 

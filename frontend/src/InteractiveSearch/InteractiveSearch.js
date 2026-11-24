@@ -1,13 +1,20 @@
+import classNames from 'classnames';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useLayoutEffect, useMemo, useState } from 'react';
 import Alert from 'Components/Alert';
+import SelectInput from 'Components/Form/SelectInput';
+import TextInput from 'Components/Form/TextInput';
 import Icon from 'Components/Icon';
+import Button from 'Components/Link/Button';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
-import Table from 'Components/Table/Table';
-import TableBody from 'Components/Table/TableBody';
+import ConfirmModal from 'Components/Modal/ConfirmModal';
+import TableHeader from 'Components/Table/TableHeader';
+import TableHeaderCell from 'Components/Table/TableHeaderCell';
 import { icons, kinds, sortDirections } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
 import InteractiveSearchRow from './InteractiveSearchRow';
+import { releaseIdentity } from './releaseWindow';
+import { useReleaseWindow, useSearchWidth } from './useReleaseWindow';
 import styles from './InteractiveSearch.css';
 
 const columns = [
@@ -103,11 +110,106 @@ function InteractiveSearch(props) {
     longDateFormat,
     timeFormat,
     onSortPress,
-    onGrabPress
+    onGrabPress,
+    textFilter = '',
+    onTextFilterChange,
+    onRefreshPress,
+    filterMenu,
+    canGrab = true,
+    needsRefresh = false,
+    searchScopeKey
   } = props;
 
+  const { ref: root, width, cards } = useSearchWidth();
+  const keys = useMemo(() => items.map(releaseIdentity), [items]);
+  const [pending, setPending] = useState(null);
+  const confirmation = pending && canGrab && pending.scope === searchScopeKey && keys.includes(pending.key) ? pending : null;
+  const resultWindow = useReleaseWindow(keys, width, cards, searchScopeKey, confirmation?.key);
+
+  useLayoutEffect(() => {
+    if (pending && !confirmation) {
+      setPending(null);
+    }
+  }, [confirmation, pending]);
+
+  const sortLabels = {
+    protocol: translate('Source'),
+    age: 'Age',
+    title: translate('Title'),
+    indexer: translate('Indexer'),
+    size: translate('Size').trim(),
+    peers: 'Peers',
+    qualityWeight: translate('Quality'),
+    customFormatScore: translate('CustomFormatScore'),
+    indexerFlags: translate('IndexerFlags'),
+    rejections: 'Rejections',
+    releaseWeight: 'Release rank'
+  };
+  const currentSort = columns.find((column) => column.name === sortKey);
+
+  function grab(item) {
+    if (!canGrab) {
+      return;
+    }
+
+    const payload = { ...searchPayload, guid: item.guid, indexerId: item.indexerId, searchResultId: item.searchResultId };
+    if (item.downloadAllowed) {
+      onGrabPress(payload);
+    } else {
+      setPending({ key: releaseIdentity(item), scope: searchScopeKey, title: item.title, payload });
+    }
+  }
+
+  const row = (index) => (
+    <InteractiveSearchRow
+      key={keys[index]}
+      {...items[index]}
+      rowKey={keys[index]}
+      index={index}
+      total={items.length}
+      card={cards}
+      canGrab={canGrab}
+      longDateFormat={longDateFormat}
+      timeFormat={timeFormat}
+      onGrabPress={() => grab(items[index])}
+    />
+  );
+
+  const results = resultWindow.entries.map((entry) => {
+    if ('index' in entry) {
+      return row(entry.index);
+    }
+
+    const height = entry.gap;
+    return cards ?
+      <div key={`gap-${entry.start}`} aria-hidden={true} style={{ height }} /> :
+      <tr key={`gap-${entry.start}`} aria-hidden={true}><td className={styles.spacer} colSpan={columns.length} style={{ height }} /></tr>;
+  });
+
   return (
-    <div>
+    <div ref={root} className={styles.search} role="region" aria-label={translate('InteractiveSearchModalHeader')}>
+      <div className={styles.searchControls}>
+        {
+          onTextFilterChange &&
+            <TextInput
+              name="releaseTextFilter"
+              type="search"
+              aria-label={translate('InteractiveSearchFilterText')}
+              placeholder={translate('InteractiveSearchFilterText')}
+              value={textFilter}
+              onChange={({ value }) => onTextFilterChange(value)}
+            />
+        }
+        {filterMenu}
+        {onRefreshPress && <Button isDisabled={isFetching} onPress={onRefreshPress}>{translate('Refresh')}</Button>}
+      </div>
+      {
+        isPopulated &&
+          <div className={styles.resultCount} role="status">
+            {translate('InteractiveSearchResultCount', [items.length, totalReleasesCount])}
+          </div>
+      }
+      {needsRefresh && <Alert kind={kinds.WARNING}>{translate('InteractiveSearchRefreshRequired')}</Alert>}
       {
         isFetching ? <LoadingIndicator /> : null
       }
@@ -137,40 +239,69 @@ function InteractiveSearch(props) {
       }
 
       {
-        isPopulated && !!items.length ?
-          <Table
-            columns={columns}
-            sortKey={sortKey}
-            sortDirection={sortDirection}
-            onSortPress={onSortPress}
-          >
-            <TableBody>
-              {
-                items.map((item) => {
-                  return (
-                    <InteractiveSearchRow
-                      key={`${item.indexerId}-${item.guid}`}
-                      {...item}
-                      searchPayload={searchPayload}
-                      longDateFormat={longDateFormat}
-                      timeFormat={timeFormat}
-                      onGrabPress={onGrabPress}
-                    />
-                  );
-                })
-              }
-            </TableBody>
-          </Table> :
-          null
+        cards && isPopulated && !!items.length &&
+          <div className={styles.cardSort}>
+            <SelectInput
+              name="releaseSortKey"
+              aria-label={translate('InteractiveSearchSortBy')}
+              value={sortKey}
+              values={columns.map((column) => ({ key: column.name, value: sortLabels[column.name] }))}
+              onChange={({ value }) => onSortPress(value, columns.find((column) => column.name === value)?.fixedSortDirection)}
+            />
+            <SelectInput
+              name="releaseSortDirection"
+              aria-label={translate('InteractiveSearchSortDirection')}
+              value={sortDirection}
+              isDisabled={!!currentSort?.fixedSortDirection}
+              values={[
+                { key: sortDirections.ASCENDING, value: translate('InteractiveSearchSortAscending') },
+                { key: sortDirections.DESCENDING, value: translate('InteractiveSearchSortDescending') }
+              ]}
+              onChange={({ value }) => onSortPress(sortKey, value)}
+            />
+          </div>
       }
-
-      {
-        totalReleasesCount !== items.length && !!items.length ?
-          <div className={styles.filteredMessage}>
-            {translate('SomeResultsAreHiddenByTheAppliedFilter')}
-          </div> :
-          null
-      }
+      <div
+        ref={resultWindow.ref}
+        role="region"
+        aria-label={translate('InteractiveSearchResults')}
+        aria-busy={isFetching}
+        tabIndex={resultWindow.virtualized ? 0 : undefined}
+        className={classNames(styles.resultViewport, resultWindow.virtualized && styles.virtualized)}
+        onFocusCapture={resultWindow.onFocusCapture}
+        onBlurCapture={resultWindow.onBlurCapture}
+      >
+        {
+          isPopulated && !!items.length && (
+            cards ?
+              <div role="list" data-release-list={true}>{results}</div> :
+              <table className={styles.resultsTable} aria-rowcount={items.length + 1}>
+                <TableHeader>
+                  {columns.map((column) => (
+                    <TableHeaderCell key={column.name} {...column} sortKey={sortKey} sortDirection={sortDirection} onSortPress={onSortPress}>
+                      {typeof column.label === 'function' ? column.label() : column.label}
+                    </TableHeaderCell>
+                  ))}
+                </TableHeader>
+                <tbody data-release-list={true}>{results}</tbody>
+              </table>
+          )
+        }
+      </div>
+      <ConfirmModal
+        isOpen={!!confirmation}
+        kind={kinds.WARNING}
+        title={translate('GrabRelease')}
+        message={translate('GrabReleaseMessageText', [confirmation?.title ?? ''])}
+        confirmLabel={translate('Grab')}
+        onConfirm={() => {
+          if (confirmation) {
+            onGrabPress(confirmation.payload);
+          }
+          setPending(null);
+        }}
+        onCancel={() => setPending(null)}
+      />
     </div>
   );
 }
@@ -188,7 +319,14 @@ InteractiveSearch.propTypes = {
   longDateFormat: PropTypes.string.isRequired,
   timeFormat: PropTypes.string.isRequired,
   onSortPress: PropTypes.func.isRequired,
-  onGrabPress: PropTypes.func.isRequired
+  onGrabPress: PropTypes.func.isRequired,
+  textFilter: PropTypes.string,
+  onTextFilterChange: PropTypes.func,
+  onRefreshPress: PropTypes.func,
+  filterMenu: PropTypes.node,
+  canGrab: PropTypes.bool,
+  needsRefresh: PropTypes.bool,
+  searchScopeKey: PropTypes.string
 };
 
 export default InteractiveSearch;

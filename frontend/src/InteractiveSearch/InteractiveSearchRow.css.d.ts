@@ -2,14 +2,25 @@
 // Please do not change this file!
 interface CssExports {
   'age': string;
+  'card': string;
+  'cardAction': string;
+  'cardAge': string;
+  'cardFields': string;
+  'cardHeading': string;
+  'cardRow': string;
+  'cardTitle': string;
   'cell': string;
   'customFormatScore': string;
   'download': string;
+  'grabStatus': string;
   'indexer': string;
+  'indexerDetails': string;
   'indexerFlags': string;
+  'parsedMetadata': string;
   'peers': string;
   'protocol': string;
   'quality': string;
+  'reasons': string;
   'rejected': string;
   'size': string;
   'titleContent': string;

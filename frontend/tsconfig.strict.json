@@ -13,6 +13,8 @@
     "./src/Activity/Queue/*.ts",
     "./src/App/queryClient.ts",
     "./src/Book/BookIdentity.ts",
+    "./src/InteractiveSearch/releaseSearchQuery.ts",
+    "./src/InteractiveSearch/releaseWindow.ts",
     "./src/Author/Details/RecordingCatalogLabel.tsx",
     "./src/Settings/DownloadClients/Options/downloadClientOptionsState.ts",
     "./src/Utilities/Book/recordingIdentity.ts",

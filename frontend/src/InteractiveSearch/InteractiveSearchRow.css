@@ -1,61 +1,130 @@
 .cell {
   composes: cell from '~Components/Table/Cells/TableRowCell.css';
+  overflow-wrap: anywhere;
 }
 
-.protocol {
+.protocol,
+.age,
+.indexer,
+.quality,
+.customFormatScore,
+.rejected,
+.indexerFlags,
+.download,
+.size,
+.peers {
   composes: cell;
-
-  width: 80px;
 }
 
 .titleContent {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  word-break: break-all;
-}
-
-.indexer {
-  composes: cell;
-
-  width: 85px;
+  overflow-wrap: anywhere;
 }
 
 .quality {
-  composes: cell;
-
   text-align: center;
 }
 
-.quality {
-  white-space: nowrap;
-}
-
 .customFormatScore {
-  composes: cell from '~Components/Table/Cells/TableRowCell.css';
-
-  width: 55px;
   font-weight: bold;
   cursor: default;
 }
 
-.rejected,
-.indexerFlags,
-.download {
-  composes: cell;
-
-  width: 50px;
-}
-
 .age,
 .size {
-  composes: cell;
-
   white-space: nowrap;
 }
 
-.peers {
-  composes: cell;
+.reasons {
+  margin-top: 6px;
 
-  width: 75px;
+  summary {
+    color: var(--dangerColor);
+    cursor: pointer;
+  }
+
+  ul {
+    margin: 6px 0;
+    padding-left: 20px;
+    overflow-wrap: anywhere;
+  }
+}
+
+.grabStatus {
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+
+.cardRow {
+  padding-bottom: 10px;
+  min-width: 0;
+}
+
+.card {
+  padding: 12px;
+  border: 1px solid var(--borderColor);
+  border-radius: 4px;
+  background-color: var(--cardBackgroundColor);
+  overflow-wrap: anywhere;
+}
+
+.cardHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardAge {
+  color: var(--helpTextColor);
+  font-size: 12px;
+}
+
+.cardTitle {
+  margin-top: 9px;
+  font-weight: bold;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.parsedMetadata {
+  margin-top: 4px;
+  color: var(--helpTextColor);
+  font-size: 12px;
+}
+
+.cardFields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr));
+  gap: 10px 16px;
+
+  margin: 12px 0 0;
+
+  dt {
+    margin-bottom: 3px;
+    color: var(--helpTextColor);
+    font-weight: normal;
+    font-size: 12px;
+  }
+
+  dd {
+    margin: 0;
+    min-width: 0;
+  }
+}
+
+.indexerDetails {
+  margin-top: 8px;
+
+  summary {
+    cursor: pointer;
+  }
+}
+
+.cardAction {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  gap: 8px;
 }

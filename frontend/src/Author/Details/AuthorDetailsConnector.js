@@ -5,12 +5,12 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import * as commandNames from 'Commands/commandNames';
+import { invalidateReleaseSearches } from 'InteractiveSearch/releaseSearchQuery';
 import { toggleAuthorMonitored } from 'Store/Actions/authorActions';
 import { clearBookFiles, fetchBookFiles } from 'Store/Actions/bookFileActions';
 import { saveBookEditor } from 'Store/Actions/bookIndexActions';
 import { executeCommand } from 'Store/Actions/commandActions';
 import { clearQueueDetails, fetchQueueDetails } from 'Store/Actions/queueActions';
-import { cancelFetchReleases, clearReleases } from 'Store/Actions/releaseActions';
 import { clearSeries, fetchSeries } from 'Store/Actions/seriesActions';
 import createAllAuthorSelector from 'Store/Selectors/createAllAuthorsSelector';
 import createCommandsSelector from 'Store/Selectors/createCommandsSelector';
@@ -213,8 +213,6 @@ const mapDispatchToProps = {
   toggleAuthorMonitored,
   fetchQueueDetails,
   clearQueueDetails,
-  clearReleases,
-  cancelFetchReleases,
   executeCommand
 };
 
@@ -243,6 +241,7 @@ class AuthorDetailsConnector extends Component {
       (prevProps.isRenamingFiles && !isRenamingFiles) ||
       (prevProps.isRenamingAuthor && !isRenamingAuthor)
     ) {
+      invalidateReleaseSearches({ authorId: id });
       this.populate();
     }
 
@@ -272,11 +271,9 @@ class AuthorDetailsConnector extends Component {
   };
 
   unpopulate = () => {
-    this.props.cancelFetchReleases();
     this.props.clearSeries();
     this.props.clearBookFiles();
     this.props.clearQueueDetails();
-    this.props.clearReleases();
   };
 
   //
@@ -339,8 +336,6 @@ AuthorDetailsConnector.propTypes = {
   toggleAuthorMonitored: PropTypes.func.isRequired,
   fetchQueueDetails: PropTypes.func.isRequired,
   clearQueueDetails: PropTypes.func.isRequired,
-  clearReleases: PropTypes.func.isRequired,
-  cancelFetchReleases: PropTypes.func.isRequired,
   executeCommand: PropTypes.func.isRequired
 };
 

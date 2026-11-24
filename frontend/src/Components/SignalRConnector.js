@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import { clearHistoryRefresh, refreshHistoryPages, scheduleHistoryRefresh } from 'Activity/History/historyPageQuery';
 import { clearQueueRefresh, refreshQueuePages, scheduleQueueRefresh } from 'Activity/Queue/queuePageQuery';
+import { invalidateReleaseSearches } from 'InteractiveSearch/releaseSearchQuery';
 import { setAppValue, setVersion } from 'Store/Actions/appActions';
 import { fetchAuthor } from 'Store/Actions/authorActions';
 import { removeItem, update, updateItem } from 'Store/Actions/baseActions';
@@ -367,6 +368,7 @@ class SignalRConnector extends Component {
     refreshHistoryPages();
     refreshWantedPages();
     refreshQueuePages();
+    invalidateReleaseSearches();
     repopulatePage();
   };
 

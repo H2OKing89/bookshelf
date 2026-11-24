@@ -5,11 +5,11 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import * as commandNames from 'Commands/commandNames';
+import { invalidateReleaseSearches } from 'InteractiveSearch/releaseSearchQuery';
 import { toggleBooksMonitored } from 'Store/Actions/bookActions';
 import { clearBookFiles, fetchBookFiles } from 'Store/Actions/bookFileActions';
 import { executeCommand } from 'Store/Actions/commandActions';
 import { clearEditions, fetchEditions } from 'Store/Actions/editionActions';
-import { cancelFetchReleases, clearReleases } from 'Store/Actions/releaseActions';
 import createAllAuthorSelector from 'Store/Selectors/createAllAuthorsSelector';
 import createCommandsSelector from 'Store/Selectors/createCommandsSelector';
 import createDimensionsSelector from 'Store/Selectors/createDimensionsSelector';
@@ -122,8 +122,6 @@ const mapDispatchToProps = {
   clearBookFiles,
   fetchEditions,
   clearEditions,
-  clearReleases,
-  cancelFetchReleases,
   toggleBooksMonitored
 };
 
@@ -154,6 +152,7 @@ class BookDetailsConnector extends Component {
       !_.isEqual(getMonitoredEditions(prevProps), getMonitoredEditions(this.props)) ||
       (prevProps.anyReleaseOk === false && anyReleaseOk === true)
     ) {
+      invalidateReleaseSearches({ bookId: id });
       this.unpopulate();
       this.populate();
     }
@@ -183,8 +182,6 @@ class BookDetailsConnector extends Component {
   };
 
   unpopulate = () => {
-    this.props.cancelFetchReleases();
-    this.props.clearReleases();
     this.props.clearBookFiles();
     this.props.clearEditions();
   };
@@ -249,8 +246,6 @@ BookDetailsConnector.propTypes = {
   clearBookFiles: PropTypes.func.isRequired,
   fetchEditions: PropTypes.func.isRequired,
   clearEditions: PropTypes.func.isRequired,
-  clearReleases: PropTypes.func.isRequired,
-  cancelFetchReleases: PropTypes.func.isRequired,
   toggleBooksMonitored: PropTypes.func.isRequired,
   executeCommand: PropTypes.func.isRequired
 };

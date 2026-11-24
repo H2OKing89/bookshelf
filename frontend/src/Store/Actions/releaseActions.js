@@ -1,9 +1,6 @@
 import { createAction } from 'redux-actions';
 import { filterBuilderTypes, filterBuilderValueTypes, filterTypes, sortDirections } from 'Helpers/Props';
-import { createThunk, handleThunks } from 'Store/thunks';
-import createAjaxRequest from 'Utilities/createAjaxRequest';
 import translate from 'Utilities/String/translate';
-import createFetchHandler from './Creators/createFetchHandler';
 import createHandleActions from './Creators/createHandleActions';
 import createSetClientSideCollectionFilterReducer from './Creators/Reducers/createSetClientSideCollectionFilterReducer';
 import createSetClientSideCollectionSortReducer from './Creators/Reducers/createSetClientSideCollectionSortReducer';
@@ -15,16 +12,10 @@ export const section = 'releases';
 export const bookSection = 'releases.book';
 export const authorSection = 'releases.author';
 
-let abortCurrentRequest = null;
-
 //
 // State
 
 export const defaultState = {
-  isFetching: false,
-  isPopulated: false,
-  error: null,
-  items: [],
   sortKey: 'releaseWeight',
   sortDirection: sortDirections.ASCENDING,
   sortPredicates: {
@@ -220,6 +211,8 @@ export const defaultState = {
 
 export const persistState = [
   'releases.selectedFilterKey',
+  'releases.book.selectedFilterKey',
+  'releases.author.selectedFilterKey',
   'releases.book.customFilters',
   'releases.author.customFilters'
 ];
@@ -227,117 +220,21 @@ export const persistState = [
 //
 // Actions Types
 
-export const FETCH_RELEASES = 'releases/fetchReleases';
-export const CANCEL_FETCH_RELEASES = 'releases/cancelFetchReleases';
 export const SET_RELEASES_SORT = 'releases/setReleasesSort';
-export const CLEAR_RELEASES = 'releases/clearReleases';
-export const GRAB_RELEASE = 'releases/grabRelease';
-export const UPDATE_RELEASE = 'releases/updateRelease';
 export const SET_BOOK_RELEASES_FILTER = 'releases/setBookReleasesFilter';
 export const SET_AUTHOR_RELEASES_FILTER = 'releases/setAuthorReleasesFilter';
 
 //
 // Action Creators
 
-export const fetchReleases = createThunk(FETCH_RELEASES);
-export const cancelFetchReleases = createThunk(CANCEL_FETCH_RELEASES);
 export const setReleasesSort = createAction(SET_RELEASES_SORT);
-export const clearReleases = createAction(CLEAR_RELEASES);
-export const grabRelease = createThunk(GRAB_RELEASE);
-export const updateRelease = createAction(UPDATE_RELEASE);
 export const setBookReleasesFilter = createAction(SET_BOOK_RELEASES_FILTER);
 export const setAuthorReleasesFilter = createAction(SET_AUTHOR_RELEASES_FILTER);
-
-//
-// Helpers
-
-const fetchReleasesHelper = createFetchHandler(section, '/release');
-
-//
-// Action Handlers
-
-export const actionHandlers = handleThunks({
-
-  [FETCH_RELEASES]: function(getState, payload, dispatch) {
-    const abortRequest = fetchReleasesHelper(getState, payload, dispatch);
-
-    abortCurrentRequest = abortRequest;
-  },
-
-  [CANCEL_FETCH_RELEASES]: function(getState, payload, dispatch) {
-    if (abortCurrentRequest) {
-      abortCurrentRequest = abortCurrentRequest();
-    }
-  },
-
-  [GRAB_RELEASE]: function(getState, payload, dispatch) {
-    const guid = payload.guid;
-
-    dispatch(updateRelease({ guid, isGrabbing: true }));
-
-    const promise = createAjaxRequest({
-      url: '/release',
-      method: 'POST',
-      contentType: 'application/json',
-      dataType: 'json',
-      data: JSON.stringify(payload)
-    }).request;
-
-    promise.done((data) => {
-      dispatch(updateRelease({
-        guid,
-        isGrabbing: false,
-        isGrabbed: true,
-        grabError: null
-      }));
-    });
-
-    promise.fail((xhr) => {
-      const grabError = xhr.responseJSON && xhr.responseJSON.message || 'Failed to add to download queue';
-
-      dispatch(updateRelease({
-        guid,
-        isGrabbing: false,
-        isGrabbed: false,
-        grabError
-      }));
-    });
-  }
-});
 
 //
 // Reducers
 
 export const reducers = createHandleActions({
-
-  [CLEAR_RELEASES]: (state) => {
-    const {
-      book,
-      author,
-      ...otherDefaultState
-    } = defaultState;
-
-    return Object.assign({}, state, otherDefaultState);
-  },
-
-  [UPDATE_RELEASE]: (state, { payload }) => {
-    const guid = payload.guid;
-    const newState = Object.assign({}, state);
-    const items = newState.items;
-
-    // Return early if there aren't any items (the user closed the modal)
-    if (!items.length) {
-      return;
-    }
-
-    const index = items.findIndex((item) => item.guid === guid);
-    const item = Object.assign({}, items[index], payload);
-
-    newState.items = [...items];
-    newState.items.splice(index, 1, item);
-
-    return newState;
-  },
 
   [SET_RELEASES_SORT]: createSetClientSideCollectionSortReducer(section),
   [SET_BOOK_RELEASES_FILTER]: createSetClientSideCollectionFilterReducer(bookSection),

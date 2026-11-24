@@ -8,6 +8,8 @@ import styles from './InteractiveSearch.css';
 
 function InteractiveSearchFilterMenu(props) {
   const {
+    type,
+    sectionItems,
     selectedFilterKey,
     filters,
     customFilters,
@@ -23,6 +25,7 @@ function InteractiveSearchFilterMenu(props) {
         customFilters={customFilters}
         buttonComponent={PageMenuButton}
         filterModalConnectorComponent={InteractiveSearchFilterModalConnector}
+        filterModalConnectorComponentProps={{ type, sectionItems }}
         onFilterSelect={onFilterSelect}
       />
     </div>
@@ -30,6 +33,8 @@ function InteractiveSearchFilterMenu(props) {
 }
 
 InteractiveSearchFilterMenu.propTypes = {
+  type: PropTypes.oneOf(['book', 'author']).isRequired,
+  sectionItems: PropTypes.arrayOf(PropTypes.object).isRequired,
   selectedFilterKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   filters: PropTypes.arrayOf(PropTypes.object).isRequired,
   customFilters: PropTypes.arrayOf(PropTypes.object).isRequired,

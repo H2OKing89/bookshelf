@@ -2,8 +2,15 @@
 // Please do not change this file!
 interface CssExports {
   'blankpad': string;
+  'cardSort': string;
   'filterMenuContainer': string;
-  'filteredMessage': string;
+  'resultCount': string;
+  'resultViewport': string;
+  'resultsTable': string;
+  'search': string;
+  'searchControls': string;
+  'spacer': string;
+  'virtualized': string;
 }
 export const cssExports: CssExports;
 export default cssExports;
