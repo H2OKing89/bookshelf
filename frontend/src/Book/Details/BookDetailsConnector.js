@@ -145,13 +145,13 @@ class BookDetailsConnector extends Component {
       isRefreshingMediaInfo
     } = this.props;
 
-    if (
+    if (prevProps.id === id && (
       (prevProps.isRenamingFiles && !isRenamingFiles) ||
       (prevProps.isRenamingAuthor && !isRenamingAuthor) ||
       (prevProps.isRefreshingMediaInfo && !isRefreshingMediaInfo) ||
       !_.isEqual(getMonitoredEditions(prevProps), getMonitoredEditions(this.props)) ||
       (prevProps.anyReleaseOk === false && anyReleaseOk === true)
-    ) {
+    )) {
       invalidateReleaseSearches({ bookId: id });
       this.unpopulate();
       this.populate();

@@ -123,3 +123,25 @@ test('expired, invalidated and malformed results cannot authorize grabs', async 
   await search.invalidateReleaseSearches({ bookId: 11 });
   assert.equal(search.currentRelease(client, key, item), undefined);
 });
+
+test('invalidation during a search requires refresh even if that search subsequently succeeds', async (t) => {
+  let finishFirst;
+  let requests = 0;
+  const { client, search } = setup(t, async () => {
+    requests++;
+    return requests === 1 ? new Promise(resolve => { finishFirst = resolve; }) : json([release(12)]);
+  });
+  const scope = { bookId: 11 };
+  const options = search.default(scope);
+  const pending = client.fetchQuery(options);
+  await search.invalidateReleaseSearches(scope);
+  finishFirst(json([release(11)]));
+  const outdated = await pending;
+  assert.equal(outdated.refreshRequired, true);
+  assert.equal(search.currentRelease(client, options.queryKey, outdated.items[0]), undefined);
+  assert.equal(requests, 1);
+
+  const refreshed = await client.fetchQuery({ ...options, staleTime: 0 });
+  assert.equal(refreshed.refreshRequired, false);
+  assert.equal(search.currentRelease(client, options.queryKey, refreshed.items[0]).searchResultId, release(12).searchResultId);
+});

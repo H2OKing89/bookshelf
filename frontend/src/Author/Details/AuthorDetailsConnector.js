@@ -235,12 +235,12 @@ class AuthorDetailsConnector extends Component {
       isRenamingAuthor
     } = this.props;
 
-    if (
+    if (prevProps.id === id && (
       (prevProps.isAuthorRefreshing && !isAuthorRefreshing) ||
       (prevProps.allAuthorRefreshing && !allAuthorRefreshing) ||
       (prevProps.isRenamingFiles && !isRenamingFiles) ||
       (prevProps.isRenamingAuthor && !isRenamingAuthor)
-    ) {
+    )) {
       invalidateReleaseSearches({ authorId: id });
       this.populate();
     }

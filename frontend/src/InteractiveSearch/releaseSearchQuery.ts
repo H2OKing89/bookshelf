@@ -1,10 +1,11 @@
-import { type QueryClient,queryOptions } from '@tanstack/react-query';
+import { type QueryClient, queryOptions } from '@tanstack/react-query';
 import queryClient from 'App/queryClient';
 import fetchJson, { ApiError } from 'Utilities/Fetch/fetchJson';
 
+const invalidationRevisions = new WeakMap<object, number>();
+
 export const releaseFreshnessMs = 5 * 60 * 1000;
 const releaseCacheMs = 10 * 60 * 1000;
-const releaseRequestTimeout = 120_000;
 
 export type ReleaseSearchScope = { bookId: number } | { authorId: number } | Record<string, never>;
 
@@ -106,17 +107,23 @@ export function releaseSearchKey(scope: ReleaseSearchScope) {
 export type ReleaseSearchKey = ReturnType<typeof releaseSearchKey>;
 
 export default function releaseSearchQuery(scope: ReleaseSearchScope) {
+  const key = releaseSearchKey(scope);
   const params = new URLSearchParams();
   for (const [name, id] of Object.entries(scope)) {
     params.set(name, String(id));
   }
 
   return queryOptions({
-    queryKey: releaseSearchKey(scope),
-    queryFn: async ({ signal }): Promise<ReleaseSearchResults> => ({
-      items: await fetchJson({ path: `/release${params.size ? `?${params}` : ''}`, parse: parseSearchResults, signal, timeout: releaseRequestTimeout }),
-      fetchedAt: Date.now()
-    }),
+    queryKey: key,
+    queryFn: async ({ signal }): Promise<ReleaseSearchResults> => {
+      const entry = queryClient.getQueryCache().find({ queryKey: key, exact: true });
+      const revision = entry ? invalidationRevisions.get(entry) : undefined;
+      const items = await fetchJson({ path: `/release${params.size ? `?${params}` : ''}`, parse: parseSearchResults, signal });
+
+      // A response already in flight when policy or connections change may
+      // arrive after invalidation. Its results remain visible for review.
+      return { items, fetchedAt: Date.now(), refreshRequired: !!entry && revision !== invalidationRevisions.get(entry) };
+    },
     staleTime: releaseFreshnessMs,
     gcTime: releaseCacheMs,
     networkMode: 'always',
@@ -132,7 +139,12 @@ export function filterReleaseTitles(items: SearchRelease[], text: string) {
 }
 
 export function invalidateReleaseSearches(scope?: ReleaseSearchScope) {
-  return queryClient.invalidateQueries({ queryKey: scope ? releaseSearchKey(scope) : releaseSearchFamilyKey(), refetchType: 'none' });
+  const queryKey = scope ? releaseSearchKey(scope) : releaseSearchFamilyKey();
+  for (const entry of queryClient.getQueryCache().findAll({ queryKey })) {
+    invalidationRevisions.set(entry, (invalidationRevisions.get(entry) ?? 0) + 1);
+  }
+
+  return queryClient.invalidateQueries({ queryKey, refetchType: 'none' });
 }
 
 export function currentRelease(client: QueryClient, key: ReleaseSearchKey, action: unknown) {
@@ -160,7 +172,7 @@ export interface GrabSearchRelease {
 export function grabSearchRelease({ key, identity }: GrabSearchRelease) {
   const { guid, indexerId, searchResultId } = identity;
   return fetchJson({
-    path: '/release', method: 'POST', body: { ...key[2], guid, indexerId, searchResultId }, timeout: releaseRequestTimeout,
+    path: '/release', method: 'POST', body: { ...key[2], guid, indexerId, searchResultId },
     parse: (value) => {
       if (!sameRelease(parseReleaseIdentity(value), identity)) {
         throw new Error('Release response did not match the selected result');
