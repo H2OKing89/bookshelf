@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using NzbDrone.Core.Download.Pending;
@@ -57,6 +58,18 @@ namespace NzbDrone.Core.Parser.Model
 
         [JsonIgnore]
         public IReadOnlyList<int> PendingBookIds { get; set; }
+
+        internal ReleaseInfo CopyForInteractiveGrab()
+        {
+            var copy = (ReleaseInfo)MemberwiseClone();
+            copy.BookAuthors = BookAuthors?.ToList();
+            copy.Narrators = Narrators?.ToList();
+            copy.BookSeries = BookSeries?.ToList();
+            copy.Categories = Categories?.ToList();
+            copy.Languages = Languages?.ToList();
+            copy.PendingBookIds = PendingBookIds?.ToArray();
+            return copy;
+        }
 
         public bool HasStructuredBookIdentity()
         {

@@ -15,6 +15,9 @@ namespace Readarr.Api.V1.Indexers
     public class ReleaseResource : RestResource
     {
         public string Guid { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public string SearchResultId { get; set; }
         public QualityModel Quality { get; set; }
         public MediaInfoResource MediaInfo { get; set; }
         public int QualityWeight { get; set; }

@@ -25,6 +25,13 @@ namespace NzbDrone.Core.Parser.Model
         [JsonIgnore]
         public Dictionary<string, object> ExtraInfo { get; set; } = new Dictionary<string, object>();
 
+        internal ParsedBookInfo CopyForInteractiveGrab()
+        {
+            var copy = (ParsedBookInfo)MemberwiseClone();
+            copy.ExtraInfo = ExtraInfo == null ? new Dictionary<string, object>() : new Dictionary<string, object>(ExtraInfo);
+            return copy;
+        }
+
         public override string ToString()
         {
             var bookString = "[Unknown Book]";

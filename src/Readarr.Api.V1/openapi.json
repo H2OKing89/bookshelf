@@ -13542,6 +13542,11 @@
             "type": "string",
             "nullable": true
           },
+          "searchResultId": {
+            "type": "string",
+            "description": "Temporary identity of the exact cached search result. Echo it when grabbing a result.",
+            "nullable": true
+          },
           "quality": {
             "$ref": "#/components/schemas/QualityModel"
           },
