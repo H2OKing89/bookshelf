@@ -11,6 +11,7 @@ import scrollPositions from 'Store/scrollPositions';
 import createAuthorClientSideCollectionItemsSelector from 'Store/Selectors/createAuthorClientSideCollectionItemsSelector';
 import createCommandExecutingSelector from 'Store/Selectors/createCommandExecutingSelector';
 import createDimensionsSelector from 'Store/Selectors/createDimensionsSelector';
+import { isLocked } from 'Utilities/scrollLock';
 import AuthorIndex from './AuthorIndex';
 
 function createMapStateToProps() {
@@ -92,7 +93,9 @@ class AuthorIndexConnector extends Component {
   };
 
   onScroll = ({ scrollTop }) => {
-    scrollPositions.authorIndex = scrollTop;
+    if (!isLocked()) {
+      scrollPositions.authorIndex = scrollTop;
+    }
   };
 
   //

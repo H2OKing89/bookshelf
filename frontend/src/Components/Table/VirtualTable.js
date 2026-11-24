@@ -70,7 +70,7 @@ class VirtualTable extends Component {
       this._grid.scrollToPosition({ scrollTop });
     }
 
-    if (scrollIndex != null && scrollIndex !== prevProps.scrollIndex) {
+    if (this._grid && scrollIndex != null && scrollIndex !== prevProps.scrollIndex) {
       this._grid.scrollToCell({
         rowIndex: scrollIndex,
         columnIndex: 0
@@ -108,6 +108,7 @@ class VirtualTable extends Component {
       headerHeight,
       rowHeight,
       rowRenderer,
+      onScroll,
       ...otherProps
     } = this.props;
 
@@ -132,6 +133,7 @@ class VirtualTable extends Component {
     return (
       <WindowScroller
         scrollElement={isSmallScreen ? undefined : scroller}
+        onScroll={onScroll}
       >
         {({ height, registerChild, onChildScroll, scrollTop }) => {
           if (!height) {
@@ -194,6 +196,7 @@ VirtualTable.propTypes = {
   headerHeight: PropTypes.number.isRequired,
   rowHeight: PropTypes.oneOfType([PropTypes.func, PropTypes.number]).isRequired,
   rowRenderer: PropTypes.func.isRequired,
+  onScroll: PropTypes.func,
   onRecompute: PropTypes.func.isRequired
 };
 

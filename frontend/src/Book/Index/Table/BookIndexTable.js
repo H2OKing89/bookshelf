@@ -92,7 +92,8 @@ class BookIndexTable extends Component {
       allUnselected,
       onSelectAllChange,
       isEditorActive,
-      selectedState
+      selectedState,
+      onScroll
     } = this.props;
 
     return (
@@ -101,6 +102,7 @@ class BookIndexTable extends Component {
         items={items}
         scrollIndex={this.state.scrollIndex}
         scrollTop={scrollTop}
+        onScroll={onScroll}
         isSmallScreen={isSmallScreen}
         scroller={scroller}
         rowHeight={38}
@@ -134,6 +136,7 @@ BookIndexTable.propTypes = {
   sortDirection: PropTypes.oneOf(sortDirections.all),
   jumpToCharacter: PropTypes.string,
   scrollTop: PropTypes.number,
+  onScroll: PropTypes.func.isRequired,
   scroller: PropTypes.instanceOf(Element).isRequired,
   isSmallScreen: PropTypes.bool.isRequired,
   onSortPress: PropTypes.func.isRequired,

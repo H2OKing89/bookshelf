@@ -11,6 +11,7 @@ import scrollPositions from 'Store/scrollPositions';
 import createBookClientSideCollectionItemsSelector from 'Store/Selectors/createBookClientSideCollectionItemsSelector';
 import createCommandExecutingSelector from 'Store/Selectors/createCommandExecutingSelector';
 import createDimensionsSelector from 'Store/Selectors/createDimensionsSelector';
+import { isLocked } from 'Utilities/scrollLock';
 import BookIndex from './BookIndex';
 
 function createMapStateToProps() {
@@ -101,7 +102,9 @@ class BookIndexConnector extends Component {
   };
 
   onScroll = ({ scrollTop }) => {
-    scrollPositions.bookIndex = scrollTop;
+    if (!isLocked()) {
+      scrollPositions.bookIndex = scrollTop;
+    }
   };
 
   //

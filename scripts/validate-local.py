@@ -12,7 +12,7 @@ import tempfile
 from validation import common
 
 
-CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "docker")
+CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization", "docker")
 
 
 def parser():
@@ -54,7 +54,7 @@ def main(argv=None):
         parser().error("--checks historypaging requires --playwright-module")
     if "historysync" in chosen and not arguments.playwright_module:
         parser().error("--checks historysync requires --playwright-module")
-    for check in ("wantedpaging", "queuepaging", "settingsdrafts", "routernavigation"):
+    for check in ("wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization"):
         if check in chosen and not arguments.playwright_module:
             parser().error(f"--checks {check} requires --playwright-module")
     if "docker" in chosen and not arguments.docker_runtime:
@@ -90,13 +90,13 @@ def main(argv=None):
             output = common.private_directory(arguments.output.expanduser().resolve())
         for label, runtime in inputs.items():
             snapshots[label] = common.snapshot_runtime(runtime)
-        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation")):
+        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization")):
             common.ensure_host_compatible(inputs["candidate"])
         for label in ("baseline", "legacy"):
             if label in inputs:
                 common.ensure_host_compatible(inputs[label])
         # Imports are deliberately after validation; modules never launch on import.
-        from validation import accesspolicy, acquisition, app, authpolicy, cancellation, datastore, docker, history_paging, identity, library_review, logstorage, media, metadata_accessibility, operational_paging, package, postgresconnections, releaseidentity, restore, router_navigation, settings_drafts, sqlite, upgrade
+        from validation import accesspolicy, acquisition, app, authpolicy, cancellation, datastore, docker, history_paging, identity, interactive_search, library_review, library_virtualization, logstorage, media, metadata_accessibility, operational_paging, package, postgresconnections, releaseidentity, restore, router_navigation, settings_drafts, sqlite, upgrade
         callbacks = {
             "package": lambda: package.run(inputs["candidate"], output / "package", repo),
             "app": lambda: app.run(inputs["candidate"], output / "app"),
@@ -120,6 +120,8 @@ def main(argv=None):
             "queuepaging": lambda: operational_paging.run_queue(inputs["candidate"], output / "queuepaging", arguments.playwright_module),
             "settingsdrafts": lambda: settings_drafts.run(inputs["candidate"], output / "settingsdrafts", arguments.playwright_module),
             "routernavigation": lambda: router_navigation.run(inputs["candidate"], output / "routernavigation", arguments.playwright_module),
+            "interactivesearch": lambda: interactive_search.run(inputs["candidate"], output / "interactivesearch", arguments.playwright_module),
+            "libraryvirtualization": lambda: library_virtualization.run(inputs["candidate"], output / "libraryvirtualization", arguments.playwright_module),
             "authpolicy": lambda: authpolicy.run(inputs["candidate"], output / "authpolicy", baseline_runtime=inputs["baseline"]),
             "docker": lambda: docker.run(inputs["docker"], output / "docker", repo),
         }

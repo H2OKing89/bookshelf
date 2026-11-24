@@ -213,7 +213,8 @@ class AuthorIndexOverviews extends Component {
     const {
       items,
       isSmallScreen,
-      scroller
+      scroller,
+      onScroll
     } = this.props;
 
     const {
@@ -227,6 +228,7 @@ class AuthorIndexOverviews extends Component {
       >
         <WindowScroller
           scrollElement={isSmallScreen ? undefined : scroller}
+          onScroll={onScroll}
         >
           {({ height, registerChild, onChildScroll, scrollTop }) => {
             if (!height) {
@@ -268,6 +270,7 @@ AuthorIndexOverviews.propTypes = {
   sortKey: PropTypes.string,
   overviewOptions: PropTypes.object.isRequired,
   scrollTop: PropTypes.number.isRequired,
+  onScroll: PropTypes.func.isRequired,
   jumpToCharacter: PropTypes.string,
   scroller: PropTypes.instanceOf(Element).isRequired,
   showRelativeDates: PropTypes.bool.isRequired,

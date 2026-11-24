@@ -98,7 +98,8 @@ class AuthorIndexTable extends Component {
       allUnselected,
       onSelectAllChange,
       isEditorActive,
-      selectedState
+      selectedState,
+      onScroll
     } = this.props;
 
     return (
@@ -107,6 +108,7 @@ class AuthorIndexTable extends Component {
         items={items}
         scrollIndex={this.state.scrollIndex}
         scrollTop={scrollTop}
+        onScroll={onScroll}
         isSmallScreen={isSmallScreen}
         scroller={scroller}
         rowHeight={showBanners ? 70 : 38}
@@ -143,6 +145,7 @@ AuthorIndexTable.propTypes = {
   showTitle: PropTypes.string.isRequired,
   jumpToCharacter: PropTypes.string,
   scrollTop: PropTypes.number,
+  onScroll: PropTypes.func.isRequired,
   scroller: PropTypes.instanceOf(Element).isRequired,
   isSmallScreen: PropTypes.bool.isRequired,
   onSortPress: PropTypes.func.isRequired,

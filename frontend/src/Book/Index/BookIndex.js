@@ -450,7 +450,6 @@ class BookIndex extends Component {
             registerScroller={this.setScrollerRef}
             className={styles.contentBody}
             innerClassName={styles[`${view}InnerContentBody`]}
-            onScroll={onScroll}
           >
             {
               isFetching && !isPopulated &&
@@ -480,6 +479,7 @@ class BookIndex extends Component {
                     onSelectedChange={this.onSelectedChange}
                     onSelectAllChange={this.onSelectAllChange}
                     selectedState={selectedState}
+                    onScroll={onScroll}
                     {...otherProps}
                   />
 

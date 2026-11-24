@@ -279,6 +279,7 @@ class BookIndexPosters extends Component {
   render() {
     const {
       scroller,
+      onScroll,
       items,
       isSmallScreen
     } = this.props;
@@ -298,6 +299,7 @@ class BookIndexPosters extends Component {
       >
         <WindowScroller
           scrollElement={isSmallScreen ? undefined : scroller}
+          onScroll={onScroll}
         >
           {({ height, registerChild, onChildScroll, scrollTop }) => {
             if (!height) {
@@ -339,6 +341,7 @@ BookIndexPosters.propTypes = {
   posterOptions: PropTypes.object.isRequired,
   jumpToCharacter: PropTypes.string,
   scrollTop: PropTypes.number.isRequired,
+  onScroll: PropTypes.func.isRequired,
   scroller: PropTypes.instanceOf(Element).isRequired,
   showRelativeDates: PropTypes.bool.isRequired,
   shortDateFormat: PropTypes.string.isRequired,
