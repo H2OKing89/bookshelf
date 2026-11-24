@@ -29,11 +29,6 @@
   cursor: default;
 }
 
-.age,
-.size {
-  white-space: nowrap;
-}
-
 .reasons {
   margin-top: 6px;
 
@@ -112,6 +107,13 @@
   }
 }
 
+.cardFields dd span,
+.quality span {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .indexerDetails {
   margin-top: 8px;
 
@@ -127,4 +129,9 @@
   flex-wrap: wrap;
   margin-top: 12px;
   gap: 8px;
+
+  > button {
+    max-width: 100%;
+    white-space: normal;
+  }
 }

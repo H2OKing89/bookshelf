@@ -35,8 +35,7 @@ class BookDetails extends Component {
       isOrganizeModalOpen: false,
       isRetagModalOpen: false,
       isEditBookModalOpen: false,
-      isDeleteBookModalOpen: false,
-      selectedTabIndex: 0
+      isDeleteBookModalOpen: false
     };
   }
 
@@ -78,10 +77,6 @@ class BookDetails extends Component {
     this.setState({ isDeleteBookModalOpen: false });
   };
 
-  onTabSelect = (index, lastIndex) => {
-    this.setState({ selectedTabIndex: index });
-  };
-
   //
   // Render
 
@@ -113,8 +108,7 @@ class BookDetails extends Component {
       isOrganizeModalOpen,
       isRetagModalOpen,
       isEditBookModalOpen,
-      isDeleteBookModalOpen,
-      selectedTabIndex
+      isDeleteBookModalOpen
     } = this.state;
 
     return (
@@ -248,7 +242,7 @@ class BookDetails extends Component {
                 </div>
             }
 
-            <Tabs selectedIndex={this.state.tabIndex} onSelect={this.onTabSelect}>
+            <Tabs>
               <TabList
                 className={styles.tabList}
               >

@@ -62,8 +62,7 @@ class AuthorDetails extends Component {
       allSelected: false,
       allUnselected: false,
       lastToggled: null,
-      selectedState: {},
-      selectedTabIndex: 0
+      selectedState: {}
     };
   }
 
@@ -207,10 +206,6 @@ class AuthorDetails extends Component {
     });
   };
 
-  onTabSelect = (index, lastIndex) => {
-    this.setState({ selectedTabIndex: index });
-  };
-
   //
   // Render
 
@@ -260,8 +255,7 @@ class AuthorDetails extends Component {
       selectedState,
       allExpanded,
       allCollapsed,
-      expandedState,
-      selectedTabIndex
+      expandedState
     } = this.state;
 
     let expandIcon = icons.EXPAND_INDETERMINATE;
@@ -445,7 +439,7 @@ class AuthorDetails extends Component {
 
             {
               isPopulated &&
-                <Tabs selectedIndex={this.state.tabIndex} onSelect={this.onTabSelect}>
+                <Tabs>
                   <TabList
                     className={styles.tabList}
                   >
