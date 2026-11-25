@@ -27,7 +27,7 @@ class RunnerResultTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.runtime = package(self.root / "runtime")
         self.modules = {"validation." + name: types.ModuleType("validation." + name)
-                        for name in ("accesspolicy", "acquisition", "app", "authpolicy", "cancellation", "datastore", "docker", "identity", "logstorage", "media", "package", "postgresconnections", "releaseidentity", "restore", "settings_drafts", "sqlite", "upgrade")}
+                        for name in ("accesspolicy", "acquisition", "api_documents", "app", "authpolicy", "cancellation", "datastore", "docker", "download_queue", "host_tls_lifecycle", "identity", "logstorage", "media", "notification_lifecycle", "package", "performance_profiling", "postgresconnections", "releaseidentity", "restore", "settings_drafts", "sqlite", "upgrade")}
         self.output = self.root / "results"
 
     @contextlib.contextmanager
@@ -104,6 +104,29 @@ class RunnerResultTests(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(calls, [((self.runtime.resolve(), self.output / "identity"),
                                   {"baseline_runtime": baseline.resolve(), "playwright_module": browser})])
+
+    def test_new_checks_dispatch_with_owned_baseline_and_browser(self):
+        baseline = package(self.root / "baseline")
+        browser = self.root / "playwright"
+        modules = {"hosttlslifecycle": "host_tls_lifecycle", "downloadqueue": "download_queue",
+                   "apidocuments": "api_documents", "notificationlifecycle": "notification_lifecycle",
+                   "performanceprofiling": "performance_profiling"}
+        calls = {}
+        for key, module in modules.items():
+            def callback(*args, key=key):
+                calls[key] = args
+                return {"checks": {"owned": True}, "passed": 1, "failed": 0, "completed": True}
+            self.modules["validation." + module].run = callback
+        console = io.StringIO()
+        with (self.mocked_modules(), patch.object(runner.common, "ensure_host_compatible"),
+              contextlib.redirect_stdout(console), contextlib.redirect_stderr(console)):
+            status = runner.main(["--runtime", str(self.runtime), "--baseline-runtime", str(baseline),
+                                  "--playwright-module", str(browser), "--output", str(self.output), "--checks", *modules])
+        self.assertEqual(status, 0)
+        for key in modules:
+            suffix = (baseline.resolve(), browser) if key == "notificationlifecycle" else (
+                (baseline.resolve(),) if key == "hosttlslifecycle" else (browser,) if key == "performanceprofiling" else ())
+            self.assertEqual(calls[key], (self.runtime.resolve(), self.output / key, *suffix))
 
     def test_settings_drafts_requires_and_passes_the_browser_module(self):
         browser = self.root / "playwright"
