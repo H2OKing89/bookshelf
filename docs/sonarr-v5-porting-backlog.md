@@ -914,6 +914,19 @@ license requirement. The locked graph and inventory are in
 [dependency audit](dependency-audit.md#compatible-maintenance-refresh-2026-11-24).
 P09 remains **In progress** for native and wider major-version compatibility.
 
+**2026-11-24 major-line evaluation:** `987b8a70e` moves the SignalR client
+to the .NET 10 line, Fuse to 7, Node types to 24, filesize to 11, Ical.Net to 5,
+and NUnit to 4, plus selected supported maintenance versions. The calendar
+contract preserves all-day dates, UIDs and tag filtering. New Ical.Net and
+NodaTime notices are pinned and packaged. The 25-project NuGet and 1,344-entry
+Yarn audits report zero known vulnerabilities; incompatible/costly major
+trials were retained as documented decisions rather than forced upgrades.
+Exact integrated proof exposed a controlled-scroll compatibility issue in the
+newer react-virtualized version; `ce93fb9df` corrects it through the public
+external scroller callback, including table, poster and overview modes. See
+[major-line inventory and review](dependency-audit.md). P09 remains **In progress**
+for wider framework/tooling/native acceptance.
+
 ### P10
 
 **Carry cancellation through the HTTP client stack**
@@ -2890,6 +2903,18 @@ TypeScript projects, Vite declaration verification, frontend tests and prior
 list lifecycle/browser checks pass. The source tree still contains 999 JS
 files and 98 non-declaration TS/TSX files; it is not fully strict. U07 remains
 **In progress** for incremental conversion.
+
+**2026-11-24 library and queue boundary slice:** `2367adf9b` converts eight
+JS components to strict TS/TSX, adds branded book/author/edition/book-file and
+queue resource IDs, and decodes the four actual library fetch/store boundaries
+without discarding legacy fields, false, zero or unassigned associations.
+Wanted, history, recording-work and queue data paths use the typed models;
+work-coverage, format/quality, MediaInfo and queue row presentation are typed.
+Compile-time negative cases and runtime parsers reject malformed resource
+identities. `ce93fb9df` adds a typed virtualized scroll helper and real
+layout regression checks. The remaining source is **991 JS and 108 ordinary
+TS/TSX files** (excluding declarations); U07 stays **In progress** for the
+larger legacy store/component migration.
 
 ### U08
 

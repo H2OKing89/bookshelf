@@ -504,3 +504,19 @@ notification service were used. NuGet/Yarn vulnerability reports are registry
 advisory snapshots, not complete native/library security audits. P09's
 remaining major-line migrations and native ARM64/release acceptance are not
 closed by these changes.
+
+### Integrated virtualization compatibility check
+
+The first combined exact `bc019a705` package reproduced an alphabet jump
+regression with the updated `react-virtualized` 9.22.6: the Z control was
+rendered and clicked, but the controlled grid remained at its initial scroll
+position. The identical typed library UI on the prior dependency graph
+successfully jumped and restored scroll. Commit `ce93fb9df` adapts the table
+and author/book poster/overview grids to the dependency's public cell-offset
+and external WindowScroller callback, rather than manipulating controlled
+Grid scroll state. A separate maintained-dependency overlay passed 62 expanded
+browser checks, with desktop top/end jumps and desktop/phone view restoration,
+and two focused unit tests, both TS projects, ESLint and Vite verification.
+The final lock graph is unchanged, so the dated inventory above remains exact.
+The initial failed receipt is retained; exact corrected package replay is
+recorded in local validation.
