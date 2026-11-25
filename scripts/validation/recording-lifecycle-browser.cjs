@@ -16,7 +16,17 @@ async function verifyEditors(page, base, config, { check, step, output }) {
   await signIn(page, config, `/book/${config.local.slug}`);
   await page.getByText(config.local.title, { exact: true }).first().waitFor();
   const editLocal = page.getByRole('button', { name: 'Edit local metadata', exact: true });
-  await editLocal.click();
+  const openLocal = async () => {
+    const more = page.getByRole('button', { name: 'More', exact: true }).first();
+    await editLocal.or(more).first().waitFor();
+    if (device === 'phone' || !await editLocal.isVisible()) {
+      await more.click();
+      await page.getByRole('menu', { name: 'More', exact: true }).getByRole('menuitem', { name: 'Edit local metadata', exact: true }).click();
+    } else {
+      await editLocal.click();
+    }
+  };
+  await openLocal();
   const local = page.getByRole('dialog', { name: 'Edit local recording', exact: true });
   await local.waitFor();
   const subtitle = local.getByLabel('Subtitle', { exact: true });
@@ -28,7 +38,7 @@ async function verifyEditors(page, base, config, { check, step, output }) {
   await local.getByRole('button', { name: 'Save metadata', exact: true }).click();
   check('local_editor_saves_to_exact_identity', (await localSaved).ok());
   await local.waitFor({ state: 'hidden' });
-  await editLocal.click();
+  await openLocal();
   await local.waitFor();
   await local.getByLabel('Title', { exact: true }).waitFor();
   check('local_editor_reloads_persisted_value', await local.getByLabel('Subtitle', { exact: true }).inputValue() === `Owned ${device} browser correction`);
@@ -77,7 +87,13 @@ async function verifyEditors(page, base, config, { check, step, output }) {
     });
     await page.goto(`${config.url}/unmapped`);
     await page.getByText(new RegExp(config.create.title + '\\.m4b')).waitFor();
-    await page.locator(`input[name="${config.create.fileId}"]`).check();
+    step('select_unmapped_file');
+    const checkbox = page.locator(`input[name="${config.create.fileId}"]`);
+    // The styled CheckInput deliberately disables pointer events on its native
+    // input; click the containing label the way a user would.
+    await checkbox.locator('..').click();
+    check('only_owned_unmapped_file_selected', await checkbox.isChecked());
+    step('open_create_recording_editor');
     await page.getByRole('button', { name: 'Create local recording', exact: true }).click();
     const create = page.getByRole('dialog', { name: 'Create local recording', exact: true });
     await create.getByLabel('Title', { exact: true }).waitFor();
@@ -85,6 +101,7 @@ async function verifyEditors(page, base, config, { check, step, output }) {
     await create.getByLabel('Author', { exact: true }).selectOption({ label: 'Create a local author' });
     await create.getByLabel('Local author name', { exact: true }).fill(config.create.author);
     await create.getByLabel('Local author folder', { exact: true }).fill(config.create.path);
+    step('save_new_local_author');
     const created = page.waitForResponse(response => response.url() === createRoute && response.request().method() === 'POST');
     await create.getByRole('button', { name: 'Create recording', exact: true }).click();
     check('create_local_author_and_recording_has_committed', (await created).ok());

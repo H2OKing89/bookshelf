@@ -36,6 +36,12 @@ HISTORY = LEGACY_HISTORY | {159, 160, 161, 162, 163}
 ACQUISITION_COLUMNS = {("QualityProfiles", "MinUpgradeFormatScore"), ("BookFiles", "TaggedLanguage"),
                        ("Blocklist", "RecordingLanguages"), ("Blocklist", "SelectedEditionLanguageId"),
                        ("Blocklist", "AudioFormatEvidence")}
+LOCAL_METADATA_COLUMNS = ("LocalMetadataRevision", "LocalMetadataProvenance")
+ADDITIVE_COLUMNS = ACQUISITION_COLUMNS | {("Editions", column) for column in LOCAL_METADATA_COLUMNS}
+WORK_TABLE_COLUMNS = {
+    "RecordingWorks": {"Id", "Title", "Author", "Series", "Position"},
+    "RecordingWorkMemberships": {"Id", "EditionId", "WorkId", "RecordingIdentity", "Confirmed"},
+}
 TABLES = restore.TABLES + ("AudiobookMetadataOverrides", "AudiobookMetadataCleanupRules")
 SETTING_KEYS = restore.SETTING_KEYS + ("rescanafterrefresh",)
 DATABASE_KINDS = ("main", "log", "cache")
@@ -185,8 +191,14 @@ class OwnedPostgres:
 
     def restore(self, names: dict, output: Path):
         for kind, name in names.items():
+            # This cluster and all its databases belong to the validation run.
+            # A dump from before an additive migration cannot clean objects
+            # absent from the dump (including new foreign keys). Restore into
+            # an empty database, as a real point-in-time replacement requires.
+            self.sql("postgres", "DROP DATABASE " + identifier(name) + ";")
+            self.sql("postgres", "CREATE DATABASE " + identifier(name) + ";")
             completed = self.command(["docker", "exec", "-i", self.container, "pg_restore", "--host=/validation/socket",
-                                      "--username=postgres", "--dbname=" + name, "--clean", "--if-exists",
+                                      "--username=postgres", "--dbname=" + name,
                                       "--no-owner", "--no-acl", "--exit-on-error"],
                                      text=False, input=(output / (kind + ".dump")).read_bytes())
             if completed.returncode:
@@ -329,23 +341,37 @@ def postgres_schema(postgres: OwnedPostgres, names: dict):
     return result
 
 
-def expected_acquisition_sqlite_snapshot(snapshot):
-    files = snapshot["BookFiles"]
-    return {**snapshot, "BookFiles": {"columns": files["columns"] + ["TaggedLanguage"],
-                                      "rows": [row + (None,) for row in files["rows"]]}}
+def expected_additive_sqlite_snapshot(snapshot):
+    additions = {"BookFiles": ("TaggedLanguage",), "Editions": LOCAL_METADATA_COLUMNS}
+    return {**snapshot, **{table: {"columns": snapshot[table]["columns"] + list(columns),
+                                  "rows": [row + (None,) * len(columns) for row in snapshot[table]["rows"]]}
+                          for table, columns in additions.items()}}
 
 
-def expected_acquisition_postgres_snapshot(snapshot):
-    return {**snapshot, "BookFiles": [{**row, "TaggedLanguage": None} for row in snapshot["BookFiles"]]}
+def expected_additive_postgres_snapshot(snapshot):
+    additions = {"BookFiles": ("TaggedLanguage",), "Editions": LOCAL_METADATA_COLUMNS}
+    return {**snapshot, **{table: [{**row, **dict.fromkeys(columns)} for row in snapshot[table]]
+                          for table, columns in additions.items()}}
 
 
 def postgres_preserved_schema(before, after):
-    added = {(column["table_name"], column["column_name"]) for column in after["main"]["columns"]
-             if (column["table_name"], column["column_name"]) in ACQUISITION_COLUMNS}
-    remaining = [column for column in after["main"]["columns"]
-                 if (column["table_name"], column["column_name"]) not in ACQUISITION_COLUMNS]
-    baseline = {**after, "main": {**after["main"], "columns": logical_columns(remaining)}}
-    return added == ACQUISITION_COLUMNS and before == baseline
+    main = after["main"]
+    added = {(column["table_name"], column["column_name"]) for column in main["columns"]
+             if (column["table_name"], column["column_name"]) in ADDITIVE_COLUMNS}
+    work_columns = {table: {column["column_name"] for column in main["columns"] if column["table_name"] == table}
+                    for table in WORK_TABLE_COLUMNS}
+    work_indexes = [item["indexdef"] for item in main["indexes"] if item["tablename"] == "RecordingWorkMemberships"]
+    work_constraints = [item["definition"] for item in main["constraints"] if item["tablename"] == "RecordingWorkMemberships"]
+    works_have_unique_membership = any("CREATE UNIQUE INDEX" in definition and '("EditionId", "WorkId")' in definition for definition in work_indexes)
+    works_have_foreign_keys = (any('REFERENCES "Editions"' in definition and 'ON DELETE CASCADE' in definition for definition in work_constraints)
+                               and any('REFERENCES "RecordingWorks"' in definition for definition in work_constraints))
+    remaining = [column for column in main["columns"] if column["table_name"] not in WORK_TABLE_COLUMNS
+                 and (column["table_name"], column["column_name"]) not in ADDITIVE_COLUMNS]
+    baseline = {**after, "main": {"columns": logical_columns(remaining),
+                                 "indexes": [item for item in main["indexes"] if item["tablename"] not in WORK_TABLE_COLUMNS],
+                                 "constraints": [item for item in main["constraints"] if item["tablename"] not in WORK_TABLE_COLUMNS]}}
+    return (added == ADDITIVE_COLUMNS and work_columns == WORK_TABLE_COLUMNS and works_have_unique_membership
+            and works_have_foreign_keys and before == baseline)
 
 
 def transfer_seed(postgres: OwnedPostgres, names: dict, source: Fixture):
@@ -443,7 +469,7 @@ def run(runtime: Path, output: Path, baseline_runtime: Path | None = None) -> di
         check("sqlite_saved_quality_profiles_default_to_zero_upgrade_delta",
               all(profile["minUpgradeFormatScore"] == 0 for profile in sqlite.api("qualityprofile")))
         sqlite.stop()
-        golden_sqlite = expected_acquisition_sqlite_snapshot(golden_sqlite)
+        golden_sqlite = expected_additive_sqlite_snapshot(golden_sqlite)
         check("sqlite_catalog_overrides_narrators_dates_and_ids_survive_engine_upgrade", sqlite_snapshot(sqlite) == golden_sqlite)
         check("sqlite_history_is_not_renumbered", all(value == HISTORY for value in sqlite_history(sqlite.home).values()))
         check("sqlite_owned_media_survives_engine_upgrade", restore.media_unchanged(sqlite))
@@ -484,7 +510,7 @@ def run(runtime: Path, output: Path, baseline_runtime: Path | None = None) -> di
         check("postgres_saved_quality_profiles_default_to_zero_upgrade_delta",
               all(profile["minUpgradeFormatScore"] == 0 for profile in application.api("qualityprofile")))
         application.stop()
-        golden = expected_acquisition_postgres_snapshot(golden)
+        golden = expected_additive_postgres_snapshot(golden)
         upgraded_schema = postgres_schema(postgres, names)
         check("postgres_catalog_overrides_narrators_dates_guids_and_ids_survive_engine_upgrade", postgres_snapshot(postgres, names) == golden)
         check("postgres_columns_defaults_indexes_and_constraints_survive_engine_upgrade", postgres_preserved_schema(schema, upgraded_schema))

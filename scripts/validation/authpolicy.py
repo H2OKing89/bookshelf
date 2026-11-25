@@ -230,7 +230,7 @@ def exercise(fixture: Fixture, storage: Storage, check, prefix: str) -> None:
     golden = storage.preserved()
     legacy_schema = not storage.postgres and {row[0] for row in golden["mainVersions"]} == datastore.LEGACY_HISTORY
     if legacy_schema:
-        golden = datastore.expected_acquisition_sqlite_snapshot(golden)
+        golden = datastore.expected_additive_sqlite_snapshot(golden)
         golden["mainVersions"] = [(version,) for version in sorted(datastore.HISTORY)]
     fixture.set_xml({"AuthenticationMethod": "Forms", "AuthenticationRequired": "Enabled"})
     fixture.start()

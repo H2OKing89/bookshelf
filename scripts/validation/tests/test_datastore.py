@@ -50,6 +50,18 @@ class DatastoreFixtureValueTests(unittest.TestCase):
         self.assertNotIn(34, datastore.HISTORY)
         self.assertIn(48, datastore.HISTORY)
 
+    def test_additive_recording_migrations_preserve_old_snapshot_values(self):
+        base = {"BookFiles": {"columns": ["Id", "EditionId"], "rows": [(19, 17)]},
+                "Editions": {"columns": ["Id", "Title"], "rows": [(17, "Owned recording")]}}
+        expected = datastore.expected_additive_sqlite_snapshot(base)
+        self.assertEqual(expected["BookFiles"], {"columns": ["Id", "EditionId", "TaggedLanguage"],
+                                               "rows": [(19, 17, None)]})
+        self.assertEqual(expected["Editions"]["columns"], ["Id", "Title", *datastore.LOCAL_METADATA_COLUMNS])
+        self.assertEqual(expected["Editions"]["rows"], [(17, "Owned recording", None, None)])
+        self.assertEqual(base["Editions"]["rows"], [(17, "Owned recording")])
+        postgres = datastore.expected_additive_postgres_snapshot({"BookFiles": [{"Id": 19}], "Editions": [{"Id": 17}]})
+        self.assertEqual(postgres["Editions"], [{"Id": 17, "LocalMetadataRevision": None, "LocalMetadataProvenance": None}])
+
     def test_dump_restore_attnum_compaction_preserves_visible_schema_order(self):
         before = [
             {"table_name": "Books", "column_name": "Id", "ordinal_position": 1, "data_type": "integer", "column_default": "owned_sequence"},
