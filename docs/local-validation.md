@@ -126,6 +126,21 @@ them at desktop and phone widths. It exercises an exact recording association,
 identity conflicts, stale previews and an atomic author reconciliation.
 It checks the resulting recording, history and file identities after restart.
 
+## Check interactive search and library virtualization
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --playwright-module /path/to/installed/playwright \
+  --checks interactivesearch libraryvirtualization
+```
+
+Interactive search checks the real empty-search endpoint and injects synthetic
+release responses and grab acknowledgements into Chromium. The library check
+seeds a disposable catalog and uses the real API and views to measure rendered
+rows and scroll restoration. Both exercise desktop and phone layouts. Neither
+contacts a real indexer or download client, or modifies an existing library.
+
 ## Check refresh cancellation and shutdown
 
 Run the cancellation proof against a package containing P10:
@@ -1253,3 +1268,61 @@ Use `validate-local.py --checks routernavigation settingsdrafts queuepaging
 wantedpaging historypaging historysync` with the runtime, Playwright, and
 output arguments. See `navigation-verified/summary.json` and
 `paging-verified/summary.json` under `_temp/u13-u16-u18-20261122/`.
+
+## U19, U20 and U21 search and library performance verification (2026-11-24)
+
+`f4e3e9b9b` scopes server-side release identities. `81f6ee0a3` adds typed
+interactive search queries and responsive windowed results. `5b5eb5eec`
+refines wrapping and tab handling. `77d05ce49` restores library scroll
+positions. `79dfd16d6` preserves freshness when an in-flight search is
+invalidated. `2581f5c15` fixes the measured release window at the end of a
+long list. Both Linux x64 package variants carry matching clean provenance
+from `2581f5c15`.
+
+- Both TypeScript projects, frontend lint, **122 frontend tests**, **85 API
+  tests**, and **149 Python tooling tests** passed. The production Webpack
+  build verified CSS types.
+- The API tests covered identical indexer release GUIDs from separate book
+  and author searches, stale tokens, legacy grab compatibility, request-local
+  copies, and pack membership. Frontend tests verified scope cancellation,
+  local text filtering, invalidation during an in-flight request and exact
+  release status updates without extending the five-minute freshness period.
+- **31 interactive search checks** passed against the published Linux x64
+  package. The real search without configured indexers and synthetic
+  280-release responses exercised text and preset filters, the custom filter
+  editor, sorting, fresh reopens, explicit refresh after expiry, isolated
+  book and author results, and the exact ID used by a forced grab. No real
+  indexers or download clients were involved.
+- An independent browser probe with 280 releases measured 14 mounted rows
+  (413 search-panel descendants) on desktop and 3 (155 descendants) on a
+  phone, compared with 280 rows and 7,392 descendants in both old layouts.
+  The phone's internal horizontal overflow fell from 408px to 3px. Expanded
+  audio details and rejection reasons did not overlap adjacent results. A
+  single scroll to the end reached the last release in both layouts; the
+  middle and top remained reachable, including after resizing to cards.
+  A separate manual-search modal probe exercised wide and phone layouts and
+  a simulated 200% zoom layout (720px CSS viewport, device scale factor 2).
+  Long titles and rejection text wrapped without
+  internal overflow; the correct book and last result remained reachable.
+- **42 library virtualization checks** passed. The large-library benchmark
+  used 521 authors and 4,161 books, with a peak of 28 mounted rows on desktop
+  and 23 on a phone. The existing virtualizer
+  already bounded the DOM, and the frame measurements did not establish a
+  reliable performance advantage for replacing it. The scroll callbacks were
+  fixed instead. All four settled Back-navigation offsets (19,015, 152,095,
+  18,560 and 149,964 pixels) restored exactly, where the baseline returned to
+  zero. Selection, sorting, column changes, alphabet jumps, resizing, distinct
+  regional recordings and retained ebook pages were also checked.
+- **612 delivery checks** passed, including **305 acquisition** and **56 musl
+  Docker** checks. The exact packages also passed all **262 identity**, **112
+  authentication**, **188 provider-accessibility and library-review**, **77
+  navigation and settings**, and **124 paging and live-sync** receipt checks,
+  including their unchanged-package assertions.
+
+Use `validate-local.py --checks interactivesearch libraryvirtualization`
+with the runtime, Playwright, and output arguments. Evidence is under
+`_temp/u19-u20-u21-20261124/`, in `search-library-final/summary.json` and the
+other `*-final/summary.json` receipts. The controlled library comparison is in
+`_temp/u21-library-20261124/{baseline-settled,candidate-settled}/result.json`.
+The independent exact-package search and modal measurements are in
+`_temp/u19-browser-benchmark.RTMFmw/{final-exact,modal-exact2}/measurements.json`.

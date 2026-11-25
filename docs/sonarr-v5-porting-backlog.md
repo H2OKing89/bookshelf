@@ -116,9 +116,9 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [U16](#u16) | P2 | Verified | L | Data-router navigation with a single basename |
 | [U17](#u17) | P1 | Verified | M | Keep Queue stable while a user acts, and coalesce refreshes |
 | [U18](#u18) | P2 | Verified | M | Rich Queue/History filter builders |
-| [U19](#u19) | P2 | Planned | L | Responsive release cards with variable-height virtualization |
-| [U20](#u20) | P2 | Planned | M | Text filtering and intentional caching of interactive searches |
-| [U21](#u21) | P2 | Planned | M | Simplify existing library virtualization after measuring it |
+| [U19](#u19) | P2 | Verified | L | Responsive release cards with variable-height virtualization |
+| [U20](#u20) | P2 | Verified | M | Text filtering and intentional caching of interactive searches |
+| [U21](#u21) | P2 | Verified | M | Simplify existing library virtualization after measuring it |
 | [U22](#u22) | P2 | Planned | L | Vite/HMR and a separately verified asset pipeline |
 | [B01](#b01) | P0 | Verified | M | Make audiobook identity and upgrade invariants the porting contract |
 | [B02](#b02) | P1 | Verified | L | Provide a supported author reconciliation and correction workflow |
@@ -2978,6 +2978,13 @@ See [local validation](local-validation.md#u13-u16-and-u18-selection-navigation-
 
 Adapt the presentation around Bookshelf release and rejection data; emphasize narrator, language, duration/codec/bitrate, marketplace-qualified match and quality score where actually available. **Dependencies:** U06, U07, U03/U04, release DTO review; measured baseline before adding a virtualizer. **Acceptance:** desktop/modal/phone widths display title, match/rejection reasons, audio qualities and Download access without hidden hover-only information; dynamic details, text zoom and resize do not overlap/skip rows; result scrolling stays smooth with a large synthetic fixture and bounded DOM nodes; actions keep stable release identity. Do not port TV scene/episode/season content or collapse alternative recordings.
 
+**2026-11-24 implementation.** Wide search results use a table and narrower
+containers use release cards. Measured row heights keep the rendered list
+bounded while scrolling and expanding details. Cards expose audio evidence,
+custom-format scores and rejection reasons. Confirmations capture the exact
+search-result identity. See
+[local validation](local-validation.md#u19-u20-and-u21-search-and-library-performance-verification-2026-11-24).
+
 ### U20
 
 **Text filtering and intentional caching of interactive searches**
@@ -2993,6 +3000,14 @@ Adapt the presentation around Bookshelf release and rejection data; emphasize na
 
 Add a simple local text filter with clear result counts; separately evaluate cache lifetime against audiobook indexer cost and freshness. **Dependencies:** U09 only for Query caching; U19 optional. **Acceptance:** typing does not issue fresh indexer searches; changing title/recording/marketplace search context cannot show another search's cached releases; reopening a search has an explicit freshness/refresh behavior; changing filter/sort does not re-search; grabbing updates the correct release result; filtered-empty text stays distinct from no provider results. Do not blindly adopt a 30-minute cache if local semantics require fresher data.
 
+**2026-11-24 implementation.** Book and author results use separate typed
+queries, with a five-minute freshness window and explicit Refresh. Text and
+custom filters combine locally. The release API returns an opaque result ID
+for each row and validates that identity and its destination before grabbing.
+The server retains its 30-minute result lifetime and supports unambiguous
+legacy grabs. See
+[local validation](local-validation.md#u19-u20-and-u21-search-and-library-performance-verification-2026-11-24).
+
 ### U21
 
 **Simplify existing library virtualization after measuring it**
@@ -3007,6 +3022,13 @@ Add a simple local text filter with clear result counts; separately evaluate cac
 **P2; medium; existing, alternative implementation; available in pinned v5.** S5 `Components/Table/VirtualTable.tsx:31-115` provides a typed FixedSizeList primitive with external scroll synchronization, cleanup and 20-row overscan. B `Components/Table/VirtualTable.js:31-170` already uses react-virtualized and handles item/order recomputation, jump targets and scroll restoration; author poster/overview views also exist.
 
 Benchmark before changing libraries. If bundle size or frame times justify the work, port the typed interfaces/cleanup and fixed-size primitives for appropriate layouts while retaining variable-size handling where needed. **Dependencies:** U06/U07, U13; representative library fixtures. **Acceptance:** large author/book libraries retain selection, jump-to-letter, sorting, column changes, images, resize, back-navigation restoration and phone scrolling; DOM node count stays bounded; no listener leaks; the change meets measured frame/bundle targets. Preserve alternate-recording volume summaries and retained ebook layouts. S5's shared table alone does not include all B restoration behavior.
+
+**2026-11-24 measured implementation.** A disposable catalog with 521 authors
+and 4,161 books confirmed that the existing virtualization keeps rendered rows
+bounded. The benchmark also found that Back navigation lost the saved scroll
+offset. The table, poster and overview scroll callbacks now save the position
+used by the virtualizer. The existing library remains in use. See
+[local validation](local-validation.md#u19-u20-and-u21-search-and-library-performance-verification-2026-11-24).
 
 ### U22
 

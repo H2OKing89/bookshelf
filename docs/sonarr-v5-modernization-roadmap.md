@@ -1355,3 +1355,15 @@ History can combine a book with several event types and save the filter.
 Queue can combine download status with protocol. Both apply filters across
 the full results before counting and paging. See
 [local validation](local-validation.md#u13-u16-and-u18-selection-navigation-and-filters-verification-2026-11-22).
+
+### U19, U20 and U21 search and library performance — 2026-11-24
+
+Interactive search now uses context-specific results, instant local filtering,
+and explicit refresh. Each server-side search result has its own grab identity.
+Results use measured windows of table rows or responsive cards, with audio
+details and rejection reasons available in the results.
+
+The large-library benchmark confirmed that the current virtualizer keeps
+mounted rows bounded and identified a Back-navigation scroll restoration issue.
+The library views now save the position received from their scroll containers.
+See [local validation](local-validation.md#u19-u20-and-u21-search-and-library-performance-verification-2026-11-24).
