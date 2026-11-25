@@ -1983,3 +1983,100 @@ CI and broader U07/P09 migration gates remain open. The roadmap remains
 **83 of 92 Verified**, eight In progress and one Deferred. No existing
 application home, credentials, production installation, audiobook files,
 actual external provider or user download client was modified or used.
+
+## U07 and P09 interaction/managed integration verification (2026-11-25)
+
+The newly built exact source is `70509504c5a5df9ce03a4eb381be589feb73eca5`
+(tree `5343ab2f8a4eeb37101181a2ca9af78c6004edf8`, branch `fix/sonarr-v5-foundation`). This is a local
+development-validation package, not a deployment or replacement for the
+previous unsigned release candidate.
+
+- **U07:** 87 additional JS modules migrate to TS/TSX across native field
+  contracts, settings drafts, modal focus and backdrop handling, table
+  selection/pagination/date rendering, drag/drop hooks and collection joins.
+  Source counts go from 852 JS/255 TS(X) to 765 JS/351 TS(X); 321 source
+  modules are included in the strict program. Tests cover false/zero/mixed
+  fields, number/string option identity, row registration and null
+  unregistration, invalid page numbers, focus restoration and frozen
+  Redux resource projections with stale author maps. Book joins preserve
+  updated author/profile metadata without mutating state.
+- **P09:** React DnD 16.0.1/multi-backend 9.0.0, explicit HTML5-to-touch
+  pipeline, Floating UI 2.1.9, native title/visibility integrations, tabs
+  6.1.1 and FontAwesome React wrapper 3.5.0. The isolated and combined
+  React 18 browser trials pass actual desktop/touch reorder, anchored
+  popovers/dropdowns, keyboard outside-dismissal, nested visibility,
+  titles, settings and detail tabs. A real hover-state batching bug during
+  the DnD trial is fixed by using the actual completed drop result; the
+  delay profile request's server field is corrected to `afterId`.
+- The managed graph moves NLog to 6.2.2 and its Microsoft logging adapter
+  to 6.3.0 with the explicit supported concurrent file target 6.2.2, and
+  Swashbuckle to 9.0.6/Microsoft.OpenApi 1.6.25. The initial exact hosted
+  log storage check passes all 62 behavioral cases. A real rolling
+  target fixture checks old numbered archive names, retained history
+  and redaction. The first generated v1/v2 documents differ structurally
+  only by OpenAPI 3.0.1 → 3.0.4; the tracked documents are regenerated.
+- Both migration fixtures initially failed while AutoMoq tried to
+  construct the new NLog provider using its inaccessible internal
+  configuration-loader interface. The test setup now constructs the
+  actual public NLog logger provider directly. All **46 SQLite/private
+  PostgreSQL migration cases** pass after that change, with no migration
+  implementation change or assertion removal.
+- The complete managed source receipt is at the isolated clean commit
+  `03230163703338a04c25ae55699e252e804d3ba1`: **6,147 passed,
+  zero failed, 100 existing not-executed cases** (Core 4,857, Common
+  856, API 102, Host 193, Update 21, Linux disk 36, private PostgreSQL
+  migrations 23 and repository cases 59). The managed source, notices,
+  locks, SDK and validation probe contents are byte-identical in
+  `70509504c`. The owned PostgreSQL instance stopped. See the
+  [managed source receipt](dependencies/2026-11-25-ui-integrations/managed-source-tests.json).
+- The new independent frontend checkout, with no ancestor node_modules,
+  passes both TS projects and **199 frontend unit tests**; Python tooling
+  passes **174 cases**. The locked NuGet solution and GUI restores,
+  25-project [audit](dependencies/2026-11-25-ui-integrations/nuget-audit.json)
+  and 1,238-entry Yarn audit report zero known findings. The CLI combined
+  Linux scan required a separate explicit Windows-targeted GUI audit;
+  all 25 projects are covered, not a suppressed tool error. All 23
+  managed notices match pinned upstream bytes and package hashes.
+- **React 19:** independent React/DOM 19.3.1 trial, not adopted. The
+  initial ordinary/strict projects reported 4/6 declaration errors;
+  compatible optional callbacks/ref changes and FontAwesome 3.5 remove
+  those errors. The updated trial passes both TS projects, Vite
+  verification and 199 unit tests. Initial hosted smoke passes 201
+  routing/accessibility checks including unchanged package input. Three
+  direct peer contracts still exclude React 19 and remaining function
+  defaultProps/modern JSX changes need full product acceptance. The
+  [readiness receipt](dependencies/2026-11-25-ui-integrations/react19-readiness.json)
+  distinguishes the trial from the supported React 18 graph.
+
+### Final exact-package results
+
+All **2,436 hosted checks passed across 15 completed receipts** for
+`70509504c`: delivery 616, auth 112, identity/policies 584, UI 238,
+paging 129, library review/accessibility 207, new features 87,
+new drag reorder 26, TLS and notifications 72, datastore 43,
+PostgreSQL connections 119, isolated SQLite 100, log storage 63, and
+static musl x64/ARM64 20 each. The delivery group includes the actual
+306 acquisition and 56 musl x64 Docker checks. The metadata group has
+144 behavioral accessibility checks, the UI group has 56 navigation
+and 66 library virtualization checks, and the new drag group has 25
+behavioral checks. Both committed OpenAPI documents match the actual
+listener; the 24 API document checks are green. All three packages
+include the identical 23 managed license notices and matching manifest.
+
+The glibc x64 exact input fingerprint is
+`e8227b144047052d4007cc7c07d4a448138b151ac5cebd1fe6359680021eb153`
+across all its receipts. All groups report unchanged package inputs,
+synthetic data only, no published external ports and no GitHub workflows.
+See the [compact exact-package receipt](dependencies/2026-11-25-ui-integrations/hosted-validation.json).
+
+Ignored evidence is under `_temp/u07-p09-ui-20261125/` (including
+the failed pre-correction managed trials and the final exact checkout
+and reports under `final/`). The independent popup/React 19 trials
+are under `_temp/u07-p09-overlay-20261125/`; typed form/store and
+DnD browser evidence are retained alongside their isolated checkouts.
+Both final audits are dated advisory snapshots, not complete native
+code audits. The previous unsigned release candidate, production and
+existing development homes/media remain unchanged. The roadmap remains
+**83 of 92 Verified**, eight In progress and one Deferred; both U07
+and P09 remain open for the staged remaining migrations, and the
+native ARM64/release/CI gates are unchanged.

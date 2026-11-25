@@ -1,0 +1,536 @@
+{
+  "NLog": {
+    "version": "6.2.2",
+    "source": "https://api.nuget.org/v3-flatcontainer/nlog/6.2.2/nlog.nuspec",
+    "license": [
+      "BSD-3-Clause"
+    ],
+    "repository": [
+      {
+        "type": "git",
+        "url": "https://github.com/NLog/NLog.git",
+        "commit": "d9ebf823ee8ba54977c336709928a96ea58c6259"
+      }
+    ],
+    "dependencies": [
+      {
+        "targetFramework": ".NETFramework3.5",
+        "packages": []
+      },
+      {
+        "targetFramework": ".NETFramework4.5",
+        "packages": []
+      },
+      {
+        "targetFramework": ".NETFramework4.6",
+        "packages": []
+      },
+      {
+        "targetFramework": ".NETStandard2.0",
+        "packages": []
+      },
+      {
+        "targetFramework": ".NETStandard2.1",
+        "packages": []
+      }
+    ]
+  },
+  "NLog.Extensions.Logging": {
+    "version": "6.3.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/nlog.extensions.logging/6.3.0/nlog.extensions.logging.nuspec",
+    "license": [
+      "BSD-2-Clause"
+    ],
+    "repository": [
+      {
+        "type": "git",
+        "url": "https://github.com/NLog/NLog.Extensions.Logging.git",
+        "commit": "f49aafab3ab4272e9ab9f9d7800a2c606da6998b"
+      }
+    ],
+    "dependencies": [
+      {
+        "targetFramework": "net10.0",
+        "packages": [
+          {
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "10.0.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "Microsoft.Extensions.Logging",
+            "version": "10.0.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "NLog",
+            "version": "6.2.2",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": "net11.0",
+        "packages": [
+          {
+            "id": "Microsoft.Extensions.Logging",
+            "version": "11.0.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "NLog",
+            "version": "6.2.2",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": ".NETFramework4.6.2",
+        "packages": [
+          {
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "8.0.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "Microsoft.Extensions.Logging",
+            "version": "8.0.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "NLog",
+            "version": "6.2.2",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": "net8.0",
+        "packages": [
+          {
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "8.0.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "Microsoft.Extensions.Logging",
+            "version": "8.0.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "NLog",
+            "version": "6.2.2",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": ".NETStandard2.0",
+        "packages": [
+          {
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "8.0.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "Microsoft.Extensions.Logging",
+            "version": "8.0.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "NLog",
+            "version": "6.2.2",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": ".NETStandard2.1",
+        "packages": [
+          {
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "8.0.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "Microsoft.Extensions.Logging",
+            "version": "8.0.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "NLog",
+            "version": "6.2.2",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      }
+    ]
+  },
+  "NLog.Targets.Syslog": {
+    "version": "7.0.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/nlog.targets.syslog/7.0.0/nlog.targets.syslog.nuspec",
+    "license": [
+      "BSD-3-Clause"
+    ],
+    "repository": [
+      {
+        "type": "Git",
+        "url": "https://github.com/luigiberrettini/NLog.Targets.Syslog",
+        "commit": "8187976cd29cb1baef5447163b1b305681576fad"
+      }
+    ],
+    "dependencies": [
+      {
+        "targetFramework": "net6.0",
+        "packages": [
+          {
+            "id": "NLog",
+            "version": "5.0.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "Polly.Contrib.WaitAndRetry",
+            "version": "1.1.1",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": ".NETStandard2.0",
+        "packages": [
+          {
+            "id": "NLog",
+            "version": "5.0.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "Polly.Contrib.WaitAndRetry",
+            "version": "1.1.1",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      }
+    ]
+  },
+  "Swashbuckle.AspNetCore.Annotations": {
+    "version": "6.9.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.annotations/6.9.0/swashbuckle.aspnetcore.annotations.nuspec",
+    "license": [
+      "MIT"
+    ],
+    "repository": [
+      {
+        "type": "git",
+        "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git",
+        "commit": "92ba260e2af7eb08961cf2414ea86b6548b06740"
+      }
+    ],
+    "dependencies": [
+      {
+        "targetFramework": ".NETCoreApp3.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.9.0",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": "net5.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.9.0",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": "net6.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.9.0",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": "net7.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.9.0",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": "net8.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.9.0",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": ".NETStandard2.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.9.0",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      }
+    ]
+  },
+  "Swashbuckle.AspNetCore.SwaggerGen": {
+    "version": "6.9.0",
+    "source": "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.swaggergen/6.9.0/swashbuckle.aspnetcore.swaggergen.nuspec",
+    "license": [
+      "MIT"
+    ],
+    "repository": [
+      {
+        "type": "git",
+        "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git",
+        "commit": "92ba260e2af7eb08961cf2414ea86b6548b06740"
+      }
+    ],
+    "dependencies": [
+      {
+        "targetFramework": ".NETCoreApp3.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.9.0",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": "net5.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.9.0",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": "net6.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.9.0",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": "net7.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.9.0",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": "net8.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.9.0",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": ".NETStandard2.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.9.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "Microsoft.AspNetCore.Mvc.ApiExplorer",
+            "version": "2.1.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "Microsoft.AspNetCore.Mvc.DataAnnotations",
+            "version": "2.1.0",
+            "exclude": "Build,Analyzers"
+          },
+          {
+            "id": "System.Text.Json",
+            "version": "4.6.0",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      }
+    ]
+  },
+  "NLog.Targets.ConcurrentFile@6.2.2": {
+    "version": "6.2.2",
+    "source": "https://api.nuget.org/v3-flatcontainer/nlog.targets.concurrentfile/6.2.2/nlog.targets.concurrentfile.nuspec",
+    "license": [
+      "BSD-3-Clause"
+    ],
+    "repository": [
+      {
+        "type": "git",
+        "url": "https://github.com/NLog/NLog.Targets.ConcurrentFile.git",
+        "commit": "410a614e3913423630320076a668fc378612ea76"
+      }
+    ],
+    "dependencies": [
+      {
+        "targetFramework": ".NETFramework3.5",
+        "packages": [
+          {
+            "id": "NLog",
+            "version": "6.2.2",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": ".NETFramework4.6",
+        "packages": [
+          {
+            "id": "NLog",
+            "version": "6.2.2",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": ".NETStandard2.0",
+        "packages": [
+          {
+            "id": "NLog",
+            "version": "6.2.2",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      }
+    ]
+  },
+  "Swashbuckle.AspNetCore.Annotations@9.0.6": {
+    "version": "9.0.6",
+    "source": "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.annotations/9.0.6/swashbuckle.aspnetcore.annotations.nuspec",
+    "license": [
+      "MIT"
+    ],
+    "repository": [
+      {
+        "type": "git",
+        "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git",
+        "commit": "1070368afe936b06bd4579053ea228f0fd7bce33"
+      }
+    ],
+    "dependencies": [
+      {
+        "targetFramework": "net8.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "9.0.6",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": "net9.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "9.0.6",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      }
+    ]
+  },
+  "Swashbuckle.AspNetCore.SwaggerGen@9.0.6": {
+    "version": "9.0.6",
+    "source": "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.swaggergen/9.0.6/swashbuckle.aspnetcore.swaggergen.nuspec",
+    "license": [
+      "MIT"
+    ],
+    "repository": [
+      {
+        "type": "git",
+        "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git",
+        "commit": "1070368afe936b06bd4579053ea228f0fd7bce33"
+      }
+    ],
+    "dependencies": [
+      {
+        "targetFramework": "net8.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "9.0.6",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": "net9.0",
+        "packages": [
+          {
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "9.0.6",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      }
+    ]
+  },
+  "Swashbuckle.AspNetCore.Swagger@9.0.6": {
+    "version": "9.0.6",
+    "source": "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.swagger/9.0.6/swashbuckle.aspnetcore.swagger.nuspec",
+    "license": [
+      "MIT"
+    ],
+    "repository": [
+      {
+        "type": "git",
+        "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git",
+        "commit": "1070368afe936b06bd4579053ea228f0fd7bce33"
+      }
+    ],
+    "dependencies": [
+      {
+        "targetFramework": "net8.0",
+        "packages": [
+          {
+            "id": "Microsoft.OpenApi",
+            "version": "1.6.25",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      },
+      {
+        "targetFramework": "net9.0",
+        "packages": [
+          {
+            "id": "Microsoft.OpenApi",
+            "version": "1.6.25",
+            "exclude": "Build,Analyzers"
+          }
+        ]
+      }
+    ]
+  }
+}

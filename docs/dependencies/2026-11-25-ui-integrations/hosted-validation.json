@@ -1,0 +1,178 @@
+{
+  "sourceProvenance": {
+    "productId": "bookshelf-audiobooks",
+    "sourceCommit": "70509504c5a5df9ce03a4eb381be589feb73eca5",
+    "sourceTree": "5343ab2f8a4eeb37101181a2ca9af78c6004edf8",
+    "sourceBranch": "fix/sonarr-v5-foundation",
+    "buildDirty": false
+  },
+  "exactSourceClean": true,
+  "passed": 2436,
+  "failed": 0,
+  "completed": true,
+  "groups": {
+    "auth": {
+      "passed": 112,
+      "failed": 0,
+      "completed": true,
+      "summarySha256": "898706326a96f91361e336ecc47067af0aed90b8d02cf39a16cd92589e0ec569",
+      "inputFingerprints": {
+        "candidate": "e8227b144047052d4007cc7c07d4a448138b151ac5cebd1fe6359680021eb153",
+        "baseline": "3e56331647592bec0a8ca0b4f955de7e70aa5e7d307d97057211979cebffe5b2"
+      }
+    },
+    "datastore": {
+      "passed": 43,
+      "failed": 0,
+      "completed": true,
+      "summarySha256": "74fbc44f77435510b37e4026062aa3dba8f06e73956b4be6dddf723f1f43d813",
+      "inputFingerprints": {
+        "candidate": "e8227b144047052d4007cc7c07d4a448138b151ac5cebd1fe6359680021eb153",
+        "baseline": "cb10e3f9d5f65ee0edc7c4309f931ad84360ccf3a7d5c284e45e03ff1a31d57c"
+      }
+    },
+    "delivery": {
+      "passed": 616,
+      "failed": 0,
+      "completed": true,
+      "summarySha256": "83fbb3c7301e669632f94a442485c26ef9c32f154310f9d9bd65042346314d82",
+      "inputFingerprints": {
+        "candidate": "e8227b144047052d4007cc7c07d4a448138b151ac5cebd1fe6359680021eb153",
+        "baseline": "675836dd961c5b93c412677034bbe99b94b1fc0d46cbd0bfa6cab4c69adcab6e",
+        "docker": "f8443f0d8c76911bf297224080c1b97aa32dc121dd06174005dcd3442da0af17"
+      }
+    },
+    "dragreorder": {
+      "passed": 26,
+      "failed": 0,
+      "completed": true,
+      "summarySha256": "d2453c3b36ccd48af803292148c551af7e4f5234e6b0ef0ae31b3c5311e5eb95",
+      "inputFingerprints": {
+        "candidate": "e8227b144047052d4007cc7c07d4a448138b151ac5cebd1fe6359680021eb153"
+      }
+    },
+    "host-and-notifications": {
+      "passed": 72,
+      "failed": 0,
+      "completed": true,
+      "summarySha256": "fcc0eb39603ffba8c7874e2fe367b980930342d31f61907ce730992541e9488b",
+      "inputFingerprints": {
+        "candidate": "e8227b144047052d4007cc7c07d4a448138b151ac5cebd1fe6359680021eb153",
+        "baseline": "ab11dd7f2588f41af4e54ebcd68dbfc9943e68c41723ff9225cc64e41cc2d0d4"
+      }
+    },
+    "identity-and-policies": {
+      "passed": 584,
+      "failed": 0,
+      "completed": true,
+      "summarySha256": "1c3801cbe78e307a78a04f8f46f6648a182e8d40d50e3706463f2073fd1597f3",
+      "inputFingerprints": {
+        "candidate": "e8227b144047052d4007cc7c07d4a448138b151ac5cebd1fe6359680021eb153",
+        "baseline": "148341eca05b9f96a65206ef5db22ab77128ca69ba00aeeb4c4ba5a37a18aa0b"
+      }
+    },
+    "library": {
+      "passed": 207,
+      "failed": 0,
+      "completed": true,
+      "summarySha256": "823cdbbd12c379d686e1dd08b1ee772619c85bebaecd788c0bb49a2c362684c6",
+      "inputFingerprints": {
+        "candidate": "e8227b144047052d4007cc7c07d4a448138b151ac5cebd1fe6359680021eb153"
+      }
+    },
+    "logstorage": {
+      "passed": 63,
+      "failed": 0,
+      "completed": true,
+      "summarySha256": "7957b003df166ddf24b409d633647496f2bb9b5bd2a6106670b7c81d4d414618",
+      "inputFingerprints": {
+        "candidate": "e8227b144047052d4007cc7c07d4a448138b151ac5cebd1fe6359680021eb153"
+      }
+    },
+    "new-features": {
+      "passed": 87,
+      "failed": 0,
+      "completed": true,
+      "summarySha256": "917ec3c85c821bc2a2249dbf5a44c047564d3800c0d8545e5e73458bece6bedc",
+      "inputFingerprints": {
+        "candidate": "e8227b144047052d4007cc7c07d4a448138b151ac5cebd1fe6359680021eb153"
+      }
+    },
+    "paging": {
+      "passed": 129,
+      "failed": 0,
+      "completed": true,
+      "summarySha256": "13ff414541a76aade3966d4ec1e46eea3c0dcca2fbf15d38085d8d506f77738e",
+      "inputFingerprints": {
+        "candidate": "e8227b144047052d4007cc7c07d4a448138b151ac5cebd1fe6359680021eb153"
+      }
+    },
+    "postgresconnections": {
+      "passed": 119,
+      "failed": 0,
+      "completed": true,
+      "summarySha256": "61af8e7a894891fe675c5b6634ac0aa5a2f7d0786965f07e48f20a0e97b00fd8",
+      "inputFingerprints": {
+        "candidate": "e8227b144047052d4007cc7c07d4a448138b151ac5cebd1fe6359680021eb153",
+        "baseline": "aeae84b3a7165432cb465fd27bbfce47f03267946d02379f2b7caf006f1775e6"
+      }
+    },
+    "sqlite": {
+      "passed": 100,
+      "failed": 0,
+      "completed": true,
+      "summarySha256": "58558e4cd9a159642097387ec49aebef5789422e9346951615e564c638c21d97",
+      "inputFingerprints": {
+        "candidate": "e8227b144047052d4007cc7c07d4a448138b151ac5cebd1fe6359680021eb153",
+        "baseline": "019171f08e7ed9dd3d3952b866d32fa9fdefde9731b04bd8ce1ac2cc8298c172"
+      }
+    },
+    "static-arm64": {
+      "passed": 20,
+      "failed": 0,
+      "completed": true,
+      "summarySha256": "c8234743d27adf3fdd78e19df39a94b7c2d78573d3129a199a75a93825ee1596",
+      "inputFingerprints": {
+        "candidate": "5cca4727d251d4d182d2bc3c5367fb06c28af0e05d595d962029ecdcf8cc6c09"
+      }
+    },
+    "static-musl": {
+      "passed": 20,
+      "failed": 0,
+      "completed": true,
+      "summarySha256": "574d2dcd5d63914e18cdcfd6c2591eef18a4c521870e02717ced8a6e184f2a55",
+      "inputFingerprints": {
+        "candidate": "f8443f0d8c76911bf297224080c1b97aa32dc121dd06174005dcd3442da0af17"
+      }
+    },
+    "ui": {
+      "passed": 238,
+      "failed": 0,
+      "completed": true,
+      "summarySha256": "b407adde830f3222be8ad616f43f43011b6056924255b114226e31cf903676d5",
+      "inputFingerprints": {
+        "candidate": "e8227b144047052d4007cc7c07d4a448138b151ac5cebd1fe6359680021eb153"
+      }
+    }
+  },
+  "syntheticDataOnly": true,
+  "externalPortsPublished": false,
+  "githubWorkflowsUsed": false,
+  "nativeArm64ExecutionVerified": false,
+  "linuxMuslX64DockerChecksPassed": 56,
+  "linuxX64PackageFingerprint": "e8227b144047052d4007cc7c07d4a448138b151ac5cebd1fe6359680021eb153",
+  "packagedManagedNotices": {
+    "linux-x64": {
+      "noticeFilesVerified": 23,
+      "manifestMatchesSource": true
+    },
+    "linux-musl-x64": {
+      "noticeFilesVerified": 23,
+      "manifestMatchesSource": true
+    },
+    "linux-musl-arm64": {
+      "noticeFilesVerified": 23,
+      "manifestMatchesSource": true
+    }
+  }
+}

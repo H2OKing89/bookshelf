@@ -946,6 +946,25 @@ and [frontend inventory](dependencies/2026-11-25-frontend/summary.json).
 P09 remains **In progress** for wider compatibility and native ARM64/release
 acceptance.
 
+
+**2026-11-25 interaction and managed major-line follow-up:** React DnD
+16.0.1/multi-backend 9, Floating UI 2.1.9, react-tabs 6.1.1 and FontAwesome's
+React wrapper 3.5.0 replace older integrations; document title and author
+cover visibility now use owned React/DOM lifecycles. Desktop/touch
+reordering, dropdown geometry/focus, nested scroll and actual detail-tab
+keyboard behavior are checked. NLog 6.2.2/Extensions 6.3.0 uses its supported
+legacy rolling-file package to preserve log naming/retention and redaction;
+Swashbuckle 9.0.6 updates generated OpenAPI 3.0.4 documents with no endpoint
+or schema change. React 19 `19.3.1` is independently trialed, including clean
+updated strict/main checks and focused hosted behavior; the maintained
+graph remains React 18 because the scrollbar, slider and text-truncation
+peers and remaining function defaults/JSX transform need their own
+migration. Both package audits report zero known findings. See the
+[dated integration evidence](dependencies/2026-11-25-ui-integrations/summary.json)
+and [dependency review](dependency-audit.md).
+P09 remains **In progress** for broader managed compatibility, remaining
+React integration prerequisites, and native ARM64/release acceptance.
+
 ### P10
 
 **Carry cancellation through the HTTP client stack**
@@ -2969,6 +2988,24 @@ Remaining JS is deliberately still tracked; this is not a fully strict
 frontend. Next slices: form/field/modal/table infrastructure, remaining
 settings and resource action/container families, then the application root
 and remaining legacy components. U07 remains **In progress**.
+
+
+**2026-11-25 forms, modals, tables and collection state:** the next slice
+converts **87 JS modules** across shared inputs and their discriminated
+field contracts, settings selectors and draft navigation, modal/focus and
+table selection/pager/date contracts, DnD row/source/preview components,
+popup/title/lifecycle and collection selectors. Real fixes include
+nullable mount/unmount row selections with opaque IDs, primary-button
+backdrop release, invalid page choices, malformed provider fields, exact
+numeric/string option keys, zero-valued key/value rows, DnD drop commit
+ordering, delay profile `afterId`, and frozen book resource projection
+without mutating Redux state. Stable store input identities keep memoized
+state and author/profile changes observable. The current source contains
+**765 JS and 351 ordinary TS/TSX modules**, with 321 source modules included
+in the strict TypeScript program (excluding declarations).
+The remaining provider/schema form controls, General/UI/MediaManagement
+settings, other selectors and action/reducer families are coherent next
+slices. U07 remains **In progress**, not a completely strict frontend.
 
 ### U08
 

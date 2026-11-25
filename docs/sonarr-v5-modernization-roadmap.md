@@ -1484,3 +1484,29 @@ The roadmap remains **83 of 92 Verified**, eight In progress and one Deferred.
 U07 and P09 are not closed; P01/P02/P13/P22 native ARM64, P21/P25 CI/release
 acceptance and deferred P17 remain unchanged. No production deployment or
 release publication is part of this slice.
+
+### Shared forms, interaction dependencies and managed compatibility — 2026-11-25
+
+U07 advances 87 more JS modules (852 → 765); ordinary TS/TSX rises 255 → 351,
+with 321 source modules in the strict program. The next group covers forms,
+modal focus/backdrop behavior, row selection/header/pager/date contracts,
+settings drafts, typed collection projections and drag/drop hooks. The
+selector join no longer mutates Redux book resources; stale author maps
+and valid profile/sort inputs are exercised with frozen resources.
+
+P09 replaces the legacy DnD HOCs, Popper, document-title and lazy loader,
+adopts supported detail tabs and FontAwesome's React wrapper, and updates
+NLog's managed graph and the OpenAPI generator. Both audits report zero
+known findings; log archive naming/retention/redaction, public API
+documents, desktop/touch ordering and actual keyboard navigation remain
+verified. The isolated React 19 trial now passes both TS projects and
+focused hosted behavior, but the final supported graph remains React 18
+because older scrollbar/slider/truncation integrations and function
+default/JSX migration remain. Managed/native compatibility gates remain
+staged. See [local validation](local-validation.md) and the
+[dependency review](dependency-audit.md).
+
+The roadmap remains **83 of 92 Verified**, eight In progress and one
+Deferred. U07/P09 remain in progress; prior release, native ARM64 and
+CI gates and deferred P17 are unchanged. No release publishing or
+production deployment is part of this work.

@@ -1,0 +1,317 @@
+{
+  "date": "2026-11-25",
+  "adopted": false,
+  "initialSourceCommit": "11767196ef2249ff4dcb5193ed297fe860331b1d",
+  "updatedFrontendSourceCommit": "a3c9b3cd70bb51251acc8b0d5f584a7cd911723a",
+  "updatedTrialPins": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "@types/react": "19.3.1",
+    "@types/react-dom": "19.3.0",
+    "@fortawesome/react-fontawesome": "3.5.0",
+    "@floating-ui/react-dom": "2.1.9",
+    "react-tabs": "6.1.1",
+    "dnd-core": "16.0.1",
+    "rdndmb-html5-to-touch": "9.0.0",
+    "react-dnd": "16.0.1",
+    "react-dnd-html5-backend": "16.0.1",
+    "react-dnd-multi-backend": "9.0.0",
+    "react-dnd-touch-backend": "16.0.1"
+  },
+  "initialReact18Control": {
+    "main": {
+      "count": 0,
+      "files": 0,
+      "errors": []
+    },
+    "strict": {
+      "count": 0,
+      "files": 0,
+      "errors": []
+    }
+  },
+  "initialReact19": {
+    "fontAwesomeWrapper": "0.2.2",
+    "main": {
+      "count": 4,
+      "files": 4,
+      "errors": [
+        {
+          "file": "frontend/src/BookFile/FileDetailsModal.tsx",
+          "line": 55,
+          "code": "TS2739",
+          "message": "Type '{ isOpen: boolean; fileId: BookFileId; onModalClose: () => void; }' is missing the following properties from type '{ isOpen: any; fileId: any; onModalClose: any; onManualImport: any; onCreateLocalRecording: any; onAssociated: any; }': onManualImport, onCreateLocalRecording, onAssociated"
+        },
+        {
+          "file": "frontend/src/Components/Tooltip/Tooltip.tsx",
+          "line": 50,
+          "code": "TS2554",
+          "message": "Expected 1 arguments, but got 0."
+        },
+        {
+          "file": "frontend/src/Helpers/Hooks/usePrevious.tsx",
+          "line": 4,
+          "code": "TS2554",
+          "message": "Expected 1 arguments, but got 0."
+        },
+        {
+          "file": "node_modules/@fortawesome/react-fontawesome/index.d.ts",
+          "line": 13,
+          "code": "TS2503",
+          "message": "Cannot find namespace 'JSX'."
+        }
+      ]
+    },
+    "strict": {
+      "count": 6,
+      "files": 5,
+      "errors": [
+        {
+          "file": "frontend/src/BookFile/FileDetailsModal.tsx",
+          "line": 55,
+          "code": "TS2739",
+          "message": "Type '{ isOpen: boolean; fileId: BookFileId; onModalClose: () => void; }' is missing the following properties from type '{ isOpen: any; fileId: any; onModalClose: any; onManualImport: any; onCreateLocalRecording: any; onAssociated: any; }': onManualImport, onCreateLocalRecording, onAssociated"
+        },
+        {
+          "file": "frontend/src/Components/Modal/Modal.tsx",
+          "line": 92,
+          "code": "TS2322",
+          "message": "Type 'RefObject<HTMLDivElement | null>' is not assignable to type 'RefObject<HTMLDivElement>'."
+        },
+        {
+          "file": "frontend/src/Components/Positioning/AnchoredPopup.tsx",
+          "line": 133,
+          "code": "TS2322",
+          "message": "Type 'RefObject<HTMLDivElement | null>' is not assignable to type 'RefObject<HTMLDivElement>'."
+        },
+        {
+          "file": "frontend/src/Components/Tooltip/Tooltip.tsx",
+          "line": 50,
+          "code": "TS2554",
+          "message": "Expected 1 arguments, but got 0."
+        },
+        {
+          "file": "frontend/src/Components/Tooltip/Tooltip.tsx",
+          "line": 54,
+          "code": "TS2322",
+          "message": "Type 'undefined' is not assignable to type 'number'."
+        },
+        {
+          "file": "node_modules/@fortawesome/react-fontawesome/index.d.ts",
+          "line": 13,
+          "code": "TS2503",
+          "message": "Cannot find namespace 'JSX'."
+        }
+      ]
+    },
+    "unit": {
+      "tests": 195,
+      "pass": 195,
+      "fail": 0
+    },
+    "viteVerified": true,
+    "hostedSmoke": {
+      "passed": 201,
+      "failed": 0,
+      "completed": true,
+      "syntheticDataOnly": true,
+      "inputFingerprints": {
+        "candidate": "819cfebc88f2ae3fdc87cf83bccdb3ad0bc59e127c73cb6d206f515641529e72"
+      },
+      "counts": {
+        "routernavigation": {
+          "passed": 56,
+          "failed": 0
+        },
+        "metadataaccessibility": {
+          "passed": 144,
+          "failed": 0
+        },
+        "unchanged_candidate": {
+          "passed": 1,
+          "failed": 0
+        }
+      }
+    }
+  },
+  "afterVersionSafeSourceAndFontAwesomeChanges": {
+    "main": {
+      "count": 0,
+      "files": 0,
+      "errors": []
+    },
+    "strict": {
+      "count": 0,
+      "files": 0,
+      "errors": []
+    },
+    "unit": {
+      "tests": 199,
+      "pass": 199,
+      "fail": 0
+    },
+    "viteVerified": true
+  },
+  "unsupportedReact19PeerContracts": [
+    {
+      "package": "react-custom-scrollbars-2",
+      "version": "4.5.0",
+      "peerDependencies": {
+        "react": "^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0",
+        "react-dom": "^0.14.0 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0"
+      }
+    },
+    {
+      "package": "react-slider",
+      "version": "1.3.3",
+      "peerDependencies": {
+        "react": "^16 || ^17 || ^18",
+        "prop-types": "^15.6"
+      }
+    },
+    {
+      "package": "react-text-truncate",
+      "version": "0.19.0",
+      "peerDependencies": {
+        "react": "^15.4.1 || ^16.0.0 || ^17.0.0 ||  || ^18.0.0",
+        "react-dom": "^15.4.1 || ^16.0.0 || ^17.0.0 || ^18.0.0"
+      }
+    }
+  ],
+  "functionDefaultPropsAssignmentsRemainingAtSourceScan": [
+    "frontend/src/Activity/History/Details/HistoryDetailsModal.js",
+    "frontend/src/Activity/History/HistoryEventTypeCell.js",
+    "frontend/src/Author/Editor/AuthorEditorFooterLabel.js",
+    "frontend/src/Author/Index/Menus/AuthorIndexFilterMenu.js",
+    "frontend/src/Author/Index/Table/AuthorStatusCell.tsx",
+    "frontend/src/Author/NoAuthor.js",
+    "frontend/src/Book/Editor/BookEditorFooterLabel.js",
+    "frontend/src/Book/Index/Menus/BookIndexFilterMenu.js",
+    "frontend/src/Book/Index/Table/BookStatusCell.tsx",
+    "frontend/src/Components/Form/CaptchaInput.js",
+    "frontend/src/Components/Form/OAuthInput.js",
+    "frontend/src/Components/Form/ProviderFieldFormGroup.js",
+    "frontend/src/Components/Menu/MenuItem.js",
+    "frontend/src/Components/Menu/PageMenuButton.js",
+    "frontend/src/Components/Menu/SortMenu.js",
+    "frontend/src/Components/Menu/SortMenuItem.js",
+    "frontend/src/Components/Menu/ToolbarMenuButton.js",
+    "frontend/src/Components/Menu/ViewMenu.js",
+    "frontend/src/Components/NotFound.js",
+    "frontend/src/Components/Page/Toolbar/PageToolbarButton.js",
+    "frontend/src/Components/StarRating.js"
+  ],
+  "remainingGates": [
+    "Replace or validate with supported peers the remaining scrollbar/slider/text-truncate integrations",
+    "Migrate remaining function defaultProps and modern JSX transform",
+    "Full React19 integrated hosted package regression and runtime acceptance"
+  ],
+  "react18FontAwesomeTrial": {
+    "wrapper": "3.5.0",
+    "core": "6.7.1",
+    "main": {
+      "count": 0,
+      "files": 0,
+      "errors": []
+    },
+    "strict": {
+      "count": 0,
+      "files": 0,
+      "errors": []
+    },
+    "unit": {
+      "tests": 190,
+      "pass": 190,
+      "fail": 0
+    },
+    "viteVerified": true,
+    "hosted": {
+      "passed": 139,
+      "failed": 0,
+      "completed": true,
+      "syntheticDataOnly": true,
+      "inputFingerprints": {
+        "candidate": "acdc8cd55086340446ed5e67a2c275a7308a42b9bec7d71045bf267a3c39403f"
+      },
+      "counts": {
+        "metadataaccessibility": {
+          "passed": 138,
+          "failed": 0
+        },
+        "unchanged_candidate": {
+          "passed": 1,
+          "failed": 0
+        }
+      }
+    }
+  },
+  "react18PopupTrial": {
+    "hosted": {
+      "passed": 227,
+      "failed": 0,
+      "completed": true,
+      "syntheticDataOnly": true,
+      "inputFingerprints": {
+        "candidate": "ef1b64b7b2bc3a6463fbcd60b41d5d79d6b9b4113baa089d638e8d3e777318f9"
+      },
+      "counts": {
+        "metadataaccessibility": {
+          "passed": 138,
+          "failed": 0
+        },
+        "routernavigation": {
+          "passed": 48,
+          "failed": 0
+        },
+        "settingsdrafts": {
+          "passed": 40,
+          "failed": 0
+        },
+        "unchanged_candidate": {
+          "passed": 1,
+          "failed": 0
+        }
+      }
+    }
+  },
+  "react18TabsLazyTrial": {
+    "hosted": {
+      "passed": 123,
+      "failed": 0,
+      "completed": true,
+      "syntheticDataOnly": true,
+      "inputFingerprints": {
+        "candidate": "54055101b54a1c77d5689150b1cd79b0b073a5482d7b29dcf588c171608424dc"
+      },
+      "counts": {
+        "routernavigation": {
+          "passed": 56,
+          "failed": 0
+        },
+        "libraryvirtualization": {
+          "passed": 66,
+          "failed": 0
+        },
+        "unchanged_candidate": {
+          "passed": 1,
+          "failed": 0
+        }
+      }
+    },
+    "nativeVisibilityBrowser": {
+      "checks": {
+        "clipped_initial_placeholder": true,
+        "viewport_initial_placeholder": true,
+        "clipped_scroll_reveals_real": true,
+        "clipped_retain_after_scroll": true,
+        "viewport_scroll_reveals_real": true,
+        "viewport_retain_after_scroll": true,
+        "no_page_errors": true,
+        "no_observer_loads_immediately": true
+      },
+      "passed": 8,
+      "failed": 0,
+      "syntheticOnly": true
+    }
+  }
+}

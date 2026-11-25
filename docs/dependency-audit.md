@@ -685,3 +685,98 @@ preserves the package fingerprints and per-group evidence hashes.
 See [local validation](local-validation.md#u07-and-p09-shared-infrastructure-and-dependency-verification-2026-11-25)
 for the two integrated defects, their corrections and the final exact
 replay. Native ARM64 execution remains separate.
+
+## React integration compatibility and logging/OpenAPI refresh — 2026-11-25
+
+The [dated integration inventory](dependencies/2026-11-25-ui-integrations/summary.json)
+records the exact selected frontend and managed versions, locks, source
+counts, license checks and test proof for `70509504c`.
+
+| Integration | Previous | Selected |
+| --- | --- | --- |
+| React DnD / HTML5 backend / touch backend | 14.x | 16.0.1 |
+| React DnD multi-backend | 6.0.2 | 9.0.0, with explicit public HTML5-to-touch pipeline 9.0.0 and dnd-core 16.0.1 |
+| react-popper | 1.3.7 | @floating-ui/react-dom 2.1.9 |
+| react-document-title | 2.0.3 | Owned nested document-title context and layout effects |
+| react-lazyload | 3.2.1 | Typed native IntersectionObserver boundary |
+| react-tabs | 4.3.0 | 6.1.1 |
+| FontAwesome React wrapper | 0.2.2 | 3.5.0; retain SVG core and icon assets 6.7.1 |
+| NLog / NLog.Extensions.Logging | 5.5.1 / 5.5.0 | 6.2.2 / 6.3.0 |
+| NLog.Targets.ConcurrentFile | — | 6.2.2 |
+| Swashbuckle annotations / generator / Swagger | 6.6.2 | 9.0.6 |
+| Microsoft.OpenApi | 1.6.14 (transitive) | 1.6.25 |
+
+The frontend graph removes the old DnD HOCs, moves to typed DOM hooks and
+actual drop results instead of batched hover state, and explicitly preserves
+touch and mouse ordering. The delay-profile request now uses the server's
+`afterId` field. Real desktop and touch browser tests verify saved table,
+quality-profile and delay-profile ordering. The old Popper dependency and
+standalone title side-effect package are no longer needed. Floating UI
+tracks actual anchors and viewport clipping while keeping keyboard focus,
+portal and dismissal behavior. The cover visibility observer disconnects
+on reveal/unmount, loads immediately if the API is unavailable, and retains
+visible content after scrolling out. The detail tabs preserve tab focus
+and labelled panel behavior. Native classList replaces the last
+element-class use; the direct hoisting and lazyload type declarations are
+no longer required on the clean graph.
+
+The [NLog 6 migration guide](https://nlog-project.org/2025/04/29/nlog-6-0-major-changes.html)
+describes changes to the file target's archive and concurrency behavior.
+Bookshelf uses the supported, independently packaged concurrent file target
+for its existing application/update log contracts, rather than switching
+to the different default file naming and retention algorithm. A real
+isolated rolling-file test asserts the current filename, both numbered
+archives, latest/previous message placement and redaction. The migration
+fixture no longer attempts to mock a private configuration-loader
+dependency: it constructs the real NLog provider. Both SQLite and private
+PostgreSQL migrations pass, without changing migration code or assertions.
+
+[Swashbuckle 9.0.6](https://www.nuget.org/packages/Swashbuckle.AspNetCore.SwaggerGen/9.0.6)
+is compatible with the existing OpenAPI 1.x object model. The initial
+hosted comparison of generated v1 and v2 documents found exactly one
+changed field in each: the OpenAPI specification patch string from 3.0.1
+to 3.0.4. All paths, operations, schemas, security and discovery behavior
+are unchanged. Both tracked documents are regenerated from the actual
+owned listener. The newer OpenAPI 2.x object-model transition in subsequent
+major generator lines needs separate contract validation.
+
+The independent fully locked frontend graph stays on React/DOM 18.3.1.
+The final registry advisory snapshot reports **zero findings across
+1,238 dependencies** (89 direct declarations), and the final managed
+audit covers 25 projects with zero known vulnerable packages. The
+[managed components](dependencies/2026-11-25-ui-integrations/managed-components.json)
+inventory contains all 125 exact resolved package identities and hashes across
+25 locks. All 23 managed source/notice files and their source-package hashes
+match; seven pinned notices were added for the upgraded logging/OpenAPI
+libraries. Both .NET solution and Windows-targeted GUI restores are locked.
+
+### React 19 evaluated, not adopted
+
+The [isolated readiness receipt](dependencies/2026-11-25-ui-integrations/react19-readiness.json)
+records an actual React/DOM 19.3.1 install and corresponding type packages.
+Initially there were four ordinary and six strict diagnostics (in five
+strict files). Optional callback declarations, explicit ref initial values,
+the structural modal ref, the popup reference boundary, and the supported
+FontAwesome wrapper address those declaration problems. Both updated
+trial TypeScript projects and Vite verify pass, with 199 frontend unit
+tests. The initial React 19 graph also passes 200 behavioral hosted
+routing/accessibility checks plus the unchanged-input check; this is not
+full React 19 product acceptance.
+
+The remaining direct peer exclusions are react-custom-scrollbars-2,
+react-slider and react-text-truncate. The first two also have real
+interaction/measurement behavior to preserve; the source still contains 21
+function-component defaultProps assignments and the legacy JSX transform.
+React 19 is therefore not forced into the maintained package graph.
+Next, replace or update those three integrations and remaining function
+defaults, adopt the modern JSX transform with actual compatibility tests,
+then replay the entire library/settings/browser matrix on React 19.
+FluentValidation, the remaining managed/runtime-generation and native
+migrations retain their earlier gates. P09 remains **In progress**.
+
+The exact final supported React 18 package passes 2,436 hosted checks in
+15 complete reports, including the actual touch/mouse reorder checks,
+all existing library and API document checks, x64 musl Docker and
+acquisition tests. All 23 managed notice hashes match in each of the
+three Linux packages. See [local validation](local-validation.md#u07-and-p09-interactionmanaged-integration-verification-2026-11-25)
+and the [exact hosted receipt](dependencies/2026-11-25-ui-integrations/hosted-validation.json).
