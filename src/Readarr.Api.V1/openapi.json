@@ -8957,6 +8957,85 @@
           }
         }
       }
+    },
+    "/api/v1/importlistcleanup": {
+      "get": {
+        "tags": [
+          "ImportListCleanup"
+        ],
+        "description": "Preview exact list-created recordings now absent from all enabled lists. Recent, complete, current successful snapshots and resolved identities are required. No writes or provider requests. Tag mode previews author-level tags, unmonitor mode affects the named recordings only.",
+        "parameters": [
+          {
+            "name": "mode",
+            "in": "query",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ImportListCleanupMode"
+                }
+              ],
+              "default": "preview"
+            }
+          },
+          {
+            "name": "tagId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportListCleanupPreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid mode or tag"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ImportListCleanup"
+        ],
+        "description": "Explicitly apply the current action-specific confirmed preview. No file deletion, no automatic invocation, and no application to manually owned or local recordings. A changed membership/definition/ownership proof is rejected.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportListCleanupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportListCleanupPreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Action and current confirmation required"
+          },
+          "409": {
+            "description": "Cleanup evidence changed; refresh preview"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9932,6 +10011,13 @@
           },
           "audioTags": {
             "$ref": "#/components/schemas/ParsedTrackInfo"
+          },
+          "qualityRank": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "readOnly": true,
+            "description": "Normalized saved quality-profile rank from 0 to 1; -1 if the file quality is not in the profile, null if no profile is associated. Equal group members have equal ranks."
           }
         },
         "additionalProperties": false
@@ -10137,6 +10223,13 @@
             "type": "number",
             "format": "double",
             "readOnly": true
+          },
+          "fileQualityRank": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "readOnly": true,
+            "description": "Lowest quality-profile rank of tracked files in the monitored edition, null without tracked files. Does not prove completeness."
           }
         },
         "additionalProperties": false
@@ -10400,7 +10493,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "additionalProperties": { }
+              "additionalProperties": {}
             },
             "nullable": true
           }
@@ -12606,6 +12699,15 @@
           "minRefreshInterval": {
             "type": "string",
             "format": "date-span"
+          },
+          "tagExisting": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportListTagExisting"
+              }
+            ],
+            "nullable": true,
+            "description": "None (default), add persistent author tags, or synchronize only list-owned author tags. Omission on an existing list preserves its policy."
           }
         },
         "additionalProperties": false
@@ -12795,6 +12897,33 @@
           "downloadClientId": {
             "type": "integer",
             "format": "int32"
+          },
+          "dangerousFileAction": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RejectedImportAction"
+              }
+            ],
+            "nullable": true,
+            "description": "Automatic action for a confirmed dangerous file rejection from this exact indexer. Defaults to review. Never removes client data; retry also requires the saved global and interactive policy. Omission preserves the existing action."
+          },
+          "executableFileAction": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RejectedImportAction"
+              }
+            ],
+            "nullable": true,
+            "description": "Automatic action for a confirmed executable file rejection from this exact indexer. Defaults to review. Never removes client data; retry also requires the saved global and interactive policy. Omission preserves the existing action."
+          },
+          "userRejectedExtensionAction": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RejectedImportAction"
+              }
+            ],
+            "nullable": true,
+            "description": "Automatic action for a confirmed user-rejected extension rejection from this exact indexer. Defaults to review. Never removes client data; retry also requires the saved global and interactive policy. Omission preserves the existing action."
           }
         },
         "additionalProperties": false
@@ -13207,7 +13336,12 @@
           "analysisStatus": {
             "type": "string",
             "nullable": true,
-            "enum": ["current", "stale", "partial", "advertised"]
+            "enum": [
+              "current",
+              "stale",
+              "partial",
+              "advertised"
+            ]
           }
         },
         "additionalProperties": false
@@ -15577,6 +15711,107 @@
           "sync"
         ],
         "type": "string"
+      },
+      "ImportListTagExisting": {
+        "type": "string",
+        "enum": [
+          "none",
+          "add",
+          "sync"
+        ]
+      },
+      "RejectedImportAction": {
+        "type": "string",
+        "enum": [
+          "review",
+          "blocklist",
+          "blocklistAndRetry"
+        ]
+      },
+      "ImportListCleanupMode": {
+        "type": "string",
+        "enum": [
+          "preview",
+          "unmonitor",
+          "tag"
+        ]
+      },
+      "ImportListCleanupCandidate": {
+        "type": "object",
+        "properties": {
+          "bookId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recordingId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "authorId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "monitored": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportListCleanupPreview": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/ImportListCleanupMode"
+          },
+          "tagId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportListCleanupCandidate"
+            }
+          },
+          "confirmationToken": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportListCleanupRequest": {
+        "type": "object",
+        "required": [
+          "mode",
+          "confirmationToken"
+        ],
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/ImportListCleanupMode"
+          },
+          "tagId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "confirmationToken": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
       }
     },
     "securitySchemes": {
@@ -15596,10 +15831,10 @@
   },
   "security": [
     {
-      "X-Api-Key": [ ]
+      "X-Api-Key": []
     },
     {
-      "apikey": [ ]
+      "apikey": []
     }
   ]
 }

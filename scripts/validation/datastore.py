@@ -32,21 +32,26 @@ from . import docker, restore
 IMAGE = "postgres:16-alpine"
 MARKER = ".bookshelf-migration-tests"
 LEGACY_HISTORY = set(range(1, 34)) | set(range(35, 49)) | {158}
-HISTORY = LEGACY_HISTORY | {159, 160, 161, 162, 163, 164, 165}
+HISTORY = LEGACY_HISTORY | {159, 160, 161, 162, 163, 164, 165, 166, 167, 168}
 ACQUISITION_COLUMNS = {("QualityProfiles", "MinUpgradeFormatScore"), ("BookFiles", "TaggedLanguage"),
                        ("Blocklist", "RecordingLanguages"), ("Blocklist", "SelectedEditionLanguageId"),
                        ("Blocklist", "AudioFormatEvidence")}
 LOCAL_METADATA_COLUMNS = ("LocalMetadataRevision", "LocalMetadataProvenance")
 FILE_METADATA_COLUMNS = ("TaggedLanguage", "ReleaseGroupEvidence")
 ADDITIVE_COLUMNS = ACQUISITION_COLUMNS | {("Editions", column) for column in LOCAL_METADATA_COLUMNS} | {
-    ("BookFiles", "ReleaseGroupEvidence"), ("ImportLists", "MembershipRevision")}
+    ("BookFiles", "ReleaseGroupEvidence"), ("ImportLists", "MembershipRevision"),
+    ("Books", "ImportListOriginId"), ("ImportLists", "TagExisting"),
+    ("Indexers", "DangerousFileAction"), ("Indexers", "ExecutableFileAction"), ("Indexers", "UserRejectedExtensionAction")}
 ADDITIVE_TABLE_COLUMNS = {
     "RecordingWorks": {"Id", "Title", "Author", "Series", "Position"},
     "RecordingWorkMemberships": {"Id", "EditionId", "WorkId", "RecordingIdentity", "Confirmed"},
     "ImportListMembershipSnapshots": {"ImportListId", "AttemptToken", "SuccessfulRevision", "LastSuccessfulSync"},
     "ImportListMembershipItems": {"Id", "ImportListId", "SourceAuthor", "SourceTitle", "SourceAuthorId", "SourceBookId",
                                   "SourceEditionId", "AuthorId", "BookId", "EditionId"},
+    "ImportListTagOwners": {"AuthorId", "TagId", "ImportListId"},
+    "ImportListManagedRecordings": {"BookId", "ForeignBookId", "AuthorMetadataId", "ImportListId"},
 }
+ADDITIVE_VIEW_COLUMNS = {"QualityProfileQualityRanks": {"ProfileId", "QualityId", "Score"}}
 TABLES = restore.TABLES + ("AudiobookMetadataOverrides", "AudiobookMetadataCleanupRules")
 SETTING_KEYS = restore.SETTING_KEYS + ("rescanafterrefresh",)
 DATABASE_KINDS = ("main", "log", "cache")
@@ -347,14 +352,14 @@ def postgres_schema(postgres: OwnedPostgres, names: dict):
 
 
 def expected_additive_sqlite_snapshot(snapshot):
-    additions = {"BookFiles": FILE_METADATA_COLUMNS, "Editions": LOCAL_METADATA_COLUMNS}
+    additions = {"BookFiles": FILE_METADATA_COLUMNS, "Editions": LOCAL_METADATA_COLUMNS, "Books": ("ImportListOriginId",)}
     return {**snapshot, **{table: {"columns": snapshot[table]["columns"] + list(columns),
                                   "rows": [row + (None,) * len(columns) for row in snapshot[table]["rows"]]}
                           for table, columns in additions.items()}}
 
 
 def expected_additive_postgres_snapshot(snapshot):
-    additions = {"BookFiles": FILE_METADATA_COLUMNS, "Editions": LOCAL_METADATA_COLUMNS}
+    additions = {"BookFiles": FILE_METADATA_COLUMNS, "Editions": LOCAL_METADATA_COLUMNS, "Books": ("ImportListOriginId",)}
     return {**snapshot, **{table: [{**row, **dict.fromkeys(columns)} for row in snapshot[table]]
                           for table, columns in additions.items()}}
 
@@ -364,7 +369,7 @@ def postgres_preserved_schema(before, after):
     added = {(column["table_name"], column["column_name"]) for column in main["columns"]
              if (column["table_name"], column["column_name"]) in ADDITIVE_COLUMNS}
     new_table_columns = {table: {column["column_name"] for column in main["columns"] if column["table_name"] == table}
-                         for table in ADDITIVE_TABLE_COLUMNS}
+                         for table in ADDITIVE_TABLE_COLUMNS | ADDITIVE_VIEW_COLUMNS}
     work_indexes = [item["indexdef"] for item in main["indexes"] if item["tablename"] == "RecordingWorkMemberships"]
     work_constraints = [item["definition"] for item in main["constraints"] if item["tablename"] == "RecordingWorkMemberships"]
     works_have_unique_membership = any("CREATE UNIQUE INDEX" in definition and '("EditionId", "WorkId")' in definition for definition in work_indexes)
@@ -373,12 +378,12 @@ def postgres_preserved_schema(before, after):
     lists_have_cascading_foreign_keys = all(any(item["tablename"] == table and 'REFERENCES "ImportLists"' in item["definition"]
                                                and 'ON DELETE CASCADE' in item["definition"] for item in main["constraints"])
                                            for table in ("ImportListMembershipSnapshots", "ImportListMembershipItems"))
-    remaining = [column for column in main["columns"] if column["table_name"] not in ADDITIVE_TABLE_COLUMNS
+    remaining = [column for column in main["columns"] if column["table_name"] not in ADDITIVE_TABLE_COLUMNS | ADDITIVE_VIEW_COLUMNS
                  and (column["table_name"], column["column_name"]) not in ADDITIVE_COLUMNS]
     baseline = {**after, "main": {"columns": logical_columns(remaining),
                                  "indexes": [item for item in main["indexes"] if item["tablename"] not in ADDITIVE_TABLE_COLUMNS],
                                  "constraints": [item for item in main["constraints"] if item["tablename"] not in ADDITIVE_TABLE_COLUMNS]}}
-    return (added == ADDITIVE_COLUMNS and new_table_columns == ADDITIVE_TABLE_COLUMNS and works_have_unique_membership
+    return (added == ADDITIVE_COLUMNS and new_table_columns == ADDITIVE_TABLE_COLUMNS | ADDITIVE_VIEW_COLUMNS and works_have_unique_membership
             and works_have_foreign_keys and lists_have_cascading_foreign_keys and before == baseline)
 
 
@@ -480,6 +485,11 @@ def run(runtime: Path, output: Path, baseline_runtime: Path | None = None) -> di
         golden_sqlite = expected_additive_sqlite_snapshot(golden_sqlite)
         check("sqlite_catalog_overrides_narrators_dates_and_ids_survive_engine_upgrade", sqlite_snapshot(sqlite) == golden_sqlite)
         check("sqlite_history_is_not_renumbered", all(value == HISTORY for value in sqlite_history(sqlite.home).values()))
+        with closing(sqlite3.connect(sqlite.home / "readarr.db")) as database:
+            check("sqlite_profile_rank_is_derived_view", database.execute(
+                "SELECT type FROM sqlite_master WHERE name='QualityProfileQualityRanks'").fetchone() == ("view",) and
+                set(restore.columns(database, "QualityProfileQualityRanks")) == ADDITIVE_VIEW_COLUMNS["QualityProfileQualityRanks"])
+
         check("sqlite_owned_media_survives_engine_upgrade", restore.media_unchanged(sqlite))
 
         stage = "fresh_postgres"
@@ -522,6 +532,9 @@ def run(runtime: Path, output: Path, baseline_runtime: Path | None = None) -> di
         upgraded_schema = postgres_schema(postgres, names)
         check("postgres_catalog_overrides_narrators_dates_guids_and_ids_survive_engine_upgrade", postgres_snapshot(postgres, names) == golden)
         check("postgres_columns_defaults_indexes_and_constraints_survive_engine_upgrade", postgres_preserved_schema(schema, upgraded_schema))
+        check("postgres_profile_rank_is_derived_view", postgres.json(names["main"],
+            "SELECT json_agg(table_name) FROM information_schema.views WHERE table_schema='public' AND table_name='QualityProfileQualityRanks'") == ["QualityProfileQualityRanks"])
+
         check("postgres_main_log_cache_history_is_not_renumbered", all(value == HISTORY for value in postgres_history(postgres, names).values()))
         check("postgres_owned_media_survives_engine_upgrade", restore.media_unchanged(application))
         check("postgres_release_dates_and_utc_instants_are_preserved", postgres.json(names["main"],

@@ -45,22 +45,25 @@ class DatastoreFixtureValueTests(unittest.TestCase):
 
     def test_historical_migration_158_is_preserved_without_inventing_34(self):
         self.assertEqual(len(datastore.LEGACY_HISTORY), 48)
-        self.assertEqual(datastore.HISTORY - datastore.LEGACY_HISTORY, {159, 160, 161, 162, 163, 164, 165})
+        self.assertEqual(datastore.HISTORY - datastore.LEGACY_HISTORY, {159, 160, 161, 162, 163, 164, 165, 166, 167, 168})
         self.assertIn(158, datastore.HISTORY)
         self.assertNotIn(34, datastore.HISTORY)
         self.assertIn(48, datastore.HISTORY)
 
     def test_additive_recording_migrations_preserve_old_snapshot_values(self):
         base = {"BookFiles": {"columns": ["Id", "EditionId"], "rows": [(19, 17)]},
-                "Editions": {"columns": ["Id", "Title"], "rows": [(17, "Owned recording")]}}
+                "Editions": {"columns": ["Id", "Title"], "rows": [(17, "Owned recording")]},
+                "Books": {"columns": ["Id"], "rows": [(1,)]}}
         expected = datastore.expected_additive_sqlite_snapshot(base)
         self.assertEqual(expected["BookFiles"], {"columns": ["Id", "EditionId", *datastore.FILE_METADATA_COLUMNS],
                                                "rows": [(19, 17, None, None)]})
         self.assertEqual(expected["Editions"]["columns"], ["Id", "Title", *datastore.LOCAL_METADATA_COLUMNS])
         self.assertEqual(expected["Editions"]["rows"], [(17, "Owned recording", None, None)])
         self.assertEqual(base["Editions"]["rows"], [(17, "Owned recording")])
-        postgres = datastore.expected_additive_postgres_snapshot({"BookFiles": [{"Id": 19}], "Editions": [{"Id": 17}]})
+        postgres = datastore.expected_additive_postgres_snapshot({"BookFiles": [{"Id": 19}], "Editions": [{"Id": 17}], "Books": [{"Id": 1}]})
         self.assertEqual(postgres["Editions"], [{"Id": 17, "LocalMetadataRevision": None, "LocalMetadataProvenance": None}])
+        self.assertEqual(expected["Books"]["rows"], [(1, None)])
+        self.assertEqual(postgres["Books"], [{"Id": 1, "ImportListOriginId": None}])
 
     def test_dump_restore_attnum_compaction_preserves_visible_schema_order(self):
         before = [
