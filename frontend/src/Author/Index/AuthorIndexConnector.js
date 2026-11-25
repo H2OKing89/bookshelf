@@ -7,7 +7,7 @@ import * as commandNames from 'Commands/commandNames';
 import withScrollPosition from 'Components/withScrollPosition';
 import { saveAuthorEditor, setAuthorFilter, setAuthorSort, setAuthorTableOption, setAuthorView } from 'Store/Actions/authorIndexActions';
 import { executeCommand } from 'Store/Actions/commandActions';
-import scrollPositions from 'Store/scrollPositions';
+import { saveScrollPosition } from 'Store/scrollPositions';
 import createAuthorClientSideCollectionItemsSelector from 'Store/Selectors/createAuthorClientSideCollectionItemsSelector';
 import createCommandExecutingSelector from 'Store/Selectors/createCommandExecutingSelector';
 import createDimensionsSelector from 'Store/Selectors/createDimensionsSelector';
@@ -94,7 +94,7 @@ class AuthorIndexConnector extends Component {
 
   onScroll = ({ scrollTop }) => {
     if (!isLocked()) {
-      scrollPositions.authorIndex = scrollTop;
+      saveScrollPosition('authorIndex', scrollTop);
     }
   };
 

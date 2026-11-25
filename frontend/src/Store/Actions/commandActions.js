@@ -112,7 +112,7 @@ function scheduleRemoveCommand(command, dispatch) {
 
   removeCommandTimeoutIds[id] = setTimeout(() => {
     dispatch(batchActions([
-      removeCommand({ section: 'commands', id }),
+      removeItem({ section: 'commands', id }),
       hideMessage({ id })
     ]));
 

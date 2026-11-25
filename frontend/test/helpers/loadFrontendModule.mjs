@@ -49,7 +49,7 @@ export function loadFrontendModule(relativePath, replacements = {}) {
       if (specifier.startsWith('.')) {
         return load(resolve(dirname(filename), specifier));
       }
-      if (/^(Book|System|Utilities|Store\/Selectors)\//.test(specifier)) {
+      if (/^(Book|System|Utilities|Store|Helpers\/Props)\//.test(specifier)) {
         return load(resolve(sourceRoot, specifier));
       }
       return require(specifier);

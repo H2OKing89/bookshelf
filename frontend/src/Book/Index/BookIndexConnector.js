@@ -7,7 +7,7 @@ import * as commandNames from 'Commands/commandNames';
 import withScrollPosition from 'Components/withScrollPosition';
 import { saveBookEditor, setBookFilter, setBookSort, setBookTableOption, setBookView } from 'Store/Actions/bookIndexActions';
 import { executeCommand } from 'Store/Actions/commandActions';
-import scrollPositions from 'Store/scrollPositions';
+import { saveScrollPosition } from 'Store/scrollPositions';
 import createBookClientSideCollectionItemsSelector from 'Store/Selectors/createBookClientSideCollectionItemsSelector';
 import createCommandExecutingSelector from 'Store/Selectors/createCommandExecutingSelector';
 import createDimensionsSelector from 'Store/Selectors/createDimensionsSelector';
@@ -103,7 +103,7 @@ class BookIndexConnector extends Component {
 
   onScroll = ({ scrollTop }) => {
     if (!isLocked()) {
-      scrollPositions.bookIndex = scrollTop;
+      saveScrollPosition('bookIndex', scrollTop);
     }
   };
 

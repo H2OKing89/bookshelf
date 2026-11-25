@@ -185,15 +185,18 @@ test('Redux preference startup retains legacy rollback data and avoids restoring
   const { default: createPersistState } = loadFrontendModule('Store/Middleware/createPersistState', {
     'Activity/Queue/queuePreferences': { initializeQueuePreferences: (value) => initialized.push(value) },
     'Store/Actions': [{ persistState: ['history.pageSize'] }],
-    'Store/Migrators/migrate': () => {}
+    'Store/Migrators/migrate': () => {},
+    'Store/StateTypes': loadFrontendModule('Store/StateTypes')
   });
   const initialState = { queue: { status: {} }, history: { pageSize: 20 } };
-  const store = createStore((state) => state, initialState, createPersistState());
+  const persistence = createPersistState(initialState);
+  const store = createStore((state) => state, persistence.initialState);
+  persistence.attach(store);
   store.dispatch({ type: 'fixture/dispatch' });
   assert.deepEqual(initialized, [legacy]);
   assert.deepEqual(store.getState(), { ...initialState, history: { pageSize: 50 } });
   assert.deepEqual(JSON.parse(storage.getItem('readarr')), before);
 
   storage.setItem('readarr', '{malformed');
-  assert.deepEqual(createStore((state) => state, initialState, createPersistState()).getState(), initialState);
+  assert.deepEqual(createPersistState(initialState).initialState, initialState);
 });

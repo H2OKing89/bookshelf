@@ -15,9 +15,9 @@ export function readPreferenceStorage(storage: Storage | undefined, key: string)
   }
 }
 
-export function writePreferenceStorage(storage: Storage | undefined, key: string, value: unknown) {
+export function writePreferenceStorage(storage: Storage | undefined, key: string, value: unknown, space?: number) {
   try {
-    storage?.setItem(key, JSON.stringify(value));
+    storage?.setItem(key, JSON.stringify(value, null, space));
   } catch {
     // Preferences can still be changed for the current session.
   }

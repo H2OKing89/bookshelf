@@ -32,4 +32,6 @@ export const all = [
   NOT_STARTS_WITH,
   ENDS_WITH,
   NOT_ENDS_WITH
-];
+] as const;
+
+export type FilterType = typeof all[number];

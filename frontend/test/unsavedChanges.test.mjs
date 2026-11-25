@@ -187,14 +187,14 @@ test('collection pagination and scroll restore from router navigation state', ()
       useLocation: () => ({ state }),
       useNavigationType: () => action
     },
-    'Store/scrollPositions': { authors: 640 }
+    'Store/scrollPositions': { getScrollPosition: (key) => key === 'authorIndex' ? 640 : 0 }
   };
   const [{ default: withCurrentPage }, { default: withScrollPosition }] = loadFrontendModule([
-    'Components/withCurrentPage.js', 'Components/withScrollPosition.js'
+    'Components/withCurrentPage.js', 'Components/withScrollPosition'
   ], replacements);
   const Collection = () => null;
   const Paged = withCurrentPage(Collection);
-  const Scrolled = withScrollPosition(Collection, 'authors');
+  const Scrolled = withScrollPosition(Collection, 'authorIndex');
 
   assert.equal(Paged({}).props.useCurrentPage, true);
   assert.equal(Scrolled({}).props.scrollTop, 640);
@@ -204,6 +204,8 @@ test('collection pagination and scroll restore from router navigation state', ()
   action = 'REPLACE';
   state = { restoreScrollPosition: true };
   assert.equal(Scrolled({}).props.scrollTop, 640);
+  state = { restoreScrollPosition: false };
+  assert.equal(Scrolled({}).props.scrollTop, 0);
 });
 
 test('download client modal marks changed schema fields dirty without treating reversions as edits', () => {
