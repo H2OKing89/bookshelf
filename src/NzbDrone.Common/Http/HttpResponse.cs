@@ -88,9 +88,9 @@ namespace NzbDrone.Common.Http
 
         public override string ToString()
         {
-            var result = $"Res: HTTP/{Version} [{Request.Method}] {Request.Url}: {(int)StatusCode}.{StatusCode} ({ResponseData?.Length ?? 0} bytes)";
+            var result = $"Res: HTTP/{Version} [{Request.Method}] {Request.ToString(includeMethod: false, includeSummary: false)}: {(int)StatusCode}.{StatusCode} ({ResponseData?.Length ?? 0} bytes)";
 
-            if (HasHttpError && Headers.ContentType.IsNotNullOrWhiteSpace() && !Headers.ContentType.Equals("text/html", StringComparison.InvariantCultureIgnoreCase))
+            if (!Request.RedactSensitiveDetails && HasHttpError && Headers.ContentType.IsNotNullOrWhiteSpace() && !Headers.ContentType.Equals("text/html", StringComparison.InvariantCultureIgnoreCase))
             {
                 result += Environment.NewLine + Content;
             }

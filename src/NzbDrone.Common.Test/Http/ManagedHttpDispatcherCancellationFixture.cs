@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -225,6 +226,48 @@ namespace NzbDrone.Common.Test.Http
                 await _dispatcher.GetResponseAsync(new HttpRequest(server.Url), new CookieContainer()).WaitAsync(Deadline));
 
             error.Status.Should().Be(WebExceptionStatus.ReceiveFailure);
+        }
+
+        [TestCase("Content-Length: 12\r\n", "0123456789ab")]
+        [TestCase("Transfer-Encoding: chunked\r\n", "6\r\n012345\r\n6\r\n6789ab\r\n0\r\n\r\n")]
+        public async Task should_enforce_the_buffered_response_limit_with_and_without_a_declared_length(string framing, string body)
+        {
+            await using var server = new LoopbackServer((stream, path, stop) =>
+                Write(stream, $"HTTP/1.1 200 OK\r\n{framing}Connection: close\r\n\r\n{body}", stop));
+
+            Assert.ThrowsAsync<HttpResponseSizeLimitException>(async () =>
+                await _dispatcher.GetResponseAsync(new HttpRequest(server.Url) { MaxBufferedResponseBytes = 10 }, new CookieContainer()).WaitAsync(Deadline));
+        }
+
+        [Test]
+        public async Task should_accept_a_response_at_the_exact_buffered_limit()
+        {
+            await using var server = new LoopbackServer((stream, path, stop) =>
+                Write(stream, "HTTP/1.1 200 OK\r\nContent-Length: 10\r\nConnection: close\r\n\r\n0123456789", stop));
+
+            var response = await _dispatcher.GetResponseAsync(new HttpRequest(server.Url) { MaxBufferedResponseBytes = 10 }, new CookieContainer()).WaitAsync(Deadline);
+            response.Content.Should().Be("0123456789");
+        }
+
+        [Test]
+        public async Task should_limit_decompressed_buffered_response_bytes()
+        {
+            using var compressed = new MemoryStream();
+            using (var compressor = new GZipStream(compressed, CompressionLevel.Optimal, leaveOpen: true))
+            {
+                compressor.Write(Encoding.UTF8.GetBytes(new string('x', 1024)));
+            }
+
+            var payload = compressed.ToArray();
+            payload.Length.Should().BeLessThan(128);
+            await using var server = new LoopbackServer(async (stream, path, stop) =>
+            {
+                await Write(stream, $"HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Length: {payload.Length}\r\nConnection: close\r\n\r\n", stop);
+                await stream.WriteAsync(payload, stop);
+            });
+
+            Assert.ThrowsAsync<HttpResponseSizeLimitException>(async () =>
+                await _dispatcher.GetResponseAsync(new HttpRequest(server.Url) { MaxBufferedResponseBytes = 128 }, new CookieContainer()).WaitAsync(Deadline));
         }
 
         private static TaskCompletionSource<bool> Signal()

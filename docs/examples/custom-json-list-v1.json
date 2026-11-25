@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "snapshotId": "example-revision-1",
+  "page": 1,
+  "pageSize": 100,
+  "totalItems": 4,
+  "complete": true,
+  "items": [
+    {
+      "kind": "author",
+      "authorId": "audible:us:B000000001",
+      "author": "Example Author"
+    },
+    {
+      "kind": "recording",
+      "authorId": "audible:us:B000000001",
+      "author": "Example Author",
+      "title": "Example Work (US)",
+      "recordingId": "audible:us:B000000002",
+      "editionId": "audible:us:B000000002"
+    },
+    {
+      "kind": "work",
+      "authorId": "audible:us:B000000001",
+      "author": "Example Author",
+      "workId": "owned-source-work-1",
+      "workTitle": "Example Work",
+      "recordings": [
+        {
+          "title": "Example Work (US)",
+          "recordingId": "audible:us:B000000002",
+          "editionId": "audible:us:B000000002"
+        },
+        {
+          "title": "Example Work (UK)",
+          "recordingId": "audible:uk:B000000002",
+          "editionId": "audible:uk:B000000002"
+        }
+      ]
+    },
+    {
+      "kind": "recording",
+      "authorId": "local:author:00000000000000000000000000000001",
+      "author": "Example Local Author",
+      "title": "Example Local Recording",
+      "recordingId": "local:recording:00000000000000000000000000000002",
+      "editionId": "local:recording:00000000000000000000000000000002"
+    }
+  ]
+}

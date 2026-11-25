@@ -46,6 +46,11 @@ namespace NzbDrone.Common.Http
         public bool ConnectionKeepAlive { get; set; }
         public bool LogResponseContent { get; set; }
         public bool LogHttpError { get; set; }
+
+        // Opt in for private feeds: ordinary callers retain the existing diagnostics.
+        public bool RedactSensitiveDetails { get; set; }
+        public bool UseCookies { get; set; } = true;
+        public int? MaxBufferedResponseBytes { get; set; }
         public Dictionary<string, string> Cookies { get; private set; }
         public bool StoreRequestCookie { get; set; }
         public bool StoreResponseCookie { get; set; }
@@ -56,7 +61,7 @@ namespace NzbDrone.Common.Http
 
         public override string ToString()
         {
-            return ToString();
+            return ToString(includeMethod: true, includeSummary: true);
         }
 
         public string ToString(bool includeMethod = true, bool includeSummary = true)
@@ -68,9 +73,9 @@ namespace NzbDrone.Common.Http
                 builder.AppendFormat("Req: [{0}] ", Method);
             }
 
-            builder.Append(Url);
+            builder.Append(RedactSensitiveDetails ? "[private endpoint]" : Url?.ToString());
 
-            if (includeSummary && ContentSummary.IsNotNullOrWhiteSpace())
+            if (!RedactSensitiveDetails && includeSummary && ContentSummary.IsNotNullOrWhiteSpace())
             {
                 builder.Append(": ");
                 builder.Append(ContentSummary);

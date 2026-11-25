@@ -15,7 +15,7 @@ namespace NzbDrone.Common.Http
         }
 
         public HttpException(HttpRequest request, HttpResponse response)
-            : this(request, response, string.Format("HTTP request failed: [{0}:{1}] [{2}] at [{3}]", (int)response.StatusCode, response.StatusCode, request.Method, request.Url))
+            : this(request, response, string.Format("HTTP request failed: [{0}:{1}] [{2}] at [{3}]", (int)response.StatusCode, response.StatusCode, request.Method, request.ToString(includeMethod: false, includeSummary: false)))
         {
         }
 
@@ -26,7 +26,7 @@ namespace NzbDrone.Common.Http
 
         public override string ToString()
         {
-            if (Response != null && Response.ResponseData != null)
+            if (Request?.RedactSensitiveDetails != true && Response != null && Response.ResponseData != null)
             {
                 return base.ToString() + Environment.NewLine + Response.Content;
             }

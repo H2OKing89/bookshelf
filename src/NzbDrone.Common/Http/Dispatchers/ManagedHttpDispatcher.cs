@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -124,6 +125,10 @@ namespace NzbDrone.Common.Http.Dispatchers
                         {
                             await responseMessage.Content.CopyToAsync(request.ResponseStream, null, linked.Token);
                         }
+                        else if (request.MaxBufferedResponseBytes.HasValue)
+                        {
+                            data = await ReadBoundedContent(responseMessage.Content, request.MaxBufferedResponseBytes.Value, linked.Token);
+                        }
                         else
                         {
                             data = await responseMessage.Content.ReadAsByteArrayAsync(linked.Token);
@@ -131,6 +136,11 @@ namespace NzbDrone.Common.Http.Dispatchers
                     }
                     catch (OperationCanceledException) when (linked.IsCancellationRequested)
                     {
+                        throw;
+                    }
+                    catch (HttpResponseSizeLimitException)
+                    {
+                        linked.Token.ThrowIfCancellationRequested();
                         throw;
                     }
                     catch (Exception ex)
@@ -156,6 +166,31 @@ namespace NzbDrone.Common.Http.Dispatchers
             {
                 throw new WebException("Http request timed out", ex, WebExceptionStatus.Timeout, null);
             }
+        }
+
+        private static async Task<byte[]> ReadBoundedContent(HttpContent content, int limit, CancellationToken cancellationToken)
+        {
+            if (limit < 0 || content.Headers.ContentLength > limit)
+            {
+                throw new HttpResponseSizeLimitException(limit);
+            }
+
+            using var source = await content.ReadAsStreamAsync(cancellationToken);
+            using var result = new MemoryStream();
+            var buffer = new byte[8192];
+            int count;
+            while ((count = await source.ReadAsync(buffer.AsMemory(), cancellationToken)) != 0)
+            {
+                if (result.Length + count > limit)
+                {
+                    throw new HttpResponseSizeLimitException(limit);
+                }
+
+                result.Write(buffer, 0, count);
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            return result.ToArray();
         }
 
         protected virtual System.Net.Http.HttpClient GetClient(HttpUri uri)

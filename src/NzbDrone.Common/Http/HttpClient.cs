@@ -95,15 +95,15 @@ namespace NzbDrone.Common.Http
 
             if (request.AllowAutoRedirect && response.HasHttpRedirect)
             {
-                var autoRedirectChain = new List<string> { request.Url.ToString() };
+                var autoRedirectChain = new List<string> { request.ToString(includeMethod: false, includeSummary: false) };
 
                 do
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     request.Url += new HttpUri(response.Headers.GetSingleValue("Location"));
-                    autoRedirectChain.Add(request.Url.ToString());
+                    autoRedirectChain.Add(request.ToString(includeMethod: false, includeSummary: false));
 
-                    _logger.Trace("Redirected to {0}", request.Url);
+                    _logger.Trace("Redirected to {0}", autoRedirectChain.Last());
 
                     if (autoRedirectChain.Count > MaxRedirects)
                     {
@@ -125,7 +125,7 @@ namespace NzbDrone.Common.Http
 
             if (response.HasHttpRedirect && !RuntimeInfo.IsProduction)
             {
-                _logger.Error("Server requested a redirect to [{0}] while in developer mode. Update the request URL to avoid this redirect.", response.Headers["Location"]);
+                _logger.Error("Server requested a redirect to [{0}] while in developer mode. Update the request URL to avoid this redirect.", request.RedactSensitiveDetails ? "private endpoint" : response.Headers["Location"]);
             }
 
             if (!request.SuppressHttpError && response.HasHttpError && (request.SuppressHttpErrorStatusCodes == null || !request.SuppressHttpErrorStatusCodes.Contains(response.StatusCode)))
@@ -200,7 +200,10 @@ namespace NzbDrone.Common.Http
                 : await _httpDispatcher.GetResponseAsync(request, cookieContainer);
 
             cancellationToken.ThrowIfCancellationRequested();
-            HandleResponseCookies(response, cookieContainer);
+            if (request.UseCookies)
+            {
+                HandleResponseCookies(response, cookieContainer);
+            }
 
             stopWatch.Stop();
 
@@ -212,7 +215,7 @@ namespace NzbDrone.Common.Http
                 cancellationToken.ThrowIfCancellationRequested();
             }
 
-            if (request.LogResponseContent && response.ResponseData != null)
+            if (!request.RedactSensitiveDetails && request.LogResponseContent && response.ResponseData != null)
             {
                 _logger.Trace("Response content ({0} bytes): {1}", response.ResponseData.Length, response.Content);
             }
@@ -222,6 +225,11 @@ namespace NzbDrone.Common.Http
 
         private CookieContainer InitializeRequestCookies(HttpRequest request)
         {
+            if (!request.UseCookies)
+            {
+                return new CookieContainer();
+            }
+
             lock (_cookieContainerCache)
             {
                 var sourceContainer = new CookieContainer();
