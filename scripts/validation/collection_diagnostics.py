@@ -69,6 +69,8 @@ class ListEndpoint:
             if self.mode == "partial":
                 books.append({"id": 999, "title": "Owned incomplete provider row", "foreignBookId": "audible:us:B000009999",
                               "foreignEditionId": "audible:us:B000009999", "authorId": 999, "monitored": True})
+            elif self.mode == "contradictory":
+                books[0]["foreignEditionId"] = "audible:uk:B011111111"
             return 200, books
         if pathname == "/api/v1/qualityprofile":
             return 200, [{"id": 1, "name": "Owned quality profile"}]
@@ -232,9 +234,18 @@ def inspect_lists(fixture, first, second):
     first.book_ids = []
     empty = sync_list(fixture, FIRST_LIST)
     fixture.check("confirmed_empty_clears_only_its_own_list", empty["isCurrent"] and empty["lastSuccessfulSync"] is not None and not empty["items"] and fixture.api(f"importlistmembership/{SECOND_LIST}") == b)
+    first.mode = "contradictory"
+    first.book_ids = [101]
+    contradiction = sync_list(fixture, FIRST_LIST)
+    fixture.check("contradictory_marketplace_identity_is_visible_but_unresolved", len(contradiction["items"]) == 1 and
+                  contradiction["items"][0]["sourceBookId"] == "audible:us:B011111111" and
+                  contradiction["items"][0]["sourceEditionId"] == "audible:uk:B011111111" and
+                  not contradiction["items"][0].get("bookId") and not contradiction["items"][0].get("editionId"))
+    fixture.api("importlistexclusion", "POST", {"foreignId": "audible:uk:B011111111", "authorName": "Owned UK recording exclusion"})
+    fixture.check("raw_exact_exclusion_remains_visible_before_resolution", fixture.api(route)["items"][0]["excluded"] is True)
+    first.mode = "success"
     first.book_ids = [101, 102]
     a = sync_list(fixture, FIRST_LIST)
-    fixture.api("importlistexclusion", "POST", {"foreignId": "audible:uk:B011111111", "authorName": "Owned UK recording exclusion"})
     excluded = fixture.api(route)
     fixture.check("excluded_item_remains_visible_in_raw_snapshot", source_ids(excluded) == source_ids(a) and
                   {item["sourceBookId"] for item in excluded["items"] if item["excluded"]} == {"audible:uk:B011111111"})
