@@ -381,3 +381,126 @@ verification passed in the isolated dependency checkout. Integrated validation
 is recorded separately in [local validation](local-validation.md). P09 remains
 **In progress** for the broader compatibility and native-platform gates;
 P08's no-commercial-license implementation remains intact.
+
+## Supported-line and major-version review, 2026-11-24
+
+The [dated registry review and lock inventory](dependencies/2026-11-24-major-lines/summary.json)
+records the exact dependency commit `987b8a70e`, the isolated test checkout,
+the public registry results for all 90 npm direct IDs and 70 public NuGet
+central pins, and the excluded custom-feed Mono.Posix pin. It distinguishes
+the registry's highest stable/dist-tag version from the selected compatible
+line; neither a newer version number nor the donor's choice is by itself a
+compatibility decision. The [individual version rows](dependencies/2026-11-24-major-lines/registry-lines.json)
+retain the before/selected/latest versions, resolved managed packages and
+available npm license, peer and engine metadata.
+
+### Adopted lines
+
+| Dependency | Before | Selected | Reason |
+| --- | --- | --- | --- |
+| Ical.Net | 4.3.1 | 5.2.4 | The [maintainer identifies v4 as unsupported](https://github.com/ical-org/ical.net#icalnet-versions). The v5 date-only API is adapted to retain the original recording UID, release date, exclusive next-day end, current title/overview and tag filtering. NodaTime resolves to 3.2.2. |
+| NUnit | 3.14.0 | 4.6.1 | Same maintained intermediate major as pinned Sonarr v5; [classic assertion compatibility was restored in 4.5](https://docs.nunit.org/articles/nunit/writing-tests/assertions/assertions.html). Only the removed formatted failure-message overload and a legacy collection-assert namespace needed test-only edits. |
+| AutoFixture | 4.17.0 | 4.18.1 | Latest stable compatible test-data generator. |
+| Moq | 4.17.2 | 4.21.0 | Stable test-library release; exact restored BSD-3-Clause package metadata lists Castle.Core and ordinary framework dependencies, not a new commercial license package. |
+| System.Buffers / System.Memory / System.ValueTuple | 4.6.0 / 4.6.2 / 4.6.1 | 4.6.1 / 4.6.3 / 4.6.2 | Same-line managed compatibility/pin maintenance; .NET 10 and all native-asset versions unchanged. |
+| @microsoft/signalr | 6.0.25 | 10.0.11 | Latest registry 10.x browser client, matching the server's supported .NET generation; [Microsoft ties client support to the runtime lifecycle](https://learn.microsoft.com/en-us/aspnet/core/signalr/client-features?view=aspnetcore-10.0). |
+| @types/node | 20.16.11 | 24.19.2 | Type declarations now match the pinned Node 24 toolchain; do not jump to Node 26 types. |
+| fuse.js | 6.6.2 | 7.5.0 | Same major as the pinned Sonarr v5 global search; exercised the actual Bookshelf search worker, including typo ranking, nested tags, indices and limit. |
+| filesize | 10.1.6 | 11.0.35 | Normal binary size/bit formatting is unchanged. The newer library throws on infinite values, so the wrapper explicitly returns blank for all non-finite input. |
+| react-virtualized | 9.21.1 | 9.22.6 | Stay on the existing API major while using a version whose peer contract includes React 18. |
+| react-focus-lock | 2.9.4 | 2.13.7 | Same-line modal focus and React 18 compatibility maintenance. |
+| eslint-plugin-react-hooks | 4.6.2 | 5.2.0 | ESLint 8-compatible intermediate major used by the donor; retain the existing lint rules and configuration. |
+
+Compatible same-line frontend maintenance also updates TanStack Query, React
+Router, React 18 and Lodash declarations, React lazy loading, Vite 8,
+its React and CSS modules plugins, Autoprefixer, core-js, CSS-module declaration
+tooling and the compatible ESLint 8 / Prettier 2 plugin versions. No forced
+incompatible resolutions were added. The original unused Core project
+RestSharp reference is removed: the production lock graph no longer resolves
+it, while the legacy integration test client continues using its existing
+106.15.0 API.
+
+The [restored NuGet metadata](dependencies/2026-11-24-major-lines/reviewed-nuget-metadata.json)
+retains the reviewed licenses and declared dependencies. New distributed
+[Ical.Net and NodaTime notices](../LICENSES/managed/README.md) come from the
+exact Git commits identified by their package metadata, with package and
+notice hashes in [sources.json](../LICENSES/managed/sources.json). No existing
+native engine, raster/PDF asset, .NET runtime, SDK or corresponding notice pin
+was changed.
+
+### Reviewed and deliberately retained
+
+Versions below are the registry observations on this date, not automatic
+upgrade requirements. The machine-readable review records individual IDs
+even where the compatibility decision is shared by a coupled family.
+
+| Retained managed line | Registry candidate | Decision |
+| --- | --- | --- |
+| DryIoc.dll 5.4.3; DryIoc DI adapter 6.2.0 | 6.0.0; 8.0.0 | Coupled container/registration and lifetime migration; preserve the newly verified host singleton and restart behavior. The donor retains the same versions. |
+| FluentAssertions 5.10.3 | 7.2.2 open-source line; 8.11.0 latest | Actual 7.2.2 build trial failed existing time-precision, collection equivalence and member-projection assertion APIs across several fixtures. Do not rewrite or weaken assertions in a dependency refresh. [The vendor states v7 remains open source and v8+ introduces paid commercial-use terms](https://fluentassertions.com/introduction#licensing). A separate test migration can target v7. |
+| FluentValidation 9.5.4 | 12.2.0 | Custom validator and cascade/API migrations span several major versions ([upgrade guides](https://docs.fluentvalidation.net/en/latest/upgrading-to-12.html)); the donor also retains 9.5.4. |
+| MailKit 4.18.2 | 5.0.0 | Separate SMTP protocol, auth and TLS behavior review with owned server fixtures before upgrading an actual notification integration. |
+| Microsoft ASP.NET/Extensions/System 10.0.15 lines | 11.0.0 | Move these together with a deliberate .NET runtime/SDK migration, not into the pinned .NET 10 delivery ABI. |
+| Microsoft.Data.SqlClient 2.1.7; IdentityModel JSON Web Tokens/JWT 6.35.0 | 7.1.2; 8.23.0 | These central declarations do not resolve in the restored locks; they are not vulnerable runtime packages. Avoid introducing a new SQL/auth dependency solely to update dormant pins. |
+| MonoTorrent 2.0.7 | 3.0.2 | The donor changed magnet/torrent reads to `InfoHashes.V1OrV2`. A direct substitution can admit a different hash identity, especially v2-only and hybrid magnets. Require scoped client/receipt/blocklist compatibility checks before changing this acquisition contract. |
+| NLog 5.5.1 / NLog.Extensions.Logging 5.5.0 | 6.2.2 / 6.3.0 | [NLog 6 migration](https://github.com/NLog/NLog/wiki/NLog-6.0---List-of-major-changes) affects logging configuration and related targets. Preserve redaction, database logging, shutdown and profiler behavior; the donor stays on NLog 5. |
+| Npgsql 10.0.3 | 10.0.4 same-line; 11.0.0 latest | Existing pinned provider, exact notice and PostgreSQL migration acceptance remain intact; validate a provider update against the full database gate and replace its notice together. |
+| NUnit 4.6.1 | 5.0.0 | Adopt the bounded compatible intermediate release; NUnit 5 has a further [breaking-change list](https://docs.nunit.org/articles/nunit/release-notes/framework.html). |
+| RestSharp 106.15.0 (test client) | 114.1.0 | [Modern RestSharp migration](https://restsharp.dev/migration) replaces the old request/client contract used throughout legacy integration tests. Remove unused production reference now; defer rewriting the remaining test harness. |
+| Selenium.Support 3.141.0 / ChromeDriver 134.0.6998.16500 | 4.54.0 / 158.0.8127.8800 | Vendor API/driver pairing is a legacy automation migration. Current owned browser gates use Playwright; do not claim the older Selenium integration suite is updated by installing a driver alone. |
+| StyleCop.Analyzers 1.1.118 | 1.3.180 | Isolated actual compile trial produces 47 errors (including cascading build failures) on established source formatting. Defer the analyzer/rules migration; no global suppression or unrelated reformatting. |
+| Swashbuckle annotations/generator 6.6.2 | 6.9.0 same-line; 10.3.1 donor; 11.0.1 latest | Separate OpenAPI object/source-contract and static-document regeneration comparison across the major lines. Keep the just-verified v1/v2 schemas stable in this slice. |
+| System.IO.Abstractions / TestingHelpers 17.0.24 | 17.2.26 same-line; 23.1.0 latest | Must migrate the matching production/test filesystem wrappers and prove import, rename, deletion and safe backup semantics; do not update one half independently. |
+| Mono.Posix.NETStandard Servarr pin | Custom feed | Keep the existing native-image ABI and architecture validation. |
+
+| Retained frontend line | Registry candidate | Decision |
+| --- | --- | --- |
+| Babel 7 core/parser/plugin/presets | Babel 8 | Coupled Babel configuration, Vite compatibility transform plugins and test harness; donor remains on Babel 7. |
+| Font Awesome 6 icon family / React wrapper 0.2 | Icon family 7.3.1 / wrapper 3.5.0 | Review icon mappings, CSS, wrapper batching/props and all rendered controls together instead of a blind major jump; donor uses a different icon library. |
+| SignalR JS 10.0.11 | 11.0.0 | Chosen supported .NET 10 line; a .NET 11 client is unnecessary for this runtime. |
+| React and React DOM 18 / React 18 declarations | React 19.3.x | Existing drag/drop, Popper and document-title peer contracts are not all compatible. Donor stays on React 18. |
+| ESLint 8 / config-prettier 8 / plugin-prettier 4 / Prettier 2 | ESLint 10 / config 10 / plugin 5 / Prettier 3 | Coordinated flat-config/toolchain migration; existing config and legacy plugins must be validated before any major jump. |
+| React Hooks lint plugin 5.2.0 | 7.1.1 | Intermediate major keeps configured hooks rules and ESLint 8; modern compiler-oriented rule migration is separate. |
+| eslint-plugin-simple-import-sort 12 | 14.0.0 | Lint-rule migration, not a production dependency or current audit finding. |
+| jQuery 3.7.1 | 4.1.0 (3.8.0 same-line) | Preserve legacy AJAX/DOM APIs while reducing their usage; donor also retains 3.7.1. |
+| postcss-mixins 9 / postcss-nested 6 | 12.1.2 / 9.0.1 | CSS compilation changes need stylesheet/warning and generated declaration comparison; donor retains both versions. |
+| React DnD 14 / HTML5 and touch backends / multi-backend 6 | DnD/backends 16 / multi-backend 9 | Coupled drag/drop and touch migration (donor uses dnd-kit). Existing peer warnings are known; do not force mixed versions. |
+| react-google-recaptcha 2 | 3.1.0 | Legacy external integration; validate its provider/UI contract with owned fixtures first. |
+| react-popper 1 | 2.3.0 | Popper major/render-prop migration across menus, selects and tooltips is separate; donor uses Floating UI. |
+| react-redux 7 / Redux 4 / redux-actions 2 / redux-thunk 2 / reselect 4 | 9.3.1 / 5.0.1 / 3.0.3 / 3.1.0 / 5.3.0 | Coupled persistent store, middleware, selector and import/ESM migration. The donor replaces this store with Zustand; preserve Bookshelf's existing state semantics. |
+| react-slider 1 / react-tabs 4 | 2.0.6 / 6.1.1 | Component and keyboard behavior changes need explicit quality-setting and detail-tab proof; donor retains the original majors. |
+| react-virtualized 9.22.6 | 10.0.1 | Selected React 18-compatible 9.x patch rather than changing grid/virtualization APIs. |
+| Stylelint 15.10.3 / stylelint-order 6 | 18.1.0 / 8.1.3 | Even the 15.11.0 same-line trial added four shorthand-rule failures beyond the three existing CSS order findings; retained the original line without changing unrelated styles. |
+| TypeScript 5.9.3 | 7.0.2 | Keep parser, CSS declaration generator and strict TS project compatibility; donor also uses TypeScript 5.9. |
+
+### Local evidence
+
+Locked restores of the solution and explicit Windows-targetable GUI graph
+pass, and frozen Yarn Classic installation passes. NuGet's 25-project audit
+reports **zero** vulnerable packages; Yarn reports **zero** advisory findings
+over 1,344 dependencies. See the [audit summary](dependencies/2026-11-24-major-lines/summary.json),
+[managed lock inventory](dependencies/2026-11-24-major-lines/inventory.cdx.json),
+[lock hashes](dependencies/2026-11-24-major-lines/lock-sha256.json),
+[NuGet audit](dependencies/2026-11-24-major-lines/nuget-audit.json) and
+[Yarn audit summary](dependencies/2026-11-24-major-lines/yarn-audit-summary.json).
+The direct-registry review records versions rather than claiming every new
+major is supported or licensed for this project.
+
+The isolated dependency checkout compiled the full solution and passed the
+offline source suites: Core 4,832, Common 855, API 102, Host 193 and Updater 21
+(6,003 passed total; existing skips, including PostgreSQL cases that require
+the separately owned socket). The calendar fixture passed on both the older
+and updated iCalendar library. The retained frontend graph passed 142 tests,
+both TypeScript configurations, ESLint and Vite verification. The actual
+owned browser fixture against the previous backend with the rebuilt frontend
+passed 125 checks across desktop and phone, including real SignalR negotiation,
+a forced reconnect and exactly one resynchronization of authors, commands
+and active page; modal focus, keyboard interaction, virtual table reordering
+and provider isolation also passed. That is frontend compatibility evidence,
+not exact final integrated-package provenance.
+
+No live application home, actual provider, user credentials or external
+notification service were used. NuGet/Yarn vulnerability reports are registry
+advisory snapshots, not complete native/library security audits. P09's
+remaining major-line migrations and native ARM64/release acceptance are not
+closed by these changes.

@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-24",
+  "baseCommit": "4da80b07f",
+  "sourceCommit": "987b8a70ecee53aaf47172497690dc8d4090b6ba",
+  "isolatedTestedDependencyCommit": "5f3771577ade2b83509afd05233254d7cb860add",
+  "nugetLockfiles": 25,
+  "managedPackageIds": 120,
+  "managedComponents": 120,
+  "nugetAuditedProjects": 25,
+  "nugetReportedVulnerablePackages": 0,
+  "frontendAuditDependencies": 1344,
+  "frontendAuditFindings": 0,
+  "npmRegistryDirectIds": 90,
+  "nugetRegistryPins": 70,
+  "registryRequestErrors": [],
+  "offlineSourcePassCounts": {
+    "core": 4832,
+    "common": 855,
+    "api": 102,
+    "host": 193,
+    "update": 21
+  },
+  "frontendTestsPassed": 142,
+  "hostedFrontendOverlayChecksPassed": 125,
+  "exactIntegratedPackageValidation": false,
+  "nativeArm64ExecutionVerified": false,
+  "nativeCodeAudit": false
+}
