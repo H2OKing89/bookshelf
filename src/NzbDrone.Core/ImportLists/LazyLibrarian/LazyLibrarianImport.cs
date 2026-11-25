@@ -12,6 +12,7 @@ namespace NzbDrone.Core.ImportLists.LazyLibrarianImport
 
         public override ImportListType ListType => ImportListType.Other;
         public override TimeSpan MinRefreshInterval => TimeSpan.FromMinutes(15);
+        public override bool SupportsPaging => false;
         public override int PageSize => 1000;
 
         public LazyLibrarianImport(IHttpClient httpClient, IImportListStatusService importListStatusService, IConfigService configService, IParsingService parsingService, Logger logger)

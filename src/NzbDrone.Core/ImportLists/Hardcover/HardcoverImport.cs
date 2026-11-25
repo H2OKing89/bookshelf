@@ -20,6 +20,7 @@ namespace NzbDrone.Core.ImportLists.Hardcover
 
         public override ImportListType ListType => ImportListType.Hardcover;
         public override TimeSpan MinRefreshInterval => TimeSpan.FromHours(12);
+        public override bool SupportsPaging => false;
         public override int PageSize => 200;
 
         public override ProviderMessage Message => new ProviderMessage(

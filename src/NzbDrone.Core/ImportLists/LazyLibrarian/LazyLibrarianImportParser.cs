@@ -27,7 +27,7 @@ namespace NzbDrone.Core.ImportLists.LazyLibrarianImport
             // no books were return
             if (jsonResponse == null)
             {
-                return items;
+                throw new ImportListException(importListResponse, "LazyLibrarian did not return a list response.");
             }
 
             foreach (var item in jsonResponse)

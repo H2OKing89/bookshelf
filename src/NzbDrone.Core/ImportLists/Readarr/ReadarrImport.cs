@@ -29,12 +29,16 @@ namespace NzbDrone.Core.ImportLists.Readarr
             _readarrV1Proxy = readarrV1Proxy;
         }
 
-        public override IList<ImportListItemInfo> Fetch()
+        public override IList<ImportListItemInfo> Fetch() => FetchWithStatus().Items;
+
+        public override ImportListFetchResult FetchWithStatus()
         {
             var authorsAndBooks = new List<ImportListItemInfo>();
+            var complete = false;
 
             try
             {
+                Settings.Validate().ThrowOnError();
                 var remoteBooks = _readarrV1Proxy.GetBooks(Settings);
                 var remoteAuthors = _readarrV1Proxy.GetAuthors(Settings);
 
@@ -43,6 +47,11 @@ namespace NzbDrone.Core.ImportLists.Readarr
                 foreach (var remoteBook in remoteBooks)
                 {
                     var remoteAuthor = authorDict[remoteBook.AuthorId];
+                    if ((remoteBook.Title.IsNullOrWhiteSpace() && remoteBook.ForeignBookId.IsNullOrWhiteSpace()) ||
+                        (remoteAuthor.AuthorName.IsNullOrWhiteSpace() && remoteAuthor.ForeignAuthorId.IsNullOrWhiteSpace()))
+                    {
+                        throw new InvalidOperationException("The remote list contained an incomplete author or book entry.");
+                    }
 
                     if (Settings.ProfileIds.Any() && !Settings.ProfileIds.Contains(remoteAuthor.QualityProfileId))
                     {
@@ -75,6 +84,7 @@ namespace NzbDrone.Core.ImportLists.Readarr
                 }
 
                 _importListStatusService.RecordSuccess(Definition.Id);
+                complete = true;
             }
             catch
             {
@@ -82,7 +92,7 @@ namespace NzbDrone.Core.ImportLists.Readarr
                 _importListStatusService.RecordFailure(Definition.Id);
             }
 
-            return CleanupListItems(authorsAndBooks);
+            return new ImportListFetchResult(CleanupListItems(authorsAndBooks), complete);
         }
 
         public override object RequestAction(string action, IDictionary<string, string> query)

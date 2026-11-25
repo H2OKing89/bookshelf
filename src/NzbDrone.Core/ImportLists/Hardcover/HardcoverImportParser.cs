@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NLog;
@@ -28,100 +29,60 @@ namespace NzbDrone.Core.ImportLists.Hardcover
 
             if (_importListResponse.Content.IsNullOrWhiteSpace())
             {
-                Logger.Warn("Hardcover Parser: Response content is empty");
-                return items;
+                throw IncompleteResponse();
             }
 
             var root = JsonConvert.DeserializeObject<JToken>(_importListResponse.Content);
-
-            var dataToken = GetItemsToken(root);
-            var tokenList = dataToken.ToList();
-
-            foreach (var entry in tokenList)
+            var request = JsonConvert.DeserializeObject<JObject>(Encoding.UTF8.GetString(_importListResponse.HttpRequest.ContentData ?? System.Array.Empty<byte>()));
+            var variables = request?["variables"];
+            if (root is not JObject || root["errors"]?.HasValues == true || root["data"]?["users"] is not JArray users || users.Count != 1)
             {
-                var item = ParseEntry(entry);
+                throw IncompleteResponse();
+            }
 
-                if (item != null)
+            var user = users.Single();
+            var books = new List<JToken>();
+            if (variables?["slugs"] is JArray slugs)
+            {
+                if (user["lists"] is not JArray lists || !new HashSet<string>(slugs.Values<string>()).SetEquals(lists.Select(list => list.Value<string>("slug"))))
                 {
-                    items.Add(item);
+                    throw IncompleteResponse();
                 }
+
+                foreach (var list in lists)
+                {
+                    if (list["list_books"] is not JArray listBooks)
+                    {
+                        throw IncompleteResponse();
+                    }
+
+                    books.AddRange(listBooks.Select(entry => entry["book"]));
+                }
+            }
+            else if (variables?["statusIds"] is JArray && user["user_books"] is JArray userBooks)
+            {
+                books.AddRange(userBooks.Select(entry => entry["book"]));
+            }
+            else
+            {
+                throw IncompleteResponse();
+            }
+
+            foreach (var entry in books)
+            {
+                if (entry is not JObject || ParseEntry(entry) is not { } item || item.Book.IsNullOrWhiteSpace())
+                {
+                    throw IncompleteResponse();
+                }
+
+                items.Add(item);
             }
 
             Logger.Debug("Hardcover: Parsed {0} items from response", items.Count);
             return items;
         }
 
-        private IEnumerable<JToken> GetItemsToken(JToken root)
-        {
-            if (root == null)
-            {
-                return Enumerable.Empty<JToken>();
-            }
-
-            // GraphQL shape: data.users[].lists[].list_books[].book
-            // or:            data.users[].user_books[].book (reading statuses)
-            var users = root["data"]?["users"];
-            if (users != null && users.Type == JTokenType.Array)
-            {
-                var books = new List<JToken>();
-                foreach (var usersItem in users.Children())
-                {
-                    var lists = usersItem["lists"];
-                    if (lists != null && lists.Type == JTokenType.Array)
-                    {
-                        foreach (var list in lists.Children())
-                        {
-                            var listBooks = list["list_books"];
-                            if (listBooks != null && listBooks.Type == JTokenType.Array)
-                            {
-                                foreach (var listBook in listBooks.Children())
-                                {
-                                    var book = listBook["book"];
-                                    if (book != null)
-                                    {
-                                        books.Add(book);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    var userBooks = usersItem["user_books"];
-                    if (userBooks != null && userBooks.Type == JTokenType.Array)
-                    {
-                        foreach (var userBook in userBooks.Children())
-                        {
-                            var book = userBook["book"];
-                            if (book != null)
-                            {
-                                books.Add(book);
-                            }
-                        }
-                    }
-                }
-
-                Logger.Debug("Hardcover: Extracted {0} books from response", books.Count);
-                return books;
-            }
-
-            // Fallback: edges structure
-            var edges = root["data"]?["list"]?["list_books"]?["edges"];
-            if (edges != null && edges.Type == JTokenType.Array)
-            {
-                return edges.Children().Select(e => e["node"]);
-            }
-
-            // Fallbacks for older/rest responses
-            if (root.Type == JTokenType.Array)
-            {
-                return root.Children();
-            }
-
-            return root["data"]?.Children()
-                   ?? root["books"]?.Children()
-                   ?? root["items"]?.Children()
-                   ?? Enumerable.Empty<JToken>();
-        }
+        private ImportListException IncompleteResponse() => new (_importListResponse, "Hardcover did not return a complete list response.");
 
         private ImportListItemInfo ParseEntry(JToken entry)
         {

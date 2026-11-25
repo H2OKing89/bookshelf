@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Core.ImportLists.Exclusions;
-using NzbDrone.Core.Validation;
+using NzbDrone.Core.Books;
+using NzbDrone.Core.MetadataSource.Audiobook;
+using NzbDrone.Core.MetadataSource.BookInfo;
 using NzbDrone.Http.REST.Attributes;
 using Readarr.Http;
 using Readarr.Http.REST;
@@ -15,13 +18,36 @@ namespace Readarr.Api.V1.ImportLists
         private readonly IImportListExclusionService _importListExclusionService;
 
         public ImportListExclusionController(IImportListExclusionService importListExclusionService,
-                                         ImportListExclusionExistsValidator importListExclusionExistsValidator,
-                                         GuidValidator guidValidator)
+                                         ImportListExclusionExistsValidator importListExclusionExistsValidator)
         {
             _importListExclusionService = importListExclusionService;
 
-            SharedValidator.RuleFor(c => c.ForeignId).NotEmpty().SetValidator(guidValidator).SetValidator(importListExclusionExistsValidator);
+            SharedValidator.RuleFor(c => c.ForeignId).NotEmpty().Must(IsQualifiedIdentity).WithMessage("Choose a qualified recording or author identity.").SetValidator(importListExclusionExistsValidator);
             SharedValidator.RuleFor(c => c.AuthorName).NotEmpty();
+        }
+
+        private static bool IsQualifiedIdentity(string id)
+        {
+            if (Guid.TryParse(id, out _))
+            {
+                return true;
+            }
+
+            if (LocalAuthorId.IsLocal(id) || LocalRecordingId.IsLocal(id))
+            {
+                var parts = id.Split(':');
+                return parts.Length == 3 && Guid.TryParse(parts[2], out _);
+            }
+
+            try
+            {
+                AudiobookId.Parse(id);
+                return true;
+            }
+            catch (BookInfoException)
+            {
+                return false;
+            }
         }
 
         protected override ImportListExclusionResource GetResourceById(int id)

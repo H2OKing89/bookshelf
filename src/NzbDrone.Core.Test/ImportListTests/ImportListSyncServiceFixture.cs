@@ -28,10 +28,11 @@ namespace NzbDrone.Core.Test.ImportListTests
             _importListReports = new List<ImportListItemInfo> { importListItem1 };
 
             var mockImportList = new Mock<IImportList>();
+            Mocker.GetMock<IImportListMembershipRepository>().Setup(v => v.Complete(It.IsAny<ImportListMembershipAttempt>(), It.IsAny<IReadOnlyList<ImportListMembershipItem>>())).Returns(true);
 
             Mocker.GetMock<IFetchAndParseImportList>()
                 .Setup(v => v.Fetch())
-                .Returns(_importListReports);
+                .Returns(() => new List<ImportListFetchBatch> { new (new ImportListMembershipAttempt(0, 0, "fixture"), _importListReports) });
 
             Mocker.GetMock<ISearchForNewBook>()
                 .Setup(v => v.SearchForNewBook(It.IsAny<string>(), It.IsAny<string>(), true))
@@ -54,8 +55,8 @@ namespace NzbDrone.Core.Test.ImportListTests
                 });
 
             Mocker.GetMock<IImportListFactory>()
-                .Setup(v => v.Get(It.IsAny<int>()))
-                .Returns(new ImportListDefinition { ShouldMonitor = ImportListMonitorType.SpecificBook });
+                .Setup(v => v.Find(It.IsAny<int>()))
+                .Returns(new ImportListDefinition { EnableAutomaticAdd = true, ShouldMonitor = ImportListMonitorType.SpecificBook });
 
             Mocker.GetMock<IImportListFactory>()
                 .Setup(v => v.AutomaticAddEnabled(It.IsAny<bool>()))
@@ -63,7 +64,7 @@ namespace NzbDrone.Core.Test.ImportListTests
 
             Mocker.GetMock<IFetchAndParseImportList>()
                 .Setup(v => v.Fetch())
-                .Returns(_importListReports);
+                .Returns(() => new List<ImportListFetchBatch> { new (new ImportListMembershipAttempt(0, 0, "fixture"), _importListReports) });
 
             Mocker.GetMock<IImportListExclusionService>()
                 .Setup(v => v.All())
@@ -149,8 +150,8 @@ namespace NzbDrone.Core.Test.ImportListTests
         private void WithMonitorType(ImportListMonitorType monitor)
         {
             Mocker.GetMock<IImportListFactory>()
-                .Setup(v => v.Get(It.IsAny<int>()))
-                .Returns(new ImportListDefinition { ShouldMonitor = monitor });
+                .Setup(v => v.Find(It.IsAny<int>()))
+                .Returns(new ImportListDefinition { EnableAutomaticAdd = true, ShouldMonitor = monitor });
         }
 
         [Test]
@@ -349,7 +350,7 @@ namespace NzbDrone.Core.Test.ImportListTests
         {
             Mocker.GetMock<IFetchAndParseImportList>()
                 .Setup(v => v.Fetch())
-                .Returns(new List<ImportListItemInfo>());
+                .Returns(new List<ImportListFetchBatch>());
 
             Subject.Execute(new ImportListSyncCommand());
 

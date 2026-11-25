@@ -22,7 +22,7 @@ namespace NzbDrone.Core.ImportLists
 
         protected readonly IHttpClient _httpClient;
 
-        public bool SupportsPaging => PageSize > 0;
+        public virtual bool SupportsPaging => PageSize > 0;
 
         public virtual int PageSize => 0;
         public virtual TimeSpan RateLimit => TimeSpan.FromSeconds(2);
@@ -38,13 +38,16 @@ namespace NzbDrone.Core.ImportLists
 
         public override IList<ImportListItemInfo> Fetch()
         {
-            return FetchReleases(g => g.GetListItems(), true);
+            return FetchWithStatus().Items;
         }
 
-        protected virtual IList<ImportListItemInfo> FetchReleases(Func<IImportListRequestGenerator, ImportListPageableRequestChain> pageableRequestChainSelector, bool isRecent = false)
+        public override ImportListFetchResult FetchWithStatus() => FetchReleases(g => g.GetListItems());
+
+        protected virtual ImportListFetchResult FetchReleases(Func<IImportListRequestGenerator, ImportListPageableRequestChain> pageableRequestChainSelector)
         {
             var releases = new List<ImportListItemInfo>();
             var url = string.Empty;
+            var complete = false;
 
             try
             {
@@ -52,6 +55,8 @@ namespace NzbDrone.Core.ImportLists
                 var parser = GetParser();
 
                 var pageableRequestChain = pageableRequestChainSelector(generator);
+                var sawPage = false;
+                var limited = false;
 
                 for (var i = 0; i < pageableRequestChain.Tiers; i++)
                 {
@@ -60,24 +65,35 @@ namespace NzbDrone.Core.ImportLists
                     foreach (var pageableRequest in pageableRequests)
                     {
                         var pagedReleases = new List<ImportListItemInfo>();
+                        var sawRequest = false;
+                        var endedAtFullPage = false;
 
                         foreach (var request in pageableRequest)
                         {
                             url = request.Url.FullUri;
 
                             var page = FetchPage(request, parser);
+                            sawPage = true;
+                            sawRequest = true;
+                            endedAtFullPage = IsFullPage(page);
 
                             pagedReleases.AddRange(page);
 
                             if (pagedReleases.Count >= MaxNumResultsPerQuery)
                             {
+                                limited = true;
                                 break;
                             }
 
-                            if (!IsFullPage(page))
+                            if (!endedAtFullPage)
                             {
                                 break;
                             }
+                        }
+
+                        if (!sawRequest || endedAtFullPage || pagedReleases.Any(release => !IsValidRelease(release)))
+                        {
+                            limited = true;
                         }
 
                         releases.AddRange(pagedReleases.Where(IsValidRelease));
@@ -89,7 +105,15 @@ namespace NzbDrone.Core.ImportLists
                     }
                 }
 
-                _importListStatusService.RecordSuccess(Definition.Id);
+                complete = sawPage && !limited;
+                if (complete)
+                {
+                    _importListStatusService.RecordSuccess(Definition.Id);
+                }
+                else
+                {
+                    _importListStatusService.RecordFailure(Definition.Id);
+                }
             }
             catch (WebException webException)
             {
@@ -161,7 +185,7 @@ namespace NzbDrone.Core.ImportLists
                 _logger.Error(ex, "An error occurred while processing feed. {0}", url);
             }
 
-            return CleanupListItems(releases);
+            return new ImportListFetchResult(CleanupListItems(releases), complete);
         }
 
         protected virtual bool IsValidRelease(ImportListItemInfo release)
@@ -176,7 +200,7 @@ namespace NzbDrone.Core.ImportLists
 
         protected virtual bool IsFullPage(IList<ImportListItemInfo> page)
         {
-            return PageSize != 0 && page.Count >= PageSize;
+            return SupportsPaging && page.Count >= PageSize;
         }
 
         protected virtual IList<ImportListItemInfo> FetchPage(ImportListRequest request, IParseImportListResponse parser)

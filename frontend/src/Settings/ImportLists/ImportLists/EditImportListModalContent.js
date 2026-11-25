@@ -24,6 +24,7 @@ import AdvancedSettingsButton from 'Settings/AdvancedSettingsButton';
 import formatShortTimeSpan from 'Utilities/Date/formatShortTimeSpan';
 import requestAction from 'Utilities/requestAction';
 import translate from 'Utilities/String/translate';
+import ImportListMembership from './ImportListMembership';
 import styles from './EditImportListModalContent.css';
 
 function ImportListMonitoringOptionsPopoverContent() {
@@ -406,6 +407,7 @@ function EditImportListModalContent(props) {
 
             </Form>
         }
+        {!!id && <ImportListMembership id={id} />}
       </ModalBody>
       <ModalFooter>
         {

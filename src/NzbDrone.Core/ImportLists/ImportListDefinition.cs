@@ -7,6 +7,7 @@ namespace NzbDrone.Core.ImportLists
     public class ImportListDefinition : ProviderDefinition
     {
         public bool EnableAutomaticAdd { get; set; }
+        public long MembershipRevision { get; set; }
         public ImportListMonitorType ShouldMonitor { get; set; }
         public bool ShouldMonitorExisting { get; set; }
         public bool ShouldSearch { get; set; }

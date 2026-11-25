@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -22,6 +23,8 @@ namespace NzbDrone.Core.ImportLists
         private readonly IImportListFactory _importListFactory;
         private readonly IImportListExclusionService _importListExclusionService;
         private readonly IFetchAndParseImportList _listFetcherAndParser;
+        private readonly IImportListMembershipRepository _membership;
+        private readonly IImportListStatusService _listStatus;
         private readonly ISearchForNewBook _bookSearch;
         private readonly ISearchForNewAuthor _authorSearch;
         private readonly IProvideBookInfo _bookInfoProxy;
@@ -36,6 +39,8 @@ namespace NzbDrone.Core.ImportLists
         public ImportListSyncService(IImportListFactory importListFactory,
                                      IImportListExclusionService importListExclusionService,
                                      IFetchAndParseImportList listFetcherAndParser,
+                                     IImportListMembershipRepository membership,
+                                     IImportListStatusService listStatus,
                                      ISearchForNewBook bookSearch,
                                      ISearchForNewAuthor authorSearch,
                                      IProvideBookInfo bookInfoProxy,
@@ -50,6 +55,8 @@ namespace NzbDrone.Core.ImportLists
             _importListFactory = importListFactory;
             _importListExclusionService = importListExclusionService;
             _listFetcherAndParser = listFetcherAndParser;
+            _membership = membership;
+            _listStatus = listStatus;
             _bookSearch = bookSearch;
             _authorSearch = authorSearch;
             _bookInfoProxy = bookInfoProxy;
@@ -80,6 +87,11 @@ namespace NzbDrone.Core.ImportLists
 
         private List<Book> SyncList(ImportListDefinition definition)
         {
+            if (definition == null)
+            {
+                return new List<Book>();
+            }
+
             _logger.ProgressInfo($"Starting Import List Refresh for List {definition.Name}");
 
             var listItems = _listFetcherAndParser.FetchSingleList(definition).ToList();
@@ -87,7 +99,72 @@ namespace NzbDrone.Core.ImportLists
             return ProcessListItems(listItems);
         }
 
-        private List<Book> ProcessListItems(List<ImportListItemInfo> items)
+        private List<Book> ProcessListItems(List<ImportListFetchBatch> batches)
+        {
+            var items = new List<(ImportListMembershipAttempt Attempt, ImportListItemInfo Report)>();
+            foreach (var batch in batches)
+            {
+                try
+                {
+                    var entries = new List<ImportListMembershipItem>();
+                    foreach (var report in batch.Items)
+                    {
+                        var entry = ImportListMembershipItem.FromSource(report);
+
+                        // An exact local ID from another application is not an
+                        // Audible title lookup; keep its raw membership only.
+                        if (!IsLocalSource(report))
+                        {
+                            ResolveReport(report);
+                            entry.SetResolvedIdentity(report);
+                            report.AuthorGoodreadsId = entry.AuthorId;
+                            report.BookGoodreadsId = entry.BookId;
+                            report.EditionGoodreadsId = entry.EditionId;
+                        }
+
+                        entries.Add(entry);
+                    }
+
+                    if (_membership.Complete(batch.Attempt, entries))
+                    {
+                        _listStatus.UpdateListSyncStatus(batch.Attempt.ImportListId);
+                        var definition = _importListFactory.Find(batch.Attempt.ImportListId);
+                        if (definition != null && definition.EnableAutomaticAdd && definition.MembershipRevision == batch.Attempt.Revision)
+                        {
+                            items.AddRange(batch.Items.Where(report => !IsLocalSource(report)).Select(report => (batch.Attempt, report)));
+                        }
+                    }
+                }
+                catch (Exception exception)
+                {
+                    // A failed identity resolution must not replace a valid
+                    // snapshot with a partially mapped set.
+                    _logger.Error(exception, "Import List membership refresh failed for list {0}", batch.Attempt.ImportListId);
+                }
+            }
+
+            return ProcessResolvedItems(items);
+        }
+
+        private static bool IsLocalSource(ImportListItemInfo report) => LocalRecordingId.IsLocal(report.BookGoodreadsId) ||
+            LocalRecordingId.IsLocal(report.EditionGoodreadsId) || LocalAuthorId.IsLocal(report.AuthorGoodreadsId);
+
+        private void ResolveReport(ImportListItemInfo report)
+        {
+            if (report.Book.IsNotNullOrWhiteSpace() || report.EditionGoodreadsId.IsNotNullOrWhiteSpace() || report.BookGoodreadsId.IsNotNullOrWhiteSpace())
+            {
+                if (!AudiobookId.IsNative(report.BookGoodreadsId) || !AudiobookId.IsNative(report.AuthorGoodreadsId) || !AudiobookId.IsNative(report.EditionGoodreadsId))
+                {
+                    MapBookReport(report);
+                }
+            }
+            else if ((report.Author.IsNotNullOrWhiteSpace() || report.AuthorGoodreadsId.IsNotNullOrWhiteSpace()) && !AudiobookId.IsNative(report.AuthorGoodreadsId))
+            {
+                MapAuthorReport(report);
+            }
+        }
+
+        private List<Book> ProcessResolvedItems(List<(ImportListMembershipAttempt Attempt, ImportListItemInfo Report)> items)
         {
             var processed = new List<Book>();
             var authorsToAdd = new List<Author>();
@@ -106,21 +183,20 @@ namespace NzbDrone.Core.ImportLists
 
             var listExclusions = _importListExclusionService.All();
 
-            foreach (var report in items)
+            foreach (var (attempt, report) in items)
             {
                 _logger.ProgressTrace("Processing list item {0}/{1}", reportNumber, items.Count);
 
                 reportNumber++;
 
-                var importList = _importListFactory.Get(report.ImportListId);
+                var importList = _importListFactory.Find(report.ImportListId);
+                if (importList == null || !importList.EnableAutomaticAdd || importList.MembershipRevision != attempt.Revision)
+                {
+                    continue;
+                }
 
                 if (report.Book.IsNotNullOrWhiteSpace() || report.EditionGoodreadsId.IsNotNullOrWhiteSpace())
                 {
-                    if (!AudiobookId.IsNative(report.BookGoodreadsId) || !AudiobookId.IsNative(report.AuthorGoodreadsId) || !AudiobookId.IsNative(report.EditionGoodreadsId))
-                    {
-                        MapBookReport(report);
-                    }
-
                     if (AudiobookId.IsNative(report.BookGoodreadsId))
                     {
                         ProcessBookReport(importList, report, listExclusions, booksToAdd, authorsToAdd);
@@ -128,11 +204,6 @@ namespace NzbDrone.Core.ImportLists
                 }
                 else if (report.Author.IsNotNullOrWhiteSpace() || report.AuthorGoodreadsId.IsNotNullOrWhiteSpace())
                 {
-                    if (!AudiobookId.IsNative(report.AuthorGoodreadsId))
-                    {
-                        MapAuthorReport(report);
-                    }
-
                     ProcessAuthorReport(importList, report, listExclusions, authorsToAdd);
                 }
             }
@@ -171,7 +242,8 @@ namespace NzbDrone.Core.ImportLists
             }
             else if (AudiobookId.IsAsin(report.EditionGoodreadsId))
             {
-                mapped = _bookSearch.SearchByAsin(report.EditionGoodreadsId).SingleOrDefault();
+                var matches = _bookSearch.SearchByAsin(report.EditionGoodreadsId).DistinctBy(book => book.ForeignBookId).ToList();
+                mapped = matches.Count == 1 ? matches[0] : null;
             }
             else if (report.Book.IsNotNullOrWhiteSpace())
             {
@@ -206,7 +278,7 @@ namespace NzbDrone.Core.ImportLists
             var existingBook = _bookService.FindById(report.BookGoodreadsId);
 
             // Check to see if book excluded
-            var excludedBook = listExclusions.SingleOrDefault(s => s.ForeignId == report.BookGoodreadsId);
+            var excludedBook = listExclusions.FirstOrDefault(s => s.ForeignId == report.BookGoodreadsId || s.ForeignId == report.EditionGoodreadsId);
 
             // Check to see if author excluded
             var excludedAuthor = listExclusions.SingleOrDefault(s => s.ForeignId == report.AuthorGoodreadsId);
@@ -411,7 +483,7 @@ namespace NzbDrone.Core.ImportLists
 
         public void Execute(ImportListSyncCommand message)
         {
-            var processed = message.DefinitionId.HasValue ? SyncList(_importListFactory.Get(message.DefinitionId.Value)) : SyncAll();
+            var processed = message.DefinitionId.HasValue ? SyncList(_importListFactory.Find(message.DefinitionId.Value)) : SyncAll();
 
             _eventAggregator.PublishEvent(new ImportListSyncCompleteEvent(processed));
         }

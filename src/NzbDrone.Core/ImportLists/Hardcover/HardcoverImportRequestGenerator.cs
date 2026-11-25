@@ -32,6 +32,10 @@ namespace NzbDrone.Core.ImportLists.Hardcover
                     {
                         statusIds.Add(statusId);
                     }
+                    else
+                    {
+                        throw new System.InvalidOperationException("Invalid Hardcover reading status in the list settings.");
+                    }
                 }
                 else
                 {

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using FluentValidation.Results;
 using NLog;
 using NzbDrone.Core.Configuration;
@@ -63,9 +62,11 @@ namespace NzbDrone.Core.ImportLists
 
         public abstract IList<ImportListItemInfo> Fetch();
 
+        public virtual ImportListFetchResult FetchWithStatus() => new (Fetch(), false);
+
         protected virtual IList<ImportListItemInfo> CleanupListItems(IEnumerable<ImportListItemInfo> releases)
         {
-            var result = releases.DistinctBy(r => new { r.Author, r.Book }).ToList();
+            var result = ImportListItemIdentity.DistinctItems(releases);
 
             result.ForEach(c =>
             {

@@ -4,140 +4,103 @@ using System.Linq;
 using System.Threading.Tasks;
 using NLog;
 using NzbDrone.Common.TPL;
-using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.ImportLists
 {
     public interface IFetchAndParseImportList
     {
-        List<ImportListItemInfo> Fetch();
-        List<ImportListItemInfo> FetchSingleList(ImportListDefinition definition);
+        List<ImportListFetchBatch> Fetch();
+        List<ImportListFetchBatch> FetchSingleList(ImportListDefinition definition);
     }
 
     public class FetchAndParseImportListService : IFetchAndParseImportList
     {
         private readonly IImportListFactory _importListFactory;
         private readonly IImportListStatusService _importListStatusService;
+        private readonly IImportListMembershipRepository _membership;
         private readonly Logger _logger;
 
-        public FetchAndParseImportListService(IImportListFactory importListFactory, IImportListStatusService importListStatusService, Logger logger)
+        public FetchAndParseImportListService(IImportListFactory importListFactory, IImportListStatusService importListStatusService, IImportListMembershipRepository membership, Logger logger)
         {
             _importListFactory = importListFactory;
             _importListStatusService = importListStatusService;
+            _membership = membership;
             _logger = logger;
         }
 
-        public List<ImportListItemInfo> Fetch()
+        public List<ImportListFetchBatch> Fetch()
         {
-            var result = new List<ImportListItemInfo>();
-
-            var importLists = _importListFactory.AutomaticAddEnabled();
-
-            if (!importLists.Any())
-            {
-                _logger.Debug("No enabled import lists, skipping.");
-                return result;
-            }
-
-            _logger.Debug("Available import lists {0}", importLists.Count);
-
-            var taskList = new List<Task>();
+            var result = new List<ImportListFetchBatch>();
             var taskFactory = new TaskFactory(TaskCreationOptions.LongRunning, TaskContinuationOptions.None);
-
-            foreach (var importList in importLists)
+            var tasks = new List<Task>();
+            foreach (var importList in _importListFactory.AutomaticAddEnabled())
             {
-                var importListLocal = importList;
-                var importListStatus = _importListStatusService.GetLastSyncListInfo(importListLocal.Definition.Id);
-
-                if (importListStatus.HasValue)
+                var lastSync = _importListStatusService.GetLastSyncListInfo(importList.Definition.Id);
+                if (lastSync.HasValue && DateTime.UtcNow < lastSync.Value + importList.MinRefreshInterval)
                 {
-                    var importListNextSync = importListStatus.Value + importListLocal.MinRefreshInterval;
-
-                    if (DateTime.UtcNow < importListNextSync)
-                    {
-                        _logger.Trace("Skipping refresh of Import List {0} ({1}) due to minimum refresh interval. Next sync after {2}", importList.Name, importListLocal.Definition.Name, importListNextSync);
-                        continue;
-                    }
+                    continue;
                 }
 
-                var task = taskFactory.StartNew(() =>
-                     {
-                         try
-                         {
-                             var importListReports = importListLocal.Fetch();
-
-                             lock (result)
-                             {
-                                 _logger.Debug("Found {0} reports from {1} ({2})", importListReports.Count, importList.Name, importListLocal.Definition.Name);
-
-                                 result.AddRange(importListReports);
-                             }
-
-                             _importListStatusService.UpdateListSyncStatus(importList.Definition.Id);
-                         }
-                         catch (Exception e)
-                         {
-                             _logger.Error(e, "Error during Import List Sync of {0} ({1})", importList.Name, importListLocal.Definition.Name);
-                         }
-                     }).LogExceptions();
-
-                taskList.Add(task);
+                tasks.Add(taskFactory.StartNew(() =>
+                {
+                    var batch = FetchList(importList);
+                    if (batch != null)
+                    {
+                        lock (result)
+                        {
+                            result.Add(batch);
+                        }
+                    }
+                }).LogExceptions());
             }
 
-            Task.WaitAll(taskList.ToArray());
-
-            result = result.DistinctBy(r => new { r.Author, r.Book }).ToList();
-
-            _logger.Debug("Found {0} total reports from {1} lists", result.Count, importLists.Count);
-
-            return result;
+            Task.WaitAll(tasks.ToArray());
+            return result.OrderBy(batch => batch.Attempt.ImportListId).ToList();
         }
 
-        public List<ImportListItemInfo> FetchSingleList(ImportListDefinition definition)
+        public List<ImportListFetchBatch> FetchSingleList(ImportListDefinition definition)
         {
-            var result = new List<ImportListItemInfo>();
-
-            var importList = _importListFactory.GetInstance(definition);
-
-            if (importList == null || !definition.EnableAutomaticAdd)
+            if (definition == null || !definition.EnableAutomaticAdd || definition.Implementation.StartsWith("Goodreads", StringComparison.Ordinal))
             {
-                _logger.Debug("Import List {0} ({1}) is not enabled, skipping.", importList.Name, importList.Definition.Name);
-                return result;
+                return new List<ImportListFetchBatch>();
             }
 
-            var taskList = new List<Task>();
-            var taskFactory = new TaskFactory(TaskCreationOptions.LongRunning, TaskContinuationOptions.None);
+            var importList = _importListFactory.GetInstance(definition);
+            var batch = importList == null ? null : FetchList(importList);
+            return batch == null ? new List<ImportListFetchBatch>() : new List<ImportListFetchBatch> { batch };
+        }
 
-            var importListLocal = importList;
-
-            var task = taskFactory.StartNew(() =>
+        private ImportListFetchBatch FetchList(IImportList importList)
+        {
+            try
             {
-                try
+                var attempt = _membership.Begin((ImportListDefinition)importList.Definition);
+                if (attempt == null)
                 {
-                    var importListReports = importListLocal.Fetch();
-
-                    lock (result)
-                    {
-                        _logger.Debug("Found {0} reports from {1} ({2})", importListReports.Count, importList.Name, importListLocal.Definition.Name);
-
-                        result.AddRange(importListReports);
-                    }
-
-                    _importListStatusService.UpdateListSyncStatus(importList.Definition.Id);
+                    return null;
                 }
-                catch (Exception e)
+
+                var result = importList.FetchWithStatus();
+                if (result == null || !result.Complete || result.Items == null)
                 {
-                    _logger.Error(e, "Error during Import List Sync of {0} ({1})", importList.Name, importListLocal.Definition.Name);
+                    _logger.Debug("Import List {0} did not return a complete result; retaining its last successful membership.", importList.Definition.Name);
+                    return null;
                 }
-            }).LogExceptions();
 
-            taskList.Add(task);
+                var items = ImportListItemIdentity.DistinctItems(result.Items);
+                foreach (var item in items)
+                {
+                    item.ImportListId = importList.Definition.Id;
+                    item.ImportList = importList.Definition.Name;
+                }
 
-            Task.WaitAll(taskList.ToArray());
-
-            result = result.DistinctBy(r => new { r.Author, r.Book }).ToList();
-
-            return result;
+                return new ImportListFetchBatch(attempt, items);
+            }
+            catch (Exception exception)
+            {
+                _logger.Error(exception, "Error during Import List Sync of {0}", importList.Definition.Name);
+                return null;
+            }
         }
     }
 }
