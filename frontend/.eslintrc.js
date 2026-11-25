@@ -363,6 +363,9 @@ module.exports = {
 
       rules: Object.assign(typescriptEslintRecommended.rules, {
         'no-shadow': 'off',
+        // The core rule does not understand TypeScript overload signatures.
+        'no-redeclare': 'off',
+        '@typescript-eslint/no-redeclare': 'error',
         // These should be enabled after cleaning things up
         '@typescript-eslint/no-unused-vars': 'warn',
         '@typescript-eslint/explicit-function-return-type': 'off',

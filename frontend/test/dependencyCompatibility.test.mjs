@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { loadFrontendModule } from './helpers/loadFrontendModule.mjs';
 
 test('binary size formatting preserves audiobook sizes and rejects invalid non-finite values', () => {
-  const { default: formatBytes } = loadFrontendModule('Utilities/Number/formatBytes.js');
+  const { default: formatBytes } = loadFrontendModule('Utilities/Number/formatBytes.ts');
   assert.equal(formatBytes(0), '0 B');
   assert.equal(formatBytes(1536), '1.5 KiB');
   assert.equal(formatBytes(123456789), '117.7 MiB');
