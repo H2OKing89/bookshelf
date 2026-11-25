@@ -53,7 +53,7 @@ namespace NzbDrone.Core.Books
             term = (term ?? string.Empty).Trim();
             if (term.Length > 512)
             {
-                throw new BadRequestException("Work search must not exceed 512 characters.");
+                throw Invalid("Work search must not exceed 512 characters.");
             }
 
             // Treat punctuation in the search literally (including LIKE wildcards).
@@ -101,13 +101,13 @@ namespace NzbDrone.Core.Books
             var recordingIdentity = Identity(current.Recording);
             if (recordingIdentity == null)
             {
-                throw new BadRequestException("The recording has no catalogue or local identity.");
+                throw Invalid("The recording has no catalogue or local identity.");
             }
 
             var ids = edit.Memberships.Where(item => item.WorkId.HasValue).Select(item => item.WorkId.Value).ToArray();
             if (ids.Length > 0 && ReadWorks(connection, transaction, ids).Count != ids.Length)
             {
-                throw new BadRequestException("A selected work no longer exists.");
+                throw Invalid("A selected work no longer exists.");
             }
 
             // This edit replaces only this recording's associations, never the
@@ -255,7 +255,7 @@ namespace NzbDrone.Core.Books
         {
             if (edit?.Memberships == null || string.IsNullOrWhiteSpace(edit.Revision))
             {
-                throw new BadRequestException("An up-to-date recording revision and work memberships are required.");
+                throw Invalid("An up-to-date recording revision and work memberships are required.");
             }
 
             var selected = new HashSet<int>();
@@ -263,14 +263,14 @@ namespace NzbDrone.Core.Books
             {
                 if (member == null || !member.Confirmed.HasValue || member.WorkId.HasValue == (member.NewWork != null))
                 {
-                    throw new BadRequestException("Each membership must specify exactly one work and whether it is confirmed or uncertain.");
+                    throw Invalid("Each membership must specify exactly one work and whether it is confirmed or uncertain.");
                 }
 
                 if (member.WorkId.HasValue)
                 {
                     if (member.WorkId.Value <= 0 || !selected.Add(member.WorkId.Value))
                     {
-                        throw new BadRequestException("Select each existing work only once.");
+                        throw Invalid("Select each existing work only once.");
                     }
 
                     continue;
@@ -279,7 +279,7 @@ namespace NzbDrone.Core.Books
                 var work = member.NewWork;
                 if (work.Id != 0)
                 {
-                    throw new BadRequestException("A new work cannot have an existing ID.");
+                    throw Invalid("A new work cannot have an existing ID.");
                 }
 
                 work.Title = Normalize(work.Title, 512);
@@ -288,7 +288,7 @@ namespace NzbDrone.Core.Books
                 work.Position = Normalize(work.Position, 128);
                 if (work.Title.Length == 0)
                 {
-                    throw new BadRequestException("A work title is required.");
+                    throw Invalid("A work title is required.");
                 }
             }
         }
@@ -298,10 +298,12 @@ namespace NzbDrone.Core.Books
             value = (value ?? string.Empty).Trim();
             if (value.Length > maxLength)
             {
-                throw new BadRequestException($"Work text must not exceed {maxLength} characters.");
+                throw Invalid($"Work text must not exceed {maxLength} characters.");
             }
 
             return value;
         }
+
+        private static NzbDroneClientException Invalid(string message) => new NzbDroneClientException(HttpStatusCode.BadRequest, message);
     }
 }

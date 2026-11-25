@@ -140,10 +140,21 @@ namespace NzbDrone.Core.Test.BookTests
             }));
             conflict.StatusCode.Should().Be(HttpStatusCode.Conflict);
 
-            Assert.Throws<BadRequestException>(() => Save(_pack, Existing(workId), Existing(workId)));
-            Assert.Throws<BadRequestException>(() => Save(_pack, NewWork("Two", "2"), Existing(int.MaxValue)));
+            Assert.Throws<NzbDroneClientException>(() => Save(_pack, Existing(workId), Existing(workId))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            Assert.Throws<NzbDroneClientException>(() => Save(_pack, NewWork("Two", "2"), Existing(int.MaxValue))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
             Subject.Inspect(_pack.Id).Revision.Should().Be(current.Revision);
             Db.All<RecordingWork>().Should().ContainSingle();
+        }
+
+        [Test]
+        public void should_report_invalid_user_input_as_bad_request()
+        {
+            Assert.Throws<NzbDroneClientException>(() => Subject.FindWorks(new string('a', 513))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            Assert.Throws<NzbDroneClientException>(() => Subject.Save(_pack.Id, null)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            Assert.Throws<NzbDroneClientException>(() => Save(_pack, NewWork("", "1"))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            Assert.Throws<NzbDroneClientException>(() => Save(_pack, new RecordingWorkMemberEdit { NewWork = new RecordingWork { Title = "One" } })).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            Subject.Inspect(_pack.Id).Memberships.Should().BeEmpty();
+            Db.All<RecordingWork>().Should().BeEmpty();
         }
 
         [Test]
