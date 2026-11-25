@@ -1,0 +1,30 @@
+{
+  "scope": "Yarn Classic registry audit of frozen application and development graph",
+  "before": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 11,
+      "moderate": 62,
+      "high": 110,
+      "critical": 0
+    },
+    "dependencies": 861,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 861
+  },
+  "after": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "dependencies": 836,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 836
+  },
+  "advisorySuppressions": false
+}

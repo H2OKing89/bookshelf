@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-24",
+  "sourceCommit": "54fda4e8939e251d8c0679e1a54054049eecb1ca",
+  "lockfiles": 25,
+  "packageIds": 120,
+  "components": 120,
+  "auditedProjects": 25,
+  "nugetReportedVulnerablePackages": 0,
+  "frontendAuditFindingsBefore": 183,
+  "frontendAuditFindingsAfter": 0,
+  "frontendAuditDependenciesAfter": 836,
+  "nativeArm64ExecutionVerified": false,
+  "nativeCodeAudit": false
+}

@@ -344,3 +344,40 @@ and during build. The test wrapper propagates nonzero runner statuses; six
 isolated fake-runner cases cover ordinary and coverage invocations. Legacy
 `--enable-extra-platforms-in-sdk` fails explicitly rather than modifying an
 installed SDK. Actual remote CI was not run for this local change.
+
+## Compatible maintenance refresh, 2026-11-24
+
+Commit `54fda4e89` refreshes the locked .NET 10 and Yarn Classic graphs without
+requiring new licenses, changing native provider packages or jumping major
+framework generations. The dated [inventory and audit records](dependencies/2026-11-24-maintenance/summary.json)
+include exact managed package hashes, the checked lockfiles, all 25 audited
+projects (including the Windows GUI with explicit Windows targeting), and the
+frontend before/after audit counts. The initial and refreshed NuGet graphs both
+reported **zero known vulnerable packages**; the frontend audit moved from
+**183 reports (11 low, 62 moderate, 110 high)** to **zero**. Audit results describe
+those registries' reported advisories at the time of the check, not a complete
+code or native-library review.
+
+| Managed package | Previous | Updated |
+| --- | --- | --- |
+| Dapper | 2.0.151 | 2.1.100 |
+| Diacritical.Net | 1.0.4 | 1.0.5 |
+| Newtonsoft.Json | 13.0.3 | 13.0.4 |
+| Polly | 8.5.2 | 8.9.1 |
+| IPAddressRange | 6.1.0 | 6.3.0 |
+
+Frontend updates include Lodash 4.18.1, qs 6.17.1, Moment 2.31.0, PostCSS
+8.5.33, the current compatible Babel 7 patch lines, and TypeScript ESLint
+8.74.0. Affected transitive resolutions were refreshed within their declared
+ranges. The unused postcss-url and rimraf dependencies were removed; the clean
+script uses built-in Node filesystem operations. Static color transforms retain
+the prior computed colors; dynamic colors now use native CSS `color-mix`.
+The obsolete color-function plugin is no longer required. No audit exceptions
+or forced incompatible major resolutions were added.
+
+Locked restore, the frozen Yarn install, offline Core regression tests,
+frontend tests, both TypeScript projects, lint and the production-style Vite
+verification passed in the isolated dependency checkout. Integrated validation
+is recorded separately in [local validation](local-validation.md). P09 remains
+**In progress** for the broader compatibility and native-platform gates;
+P08's no-commercial-license implementation remains intact.
