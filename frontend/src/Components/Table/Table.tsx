@@ -1,36 +1,46 @@
 import classNames from 'classnames';
-import _ from 'lodash';
-import PropTypes from 'prop-types';
 import React from 'react';
 import IconButton from 'Components/Link/IconButton';
 import Scroller from 'Components/Scroller/Scroller';
 import TableOptionsModalWrapper from 'Components/Table/TableOptions/TableOptionsModalWrapper';
 import { icons, scrollDirections } from 'Helpers/Props';
+import type { SortDirection } from 'Helpers/Props/sortDirections';
+import type Column from './Column';
 import TableHeader from './TableHeader';
 import TableHeaderCell from './TableHeaderCell';
 import TableSelectAllHeaderCell from './TableSelectAllHeaderCell';
+import type { CheckboxSelectionChange } from './tableSelection';
 import styles from './Table.css';
 
-const tableHeaderCellProps = [
-  'sortKey',
-  'sortDirection'
-];
-
-function getTableHeaderCellProps(props) {
-  return _.reduce(tableHeaderCellProps, (result, key) => {
-    if (props.hasOwnProperty(key)) {
-      result[key] = props[key];
-    }
-
-    return result;
-  }, {});
+interface TableOptionChange {
+  columns?: Column[];
+  pageSize?: number;
+  [option: string]: unknown;
 }
 
-function Table(props) {
+interface TableBaseProps {
+  className?: string;
+  horizontalScroll?: boolean;
+  columns: readonly Column[];
+  optionsComponent?: React.ElementType;
+  pageSize?: number;
+  canModifyColumns?: boolean;
+  sortKey?: string;
+  sortDirection?: SortDirection;
+  children?: React.ReactNode;
+  onSortPress?: (name: string, direction?: SortDirection) => void;
+  onTableOptionChange?: (change: TableOptionChange) => void;
+}
+
+type TableProps = TableBaseProps & (
+  { selectAll: true; allSelected?: boolean; allUnselected?: boolean; isSelectAllDisabled?: boolean; onSelectAllChange: (change: CheckboxSelectionChange) => void } |
+  { selectAll?: false; allSelected?: boolean; allUnselected?: boolean; isSelectAllDisabled?: boolean; onSelectAllChange?: (change: CheckboxSelectionChange) => void }
+);
+
+function Table(props: TableProps) {
   const {
-    className,
-    horizontalScroll,
-    selectAll,
+    className = styles.table,
+    horizontalScroll = true,
     columns,
     optionsComponent,
     pageSize,
@@ -38,7 +48,8 @@ function Table(props) {
     children,
     onSortPress,
     onTableOptionChange,
-    ...otherProps
+    sortKey,
+    sortDirection
   } = props;
 
   return (
@@ -57,8 +68,8 @@ function Table(props) {
       <table className={className}>
         <TableHeader>
           {
-            selectAll ?
-              <TableSelectAllHeaderCell {...otherProps} /> :
+            props.selectAll ?
+              <TableSelectAllHeaderCell allSelected={props.allSelected} allUnselected={props.allUnselected} isSelectAllDisabled={props.isSelectAllDisabled} onSelectAllChange={props.onSelectAllChange} /> :
               null
           }
 
@@ -83,7 +94,6 @@ function Table(props) {
                     className={styles[name]}
                     name={name}
                     isSortable={false}
-                    {...otherProps}
                   >
                     <TableOptionsModalWrapper
                       columns={columns}
@@ -104,7 +114,8 @@ function Table(props) {
                 <TableHeaderCell
                   key={column.name}
                   onSortPress={onSortPress}
-                  {...getTableHeaderCellProps(otherProps)}
+                  sortKey={sortKey}
+                  sortDirection={sortDirection}
                   {...column}
                 >
                   {typeof column.label === 'function' ? column.label() : column.label}
@@ -119,25 +130,5 @@ function Table(props) {
     </Scroller>
   );
 }
-
-Table.propTypes = {
-  ...TableHeaderCell.props,
-  className: PropTypes.string,
-  horizontalScroll: PropTypes.bool.isRequired,
-  selectAll: PropTypes.bool.isRequired,
-  columns: PropTypes.arrayOf(PropTypes.object).isRequired,
-  optionsComponent: PropTypes.elementType,
-  pageSize: PropTypes.number,
-  canModifyColumns: PropTypes.bool,
-  children: PropTypes.node,
-  onSortPress: PropTypes.func,
-  onTableOptionChange: PropTypes.func
-};
-
-Table.defaultProps = {
-  className: styles.table,
-  horizontalScroll: true,
-  selectAll: false
-};
 
 export default Table;

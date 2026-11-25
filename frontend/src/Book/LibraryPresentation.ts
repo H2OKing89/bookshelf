@@ -45,7 +45,7 @@ export interface LibraryColumn {
 
 export interface SelectionChange<Id extends number> {
   id: Id;
-  value: boolean;
+  value: boolean | null;
   shiftKey?: boolean;
 }
 

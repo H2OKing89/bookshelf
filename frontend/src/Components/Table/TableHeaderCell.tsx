@@ -1,11 +1,26 @@
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Icon from 'Components/Icon';
 import Link from 'Components/Link/Link';
 import { icons, sortDirections } from 'Helpers/Props';
+import type { SortDirection } from 'Helpers/Props/sortDirections';
 import styles from './TableHeaderCell.css';
 
-class TableHeaderCell extends Component {
+export interface TableHeaderCellProps {
+  className?: string;
+  name: string;
+  label?: React.ReactNode | (() => string);
+  columnLabel?: string | (() => string);
+  isSortable?: boolean;
+  isVisible?: boolean;
+  isModifiable?: boolean;
+  sortKey?: string;
+  sortDirection?: SortDirection;
+  fixedSortDirection?: SortDirection;
+  children?: React.ReactNode;
+  onSortPress?: (name: string, direction?: SortDirection) => void;
+}
+
+class TableHeaderCell extends Component<TableHeaderCellProps> {
 
   //
   // Listeners
@@ -17,9 +32,9 @@ class TableHeaderCell extends Component {
     } = this.props;
 
     if (fixedSortDirection) {
-      this.props.onSortPress(name, fixedSortDirection);
+      this.props.onSortPress?.(name, fixedSortDirection);
     } else {
-      this.props.onSortPress(name);
+      this.props.onSortPress?.(name);
     }
   };
 
@@ -28,21 +43,22 @@ class TableHeaderCell extends Component {
 
   render() {
     const {
-      className,
+      className = styles.headerCell,
       name,
       label,
       columnLabel,
-      isSortable,
-      isVisible,
-      isModifiable,
+      isSortable = false,
       sortKey,
       sortDirection,
-      fixedSortDirection,
       children,
-      onSortPress,
       ...otherProps
     } = this.props;
 
+    delete otherProps.isVisible;
+    delete otherProps.isModifiable;
+    delete otherProps.fixedSortDirection;
+    delete otherProps.onSortPress;
+    const renderedLabel = typeof label === 'function' ? label() : label;
     const isSorting = isSortable && sortKey === name;
     const sortIcon = sortDirection === sortDirections.ASCENDING ?
       icons.SORT_ASCENDING :
@@ -54,7 +70,7 @@ class TableHeaderCell extends Component {
           {...otherProps}
           component="th"
           className={className}
-          label={typeof label === 'function' ? label() : label}
+          label={typeof renderedLabel === 'string' ? renderedLabel : undefined}
           title={typeof columnLabel === 'function' ? columnLabel() : columnLabel}
           onPress={this.onPress}
         >
@@ -75,25 +91,5 @@ class TableHeaderCell extends Component {
     );
   }
 }
-
-TableHeaderCell.propTypes = {
-  className: PropTypes.string,
-  name: PropTypes.string.isRequired,
-  label: PropTypes.oneOfType([PropTypes.string, PropTypes.func, PropTypes.node]),
-  columnLabel: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-  isSortable: PropTypes.bool,
-  isVisible: PropTypes.bool,
-  isModifiable: PropTypes.bool,
-  sortKey: PropTypes.string,
-  fixedSortDirection: PropTypes.string,
-  sortDirection: PropTypes.string,
-  children: PropTypes.node,
-  onSortPress: PropTypes.func
-};
-
-TableHeaderCell.defaultProps = {
-  className: styles.headerCell,
-  isSortable: false
-};
 
 export default TableHeaderCell;

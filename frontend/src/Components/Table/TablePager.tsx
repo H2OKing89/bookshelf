@@ -1,5 +1,4 @@
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import SelectInput from 'Components/Form/SelectInput';
 import Icon from 'Components/Icon';
@@ -8,13 +7,25 @@ import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import { icons } from 'Helpers/Props';
 import styles from './TablePager.css';
 
-class TablePager extends Component {
+export interface TablePagerProps {
+  page?: number;
+  totalPages?: number;
+  totalRecords?: number;
+  isFetching?: boolean;
+  onFirstPagePress: () => void;
+  onPreviousPagePress: () => void;
+  onNextPagePress: () => void;
+  onLastPagePress: () => void;
+  onPageSelect: (page: number) => void;
+}
+
+class TablePager extends Component<TablePagerProps, { isShowingPageSelect: boolean }> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: TablePagerProps) {
+    super(props);
 
     this.state = {
       isShowingPageSelect: false
@@ -28,9 +39,12 @@ class TablePager extends Component {
     this.setState({ isShowingPageSelect: true });
   };
 
-  onPageSelect = ({ value: page }) => {
+  onPageSelect = ({ value }: { value: string | number }) => {
     this.setState({ isShowingPageSelect: false });
-    this.props.onPageSelect(parseInt(page));
+    const page = Number(value);
+    if (Number.isSafeInteger(page) && page > 0 && page <= (this.props.totalPages ?? 0)) {
+      this.props.onPageSelect(page);
+    }
   };
 
   onPageSelectBlur = () => {
@@ -43,7 +57,7 @@ class TablePager extends Component {
   render() {
     const {
       page,
-      totalPages,
+      totalPages = 0,
       totalRecords,
       isFetching,
       onFirstPagePress,
@@ -53,7 +67,10 @@ class TablePager extends Component {
     } = this.props;
 
     const isShowingPageSelect = this.state.isShowingPageSelect;
-    const pages = Array.from(new Array(totalPages), (x, i) => {
+    if (!page || !Number.isSafeInteger(totalPages) || totalPages < 1) {
+      return null;
+    }
+    const pages = Array.from({ length: totalPages }, (_, i) => {
       const pageNumber = i + 1;
 
       return {
@@ -61,10 +78,6 @@ class TablePager extends Component {
         value: pageNumber
       };
     });
-
-    if (!page) {
-      return null;
-    }
 
     const isFirstPage = page === 1;
     const isLastPage = page === totalPages;
@@ -164,17 +177,5 @@ class TablePager extends Component {
   }
 
 }
-
-TablePager.propTypes = {
-  page: PropTypes.number,
-  totalPages: PropTypes.number,
-  totalRecords: PropTypes.number,
-  isFetching: PropTypes.bool,
-  onFirstPagePress: PropTypes.func.isRequired,
-  onPreviousPagePress: PropTypes.func.isRequired,
-  onNextPagePress: PropTypes.func.isRequired,
-  onLastPagePress: PropTypes.func.isRequired,
-  onPageSelect: PropTypes.func.isRequired
-};
 
 export default TablePager;

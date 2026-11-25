@@ -6,7 +6,7 @@ import { loadFrontendModule } from './helpers/loadFrontendModule.mjs';
 
 function setup(t) {
   const listeners = new Map();
-  const body = { style: { top: '3px' } };
+  const body = { style: { top: '3px' }, classList: { add() {}, remove() {} } };
   const scrollLocks = [];
   const scrolls = [];
   const element = (parent) => ({
@@ -33,8 +33,7 @@ function setup(t) {
     delete globalThis.window;
   });
 
-  const { default: Modal } = loadFrontendModule('Components/Modal/Modal.js', {
-    'element-class': () => ({ add() {}, remove() {} }),
+  const { default: Modal } = loadFrontendModule('Components/Modal/Modal.tsx', {
     'react-dom': { createPortal: (contents) => contents },
     'react-focus-lock': ({ children }) => children,
     'Components/Error/ErrorBoundary': ({ children }) => children,
@@ -44,7 +43,7 @@ function setup(t) {
     './ModalContext': titleContext,
     './ModalError': () => null
   });
-  const { default: ModalHeader } = loadFrontendModule('Components/Modal/ModalHeader.js', {
+  const { default: ModalHeader } = loadFrontendModule('Components/Modal/ModalHeader.tsx', {
     './ModalContext': titleContext
   });
 
@@ -137,6 +136,8 @@ test('backdrop dismissal requires a stationary primary mouse press on the active
   modal.onBackdropEndPress(press);
   modal.onBackdropBeginPress(press);
   modal.onBackdropEndPress({ ...press, clientX: 50 });
+  modal.onBackdropBeginPress(press);
+  modal.onBackdropEndPress({ ...press, button: 2 });
   modal.onBackdropBeginPress({ ...press, button: 2 });
   modal.onBackdropEndPress(press);
   assert.equal(listeners.size, 1);
@@ -153,7 +154,7 @@ test('destructive confirmations autofocus Cancel and require the actual Delete b
   const passthrough = ({ children }) => children;
   const button = ({ children, onPress, autoFocus }) =>
     createElement('button', { autoFocus, onClick: onPress }, children);
-  const { default: ConfirmModal } = loadFrontendModule('Components/Modal/ConfirmModal.js', {
+  const { default: ConfirmModal } = loadFrontendModule('Components/Modal/ConfirmModal.tsx', {
     'Components/Link/Button': button,
     'Components/Link/SpinnerButton': button,
     'Components/Modal/Modal': passthrough,
@@ -183,4 +184,13 @@ test('destructive confirmations autofocus Cancel and require the actual Delete b
   assert.equal(deletes, 0);
   confirm.props.onPress();
   assert.equal(deletes, 1);
+});
+
+test('closing a dialog skips a connected but non-focusable opener', async (t) => {
+  const { listeners, open } = setup(t);
+  document.activeElement = { isConnected: true };
+  const modal = open('Editor');
+  modal.componentWillUnmount();
+  await Promise.resolve();
+  assert.equal(listeners.size, 0);
 });

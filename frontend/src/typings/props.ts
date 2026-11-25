@@ -1,5 +1,5 @@
 export interface SelectStateInputProps {
   id: number;
-  value: boolean;
-  shiftKey: boolean;
+  value: boolean | null;
+  shiftKey?: boolean;
 }

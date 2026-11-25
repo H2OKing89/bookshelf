@@ -1,11 +1,10 @@
 import classNames from 'classnames';
-import elementClass from 'element-class';
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import FocusLock from 'react-focus-lock';
 import ErrorBoundary from 'Components/Error/ErrorBoundary';
 import { sizes } from 'Helpers/Props';
+import type { Size } from 'Helpers/Props/sizes';
 import { isIOS } from 'Utilities/browser';
 import * as keyCodes from 'Utilities/Constants/keyCodes';
 import getUniqueElementId from 'Utilities/getUniqueElementId';
@@ -14,15 +13,43 @@ import { ModalTitleContext } from './ModalContext';
 import ModalError from './ModalError';
 import styles from './Modal.css';
 
-const openModals = [];
-const backdropClickDistance = 8;
-let scrollPosition = null;
+export interface ModalProps {
+  'aria-label'?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  backdropClassName?: string;
+  size?: Size;
+  children?: React.ReactNode;
+  isOpen: boolean;
+  closeOnBackgroundClick?: boolean;
+  onModalClose: () => void;
+}
+interface ModalState { isTopModal: boolean }
+interface OpenState {
+  focusTargets: (Element | null)[];
+  scrollX: number;
+  scrollY: number;
+}
+interface ModalLayer {
+  props: ModalProps;
+  focusTargets: (Element | null)[];
+  dialogRef: React.RefObject<HTMLDivElement>;
+  setState(state: ModalState): void;
+}
 
-function topModal() {
+const openModals: ModalLayer[] = [];
+const sizeClasses: Partial<Record<Size, string>> = styles;
+function canRestoreFocus(element: Element | null): element is Element & { focus(options?: FocusOptions): void } {
+  return element !== null && 'focus' in element && typeof element.focus === 'function';
+}
+const backdropClickDistance = 8;
+let scrollPosition: { scrollX: number; scrollY: number; bodyTop: string } | null = null;
+
+function topModal(): ModalLayer | undefined {
   return openModals[openModals.length - 1];
 }
 
-function captureOpenState() {
+function captureOpenState(): OpenState {
   return {
     focusTargets: [document.activeElement, ...(topModal()?.focusTargets ?? [])],
     scrollX: window.scrollX,
@@ -30,7 +57,7 @@ function captureOpenState() {
   };
 }
 
-function onKeyDown(event) {
+function onKeyDown(event: KeyboardEvent) {
   if (
     (event.key === 'Escape' || event.keyCode === keyCodes.ESCAPE) &&
     !event.defaultPrevented &&
@@ -43,34 +70,43 @@ function onKeyDown(event) {
   }
 }
 
-class Modal extends Component {
+class Modal extends Component<ModalProps, ModalState, OpenState | null> {
+  static defaultProps = {
+    className: styles.modal,
+    backdropClassName: styles.modalBackdrop,
+    size: sizes.LARGE,
+    closeOnBackgroundClick: true
+  };
+
+
+
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: ModalProps) {
+    super(props);
 
     this._node = document.getElementById('portal-root');
     this._backgroundRef = null;
-    this.dialogRef = React.createRef();
+    this.dialogRef = React.createRef<HTMLDivElement>();
     this._titleId = `${getUniqueElementId()}-title`;
     this._initialOpenState = props.isOpen ? captureOpenState() : null;
     this.state = { isTopModal: true };
   }
 
   componentDidMount() {
-    if (this.props.isOpen) {
+    if (this.props.isOpen && this._initialOpenState) {
       this._openModal(this._initialOpenState);
       this._initialOpenState = null;
     }
   }
 
-  getSnapshotBeforeUpdate(prevProps) {
+  getSnapshotBeforeUpdate(prevProps: ModalProps): OpenState | null {
     return !prevProps.isOpen && this.props.isOpen ? captureOpenState() : null;
   }
 
-  componentDidUpdate(prevProps, prevState, snapshot) {
+  componentDidUpdate(prevProps: ModalProps, _prevState: ModalState, snapshot: OpenState | null) {
     if (snapshot) {
       this._openModal(snapshot);
     } else if (prevProps.isOpen && !this.props.isOpen) {
@@ -84,14 +120,22 @@ class Modal extends Component {
     }
   }
 
+  private _node: HTMLElement | null;
+  private _backgroundRef: HTMLDivElement | null;
+  dialogRef: React.RefObject<HTMLDivElement>;
+  private _titleId: string;
+  private _initialOpenState: OpenState | null;
+  private _backdropPress: { x: number; y: number } | null = null;
+  focusTargets: (Element | null)[] = [];
+
   //
   // Control
 
-  _setBackgroundRef = (ref) => {
+  _setBackgroundRef = (ref: HTMLDivElement | null) => {
     this._backgroundRef = ref;
   };
 
-  _openModal({ focusTargets, scrollX, scrollY }) {
+  _openModal({ focusTargets, scrollX, scrollY }: OpenState) {
     const previousModal = topModal();
 
     this.focusTargets = focusTargets;
@@ -109,9 +153,9 @@ class Modal extends Component {
         setScrollLock(true);
         scrollPosition = { scrollX, scrollY, bodyTop: document.body.style.top };
         document.body.style.top = `${-scrollY}px`;
-        elementClass(document.body).add(styles.modalOpenIOS);
+        document.body.classList.add(styles.modalOpenIOS);
       } else {
-        elementClass(document.body).add(styles.modalOpen);
+        document.body.classList.add(styles.modalOpen);
       }
     }
   }
@@ -134,12 +178,12 @@ class Modal extends Component {
 
       if (scrollPosition) {
         setScrollLock(false);
-        elementClass(document.body).remove(styles.modalOpenIOS);
+        document.body.classList.remove(styles.modalOpenIOS);
         document.body.style.top = scrollPosition.bodyTop;
         window.scrollTo(scrollPosition.scrollX, scrollPosition.scrollY);
         scrollPosition = null;
       } else {
-        elementClass(document.body).remove(styles.modalOpen);
+        document.body.classList.remove(styles.modalOpen);
       }
     }
 
@@ -150,12 +194,14 @@ class Modal extends Component {
       Promise.resolve().then(() => {
         if (topModal() === nextModal) {
           const target = focusTargets.find((element) =>
-            element?.isConnected &&
+            canRestoreFocus(element) && element.isConnected &&
             element !== document.body &&
             (!nextModal || nextModal.dialogRef.current?.contains(element))
           );
 
-          target?.focus({ preventScroll: true });
+          if (target && canRestoreFocus(target)) {
+            target.focus({ preventScroll: true });
+          }
         }
       });
     }
@@ -164,7 +210,7 @@ class Modal extends Component {
   //
   // Listeners
 
-  onBackdropBeginPress = (event) => {
+  onBackdropBeginPress = (event: React.MouseEvent<HTMLDivElement>) => {
     this._backdropPress =
       event.button === 0 &&
       event.target === this._backgroundRef &&
@@ -173,9 +219,9 @@ class Modal extends Component {
         null;
   };
 
-  onBackdropEndPress = (event) => {
+  onBackdropEndPress = (event: React.MouseEvent<HTMLDivElement>) => {
     const {
-      closeOnBackgroundClick,
+      closeOnBackgroundClick = true,
       onModalClose
     } = this.props;
     const press = this._backdropPress;
@@ -183,6 +229,7 @@ class Modal extends Component {
 
     if (
       press &&
+      event.button === 0 &&
       event.target === this._backgroundRef &&
       topModal() === this &&
       Math.hypot(event.clientX - press.x, event.clientY - press.y) <= backdropClickDistance &&
@@ -200,7 +247,7 @@ class Modal extends Component {
       className,
       style,
       backdropClassName,
-      size,
+      size = sizes.LARGE,
       children,
       isOpen,
       onModalClose,
@@ -210,6 +257,10 @@ class Modal extends Component {
 
     if (!isOpen) {
       return null;
+    }
+
+    if (!this._node) {
+      throw new Error('Missing modal portal root');
     }
 
     return ReactDOM.createPortal(
@@ -226,7 +277,7 @@ class Modal extends Component {
                 ref={this.dialogRef}
                 className={classNames(
                   className,
-                  styles[size]
+                  sizeClasses[size]
                 )}
                 style={style}
                 role="dialog"
@@ -237,8 +288,7 @@ class Modal extends Component {
                 tabIndex={-1}
               >
                 <ErrorBoundary
-                  errorComponent={ModalError}
-                  onModalClose={onModalClose}
+                  renderError={(failure) => <ModalError {...failure} onModalClose={onModalClose} />}
                 >
                   {children}
                 </ErrorBoundary>
@@ -251,24 +301,5 @@ class Modal extends Component {
     );
   }
 }
-
-Modal.propTypes = {
-  'aria-label': PropTypes.string,
-  className: PropTypes.string,
-  style: PropTypes.object,
-  backdropClassName: PropTypes.string,
-  size: PropTypes.oneOf(sizes.all),
-  children: PropTypes.node,
-  isOpen: PropTypes.bool.isRequired,
-  closeOnBackgroundClick: PropTypes.bool.isRequired,
-  onModalClose: PropTypes.func.isRequired
-};
-
-Modal.defaultProps = {
-  className: styles.modal,
-  backdropClassName: styles.modalBackdrop,
-  size: sizes.LARGE,
-  closeOnBackgroundClick: true
-};
 
 export default Modal;

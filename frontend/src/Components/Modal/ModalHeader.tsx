@@ -1,9 +1,8 @@
-import PropTypes from 'prop-types';
 import React, { useContext } from 'react';
 import { ModalTitleContext } from './ModalContext';
 import styles from './ModalHeader.css';
 
-function ModalHeader({ children, ...otherProps }) {
+function ModalHeader({ children, ...otherProps }: React.HTMLAttributes<HTMLHeadingElement>) {
   const titleId = useContext(ModalTitleContext);
 
   return (
@@ -16,9 +15,5 @@ function ModalHeader({ children, ...otherProps }) {
     </h2>
   );
 }
-
-ModalHeader.propTypes = {
-  children: PropTypes.node
-};
 
 export default ModalHeader;

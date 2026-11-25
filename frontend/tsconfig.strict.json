@@ -121,6 +121,16 @@
     "./src/Book/Details/BookRecordingMetadata.tsx",
     "./src/Book/Details/formatChapterTime.ts",
     "./src/InteractiveImport/Edition/SelectEditionRow.tsx",
-    "./src/BookFile/FileDetails.tsx"
+    "./src/BookFile/FileDetails.tsx",
+    "./src/Components/Modal/*.tsx",
+    "./src/Components/Modal/*.ts",
+    "./src/Components/Scroller/Scroller.tsx",
+    "./src/Components/Error/ErrorBoundary.tsx",
+    "./src/Components/Error/ErrorBoundaryError.tsx",
+    "./src/Helpers/Props/scrollDirections.ts",
+    "./src/Helpers/Props/sortDirections.ts",
+    "./src/Components/Table/*.tsx",
+    "./src/Components/Table/*.ts",
+    "./src/Components/Table/Cells/*.tsx"
   ]
 }

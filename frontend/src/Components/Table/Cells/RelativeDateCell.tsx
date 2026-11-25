@@ -1,30 +1,44 @@
-import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
+import type UiSettings from 'typings/Settings/UiSettings';
+import type { DateInput } from 'Utilities/Date/dateTypes';
 import formatDateTime from 'Utilities/Date/formatDateTime';
 import getRelativeDate from 'Utilities/Date/getRelativeDate';
 import TableRowCell from './TableRowCell';
 import styles from './RelativeDateCell.css';
 
-class RelativeDateCell extends PureComponent {
+export type DatePresentation = Pick<UiSettings, 'showRelativeDates' | 'shortDateFormat' | 'longDateFormat' | 'timeFormat'>;
+
+interface DateCellTargetProps {
+  className?: string;
+  title?: string;
+  children?: React.ReactNode;
+}
+
+export interface RelativeDateCellProps extends DatePresentation, DateCellTargetProps {
+  date?: DateInput;
+  includeSeconds?: boolean;
+  component?: React.ComponentType<DateCellTargetProps>;
+}
+
+class RelativeDateCell extends PureComponent<RelativeDateCellProps> {
 
   //
   // Render
 
   render() {
     const {
-      className,
+      className = styles.cell,
       date,
-      includeSeconds,
+      includeSeconds = false,
       showRelativeDates,
       shortDateFormat,
       longDateFormat,
       timeFormat,
-      component: Component,
-      dispatch,
+      component: Component = TableRowCell,
       ...otherProps
     } = this.props;
 
-    if (!date) {
+    if (date == null || date === '') {
       return (
         <Component
           className={className}
@@ -44,23 +58,5 @@ class RelativeDateCell extends PureComponent {
     );
   }
 }
-
-RelativeDateCell.propTypes = {
-  className: PropTypes.string.isRequired,
-  date: PropTypes.string,
-  includeSeconds: PropTypes.bool.isRequired,
-  showRelativeDates: PropTypes.bool.isRequired,
-  shortDateFormat: PropTypes.string.isRequired,
-  longDateFormat: PropTypes.string.isRequired,
-  timeFormat: PropTypes.string.isRequired,
-  component: PropTypes.elementType,
-  dispatch: PropTypes.func
-};
-
-RelativeDateCell.defaultProps = {
-  className: styles.cell,
-  includeSeconds: false,
-  component: TableRowCell
-};
 
 export default RelativeDateCell;

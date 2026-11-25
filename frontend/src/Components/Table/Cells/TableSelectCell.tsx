@@ -1,10 +1,18 @@
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import CheckInput from 'Components/Form/CheckInput';
+import type { CheckboxSelectionChange, TableSelectionChange } from '../tableSelection';
 import TableRowCell from './TableRowCell';
 import styles from './TableSelectCell.css';
 
-class TableSelectCell extends Component {
+export interface TableSelectCellProps<Id extends string | number> extends React.AriaAttributes {
+  className?: string;
+  id: Id;
+  isSelected?: boolean;
+  isDisabled?: boolean;
+  onSelectedChange: (change: TableSelectionChange<Id>) => void;
+}
+
+class TableSelectCell<Id extends string | number> extends Component<TableSelectCellProps<Id>> {
 
   //
   // Lifecycle
@@ -12,7 +20,7 @@ class TableSelectCell extends Component {
   componentDidMount() {
     const {
       id,
-      isSelected,
+      isSelected = false,
       onSelectedChange
     } = this.props;
 
@@ -31,7 +39,7 @@ class TableSelectCell extends Component {
   //
   // Listeners
 
-  onChange = ({ value, shiftKey }, a, b, c, d) => {
+  onChange = ({ value, shiftKey }: CheckboxSelectionChange) => {
     const {
       id,
       onSelectedChange
@@ -45,11 +53,12 @@ class TableSelectCell extends Component {
 
   render() {
     const {
-      className,
+      className = styles.selectCell,
       id,
-      isSelected,
-      ...otherProps
+      isSelected = false,
+      ...inputProps
     } = this.props;
+    delete inputProps.onSelectedChange;
 
     return (
       <TableRowCell className={className}>
@@ -57,24 +66,12 @@ class TableSelectCell extends Component {
           className={styles.input}
           name={id.toString()}
           value={isSelected}
-          {...otherProps}
+          {...inputProps}
           onChange={this.onChange}
         />
       </TableRowCell>
     );
   }
 }
-
-TableSelectCell.propTypes = {
-  className: PropTypes.string.isRequired,
-  id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-  isSelected: PropTypes.bool.isRequired,
-  onSelectedChange: PropTypes.func.isRequired
-};
-
-TableSelectCell.defaultProps = {
-  className: styles.selectCell,
-  isSelected: false
-};
 
 export default TableSelectCell;

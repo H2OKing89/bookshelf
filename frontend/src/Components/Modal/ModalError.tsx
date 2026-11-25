@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
 import React from 'react';
+import type { BoundaryErrorProps } from 'Components/Error/ErrorBoundary';
 import ErrorBoundaryError from 'Components/Error/ErrorBoundaryError';
 import Button from 'Components/Link/Button';
 import ModalBody from 'Components/Modal/ModalBody';
@@ -9,7 +9,7 @@ import ModalHeader from 'Components/Modal/ModalHeader';
 import translate from 'Utilities/String/translate';
 import styles from './ModalError.css';
 
-function ModalError(props) {
+function ModalError(props: BoundaryErrorProps & { onModalClose: () => void }) {
   const {
     onModalClose,
     ...otherProps
@@ -40,9 +40,5 @@ function ModalError(props) {
     </ModalContent>
   );
 }
-
-ModalError.propTypes = {
-  onModalClose: PropTypes.func.isRequired
-};
 
 export default ModalError;

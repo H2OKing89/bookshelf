@@ -3,4 +3,6 @@ export const BOTH = 'both';
 export const HORIZONTAL = 'horizontal';
 export const VERTICAL = 'vertical';
 
-export const all = [NONE, HORIZONTAL, VERTICAL, BOTH];
+export const all = [NONE, HORIZONTAL, VERTICAL, BOTH] as const;
+
+export type ScrollDirection = typeof all[number];

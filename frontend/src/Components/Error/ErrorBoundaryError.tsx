@@ -4,14 +4,12 @@ import translate from 'Utilities/String/translate';
 import styles from './ErrorBoundaryError.css';
 
 interface ErrorBoundaryErrorProps {
-  className: string;
-  messageClassName: string;
-  detailsClassName: string;
-  message: string;
+  className?: string;
+  messageClassName?: string;
+  detailsClassName?: string;
+  message?: string;
   error: Error;
-  info: {
-    componentStack: string;
-  };
+  info: React.ErrorInfo;
 }
 
 function ErrorBoundaryError(props: ErrorBoundaryErrorProps) {
@@ -29,13 +27,19 @@ function ErrorBoundaryError(props: ErrorBoundaryErrorProps) {
   >(null);
 
   useEffect(() => {
+    let cancelled = false;
+    setDetailedError(null);
     if (error) {
-      StackTrace.fromError(error).then((de) => {
-        setDetailedError(de);
+      StackTrace.fromError(error).then((frames) => {
+        if (!cancelled) {
+          setDetailedError(frames);
+        }
+      }).catch(() => {
+        // The component stack is still available if the source map cannot be read.
       });
-    } else {
-      setDetailedError(null);
     }
+
+    return () => { cancelled = true; };
   }, [error, setDetailedError]);
 
   return (
@@ -45,6 +49,7 @@ function ErrorBoundaryError(props: ErrorBoundaryErrorProps) {
       <div className={styles.imageContainer}>
         <img
           className={styles.image}
+          alt=""
           src={`${window.Readarr.urlBase}/Content/Images/error.png`}
         />
       </div>

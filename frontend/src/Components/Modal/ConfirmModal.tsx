@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import Button from 'Components/Link/Button';
 import SpinnerButton from 'Components/Link/SpinnerButton';
@@ -8,18 +7,35 @@ import ModalContent from 'Components/Modal/ModalContent';
 import ModalFooter from 'Components/Modal/ModalFooter';
 import ModalHeader from 'Components/Modal/ModalHeader';
 import { kinds, sizes } from 'Helpers/Props';
+import type { Kind } from 'Helpers/Props/kinds';
+import type { Size } from 'Helpers/Props/sizes';
 
-function ConfirmModal(props) {
+export interface ConfirmModalProps {
+  className?: string;
+  isOpen: boolean;
+  kind?: Kind;
+  size?: Size;
+  title: string;
+  message: React.ReactNode;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  hideCancelButton?: boolean;
+  isSpinning?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function ConfirmModal(props: ConfirmModalProps) {
   const {
     isOpen,
-    kind,
-    size,
+    kind = kinds.PRIMARY,
+    size = sizes.MEDIUM,
     title,
     message,
-    confirmLabel,
-    cancelLabel,
+    confirmLabel = 'OK',
+    cancelLabel = 'Cancel',
     hideCancelButton,
-    isSpinning,
+    isSpinning = false,
     onConfirm,
     onCancel
   } = props;
@@ -63,28 +79,5 @@ function ConfirmModal(props) {
     </Modal>
   );
 }
-
-ConfirmModal.propTypes = {
-  className: PropTypes.string,
-  isOpen: PropTypes.bool.isRequired,
-  kind: PropTypes.oneOf(kinds.all),
-  size: PropTypes.oneOf(sizes.all),
-  title: PropTypes.string.isRequired,
-  message: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
-  confirmLabel: PropTypes.string,
-  cancelLabel: PropTypes.string,
-  hideCancelButton: PropTypes.bool,
-  isSpinning: PropTypes.bool.isRequired,
-  onConfirm: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired
-};
-
-ConfirmModal.defaultProps = {
-  kind: kinds.PRIMARY,
-  size: sizes.MEDIUM,
-  confirmLabel: 'OK',
-  cancelLabel: 'Cancel',
-  isSpinning: false
-};
 
 export default ConfirmModal;

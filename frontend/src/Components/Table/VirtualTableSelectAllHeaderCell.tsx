@@ -1,27 +1,25 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import CheckInput from 'Components/Form/CheckInput';
+import { type CheckboxSelectionChange, getSelectAllValue } from './tableSelection';
 import VirtualTableHeaderCell from './VirtualTableHeaderCell';
 import styles from './VirtualTableSelectAllHeaderCell.css';
 
-function getValue(allSelected, allUnselected) {
-  if (allSelected) {
-    return true;
-  } else if (allUnselected) {
-    return false;
-  }
-
-  return null;
+export interface SelectAllHeaderCellProps {
+  allSelected?: boolean;
+  allUnselected?: boolean;
+  isSelectAllDisabled?: boolean;
+  onSelectAllChange: (change: CheckboxSelectionChange) => void;
 }
 
-function VirtualTableSelectAllHeaderCell(props) {
+function VirtualTableSelectAllHeaderCell(props: SelectAllHeaderCellProps) {
   const {
-    allSelected,
-    allUnselected,
+    allSelected = false,
+    allUnselected = false,
+    isSelectAllDisabled,
     onSelectAllChange
   } = props;
 
-  const value = getValue(allSelected, allUnselected);
+  const value = getSelectAllValue(allSelected, allUnselected);
 
   return (
     <VirtualTableHeaderCell
@@ -32,16 +30,11 @@ function VirtualTableSelectAllHeaderCell(props) {
         className={styles.input}
         name="selectAll"
         value={value}
+        isDisabled={isSelectAllDisabled}
         onChange={onSelectAllChange}
       />
     </VirtualTableHeaderCell>
   );
 }
-
-VirtualTableSelectAllHeaderCell.propTypes = {
-  allSelected: PropTypes.bool.isRequired,
-  allUnselected: PropTypes.bool.isRequired,
-  onSelectAllChange: PropTypes.func.isRequired
-};
 
 export default VirtualTableSelectAllHeaderCell;

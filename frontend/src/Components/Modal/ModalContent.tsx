@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import Icon from 'Components/Icon';
 import Link from 'Components/Link/Link';
@@ -6,11 +5,15 @@ import { icons } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
 import styles from './ModalContent.css';
 
-function ModalContent(props) {
+export interface ModalContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  showCloseButton?: boolean;
+  onModalClose: () => void;
+}
+function ModalContent(props: ModalContentProps) {
   const {
-    className,
+    className = styles.modalContent,
     children,
-    showCloseButton,
+    showCloseButton = true,
     onModalClose,
     ...otherProps
   } = props;
@@ -39,17 +42,5 @@ function ModalContent(props) {
     </div>
   );
 }
-
-ModalContent.propTypes = {
-  className: PropTypes.string,
-  children: PropTypes.node,
-  showCloseButton: PropTypes.bool.isRequired,
-  onModalClose: PropTypes.func.isRequired
-};
-
-ModalContent.defaultProps = {
-  className: styles.modalContent,
-  showCloseButton: true
-};
 
 export default ModalContent;
