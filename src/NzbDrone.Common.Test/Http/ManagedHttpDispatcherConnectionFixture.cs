@@ -577,16 +577,31 @@ namespace NzbDrone.Common.Test.Http
 
             public async ValueTask DisposeAsync()
             {
-                await _stopping.CancelAsync();
-                _listener.Stop();
-                await _accept.WaitAsync(Deadline);
-                foreach (var client in _clients)
+                try
                 {
-                    client.Dispose();
+                    // Cancel and join the pending accept before closing the listening
+                    // socket. Closing it during cancellation can produce a teardown
+                    // SocketException even when every test request succeeded.
+                    await _stopping.CancelAsync();
+                    await _accept.WaitAsync(Deadline);
                 }
+                finally
+                {
+                    _listener.Stop();
+                    foreach (var client in _clients)
+                    {
+                        client.Dispose();
+                    }
 
-                await Task.WhenAll(_connections).WaitAsync(Deadline);
-                _stopping.Dispose();
+                    try
+                    {
+                        await Task.WhenAll(_connections).WaitAsync(Deadline);
+                    }
+                    finally
+                    {
+                        _stopping.Dispose();
+                    }
+                }
             }
 
             private async Task Accept()
