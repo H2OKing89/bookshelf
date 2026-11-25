@@ -104,7 +104,44 @@ export interface LibraryAuthor {
   metadataProfileId?: number | null;
 }
 
-export interface LibraryEdition {
+export interface RecordingContributor {
+  name?: string | null;
+  asin?: string | null;
+  role?: string | null;
+}
+
+export interface RecordingClassification {
+  name?: string | null;
+  asin?: string | null;
+  type?: string | null;
+}
+
+export interface RecordingChapter {
+  ordinal: number;
+  title?: string | null;
+  startOffsetMs?: number | null;
+  lengthMs?: number | null;
+}
+
+export interface RecordingChapterMetadata {
+  runtimeLengthMs?: number | null;
+  chapters?: RecordingChapter[] | null;
+  brandIntroDurationMs?: number | null;
+  brandOutroDurationMs?: number | null;
+  isAccurate?: boolean | null;
+}
+
+export interface RecordingMetadata {
+  contributors?: RecordingContributor[] | null;
+  publisher?: string | null;
+  language?: string | null;
+  copyrightYear?: number | null;
+  literatureType?: string | null;
+  isAdult?: boolean | null;
+  releaseDateIsPlaceholder?: boolean | null;
+}
+
+export interface LibraryEdition extends RecordingMetadata {
   id: EditionId;
   bookId?: Association<BookId>;
   title?: string | null;
@@ -113,6 +150,8 @@ export interface LibraryEdition {
   asin?: string | null;
   audibleRegion?: string | null;
   isbn13?: string | null;
+  disambiguation?: string | null;
+  chapterMetadata?: RecordingChapterMetadata | null;
   format?: string | null;
   isEbook?: boolean | null;
   pageCount?: number | null;
@@ -121,7 +160,7 @@ export interface LibraryEdition {
   isAdult?: boolean | null;
 }
 
-export interface LibraryBook {
+export interface LibraryBook extends RecordingMetadata {
   id: BookId;
   authorId?: Association<AuthorId>;
   title?: string | null;
@@ -138,6 +177,9 @@ export interface LibraryBook {
   runtimeLengthMinutes?: number | null;
   runtimeLengthMs?: number | null;
   isAdult?: boolean | null;
+  seriesTitle?: string | null;
+  classifications?: RecordingClassification[] | null;
+  genres?: string[] | null;
   author?: LibraryAuthor | null;
   editions?: LibraryEdition[] | null;
 }
@@ -171,6 +213,46 @@ export interface MediaInfoModel extends AudioStreamInfo {
   audioStreams?: AudioStreamInfo[] | null;
 }
 
+// ParsedTrackInfo is distinct from MediaInfoModel; its optional tags can also
+// describe ebooks and files not associated with an Audible edition.
+export interface AudioTags {
+  title?: string | null;
+  bookTitle?: string | null;
+  authorTitle?: string | null;
+  seriesTitle?: string | null;
+  seriesIndex?: string | null;
+  language?: string | null;
+  label?: string | null;
+  publisher?: string | null;
+  catalogNumber?: string | null;
+  disambiguation?: string | null;
+  isbn?: string | null;
+  asin?: string | null;
+  authorMBId?: string | null;
+  bookMBId?: string | null;
+  releaseMBId?: string | null;
+  recordingMBId?: string | null;
+  trackMBId?: string | null;
+  trackNumbers?: number[] | null;
+  discNumber?: number | null;
+  discCount?: number | null;
+  year?: number | null;
+  country?: { name?: string | null } | null;
+}
+
+export interface ReleaseGroupEvidence {
+  source?: string | null;
+  reason?: string | null;
+  packUploaderGroup?: string | null;
+  downloadGroup?: string | null;
+  folderGroup?: string | null;
+  recordingFolderGroup?: string | null;
+  fileGroup?: string | null;
+  recordingId?: string | null;
+  resolvedGroup?: string | null;
+  packRecordingIds?: string[] | null;
+}
+
 export interface LibraryBookFile {
   id: BookFileId;
   bookId?: Association<BookId>;
@@ -183,6 +265,9 @@ export interface LibraryBookFile {
   qualityWeight?: number | null;
   qualityCutoffNotMet?: boolean | null;
   mediaInfo?: MediaInfoModel | null;
+  audioTags?: AudioTags | null;
+  releaseGroup?: string | null;
+  releaseGroupEvidence?: ReleaseGroupEvidence | null;
 }
 
 // Preserve fields that remain in legacy JavaScript consumers (including ebook
@@ -203,6 +288,83 @@ export function parseLibraryAuthor(value: unknown): LibraryAuthor {
   });
 }
 
+function parseOptional<T>(value: unknown, parse: (value: unknown) => T): T | null | undefined {
+  if (value == null) {
+    return value === null ? null : undefined;
+  }
+  return parse(value);
+}
+
+function parseOptionalList<T>(value: unknown, parse: (item: unknown) => T): T[] | null | undefined {
+  return parseOptional(value, (items) => {
+    if (!Array.isArray(items)) {
+      throw new TypeError('Invalid library list');
+    }
+    return items.map(parse);
+  });
+}
+
+function parseRecordingContributor(value: unknown): RecordingContributor {
+  const item = resource(value);
+  return omitUndefined({
+    ...item,
+    name: optionalText(item.name),
+    asin: optionalText(item.asin),
+    role: optionalText(item.role)
+  });
+}
+
+function parseRecordingClassification(value: unknown): RecordingClassification {
+  const item = resource(value);
+  return omitUndefined({
+    ...item,
+    name: optionalText(item.name),
+    asin: optionalText(item.asin),
+    type: optionalText(item.type)
+  });
+}
+
+function parseRecordingChapter(value: unknown): RecordingChapter {
+  const item = resource(value);
+  const ordinal = optionalNonnegativeInteger(item.ordinal);
+  if (ordinal == null) {
+    throw new TypeError('Invalid chapter ordinal');
+  }
+  return omitUndefined({
+    ...item,
+    ordinal,
+    title: optionalText(item.title),
+    startOffsetMs: optionalNonnegativeInteger(item.startOffsetMs),
+    lengthMs: optionalNonnegativeInteger(item.lengthMs)
+  });
+}
+
+function parseRecordingChapterMetadata(value: unknown): RecordingChapterMetadata | null | undefined {
+  return parseOptional(value, (data) => {
+    const item = resource(data);
+    return omitUndefined({
+      ...item,
+      runtimeLengthMs: optionalNonnegativeInteger(item.runtimeLengthMs),
+      brandIntroDurationMs: optionalNonnegativeInteger(item.brandIntroDurationMs),
+      brandOutroDurationMs: optionalNonnegativeInteger(item.brandOutroDurationMs),
+      isAccurate: optionalFlag(item.isAccurate),
+      chapters: parseOptionalList(item.chapters, parseRecordingChapter)
+    });
+  });
+}
+
+function parseRecordingMetadata(item: Record<string, unknown>): RecordingMetadata {
+  return omitUndefined({
+    contributors: parseOptionalList(item.contributors, parseRecordingContributor),
+    publisher: optionalText(item.publisher),
+    language: optionalText(item.language),
+    copyrightYear: optionalNonnegativeInteger(item.copyrightYear),
+    literatureType: optionalText(item.literatureType),
+    isAdult: optionalFlag(item.isAdult),
+    releaseDateIsPlaceholder: optionalFlag(item.releaseDateIsPlaceholder)
+  });
+}
+
 export function parseLibraryEdition(value: unknown): LibraryEdition {
   const item = resource(value);
   return omitUndefined({
@@ -215,6 +377,9 @@ export function parseLibraryEdition(value: unknown): LibraryEdition {
     asin: optionalText(item.asin),
     audibleRegion: optionalText(item.audibleRegion),
     isbn13: optionalText(item.isbn13),
+    ...parseRecordingMetadata(item),
+    disambiguation: optionalText(item.disambiguation),
+    chapterMetadata: parseRecordingChapterMetadata(item.chapterMetadata),
     format: optionalText(item.format),
     isEbook: optionalFlag(item.isEbook),
     pageCount: optionalNonnegativeInteger(item.pageCount),
@@ -278,6 +443,65 @@ export function parseMediaInfo(value: unknown): MediaInfoModel | null | undefine
   });
 }
 
+function parseAudioTags(value: unknown): AudioTags | null | undefined {
+  return parseOptional(value, (data) => {
+    const item = resource(data);
+    return omitUndefined({
+      ...item,
+      title: optionalText(item.title),
+      bookTitle: optionalText(item.bookTitle),
+      authorTitle: optionalText(item.authorTitle),
+      seriesTitle: optionalText(item.seriesTitle),
+      seriesIndex: optionalText(item.seriesIndex),
+      language: optionalText(item.language),
+      label: optionalText(item.label),
+      publisher: optionalText(item.publisher),
+      catalogNumber: optionalText(item.catalogNumber),
+      disambiguation: optionalText(item.disambiguation),
+      isbn: optionalText(item.isbn),
+      asin: optionalText(item.asin),
+      authorMBId: optionalText(item.authorMBId),
+      bookMBId: optionalText(item.bookMBId),
+      releaseMBId: optionalText(item.releaseMBId),
+      recordingMBId: optionalText(item.recordingMBId),
+      trackMBId: optionalText(item.trackMBId),
+      trackNumbers: parseOptionalList(item.trackNumbers, (value) => {
+        const number = optionalQuantity(value);
+        if (number == null || !Number.isInteger(number)) {
+          throw new TypeError('Invalid track number');
+        }
+        return number;
+      }),
+      discNumber: optionalQuantity(item.discNumber),
+      discCount: optionalQuantity(item.discCount),
+      year: optionalNonnegativeInteger(item.year),
+      country: parseOptional(item.country, (value) => {
+        const country = resource(value);
+        return omitUndefined({ ...country, name: optionalText(country.name) });
+      })
+    });
+  });
+}
+
+function parseReleaseGroupEvidence(value: unknown): ReleaseGroupEvidence | null | undefined {
+  return parseOptional(value, (data) => {
+    const item = resource(data);
+    return omitUndefined({
+      ...item,
+      source: optionalText(item.source),
+      reason: optionalText(item.reason),
+      packUploaderGroup: optionalText(item.packUploaderGroup),
+      downloadGroup: optionalText(item.downloadGroup),
+      folderGroup: optionalText(item.folderGroup),
+      recordingFolderGroup: optionalText(item.recordingFolderGroup),
+      fileGroup: optionalText(item.fileGroup),
+      recordingId: optionalText(item.recordingId),
+      resolvedGroup: optionalText(item.resolvedGroup),
+      packRecordingIds: parseOptionalList(item.packRecordingIds, requiredText)
+    });
+  });
+}
+
 export function parseLibraryBookFile(value: unknown): LibraryBookFile {
   const item = resource(value);
   return omitUndefined({
@@ -292,7 +516,10 @@ export function parseLibraryBookFile(value: unknown): LibraryBookFile {
     qualityRank: optionalQuantity(item.qualityRank),
     qualityWeight: optionalNonnegativeInteger(item.qualityWeight),
     qualityCutoffNotMet: optionalFlag(item.qualityCutoffNotMet),
-    mediaInfo: parseMediaInfo(item.mediaInfo)
+    mediaInfo: parseMediaInfo(item.mediaInfo),
+    audioTags: parseAudioTags(item.audioTags),
+    releaseGroup: optionalText(item.releaseGroup),
+    releaseGroupEvidence: parseReleaseGroupEvidence(item.releaseGroupEvidence)
   });
 }
 
@@ -305,13 +532,6 @@ export function parseLibraryCollection<T extends { id: number }>(value: unknown,
     throw new TypeError('Duplicate library resource ID');
   }
   return items;
-}
-
-function parseOptional<T>(value: unknown, parse: (value: unknown) => T): T | null | undefined {
-  if (value == null) {
-    return value === null ? null : undefined;
-  }
-  return parse(value);
 }
 
 export function parseLibraryBook(value: unknown): LibraryBook {
@@ -343,7 +563,10 @@ export function parseLibraryBook(value: unknown): LibraryBook {
     pageCount: optionalNonnegativeInteger(item.pageCount),
     runtimeLengthMinutes: optionalNonnegativeInteger(item.runtimeLengthMinutes),
     runtimeLengthMs: optionalNonnegativeInteger(item.runtimeLengthMs),
-    isAdult: optionalFlag(item.isAdult)
+    ...parseRecordingMetadata(item),
+    seriesTitle: optionalText(item.seriesTitle),
+    classifications: parseOptionalList(item.classifications, parseRecordingClassification),
+    genres: parseOptionalList(item.genres, requiredText)
   });
 }
 

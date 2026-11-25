@@ -1,9 +1,8 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { loadFrontendModule } from './helpers/loadFrontendModule.mjs';
 
-const source = await readFile(new URL('../src/Book/Details/formatChapterTime.js', import.meta.url), 'utf8');
-const { default: formatChapterTime } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+const { default: formatChapterTime } = loadFrontendModule('Book/Details/formatChapterTime');
 
 test('shows chapter offsets without wrapping long recordings at 24 hours', () => {
   assert.equal(formatChapterTime(0), '0:00:00');

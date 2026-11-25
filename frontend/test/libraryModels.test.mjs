@@ -103,3 +103,38 @@ test('a malformed legacy fetch is reported without replacing library data or lea
   assert.equal(dispatched[1][1].payload.isPopulated, true);
   assert.equal(typeof fail, 'function');
 });
+
+
+test('recording metadata and file evidence retain zero values, false placeholders and separate recording identities', () => {
+  const data = {
+    id: 12,
+    authorId: 8,
+    seriesTitle: 'Synthetic series #1',
+    releaseDateIsPlaceholder: true,
+    copyrightYear: 0,
+    isAdult: false,
+    classifications: [{ type: 'genre', name: 'Synthetic', asin: null }],
+    contributors: [{ name: 'Fixture Narrator', role: 'Narrator' }],
+    editions: [
+      { id: 82, bookId: 12, foreignEditionId: 'recording-us', audibleRegion: 'us', asin: 'B000123456', releaseDateIsPlaceholder: false,
+        isAdult: false, copyrightYear: 0, language: 'en', chapterMetadata: { runtimeLengthMs: 0, isAccurate: false, brandIntroDurationMs: null,
+          chapters: [{ ordinal: 1, title: null, startOffsetMs: 0, lengthMs: 0 }] } },
+      { id: 83, bookId: 12, foreignEditionId: 'recording-uk', audibleRegion: 'uk', asin: 'B000123456' },
+      { id: 84, bookId: 12, foreignEditionId: 'local-recording', audibleRegion: null, asin: null },
+      { id: 85, bookId: 12, foreignEditionId: 'ebook-recording', isEbook: true, isbn13: '9781234567890', format: 'EPUB', pageCount: 0 }
+    ]
+  };
+  assert.deepEqual(models.parseLibraryBook(data), data);
+  const file = { id: 51, bookId: 12, audioTags: { asin: null, title: 'Locally identified', trackNumbers: [], country: null, year: 0 },
+    releaseGroup: '', releaseGroupEvidence: { source: 'recordingFile', reason: 'exactChoice', recordingId: 'local-recording', packRecordingIds: ['recording-uk', 'recording-us'] } };
+  assert.deepEqual(models.parseLibraryBookFile(file), file);
+  for (const validate of [
+    () => models.parseLibraryEdition({ id: 4, chapterMetadata: { runtimeLengthMs: '0' } }),
+    () => models.parseLibraryEdition({ id: 4, chapterMetadata: { chapters: [{ ordinal: 1, startOffsetMs: -1 }] } }),
+    () => models.parseLibraryBook({ id: 4, contributors: [{ name: 1 }] }),
+    () => models.parseLibraryBookFile({ id: 4, audioTags: { trackNumbers: [null] } }),
+    () => models.parseLibraryBookFile({ id: 4, releaseGroupEvidence: { recordingId: 4 } })
+  ]) {
+    assert.throws(validate, TypeError);
+  }
+});
