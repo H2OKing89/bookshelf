@@ -28,7 +28,7 @@ namespace NzbDrone.Api.Test
                 .Returns(new List<Book> { StoredBook("Old local title", 21, false) })
                 .Returns(new List<Book> { StoredBook("Corrected local title", 22, true) });
 
-            var result = (AcceptedObjectResult)controller.SaveAll(new BookEditorResource { BookIds = ids, Monitored = true });
+            var result = (AcceptedResult)controller.SaveAll(new BookEditorResource { BookIds = ids, Monitored = true });
 
             books.Verify(service => service.SetMonitored(ids, true), Times.Once());
             books.Verify(service => service.UpdateMany(It.IsAny<List<Book>>()), Times.Never());
