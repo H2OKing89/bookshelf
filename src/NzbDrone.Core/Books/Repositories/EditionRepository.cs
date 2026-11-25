@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using NzbDrone.Common.EnsureThat;
 using NzbDrone.Core.Datastore;
@@ -23,6 +25,36 @@ namespace NzbDrone.Core.Books
         public EditionRepository(IMainDatabase database, IEventAggregator eventAggregator)
             : base(database, eventAggregator)
         {
+        }
+
+        public override void UpdateMany(IList<Edition> models)
+        {
+            if (!models.Any(edition => LocalRecordingId.IsLocal(edition.ForeignEditionId)))
+            {
+                base.UpdateMany(models);
+                return;
+            }
+
+            if (models.Any(edition => edition.Id == 0))
+            {
+                throw new InvalidOperationException("Can't update model with ID 0");
+            }
+
+            using var connection = _database.OpenConnection();
+            using var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
+            foreach (var edition in models)
+            {
+                if (LocalRecordingId.IsLocal(edition.ForeignEditionId))
+                {
+                    UpdateFields(connection, transaction, edition, item => item.Monitored);
+                }
+                else
+                {
+                    UpdateFields(connection, transaction, edition);
+                }
+            }
+
+            transaction.Commit();
         }
 
         public List<Edition> GetAllMonitoredEditions()

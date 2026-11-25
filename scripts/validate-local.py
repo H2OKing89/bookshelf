@@ -12,7 +12,7 @@ import tempfile
 from validation import common
 
 
-CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization", "assetpipeline", "docker")
+CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization", "assetpipeline", "recordinglifecycle", "docker")
 
 
 def parser():
@@ -44,8 +44,9 @@ def main(argv=None):
         parser().error("--checks postgresconnections requires --baseline-runtime (a pre-P14 package)")
     if "authpolicy" in chosen and not arguments.baseline_runtime:
         parser().error("--checks authpolicy requires --baseline-runtime (a pre-P16 package)")
-    if "identity" in chosen and (not arguments.baseline_runtime or not arguments.playwright_module):
-        parser().error("--checks identity requires --baseline-runtime and --playwright-module")
+    for check in ("identity", "recordinglifecycle"):
+        if check in chosen and (not arguments.baseline_runtime or not arguments.playwright_module):
+            parser().error(f"--checks {check} requires --baseline-runtime and --playwright-module")
     if "metadataaccessibility" in chosen and not arguments.playwright_module:
         parser().error("--checks metadataaccessibility requires --playwright-module")
     if "libraryreview" in chosen and not arguments.playwright_module:
@@ -90,13 +91,13 @@ def main(argv=None):
             output = common.private_directory(arguments.output.expanduser().resolve())
         for label, runtime in inputs.items():
             snapshots[label] = common.snapshot_runtime(runtime)
-        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization", "assetpipeline")):
+        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization", "assetpipeline", "recordinglifecycle")):
             common.ensure_host_compatible(inputs["candidate"])
         for label in ("baseline", "legacy"):
             if label in inputs:
                 common.ensure_host_compatible(inputs[label])
         # Imports are deliberately after validation; modules never launch on import.
-        from validation import accesspolicy, acquisition, app, asset_pipeline, authpolicy, cancellation, datastore, docker, history_paging, identity, interactive_search, library_review, library_virtualization, logstorage, media, metadata_accessibility, operational_paging, package, postgresconnections, releaseidentity, restore, router_navigation, settings_drafts, sqlite, upgrade
+        from validation import accesspolicy, acquisition, app, asset_pipeline, authpolicy, cancellation, datastore, docker, history_paging, identity, interactive_search, library_review, library_virtualization, logstorage, media, metadata_accessibility, operational_paging, package, postgresconnections, releaseidentity, recording_lifecycle, restore, router_navigation, settings_drafts, sqlite, upgrade
         callbacks = {
             "package": lambda: package.run(inputs["candidate"], output / "package", repo),
             "app": lambda: app.run(inputs["candidate"], output / "app"),
@@ -123,6 +124,7 @@ def main(argv=None):
             "interactivesearch": lambda: interactive_search.run(inputs["candidate"], output / "interactivesearch", arguments.playwright_module),
             "libraryvirtualization": lambda: library_virtualization.run(inputs["candidate"], output / "libraryvirtualization", arguments.playwright_module),
             "assetpipeline": lambda: asset_pipeline.run(inputs["candidate"], output / "assetpipeline", arguments.playwright_module),
+            "recordinglifecycle": lambda: recording_lifecycle.run(inputs["candidate"], output / "recordinglifecycle", inputs["baseline"], arguments.playwright_module),
             "authpolicy": lambda: authpolicy.run(inputs["candidate"], output / "authpolicy", baseline_runtime=inputs["baseline"]),
             "docker": lambda: docker.run(inputs["docker"], output / "docker", repo),
         }

@@ -1,0 +1,71 @@
+.coverage {
+  margin: 15px 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  margin: 10px 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  margin-bottom: 10px;
+  min-width: 0;
+}
+
+.input {
+  composes: input from '~Components/Form/Input.css';
+
+  min-width: 0;
+  max-width: 100%;
+}
+
+.work {
+  margin: 10px 0;
+  padding: 12px;
+  border: 1px solid var(--lightGray);
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+
+  h3 {
+    margin-top: 0;
+    font-size: 15px;
+  }
+
+  li {
+    margin: 5px 0;
+  }
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 10px;
+}
+
+.editorFields {
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  border: 0;
+}
+
+.matches {
+  padding-left: 16px;
+
+  li {
+    margin: 8px 0;
+  }
+
+  button {
+    margin-left: 8px;
+  }
+}

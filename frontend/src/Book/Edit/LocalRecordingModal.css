@@ -29,3 +29,9 @@
 .select {
   composes: select from '~Components/Form/SelectInput.css';
 }
+
+.chapter {
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid var(--borderColor);
+}

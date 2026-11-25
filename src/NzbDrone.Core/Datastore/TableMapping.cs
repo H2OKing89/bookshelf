@@ -132,6 +132,9 @@ namespace NzbDrone.Core.Datastore
                   .HasOne(l => l.Book, l => l.BookId)
                   .HasOne(l => l.Series, l => l.SeriesId);
 
+            Mapper.Entity<RecordingWork>("RecordingWorks").RegisterModel();
+            Mapper.Entity<RecordingWorkMembership>("RecordingWorkMemberships").RegisterModel();
+
             Mapper.Entity<AuthorMetadata>("AuthorMetadata").RegisterModel();
 
             Mapper.Entity<Book>("Books").RegisterModel()

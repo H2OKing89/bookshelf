@@ -24,7 +24,7 @@ namespace NzbDrone.Core.Test.Datastore.Migration
     public class MigrationCompatibilityFixture : MigrationCompatibilityTestBase
     {
         private static readonly long[] HistoricalVersions = Enumerable.Range(1, 48)
-            .Where(version => version != 34).Select(version => (long)version).Concat(new long[] { 158, 159, 160, 161 }).ToArray();
+            .Where(version => version != 34).Select(version => (long)version).Concat(new long[] { 158, 159, 160, 161, 162, 163 }).ToArray();
 
         public MigrationCompatibilityFixture(DatabaseType databaseType)
             : base(databaseType)
@@ -57,6 +57,7 @@ namespace NzbDrone.Core.Test.Datastore.Migration
         [TestCase(46)]
         [TestCase(47)]
         [TestCase(158)]
+        [TestCase(161)]
         public void older_schema_checkpoints_should_preserve_recording_identity_parts_history_settings_and_dates(int checkpoint)
         {
             Migrate(MigrationType.Main, checkpoint);

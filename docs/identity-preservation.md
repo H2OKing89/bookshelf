@@ -54,8 +54,33 @@ migrations. It covers authors, books, editions, files, history, accounts, series
 series links, saved identity overrides and selected configuration values. Owned
 source/library bytes are hashed independently. Fixed synthetic IDs make failures
 reproducible; paths and credentials are generated inside a fresh private home.
-The recipe records a pack's existing range position; it does not implement the
-separate B03 recording-to-work membership model.
+The recipe records a pack's existing range position. Work memberships start
+empty in the older package; the separate `recordinglifecycle` proof creates
+reviewed work relationships after migration rather than inferring the range.
+
+## Publisher-pack work coverage
+
+On an audio recording's **Work coverage** tab, choose the exact edition and
+select **Edit work coverage**. Add a new work with its title, author, series and
+volume/position label, or link a work already reviewed for another recording.
+Mark each link confirmed or uncertain. Fractional positions and side stories
+can be described without expanding a text range into unverified volumes.
+
+A pack and each standalone or regional recording keep their own recording IDs
+and files. The tab shows direct file ownership separately from related confirmed
+work coverage. A related file is counted only once even if its recording covers
+several works. Having an associated file is not proof of complete audio parts;
+acquisition, monitoring and removal still operate on the exact recording.
+Changing or removing a membership changes only that relationship, not the
+linked work's other recordings or any media. A revision mismatch requires
+reopening coverage before saving.
+
+The API uses `GET /api/v1/recordingwork/book/{bookId}` to choose an edition,
+`GET /api/v1/recordingwork/works?term=...` to find reviewed works, and
+`GET`/`PUT /api/v1/recordingwork/{editionId}` to read and replace that exact
+edition's reviewed membership set. A replacement supplies its revision and
+memberships, each with an explicit confirmation value and either an existing
+`workId` or a `newWork` description. See the [API reference](../src/Readarr.Api.V1/openapi.json).
 
 ## Hosted upgrade, API and browser gate
 

@@ -6,6 +6,7 @@ import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import * as commandNames from 'Commands/commandNames';
 import { invalidateReleaseSearches } from 'InteractiveSearch/releaseSearchQuery';
+import { updateItem } from 'Store/Actions/baseActions';
 import { toggleBooksMonitored } from 'Store/Actions/bookActions';
 import { clearBookFiles, fetchBookFiles } from 'Store/Actions/bookFileActions';
 import { executeCommand } from 'Store/Actions/commandActions';
@@ -122,7 +123,8 @@ const mapDispatchToProps = {
   clearBookFiles,
   fetchEditions,
   clearEditions,
-  toggleBooksMonitored
+  toggleBooksMonitored,
+  updateItem
 };
 
 function getMonitoredEditions(props) {
@@ -189,6 +191,12 @@ class BookDetailsConnector extends Component {
   //
   // Listeners
 
+  onLocalMetadataSaved = (book) => {
+    this.props.updateItem({ section: 'books', ...book });
+    this.props.fetchEditions({ bookId: book.id });
+    invalidateReleaseSearches({ bookId: book.id });
+  };
+
   onMonitorTogglePress = (monitored) => {
     this.props.toggleBooksMonitored({
       bookIds: [this.props.id],
@@ -228,6 +236,7 @@ class BookDetailsConnector extends Component {
         onRefreshPress={this.onRefreshPress}
         onRefreshMediaInfoPress={this.onRefreshMediaInfoPress}
         onSearchPress={this.onSearchPress}
+        onLocalMetadataSaved={this.onLocalMetadataSaved}
       />
     );
   }
@@ -247,7 +256,8 @@ BookDetailsConnector.propTypes = {
   fetchEditions: PropTypes.func.isRequired,
   clearEditions: PropTypes.func.isRequired,
   toggleBooksMonitored: PropTypes.func.isRequired,
-  executeCommand: PropTypes.func.isRequired
+  executeCommand: PropTypes.func.isRequired,
+  updateItem: PropTypes.func.isRequired
 };
 
 export default connect(createMapStateToProps, mapDispatchToProps)(BookDetailsConnector);

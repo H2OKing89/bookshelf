@@ -21,5 +21,11 @@ namespace Readarr.Api.V1.LocalRecordings
 
         [HttpPost]
         public BookResource Create([FromBody] LocalRecording recording) => _recordings.Create(recording).ToResource();
+
+        [HttpGet("{bookId:int}")]
+        public LocalRecording Get(int bookId) => _recordings.Get(bookId);
+
+        [HttpPut("{bookId:int}")]
+        public BookResource Update(int bookId, [FromBody] LocalRecording recording) => _recordings.Update(bookId, recording).ToResource();
     }
 }

@@ -5,15 +5,15 @@ import { loadFrontendModule } from './helpers/loadFrontendModule.mjs';
 const boundaries = Object.fromEntries([
   'Components/Alert', 'Components/Form/FormGroup', 'Components/Form/FormInputHelpText', 'Components/Form/FormLabel',
   'Components/Link/Button', 'Components/Link/SpinnerButton', 'Components/Loading/LoadingIndicator',
-  'Components/Modal/Modal', 'Components/Modal/ModalBody', 'Components/Modal/ModalContent',
+  'Components/Modal/ConfirmModal', 'Components/Modal/Modal', 'Components/Modal/ModalBody', 'Components/Modal/ModalContent',
   'Components/Modal/ModalFooter', 'Components/Modal/ModalHeader'
 ].map((name) => [name, () => null]));
 
-function setup() {
+function setup(overrides = {}) {
   const requests = [];
   const created = [];
   let closeCount = 0;
-  const { default: Modal } = loadFrontendModule('UnmappedFiles/CreateLocalRecordingModal.js', {
+  const { default: Modal } = loadFrontendModule('Book/Edit/LocalRecordingModal.js', {
     ...boundaries,
     'react-redux': { connect: () => (component) => component },
     'Helpers/Props': { kinds: {}, sizes: {} },
@@ -34,7 +34,8 @@ function setup() {
     files: [{ id: 7, path: '/books/course/01.mp3' }, { id: 8, path: '/books/course/02.mp3' }],
     authors: [{ id: 4, authorName: 'Course Author' }],
     onModalClose() { closeCount++; },
-    onCreated(book) { created.push(book); }
+    onCreated(book) { created.push(book); },
+    ...overrides
   });
   component.setState = (update) => {
     component.state = { ...component.state, ...(typeof update === 'function' ? update(component.state) : update) };
@@ -56,14 +57,14 @@ test('previews the selected files and submits the reviewed metadata as one local
   assert.equal(component.state.fields.narrators, 'Reader, First\nSecond Reader');
   component.onInputChange({ name: 'title', value: '  Reviewed Course  ' });
   component.onInputChange({ name: 'year', value: '' });
-  component.onCreatePress();
+  component.onSavePress();
   assert.equal(requests.length, 2);
   assert.equal(requests[1].options.method, 'POST');
   assert.deepEqual(JSON.parse(requests[1].options.data), {
     fileIds: [7, 8], title: 'Reviewed Course', subtitle: 'Part One', authorId: 4,
-    narrators: ['Reader, First', 'Second Reader'], language: 'English', publisher: 'Publisher', year: null
+    narrators: ['Reader, First', 'Second Reader'], language: 'English', publisher: 'Publisher', year: null, chapterMetadata: null
   });
-  component.onCreatePress();
+  component.onSavePress();
   component.onModalClose();
   assert.equal(requests.length, 2, 'double clicking must not issue another write');
   assert.equal(closeCount(), 0, 'do not discard the in-flight result');
@@ -78,18 +79,18 @@ test('failed preview and save requests remain visible and retry preserves review
   requests[0].reject({ status: 500 });
   assert.equal(component.state.error, 'Unable to read the selected files.');
   assert.equal(component.state.isLoading, false);
-  component.onCreatePress();
+  component.onSavePress();
   assert.equal(requests.length, 1, 'a failed preview cannot be submitted');
   component.onRetryPress();
   requests[1].resolve(preview);
   component.onInputChange({ name: 'title', value: 'Reviewed Course' });
-  component.onCreatePress();
+  component.onSavePress();
   requests[2].reject({ responseJSON: [{ errorMessage: 'A selected file was already linked.' }] });
   assert.equal(component.state.error, 'A selected file was already linked.');
   assert.equal(component.state.fields.title, 'Reviewed Course');
   assert.equal(component.state.isSaving, false);
   assert.deepEqual(created, []);
-  component.onCreatePress();
+  component.onSavePress();
   assert.equal(requests.length, 4);
 });
 
@@ -117,7 +118,7 @@ test('creation requires a reviewed title, an existing author and a valid optiona
   requests[0].resolve(preview);
   for (const [name, value] of [['title', ' '], ['authorId', 999], ['year', '2026oops'], ['year', '0']]) {
     component.setState({ fields: { ...component.state.fields, title: 'Course', authorId: 4, year: '', [name]: value } });
-    component.onCreatePress();
+    component.onSavePress();
     assert.ok(component.state.error);
     assert.ok(component.state.fieldErrors[name]);
     assert.equal(requests.length, 1);
@@ -127,6 +128,72 @@ test('creation requires a reviewed title, an existing author and a valid optiona
   assert.equal(label.props.htmlFor, input.props.id);
   assert.equal(input.props['aria-invalid'], true);
   assert.equal(input.props['aria-describedby'], error.props.id);
+});
+
+test('an explicit local author uses reviewed name and folder, without an existing author ID', () => {
+  const { component, requests } = setup();
+  requests[0].resolve({ ...preview, authorId: 0, authorName: 'Original Credit', newAuthorPath: '/books/New Author' });
+  component.onInputChange({ name: 'authorId', value: -1 });
+  component.onInputChange({ name: 'newAuthorName', value: '   ' });
+  component.onSavePress();
+  assert.equal(requests.length, 1);
+  assert.ok(component.state.fieldErrors.newAuthorName);
+  component.onInputChange({ name: 'newAuthorName', value: 'New Local Author' });
+  component.onSavePress();
+  const request = JSON.parse(requests[1].options.data);
+  assert.equal(request.authorId, 0);
+  assert.equal(request.newAuthorName, 'New Local Author');
+  assert.equal(request.newAuthorPath, '/books/New Author');
+});
+
+test('local metadata edits preserve old chapter ordinals and exact identity, with stale revisions requiring reload', () => {
+  const { component, requests, closeCount } = setup({ bookId: 23, files: undefined });
+  assert.equal(requests[0].options.url, '/localrecording/23');
+  assert.equal(requests[0].options.data, undefined);
+  const chapterMetadata = {
+    runtimeLengthMs: 4000,
+    isAccurate: false,
+    chapters: [
+      { ordinal: 0, title: 'Opening', startOffsetMs: 0, lengthMs: 1500 },
+      { ordinal: 1, title: 'Second', startOffsetMs: 1500, lengthMs: 2500 }
+    ]
+  };
+  const existing = {
+    ...preview, bookId: 23, editionId: 9, recordingId: 'local:recording:abc', revision: 'legacy', year: null,
+    chapterMetadata, provenance: { chapters: 'legacy' }
+  };
+  requests[0].resolve(existing);
+  component.onInputChange({ name: 'title', value: 'New title' });
+  component.onModalClose();
+  assert.equal(component.state.isDiscardOpen, true);
+  assert.equal(closeCount(), 0);
+  component.onKeepEditing();
+  component.onSavePress();
+  assert.equal(requests[1].options.method, 'PUT');
+  assert.equal(requests[1].options.url, '/localrecording/23');
+  const edit = JSON.parse(requests[1].options.data);
+  assert.equal(edit.recordingId, existing.recordingId);
+  assert.equal(edit.revision, 'legacy');
+  assert.equal(edit.authorId, 4);
+  assert.equal(edit.editionId, 9);
+  assert.equal(edit.year, null);
+  assert.equal(edit.fileIds, undefined);
+  assert.deepEqual(edit.chapterMetadata, chapterMetadata);
+  requests[1].reject({ status: 409, responseJSON: { message: 'Recording changed.' } });
+  assert.equal(component.state.conflict, true);
+  assert.equal(component.state.fields.title, 'New title');
+  component.onRetryPress();
+  requests[2].resolve({ ...existing, title: 'Other edit', revision: 'new-revision' });
+  assert.equal(component.state.conflict, false);
+  assert.equal(component.state.fields.title, 'Other edit');
+  component.onAddChapter();
+  const chapters = component.state.fields.chapterMetadata.chapters;
+  assert.equal(chapters.at(-1).ordinal, 2);
+  assert.equal(chapters.at(-1).startOffsetMs, '4000');
+  component.onChapterChange(2, 'startOffsetMs', '100');
+  component.onSavePress();
+  assert.ok(component.state.fieldErrors.chapterMetadata);
+  assert.equal(requests.length, 3);
 });
 
 test('Unmapped exposes selection without changing the shared file-table column settings', () => {

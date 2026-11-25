@@ -6,11 +6,13 @@ using System.Net;
 using System.Text.RegularExpressions;
 using NzbDrone.Common;
 using NzbDrone.Common.Disk;
+using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser;
+using NzbDrone.Core.RootFolders;
 
 namespace NzbDrone.Core.Books
 {
@@ -18,6 +20,8 @@ namespace NzbDrone.Core.Books
     {
         LocalRecording Preview(List<int> fileIds);
         Book Create(LocalRecording recording);
+        LocalRecording Get(int bookId);
+        Book Update(int bookId, LocalRecording recording);
     }
 
     public class LocalRecordingService : ILocalRecordingService
@@ -29,6 +33,7 @@ namespace NzbDrone.Core.Books
         private readonly IBookService _books;
         private readonly ILocalRecordingRepository _repository;
         private readonly IEventAggregator _events;
+        private readonly IRootFolderService _rootFolders;
 
         public LocalRecordingService(IMediaFileService files,
             IAudioTagService tags,
@@ -36,7 +41,8 @@ namespace NzbDrone.Core.Books
             IAuthorService authors,
             IBookService books,
             ILocalRecordingRepository repository,
-            IEventAggregator events)
+            IEventAggregator events,
+            IRootFolderService rootFolders)
         {
             _files = files;
             _tags = tags;
@@ -45,6 +51,7 @@ namespace NzbDrone.Core.Books
             _books = books;
             _repository = repository;
             _events = events;
+            _rootFolders = rootFolders;
         }
 
         public LocalRecording Preview(List<int> fileIds)
@@ -54,30 +61,30 @@ namespace NzbDrone.Core.Books
 
         public Book Create(LocalRecording recording)
         {
-            if (recording == null || string.IsNullOrWhiteSpace(recording.Title) || recording.Title.Length > 1000 ||
-                recording.AuthorId <= 0 || recording.Year < 1 || recording.Year > 9999 ||
-                recording.Subtitle?.Length > 1000 || recording.Publisher?.Length > 1000 || recording.Language?.Length > 100 ||
-                recording.Narrators?.Count > 100 || recording.Narrators?.Any(name => name?.Length > 500) == true)
+            LocalRecordingMetadata.Normalize(recording);
+            if (recording.AuthorId < 0 || (recording.AuthorId == 0) != !string.IsNullOrWhiteSpace(recording.NewAuthorName))
             {
-                throw Invalid("Choose an author and enter a title. Check that the metadata fields and year are valid.");
+                throw Invalid("Choose an existing author or explicitly create a local author.");
             }
 
             var selected = ReadFiles(recording.FileIds);
             var tags = Describe(selected);
-            var author = _authors.GetAuthor(recording.AuthorId);
+            RootFolder newAuthorRoot = null;
+            var author = recording.AuthorId > 0 ? _authors.GetAuthor(recording.AuthorId) : BuildLocalAuthor(recording, selected, out newAuthorRoot);
             var id = LocalRecordingId.NewId();
-            var title = recording.Title.Trim();
+            var title = recording.Title;
             var slug = id.Replace(':', '-');
             var edition = new Edition
             {
                 ForeignEditionId = id,
                 TitleSlug = slug,
                 Title = title,
-                Subtitle = recording.Subtitle?.Trim(),
-                Narrators = (recording.Narrators ?? new List<string>()).Where(name => !string.IsNullOrWhiteSpace(name)).Select(name => name.Trim()).Distinct().ToList(),
-                Language = recording.Language?.Trim(),
-                Publisher = recording.Publisher?.Trim(),
-                ReleaseDate = recording.Year.HasValue ? new DateTime(recording.Year.Value, 1, 1, 0, 0, 0, DateTimeKind.Utc) : (DateTime?)null,
+                Subtitle = recording.Subtitle,
+                Narrators = recording.Narrators,
+                Language = recording.Language,
+                Publisher = recording.Publisher,
+                ReleaseDate = LocalRecordingMetadata.ReleaseDate(recording.Year),
+                ChapterMetadata = recording.ChapterMetadata,
                 RuntimeLengthMinutes = tags.RuntimeLengthMinutes,
                 ReleaseDateIsPlaceholder = recording.Year.HasValue,
                 Format = "Audiobook",
@@ -110,11 +117,85 @@ namespace NzbDrone.Core.Books
                 ordered[index].File.Part = index + 1;
             }
 
-            _repository.Create(book, edition, ordered.Select(item => item.File).ToList());
+            _repository.Create(book, edition, ordered.Select(item => item.File).ToList(), LocalRecordingMetadata.EditSources(tags, recording), newAuthorRoot);
+            if (newAuthorRoot != null)
+            {
+                _authors.NotifyAuthorAdded(author.Id, false);
+            }
+
             var saved = _books.GetBook(book.Id);
             _events.PublishEvent(new BookAddedEvent(saved, false));
             _events.PublishEvent(new BookUpdatedEvent(saved));
             return saved;
+        }
+
+        public LocalRecording Get(int bookId) => _repository.Get(bookId);
+
+        public Book Update(int bookId, LocalRecording recording)
+        {
+            LocalRecordingMetadata.Normalize(recording);
+            if (string.IsNullOrWhiteSpace(recording.Revision) || (recording.BookId != 0 && recording.BookId != bookId))
+            {
+                throw Invalid("Refresh the local recording before editing it.");
+            }
+
+            _repository.Update(bookId, recording);
+            var saved = _books.GetBook(bookId);
+            _events.PublishEvent(new BookUpdatedEvent(saved));
+            return saved;
+        }
+
+        private Author BuildLocalAuthor(LocalRecording recording, List<TaggedFile> selected, out RootFolder root)
+        {
+            var name = recording.NewAuthorName?.Trim();
+            if (string.IsNullOrWhiteSpace(name) || name.Length > 250 || string.IsNullOrWhiteSpace(recording.NewAuthorPath) ||
+                !Path.IsPathFullyQualified(recording.NewAuthorPath))
+            {
+                throw Invalid("Enter a local author name and absolute folder.");
+            }
+
+            string path;
+            try
+            {
+                path = Path.TrimEndingDirectorySeparator(Path.GetFullPath(recording.NewAuthorPath));
+            }
+            catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
+            {
+                throw Invalid("Enter a valid local author folder.");
+            }
+
+            root = _rootFolders.GetBestRootFolder(path);
+            if (root == null || root.IsCalibreLibrary || !root.Path.IsParentPath(path) || root.Path.PathEquals(path) ||
+                root.DefaultQualityProfileId <= 0 || root.DefaultMetadataProfileId <= 0 ||
+                selected.Any(item => !path.IsParentPath(item.File.Path)))
+            {
+                throw Invalid("The local author folder must be inside a configured audio root and contain every selected file. The root must have valid default profiles.");
+            }
+
+            var id = LocalAuthorId.NewId();
+            var metadata = new AuthorMetadata
+            {
+                ForeignAuthorId = id,
+                TitleSlug = id.Replace(':', '-'),
+                Name = name,
+                SortName = name,
+                NameLastFirst = name,
+                SortNameLastFirst = name
+            };
+
+            return new Author
+            {
+                Metadata = metadata,
+                CleanName = name.CleanAuthorName(),
+                Path = path,
+                RootFolderPath = root.Path,
+                QualityProfileId = root.DefaultQualityProfileId,
+                MetadataProfileId = root.DefaultMetadataProfileId,
+                Tags = root.DefaultTags ?? new HashSet<int>(),
+                Added = DateTime.UtcNow,
+                Monitored = false,
+                MonitorNewItems = NewItemMonitorTypes.None
+            };
         }
 
         private List<TaggedFile> ReadFiles(List<int> fileIds)
@@ -172,6 +253,9 @@ namespace NzbDrone.Core.Books
 
         private LocalRecording Describe(List<TaggedFile> selected)
         {
+            // The same ordering is used for the preview and file association.
+            selected = selected.OrderBy(item => item.Tag.Disc).ThenBy(item => item.Tag.Track)
+                .ThenBy(item => item.File.Path, StringComparer.OrdinalIgnoreCase).ToList();
             var first = selected[0].Tag;
             var title = selected.Count == 1 ? first.Title ?? first.Book : first.Book;
             var authorNames = selected.SelectMany(item => item.Tag.BookAuthors ?? Array.Empty<string>()).Where(name => !string.IsNullOrWhiteSpace(name)).Distinct().ToList();
@@ -190,10 +274,27 @@ namespace NzbDrone.Core.Books
                 RuntimeLengthMinutes = selected.Any(item => item.Tag.Duration <= TimeSpan.Zero) ? (int?)null :
                     (int)Math.Round(selected.Sum(item => item.Tag.Duration.TotalMinutes))
             };
+            result.Provenance = LocalRecordingMetadata.Sources(result, "fileTags");
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                result.Provenance["title"] = "fileName";
+            }
+
             result.Warnings.Add("This recording uses local file tags. Catalog refresh will preserve it. Automatic searching starts disabled.");
             if (author == null)
             {
-                result.Warnings.Add("Select the author from your library.");
+                var root = _rootFolders.GetBestRootFolder(selected[0].File.Path);
+                if (root != null && root.Path.IsParentPath(selected[0].File.Path))
+                {
+                    var relative = Path.GetRelativePath(root.Path, selected[0].File.Path);
+                    var separator = relative.IndexOf(Path.DirectorySeparatorChar);
+                    if (separator > 0)
+                    {
+                        result.NewAuthorPath = Path.Combine(root.Path, relative[..separator]);
+                    }
+                }
+
+                result.Warnings.Add("Select the author from your library or create a new local author for this folder.");
             }
 
             if (selected.Count > 1 && (selected.Any(item => item.Tag.Track == 0) || selected.GroupBy(item => (item.Tag.Disc, item.Tag.Track)).Any(group => group.Count() > 1)))

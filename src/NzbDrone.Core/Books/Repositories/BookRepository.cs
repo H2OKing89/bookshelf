@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Datastore;
@@ -34,6 +35,39 @@ namespace NzbDrone.Core.Books
         public BookRepository(IMainDatabase database, IEventAggregator eventAggregator)
             : base(database, eventAggregator)
         {
+        }
+
+        public override void UpdateMany(IList<Book> models)
+        {
+            if (!models.Any(book => LocalRecordingId.IsLocal(book.ForeignBookId)))
+            {
+                base.UpdateMany(models);
+                return;
+            }
+
+            if (models.Any(book => book.Id == 0))
+            {
+                throw new InvalidOperationException("Can't update model with ID 0");
+            }
+
+            using var connection = _database.OpenConnection();
+            using var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
+            foreach (var book in models)
+            {
+                if (LocalRecordingId.IsLocal(book.ForeignBookId))
+                {
+                    // Bulk monitoring and author merges must not replace local
+                    // metadata with an earlier snapshot. Author association and
+                    // the usual database fields still follow the caller's intent.
+                    UpdateFields(connection, transaction, book, item => item.AuthorMetadataId, item => item.Monitored, item => item.AnyEditionOk, item => item.AddOptions, item => item.LastInfoSync, item => item.LastSearchTime);
+                }
+                else
+                {
+                    UpdateFields(connection, transaction, book);
+                }
+            }
+
+            transaction.Commit();
         }
 
         public List<Book> GetBooks(int authorId)

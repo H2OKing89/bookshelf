@@ -279,7 +279,18 @@ namespace NzbDrone.Core.Books
         public Book UpdateBook(Book book)
         {
             var storedBook = GetBook(book.Id);
-            var updatedBook = _bookRepository.Update(book);
+            Book updatedBook;
+            if (LocalRecordingId.IsLocal(storedBook.ForeignBookId))
+            {
+                // Local recording metadata is written atomically by its editor.
+                // A monitoring or import action may have read an older title.
+                _bookRepository.SetFields(book, item => item.Monitored, item => item.AnyEditionOk, item => item.AddOptions);
+                updatedBook = GetBook(book.Id);
+            }
+            else
+            {
+                updatedBook = _bookRepository.Update(book);
+            }
 
             _eventAggregator.PublishEvent(new BookEditedEvent(updatedBook, storedBook));
 

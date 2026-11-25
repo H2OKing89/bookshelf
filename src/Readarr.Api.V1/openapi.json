@@ -4575,6 +4575,154 @@
         }
       }
     },
+    "/api/v1/localrecording": {
+      "get": {
+        "tags": [
+          "LocalRecording"
+        ],
+        "description": "Preview metadata from the selected unmapped audio files.",
+        "parameters": [
+          {
+            "name": "fileIds",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalRecording"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid file selection"
+          },
+          "409": {
+            "description": "File selection changed"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LocalRecording"
+        ],
+        "description": "Create an immutable local recording from reviewed files. Select an existing author or explicitly supply a new local author name and folder.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocalRecording"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid metadata or author folder"
+          },
+          "409": {
+            "description": "File, author or root changed"
+          }
+        }
+      }
+    },
+    "/api/v1/localrecording/{bookId}": {
+      "parameters": [
+        {
+          "name": "bookId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "LocalRecording"
+        ],
+        "description": "Read the local metadata, exact recording and file identities, provenance and edit revision.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalRecording"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Local recording not found"
+          },
+          "409": {
+            "description": "Conflicting recording identity"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "LocalRecording"
+        ],
+        "description": "Save the complete editable metadata with its current revision. This never reassigns the recording or rewrites audio files.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocalRecording"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid metadata or missing revision"
+          },
+          "404": {
+            "description": "Local recording not found"
+          },
+          "409": {
+            "description": "Recording identity or revision changed"
+          }
+        }
+      }
+    },
     "/api/v1/localization": {
       "get": {
         "tags": [
@@ -7012,6 +7160,150 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/recordingwork/book/{bookId}": {
+      "get": {
+        "tags": [
+          "RecordingWork"
+        ],
+        "description": "List exact audio editions of this book and direct file ownership totals.",
+        "parameters": [
+          {
+            "name": "bookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecordingWorkRecording"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recordingwork/works": {
+      "get": {
+        "tags": [
+          "RecordingWork"
+        ],
+        "description": "Find up to 50 user-reviewed works by title, author, series or position.",
+        "parameters": [
+          {
+            "name": "term",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecordingWork"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Search exceeds supported length"
+          }
+        }
+      }
+    },
+    "/api/v1/recordingwork/{editionId}": {
+      "parameters": [
+        {
+          "name": "editionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "RecordingWork"
+        ],
+        "description": "Inspect explicit work memberships and distinct confirmed coverage for the exact recording, without inferring volume ranges.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingWorkSnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing recording identity"
+          },
+          "404": {
+            "description": "Audio edition not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "RecordingWork"
+        ],
+        "description": "Replace the reviewed membership set for this exact edition using its revision. Files, acquisition, monitoring and recording identities are unchanged.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordingWorkEdit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingWorkSnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid membership selection"
+          },
+          "404": {
+            "description": "Audio edition not found"
+          },
+          "409": {
+            "description": "Recording or membership revision changed"
           }
         }
       }
@@ -10668,6 +10960,338 @@
           "bookReleaseDate"
         ],
         "type": "string"
+      },
+      "AudiobookChapter": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "ordinal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startOffsetMs": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lengthMs": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AudiobookChapterMetadata": {
+        "type": "object",
+        "properties": {
+          "runtimeLengthMs": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "brandIntroDurationMs": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "brandOutroDurationMs": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "isAccurate": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "chapters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AudiobookChapter"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocalRecording": {
+        "type": "object",
+        "properties": {
+          "bookId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "editionId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recordingId": {
+            "type": "string",
+            "nullable": true
+          },
+          "revision": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "authorId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "authorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "newAuthorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "newAuthorPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "subtitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "narrators": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "language": {
+            "type": "string",
+            "nullable": true
+          },
+          "publisher": {
+            "type": "string",
+            "nullable": true
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "runtimeLengthMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "chapterMetadata": {
+            "$ref": "#/components/schemas/AudiobookChapterMetadata",
+            "nullable": true
+          },
+          "provenance": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecordingWork": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "author": {
+            "type": "string",
+            "nullable": true
+          },
+          "series": {
+            "type": "string",
+            "nullable": true
+          },
+          "position": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecordingWorkRecording": {
+        "type": "object",
+        "properties": {
+          "editionId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bookId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "foreignEditionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "asin": {
+            "type": "string",
+            "nullable": true
+          },
+          "audibleRegion": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "author": {
+            "type": "string",
+            "nullable": true
+          },
+          "bookSlug": {
+            "type": "string",
+            "nullable": true
+          },
+          "monitored": {
+            "type": "boolean"
+          },
+          "fileCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sizeOnDisk": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecordingWorkReference": {
+        "type": "object",
+        "properties": {
+          "recording": {
+            "$ref": "#/components/schemas/RecordingWorkRecording"
+          },
+          "confirmed": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecordingWorkCoverage": {
+        "type": "object",
+        "properties": {
+          "work": {
+            "$ref": "#/components/schemas/RecordingWork"
+          },
+          "confirmed": {
+            "type": "boolean"
+          },
+          "hasConfirmedFiles": {
+            "type": "boolean"
+          },
+          "recordings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordingWorkReference"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecordingWorkSnapshot": {
+        "type": "object",
+        "properties": {
+          "recording": {
+            "$ref": "#/components/schemas/RecordingWorkRecording"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "unmatchedMembershipCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordingWorkCoverage"
+            }
+          },
+          "coveredWorkCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "relatedRecordingCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "relatedFileCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "relatedSizeOnDisk": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecordingWorkEdit": {
+        "type": "object",
+        "required": [
+          "revision",
+          "memberships"
+        ],
+        "properties": {
+          "revision": {
+            "type": "string"
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordingWorkMemberEdit"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecordingWorkMemberEdit": {
+        "type": "object",
+        "required": [
+          "confirmed"
+        ],
+        "properties": {
+          "workId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "newWork": {
+            "$ref": "#/components/schemas/RecordingWork"
+          },
+          "confirmed": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Specify exactly one existing work ID or a new work, and explicitly mark the membership confirmed or uncertain."
       },
       "RecordingReviewTarget": {
         "type": "object",

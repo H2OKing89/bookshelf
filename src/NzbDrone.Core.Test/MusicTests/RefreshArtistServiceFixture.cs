@@ -195,6 +195,16 @@ namespace NzbDrone.Core.Test.MusicTests
         }
 
         [Test]
+        public void should_not_fetch_metadata_for_local_authors()
+        {
+            _author.ForeignAuthorId = LocalAuthorId.NewId();
+
+            Subject.Execute(new RefreshAuthorCommand(_author.Id));
+
+            Mocker.GetMock<IProvideAuthorInfo>().Verify(provider => provider.GetAuthorInfo(It.IsAny<string>(), It.IsAny<bool>()), Times.Never());
+        }
+
+        [Test]
         public void should_not_publish_author_updated_event_if_metadata_not_updated()
         {
             var newAuthorInfo = _author.JsonClone();

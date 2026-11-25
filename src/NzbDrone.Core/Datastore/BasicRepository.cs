@@ -253,7 +253,7 @@ namespace NzbDrone.Core.Datastore
             }
         }
 
-        public void UpdateMany(IList<TModel> models)
+        public virtual void UpdateMany(IList<TModel> models)
         {
             if (models.Count == 0)
             {
@@ -415,6 +415,12 @@ namespace NzbDrone.Core.Datastore
             var sql = propertiesToUpdate == _properties ? _updateSql : GetUpdateSql(propertiesToUpdate);
 
             ExecuteUpdate(connection, transaction, model, sql);
+        }
+
+        protected void UpdateFields(IDbConnection connection, IDbTransaction transaction, TModel model, params Expression<Func<TModel, object>>[] properties)
+        {
+            var selected = properties.Length == 0 ? _properties : properties.Select(property => property.GetMemberName()).ToList();
+            UpdateFields(connection, transaction, model, selected);
         }
 
         private void UpdateFields(IDbConnection connection, IDbTransaction transaction, IList<TModel> models, List<PropertyInfo> propertiesToUpdate)

@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import BookTitleLink from 'Book/BookTitleLink';
+import LocalRecordingModal from 'Book/Edit/LocalRecordingModal';
 import Alert from 'Components/Alert';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import PageContent from 'Components/Page/PageContent';
@@ -17,7 +18,6 @@ import translate from 'Utilities/String/translate';
 import getSelectedIds from 'Utilities/Table/getSelectedIds';
 import selectAll from 'Utilities/Table/selectAll';
 import toggleSelected from 'Utilities/Table/toggleSelected';
-import CreateLocalRecordingModal from './CreateLocalRecordingModal';
 import UnmappedFilesTableHeader from './UnmappedFilesTableHeader';
 import UnmappedFilesTableRow from './UnmappedFilesTableRow';
 
@@ -327,7 +327,7 @@ class UnmappedFilesTable extends Component {
               />
           }
         </PageContentBody>
-        <CreateLocalRecordingModal
+        <LocalRecordingModal
           isOpen={localRecordingFiles !== null}
           files={localRecordingFiles || []}
           onModalClose={this.onLocalRecordingModalClose}

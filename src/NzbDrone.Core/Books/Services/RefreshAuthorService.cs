@@ -388,6 +388,12 @@ namespace NzbDrone.Core.Books
             foreach (var author in authors)
             {
                 CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
+                if (LocalAuthorId.IsLocal(author.ForeignAuthorId))
+                {
+                    _logger.Info("Preserving local author metadata: {0}", author.Name);
+                    continue;
+                }
+
                 try
                 {
                     var data = GetSkyhookData(author.ForeignAuthorId);
@@ -439,6 +445,12 @@ namespace NzbDrone.Core.Books
                 foreach (var author in authors)
                 {
                     CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
+                    if (LocalAuthorId.IsLocal(author.ForeignAuthorId))
+                    {
+                        _logger.Info("Preserving local author metadata: {0}", author.Name);
+                        continue;
+                    }
+
                     var manualTrigger = message.Trigger == CommandTrigger.Manual;
 
                     if ((updatedGoodreadsAuthors == null && _checkIfAuthorShouldBeRefreshed.ShouldRefresh(author)) ||

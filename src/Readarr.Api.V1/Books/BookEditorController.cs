@@ -22,15 +22,15 @@ namespace Readarr.Api.V1.Books
         {
             var booksToUpdate = _bookService.GetBooks(resource.BookIds);
 
-            foreach (var book in booksToUpdate)
+            if (resource.Monitored.HasValue)
             {
-                if (resource.Monitored.HasValue)
-                {
-                    book.Monitored = resource.Monitored.Value;
-                }
+                // Validation above confirms every requested ID exists. Write only
+                // the monitoring field, then reload so metadata and author
+                // associations changed concurrently are not replaced by the draft.
+                _bookService.SetMonitored(resource.BookIds, resource.Monitored.Value);
+                booksToUpdate = _bookService.GetBooks(resource.BookIds);
             }
 
-            _bookService.UpdateMany(booksToUpdate);
             return Accepted(booksToUpdate.ToResource());
         }
 

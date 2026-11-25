@@ -32,7 +32,7 @@ from . import docker, restore
 IMAGE = "postgres:16-alpine"
 MARKER = ".bookshelf-migration-tests"
 LEGACY_HISTORY = set(range(1, 34)) | set(range(35, 49)) | {158}
-HISTORY = LEGACY_HISTORY | {159, 160, 161}
+HISTORY = LEGACY_HISTORY | {159, 160, 161, 162, 163}
 ACQUISITION_COLUMNS = {("QualityProfiles", "MinUpgradeFormatScore"), ("BookFiles", "TaggedLanguage"),
                        ("Blocklist", "RecordingLanguages"), ("Blocklist", "SelectedEditionLanguageId"),
                        ("Blocklist", "AudioFormatEvidence")}

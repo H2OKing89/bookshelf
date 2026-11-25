@@ -4,6 +4,8 @@ import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import AuthorHistoryTable from 'Author/History/AuthorHistoryTable';
 import DeleteBookModal from 'Book/Delete/DeleteBookModal';
 import EditBookModalConnector from 'Book/Edit/EditBookModalConnector';
+import LocalRecordingModal from 'Book/Edit/LocalRecordingModal';
+import RecordingWorkCoverage from 'Book/WorkCoverage/RecordingWorkCoverage';
 import BookFileEditorTable from 'BookFile/Editor/BookFileEditorTable';
 import IconButton from 'Components/Link/IconButton';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
@@ -35,8 +37,15 @@ class BookDetails extends Component {
       isOrganizeModalOpen: false,
       isRetagModalOpen: false,
       isEditBookModalOpen: false,
+      isLocalMetadataModalOpen: false,
       isDeleteBookModalOpen: false
     };
+  }
+
+  componentDidUpdate(previousProps) {
+    if (previousProps.id !== this.props.id && this.state.isLocalMetadataModalOpen) {
+      this.onLocalMetadataClose();
+    }
   }
 
   //
@@ -66,6 +75,19 @@ class BookDetails extends Component {
     this.setState({ isEditBookModalOpen: false });
   };
 
+  onLocalMetadataPress = () => {
+    this.setState({ isLocalMetadataModalOpen: true });
+  };
+
+  onLocalMetadataClose = () => {
+    this.setState({ isLocalMetadataModalOpen: false });
+  };
+
+  onLocalMetadataSaved = (book) => {
+    this.onLocalMetadataClose();
+    this.props.onLocalMetadataSaved(book);
+  };
+
   onDeleteBookPress = () => {
     this.setState({
       isEditBookModalOpen: false,
@@ -84,6 +106,7 @@ class BookDetails extends Component {
     const {
       id,
       title,
+      foreignBookId,
       isRefreshing,
       isRefreshingMediaInfo,
       isFetching,
@@ -108,6 +131,7 @@ class BookDetails extends Component {
       isOrganizeModalOpen,
       isRetagModalOpen,
       isEditBookModalOpen,
+      isLocalMetadataModalOpen,
       isDeleteBookModalOpen
     } = this.state;
 
@@ -164,6 +188,14 @@ class BookDetails extends Component {
               iconName={icons.EDIT}
               onPress={this.onEditBookPress}
             />
+
+            {foreignBookId?.startsWith('local:recording:') &&
+              <PageToolbarButton
+                label="Edit local metadata"
+                iconName={icons.EDIT}
+                onPress={this.onLocalMetadataPress}
+              />
+            }
 
             <PageToolbarButton
               label={translate('Delete')}
@@ -267,6 +299,10 @@ class BookDetails extends Component {
                   {translate('FilesTotal', [bookFileCount])}
                 </Tab>
 
+                <Tab className={styles.tab} selectedClassName={styles.selectedTab}>
+                  Work coverage
+                </Tab>
+
               </TabList>
 
               <TabPanel>
@@ -288,6 +324,10 @@ class BookDetails extends Component {
                   authorId={author.id}
                   bookId={id}
                 />
+              </TabPanel>
+
+              <TabPanel>
+                <RecordingWorkCoverage key={id} bookId={id} />
               </TabPanel>
             </Tabs>
           </div>
@@ -314,6 +354,16 @@ class BookDetails extends Component {
             onDeleteAuthorPress={this.onDeleteBookPress}
           />
 
+          {foreignBookId?.startsWith('local:recording:') &&
+            <LocalRecordingModal
+              key={id}
+              isOpen={isLocalMetadataModalOpen}
+              bookId={id}
+              onModalClose={this.onLocalMetadataClose}
+              onCreated={this.onLocalMetadataSaved}
+            />
+          }
+
           <DeleteBookModal
             isOpen={isDeleteBookModalOpen}
             bookId={id}
@@ -331,6 +381,7 @@ BookDetails.propTypes = {
   id: PropTypes.number.isRequired,
   titleSlug: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
+  foreignBookId: PropTypes.string,
   seriesTitle: PropTypes.string.isRequired,
   pageCount: PropTypes.number,
   overview: PropTypes.string,
@@ -356,7 +407,8 @@ BookDetails.propTypes = {
   onMonitorTogglePress: PropTypes.func.isRequired,
   onRefreshPress: PropTypes.func,
   onRefreshMediaInfoPress: PropTypes.func,
-  onSearchPress: PropTypes.func.isRequired
+  onSearchPress: PropTypes.func.isRequired,
+  onLocalMetadataSaved: PropTypes.func.isRequired
 };
 
 BookDetails.defaultProps = {
