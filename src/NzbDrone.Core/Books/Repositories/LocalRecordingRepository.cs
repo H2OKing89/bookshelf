@@ -76,11 +76,23 @@ namespace NzbDrone.Core.Books
                 {
                     // Guard against a scan or another request claiming/changing the file
                     // between validation and commit. Preserve its history and provenance.
+                    // Older SQLite databases may store an equivalent timestamp with a
+                    // different text representation. Compare the instant, then retain
+                    // the exact storage value for the guarded update.
+                    var modified = connection.QuerySingleOrDefault<StoredModification>(
+                        "SELECT \"Modified\", CAST(\"Modified\" AS TEXT) AS \"StorageValue\" FROM \"BookFiles\" WHERE \"Id\" = @Id",
+                        new { file.Id },
+                        transaction);
+                    if (modified == null || modified.Modified != file.Modified || modified.StorageValue == null)
+                    {
+                        throw Conflict("A selected file changed or was mapped. Refresh Unmapped and try again.");
+                    }
+
                     var changed = connection.Execute(
                         "UPDATE \"BookFiles\" SET \"EditionId\" = @EditionId, \"Part\" = @Part " +
                         "WHERE \"Id\" = @Id AND \"EditionId\" = 0 AND \"Path\" = @Path " +
-                        "AND \"Size\" = @Size AND \"Modified\" = @Modified",
-                        new { EditionId = edition.Id, file.Part, file.Id, file.Path, file.Size, file.Modified },
+                        "AND \"Size\" = @Size AND CAST(\"Modified\" AS TEXT) = @Modified",
+                        new { EditionId = edition.Id, file.Part, file.Id, file.Path, file.Size, Modified = modified.StorageValue },
                         transaction);
                     if (changed != 1)
                     {
@@ -254,6 +266,12 @@ namespace NzbDrone.Core.Books
         }
 
         private static NzbDroneClientException Conflict(string message) => new NzbDroneClientException(HttpStatusCode.Conflict, message);
+
+        private sealed class StoredModification
+        {
+            public DateTime? Modified { get; set; }
+            public string StorageValue { get; set; }
+        }
 
         private class LocalRecordingRow : LocalRecording
         {

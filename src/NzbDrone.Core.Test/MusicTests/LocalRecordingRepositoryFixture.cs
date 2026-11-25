@@ -4,9 +4,11 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Dapper;
 using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Profiles.Metadata;
@@ -45,6 +47,40 @@ namespace NzbDrone.Core.Test.MusicTests
             StoredModel.SceneName.Should().Be("original");
             StoredModel.ReleaseGroup.Should().Be("group");
             Db.All<Book>().Single().Id.Should().Be(book.Id);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void should_compare_legacy_sqlite_timestamp_by_value_without_losing_guard(bool changedAfterPreview)
+        {
+            if (Db.DatabaseType != DatabaseType.SQLite)
+            {
+                Assert.Ignore("This fixture covers legacy SQLite timestamp encodings.");
+            }
+
+            var file = File("/books/Kaiju/01.mp3");
+            Storage.Insert(file);
+            const string originalModified = "2026-11-25 00:34:49.199266";
+            using var connection = Db.OpenConnection();
+            connection.Execute("UPDATE \"BookFiles\" SET \"Modified\" = @Modified WHERE \"Id\" = @Id", new { Modified = originalModified, file.Id });
+            var selected = Storage.Get(file.Id);
+            var book = Book();
+            var edition = Edition();
+
+            if (changedAfterPreview)
+            {
+                connection.Execute("UPDATE \"BookFiles\" SET \"Modified\" = @Modified WHERE \"Id\" = @Id", new { Modified = "2026-11-25 00:34:50.199266", file.Id });
+                Assert.Throws<NzbDroneClientException>(() => Subject.Create(book, edition, new List<BookFile> { selected }));
+                Db.All<Book>().Should().BeEmpty();
+                Db.All<Edition>().Should().BeEmpty();
+                Storage.Get(file.Id).EditionId.Should().Be(0);
+            }
+            else
+            {
+                Subject.Create(book, edition, new List<BookFile> { selected });
+                Storage.Get(file.Id).EditionId.Should().Be(edition.Id);
+                connection.ExecuteScalar<string>("SELECT CAST(\"Modified\" AS TEXT) FROM \"BookFiles\" WHERE \"Id\" = @Id", new { file.Id }).Should().Be(originalModified);
+            }
         }
 
         [Test]
