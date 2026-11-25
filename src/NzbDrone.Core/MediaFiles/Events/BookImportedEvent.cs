@@ -12,16 +12,18 @@ namespace NzbDrone.Core.MediaFiles.Events
         public List<BookFile> ImportedBooks { get; private set; }
         public List<BookFile> OldFiles { get; private set; }
         public bool NewDownload { get; private set; }
+        public bool IsPartOfBatch { get; }
         public DownloadClientItemClientInfo DownloadClientInfo { get; set; }
         public string DownloadId { get; private set; }
 
-        public BookImportedEvent(Author author, Book book, List<BookFile> importedBooks, List<BookFile> oldFiles, bool newDownload, DownloadClientItem downloadClientItem)
+        public BookImportedEvent(Author author, Book book, List<BookFile> importedBooks, List<BookFile> oldFiles, bool newDownload, DownloadClientItem downloadClientItem, bool isPartOfBatch = false)
         {
             Author = author;
             Book = book;
             ImportedBooks = importedBooks;
             OldFiles = oldFiles;
             NewDownload = newDownload;
+            IsPartOfBatch = isPartOfBatch;
 
             if (downloadClientItem != null)
             {

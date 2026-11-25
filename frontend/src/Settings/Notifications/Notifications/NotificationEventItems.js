@@ -29,6 +29,7 @@ function NotificationEventItems(props) {
     onBookFileDelete,
     onBookFileDeleteForUpgrade,
     onHealthIssue,
+    onHealthRestored,
     onDownloadFailure,
     onImportFailure,
     onBookRetag,
@@ -42,6 +43,7 @@ function NotificationEventItems(props) {
     supportsOnBookDelete,
     supportsOnBookFileDelete,
     supportsOnHealthIssue,
+    supportsOnHealthRestored,
     includeHealthWarnings,
     supportsOnDownloadFailure,
     supportsOnImportFailure,
@@ -218,14 +220,25 @@ function NotificationEventItems(props) {
             />
           </div>
 
+          <div>
+            <FormInputGroup
+              type={inputTypes.CHECK}
+              name="onHealthRestored"
+              helpText={translate('OnHealthRestoredHelpText')}
+              isDisabled={!supportsOnHealthRestored.value}
+              {...onHealthRestored}
+              onChange={onInputChange}
+            />
+          </div>
+
           {
-            onHealthIssue.value &&
+            (onHealthIssue.value || onHealthRestored.value) &&
               <div>
                 <FormInputGroup
                   type={inputTypes.CHECK}
                   name="includeHealthWarnings"
                   helpText={translate('IncludeHealthWarningsHelpText')}
-                  isDisabled={!supportsOnHealthIssue.value}
+                  isDisabled={!supportsOnHealthIssue.value && !supportsOnHealthRestored.value}
                   {...includeHealthWarnings}
                   onChange={onInputChange}
                 />

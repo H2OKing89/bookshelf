@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using FluentValidation.Results;
 using NLog;
+using NzbDrone.Common;
 using NzbDrone.Common.Cache;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
@@ -13,19 +15,13 @@ using NzbDrone.Core.Validation;
 
 namespace NzbDrone.Core.Notifications.Plex.Server
 {
-    public class PlexServer : NotificationBase<PlexServerSettings>
+    public class PlexServer : NotificationBase<PlexServerSettings>, IBatchedMediaServerNotification
     {
         private readonly IPlexServerService _plexServerService;
         private readonly IPlexTvService _plexTvService;
         private readonly Logger _logger;
 
-        private class PlexUpdateQueue
-        {
-            public Dictionary<int, Author> Pending { get; } = new ();
-            public bool Refreshing { get; set; }
-        }
-
-        private readonly ICached<PlexUpdateQueue> _pendingAuthorsCache;
+        private readonly MediaServerUpdateQueue<PlexServer> _pendingUpdates;
 
         public PlexServer(IPlexServerService plexServerService, IPlexTvService plexTvService, ICacheManager cacheManager, Logger logger)
         {
@@ -33,7 +29,7 @@ namespace NzbDrone.Core.Notifications.Plex.Server
             _plexTvService = plexTvService;
             _logger = logger;
 
-            _pendingAuthorsCache = cacheManager.GetRollingCache<PlexUpdateQueue>(GetType(), "pendingAuthors", TimeSpan.FromDays(1));
+            _pendingUpdates = new MediaServerUpdateQueue<PlexServer>(cacheManager, PathEqualityComparer.Instance);
         }
 
         public override string Link => "https://www.plex.tv/";
@@ -41,17 +37,41 @@ namespace NzbDrone.Core.Notifications.Plex.Server
 
         public override void OnReleaseImport(BookDownloadMessage message)
         {
-            UpdateIfEnabled(message.Author);
+            QueueImportBatch(new[] { message }, true);
+            ProcessPendingUpdates();
+        }
+
+        public bool QueueImportBatch(IReadOnlyList<BookDownloadMessage> messages, bool sendNotifications, bool refreshForRemovedFiles = false)
+        {
+            if (Settings.UpdateLibrary)
+            {
+                // Use the paths of files actually committed. Collapse all paths
+                // below the configured author directory to that single targeted scan;
+                // files stored elsewhere retain their own directory as a target.
+                var targets = messages.SelectMany(message => message.BookFiles)
+                    .Where(file => file?.Path.IsNotNullOrWhiteSpace() == true)
+                    .Select(file => Path.GetDirectoryName(file.Path))
+                    .Where(path => path.IsNotNullOrWhiteSpace()).ToList();
+                var authors = messages.Select(message => message.Author?.Path)
+                    .Where(path => path.IsNotNullOrWhiteSpace()).Distinct(PathEqualityComparer.Instance).ToList();
+                var refreshPaths = targets.Select(path => authors.FirstOrDefault(author => author.PathEquals(path) || author.IsParentPath(path)) ?? path);
+                _pendingUpdates.Add(Definition, refreshPaths);
+            }
+
+            // Plex does not have a separate per-book notification operation.
+            return false;
         }
 
         public override void OnRename(Author author, List<RenamedBookFile> renamedFiles)
         {
             UpdateIfEnabled(author);
+            ProcessPendingUpdates();
         }
 
         public override void OnBookRetag(BookRetagMessage message)
         {
             UpdateIfEnabled(message.Author);
+            ProcessPendingUpdates();
         }
 
         public override void OnBookDelete(BookDeleteMessage deleteMessage)
@@ -72,71 +92,25 @@ namespace NzbDrone.Core.Notifications.Plex.Server
 
         private void UpdateIfEnabled(Author author)
         {
-            _plexTvService.Ping(Settings.AuthToken);
-
-            if (Settings.UpdateLibrary)
+            if (Settings.UpdateLibrary && author?.Path.IsNotNullOrWhiteSpace() == true)
             {
                 _logger.Debug("Scheduling library update for author {0} {1}", author.Id, author.Name);
-                var queue = _pendingAuthorsCache.Get(Settings.Host, () => new PlexUpdateQueue());
-                lock (queue)
-                {
-                    queue.Pending[author.Id] = author;
-                }
+                _pendingUpdates.Add(Definition, new[] { author.Path });
             }
+        }
+
+        public bool ProcessPendingUpdates()
+        {
+            return Settings.UpdateLibrary && _pendingUpdates.Process(Definition, paths =>
+            {
+                _plexTvService.Ping(Settings.AuthToken);
+                _plexServerService.UpdateLibraryPaths(paths, Settings);
+            });
         }
 
         public override void ProcessQueue()
         {
-            var queue = _pendingAuthorsCache.Find(Settings.Host);
-
-            if (queue == null)
-            {
-                return;
-            }
-
-            lock (queue)
-            {
-                if (queue.Refreshing)
-                {
-                    return;
-                }
-
-                queue.Refreshing = true;
-            }
-
-            try
-            {
-                while (true)
-                {
-                    List<Author> refreshingAuthors;
-                    lock (queue)
-                    {
-                        if (queue.Pending.Empty())
-                        {
-                            queue.Refreshing = false;
-                            return;
-                        }
-
-                        refreshingAuthors = queue.Pending.Values.ToList();
-                        queue.Pending.Clear();
-                    }
-
-                    if (Settings.UpdateLibrary)
-                    {
-                        _logger.Debug("Performing library update for {0} authors", refreshingAuthors.Count);
-                        _plexServerService.UpdateLibrary(refreshingAuthors, Settings);
-                    }
-                }
-            }
-            catch
-            {
-                lock (queue)
-                {
-                    queue.Refreshing = false;
-                }
-
-                throw;
-            }
+            ProcessPendingUpdates();
         }
 
         public override ValidationResult Test()

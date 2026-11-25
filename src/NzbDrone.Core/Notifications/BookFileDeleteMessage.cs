@@ -10,6 +10,7 @@ namespace NzbDrone.Core.Notifications
         public BookFile BookFile { get; set; }
 
         public DeleteMediaFileReason Reason { get; set; }
+        public bool IsPartOfImportBatch { get; set; }
 
         public override string ToString()
         {

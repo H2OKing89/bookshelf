@@ -2,21 +2,24 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using FluentValidation.Results;
 using NLog;
+using NzbDrone.Common.Cache;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.MediaFiles;
 
 namespace NzbDrone.Core.Notifications.Subsonic
 {
-    public class Subsonic : NotificationBase<SubsonicSettings>
+    public class Subsonic : NotificationBase<SubsonicSettings>, IBatchedMediaServerNotification
     {
         private readonly ISubsonicService _subsonicService;
         private readonly Logger _logger;
+        private readonly MediaServerUpdateQueue<Subsonic> _pendingUpdates;
 
-        public Subsonic(ISubsonicService subsonicService, Logger logger)
+        public Subsonic(ISubsonicService subsonicService, ICacheManager cacheManager, Logger logger)
         {
             _subsonicService = subsonicService;
             _logger = logger;
+            _pendingUpdates = new MediaServerUpdateQueue<Subsonic>(cacheManager);
         }
 
         public override string Link => "http://subsonic.org/";
@@ -30,10 +33,41 @@ namespace NzbDrone.Core.Notifications.Subsonic
 
         public override void OnReleaseImport(BookDownloadMessage message)
         {
-            const string header = "Readarr - Downloaded";
+            QueueImportBatch(new[] { message }, true);
+            ProcessPendingUpdates();
+        }
 
-            Notify(Settings, header, message.Message);
-            Update();
+        public bool QueueImportBatch(IReadOnlyList<BookDownloadMessage> messages, bool sendNotifications, bool refreshForRemovedFiles = false)
+        {
+            if (messages.Count == 0 && !refreshForRemovedFiles)
+            {
+                return false;
+            }
+
+            QueueUpdate();
+
+            // Subsonic has a server-wide scan, but its optional chat message
+            // is still one notification per imported book for compatibility.
+            var notified = false;
+            if (sendNotifications)
+            {
+                foreach (var message in messages)
+                {
+                    notified |= Notify(Settings, "Readarr - Downloaded", message.Message);
+                }
+            }
+
+            return notified;
+        }
+
+        public bool ProcessPendingUpdates()
+        {
+            return Settings.UpdateLibrary && _pendingUpdates.Process(Definition, _ => _subsonicService.Update(Settings));
+        }
+
+        public override void ProcessQueue()
+        {
+            ProcessPendingUpdates();
         }
 
         public override void OnRename(Author author, List<RenamedBookFile> renamedFiles)
@@ -75,12 +109,20 @@ namespace NzbDrone.Core.Notifications.Subsonic
             const string header = "Readarr - Book File Deleted";
 
             Notify(Settings, header, deleteMessage.Message);
-            Update();
+            if (!deleteMessage.IsPartOfImportBatch)
+            {
+                Update();
+            }
         }
 
         public override void OnHealthIssue(HealthCheck.HealthCheck healthCheck)
         {
             Notify(Settings, HEALTH_ISSUE_TITLE_BRANDED, healthCheck.Message);
+        }
+
+        public override void OnHealthRestored(HealthCheck.HealthCheck previousCheck)
+        {
+            Notify(Settings, HEALTH_RESTORED_TITLE_BRANDED, previousCheck.Message);
         }
 
         public override void OnBookRetag(BookRetagMessage message)
@@ -99,36 +141,37 @@ namespace NzbDrone.Core.Notifications.Subsonic
             return new ValidationResult(failures);
         }
 
-        private void Notify(SubsonicSettings settings, string header, string message)
+        private bool Notify(SubsonicSettings settings, string header, string message)
         {
             try
             {
                 if (Settings.Notify)
                 {
                     _subsonicService.Notify(Settings, $"{header} - {message}");
+                    return true;
                 }
             }
             catch (SocketException ex)
             {
                 var logMessage = $"Unable to connect to Subsonic Host: {Settings.Host}:{Settings.Port}";
                 _logger.Debug(ex, logMessage);
+            }
+
+            return false;
+        }
+
+        private void QueueUpdate()
+        {
+            if (Settings.UpdateLibrary)
+            {
+                _pendingUpdates.Add(Definition, new[] { "library" });
             }
         }
 
         private void Update()
         {
-            try
-            {
-                if (Settings.UpdateLibrary)
-                {
-                    _subsonicService.Update(Settings);
-                }
-            }
-            catch (SocketException ex)
-            {
-                var logMessage = $"Unable to connect to Subsonic Host: {Settings.Host}:{Settings.Port}";
-                _logger.Debug(ex, logMessage);
-            }
+            QueueUpdate();
+            ProcessPendingUpdates();
         }
     }
 }

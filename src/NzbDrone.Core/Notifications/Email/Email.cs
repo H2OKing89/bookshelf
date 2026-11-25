@@ -77,6 +77,11 @@ namespace NzbDrone.Core.Notifications.Email
             SendEmail(Settings, HEALTH_ISSUE_TITLE_BRANDED, message.Message);
         }
 
+        public override void OnHealthRestored(HealthCheck.HealthCheck previousCheck)
+        {
+            SendEmail(Settings, HEALTH_RESTORED_TITLE_BRANDED, previousCheck.Message);
+        }
+
         public override void OnDownloadFailure(DownloadFailedMessage message)
         {
             SendEmail(Settings, DOWNLOAD_FAILURE_TITLE_BRANDED, message.Message);

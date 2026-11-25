@@ -34,8 +34,14 @@ namespace NzbDrone.Core.HealthCheck
 
         private readonly ICached<HealthCheck> _healthCheckResults;
 
-        private bool _hasRunHealthChecksAfterGracePeriod = false;
-        private bool _isRunningHealthChecksAfterGracePeriod = false;
+        // Health checks can be requested by a command, startup and several concurrent
+        // event callbacks. Share the run state with the process-local results cache.
+        private readonly HealthCheckRunState _runState;
+
+        private class HealthCheckRunState
+        {
+            public bool HasRunAfterGracePeriod { get; set; }
+        }
 
         public HealthCheckService(IEnumerable<IProvideHealthCheck> healthChecks,
                                   IServerSideNotificationService serverSideNotificationService,
@@ -51,6 +57,8 @@ namespace NzbDrone.Core.HealthCheck
             _logger = logger;
 
             _healthCheckResults = _cacheManager.GetCache<HealthCheck>(GetType());
+            _runState = _cacheManager.GetCache<HealthCheckRunState>(GetType(), "runState")
+                .Get("state", () => new HealthCheckRunState());
 
             _startupHealthChecks = _healthChecks.Where(v => v.CheckOnStartup).ToArray();
             _scheduledHealthChecks = _healthChecks.Where(v => v.CheckOnSchedule).ToArray();
@@ -100,18 +108,22 @@ namespace NzbDrone.Core.HealthCheck
 
             foreach (var result in results)
             {
+                var previous = _healthCheckResults.Find(result.Source.Name);
                 if (result.Type == HealthCheckResult.Ok)
                 {
                     _healthCheckResults.Remove(result.Source.Name);
+                    if (previous != null)
+                    {
+                        _eventAggregator.PublishEvent(new HealthCheckRestoredEvent(previous, !_runState.HasRunAfterGracePeriod));
+                    }
                 }
                 else
                 {
-                    if (_healthCheckResults.Find(result.Source.Name) == null)
-                    {
-                        _eventAggregator.PublishEvent(new HealthCheckFailedEvent(result, !_hasRunHealthChecksAfterGracePeriod));
-                    }
-
                     _healthCheckResults.Set(result.Source.Name, result);
+                    if (previous == null)
+                    {
+                        _eventAggregator.PublishEvent(new HealthCheckFailedEvent(result, !_runState.HasRunAfterGracePeriod));
+                    }
                 }
             }
 
@@ -120,72 +132,74 @@ namespace NzbDrone.Core.HealthCheck
 
         public void Execute(CheckHealthCommand message)
         {
-            if (message.Trigger == CommandTrigger.Manual)
+            lock (_runState)
             {
-                PerformHealthCheck(_healthChecks, null, true);
-            }
-            else
-            {
-                PerformHealthCheck(_scheduledHealthChecks, null, true);
+                CheckAfterGracePeriod();
+                var healthChecks = message.Trigger == CommandTrigger.Manual ? _healthChecks : _scheduledHealthChecks;
+                PerformHealthCheck(healthChecks, null, true);
             }
         }
 
         public void HandleAsync(ApplicationStartedEvent message)
         {
-            PerformHealthCheck(_startupHealthChecks, null, true);
+            lock (_runState)
+            {
+                PerformHealthCheck(_startupHealthChecks, null, true);
+            }
+        }
+
+        private void CheckAfterGracePeriod()
+        {
+            if (_runState.HasRunAfterGracePeriod || DateTime.UtcNow <= _startupGracePeriodEndTime)
+            {
+                return;
+            }
+
+            // Re-test before reporting startup failures. A check that recovered during
+            // grace is removed but must not produce an unpaired external notification.
+            var previouslyFailed = _healthCheckResults.Values.Select(result => result.Source).ToHashSet();
+            PerformHealthCheck(_healthChecks.Where(check => check.CheckOnStartup || previouslyFailed.Contains(check.GetType())).ToArray());
+            _runState.HasRunAfterGracePeriod = true;
+
+            foreach (var result in _healthCheckResults.Values.ToList())
+            {
+                _eventAggregator.PublishEvent(new HealthCheckFailedEvent(result, false));
+            }
         }
 
         public void HandleAsync(IEvent message)
         {
-            if (message is HealthCheckCompleteEvent)
+            if (message is HealthCheckCompleteEvent or HealthCheckFailedEvent or HealthCheckRestoredEvent)
             {
                 return;
             }
 
-            // If we haven't previously re-run health checks after startup grace period run startup checks again and track so they aren't run again.
-            // Return early after re-running checks to avoid triggering checks multiple times.
-            if (!_hasRunHealthChecksAfterGracePeriod && !_isRunningHealthChecksAfterGracePeriod && DateTime.UtcNow > _startupGracePeriodEndTime)
+            lock (_runState)
             {
-                _isRunningHealthChecksAfterGracePeriod = true;
+                CheckAfterGracePeriod();
 
-                PerformHealthCheck(_startupHealthChecks);
-
-                // Update after running health checks so new failure notifications aren't sent 2x.
-                _hasRunHealthChecksAfterGracePeriod = true;
-
-                // Explicitly notify for any failed checks since existing failed results would not have sent events.
-                var results = _healthCheckResults.Values.ToList();
-
-                foreach (var result in results)
+                if (!_eventDrivenHealthChecks.TryGetValue(message.GetType(), out var checks))
                 {
-                    _eventAggregator.PublishEvent(new HealthCheckFailedEvent(result, false));
+                    return;
                 }
 
-                _isRunningHealthChecksAfterGracePeriod = false;
-            }
+                var filteredChecks = new List<IProvideHealthCheck>();
+                var healthCheckResults = _healthCheckResults.Values.ToList();
 
-            if (!_eventDrivenHealthChecks.TryGetValue(message.GetType(), out var checks))
-            {
-                return;
-            }
-
-            var filteredChecks = new List<IProvideHealthCheck>();
-            var healthCheckResults = _healthCheckResults.Values.ToList();
-
-            foreach (var eventDrivenHealthCheck in checks)
-            {
-                var healthCheckType = eventDrivenHealthCheck.HealthCheck.GetType();
-                var previouslyFailed = healthCheckResults.Any(r => r.Source == healthCheckType);
-
-                if (eventDrivenHealthCheck.ShouldExecute(message, previouslyFailed))
+                foreach (var eventDrivenHealthCheck in checks)
                 {
-                    filteredChecks.Add(eventDrivenHealthCheck.HealthCheck);
-                    continue;
-                }
-            }
+                    var healthCheckType = eventDrivenHealthCheck.HealthCheck.GetType();
+                    var previouslyFailed = healthCheckResults.Any(r => r.Source == healthCheckType);
 
-            // TODO: Add debounce
-            PerformHealthCheck(filteredChecks.ToArray(), message);
+                    if (eventDrivenHealthCheck.ShouldExecute(message, previouslyFailed))
+                    {
+                        filteredChecks.Add(eventDrivenHealthCheck.HealthCheck);
+                    }
+                }
+
+                // TODO: Add debounce
+                PerformHealthCheck(filteredChecks.ToArray(), message);
+            }
         }
     }
 }

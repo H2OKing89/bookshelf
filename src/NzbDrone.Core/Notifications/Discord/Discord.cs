@@ -158,6 +158,23 @@ namespace NzbDrone.Core.Notifications.Discord
             _proxy.SendPayload(payload, Settings);
         }
 
+        public override void OnHealthRestored(HealthCheck.HealthCheck previousCheck)
+        {
+            var attachments = new List<Embed>
+            {
+                new ()
+                {
+                    Title = previousCheck.Source.Name,
+                    Text = previousCheck.Message,
+                    Color = (int)DiscordColors.Success
+                }
+            };
+
+            var payload = CreatePayload(HEALTH_RESTORED_TITLE, attachments);
+
+            _proxy.SendPayload(payload, Settings);
+        }
+
         public override void OnBookRetag(BookRetagMessage message)
         {
             var attachments = new List<Embed>

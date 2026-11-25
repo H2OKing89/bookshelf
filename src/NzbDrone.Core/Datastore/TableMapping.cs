@@ -92,6 +92,7 @@ namespace NzbDrone.Core.Datastore
                   .Ignore(i => i.SupportsOnBookFileDelete)
                   .Ignore(i => i.SupportsOnBookFileDeleteForUpgrade)
                   .Ignore(i => i.SupportsOnHealthIssue)
+                  .Ignore(i => i.SupportsOnHealthRestored)
                   .Ignore(i => i.SupportsOnDownloadFailure)
                   .Ignore(i => i.SupportsOnImportFailure)
                   .Ignore(i => i.SupportsOnBookRetag)

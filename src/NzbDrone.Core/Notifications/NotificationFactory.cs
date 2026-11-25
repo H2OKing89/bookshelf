@@ -15,6 +15,7 @@ namespace NzbDrone.Core.Notifications
         List<INotification> OnUpgradeEnabled(bool filterBlockedNotifications = true);
         List<INotification> OnRenameEnabled(bool filterBlockedNotifications = true);
         List<INotification> OnHealthIssueEnabled(bool filterBlockedNotifications = true);
+        List<INotification> OnHealthRestoredEnabled(bool filterBlockedNotifications = true);
         List<INotification> OnAuthorAddedEnabled(bool filterBlockedNotifications = true);
         List<INotification> OnAuthorDeleteEnabled(bool filterBlockedNotifications = true);
         List<INotification> OnBookDeleteEnabled(bool filterBlockedNotifications = true);
@@ -144,6 +145,12 @@ namespace NzbDrone.Core.Notifications
             return GetAvailableProviders().Where(n => ((NotificationDefinition)n.Definition).OnHealthIssue).ToList();
         }
 
+        public List<INotification> OnHealthRestoredEnabled(bool filterBlockedNotifications = true)
+        {
+            var notifications = GetAvailableProviders().Where(n => n.SupportsOnHealthRestored && ((NotificationDefinition)n.Definition).OnHealthRestored);
+            return (filterBlockedNotifications ? FilterBlockedNotifications(notifications) : notifications).ToList();
+        }
+
         public List<INotification> OnDownloadFailureEnabled(bool filterBlockedNotifications = true)
         {
             if (filterBlockedNotifications)
@@ -221,6 +228,7 @@ namespace NzbDrone.Core.Notifications
             definition.SupportsOnBookFileDelete = provider.SupportsOnBookFileDelete;
             definition.SupportsOnBookFileDeleteForUpgrade = provider.SupportsOnBookFileDeleteForUpgrade;
             definition.SupportsOnHealthIssue = provider.SupportsOnHealthIssue;
+            definition.SupportsOnHealthRestored = provider.SupportsOnHealthRestored;
             definition.SupportsOnDownloadFailure = provider.SupportsOnDownloadFailure;
             definition.SupportsOnImportFailure = provider.SupportsOnImportFailure;
             definition.SupportsOnBookRetag = provider.SupportsOnBookRetag;

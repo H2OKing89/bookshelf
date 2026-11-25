@@ -15,6 +15,7 @@ namespace NzbDrone.Core.Notifications
         public bool OnBookFileDelete { get; set; }
         public bool OnBookFileDeleteForUpgrade { get; set; }
         public bool OnHealthIssue { get; set; }
+        public bool OnHealthRestored { get; set; }
         public bool OnDownloadFailure { get; set; }
         public bool OnImportFailure { get; set; }
         public bool OnBookRetag { get; set; }
@@ -29,12 +30,13 @@ namespace NzbDrone.Core.Notifications
         public bool SupportsOnBookFileDelete { get; set; }
         public bool SupportsOnBookFileDeleteForUpgrade { get; set; }
         public bool SupportsOnHealthIssue { get; set; }
+        public bool SupportsOnHealthRestored { get; set; }
         public bool IncludeHealthWarnings { get; set; }
         public bool SupportsOnDownloadFailure { get; set; }
         public bool SupportsOnImportFailure { get; set; }
         public bool SupportsOnBookRetag { get; set; }
         public bool SupportsOnApplicationUpdate { get; set; }
 
-        public override bool Enable => OnGrab || OnReleaseImport || (OnReleaseImport && OnUpgrade) || OnRename || OnAuthorAdded || OnAuthorDelete || OnBookDelete || OnBookFileDelete || OnBookFileDeleteForUpgrade || OnHealthIssue || OnDownloadFailure || OnImportFailure || OnBookRetag || OnApplicationUpdate || Settings is WebhookSettings { OnImportComplete: true };
+        public override bool Enable => OnGrab || OnReleaseImport || (OnReleaseImport && OnUpgrade) || OnRename || OnAuthorAdded || OnAuthorDelete || OnBookDelete || OnBookFileDelete || OnBookFileDeleteForUpgrade || OnHealthIssue || OnHealthRestored || OnDownloadFailure || OnImportFailure || OnBookRetag || OnApplicationUpdate || Settings is WebhookSettings { OnImportComplete: true };
     }
 }

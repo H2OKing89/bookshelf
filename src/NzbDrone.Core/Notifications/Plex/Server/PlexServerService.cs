@@ -18,6 +18,7 @@ namespace NzbDrone.Core.Notifications.Plex.Server
     {
         void UpdateLibrary(Author author, PlexServerSettings settings);
         void UpdateLibrary(IEnumerable<Author> authors, PlexServerSettings settings);
+        void UpdateLibraryPaths(IEnumerable<string> paths, PlexServerSettings settings);
         ValidationFailure Test(PlexServerSettings settings);
     }
 
@@ -43,19 +44,30 @@ namespace NzbDrone.Core.Notifications.Plex.Server
 
         public void UpdateLibrary(IEnumerable<Author> authors, PlexServerSettings settings)
         {
+            UpdateLibraryPaths(authors.Select(author => author.Path), settings);
+        }
+
+        public void UpdateLibraryPaths(IEnumerable<string> paths, PlexServerSettings settings)
+        {
             try
             {
                 _logger.Debug("Sending Update Request to Plex Server");
                 var watch = Stopwatch.StartNew();
 
-                var version = _versionCache.Get(settings.Host, () => GetVersion(settings), TimeSpan.FromHours(2));
+                var version = _versionCache.Get(EndpointKey(settings), () => GetVersion(settings), TimeSpan.FromHours(2));
                 ValidateVersion(version);
 
                 var sections = GetSections(settings);
 
-                foreach (var author in authors)
+                var requested = new HashSet<(int SectionId, string Path)>();
+                foreach (var path in paths)
                 {
-                    UpdateSections(author, sections, settings);
+                    UpdateSections(path, sections, settings, requested);
+                }
+
+                foreach (var (sectionId, path) in requested)
+                {
+                    _plexServerProxy.Update(sectionId, path, settings);
                 }
 
                 _logger.Debug("Finished sending Update Request to Plex Server (took {0} ms)", watch.ElapsedMilliseconds);
@@ -66,6 +78,8 @@ namespace NzbDrone.Core.Notifications.Plex.Server
                 throw;
             }
         }
+
+        private static string EndpointKey(PlexServerSettings settings) => $"{settings.Host}:{settings.Port}:{settings.UseSsl}:{settings.UrlBase}";
 
         private List<PlexSection> GetSections(PlexServerSettings settings)
         {
@@ -92,10 +106,10 @@ namespace NzbDrone.Core.Notifications.Plex.Server
             return version;
         }
 
-        private void UpdateSections(Author author, List<PlexSection> sections, PlexServerSettings settings)
+        private void UpdateSections(string path, List<PlexSection> sections, PlexServerSettings settings, HashSet<(int SectionId, string Path)> requested)
         {
-            var rootFolderPath = _rootFolderService.GetBestRootFolderPath(author.Path);
-            var authorRelativePath = rootFolderPath.GetRelativePath(author.Path);
+            var rootFolderPath = _rootFolderService.GetBestRootFolderPath(path);
+            var relativePath = rootFolderPath.PathEquals(path) ? string.Empty : rootFolderPath.GetRelativePath(path);
 
             // Try to update a matching section location before falling back to updating all section locations.
             foreach (var section in sections)
@@ -115,7 +129,7 @@ namespace NzbDrone.Core.Notifications.Plex.Server
                     if (location.Path.PathEquals(mappedPath.FullPath))
                     {
                         _logger.Debug("Updating matching section location, {0}", location.Path);
-                        UpdateSectionPath(authorRelativePath, section, location, settings);
+                        AddSectionPath(relativePath, section, location, requested);
 
                         return;
                     }
@@ -128,28 +142,28 @@ namespace NzbDrone.Core.Notifications.Plex.Server
             {
                 foreach (var location in section.Locations)
                 {
-                    UpdateSectionPath(authorRelativePath, section, location, settings);
+                    AddSectionPath(relativePath, section, location, requested);
                 }
             }
         }
 
-        private void UpdateSectionPath(string authorRelativePath, PlexSection section, PlexSectionLocation location, PlexServerSettings settings)
+        private void AddSectionPath(string relativePath, PlexSection section, PlexSectionLocation location, HashSet<(int SectionId, string Path)> requested)
         {
             var separator = location.Path.Contains('\\') ? "\\" : "/";
-            var locationRelativePath = authorRelativePath.Replace("\\", separator).Replace("/", separator);
+            var locationRelativePath = relativePath.Replace("\\", separator).Replace("/", separator);
 
             // Plex location paths trim trailing extraneous separator characters, so it doesn't need to be trimmed
-            var pathToUpdate = $"{location.Path}{separator}{locationRelativePath}";
+            var pathToUpdate = locationRelativePath.Length == 0 ? location.Path : $"{location.Path}{separator}{locationRelativePath}";
 
             _logger.Debug("Updating section location, {0}", location.Path);
-            _plexServerProxy.Update(section.Id, pathToUpdate, settings);
+            requested.Add((section.Id, pathToUpdate));
         }
 
         public ValidationFailure Test(PlexServerSettings settings)
         {
             try
             {
-                _versionCache.Remove(settings.Host);
+                _versionCache.Remove(EndpointKey(settings));
                 var sections = GetSections(settings);
 
                 if (sections.Empty())

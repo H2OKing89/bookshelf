@@ -20,6 +20,7 @@ namespace NzbDrone.Core.Notifications.Webhook
         Retag,
         ApplicationUpdate,
         ManualInteractionRequired,
-        ImportComplete
+        ImportComplete,
+        HealthRestored
     }
 }

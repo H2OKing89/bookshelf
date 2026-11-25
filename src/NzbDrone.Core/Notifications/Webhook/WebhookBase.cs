@@ -169,6 +169,19 @@ namespace NzbDrone.Core.Notifications.Webhook
             };
         }
 
+        protected WebhookHealthPayload BuildHealthRestoredPayload(HealthCheck.HealthCheck previousCheck)
+        {
+            return new WebhookHealthPayload
+            {
+                EventType = WebhookEventType.HealthRestored,
+                InstanceName = _configFileProvider.InstanceName,
+                Level = previousCheck.Type,
+                Message = previousCheck.Message,
+                Type = previousCheck.Source.Name,
+                WikiUrl = previousCheck.WikiUrl?.ToString()
+            };
+        }
+
         protected WebhookApplicationUpdatePayload BuildApplicationUpdatePayload(ApplicationUpdateMessage updateMessage)
         {
             return new WebhookApplicationUpdatePayload

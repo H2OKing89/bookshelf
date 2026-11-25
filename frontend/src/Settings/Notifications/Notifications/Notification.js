@@ -67,6 +67,7 @@ class Notification extends Component {
       onBookFileDelete,
       onBookFileDeleteForUpgrade,
       onHealthIssue,
+      onHealthRestored,
       onDownloadFailure,
       onImportFailure,
       onBookRetag,
@@ -81,6 +82,7 @@ class Notification extends Component {
       supportsOnBookFileDelete,
       supportsOnBookFileDeleteForUpgrade,
       supportsOnHealthIssue,
+      supportsOnHealthRestored,
       supportsOnDownloadFailure,
       supportsOnImportFailure,
       supportsOnBookRetag,
@@ -189,6 +191,14 @@ class Notification extends Component {
         }
 
         {
+          supportsOnHealthRestored && onHealthRestored ?
+            <Label kind={kinds.SUCCESS}>
+              {translate('OnHealthRestored')}
+            </Label> :
+            null
+        }
+
+        {
           supportsOnDownloadFailure && onDownloadFailure ?
             <Label kind={kinds.SUCCESS} >
               {translate('OnDownloadFailure')}
@@ -221,7 +231,7 @@ class Notification extends Component {
         }
 
         {
-          !onGrab && !onReleaseImport && !onRename && !onBookRetag && !onHealthIssue && !onDownloadFailure && !onImportFailure && !onImportComplete ?
+          !onGrab && !onReleaseImport && !onRename && !onBookRetag && !onHealthIssue && !onHealthRestored && !onDownloadFailure && !onImportFailure && !onImportComplete ?
             <Label
               kind={kinds.DISABLED}
               outline={true}
@@ -271,6 +281,7 @@ Notification.propTypes = {
   onBookFileDelete: PropTypes.bool.isRequired,
   onBookFileDeleteForUpgrade: PropTypes.bool.isRequired,
   onHealthIssue: PropTypes.bool.isRequired,
+  onHealthRestored: PropTypes.bool.isRequired,
   onDownloadFailure: PropTypes.bool.isRequired,
   onImportFailure: PropTypes.bool.isRequired,
   onBookRetag: PropTypes.bool.isRequired,
@@ -285,6 +296,7 @@ Notification.propTypes = {
   supportsOnBookFileDelete: PropTypes.bool.isRequired,
   supportsOnBookFileDeleteForUpgrade: PropTypes.bool.isRequired,
   supportsOnHealthIssue: PropTypes.bool.isRequired,
+  supportsOnHealthRestored: PropTypes.bool.isRequired,
   supportsOnDownloadFailure: PropTypes.bool.isRequired,
   supportsOnImportFailure: PropTypes.bool.isRequired,
   supportsOnBookRetag: PropTypes.bool.isRequired,

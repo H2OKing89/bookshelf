@@ -414,6 +414,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
             var bookImports = importResults.Where(e => e.ImportDecision.Item.Book != null)
                 .GroupBy(e => e.ImportDecision.Item.Book.Id).ToList();
 
+            var committedBookImports = new List<BookImportedEvent>();
             foreach (var bookImport in bookImports)
             {
                 var book = bookImport.First().ImportDecision.Item.Book;
@@ -422,14 +423,22 @@ namespace NzbDrone.Core.MediaFiles.BookImport
 
                 if (bookImport.Where(e => e.Errors.Count == 0).ToList().Count > 0 && author != null && book != null)
                 {
-                    _eventAggregator.PublishEvent(new BookImportedEvent(
+                    var imported = new BookImportedEvent(
                         author,
                         book,
                         allImportedTrackFiles.Where(s => s.EditionId == edition.Id).ToList(),
                         allOldTrackFiles.Where(s => s.EditionId == edition.Id).ToList(),
                         replaceExisting,
-                        downloadClientItem));
+                        downloadClientItem,
+                        isPartOfBatch: true);
+                    committedBookImports.Add(imported);
+                    _eventAggregator.PublishEvent(imported);
                 }
+            }
+
+            if (committedBookImports.Count > 0)
+            {
+                _eventAggregator.PublishEvent(new BookImportBatchCompletedEvent(committedBookImports, allOldTrackFiles));
             }
 
             //Adding all the rejected decisions

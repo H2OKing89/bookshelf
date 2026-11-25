@@ -86,7 +86,7 @@ namespace NzbDrone.Core.MediaFiles
             {
                 try
                 {
-                    _eventAggregator.PublishEvent(new BookFileDeletedEvent(file, DeleteMediaFileReason.Upgrade));
+                    _eventAggregator.PublishEvent(new BookFileDeletedEvent(file, DeleteMediaFileReason.Upgrade, isPartOfImportBatch: true));
                 }
                 catch (Exception ex)
                 {

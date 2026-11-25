@@ -27,10 +27,13 @@ namespace NzbDrone.Core.Notifications
           IHandle<BookDeletedEvent>,
           IHandle<BookFileDeletedEvent>,
           IHandle<HealthCheckFailedEvent>,
+          IHandle<HealthCheckRestoredEvent>,
           IHandle<DownloadFailedEvent>,
           IHandle<ManualInteractionRequiredEvent>,
           IHandle<BookFileRetaggedEvent>,
           IHandleAsync<DeleteCompletedEvent>,
+          IHandleAsync<BookImportBatchCompletedEvent>,
+          IHandleAsync<CommandExecutedEvent>,
           IHandle<UpdateInstalledEvent>
     {
         private readonly INotificationFactory _notificationFactory;
@@ -162,21 +165,18 @@ namespace NzbDrone.Core.Notifications
                 return;
             }
 
-            var downloadMessage = new BookDownloadMessage
-            {
-                Message = GetBookDownloadMessage(message.Author, message.Book, message.ImportedBooks),
-                Author = message.Author,
-                Book = message.Book,
-                DownloadClientInfo = message.DownloadClientInfo,
-                DownloadId = message.DownloadId,
-                BookFiles = message.ImportedBooks,
-                OldFiles = message.OldFiles,
-            };
+            var downloadMessage = ToDownloadMessage(message);
 
             foreach (var notification in _notificationFactory.OnReleaseImportEnabled())
             {
                 try
                 {
+                    // Media-server providers receive the entire committed import batch below.
+                    if (message.IsPartOfBatch && notification is IBatchedMediaServerNotification)
+                    {
+                        continue;
+                    }
+
                     if (ShouldHandleAuthor(notification.Definition, message.Author))
                     {
                         if (downloadMessage.OldFiles.Empty() || ((NotificationDefinition)notification.Definition).OnUpgrade)
@@ -192,6 +192,68 @@ namespace NzbDrone.Core.Notifications
                     _logger.Warn(ex, "Unable to send OnReleaseImport notification to: " + notification.Definition.Name);
                 }
             }
+        }
+
+        private BookDownloadMessage ToDownloadMessage(BookImportedEvent message)
+        {
+            return new BookDownloadMessage
+            {
+                Message = GetBookDownloadMessage(message.Author, message.Book, message.ImportedBooks),
+                Author = message.Author,
+                Book = message.Book,
+                DownloadClientInfo = message.DownloadClientInfo,
+                DownloadId = message.DownloadId,
+                BookFiles = message.ImportedBooks,
+                OldFiles = message.OldFiles,
+            };
+        }
+
+        public void HandleAsync(BookImportBatchCompletedEvent message)
+        {
+            var downloads = message.Imports.Where(import => import.NewDownload && import.ImportedBooks.Any()).Select(ToDownloadMessage).ToList();
+            if (downloads.Count == 0 && message.ReplacedFiles.Count == 0)
+            {
+                return;
+            }
+
+            var blocked = _notificationStatusService.GetBlockedProviders().Select(status => status.ProviderId).ToHashSet();
+
+            // Do not drop committed refresh work when a connection is temporarily blocked.
+            // Capture its complete batch and let ProcessQueue honor provider backoff.
+            foreach (var notification in _notificationFactory.GetAvailableProviders())
+            {
+                if (notification is not IBatchedMediaServerNotification mediaServer)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    var definition = (NotificationDefinition)notification.Definition;
+                    var eligible = downloads.Where(download => definition.OnReleaseImport && ShouldHandleAuthor(definition, download.Author) &&
+                        (download.OldFiles.Empty() || definition.OnUpgrade)).ToList();
+
+                    // Honor the separately configured old-file deletion trigger
+                    // without scanning for each replaced part during an import.
+                    var refreshForRemovedFiles = notification.SupportsOnBookFileDeleteForUpgrade && definition.OnBookFileDelete &&
+                        definition.OnBookFileDeleteForUpgrade && message.ReplacedFiles.Any(file => file.EditionId > 0 && ShouldHandleAuthor(definition, file.Author));
+                    if (eligible.Count == 0 && !refreshForRemovedFiles)
+                    {
+                        continue;
+                    }
+
+                    if (mediaServer.QueueImportBatch(eligible, !blocked.Contains(notification.Definition.Id), refreshForRemovedFiles))
+                    {
+                        _notificationStatusService.RecordSuccess(notification.Definition.Id);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    RecordIsolatedFailure(notification, ex, "queue media-server import notification");
+                }
+            }
+
+            ProcessQueue();
         }
 
         public void Handle(AuthorRenamedEvent message)
@@ -288,6 +350,7 @@ namespace NzbDrone.Core.Notifications
             deleteMessage.BookFile = message.BookFile;
             deleteMessage.Book = message.BookFile.Edition.Value.Book;
             deleteMessage.Reason = message.Reason;
+            deleteMessage.IsPartOfImportBatch = message.IsPartOfImportBatch;
 
             foreach (var notification in _notificationFactory.OnBookFileDeleteEnabled())
             {
@@ -333,6 +396,32 @@ namespace NzbDrone.Core.Notifications
                 {
                     _notificationStatusService.RecordFailure(notification.Definition.Id);
                     _logger.Warn(ex, "Unable to send OnHealthIssue notification to: " + notification.Definition.Name);
+                }
+            }
+        }
+
+        public void Handle(HealthCheckRestoredEvent message)
+        {
+            if (message.IsInStartupGracePeriod)
+            {
+                return;
+            }
+
+            // Health checks are system-wide, not attributable to an author tag.
+            // Use the prior severity so a warning recovery respects IncludeHealthWarnings.
+            foreach (var notification in _notificationFactory.OnHealthRestoredEnabled())
+            {
+                try
+                {
+                    if (ShouldHandleHealthFailure(message.PreviousCheck, ((NotificationDefinition)notification.Definition).IncludeHealthWarnings))
+                    {
+                        notification.OnHealthRestored(message.PreviousCheck);
+                        _notificationStatusService.RecordSuccess(notification.Definition.Id);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    RecordIsolatedFailure(notification, ex, "send OnHealthRestored notification");
                 }
             }
         }
@@ -523,22 +612,65 @@ namespace NzbDrone.Core.Notifications
             }
         }
 
+        private void RecordIsolatedFailure(INotification notification, Exception error, string action)
+        {
+            try
+            {
+                _notificationStatusService.RecordFailure(notification.Definition.Id);
+            }
+            catch (Exception statusError)
+            {
+                _logger.Debug("Unable to record notification failure ({0})", statusError.GetType().Name);
+            }
+
+            // Avoid logging provider exception details that may contain endpoint credentials.
+            _logger.Warn("Unable to {0} for {1} ({2})", action, notification.Definition.Name, error.GetType().Name);
+        }
+
         public void HandleAsync(DeleteCompletedEvent message)
         {
             ProcessQueue();
         }
 
+        public void HandleAsync(CommandExecutedEvent message)
+        {
+            // The regular download-monitor command runs every minute, even if
+            // there are no further downloads. Failed refreshes can retry there.
+            if (message.Command?.Body is RefreshMonitoredDownloadsCommand)
+            {
+                ProcessQueue();
+            }
+        }
+
         private void ProcessQueue()
         {
+            var blocked = _notificationStatusService.GetBlockedProviders().Select(status => status.ProviderId).ToHashSet();
             foreach (var notification in _notificationFactory.GetAvailableProviders())
             {
                 try
                 {
-                    notification.ProcessQueue();
+                    if (notification is IBatchedMediaServerNotification mediaServer)
+                    {
+                        if (!blocked.Contains(notification.Definition.Id) && mediaServer.ProcessPendingUpdates())
+                        {
+                            _notificationStatusService.RecordSuccess(notification.Definition.Id);
+                        }
+                    }
+                    else
+                    {
+                        notification.ProcessQueue();
+                    }
                 }
                 catch (Exception ex)
                 {
-                    _logger.Warn(ex, "Unable to process notification queue for " + notification.Definition.Name);
+                    if (notification is IBatchedMediaServerNotification)
+                    {
+                        RecordIsolatedFailure(notification, ex, "process media-server notification queue");
+                    }
+                    else
+                    {
+                        _logger.Warn(ex, "Unable to process notification queue for " + notification.Definition.Name);
+                    }
                 }
             }
         }

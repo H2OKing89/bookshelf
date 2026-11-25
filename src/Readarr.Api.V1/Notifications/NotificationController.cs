@@ -21,6 +21,10 @@ namespace Readarr.Api.V1.Notifications
 
         public override ActionResult<NotificationResource> UpdateProvider([FromBody] NotificationResource providerResource, [FromQuery] bool forceSave = false)
         {
+            // Existing v1 clients may not yet know the new trigger. Omission must
+            // not disable a saved recovery-only connection on an unrelated edit.
+            providerResource.OnHealthRestored ??= GetResourceById(providerResource.Id).OnHealthRestored;
+
             const string completionFieldName = "onImportComplete";
             if (providerResource.Implementation == nameof(Webhook) && providerResource.Fields != null &&
                 providerResource.Fields.All(field => field.Name != completionFieldName))

@@ -175,6 +175,38 @@ namespace NzbDrone.Core.Test.MediaFiles
         }
 
         [Test]
+        public void completed_batch_is_published_after_committed_track_and_book_events()
+        {
+            var events = new List<string>();
+            Mocker.GetMock<IEventAggregator>().Setup(aggregator => aggregator.PublishEvent(It.IsAny<TrackImportedEvent>()))
+                .Callback<TrackImportedEvent>(_ => events.Add("track"));
+            Mocker.GetMock<IEventAggregator>().Setup(aggregator => aggregator.PublishEvent(It.IsAny<BookImportedEvent>()))
+                .Callback<BookImportedEvent>(message =>
+                {
+                    message.IsPartOfBatch.Should().BeTrue();
+                    events.Add("book");
+                });
+            Mocker.GetMock<IEventAggregator>().Setup(aggregator => aggregator.PublishEvent(It.IsAny<BookImportBatchCompletedEvent>()))
+                .Callback<BookImportBatchCompletedEvent>(message =>
+                {
+                    message.Imports.Should().ContainSingle().Which.ImportedBooks.Should().ContainSingle();
+                    events.Add("batch");
+                });
+
+            Subject.Import(_approvedDecisions, true);
+
+            events.Should().Equal("track", "book", "batch");
+        }
+
+        [Test]
+        public void rejected_imports_do_not_publish_a_completion_batch()
+        {
+            Subject.Import(_rejectedDecisions, true);
+
+            Mocker.GetMock<IEventAggregator>().Verify(aggregator => aggregator.PublishEvent(It.IsAny<BookImportBatchCompletedEvent>()), Times.Never());
+        }
+
+        [Test]
         public void should_not_move_existing_files()
         {
             var track = _approvedDecisions.First();
