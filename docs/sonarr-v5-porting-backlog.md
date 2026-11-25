@@ -89,7 +89,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D19](#d19) | P2 | Verified | M | Refresh pending decisions when policy or metadata changes |
 | [D20](#d20) | P2 | Planned | M | Sort library/history quality according to each profile |
 | [D21](#d21) | P1 | Verified | S | Backport narrow RSS parser fixes, retain existing feed machinery |
-| [D22](#d22) | P1 | Planned | L | Persist successful import-list membership snapshots |
+| [D22](#d22) | P1 | Verified | L | Persist successful import-list membership snapshots |
 | [D23](#d23) | P2 | Planned | M | Add additive and synchronized tags for existing list entries |
 | [D24](#d24) | P2 | Planned | M | Offer non-destructive cleanup when books leave all lists |
 | [D25](#d25) | P2 | Planned | M | Add a documented generic JSON import-list endpoint |
@@ -128,7 +128,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [B06](#b06) | P2 | Verified | L | Complete the local-recording metadata lifecycle |
 | [B07](#b07) | P1 | Verified | M | Expose metadata-provider health and partial-result provenance |
 | [B08](#b08) | P1 | Verified | M | Explain and resolve unmapped or conflicting recording evidence |
-| [B09](#b09) | P2 | Planned | M | Add book-native library diagnostics and collection statistics |
+| [B09](#b09) | P2 | Verified | M | Add book-native library diagnostics and collection statistics |
 
 ### Release group follow-up index
 
@@ -143,7 +143,7 @@ Execution status for the new slices is tracked here.
 | [RG01](#rg01) | P1 | Verified | M | Adapt release group parsing with audiobook compatibility fixtures |
 | [RG02](#rg02) | P1 | Verified | M | Carry manual-import group choices through preview and commit |
 | [RG03](#rg03) | P2 | Verified | M | Expose and deliberately correct stored file release groups |
-| [RG04](#rg04) | P2 | Planned | M | Design recording-versus-pack group evidence precedence |
+| [RG04](#rg04) | P2 | Verified | M | Design recording-versus-pack group evidence precedence |
 | [RG05](#rg05) | P2 | Verified | S | Add group-token length formatting and define missing-value behavior |
 
 ## Platform, authentication, storage and delivery
@@ -2428,6 +2428,15 @@ desktop and phone settings checks**. See [local validation](local-validation.md#
 
 **P1 · missing snapshot layer; lists/exclusions already exist · adapt · book/work/edition identity policy · L.** S:`src/NzbDrone.Core/ImportLists/ImportListItems/ImportListItemService.cs:26` reconciles list membership; S:`src/NzbDrone.Core/ImportLists/FetchAndParseImportListService.cs:76` updates snapshots/status only when `AnyFailure` is false. B:`src/NzbDrone.Core/ImportLists/FetchAndParseImportListService.cs:30` fetches results, and B:`src/NzbDrone.Core/ImportLists/ImportListSyncService.cs:90` processes/adds them, but lacks the `ImportListItems` service/repository. Use edition/work/author identifiers and Bookshelf's metadata source guards, never TVDB/IMDb integer mappings. Acceptance: a partial/network-failed fetch retains previous membership; legitimate empty success clears that list only; the same work across multiple lists remains represented independently; deletions/exclusions and provider deletion update membership safely.
 
+**2026-11-24 implementation:** Store each list's last complete successful
+membership with raw and separately resolved catalog identities. Partial, failed,
+superseded and disabled fetches cannot replace it; confirmed empty results
+replace only that list. Exact exclusions remain visible, and contradictory
+recording and edition IDs stay unresolved without triggering automatic adds.
+Membership is available within the saved list editor without contacting its
+provider. This establishes the basis for D23/D24, not synchronized tags or
+library cleanup. See [local validation](local-validation.md#rg04-b09-and-d22-collection-diagnostics-verification-2026-11-24).
+
 ### D23
 
 **Add additive and synchronized tags for existing list entries**
@@ -3313,6 +3322,14 @@ The current Bookshelf snapshot for this section is
 `4883fcaa724dd15e57c555cd13d39cbcba379a2f`; original numbered entries retain
 their original comparison evidence. D01/B01 apply to every slice below.
 
+**2026-11-24 implementation:** Library → Statistics exposes filtered catalog,
+owned-recording, confirmed-work and tracked-file counts, distinct storage and
+known measured audio duration. Its codec/profile, bitrate, language, narrator and
+source breakdowns use local data; unavailable and stale measurements remain
+unknown, and shared work membership cannot multiply storage or duration.
+The API and React Query page refresh after committed collection changes and
+reconnect. See [local validation](local-validation.md#rg04-b09-and-d22-collection-diagnostics-verification-2026-11-24).
+
 ### RG01
 
 **Adapt release group parsing with audiobook compatibility fixtures**
@@ -3408,6 +3425,16 @@ exercise single recordings, multipart recordings, mixed-group packs, missing
 file labels and conflicting evidence. Retain original source evidence and
 explain the resolved group. Do not overwrite explicit manual choices, merge
 recordings or change ordinary multipart behavior on a season-pack analogy alone.
+
+**2026-11-24 implementation:** Only a grab with multiple independently
+identified recordings and an exact imported recording match establishes pack
+precedence. A verified recording file or nearest recording folder may override the
+pack uploader; missing or contradictory labels retain it. Raw acquisition
+labels, the selected source and resolution reason survive import, manual
+preview and history. An explicit manual choice (including clearing the group)
+remains authoritative, and field-specific edits preserve MediaInfo and file
+ownership. Ordinary multipart and legacy grabs are unchanged. See
+[local validation](local-validation.md#rg04-b09-and-d22-collection-diagnostics-verification-2026-11-24).
 
 ### RG05
 

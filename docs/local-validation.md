@@ -162,6 +162,24 @@ memberships preserve standalone regional copies and count related files once.
 The browser exercises both editors, and the hosted check tests stale revision
 rejection, rescan, restart and application-managed backup restoration.
 
+The collection diagnostics proof uses a genuine older package as well:
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --baseline-runtime /path/to/older-audiobook-package \
+  --playwright-module /path/to/installed/playwright \
+  --checks collectiondiagnostics
+```
+
+It seeds owned current/stale audio measurements, separate regional recordings,
+an ebook, reviewed pack memberships and an unresolved file. Two local HTTP
+servers return synthetic Readarr list contents, partial responses and failures.
+The real candidate sync service and browser verify independent durable
+membership, exclusion display, statistics filters and release-group evidence
+preservation. The release-group DTO fixture tests an already stored evidence
+record; the source and acquisition tests separately exercise actual resolution.
+
 ## Check refresh cancellation and shutdown
 
 Run the cancellation proof against a package containing P10:
@@ -1419,3 +1437,85 @@ provider lookups, real download clients or production library homes were used.
 CI and supported-platform acceptance outside these Linux x64 packages remain
 open under P21/P22. Future provider associations for local recordings are not
 invented by the editor.
+
+## RG04, B09 and D22 collection diagnostics verification (2026-11-24)
+
+The three implementation slices landed in `c6091abac`, `26e397334`,
+`6e7062ba6`, `09479e0f0` and `90baea993`. The hosted browser proof identified an
+additional list-editor binding error; `2b8f722ee` fixes it and adds two frontend
+regression cases. Both Linux x64 packages (glibc and musl) were rebuilt from
+clean `2b8f722ee` with matching backend and frontend source provenance. The
+only product changes from `90baea993` are that frontend binding fix and its
+unit test.
+
+- RG04's release-group resolution passed **137 focused Core tests** (one
+  existing skip) and **14 PostgreSQL tests** (one skip). The later field-limited
+  quality/group edit passed **47 Core tests** (one existing skip) and **four
+  PostgreSQL regression tests**, including atomic rollback and unchanged
+  fractional MediaInfo timestamps. Original grab, folder and file labels,
+  the recording identities that established independent pack membership,
+  and the resolution source/reason remain available for review. An explicit
+  manual choice, including clearing the group, is not overwritten. A volume
+  range, a multi-work omnibus, legacy grab or ordinary multipart recording
+  alone is not proof of an independently releaser-labeled pack.
+- B09's nine statistics tests passed on each of SQLite and PostgreSQL 16.
+  In the local synthetic benchmark, a query covering 4,165 books and 4,168
+  files took 121 ms on SQLite and 96 ms on PostgreSQL; these are individual
+  fixture measurements, not a latency guarantee. The statistics page reports
+  tracked file sizes rather than physical disk allocation, measured durations
+  rather than advertised runtime, and file associations rather than a
+  guarantee of complete recordings. Explicit work membership is deduplicated.
+- D22's final focused suite passed **40 SQLite tests, six PostgreSQL repository
+  tests and eight API exclusion tests**. Migration 165 retains independent
+  per-list snapshots and revision claims. Failed, partial, disabled and stale
+  attempts cannot overwrite the last complete result, whereas confirmed empty
+  results can. Conflicting qualified identities are stored as unresolved and
+  cannot auto-add a recording. Exclusions are exact, and neither a membership
+  snapshot nor its read-only display grants authority to remove files, change
+  monitoring, or synchronize tags. The panel's status refers to the saved list
+  definition, not a live provider request.
+- The backend suite at `90baea993` passed **5,857 .NET tests** with 94 skips:
+  4,679 Core, 836 Common, 94 API, 181 Host, 20 Updater, 23 PostgreSQL migration
+  and 24 PostgreSQL recording/group/list/statistics tests. The final
+  `2b8f722ee` frontend passed both TypeScript projects, ESLint, production Vite
+  verification and **130 frontend tests**. All **150 Python tooling tests**
+  passed. GitHub workflows were not used.
+- The exact final package passed **72 collection diagnostics checks** (74
+  including unchanged-package assertions). It upgraded the genuine older
+  `f11f21142` audiobook package's disposable home, keeping all catalog IDs,
+  associations and owned bytes. The fixture has eight distinct audiobook
+  recordings, two confirmed works, one ebook and eleven tracked files. Only
+  four audio files contribute their 340 measured seconds; stale analysis,
+  repeated streams and multiple work associations do not inflate totals. Two
+  loopback Readarr providers exercise overlapping membership, partial data,
+  HTTP failure, confirmed empty success, conflicting identities, exact
+  exclusions, disabled and deleted lists. Desktop and phone Chromium exercise
+  statistics filters and Refresh, the actual list editor and the File Details
+  group explanation. Restart and application-managed backup restoration retain
+  the snapshots, statistics, work memberships and evidence. The hosted
+  release-group proof uses a seeded persisted evidence record; the separate
+  source fixtures exercise the selection and import logic itself.
+- On `90baea993`, datastore and authentication proofs passed **39** and
+  **110** checks respectively. The operational paging, metadata-accessibility
+  and library review, identity, and recording lifecycle receipts passed **124**,
+  **188**, **262** and **78** checks respectively, including unchanged-package
+  assertions. These backend regressions preceded the frontend-only ID binding
+  correction.
+- The exact final package's asset, router, settings, interactive-search and
+  library-virtualization regression receipt passed **194 checks**, including
+  the unchanged-package assertion. The exact final package also passed **612
+  delivery checks**, including **305 acquisition**, **56 musl Docker** and
+  matching backend/frontend release identity checks.
+
+Local evidence is under `_temp/rg04-b09-d22-20261124/`, particularly
+`collection-verified/summary.json`, `collection-verified/collectiondiagnostics/screenshots/`,
+`source-tests/`, `datastore-final/summary.json`, `auth-final/summary.json`, and
+`ui-verified/summary.json` and `delivery-verified/summary.json`. Focused
+release-group, statistics and list receipts
+are in `_temp/rg04-20261124/`, `_temp/b09-library-statistics/` and
+`_temp/d22-membership/` respectively.
+
+These local RG04/B09/D22 slices are complete. D23/D24 remain separate work.
+No production or existing development library, external provider, real
+indexer/download client or GitHub workflow was used; other platform and CI
+acceptance remain open under P21/P22.

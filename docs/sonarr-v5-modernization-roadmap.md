@@ -1382,3 +1382,18 @@ ownership, with confirmed coverage separated from uncertain volume labels.
 The hosted verification upgrades a disposable library, uses both editors and
 checks restart, rescan, backup restoration and deduplicated related-file totals.
 See [local validation](local-validation.md#u22-b06-and-b03-asset-and-recording-lifecycle-verification-2026-11-24).
+
+### RG04, B09 and D22 collection diagnostics — 2026-11-24
+
+Pack release-group evidence now distinguishes independently identified
+recordings from an ordinary multipart audiobook. The original acquisition
+labels are retained, and an explicit manual choice remains authoritative.
+Library → Statistics reports catalog and owned recordings, confirmed works,
+tracked files, measured audio duration and media breakdowns without counting
+shared file associations twice or treating stale analysis as current.
+
+Saved import lists retain their independent last complete successful membership,
+including exact exclusions and unresolved provider identities. Partial or failed
+list responses do not erase previously observed members. This is a read-only
+membership view, not tag synchronization or library-cleanup policy.
+See [local validation](local-validation.md#rg04-b09-and-d22-collection-diagnostics-verification-2026-11-24).
