@@ -15,9 +15,10 @@ async function verify(page, base, config, { check, step, output }) {
   await card.getByRole('button', { name: '', exact: true }).click();
   const dialog = page.getByRole('dialog').first();
   await dialog.waitFor();
-  const tagSetting = dialog.locator('select[name="tagExisting"]');
-  await tagSetting.waitFor();
-  check('saved_sync_tag_policy_is_visible', await tagSetting.inputValue() === 'sync');
+  await dialog.getByText('Tag existing authors', { exact: true }).waitFor();
+  const selected = dialog.getByText('Synchronize', { exact: true });
+  await selected.waitFor();
+  check('saved_sync_tag_policy_is_visible', await selected.isVisible());
   await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
   await dialog.waitFor({ state: 'hidden' });
   step('cleanup_preview');

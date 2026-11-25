@@ -1,5 +1,6 @@
 """Verify list tag ownership and explicit non-destructive cleanup in disposable homes."""
 
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import sqlite3
@@ -100,9 +101,9 @@ def inspect_policies(fixture, first, second):
                   claims(fixture) == [(AUTHOR, SYNC_TAG, SECOND_LIST)])
     # A deliberate Add of an already-applied tag establishes manual ownership;
     # the same-value monitoring edit also relinquishes cleanup control.
-    status, _, _ = library_review.request(fixture, "author/editor", "PUT", {"authorIds": [AUTHOR], "tags": [SYNC_TAG], "applyTags": "add"})
+    status, _ = library_review.request(fixture, "author/editor", "PUT", {"authorIds": [AUTHOR], "tags": [SYNC_TAG], "applyTags": "add"})
     fixture.check("manual_same_value_tag_edit_releases_claim", status in (200, 202) and not claims(fixture))
-    status, _, _ = library_review.request(fixture, "book/editor", "PUT", {"bookIds": [MANUALLY_REASSERTED_BOOK], "monitored": True})
+    status, _ = library_review.request(fixture, "book/editor", "PUT", {"bookIds": [MANUALLY_REASSERTED_BOOK], "monitored": True})
     fixture.check("manual_same_value_book_edit_accepted", status in (200, 202))
     second.book_ids = []
     sync_list(fixture, SECOND_LIST)
@@ -140,12 +141,12 @@ def inspect_apply(fixture, first, second, start_states, preview):
     tag_receipt = apply_cleanup(fixture, tag_preview)
     fixture.check("confirmed_cleanup_tag_is_permanent_and_leaves_all_books_monitored", not tag_receipt.get("confirmationToken") and
                   tags(fixture) == {MANUAL_TAG, SYNC_TAG, CLEANUP_TAG} and not claims(fixture) and book_states(fixture) == start_states)
-    status, _, _ = library_review.request(fixture, "importlistcleanup", "POST", {key: preview.get(key) for key in ("mode", "tagId", "confirmationToken")})
+    status, _ = library_review.request(fixture, "importlistcleanup", "POST", {key: preview.get(key) for key in ("mode", "tagId", "confirmationToken")})
     fixture.check("changed_tag_state_invalidates_older_unmonitor_preview", status == 409 and book_states(fixture) == start_states)
     preview = fixture.api("importlistcleanup?mode=unmonitor")
     second.mode = "failed"
     sync_list(fixture, SECOND_LIST)
-    status, _, _ = library_review.request(fixture, "importlistcleanup", "POST", {key: preview.get(key) for key in ("mode", "tagId", "confirmationToken")})
+    status, _ = library_review.request(fixture, "importlistcleanup", "POST", {key: preview.get(key) for key in ("mode", "tagId", "confirmationToken")})
     fixture.check("failed_provider_invalidates_old_confirmation_even_when_membership_retained", status == 409 and book_states(fixture) == start_states)
     second.mode = "success"
     sync_list(fixture, SECOND_LIST)
@@ -197,6 +198,23 @@ def run(runtime, output, baseline_runtime, playwright_module):
         # Except for the explicitly confirmed monitor flag and author tags,
         # compare pre-upgrade catalog/edition/file values and identities exactly.
         final = identity.snapshot(fixture, baseline)
+        # The existing bulk author editor writes DateTime values using the
+        # provider's SQLite encoding (space/Z rather than ISO T/+00:00).
+        # Preserve their precise instant, including fractional seconds, instead
+        # of mistaking that lexical round trip for an identity or data change.
+        date_columns = [baseline["Authors"]["columns"].index(column) for column in ("Added", "LastInfoSync")]
+        for snapshot in (baseline, final):
+            rows = []
+            for row in snapshot["Authors"]["rows"]:
+                row = list(row)
+                for column in date_columns:
+                    if row[column] is not None:
+                        row[column] = datetime.fromisoformat(row[column]).astimezone(timezone.utc).isoformat()
+                rows.append(tuple(row))
+            snapshot["Authors"]["rows"] = rows
+        fixture.check("manual_author_tag_edit_retains_exact_timestamp_instants",
+                      [[row[column] for column in date_columns] for row in baseline["Authors"]["rows"]] ==
+                      [[row[column] for column in date_columns] for row in final["Authors"]["rows"]])
         for table, fields in {"Books": ["Monitored"], "Authors": ["Tags"]}.items():
             projection = baseline[table]
             columns = [i for i, column in enumerate(projection["columns"]) if column not in fields]
@@ -204,6 +222,18 @@ def run(runtime, output, baseline_runtime, playwright_module):
             projection["rows"] = [tuple(row[i] for i in columns) for row in projection["rows"]]
             final[table]["columns"] = projection["columns"]
             final[table]["rows"] = [tuple(row[i] for i in columns) for row in final[table]["rows"]]
+        if final != baseline:
+            differences = {}
+            for table in baseline:
+                if final[table] == baseline[table]:
+                    continue
+                left, right = baseline[table], final[table]
+                differences[table] = {
+                    "rowsBefore": len(left["rows"]), "rowsAfter": len(right["rows"]),
+                    "changedColumns": sorted({column for a, b in zip(left["rows"], right["rows"])
+                                              for column, x, y in zip(left["columns"], a, b) if x != y})
+                }
+            common.write_json(output / "projection-differences.json", differences)
         fixture.check("cleanup_preserves_catalog_recording_and_file_identity", final == baseline and restore.media_unchanged(fixture))
         fixture.check("owned_provider_routes_only", all(set(item.requests) <= {
             "/api/v1/author", "/api/v1/book", "/api/v1/qualityprofile", "/api/v1/tag", "/api/v1/rootfolder"} for item in (first, second)))
