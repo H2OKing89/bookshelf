@@ -37,7 +37,7 @@ namespace NzbDrone.Core.Books
         void RemoveAddOptions(Author author);
     }
 
-    public class AuthorService : IAuthorService, IHandle<MinimumUpgradeFormatScoreChangedEvent>, IHandle<QualityProfileUpdatedEvent>, IHandle<AuthorReconciledEvent>
+    public class AuthorService : IAuthorService, IHandle<MinimumUpgradeFormatScoreChangedEvent>, IHandle<QualityProfileUpdatedEvent>, IHandle<AuthorReconciledEvent>, IHandle<AuthorsEditedEvent>
     {
         private readonly IAuthorRepository _authorRepository;
         private readonly IEventAggregator _eventAggregator;
@@ -208,6 +208,12 @@ namespace NzbDrone.Core.Books
 
         [EventHandleOrder(EventHandleOrder.First)]
         public void Handle(AuthorReconciledEvent message)
+        {
+            _cache.Clear();
+        }
+
+        [EventHandleOrder(EventHandleOrder.First)]
+        public void Handle(AuthorsEditedEvent message)
         {
             _cache.Clear();
         }

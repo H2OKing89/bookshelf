@@ -5,6 +5,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using NLog;
 using NzbDrone.Core.Exceptions;
+using NzbDrone.Core.ImportLists;
 using NzbDrone.Core.ImportLists.Exclusions;
 using NzbDrone.Core.MetadataSource;
 using NzbDrone.Core.MetadataSource.Audiobook;
@@ -24,6 +25,7 @@ namespace NzbDrone.Core.Books
         private readonly IBookService _bookService;
         private readonly IProvideBookInfo _bookInfo;
         private readonly IImportListExclusionService _importListExclusionService;
+        private readonly IImportListPolicyRepository _listPolicy;
         private readonly Logger _logger;
 
         public AddBookService(IAuthorService authorService,
@@ -31,6 +33,7 @@ namespace NzbDrone.Core.Books
                                IBookService bookService,
                                IProvideBookInfo bookInfo,
                                IImportListExclusionService importListExclusionService,
+                               IImportListPolicyRepository listPolicy,
                                Logger logger)
         {
             _authorService = authorService;
@@ -38,6 +41,7 @@ namespace NzbDrone.Core.Books
             _bookService = bookService;
             _bookInfo = bookInfo;
             _importListExclusionService = importListExclusionService;
+            _listPolicy = listPolicy;
             _logger = logger;
         }
 
@@ -51,6 +55,13 @@ namespace NzbDrone.Core.Books
             var dbBook = _bookService.FindById(book.ForeignBookId);
             if (dbBook != null)
             {
+                if (!book.ImportListOriginId.HasValue)
+                {
+                    _listPolicy.ReleaseBookOwnership(new[] { dbBook.Id });
+                }
+
+                // The existing record is never a new list-created recording.
+                book.ImportListOriginId = dbBook.ImportListOriginId;
                 book.UseDbFieldsFrom(dbBook);
             }
 

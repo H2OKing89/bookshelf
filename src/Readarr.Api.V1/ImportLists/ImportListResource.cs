@@ -7,6 +7,7 @@ namespace Readarr.Api.V1.ImportLists
     public class ImportListResource : ProviderResource<ImportListResource>
     {
         public bool EnableAutomaticAdd { get; set; }
+        public ImportListTagExisting? TagExisting { get; set; }
         public ImportListMonitorType ShouldMonitor { get; set; }
         public bool ShouldMonitorExisting { get; set; }
         public bool ShouldSearch { get; set; }
@@ -31,6 +32,7 @@ namespace Readarr.Api.V1.ImportLists
             var resource = base.ToResource(definition);
 
             resource.EnableAutomaticAdd = definition.EnableAutomaticAdd;
+            resource.TagExisting = definition.TagExisting;
             resource.ShouldMonitor = definition.ShouldMonitor;
             resource.ShouldMonitorExisting = definition.ShouldMonitorExisting;
             resource.ShouldSearch = definition.ShouldSearch;
@@ -55,6 +57,7 @@ namespace Readarr.Api.V1.ImportLists
             var definition = base.ToModel(resource);
 
             definition.EnableAutomaticAdd = resource.EnableAutomaticAdd;
+            definition.TagExisting = resource.TagExisting ?? ImportListTagExisting.None;
             definition.ShouldMonitor = resource.ShouldMonitor;
             definition.ShouldMonitorExisting = resource.ShouldMonitorExisting;
             definition.ShouldSearch = resource.ShouldSearch;

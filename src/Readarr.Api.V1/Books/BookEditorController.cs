@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.ImportLists;
 using NzbDrone.Core.Messaging.Commands;
 using Readarr.Http;
 
@@ -10,11 +11,13 @@ namespace Readarr.Api.V1.Books
     {
         private readonly IBookService _bookService;
         private readonly IManageCommandQueue _commandQueueManager;
+        private readonly IImportListPolicyRepository _listPolicy;
 
-        public BookEditorController(IBookService bookService, IManageCommandQueue commandQueueManager)
+        public BookEditorController(IBookService bookService, IManageCommandQueue commandQueueManager, IImportListPolicyRepository listPolicy)
         {
             _bookService = bookService;
             _commandQueueManager = commandQueueManager;
+            _listPolicy = listPolicy;
         }
 
         [HttpPut]
@@ -27,6 +30,7 @@ namespace Readarr.Api.V1.Books
                 // Validation above confirms every requested ID exists. Write only
                 // the monitoring field, then reload so metadata and author
                 // associations changed concurrently are not replaced by the draft.
+                _listPolicy.ReleaseBookOwnership(resource.BookIds);
                 _bookService.SetMonitored(resource.BookIds, resource.Monitored.Value);
                 booksToUpdate = _bookService.GetBooks(resource.BookIds);
             }

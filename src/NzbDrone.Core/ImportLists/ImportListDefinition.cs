@@ -8,6 +8,7 @@ namespace NzbDrone.Core.ImportLists
     {
         public bool EnableAutomaticAdd { get; set; }
         public long MembershipRevision { get; set; }
+        public ImportListTagExisting TagExisting { get; set; }
         public ImportListMonitorType ShouldMonitor { get; set; }
         public bool ShouldMonitorExisting { get; set; }
         public bool ShouldSearch { get; set; }
@@ -21,6 +22,13 @@ namespace NzbDrone.Core.ImportLists
         public ImportListStatus Status { get; set; }
         public ImportListType ListType { get; set; }
         public TimeSpan MinRefreshInterval { get; set; }
+    }
+
+    public enum ImportListTagExisting
+    {
+        None,
+        Add,
+        Sync
     }
 
     public enum ImportListMonitorType

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.ImportLists;
 using NzbDrone.Core.Messaging.Commands;
 using Readarr.Api.V1.Books;
 
@@ -16,7 +17,8 @@ namespace NzbDrone.Api.Test
         public void bulk_monitoring_only_updates_monitoring_and_returns_current_identity()
         {
             var books = new Mock<IBookService>();
-            var controller = new BookEditorController(books.Object, Mock.Of<IManageCommandQueue>());
+            var policy = new Mock<IImportListPolicyRepository>();
+            var controller = new BookEditorController(books.Object, Mock.Of<IManageCommandQueue>(), policy.Object);
             var ids = new List<int> { 10 };
             var identity = LocalRecordingId.NewId();
             Book StoredBook(string title, int authorId, bool monitored) => new Book
@@ -30,6 +32,7 @@ namespace NzbDrone.Api.Test
 
             var result = (AcceptedResult)controller.SaveAll(new BookEditorResource { BookIds = ids, Monitored = true });
 
+            policy.Verify(repository => repository.ReleaseBookOwnership(ids), Times.Once());
             books.Verify(service => service.SetMonitored(ids, true), Times.Once());
             books.Verify(service => service.UpdateMany(It.IsAny<List<Book>>()), Times.Never());
             var saved = ((List<BookResource>)result.Value).Should().ContainSingle().Which;

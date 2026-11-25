@@ -155,6 +155,22 @@ namespace NzbDrone.Core.Test.ImportListTests
         }
 
         [Test]
+        public void should_reconcile_tags_for_successful_empty_snapshot()
+        {
+            _importListReports.Clear();
+            Subject.Execute(new ImportListSyncCommand());
+            Mocker.GetMock<IImportListPolicyRepository>().Verify(policy => policy.ReconcileTags(It.Is<IReadOnlyCollection<int>>(ids => ids.Count == 1)), Times.Once);
+        }
+
+        [Test]
+        public void should_not_provide_failed_snapshot_ids_to_tag_policy()
+        {
+            Mocker.GetMock<IImportListMembershipRepository>().Setup(v => v.Complete(It.IsAny<ImportListMembershipAttempt>(), It.IsAny<IReadOnlyList<ImportListMembershipItem>>())).Returns(false);
+            Subject.Execute(new ImportListSyncCommand());
+            Mocker.GetMock<IImportListPolicyRepository>().Verify(policy => policy.ReconcileTags(It.Is<IReadOnlyCollection<int>>(ids => ids.Count == 0)), Times.Once);
+        }
+
+        [Test]
         public void should_search_if_author_title_and_no_author_id()
         {
             Subject.Execute(new ImportListSyncCommand());

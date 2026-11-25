@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Books.Commands;
+using NzbDrone.Core.ImportLists;
 using NzbDrone.Core.Messaging.Commands;
 using Readarr.Http;
 
@@ -14,11 +15,13 @@ namespace Readarr.Api.V1.Author
     {
         private readonly IAuthorService _authorService;
         private readonly IManageCommandQueue _commandQueueManager;
+        private readonly IImportListPolicyRepository _listPolicy;
 
-        public AuthorEditorController(IAuthorService authorService, IManageCommandQueue commandQueueManager)
+        public AuthorEditorController(IAuthorService authorService, IManageCommandQueue commandQueueManager, IImportListPolicyRepository listPolicy)
         {
             _authorService = authorService;
             _commandQueueManager = commandQueueManager;
+            _listPolicy = listPolicy;
         }
 
         [HttpPut]
@@ -29,6 +32,11 @@ namespace Readarr.Api.V1.Author
 
             foreach (var author in authorsToUpdate)
             {
+                if (resource.Monitored.HasValue || resource.Tags != null)
+                {
+                    _listPolicy.ReleaseAuthorOwnership(author.Id, resource.Monitored.HasValue, resource.Tags);
+                }
+
                 if (resource.Monitored.HasValue)
                 {
                     author.Monitored = resource.Monitored.Value;

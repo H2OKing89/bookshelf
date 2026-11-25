@@ -88,6 +88,7 @@ function EditImportListModalContent(props) {
     qualityProfileId,
     metadataProfileId,
     tags,
+    tagExisting,
     fields,
     message
   } = item;
@@ -348,6 +349,23 @@ function EditImportListModalContent(props) {
                     name="tags"
                     helpText={translate('TagsHelpText')}
                     {...tags}
+                    onChange={onInputChange}
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <FormLabel>Tag existing authors</FormLabel>
+
+                  <FormInputGroup
+                    type={inputTypes.SELECT}
+                    name="tagExisting"
+                    values={[
+                      { key: 'none', value: 'None' },
+                      { key: 'add', value: 'Add' },
+                      { key: 'sync', value: 'Synchronize' }
+                    ]}
+                    helpText="Add keeps tags permanently; Synchronize removes only tags this list system supplied after complete successful membership refreshes. Manually assigned tags are preserved. Tags apply to authors."
+                    {...tagExisting}
                     onChange={onInputChange}
                   />
                 </FormGroup>

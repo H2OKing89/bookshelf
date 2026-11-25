@@ -24,6 +24,7 @@ namespace NzbDrone.Core.ImportLists
         private readonly IImportListExclusionService _importListExclusionService;
         private readonly IFetchAndParseImportList _listFetcherAndParser;
         private readonly IImportListMembershipRepository _membership;
+        private readonly IImportListPolicyRepository _policy;
         private readonly IImportListStatusService _listStatus;
         private readonly ISearchForNewBook _bookSearch;
         private readonly ISearchForNewAuthor _authorSearch;
@@ -40,6 +41,7 @@ namespace NzbDrone.Core.ImportLists
                                      IImportListExclusionService importListExclusionService,
                                      IFetchAndParseImportList listFetcherAndParser,
                                      IImportListMembershipRepository membership,
+                                     IImportListPolicyRepository policy,
                                      IImportListStatusService listStatus,
                                      ISearchForNewBook bookSearch,
                                      ISearchForNewAuthor authorSearch,
@@ -56,6 +58,7 @@ namespace NzbDrone.Core.ImportLists
             _importListExclusionService = importListExclusionService;
             _listFetcherAndParser = listFetcherAndParser;
             _membership = membership;
+            _policy = policy;
             _listStatus = listStatus;
             _bookSearch = bookSearch;
             _authorSearch = authorSearch;
@@ -102,6 +105,7 @@ namespace NzbDrone.Core.ImportLists
         private List<Book> ProcessListItems(List<ImportListFetchBatch> batches)
         {
             var items = new List<(ImportListMembershipAttempt Attempt, ImportListItemInfo Report)>();
+            var refreshedLists = new List<int>();
             foreach (var batch in batches)
             {
                 try
@@ -132,6 +136,7 @@ namespace NzbDrone.Core.ImportLists
                     if (_membership.Complete(batch.Attempt, entries))
                     {
                         _listStatus.UpdateListSyncStatus(batch.Attempt.ImportListId);
+                        refreshedLists.Add(batch.Attempt.ImportListId);
                         var definition = _importListFactory.Find(batch.Attempt.ImportListId);
                         if (definition != null && definition.EnableAutomaticAdd && definition.MembershipRevision == batch.Attempt.Revision)
                         {
@@ -147,7 +152,7 @@ namespace NzbDrone.Core.ImportLists
                 }
             }
 
-            return ProcessResolvedItems(items);
+            return ProcessResolvedItems(items, refreshedLists);
         }
 
         private static bool IsLocalSource(ImportListItemInfo report) => LocalRecordingId.IsLocal(report.BookGoodreadsId) ||
@@ -168,15 +173,17 @@ namespace NzbDrone.Core.ImportLists
             }
         }
 
-        private List<Book> ProcessResolvedItems(List<(ImportListMembershipAttempt Attempt, ImportListItemInfo Report)> items)
+        private List<Book> ProcessResolvedItems(List<(ImportListMembershipAttempt Attempt, ImportListItemInfo Report)> items, IReadOnlyCollection<int> refreshedLists)
         {
             var processed = new List<Book>();
             var authorsToAdd = new List<Author>();
             var booksToAdd = new List<Book>();
+            var deferredSearches = new List<Action>();
 
             if (items.Count == 0)
             {
                 _logger.ProgressInfo("No list items to process");
+                _policy.ReconcileTags(refreshedLists);
 
                 return new List<Book>();
             }
@@ -203,7 +210,7 @@ namespace NzbDrone.Core.ImportLists
                 {
                     if (AudiobookId.IsNative(report.BookGoodreadsId))
                     {
-                        ProcessBookReport(importList, report, listExclusions, booksToAdd, authorsToAdd);
+                        ProcessBookReport(importList, report, listExclusions, booksToAdd, authorsToAdd, deferredSearches);
                     }
                 }
                 else if (report.Author.IsNotNullOrWhiteSpace() || report.AuthorGoodreadsId.IsNotNullOrWhiteSpace())
@@ -214,6 +221,14 @@ namespace NzbDrone.Core.ImportLists
 
             var addedAuthors = _addAuthorService.AddAuthors(authorsToAdd, false);
             var addedBooks = _addBookService.AddBooks(booksToAdd, false);
+
+            // Indexer selection must see the newly applied author tags. Only
+            // queue searches and refreshes after their transactional update.
+            _policy.ReconcileTags(refreshedLists);
+            foreach (var search in deferredSearches)
+            {
+                search();
+            }
 
             var message = string.Format($"Import List Sync Completed. Items found: {items.Count}, Authors added: {authorsToAdd.Count}, Books added: {booksToAdd.Count}");
 
@@ -276,7 +291,7 @@ namespace NzbDrone.Core.ImportLists
             }
         }
 
-        private void ProcessBookReport(ImportListDefinition importList, ImportListItemInfo report, List<ImportListExclusion> listExclusions, List<Book> booksToAdd, List<Author> authorsToAdd)
+        private void ProcessBookReport(ImportListDefinition importList, ImportListItemInfo report, List<ImportListExclusion> listExclusions, List<Book> booksToAdd, List<Author> authorsToAdd, List<Action> deferredSearches)
         {
             // Check to see if book in DB
             var existingBook = _bookService.FindById(report.BookGoodreadsId);
@@ -311,7 +326,7 @@ namespace NzbDrone.Core.ImportLists
 
                         if (importList.ShouldMonitor == ImportListMonitorType.SpecificBook)
                         {
-                            _commandQueueManager.Push(new BookSearchCommand(new List<int> { existingBook.Id }));
+                            deferredSearches.Add(() => _commandQueueManager.Push(new BookSearchCommand(new List<int> { existingBook.Id })));
                         }
                     }
 
@@ -336,7 +351,7 @@ namespace NzbDrone.Core.ImportLists
 
                     if (doSearch)
                     {
-                        _commandQueueManager.Push(new MissingBookSearchCommand(existingAuthor.Id));
+                        deferredSearches.Add(() => _commandQueueManager.Push(new MissingBookSearchCommand(existingAuthor.Id)));
                     }
                 }
 
@@ -355,7 +370,7 @@ namespace NzbDrone.Core.ImportLists
                     RootFolderPath = importList.RootFolderPath,
                     QualityProfileId = importList.ProfileId,
                     MetadataProfileId = importList.MetadataProfileId,
-                    Tags = importList.Tags,
+                    Tags = importList.TagExisting == ImportListTagExisting.Sync ? new HashSet<int>() : new HashSet<int>(importList.Tags),
                     AddOptions = new AddAuthorOptions
                     {
                         SearchForMissingBooks = importList.ShouldSearch,
@@ -372,6 +387,7 @@ namespace NzbDrone.Core.ImportLists
                 var toAdd = new Book
                 {
                     ForeignBookId = report.BookGoodreadsId,
+                    ImportListOriginId = importList.Id,
                     Monitored = monitored,
                     AnyEditionOk = true,
                     Editions = new List<Edition>(),
@@ -471,7 +487,7 @@ namespace NzbDrone.Core.ImportLists
                 RootFolderPath = importList.RootFolderPath,
                 QualityProfileId = importList.ProfileId,
                 MetadataProfileId = importList.MetadataProfileId,
-                Tags = importList.Tags,
+                Tags = importList.TagExisting == ImportListTagExisting.Sync ? new HashSet<int>() : new HashSet<int>(importList.Tags),
                 AddOptions = new AddAuthorOptions
                 {
                     SearchForMissingBooks = importList.ShouldSearch,

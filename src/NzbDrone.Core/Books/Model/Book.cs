@@ -45,6 +45,11 @@ namespace NzbDrone.Core.Books
         public bool AnyEditionOk { get; set; }
         public DateTime? LastInfoSync { get; set; }
         public DateTime Added { get; set; }
+
+        // Internal insertion provenance, never accepted from the book API.
+        [MemberwiseEqualityIgnore]
+        [JsonIgnore]
+        public int? ImportListOriginId { get; set; }
         [MemberwiseEqualityIgnore]
         public AddBookOptions AddOptions { get; set; }
 

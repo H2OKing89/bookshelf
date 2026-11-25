@@ -10,6 +10,7 @@ using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Datastore.Events;
 using NzbDrone.Core.DecisionEngine.Specifications;
 using NzbDrone.Core.Download;
+using NzbDrone.Core.ImportLists;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
@@ -38,12 +39,14 @@ namespace Readarr.Api.V1.Books
         protected readonly IEditionService _editionService;
         protected readonly IAddBookService _addBookService;
         protected readonly IMediaFileService _mediaFileService;
+        private readonly IImportListPolicyRepository _listPolicy;
 
         public BookController(IAuthorService authorService,
                           IBookService bookService,
                           IAddBookService addBookService,
                           IEditionService editionService,
                           IMediaFileService mediaFileService,
+                          IImportListPolicyRepository listPolicy,
                           ISeriesBookLinkService seriesBookLinkService,
                           IAuthorStatisticsService authorStatisticsService,
                           IMapCoversToLocal coverMapper,
@@ -59,6 +62,7 @@ namespace Readarr.Api.V1.Books
             _editionService = editionService;
             _addBookService = addBookService;
             _mediaFileService = mediaFileService;
+            _listPolicy = listPolicy;
 
             PostValidator.RuleFor(s => s.ForeignBookId).NotEmpty();
             PostValidator.RuleFor(s => s.Author.QualityProfileId).SetValidator(qualityProfileExistsValidator);
@@ -184,6 +188,10 @@ namespace Readarr.Api.V1.Books
 
             var model = bookResource.ToModel(book);
 
+            // Even deliberately reasserting the same monitored value is a
+            // user-owned choice, not a list cleanup claim.
+            _listPolicy.ReleaseBookOwnership(new[] { book.Id });
+
             _bookService.UpdateBook(model);
             _editionService.UpdateMany(model.Editions.Value);
 
@@ -219,6 +227,7 @@ namespace Readarr.Api.V1.Books
         [HttpPut("monitor")]
         public IActionResult SetBooksMonitored([FromBody]BooksMonitoredResource resource)
         {
+            _listPolicy.ReleaseBookOwnership(resource.BookIds);
             _bookService.SetMonitored(resource.BookIds, resource.Monitored);
 
             if (resource.BookIds.Count == 1)

@@ -8,6 +8,7 @@ using NzbDrone.Core.Books;
 using NzbDrone.Core.Books.Commands;
 using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Datastore.Events;
+using NzbDrone.Core.ImportLists;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
@@ -43,6 +44,7 @@ namespace Readarr.Api.V1.Author
         private readonly IMapCoversToLocal _coverMapper;
         private readonly IManageCommandQueue _commandQueueManager;
         private readonly IRootFolderService _rootFolderService;
+        private readonly IImportListPolicyRepository _listPolicy;
 
         public AuthorController(IBroadcastSignalRMessage signalRBroadcaster,
                             IAuthorService authorService,
@@ -52,6 +54,7 @@ namespace Readarr.Api.V1.Author
                             IMapCoversToLocal coverMapper,
                             IManageCommandQueue commandQueueManager,
                             IRootFolderService rootFolderService,
+                            IImportListPolicyRepository listPolicy,
                             RecycleBinValidator recycleBinValidator,
                             RootFolderValidator rootFolderValidator,
                             MappedNetworkDriveValidator mappedNetworkDriveValidator,
@@ -72,6 +75,7 @@ namespace Readarr.Api.V1.Author
             _coverMapper = coverMapper;
             _commandQueueManager = commandQueueManager;
             _rootFolderService = rootFolderService;
+            _listPolicy = listPolicy;
 
             Http.Validation.RuleBuilderExtensions.ValidId(SharedValidator.RuleFor(s => s.QualityProfileId));
             Http.Validation.RuleBuilderExtensions.ValidId(SharedValidator.RuleFor(s => s.MetadataProfileId));
@@ -166,6 +170,10 @@ namespace Readarr.Api.V1.Author
             }
 
             var model = authorResource.ToModel(author);
+
+            // Full author edits carry tags and monitoring choices; protect
+            // those explicit user selections, including same-value edits.
+            _listPolicy.ReleaseAuthorOwnership(author.Id, true, model.Tags);
 
             _authorService.UpdateAuthor(model);
 
