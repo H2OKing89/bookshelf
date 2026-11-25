@@ -73,9 +73,10 @@ namespace Readarr.Api.V1.Calendar
                 occurrence.Description = book.Editions.Value.Single(x => x.Monitored).Overview;
                 occurrence.Categories = book.Genres;
 
-                occurrence.Start = new CalDateTime(book.ReleaseDate.Value.Date) { HasTime = false };
-                occurrence.End = occurrence.Start;
-                occurrence.IsAllDay = true;
+                // iCal.NET 5 models date-only entries explicitly. Retain the
+                // previous serialized one-day event (DTEND is exclusive).
+                occurrence.Start = new CalDateTime(book.ReleaseDate.Value.Date, false);
+                occurrence.End = new CalDateTime(book.ReleaseDate.Value.Date.AddDays(1), false);
 
                 occurrence.Summary = $"{author.Name} - {_overrides.DisplayTitle(book)}";
             }

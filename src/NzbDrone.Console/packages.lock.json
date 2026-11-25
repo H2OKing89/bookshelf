@@ -331,8 +331,8 @@
       },
       "NodaTime": {
         "type": "Transitive",
-        "resolved": "3.2.0",
-        "contentHash": "yoRA3jEJn8NM0/rQm78zuDNPA3DonNSZdsorMUj+dltc1D+/Lc5h9YXGqbEEZozMGr37lAoYkcSM/KjTVqD0ow=="
+        "resolved": "3.2.2",
+        "contentHash": "dmju5W0UYC3QP/UJM0juKAZkH0HSDMp0gH91A0+mT9M0kgyM2Jm67hUZPl/WRQLq8Lijjqmdk8kyAViWFWM7dA=="
       },
       "Polly.Contrib.WaitAndRetry": {
         "type": "Transitive",
@@ -376,7 +376,7 @@
         "type": "Project",
         "dependencies": {
           "FluentValidation": "[9.5.4, )",
-          "Ical.Net": "[4.3.1, )",
+          "Ical.Net": "[5.2.4, )",
           "NLog": "[5.5.1, )",
           "Readarr.Common": "[1.0.0, )",
           "Readarr.Core": "[1.0.0, )",
@@ -403,7 +403,7 @@
           "System.Data.SQLite": "[2.0.4, )",
           "System.IO.Abstractions": "[17.0.24, )",
           "System.ServiceProcess.ServiceController": "[10.0.15, )",
-          "System.ValueTuple": "[4.6.1, )"
+          "System.ValueTuple": "[4.6.2, )"
         }
       },
       "readarr.core": {
@@ -431,7 +431,6 @@
           "PdfPig": "[0.1.16, )",
           "Polly": "[8.9.1, )",
           "Readarr.Common": "[1.0.0, )",
-          "RestSharp": "[106.15.0, )",
           "System.IO.Abstractions": "[17.0.24, )",
           "TagLibSharp-Lidarr": "[2.2.0.19, )"
         }
@@ -543,11 +542,11 @@
       },
       "Ical.Net": {
         "type": "CentralTransitive",
-        "requested": "[4.3.1, )",
-        "resolved": "4.3.1",
-        "contentHash": "ZQHNJAy26XeW0OnVRxyHW1xNWkLdueIInPCo76sdNCC0Sr8dAfBzN3DApWWk2r0nwCU0oJIGsrFHdCcQu5RWag==",
+        "requested": "[5.2.4, )",
+        "resolved": "5.2.4",
+        "contentHash": "KpXaIEqe4TntybCRoa0TSwkXJu7kgnFsLRj3lKSaYLYRQuos1ujyzaS0Opk7g5QZKM1Igi/2h84+FBhbmGgNeg==",
         "dependencies": {
-          "NodaTime": "3.2.0"
+          "NodaTime": "3.2.2"
         }
       },
       "ImpromptuInterface": {
@@ -714,12 +713,6 @@
           "Polly.Core": "8.9.1"
         }
       },
-      "RestSharp": {
-        "type": "CentralTransitive",
-        "requested": "[106.15.0, )",
-        "resolved": "106.15.0",
-        "contentHash": "HM7ohR6AscxedNenrrl93DSZG6hvdnA7O+NHyCl/6ZKTfn8psQ9rRmUpcb9eWr+140vmfxoVemql0bUoeGEW3A=="
-      },
       "SharpZipLib": {
         "type": "CentralTransitive",
         "requested": "[1.4.2, )",
@@ -795,9 +788,9 @@
       },
       "System.ValueTuple": {
         "type": "CentralTransitive",
-        "requested": "[4.6.1, )",
-        "resolved": "4.6.1",
-        "contentHash": "+RJT4qaekpZ7DDLhf+LTjq+E48jieKiY9ulJ+BoxKmZblIJfIJT8Ufcaa/clQqnYvWs8jugfGSMu8ylS0caG0w=="
+        "requested": "[4.6.2, )",
+        "resolved": "4.6.2",
+        "contentHash": "yQgmjfFximrNm9LIV3mL6T5MzjeC+epeE5rl4hXxAlYmxby7RM1dPSkIKXk9HNkl6G54h2JHOmLD46+Pey+IRg=="
       },
       "TagLibSharp-Lidarr": {
         "type": "CentralTransitive",

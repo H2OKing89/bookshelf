@@ -102,5 +102,44 @@
     "bytes": 1048,
     "sha256": "6e87a17b8230b7a3a7e6ec8681ddf13bf3bf9ddc3679d461cd700d6ef0460821",
     "packageSha512Base64": "W2mME6FU2IfIF3Agdr9loSiLTWRndIgFsLTim6pRxSV9WsrzkxV+ikjm32a2jiHGWW920qXT4R+cVHpgb2BTdA=="
+  },
+  "Ical.Net/LICENSE.md": {
+    "source": "https://raw.githubusercontent.com/ical-org/ical.net/9efe46c5183a1a81b6630168564a03b3d2da8a3b/license.md",
+    "package": "Ical.Net",
+    "version": "5.2.4",
+    "bytes": 1442,
+    "sha256": "fe4667af79d01506cfda6062136861426248a216bb84b39b76324afab70ea670",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/ical-org/ical.net",
+      "commit": "9efe46c5183a1a81b6630168564a03b3d2da8a3b"
+    },
+    "packageSha512Base64": "4coBSVBWP8ZqVnPSy+I7Yrcf0nnx8SGq7I6DXu6GULyt6SbAswHCeP2cwu9A1Sminb66yECWG/gN05h78eb1xA=="
+  },
+  "NodaTime/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/nodatime/nodatime/e56daa2599a4d1917065c015bda923e7a352a236/LICENSE.txt",
+    "package": "NodaTime",
+    "version": "3.2.2",
+    "bytes": 11358,
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/nodatime/nodatime",
+      "commit": "e56daa2599a4d1917065c015bda923e7a352a236"
+    },
+    "packageSha512Base64": "hEWuDyT8VW5qaFTURZD/QxtAex3bZibkXM308qtEmkdyIFq3+P6PYK7cUCbUQqsrahKBl+6tKpgIiA+Lw+sp2w=="
+  },
+  "NodaTime/NOTICE.txt": {
+    "source": "https://raw.githubusercontent.com/nodatime/nodatime/e56daa2599a4d1917065c015bda923e7a352a236/NOTICE.txt",
+    "package": "NodaTime",
+    "version": "3.2.2",
+    "bytes": 439,
+    "sha256": "b20873f8469e39d5d09bfbafa9ceb101d555cf8de61f8c2a31394161d3b4c6dd",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/nodatime/nodatime",
+      "commit": "e56daa2599a4d1917065c015bda923e7a352a236"
+    },
+    "packageSha512Base64": "hEWuDyT8VW5qaFTURZD/QxtAex3bZibkXM308qtEmkdyIFq3+P6PYK7cUCbUQqsrahKBl+6tKpgIiA+Lw+sp2w=="
   }
 }

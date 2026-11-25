@@ -10,6 +10,8 @@ These files accompany the pinned libraries used by Bookshelf:
 | Npgsql | 10.0.3 | [PostgreSQL license](Npgsql/LICENSE.txt) |
 | System.Data.SQLite | 2.0.4 | [Public-domain declaration and attribution](System.Data.SQLite/NOTICE.nuspec), [upstream copyright notice](System.Data.SQLite/COPYRIGHT.wiki) |
 | SourceGear.sqlite3 | 3.53.4 | [SQLite public-domain notice](SourceGear.sqlite3/LICENSE.txt), [package attribution](SourceGear.sqlite3/NOTICE.nuspec) |
+| Ical.Net | 5.2.4 | [MIT license](Ical.Net/LICENSE.md) |
+| NodaTime | 3.2.2 | [Apache-2.0 license](NodaTime/LICENSE.txt), [attribution notice](NodaTime/NOTICE.txt) |
 
 The Magick.NET notice comes from the original NuGet package and includes
 ImageMagick 7.1.2-35 and its bundled codec notices. The complete PdfPig license
@@ -38,3 +40,6 @@ provider. Its license file and package metadata are copied from the exact NuGet
 archive, preserving the SQLite public-domain declaration and the package's
 author and copyright attribution. The package does not identify a source
 revision.
+
+The iCal.NET and NodaTime notices come from the exact repository commits
+recorded in their restored NuGet package metadata.

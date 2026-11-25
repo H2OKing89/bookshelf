@@ -20,7 +20,6 @@
     <PackageReference Include="NLog" />
     <PackageReference Include="NLog.Targets.Syslog" />
     <PackageReference Include="Npgsql" />
-    <PackageReference Include="RestSharp" />
     <PackageReference Include="System.IO.Abstractions" />
     <PackageReference Include="TagLibSharp-Lidarr" />
     <PackageReference Include="Magick.NET-Q8-AnyCPU" />
