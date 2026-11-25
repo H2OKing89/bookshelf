@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using DryIoc;
 using DryIoc.Microsoft.DependencyInjection;
@@ -32,11 +33,12 @@ namespace NzbDrone.Common.Test
                 .AddDummyDatabase()
                 .AddStartupContext(new StartupContext("first", "second"));
 
+            container.RegisterInstance<TimeProvider>(TimeProvider.System);
             container.RegisterInstance(new Mock<IHostLifetime>().Object);
             container.RegisterInstance(new Mock<IOptions<PostgresOptions>>().Object);
             container.RegisterInstance(new Mock<IOptions<AppOptions>>().Object);
             container.RegisterInstance(new Mock<IOptions<AuthOptions>>().Object);
-            container.RegisterInstance(new Mock<IOptions<ServerOptions>>().Object);
+            container.RegisterInstance(Microsoft.Extensions.Options.Options.Create(new ServerOptions { PerformanceProfilingEnabled = false }));
             container.RegisterInstance(new Mock<IOptions<LogOptions>>().Object);
             container.RegisterInstance(new Mock<IOptions<UpdateOptions>>().Object);
 
