@@ -927,6 +927,25 @@ external scroller callback, including table, poster and overview modes. See
 [major-line inventory and review](dependency-audit.md). P09 remains **In progress**
 for wider framework/tooling/native acceptance.
 
+
+**2026-11-25 managed, store and lint compatibility:** the managed refresh
+`efffe2792` adopts FluentAssertions 7.2.2 (open-source line), Npgsql 10.0.4,
+and System.IO.Abstractions/TestingHelpers 23.1.0 with explicit stream and
+filesystem contracts. Twelve dormant central pins were removed; all 25
+locked NuGet projects audit cleanly and package notices are verified. The
+Redux 5 / Thunk 3 / React Redux 9 / Reselect 5 graph and typed preference
+storage (`4171d81de`, `f0bf024d4`) preserve saved options and rollback data.
+ESLint 9 flat configuration and Stylelint 18 (`31db4cf0f`, `ce37bfffb`,
+`2a34bf02d`) retain lint rules and explicitly pin the declarations required by
+React DnD. Both TypeScript projects, all CSS lint, and the exact 1,267-entry
+Yarn audit pass. React 19 and ESLint 10 remain blocked by peer compatibility;
+commercial assertion-library versions, broad analyzer-driven renames, and
+remaining managed/native architecture changes are not forced or suppressed.
+See the [dated managed inventory](dependencies/2026-11-25-managed/summary.json)
+and [frontend inventory](dependencies/2026-11-25-frontend/summary.json).
+P09 remains **In progress** for wider compatibility and native ARM64/release
+acceptance.
+
 ### P10
 
 **Carry cancellation through the HTTP client stack**
@@ -2926,6 +2945,30 @@ identities. `ce93fb9df` adds a typed virtualized scroll helper and real
 layout regression checks. The remaining source is **991 JS and 108 ordinary
 TS/TSX files** (excluding declarations); U07 stays **In progress** for the
 larger legacy store/component migration.
+
+
+**2026-11-25 shared infrastructure and library migration:** `8db71f4e4`,
+`be372f50f`, `318d57f2c`, `75b7bea07`, `4171d81de` and `f0bf024d4`
+convert **139 JavaScript modules** in pure utilities, store actions/reducers,
+preferences and resource boundaries, author/book/edition/book-file
+presentation, and shared visual/action controls. Branded IDs distinguish
+books from owning authors and recordings from editions. The author-edit
+dialog passes the owning author ID, including desktop and phone regression
+cases. Selection cannot use a stale range anchor or collection item map;
+`0cea5c36a` removes legacy memoizers that compared whole collection objects
+using an array-only comparison, with sort/filter and item-arrival regressions.
+Valid legacy filters and explicit zero/false values stay intact. Recording
+metadata, media tags, format/quality and action results keep their actual
+nullable contracts, including separate US, UK and local recording identities.
+Compile-time negative cases cover controls, collection keys, filters and
+action dispatch. The full standard and strict TypeScript projects pass in the
+independent locked checkout. The frontend source is now **852 JS files and
+255 ordinary TS/TSX files**, of which 217 frontend TS/TSX source modules enter
+the strict program (excluding CSS declarations and compile-only tests).
+Remaining JS is deliberately still tracked; this is not a fully strict
+frontend. Next slices: form/field/modal/table infrastructure, remaining
+settings and resource action/container families, then the application root
+and remaining legacy components. U07 remains **In progress**.
 
 ### U08
 

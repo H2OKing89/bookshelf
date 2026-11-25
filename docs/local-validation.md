@@ -1872,3 +1872,114 @@ actual local candidate. Native ARM64, CI, and OIDC follow their existing
 external/deferred gates. No production or existing application home, saved
 user configuration or audiobook files were changed, no real download/list or
 notification endpoint was used, and no GitHub workflow or publishing ran.
+
+## U07 and P09 shared infrastructure and dependency verification (2026-11-25)
+
+The exact newly built package source is
+`519613ad335459df1b8b7aa688b22b97c4b063c3`
+(tree `fad68657fa210e313147a3ab4c41be8ee4783b5e`, branch
+`fix/sonarr-v5-foundation`, clean build). This is a new local development
+validation package, not a replacement for the earlier staged unsigned
+release candidate or a production deployment.
+
+- **U07:** 139 JS modules converted to TS/TSX; 852 JS and 255 ordinary TS/TSX
+  remain (217 source modules are in the strict program). Shared utility
+  contracts preserve numeric and opaque identities, valid date offsets and
+  false/zero values. The typed Redux store retains previous preferences and
+  rollback availability; malformed filter entries are guarded. Author,
+  book, edition, recording and file presentations use separate typed identities
+  and media-aware nullable metadata. Shared buttons, loading, progress and
+  action status also enter strict checking. Regression tests exercise stale
+  selection anchors, legacy custom filters, and opening the owning author
+  editor from a book overview in desktop and phone views.
+- **P09:** Redux 5.0.1, Thunk 3.1.0, React Redux 9.3.1, Reselect 5.3.0;
+  ESLint 9.39.5 and Stylelint 18.1.0 with compatible config/plugins;
+  FluentAssertions 7.2.2 (open-source), Npgsql 10.0.4 and filesystem
+  abstraction/testing helpers 23.1.0. The disk transfer fixture now enforces
+  its existing expected comparisons rather than calling assertion-object
+  equality. Managed notices and exact package pins were checked. Seven CSS
+  findings were corrected without removing active rules.
+- **Clean install correction:** an initial exact build at `f0bf024d4`
+  exposed the React DnD declaration dependency previously supplied
+  transitively by React Redux 7. The explicit pinned
+  `@types/hoist-non-react-statics` 3.3.7 dependency in `2a34bf02d` fixes the
+  real independent typecheck without an untyped ambient declaration or
+  suppression. The final source checkout is outside the workspace
+  dependency tree, with its own frozen install. It passes both TypeScript
+  projects, all 171 frontend tests, ESLint, Stylelint, Vite declaration
+  verification and package build for glibc x64, musl x64 and musl ARM64.
+- The integrated managed source receipt at `f0bf024d4` contains eight
+  successful suites: 4,857 Core, 855 Common, 102 API, 193 Host, 21 Updater,
+  36 Linux disk, 23 private PostgreSQL migrations and 59 focused PostgreSQL
+  repository cases: **6,146 passed, zero failed, 100 not executed** (existing
+  explicit/platform skips). The subsequent source changes before the
+  exact package build affect frontend manifests, the two collection selectors,
+  their regression test, and the provider validation fixture; managed
+  implementation, tests, locks and configuration are identical. The owned
+  PostgreSQL server stopped and both source checkouts remained clean.
+  The [integrated managed receipt](dependencies/2026-11-25-managed/integrated-source-tests.json)
+  records that distinction. The Python validation-tooling suite passes 173
+  tests (with `PYTHONPATH=scripts`).
+- The 25-project NuGet audit has zero known vulnerable packages; the final
+  Yarn audit has **zero known findings across 1,267 dependencies**.
+  See the [managed inventory](dependencies/2026-11-25-managed/summary.json)
+  and [frontend inventory](dependencies/2026-11-25-frontend/summary.json).
+  These dated advisory snapshots do not establish complete native security.
+
+
+### Integrated defects and replay
+
+The first exact independently built package `2a34bf02d` passed the delivery,
+auth, host, paging, API, storage and static architecture groups. However,
+the hosted UI, accessibility and quality-sort checks exposed a real
+pre-existing misuse of a collection comparator: the old author/book
+selector wrappers compared whole collection state objects as though they
+were arrays. The legacy JS helper silently returned false for those inputs;
+the typed array helper exposed the invalid call. The observed
+`prevItems.some is not a function` was reproduced on the exact dependency
+graph. `0cea5c36a` removes the redundant wrappers while keeping input
+memoization, and tests changes in sort key/direction, empty/filtered
+collections and new items for both selectors. Browser behavior is replayed
+against the rebuilt package.
+
+The initial provider policy fixture also raced a real automatic refresh
+after re-enabling the import list. The subsequent explicit empty-mode sync
+coalesced with the prior still-running success command; no empty response
+was fetched. `519613ad3` waits for that command to finish and additionally
+asserts the distinct empty-mode request, retaining the actual
+empty-membership assertion. The repaired fixture passed all 56 provider
+checks on the original package; no provider implementation code changed.
+The first failed receipts and the targeted diagnostic replays are retained.
+
+
+### Final exact package replay
+
+All **2,371 hosted checks passed across 14 completed receipts** on
+`519613ad3`: delivery 616, auth 112, identity/policies 584, UI 218,
+paging 129, library review/accessibility 188, new features 87, TLS and
+notification 72, datastore 43, PostgreSQL connections 119, isolated SQLite
+100, log storage 63, and static musl x64/ARM64 20 each. The delivery group
+includes acquisition 306 and actual x64 musl Docker checks 56. Library
+virtualization now passes 66 checks including the owning-author editor
+on desktop and phone; metadata accessibility passes 125, quality ranking
+34, and provider policy 56. The two former integration failures are
+repaired and no behavioral assertion was removed.
+
+The glibc x64 input fingerprint is
+`d0f232296fd9f361911b3088d9b44520bfc1b559c0f7a6062ef2d12e29a68195`
+across all its receipts. Every group verifies unchanged input packages,
+uses synthetic data, publishes no external ports and uses no GitHub
+workflow. The [compact exact-package receipt](dependencies/2026-11-25-frontend/hosted-validation.json)
+records receipt hashes, source provenance and package fingerprints.
+
+Ignored local evidence is under `_temp/u07-p09-foundation-20261125/`,
+with the independently built final package and all 14 final reports
+under `replay-final/`. The earlier exact candidate, failed receipts,
+isolated diagnostics, and the managed test evidence under
+`_temp/p09-managed-20261125/` remain available for comparison.
+The final package is built and tested locally; the previous unsigned release
+candidate is unchanged. Native ARM64 execution, release publication/signing,
+CI and broader U07/P09 migration gates remain open. The roadmap remains
+**83 of 92 Verified**, eight In progress and one Deferred. No existing
+application home, credentials, production installation, audiobook files,
+actual external provider or user download client was modified or used.

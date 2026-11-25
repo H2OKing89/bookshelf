@@ -1457,3 +1457,30 @@ license notices and exact evidence. Publishing and built-in updating remain
 disabled; P25, CI and native ARM64 acceptance are still open.
 See [local validation](local-validation.md#background-profiling-typed-library-resources-dependency-compatibility-and-local-release-2026-11-24)
 and [the local candidate](release-policy.md#current-local-candidate-2026-11-24).
+
+
+### Strict shared infrastructure and dependency compatibility — 2026-11-25
+
+U07 and P09 advance together through typed shared utilities, Redux store and
+preferences, author/book/edition/file presentations, and common visual/action
+controls. The source has 139 fewer unchecked JS modules (991 → 852) and 255
+ordinary TS/TSX modules (217 included in the strict program). Confirmed
+regressions include the book overview's owning-author edit target, stale
+selection/range identities, preservation of valid legacy custom filters, and
+proper sort/filter state propagation through the library selectors.
+US, UK, local recording and ebook identity boundaries remain explicit.
+
+P09 adopts the validated Redux 5/Thunk 3/React Redux 9/Reselect 5 graph, ESLint
+9 flat configuration, Stylelint 18 and compatible plugins, plus the
+open-source FluentAssertions 7, Npgsql 10.0.4 and System.IO.Abstractions 23.1.0
+managed graph. Both registry audits report zero known findings; this is not
+a comprehensive native-code audit. The clean install pins React DnD's
+hoist-non-react-statics declarations rather than inheriting transitive types.
+The broader React 19, rule/tooling, analyzer, managed/native and strict UI
+migration decisions remain explicit and staged. See the [dependency review](dependency-audit.md)
+and [local validation](local-validation.md).
+
+The roadmap remains **83 of 92 Verified**, eight In progress and one Deferred.
+U07 and P09 are not closed; P01/P02/P13/P22 native ARM64, P21/P25 CI/release
+acceptance and deferred P17 remain unchanged. No production deployment or
+release publication is part of this slice.

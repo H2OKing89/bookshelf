@@ -1,0 +1,127 @@
+{
+  "date": "2026-11-25",
+  "baseCommit": "7953a4c2f",
+  "sourceCommit": "519613ad335459df1b8b7aa688b22b97c4b063c3",
+  "directDependenciesBefore": 90,
+  "directDependenciesAfter": 92,
+  "directChanges": [
+    {
+      "name": "react-redux",
+      "kind": "dependencies",
+      "before": "7.2.9",
+      "selected": "9.3.1"
+    },
+    {
+      "name": "redux",
+      "kind": "dependencies",
+      "before": "4.2.1",
+      "selected": "5.0.1"
+    },
+    {
+      "name": "redux-localstorage",
+      "kind": "dependencies",
+      "before": "0.4.1",
+      "selected": null
+    },
+    {
+      "name": "redux-thunk",
+      "kind": "dependencies",
+      "before": "2.4.2",
+      "selected": "3.1.0"
+    },
+    {
+      "name": "reselect",
+      "kind": "dependencies",
+      "before": "4.1.8",
+      "selected": "5.3.0"
+    },
+    {
+      "name": "@eslint/compat",
+      "kind": "devDependencies",
+      "before": null,
+      "selected": "2.1.1"
+    },
+    {
+      "name": "@stylistic/stylelint-plugin",
+      "kind": "devDependencies",
+      "before": null,
+      "selected": "6.0.1"
+    },
+    {
+      "name": "@types/hoist-non-react-statics",
+      "kind": "devDependencies",
+      "before": null,
+      "selected": "3.3.7"
+    },
+    {
+      "name": "eslint",
+      "kind": "devDependencies",
+      "before": "8.57.1",
+      "selected": "9.39.5"
+    },
+    {
+      "name": "eslint-config-prettier",
+      "kind": "devDependencies",
+      "before": "8.10.2",
+      "selected": "10.1.8"
+    },
+    {
+      "name": "eslint-plugin-prettier",
+      "kind": "devDependencies",
+      "before": "4.2.5",
+      "selected": null
+    },
+    {
+      "name": "globals",
+      "kind": "devDependencies",
+      "before": null,
+      "selected": "17.14.0"
+    },
+    {
+      "name": "stylelint",
+      "kind": "devDependencies",
+      "before": "15.10.3",
+      "selected": "18.1.0"
+    },
+    {
+      "name": "stylelint-order",
+      "kind": "devDependencies",
+      "before": "6.0.4",
+      "selected": "8.1.3"
+    }
+  ],
+  "frontendAudit": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "dependencies": 1267,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 1267
+  },
+  "sourceCountsBefore": {
+    "js": 991,
+    "tsTsxExceptDeclarations": 108
+  },
+  "sourceCountsAfter": {
+    "js": 852,
+    "tsTsxExceptDeclarations": 255
+  },
+  "strictCheckedFrontendSourceModules": 217,
+  "frontendUnitTestsPassed": 171,
+  "independentCleanFrozenInstall": true,
+  "strictAndStandardTypechecksPassed": true,
+  "nativeArm64ExecutionVerified": false,
+  "packageInputSha256": {
+    "package.json": "0e5617f7ef79955199cd8236e554e3e41953a0a57b781caae5db716c0e663c02",
+    "yarn.lock": "53b4ebf490a3799c895a4a950270e2ed705e5aa355a71491c5e66f71e82d9e81"
+  },
+  "exactIntegratedPackageValidation": true,
+  "hostedChecksPassed": 2371,
+  "successfulHostedReceipts": 14,
+  "pythonToolingTestsPassed": 173
+}

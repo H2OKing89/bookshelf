@@ -605,3 +605,83 @@ This audit is a registry advisory snapshot, not a complete security or native
 code audit; integrated native x64 package replay and native ARM64 execution are
 separate gates. P09 remains in progress for outstanding coupled migrations and
 native release acceptance.
+
+
+## Redux, TypeScript dependency boundaries and lint tooling — 2026-11-25
+
+The frontend graph is locked and tested in a clean checkout outside the
+workspace's dependency tree. See the [dated frontend inventory](dependencies/2026-11-25-frontend/summary.json),
+[installed direct-package metadata](dependencies/2026-11-25-frontend/direct-dependencies.json)
+and [registry compatibility constraints](dependencies/2026-11-25-frontend/compatibility-constraints.json).
+The final source is `519613ad335459df1b8b7aa688b22b97c4b063c3`; the separate
+managed refresh above is part of that source.
+
+| Dependency | Before | Selected |
+| --- | --- | --- |
+| Redux / Redux Thunk | 4.2.1 / 2.4.2 | 5.0.1 / 3.1.0 |
+| React Redux / Reselect | 7.2.9 / 4.1.8 | 9.3.1 / 5.3.0 |
+| redux-localstorage | 0.4.1 | Removed after migration to typed preference storage |
+| ESLint / eslint-config-prettier | 8.57.1 / 8.10.2 | 9.39.5 / 10.1.8 |
+| ESLint compatibility / explicit globals | — | 2.1.1 / 17.14.0 |
+| eslint-plugin-prettier | 4.2.5 | Removed (formatting rule was disabled) |
+| Stylelint / stylelint-order | 15.10.3 / 6.0.4 | 18.1.0 / 8.1.3 |
+| Stylelint stylistic rules | — | 6.0.1 |
+| hoist-non-react-statics declarations | Transitive | Explicit 3.3.7 development dependency |
+
+The state upgrade first tested Reselect and the Redux/Thunk pair separately,
+then the React Redux integration with all selected versions. The typed store
+preserves the `readarr` preference key, valid saved custom filters, explicit
+false/zero values and legacy Queue preferences for rollback. Server resources
+are not persisted as preferences. Unknown or malformed filter values and
+stale collection identities do not crash selection; genuine selected IDs and
+filter behavior remain intact. The retained redux-actions and
+redux-batched-actions libraries keep their existing action contracts; replacing
+them or the store architecture is separate from this migration.
+
+The [ESLint flat-config migration](https://eslint.org/docs/latest/use/configure/migration-guide)
+preserves the enabled rule severities: the four renamed core rules use
+their supported equivalents, and the legacy filename plugin receives the
+official rule-API compatibility wrapper. Two unused catch bindings and stale
+suppression comments were removed. The original and new effective JS and TS
+rule-severity configurations were compared. ESLint 10 is intentionally deferred:
+the latest React and import plugins in the registry review declare ESLint
+support through 9, not 10.
+
+The [Stylelint 18 migration](https://stylelint.io/migration-guide/to-18/) retains
+the active rule values and property ordering. The moved single-line declaration
+rule is enforced by the stylistic plugin (including a negative rule probe).
+Seven existing findings were corrected across four CSS files; all stylesheet
+checks now pass. The build uses a quoted CSS glob on both supported lint
+invocation paths. No rule suppression was added.
+
+React and React DOM stay at 18.3.1. React Redux 9 supports this line; the
+existing drag/drop, Popper and document-title packages still have older peer
+contracts. The current install reports those legacy peer warnings, which
+are not advisory findings. A React 19 migration must replace or adapt those
+integrations and validate drag/drop, popovers, routing, focus, and the
+remaining function-component defaults. The C# assertion/filesystem/database
+refresh and its explicit license decisions are recorded above. Prettier 2,
+the old React Hooks plugin and the remaining managed/native major migrations
+remain separate compatibility work.
+
+A fresh independent install revealed that React DnD had been relying on
+React Redux 7's transitive hoist-non-react-statics type declarations. The
+explicit pinned declarations in `2a34bf02d` restore the correct upstream type
+contract without an ambient untyped module or TypeScript suppression. A new
+frozen install outside the original repository passes both TypeScript
+projects. The exact Yarn audit reports **0 known findings across 1,267
+dependencies**. The locked graph contains 92 direct runtime/development
+declarations, compared with 90 before. This supersedes the previous
+1,344-entry audit snapshot and the earlier failed Stylelint trial; the
+dated historical evidence is retained. Neither this advisory snapshot nor
+the native package builds substitute for native ARM64 execution or a complete
+native/library security audit. P09 remains **In progress**.
+
+The final independent package replay on `519613ad3` passes 2,371 hosted
+checks, including actual x64 musl Docker and acquisition probes, the
+three package static checks, UI and lifecycle acceptance. Its
+[compact receipt](dependencies/2026-11-25-frontend/hosted-validation.json)
+preserves the package fingerprints and per-group evidence hashes.
+See [local validation](local-validation.md#u07-and-p09-shared-infrastructure-and-dependency-verification-2026-11-25)
+for the two integrated defects, their corrections and the final exact
+replay. Native ARM64 execution remains separate.
