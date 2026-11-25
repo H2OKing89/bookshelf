@@ -36,3 +36,35 @@ Compared with the pinned Sonarr V5 reference (`c018578e4`, no comparisons with V
 The local `hosttlslifecycle` packaged check creates its own private application home, certificate root/intermediate/leaf and passwords, tests loopback TLS handshakes with only the generated root trusted, preserves an actual baseline password-protected PFX home, and tests separate and combined PEM keys, encrypted keys, invalid saves, invalid startup, and unchanged certificate files. It restarts twice from an app home with spaces and `=`, confirms a distinct replacement process in the fixture-owned process group with the same HTTP/HTTPS ports and app home, sends SIGTERM only to that owned group, checks the shutdown handlers and SQLite integrity/marker, and starts the same home again. No production service or external endpoint is involved.
 
 Unit regressions exercise actual SSL streams, configuration round-tripping, exactly-once shutdown dispatch, argument quoting, worker draining, cancellation of a generated native probe and mocked updater/SCM handoffs. The external-process design is retained intentionally. Native Windows service/TLS acceptance, real updater acceptance (disabled by Bookshelf policy), long-running non-cooperative job teardown, and any future **in-process** host rebuild are separate, unverified acceptance scopes; they must not be inferred from Linux loopback evidence.
+
+## Opt-in performance diagnostics (P23)
+
+In **Settings → General**, enable advanced settings and turn **Performance
+profiling** on. Save and restart Bookshelf. Open **System → Status → Performance
+diagnostics**, perform the library operation you want to measure, and select
+**Refresh timings**. The panel groups authenticated API requests by controller
+operation and HTTP method, reporting the number of requests, mean and maximum
+request duration, failures/cancellations, SQLite statement count and duration,
+and PostgreSQL provider operation count and duration (which includes physical
+connection opens). These are aggregates, not a per-request or per-query trace.
+
+The setting is off by default and applies at host startup. The diagnostic API
+(`GET /api/v1/system/performance`) requires the actual application API key,
+including when other UI routes permit a local or external authentication mode.
+Responses are marked non-cacheable and the diagnostics endpoint itself is not
+sampled. The view includes up to 256 completed request samples from the last ten
+minutes, measured with a monotonic clock; expired samples are pruned on read,
+on new samples, and once per minute while idle. No SQL text, parameters,
+request URLs, bodies, file paths, credentials or per-user identifiers are
+retained by this profiler. Turning the setting off and restarting clears all
+samples. The setting can also be overridden with
+`Readarr__Server__PerformanceProfilingEnabled`.
+
+The current capability profiles API request work and database activity in
+that request's execution scope. Independently scheduled background metadata
+refreshes, imports, download polling, and native analysis jobs are not timed
+as separate operations by this panel. Do not interpret the duration of a
+request that queues a background job as the job's execution time. The local
+validation exercises the feature on a large synthetic catalogue and both
+supported database providers; broader background profiling and overhead studies
+remain follow-up work.

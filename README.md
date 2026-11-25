@@ -49,6 +49,10 @@ Run the [local package validation](docs/local-validation.md) checks against a
 complete package to verify startup, backup/restore, upgrades and media handling
 with fresh synthetic data. GitHub Actions is not required.
 
+See [host TLS, restart behavior and performance diagnostics](docs/host-tls-and-lifecycle.md)
+for HTTPS and optional request/database timings. The [versioned queue API](src/Readarr.Api.V2/README.md)
+describes v2 download-level actions and the retained v1 compatibility contract.
+
 Tracked downloads retain sources until their intended books and recording parts
 have verified committed files. See [download completion](docs/download-completion.md)
 for retry, restart, manual Copy and client-cleanup behavior.

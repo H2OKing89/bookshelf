@@ -163,6 +163,6 @@ P25 does not remove or redirect either metadata configuration.
 The existing GitHub workflows still contain legacy softcover/hardcover publishing
 variants. This local change does not disable those jobs or establish publication
 gates for them. Their retention/removal or migration, a fork-owned feed and trust
-policy, signed releases, GitHub release gating and the P22 support matrix remain
+policy, signed releases, GitHub release gating and P22 per-RID native acceptance remain
 separate work. GitHub billing is not needed for the local checks and staging
 commands above.

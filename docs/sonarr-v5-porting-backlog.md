@@ -59,12 +59,12 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P15](#p15) | P2 | Verified | M | Make SQL log storage optional |
 | [P16](#p16) | P2 | Verified | L | Review v5 authentication defaults, bootstrap and recovery as product policy |
 | [P17](#p17) | P2 | Deferred | L | Add OIDC only if SSO is wanted |
-| [P18](#p18) | P2 | Planned | M | Load PEM certificates, separate private keys and certificate chains |
-| [P19](#p19) | P2 | Planned | L | Study in-process host restart and service lifecycle |
-| [P20](#p20) | P2 | Planned | M | Keep API versions coexistable and generate matching OpenAPI documents |
+| [P18](#p18) | P2 | Verified | M | Load PEM certificates, separate private keys and certificate chains |
+| [P19](#p19) | P2 | Verified | L | Study in-process host restart and service lifecycle |
+| [P20](#p20) | P2 | Verified | M | Keep API versions coexistable and generate matching OpenAPI documents |
 | [P21](#p21) | P1 | In progress | L | Run the delivery artifact through unit, DB and HTTP integration gates |
-| [P22](#p22) | P2 | Planned | L | Define a truthful support matrix and package each native dependency |
-| [P23](#p23) | P3 | Planned | M | Add opt-in request/SQL profiling only after core correctness |
+| [P22](#p22) | P2 | In progress | L | Define a truthful support matrix and package each native dependency |
+| [P23](#p23) | P3 | In progress | M | Add opt-in request/SQL profiling only after core correctness |
 | [P24](#p24) | P2 | Verified | S | Correct URL-base boundary handling on login redirects |
 | [P25](#p25) | P0 | In progress | L | Isolate fork release channels and require matching source/artifact identity |
 | [P26](#p26) | P0 | Verified | M | Propagate repository write failures and transact general bulk updates |
@@ -85,7 +85,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D15](#d15) | P1 | Verified | L | Implement meaningful audiobook size policy, including per-profile limits |
 | [D16](#d16) | P2 | Verified | M | Rank near preferred audiobook size instead of always favoring the largest |
 | [D17](#d17) | P1 | Verified | M | Check library free space before grabbing |
-| [D18](#d18) | P2 | Planned | L | Represent one queued download with multiple books |
+| [D18](#d18) | P2 | Verified | L | Represent one queued download with multiple books |
 | [D19](#d19) | P2 | Verified | M | Refresh pending decisions when policy or metadata changes |
 | [D20](#d20) | P2 | Verified | M | Sort library/history quality according to each profile |
 | [D21](#d21) | P1 | Verified | S | Backport narrow RSS parser fixes, retain existing feed machinery |
@@ -94,8 +94,8 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D24](#d24) | P2 | Verified | M | Offer non-destructive cleanup when books leave all lists |
 | [D25](#d25) | P2 | Verified | M | Add a documented generic JSON import-list endpoint |
 | [D26](#d26) | P2 | Verified | M | Enrich webhooks with committed completion and score provenance |
-| [D27](#d27) | P2 | Planned | M | Send health-restored notifications |
-| [D28](#d28) | P3 | Planned | M | Coalesce media-server refreshes for multipart imports |
+| [D27](#d27) | P2 | Verified | M | Send health-restored notifications |
+| [D28](#d28) | P3 | Verified | M | Coalesce media-server refreshes for multipart imports |
 | [D29](#d29) | P2 | Verified | M | Support explicit qBittorrent total versus inactive seed time |
 | [D30](#d30) | P3 | Planned | L | Defer scripted import replacement; study an explicit extension boundary |
 | [U01](#u01) | P1 | Verified | S | Correct accessible names on icon actions |
@@ -906,6 +906,14 @@ identity remain P21/P22/P25 gates. Zero NuGet matches does not audit every nativ
 codec, OS package or artifact's reachable code. Default ARM64 HTTP acceptance
 still requires the native ARM64 runner recorded under P01.
 
+**2026-11-24 compatible dependency maintenance:** `54fda4e89` refreshed five
+managed packages and compatible direct/transitive frontend dependencies;
+all 25 NuGet projects report zero known vulnerable packages and the Yarn audit
+fell from 183 findings to zero, without advisory exceptions or a commercial
+license requirement. The locked graph and inventory are in
+[dependency audit](dependency-audit.md#compatible-maintenance-refresh-2026-11-24).
+P09 remains **In progress** for native and wider major-version compatibility.
+
 ### P10
 
 **Carry cancellation through the HTTP client stack**
@@ -1509,6 +1517,14 @@ this optional feature.
 
 **Acceptance:** existing PFX still works; PEM bundled/separate keys and full chain handshake correctly; missing key/wrong password/unsupported types fail safely; IPv6/base-path listener and proxy configurations remain reachable; no private key/cert password appears in logs or API responses.
 
+**2026-11-24 local verification:** `bc95c8d5a` supports existing PFX/P12,
+combined and separate PEM keys, encrypted PKCS#8 and intermediate chains.
+Omitted values preserve existing settings and certificate passwords are masked.
+The actual packaged TLS fixture upgrades an encrypted baseline PFX, verifies
+trusted loopback chain handshakes, rejects invalid inputs without leaking
+credentials, and retains the URL base. **Verified** for the current Linux
+delivery scope. See [host TLS and lifecycle](host-tls-and-lifecycle.md).
+
 ### P19
 
 **Study in-process host restart and service lifecycle**
@@ -1528,6 +1544,18 @@ this optional feature.
 
 **Acceptance:** repeated setting-change restarts, explicit shutdown, service stop and container SIGTERM release ports/DB locks, don't duplicate workers/subscriptions, and don't leak resources; saved settings reload; updater handoff still replaces files correctly. A retained external-process strategy can be the correct outcome.
 
+**2026-11-24 lifecycle decision:** `4e922ffd6` deliberately retains an
+external-process restart rather than transplanting the donor's in-process
+host loop. Shutdown now publishes the domain notification once on SIGTERM,
+cancels/drains cooperative commands and native MediaInfo, disposes host and
+pools, and only then launches the replacement with the same resolved home and
+quoted arguments. Actual same-home restarts, graceful stop, SQLite/port
+reuse, native x64 Docker delivery and mocked updater argument handoff passed.
+**Verified** for the study and current Linux lifecycle behavior; native SCM
+and real update replacement are not claimed (desktop delivery is unsupported,
+and in-app updates remain disabled under P25). See
+[the lifecycle review](host-tls-and-lifecycle.md#why-retain-an-external-process-restart).
+
 ### P20
 
 **Keep API versions coexistable and generate matching OpenAPI documents**
@@ -1546,6 +1574,15 @@ this optional feature.
 **Book/audio caution:** Authors/Books/Editions/narrators/parts and audio-versus-ebook distinctions must retain correct names/types; TV Series/Episode resources are irrelevant.
 
 **Acceptance:** current v1 clients still work; each version's OpenAPI includes only its intended routes/contracts/auth; enum/date/null/property casing stays compatible; generated client tests and SignalR payload validation pass; documented endpoints match the actual listener/base path.
+
+**2026-11-24 local verification:** `c3ffbd550`, `448b54192` and
+`b85d1dfe8` introduce Bookshelf-owned v2 queue routes without changing v1's
+numeric row contract or default discovery version. The actual listener
+publishes separate v1/v2 documents with correct base path and authentication
+schemes; unsupported versions return 404. Regenerated static references match
+the runtime exactly (183 v1 paths, four v2 paths), with no pre-existing
+operations or schemas removed. **Verified**. See
+[v2 queue/API reference](../src/Readarr.Api.V2/README.md).
 
 ### P21
 
@@ -1615,6 +1652,17 @@ changed by this slice.
 
 **Acceptance:** documented platform rows match actual signed/published/tested artifacts; every supported package starts, reads formats, analyzes audio, imports/renames and updates on that architecture; native libraries, executable bits and licenses are present; unsupported packaging paths fail clearly rather than shipping incomplete artifacts.
 
+**2026-11-24 platform matrix and packaging slice:** `0d0d8ec57` documents
+and enforces the three Linux delivery RIDs; unsupported desktop/extra targets
+fail before build output mutation and the Dockerfile accepts only supported
+Linux architectures. Static validation checks application/updater architecture
+and loader family, pinned SQLite, static MediaInfo, native libraries,
+executability and notices. The exact x64 glibc/musl and musl ARM64 packages
+passed static checks, with native x64 application/Docker acceptance. P22 is
+**In progress** for native ARM64 execution and release-artifact acceptance;
+no Windows/macOS/FreeBSD delivery or emulated substitute is claimed. See
+[platform support](platform-support.md).
+
 ### P23
 
 **Add opt-in request/SQL profiling only after core correctness**
@@ -1633,6 +1681,18 @@ changed by this slice.
 **Book/audio caution:** profiling can help expensive edition joins and refresh fan-out, but metadata and queries may contain user-specific library names/paths/provider parameters. It must not become part of ordinary import flow.
 
 **Acceptance:** off by default with negligible disabled overhead; unauthorized access cannot read results; no raw secrets in traces; representative large-library refresh/import bottlenecks are measurable without correctness or cancellation regressions; profiling data expires predictably.
+
+**2026-11-24 request/database profiling slice:** `8ac95350b`,
+`a51c98060` and `0f75e288e` add a default-off, host-owned profiler accessible
+only by an authenticated API-key principal. The in-memory aggregate is limited
+to 256 completed requests and a ten-minute monotonic view; raw SQL, URLs,
+parameters, credentials and application data are not retained. Actual SQLite
+and PostgreSQL operations, concurrent scopes, cancellation, expiration,
+restart opt-in/out, and desktop/phone presentation passed. The hosted check
+uses a 4,161-book synthetic catalogue. This working feature profiles request
+scope, not independently scheduled background refresh/import work. P23 stays
+**In progress** for background-workload/overhead acceptance rather than claiming
+those measurements. See [performance diagnostics](host-tls-and-lifecycle.md#opt-in-performance-diagnostics-p23).
 
 ### P24
 
@@ -2362,6 +2422,16 @@ desktop and phone settings checks**. See [local validation](local-validation.md#
 
 **P2 · partial · adapt with explicit API compatibility decision · D04, API/UI work · L.** S:`src/NzbDrone.Core/Queue/QueueService.cs:58` `MapQueueItem` receives `List<Episode>` and line 85 hashes only client/download; B:`src/NzbDrone.Core/Queue/QueueService.cs:63` maps one Book and line 96 includes book ID. A download-level row with `Books[]`/recording coverage removes duplicate actions and supports multi-book/audiobook bundles. Acceptance: progress/size counts once per download, blocklist/remove/retry operate once, book details remain navigable, polling and selection persist across changing metadata, and old API consumers are handled deliberately. S:`src/NzbDrone.Core/Queue/ObsoleteQueueService.cs:21` is compatibility code for the former per-episode model, not stale queue cleanup.
 
+**2026-11-24 local verification:** `c3ffbd550` and `448b54192` group the
+queue by download client and download identity rather than one book-row ID.
+Recorded grab coverage keeps distinct marketplace recordings, and inferred or
+unknown coverage is identified rather than treated as authority to retry a
+whole author. V2 actions bind to a current revision and validate the complete
+selection before mutation; a physical download is handled once and independent
+clients are isolated. V1 remains available. Real loopback simulated clients,
+exact retry and cleanup tests, plus desktop/phone queue behavior passed.
+**Verified**. See [the v2 contract](../src/Readarr.Api.V2/README.md).
+
 ### D19
 
 **Refresh pending decisions when policy or metadata changes**
@@ -2554,6 +2624,14 @@ See [local validation](local-validation.md#d19-b05-and-d26-verification-2026-11-
 
 **P2 · partial · adapt · health event support · S–M.** S:`src/NzbDrone.Core/Notifications/NotificationService.cs:512` handles `HealthCheckRestoredEvent`; S:`src/NzbDrone.Core/Notifications/Webhook/WebhookBase.cs:172` emits `HealthRestored`. B:`src/NzbDrone.Core/Notifications/NotificationService.cs:320` handles failures, and B:`src/NzbDrone.Core/Notifications/NotificationDefinition.cs:16` has `OnHealthIssue`, without a restored trigger. Extend the event pipeline, provider capability/schema and UI toggle. Acceptance: recovery sends once for a previously reported condition, warnings obey inclusion settings, repeated healthy checks do not spam, tags/provider failures remain isolated, and enabling restored notifications does not enable failure notifications implicitly.
 
+**2026-11-24 local verification:** `c7ed7e5de` adds independent opt-in
+recovery notifications via migration 169 (default false), provider capability,
+resource and Connect UI. Previously reported conditions recover once, warning
+preferences and per-provider isolation persist, and old clients omitting the
+new property do not disable it. Actual same-home upgrade, recovery-only
+configuration, explicit false and desktop/phone controls passed; provider
+transition tests use local fakes. **Verified**.
+
 ### D28
 
 **Coalesce media-server refreshes for multipart imports**
@@ -2566,6 +2644,16 @@ See [local validation](local-validation.md#d19-b05-and-d26-verification-2026-11-
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/Notifications/Plex/Server/PlexServerService.cs](../src/NzbDrone.Core/Notifications/Plex/Server/PlexServerService.cs).
 
 **P3 · missing shared queue abstraction; refresh providers already exist · adapt if providers support audiobook libraries · D01, D26 · M.** S:`src/NzbDrone.Core/Notifications/MediaServerUpdateQueue.cs:26` merges updates by item/server; `ProcessQueue:42` serializes refresh work while accepting new entries. B has Plex server integration under `src/NzbDrone.Core/Notifications/Plex/Server/`, without this shared queue class. Batch refreshes after committed book/recording completion to avoid one request per part. Acceptance: a multipart audiobook yields one useful refresh per library/server; concurrent downloads are not lost; an exception releases the refreshing flag and follows a defined retry policy; two configured servers are isolated. Do not copy TV library/episode keys or assume Plex music libraries model audiobooks correctly.
+
+**2026-11-24 local verification:** `c7ed7e5de` and `e8d050ce3` coalesce
+Plex Music target and Subsonic refreshes at committed audiobook import
+boundaries. They retain per-item chat behavior, including upgrades, isolate
+configured endpoints, preserve queued work on failure, and retry with bounded
+backoff. Actual adapter/target tests cover multi-part and concurrent imports,
+replacement, mapped paths, retries and endpoint isolation; packaged tests
+preserve legacy connection settings and exercise a loopback Subsonic test.
+No new television-library assumptions, live media-server contacts, or
+unimplemented media-server adapters are claimed. **Verified**.
 
 ### D29
 
@@ -2762,6 +2850,16 @@ edition ID mixups, nullable identity fields, marketplace differences, and
 invalid CSS class names. Webpack's `--env verifyCssTypes` mode checks generated
 CSS declarations. The remaining frontend migration is staged in subsequent
 slices. See [local validation](local-validation.md#u07-u08-and-u09-verification-2026-11-21).
+
+**2026-11-24 staged strictness:** `55a37b967` types import-list memberships,
+cleanup preview/confirmed actions and quality ranks; provider/local identity
+shapes, positive IDs, selection mode/tag and confirmation-token binding are
+validated at runtime as well as in compile-time regression cases. The v2 queue
+transport and performance diagnostics also use typed API boundaries. Both
+TypeScript projects, Vite declaration verification, frontend tests and prior
+list lifecycle/browser checks pass. The source tree still contains 999 JS
+files and 98 non-declaration TS/TSX files; it is not fully strict. U07 remains
+**In progress** for incremental conversion.
 
 ### U08
 

@@ -1657,3 +1657,97 @@ All six local slices are verified. No production or existing development
 library was modified. No GitHub workflows, external real list providers,
 real indexers, or real download clients were used. Cross-platform release
 and CI acceptance remain separate P21/P22 work.
+
+## Dependency, typing, queue API, host and notification verification (2026-11-24)
+
+This batch covers P09, U07, P18–P20, P22–P23, D18 and D27–D28. The exact
+integrated product source was `0f75e288e`; all three declared Linux RIDs were
+published from a clean, locked checkout. The final delivery candidate adds
+only two equivalent stylesheet lint corrections and the test-only loopback
+teardown repair (`aa5be616a`). Later commits change validation/documentation
+only. See the [roadmap](sonarr-v5-modernization-roadmap.md),
+[platform matrix](platform-support.md),
+[host configuration and diagnostics](host-tls-and-lifecycle.md),
+[v2 API contract](../src/Readarr.Api.V2/README.md) and
+[dependency inventory](dependencies/2026-11-24-maintenance/summary.json).
+
+- Managed and frontend dependency inventories match the exact candidate's
+  lockfiles and manifests (28 SHA-256 comparisons). The 25-project NuGet audit
+  reports zero vulnerable packages. Yarn audit reports changed from 183 to
+  zero; the final offline frozen workspace install succeeded and a further
+  audit of the installed graph returned zero findings across 836 dependencies.
+  This is registry-advisory evidence, not native-code or complete security
+  assurance. No license key is required.
+- Exact integrated source tests: **6,100 passing .NET tests, 94 existing
+  skips** (4,850 Core, 855 Common, 101 API, 193 Host, 21 Updater, 23 PostgreSQL
+  migration and 57 focused PostgreSQL tests). The original Common run exposed
+  an existing TCP listener disposal race after both IPv4 and IPv6 test requests
+  had succeeded. Test-only commit `199cc07e0` cancels and joins pending accepts
+  before stopping the listener; the whole affected fixture, 15 repetitions
+  of the failing case, and full Common suite then passed. The original failure
+  receipt is retained; no application behavior was changed by that repair.
+- Both TypeScript projects, **140 frontend tests**, ESLint, production Vite
+  verification (including CSS declarations) and targeted stylesheet lint pass.
+  The final tooling suite passes **170 tests**. The strict TypeScript migration
+  remains incremental; the source still contains 999 JS files and 98
+  non-declaration TS/TSX files.
+- The new exact-package feature checks pass: **34 TLS/lifecycle**, **21
+  download-level queue**, **24 versioned OpenAPI**, **36 notification
+  lifecycle**, and **27 profiling**. Fixtures prove actual encrypted PFX and
+  PEM chain handshakes, repeated same-home process restarts and one-time
+  SIGTERM cancellation, identity-specific download coverage/actions on two
+  isolated client configurations, normalized v1/v2 OpenAPI equality, health
+  recovery opt-in migration, and existing media-server settings. Profiling
+  verifies API-key authorization, large-catalog (4,161 books) request and SQL
+  timings, non-cacheable aggregate-only responses, desktop and phone views,
+  restart gating and sample clearing. Focused source tests also exercise real
+  PostgreSQL provider timings, monotonic retention and concurrent scopes, and
+  Plex/Subsonic adapter batching, target resolution and retry behavior with
+  synthetic dependencies. The packaged notification check exercises an owned
+  loopback Subsonic test endpoint.
+- The primary exact-artifact sweep passed **2,346 checks across 22 successful
+  receipts**, including unchanged input package assertions, and **616 delivery
+  checks** (including 306 acquisition and 56 actual x64 musl Docker checks).
+  Additional SQLite, PostgreSQL migration, log storage, authentication, list
+  lifecycle, library identity, browser/UI and older-package upgrade checks
+  passed. Static package validation passed on each of glibc x64, musl x64,
+  and musl ARM64. ARM64 is static inspection only, not native execution.
+- The pre-P14 PostgreSQL connection-string fixture initially compared the
+  entire pre-migration data/schema directly with the current schema. Tooling
+  commit `4e66c7566` requires the genuine historical migration set through
+  158, preserves every previously tracked value, verifies only the expected
+  additions and their defaults/types, and verifies exact final migration
+  history. The corrected real SCRAM/owned-socket upgrade and connection-string
+  replay passed **117 checks**, plus both unchanged-package assertions. This
+  corrects the assertion for later additive migrations without relaxing data
+  preservation. PostgreSQL TLS transport is not exercised by that fixture.
+
+Exact source evidence and the initial/fixed Common receipts are in
+`_temp/final-source-regression-20261124/`. Package, audit, frontend, tooling,
+feature-specific browser screenshots and hosted receipts are in
+`_temp/p09-u07-p23-p22-20261124/`. The primary runtime is preserved in
+`build-source-verified/_artifacts/<rid>/net10.0/Readarr`, and the final
+stylesheet-corrected runtime is in
+`build-source-final-style/_artifacts/<rid>/net10.0/Readarr` under that evidence
+root. The original failed PostgreSQL comparison lives in
+`postgresconnections-verified/summary.json`; its successful strict replay is
+`postgresconnections-replay-verified/summary.json`.
+
+The final clean `aa5be616a` candidate was rebuilt for all three RIDs after the
+stylesheet corrections. A separate **843-check replay over ten receipts**
+passed native x64 startup/delivery and Docker, static inspection for the three
+RIDs, all five new feature checks, UI/assets, desktop/phone queue and history,
+metadata/library review, and the genuine import-list upgrade. Its glibc x64
+package fingerprint is
+`ea5eee39363324b17e07fa6db1a5e128dea4e67be6b1e4b813346d126222ff8e`.
+The corresponding `style-final-*/summary.json` receipts and the candidate's
+own UI source-provenance file confirm the exact clean publication. The backend
+implementation is unchanged from the primary full sweep; the differences are
+only the two CSS files and Common test-fixture repair.
+
+The backlog is now **81 of 92 Verified**, nine In progress, one Planned, and
+one Deferred. P09 and U07 retain their broader dependency/type migration gates;
+P22 retains native ARM64 and release acceptance; P23 retains background-job
+profiling and broader overhead evaluation. No production or existing
+application home, saved user configuration or audiobook media was modified.
+No real notification/download/list services or GitHub workflow were used.

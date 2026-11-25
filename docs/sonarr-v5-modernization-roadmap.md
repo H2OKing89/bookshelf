@@ -1413,3 +1413,25 @@ sorting uses live saved-profile rank with equal group ranks and a lowest-file
 collection sort. qBittorrent total and inactive seeding modes retain current
 defaults and reject unsupported settings rather than changing semantics.
 See [local validation](local-validation.md#d23-d24-d25-d08-d20-and-d29-policy-verification-2026-11-24).
+
+### Dependency, typing, queue/API, host and notification slices — 2026-11-24
+
+Six more locally accepted roadmap items are **Verified**: P18 (TLS certificates
+and keys), P19 (host lifecycle study and graceful external restart), P20
+(coexisting API versions), D18 (download-level queue), D27 (health recovery),
+and D28 (committed media-server refresh batching). The existing v1 API and
+book/edition identities remain intact; v2 is advertised separately.
+
+P09 and U07 advanced within the staged dependency/strictness work. The refreshed
+NuGet and Yarn graphs report zero advisory findings at the time of audit;
+large remaining JS conversion and broader native acceptance are still open.
+P22 now has an enforced [Linux platform matrix](platform-support.md) and
+static native package checks; native ARM64 and release acceptance are not
+established. P23 adds functional authenticated, opt-in request/SQL aggregates
+with bounded monotonic retention and tested large-library presentation, while
+independent background-job measurements and broader overhead evaluation remain
+open. P17 stays deferred as requested; no GitHub workflow or production upgrade
+was run.
+
+See the [detailed backlog](sonarr-v5-porting-backlog.md) and
+[local validation](local-validation.md#dependency-typing-queue-api-host-and-notification-verification-2026-11-24).
