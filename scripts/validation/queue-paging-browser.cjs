@@ -47,6 +47,7 @@ function queueRecord(id) {
     canIgnore: !unknown,
     canChangeCategory: true,
     canBlocklist: !unknown,
+    canRetry: !unknown,
     canGrab: false,
     canImport: false,
     title: 'Owned Queue Release ' + id,

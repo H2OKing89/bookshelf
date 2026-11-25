@@ -1,48 +1,27 @@
 #!/bin/bash
-set -e
+# Generate both API references from an explicitly supplied, complete Linux build.
+# Uses an isolated loopback home; never deletes existing builds or uses a live home.
+set -euo pipefail
 
-FRAMEWORK="net10.0"
-PLATFORM=$1
-
-if [ "$PLATFORM" = "Windows" ]; then
-  RUNTIME="win-x64"
-elif [ "$PLATFORM" = "Linux" ]; then
-  RUNTIME="linux-x64"
-elif [ "$PLATFORM" = "Mac" ]; then
-  RUNTIME="osx-x64"
-else
-  echo "Platform must be provided as first arguement: Windows, Linux or Mac"
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+  echo "Usage: bash docs.sh /path/to/built/Readarr [new-evidence-directory]"
   exit 1
 fi
 
-outputFolder='_output'
-testPackageFolder='_tests'
-
-rm -rf $outputFolder
-rm -rf $testPackageFolder
-
-slnFile=src/Readarr.sln
-
-platform=Posix
-
-if [ "$PLATFORM" = "Windows" ]; then
-  application=Readarr.Console.dll
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+runtime="$(realpath "$1")"
+mkdir -p "$root/_temp"
+if [ "$#" -eq 2 ]; then
+  evidence="$(realpath -m "$2")"
 else
-  application=Readarr.dll
+  work="$(mktemp -d "$root/_temp/openapi-generation.XXXXXX")"
+  evidence="$work/evidence"
 fi
 
-dotnet clean $slnFile -c Debug
-dotnet clean $slnFile -c Release
+cd "$root"
+python3 -m scripts.validation.api_documents "$runtime" "$evidence" --generate
+mkdir -p src/Readarr.Api.V2
+install -m 0644 "$evidence/v1-openapi.json" src/Readarr.Api.V1/openapi.json
+install -m 0644 "$evidence/v2-openapi.json" src/Readarr.Api.V2/openapi.json
 
-dotnet msbuild -restore $slnFile -p:Configuration=Debug -p:Platform=$platform -p:RuntimeIdentifiers=$RUNTIME -t:PublishAllRids
-
-dotnet new tool-manifest
-dotnet tool install --version 6.6.2 Swashbuckle.AspNetCore.Cli
-
-dotnet tool run swagger tofile --output ./src/Readarr.Api.V1/openapi.json "$outputFolder/$FRAMEWORK/$RUNTIME/$application" v1 &
-
-sleep 45
-
-kill %1
-
-exit 0
+echo "Generated both Bookshelf API references. Validation evidence: $evidence"

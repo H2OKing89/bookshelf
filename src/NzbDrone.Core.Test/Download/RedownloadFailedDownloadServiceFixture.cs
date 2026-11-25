@@ -111,6 +111,25 @@ namespace NzbDrone.Core.Test.Download
         }
 
         [Test]
+        public void queue_retry_searches_only_recorded_ids_even_if_the_author_book_count_matches()
+        {
+            var failedEvent = new DownloadFailedEvent
+            {
+                AuthorId = 2,
+                BookIds = new List<int> { 4, 5, 6 },
+                RestrictRedownloadToBookIds = true
+            };
+
+            Subject.Handle(failedEvent);
+
+            Mocker.GetMock<IManageCommandQueue>()
+                .Verify(x => x.Push(It.Is<BookSearchCommand>(c => c.BookIds.Count == 3 && c.BookIds[0] == 4 && c.BookIds[1] == 5 && c.BookIds[2] == 6),
+                                    It.IsAny<CommandPriority>(),
+                                    It.IsAny<CommandTrigger>()), Times.Once());
+            Mocker.GetMock<IManageCommandQueue>().Verify(x => x.Push(It.IsAny<AuthorSearchCommand>(), It.IsAny<CommandPriority>(), It.IsAny<CommandTrigger>()), Times.Never());
+        }
+
+        [Test]
         public void should_redownload_author_on_failure()
         {
             // note that author is set to have 3 books in setup

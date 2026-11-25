@@ -208,6 +208,7 @@ function parseQueueItem(value: unknown) {
     canChangeCategory: requiredBoolean(value.canChangeCategory),
     canIgnore: requiredBoolean(value.canIgnore),
     canBlocklist: requiredBoolean(value.canBlocklist),
+    canRetry: requiredBoolean(value.canRetry),
     canGrab: requiredBoolean(value.canGrab),
     canImport: requiredBoolean(value.canImport),
     quality: parseQuality(value.quality),
@@ -313,6 +314,10 @@ function parseQueueStatus(value: unknown) {
   };
 }
 
+export function queuePageFamilyKey() {
+  return ['activityQueue', window.Readarr.apiRoot] as const;
+}
+
 export function queueStatusQuery() {
   return queryOptions({
     queryKey: [...queuePageFamilyKey(), 'status'] as const,
@@ -322,10 +327,6 @@ export function queueStatusQuery() {
     networkMode: 'always',
     retry: false
   });
-}
-
-export function queuePageFamilyKey() {
-  return ['activityQueue', window.Readarr.apiRoot] as const;
 }
 
 function clearTimer() {

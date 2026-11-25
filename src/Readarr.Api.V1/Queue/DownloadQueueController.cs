@@ -153,7 +153,8 @@ namespace Readarr.Api.V1.Queue
             // submitted identities can never select an inferred sibling/client.
             var actions = rows.Select(row =>
             {
-                if (!row.CanRemove || (request.Blocklist && !row.CanBlocklist))
+                if (!row.CanRemove || (request.Blocklist && !row.CanBlocklist) ||
+                    (row.Kind == QueueDownloadKind.Download && request.Blocklist && !request.SkipRedownload && !row.CanRetry))
                 {
                     throw StaleSelection();
                 }

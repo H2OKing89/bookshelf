@@ -26,6 +26,7 @@ interface RemoveQueueItemModalProps {
   canIgnore: boolean;
   canRemoveFromClient: boolean;
   canBlocklist: boolean;
+  canRetry: boolean;
   hasPending: boolean;
   isPending: boolean;
   isRemoveDisabled: boolean;
@@ -47,6 +48,7 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
     canIgnore,
     canRemoveFromClient,
     canBlocklist,
+    canRetry,
     hasPending,
     canChangeCategory,
     isPending,
@@ -62,13 +64,28 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
     useState<RemovalMethod>('removeFromClient');
   const [blocklistMethod, setBlocklistMethod] =
     useState<BlocklistMethod>('doNotBlocklist');
-  const effectiveRemovalMethod = removalMethod === 'removeFromClient' && canRemoveFromClient ||
+  let effectiveRemovalMethod = removalMethod;
+  const removalMethodAllowed = removalMethod === 'removeFromClient' && canRemoveFromClient ||
     removalMethod === 'changeCategory' && canChangeCategory ||
-    removalMethod === 'ignore' && (canIgnore || canBlocklist)
-    ? removalMethod : canRemoveFromClient ? 'removeFromClient' : canChangeCategory ? 'changeCategory' : 'ignore';
-  const effectiveBlocklistMethod = canBlocklist
-    ? (isPending && blocklistMethod === 'blocklistAndSearch' ? 'blocklistOnly' : blocklistMethod)
-    : 'doNotBlocklist';
+    removalMethod === 'ignore' && (canIgnore || canBlocklist);
+
+  if (!removalMethodAllowed) {
+    if (canRemoveFromClient) {
+      effectiveRemovalMethod = 'removeFromClient';
+    } else if (canChangeCategory) {
+      effectiveRemovalMethod = 'changeCategory';
+    } else {
+      effectiveRemovalMethod = 'ignore';
+    }
+  }
+
+  let effectiveBlocklistMethod = blocklistMethod;
+  if (!canBlocklist) {
+    effectiveBlocklistMethod = 'doNotBlocklist';
+  } else if ((isPending || !canRetry) && blocklistMethod === 'blocklistAndSearch') {
+    effectiveBlocklistMethod = 'blocklistOnly';
+  }
+
   const unavailable = !isPending && effectiveRemovalMethod === 'ignore' &&
     !canIgnore && effectiveBlocklistMethod === 'doNotBlocklist';
 
@@ -135,7 +152,7 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
       },
       {
         key: 'blocklistAndSearch',
-        isDisabled: isPending || !canBlocklist,
+        isDisabled: isPending || !canBlocklist || !canRetry,
         value: translate('BlocklistAndSearch'),
         hint: multipleSelected
           ? translate('BlocklistAndSearchMultipleHint')
@@ -150,7 +167,7 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
           : translate('BlocklistOnlyHint'),
       },
     ];
-  }, [multipleSelected, canBlocklist, isPending]);
+  }, [multipleSelected, canBlocklist, canRetry, isPending]);
 
   const handleRemovalMethodChange = useCallback(
     ({ value }: { value: RemovalMethod }) => {

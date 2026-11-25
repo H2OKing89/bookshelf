@@ -52,6 +52,7 @@ namespace NzbDrone.Core.Queue
         public bool CanChangeCategory { get; set; }
         public bool CanIgnore { get; set; }
         public bool CanBlocklist { get; set; }
+        public bool CanRetry { get; set; }
         public bool CanGrab { get; set; }
         public bool CanImport { get; set; }
         public bool CanRemove => Kind == QueueDownloadKind.Pending || CanRemoveFromClient || CanChangeCategory || CanIgnore || CanBlocklist;
@@ -121,6 +122,8 @@ namespace NzbDrone.Core.Queue
                     }
                 }
 
+                group.CanRetry = group.Kind == QueueDownloadKind.Download && group.CanBlocklist &&
+                    group.Recordings.All(recording => books.ContainsKey(recording.BookId));
                 group.Author = group.AuthorId.HasValue ? authors.GetValueOrDefault(group.AuthorId.Value) : null;
 
                 // Include action-relevant provenance, but never progress, ETA,
@@ -146,6 +149,7 @@ namespace NzbDrone.Core.Queue
                     group.CanRemoveFromClient,
                     group.CanChangeCategory,
                     group.CanBlocklist,
+                    group.CanRetry,
                     group.CanIgnore,
                     group.CanGrab,
                     group.CanImport,

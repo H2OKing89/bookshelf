@@ -30,6 +30,7 @@ namespace NzbDrone.Core.Download
 
         // Explicit queue actions handle removal/category changes themselves.
         public bool SuppressAutomaticRemoval { get; set; }
+        public bool RestrictRedownloadToBookIds { get; set; }
         public string ImportRejectionCode { get; set; }
         public string ImportRejectionAction { get; set; }
         public ReleaseSourceType ReleaseSource { get; set; }

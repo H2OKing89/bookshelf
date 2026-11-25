@@ -207,6 +207,14 @@ namespace NzbDrone.Core.Test.Download
         }
 
         [Test]
+        public void explicit_versioned_queue_action_does_not_remove_the_same_client_job_again()
+        {
+            Subject.Handle(new DownloadFailedEvent { TrackedDownload = _tracked, SuppressAutomaticRemoval = true });
+
+            _client.Verify(client => client.RemoveItem(It.IsAny<DownloadClientItem>(), It.IsAny<bool>()), Times.Never());
+        }
+
+        [Test]
         public void failed_download_removal_retains_its_existing_independent_policy()
         {
             Subject.Handle(new DownloadFailedEvent { TrackedDownload = _tracked });

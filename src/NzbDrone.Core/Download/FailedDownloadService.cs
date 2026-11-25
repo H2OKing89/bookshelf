@@ -195,6 +195,7 @@ namespace NzbDrone.Core.Download
                 TrackedDownload = trackedDownload,
                 SkipRedownload = skipRedownload,
                 SuppressAutomaticRemoval = suppressAutomaticRemoval,
+                RestrictRedownloadToBookIds = suppressAutomaticRemoval,
                 ReleaseSource = releaseSource
             };
 

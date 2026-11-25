@@ -48,6 +48,12 @@ namespace NzbDrone.Core.Download
                 return;
             }
 
+            if (message.RestrictRedownloadToBookIds)
+            {
+                _commandQueueManager.Push(new BookSearchCommand(message.BookIds));
+                return;
+            }
+
             if (message.BookIds.Count == 1)
             {
                 _logger.Debug("Failed download only contains one book, searching again");

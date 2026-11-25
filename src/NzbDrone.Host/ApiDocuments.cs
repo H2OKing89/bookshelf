@@ -15,6 +15,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Writers;
 using Readarr.Http;
 using Swashbuckle.AspNetCore.Swagger;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace NzbDrone.Host
 {
@@ -28,13 +29,23 @@ namespace NzbDrone.Host
                 options.SwaggerDoc("v2", Info("2.0.0", "Bookshelf download-level queue API"));
                 options.DocInclusionPredicate(Include);
                 options.DescribeAllParametersInCamelCase();
+                options.OperationFilter<ApiAuthorizationDocumentation>();
 
                 var header = ApiKey("X-Api-Key", ParameterLocation.Header);
                 var query = ApiKey("apikey", ParameterLocation.Query);
                 options.AddSecurityDefinition(header.Name, header);
                 options.AddSecurityDefinition(query.Name, query);
+                var bearer = new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    Description = "API key supplied as a Bearer token",
+                    Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "BearerApiKey" }
+                };
+                options.AddSecurityDefinition("BearerApiKey", bearer);
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement { { header, Array.Empty<string>() } });
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement { { query, Array.Empty<string>() } });
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement { { bearer, Array.Empty<string>() } });
             });
         }
 
@@ -92,5 +103,22 @@ namespace NzbDrone.Host
             In = location,
             Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = name }
         };
+    }
+
+    public class ApiAuthorizationDocumentation : IOperationFilter
+    {
+        public void Apply(OpenApiOperation operation, OperationFilterContext context)
+        {
+            var metadata = context.ApiDescription.ActionDescriptor.EndpointMetadata;
+            if (metadata.OfType<IAllowAnonymous>().Any())
+            {
+                operation.Security = new List<OpenApiSecurityRequirement> { new OpenApiSecurityRequirement() };
+            }
+            else if (metadata.OfType<IAuthorizeData>().Any(attribute => attribute.Policy == "UI"))
+            {
+                operation.Security = new List<OpenApiSecurityRequirement> { new OpenApiSecurityRequirement() };
+                operation.Description = (operation.Description ?? string.Empty) + " Browser route; uses configured UI authentication (Forms cookie, Basic, External or None), not API-key authentication.";
+            }
+        }
     }
 }

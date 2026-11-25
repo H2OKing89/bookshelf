@@ -13,7 +13,7 @@ function record(id, extras) {
     coverageSource: 'recordedGrab', recordings: [{ bookId: id, recordingId: 'owned-recording' }],
     title: 'Owned queue fixture', status: 'queued', authorId: 33, downloadClientId: clientId, downloadId,
     canRemove: true, canRemoveFromClient: true, canChangeCategory: false, canIgnore: true,
-    canBlocklist: true, canGrab: false, canImport: false,
+    canBlocklist: true, canRetry: true, canGrab: false, canImport: false,
     ...extras
   };
 }

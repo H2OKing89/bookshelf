@@ -29,6 +29,7 @@ namespace Readarr.Api.V1.Queue
         public bool CanChangeCategory { get; set; }
         public bool CanIgnore { get; set; }
         public bool CanBlocklist { get; set; }
+        public bool CanRetry { get; set; }
         public bool CanGrab { get; set; }
         public bool CanImport { get; set; }
         public QualityModel Quality { get; set; }
@@ -74,6 +75,7 @@ namespace Readarr.Api.V1.Queue
                 CanChangeCategory = download.CanChangeCategory,
                 CanIgnore = download.CanIgnore,
                 CanBlocklist = download.CanBlocklist,
+                CanRetry = download.CanRetry,
                 CanGrab = download.CanGrab,
                 CanImport = download.CanImport,
                 Quality = row.Quality,

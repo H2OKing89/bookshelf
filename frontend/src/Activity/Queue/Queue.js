@@ -119,6 +119,7 @@ class Queue extends Component {
         canRemoveFromClient: items.every((item) => item.kind === 'pending' || item.canRemoveFromClient),
         canIgnore: items.every((item) => item.kind === 'pending' || item.canIgnore),
         canBlocklist: items.every((item) => item.canBlocklist),
+        canRetry: items.every((item) => item.kind === 'pending' || item.canRetry),
         hasPending: items.some(({ kind }) => kind === 'pending'),
         isPending: items.every(({ kind }) => kind === 'pending')
       }
@@ -291,6 +292,7 @@ class Queue extends Component {
           canIgnore={!!removal?.canIgnore}
           canRemoveFromClient={!!removal?.canRemoveFromClient}
           canBlocklist={!!removal?.canBlocklist}
+          canRetry={!!removal?.canRetry}
           hasPending={!!removal?.hasPending}
           isPending={!!removal?.isPending}
           isRemoveDisabled={confirmationIsStale}

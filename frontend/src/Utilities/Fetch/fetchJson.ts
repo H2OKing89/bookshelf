@@ -62,7 +62,7 @@ function requestTarget(path: string, apiVersion?: 2) {
       throw new ApiError({ kind: 'invalid-request' });
     }
 
-    prefix = prefix.slice(0, -1) + '2';
+    prefix = `${prefix.slice(0, -1)}2`;
   }
 
   if (
