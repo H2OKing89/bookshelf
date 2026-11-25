@@ -97,7 +97,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D27](#d27) | P2 | Verified | M | Send health-restored notifications |
 | [D28](#d28) | P3 | Verified | M | Coalesce media-server refreshes for multipart imports |
 | [D29](#d29) | P2 | Verified | M | Support explicit qBittorrent total versus inactive seed time |
-| [D30](#d30) | P3 | Planned | L | Defer scripted import replacement; study an explicit extension boundary |
+| [D30](#d30) | P3 | Verified | L | Defer scripted import replacement; study an explicit extension boundary |
 | [U01](#u01) | P1 | Verified | S | Correct accessible names on icon actions |
 | [U02](#u02) | P1 | Verified | M | Named, semantic dialogs |
 | [U03](#u03) | P1 | Verified | M | Keyboard-operated, viewport-aware menus |
@@ -2688,6 +2688,18 @@ See [local validation](local-validation.md#d23-d24-d25-d08-d20-and-d29-policy-ve
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/MediaFiles/BookImport/ImportApprovedBooks.cs](../src/NzbDrone.Core/MediaFiles/BookImport/ImportApprovedBooks.cs).
 
 **P3 · missing Sonarr-style transfer override · study/defer · D01, D04 and explicit product need · L.** S:`src/NzbDrone.Core/MediaFiles/ScriptImportDecider.cs:23` `ImportScriptService`, `ProcessOutput:52`, `TryImport:113` supports script-controlled `MoveComplete`, `DeferMove`, `RenameRequested`, extra files, and rich environment variables. Bookshelf has notification/custom-script facilities but no equivalent importer override. This could help specialized audiobook post-processing, but the single returned media-file protocol does not model multipart recordings, and arbitrary script completion cannot replace staged transaction/provenance guarantees. Acceptance before implementation: defined multi-output manifest, confined destinations/ownership, bounded execution, safe rollback, probe/tag validation, seed-source preservation, and no history/notification commit before all output files are verified. Prefer a post-commit notification hook for tasks that do not need to control transfer.
+
+**2026-11-24 design review:** [Audiobook import extension design](import-extension-design.md)
+completes the D30 study against the pinned Sonarr v5 donor. Retain the existing
+post-commit notification boundary for non-mutating integrations and keep the
+normal importer solely responsible for publication, identity, receipt and source
+retirement. The proposed opt-in transformation protocol describes bounded,
+versioned, one-to-one multi-part staging outputs; it requires real worker
+isolation, independent media/identity checks, rollback and restart evidence.
+The acceptance matrix covers incomplete releases and Copy/seed preservation.
+**Verified as a design decision only**; no script-controlled transfer feature,
+new setting or execution capability is enabled. Future implementation requires
+a concrete product need and the documented acceptance work.
 
 ## Frontend and interaction design
 
