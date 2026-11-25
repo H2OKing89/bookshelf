@@ -1,16 +1,18 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import Scroller from 'Components/Scroller/Scroller';
 import styles from './MenuContent.css';
 
-function MenuContent(props) {
-  const {
-    forwardedRef,
-    className,
-    children,
-    ...otherProps
-  } = props;
+interface MenuContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  forwardedRef?: React.Ref<HTMLDivElement>;
+  children: React.ReactNode;
+}
 
+function MenuContent({
+  forwardedRef,
+  className = styles.menuContent,
+  children,
+  ...otherProps
+}: MenuContentProps) {
   return (
     <div
       ref={forwardedRef}
@@ -25,15 +27,5 @@ function MenuContent(props) {
     </div>
   );
 }
-
-MenuContent.propTypes = {
-  forwardedRef: PropTypes.func,
-  className: PropTypes.string,
-  children: PropTypes.node.isRequired
-};
-
-MenuContent.defaultProps = {
-  className: styles.menuContent
-};
 
 export default MenuContent;

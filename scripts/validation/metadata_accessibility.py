@@ -144,7 +144,11 @@ def run(runtime, output, playwright_module):
         stage = "browser"
         screenshots = common.private_directory(output / "screenshots")
         process = common.private_directory(output / "browser-process")
-        config = {"url": "http://" + fixture.backend_host + fixture.URL_BASE,
+        suggestion = fixture.home / "owned-suggestions" / "Synthetic Choices"
+        suggestion.mkdir(parents=True)
+        config = {"suggestionPrefix": str(suggestion.parent / "Synthetic"),
+                  "suggestionPath": str(suggestion),
+                  "url": "http://" + fixture.backend_host + fixture.URL_BASE,
                   "username": fixture.current_username, "password": fixture.current_password,
                   "output": str(screenshots), "playwrightModule": str(playwright_module),
                   "downloadClientName": CLIENT_NAME}

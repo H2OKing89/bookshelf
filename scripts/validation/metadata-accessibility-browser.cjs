@@ -270,6 +270,46 @@ async function verify(config) {
           check('local_recording_links_to_created_book', true);
         }
 
+        failureStep = layout + '_enhanced_select_geometry';
+        await go('/settings/ui');
+        const weekLabel = page.locator('label').filter({ hasText: /^First Day of Week$/ });
+        await weekLabel.waitFor();
+        const weekId = await weekLabel.getAttribute('for');
+        const week = page.locator(`button[id="${weekId}"]`);
+        await week.waitFor();
+        const originalWeek = await week.innerText();
+        if (layout === 'desktop') {
+          await week.press('ArrowDown');
+          const popupId = await week.getAttribute('aria-controls');
+          const popup = page.locator(`[id="${popupId}"]`);
+          await popup.waitFor();
+          await page.waitForFunction(({ popupId, weekId }) => {
+            const popup = document.getElementById(popupId)?.getBoundingClientRect();
+            const anchor = document.getElementById(weekId)?.getBoundingClientRect();
+            const width = window.visualViewport?.width ?? window.innerWidth;
+            const height = window.visualViewport?.height ?? window.innerHeight;
+            return popup && anchor && popup.width >= anchor.width - 2 &&
+              popup.left >= -1 && popup.right <= width + 1 &&
+              popup.top >= -1 && popup.bottom <= height + 1;
+          }, { popupId, weekId });
+          check('enhanced_select_anchors_and_fits_viewport', true);
+          await page.mouse.click(1, page.viewportSize().height - 2);
+          await popup.waitFor({ state: 'hidden' });
+          check('keyboard_opened_select_dismisses_on_outside_pointer', await week.getAttribute('aria-expanded') === 'false');
+          await week.press('ArrowDown');
+          await page.locator(`[id="${await week.getAttribute('aria-controls')}"]`).waitFor();
+          await week.press('Escape');
+        } else {
+          await week.tap();
+          const options = dialog('Options');
+          await options.waitFor();
+          check('touch_select_retains_options_dialog', await week.getAttribute('aria-expanded') === 'true');
+          await button('Close', options).click();
+          await options.waitFor({ state: 'hidden' });
+        }
+        check('cancelled_select_preserves_current_value', await week.innerText() === originalWeek &&
+          await week.getAttribute('aria-expanded') === 'false');
+
         failureStep = layout + '_folder_picker';
         await go('/settings/mediamanagement');
         await button('Add Root Folder').click();
@@ -289,6 +329,41 @@ async function verify(config) {
         check('path_help_reaches_the_autosuggest_input',
           await folderPath.getAttribute('name') === 'path' &&
           (await descriptions(folderPath)).some(text => text.includes('your book library')));
+        failureStep = layout + '_autosuggest_geometry';
+        await folderPath.fill(config.suggestionPrefix);
+        const suggestion = page.getByRole('option').filter({ hasText: 'Synthetic Choices' });
+        await suggestion.waitFor();
+        const suggestionList = page.locator(`[id="${await folderPath.getAttribute('aria-controls')}"]`);
+        const inputRect = await folderPath.boundingBox();
+        const listRect = await suggestionList.boundingBox();
+        check('owned_autosuggest_matches_path_input_width', !!inputRect && !!listRect &&
+          Math.abs(inputRect.width - listRect.width) <= 2 && listRect.x >= -1 &&
+          listRect.x + listRect.width <= page.viewportSize().width + 1 &&
+          (await suggestion.innerText()).includes(config.suggestionPath));
+        await name.focus();
+        await suggestion.waitFor({ state: 'hidden' });
+        check('autosuggest_blur_dismisses_popup', true);
+
+        failureStep = layout + '_tooltip_geometry';
+        const info = rootFolder.locator('label').filter({ hasText: /^Monitor$/ }).locator('svg');
+        await info.waitFor();
+        if (layout === 'desktop') {
+          await info.hover();
+        } else {
+          await info.tap();
+        }
+        const tooltip = page.getByText('Monitoring Options', { exact: true });
+        await tooltip.waitFor();
+        const box = await tooltip.boundingBox();
+        check('monitoring_tooltip_fits_viewport', !!box && box.width > 0 &&
+          box.x >= -1 && box.x + box.width <= page.viewportSize().width + 1);
+        if (layout === 'desktop') {
+          await name.hover();
+        } else {
+          await info.tap();
+        }
+        await tooltip.waitFor({ state: 'hidden' });
+        check('monitoring_tooltip_closes_after_interaction', true);
         await name.fill('Synthetic Invalid Folder');
         await folderPath.fill('synthetic-invalid-relative-path');
         await folderPath.blur();

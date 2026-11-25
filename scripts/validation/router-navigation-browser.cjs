@@ -20,6 +20,14 @@ async function verifyNavigation(page, base, config, { check, step, output }) {
   await Promise.all([page.waitForURL(protectedBook.href), page.locator('#login-button').click()]);
   const recordingTitle = page.getByText(config.recording.title, { exact: true }).first();
   await recordingTitle.waitFor();
+  const instanceName = await page.evaluate(() => window.Readarr.instanceName);
+  const expectedBookTitle = `${config.recording.title} - ${instanceName}`;
+  const expectedAuthorTitle = `${config.author.name} - ${instanceName}`;
+  const expectTitle = async title => {
+    await page.waitForFunction(expected => document.title === expected, title);
+    return await page.title() === title;
+  };
+  check('recording_document_title', await expectTitle(expectedBookTitle));
   check('authentication_returns_to_the_prefixed_book_and_query', page.url() === protectedBook.href &&
     await page.evaluate(value => window.Readarr.urlBase === value, prefix));
 
@@ -37,22 +45,27 @@ async function verifyNavigation(page, base, config, { check, step, output }) {
   await author.click();
   await page.waitForURL(new URL(authorPath, base).href);
   await page.getByText(config.author.name, { exact: true }).first().waitFor();
+  check('author_document_title_after_client_navigation', await expectTitle(expectedAuthorTitle));
   await page.goBack();
   await recordingTitle.waitFor();
   check('back_returns_to_the_exact_recording_bookmark', page.url() === bookmark.href);
+  check('back_restores_recording_document_title', await expectTitle(expectedBookTitle));
   await page.goForward();
   await page.waitForURL(new URL(authorPath, base).href);
   check('forward_restores_the_same_author_route', page.url() === new URL(authorPath, base).href);
+  check('forward_restores_author_document_title', await expectTitle(expectedAuthorTitle));
 
   step('calendar_and_not_found');
   const calendar = new URL(`${prefix}/calendar?fixture=calendar#owned`, base);
   await page.goto(calendar.href);
   await page.getByRole('link', { name: 'Calendar', exact: true }).waitFor();
   check('calendar_bookmark_preserves_query_and_fragment', page.url() === calendar.href);
+  check('calendar_document_title', await expectTitle(`Calendar - ${instanceName}`));
   const unknown = new URL(`${prefix}/owned-route-not-found`, base);
   await page.goto(unknown.href);
   await page.getByText('You must be lost, nothing to see here.', { exact: true }).waitFor();
   check('unknown_route_renders_the_application_not_found_page', page.url() === unknown.href);
+  check('not_found_does_not_keep_previous_route_title', await expectTitle(`MIA - ${instanceName}`));
   check('router_leaves_api_requests_on_the_deployment_base', prefixedReads.size > 0 &&
     [...prefixedReads].every(request => request.startsWith(`${prefix}/api/v1/`)));
   await page.screenshot({ path: path.join(output, 'owned-router-not-found.png'), fullPage: true });

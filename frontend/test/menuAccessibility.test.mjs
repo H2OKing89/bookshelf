@@ -15,10 +15,9 @@ const [Menu, MenuContent, SelectedMenuItem, MenuItem] = loadFrontendModule([
   'Components/Link/Link': ({ to, isDisabled, onPress, ...props }) =>
     h(to ? 'a' : 'button', { ...props, href: to, disabled: isDisabled || undefined, onClick: onPress }),
   'Helpers/Props': { align: { LEFT: 'left', RIGHT: 'right' }, icons: { CHECK: {} } },
-  'react-popper': {
-    Manager: passthrough,
-    Reference: ({ children }) => children({ ref: () => {} }),
-    Popper: ({ children }) => children({ ref: () => {}, style: {}, scheduleUpdate: () => {} })
+  'Components/Positioning/AnchoredPopup': {
+    default: ({ children }) => children({ ref: () => {}, style: {} }),
+    __esModule: true
   }
 }).map(module => module.default);
 
@@ -108,7 +107,7 @@ test('keyboard focus wraps over actionable choices and Escape or Tab restores th
     contains: node => node === trigger,
     getBoundingClientRect: () => ({ top: 420, bottom: 450 })
   });
-  menu.setMenu({
+  menu.onFloatingChange({
     contains: node => choices.includes(node),
     querySelectorAll: () => choices,
     firstElementChild: { getBoundingClientRect: () => ({ top: 20, bottom: 400 }) }
@@ -119,6 +118,7 @@ test('keyboard focus wraps over actionable choices and Escape or Tab restores th
   menu.onTriggerKeyDown(open);
   assert.equal(open.prevented, true);
   assert.equal(menu.state.maxHeight, 412);
+  menu.onPositioned();
   nextFrame();
   assert.equal(document.activeElement, last);
   menu.onMenuKeyDown(key('ArrowDown'));
@@ -138,6 +138,7 @@ test('keyboard focus wraps over actionable choices and Escape or Tab restores th
   assert.equal(listeners.size, 0);
 
   menu.onTriggerPress();
+  menu.onPositioned();
   nextFrame();
   const tab = key('Tab');
   menu.onMenuKeyDown(tab);
@@ -146,6 +147,7 @@ test('keyboard focus wraps over actionable choices and Escape or Tab restores th
   assert.equal(listeners.size, 0);
 
   menu.onTriggerPress();
+  menu.onPositioned();
   nextFrame();
   listeners.get('document:pointerdown')({ target: {} });
   assert.equal(menu.state.isOpen, false);

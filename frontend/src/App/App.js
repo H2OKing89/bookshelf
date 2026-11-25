@@ -1,10 +1,10 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
 import React from 'react';
-import DocumentTitle from 'react-document-title';
 import { Provider } from 'react-redux';
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
 import { SavedSettingsStatus } from 'Components/ActionStatus';
+import { DocumentTitleProvider } from 'Components/Page/DocumentTitle';
 import PageConnector from 'Components/Page/PageConnector';
 import UnsavedNavigationProvider from 'Settings/UnsavedNavigationProvider';
 import ApplyTheme from './ApplyTheme';
@@ -46,13 +46,13 @@ export function createAppRouter() {
 
 function App({ store, router }) {
   return (
-    <DocumentTitle title={window.Readarr.instanceName}>
+    <DocumentTitleProvider title={window.Readarr.instanceName}>
       <QueryClientProvider client={queryClient}>
         <Provider store={store}>
           <RouterProvider router={router} />
         </Provider>
       </QueryClientProvider>
-    </DocumentTitle>
+    </DocumentTitleProvider>
   );
 }
 

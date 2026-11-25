@@ -1,17 +1,13 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import { Manager, Popper, Reference } from 'react-popper';
 import Portal from 'Components/Portal';
+import AnchoredPopup from 'Components/Positioning/AnchoredPopup';
 import { align } from 'Helpers/Props';
 import getUniqueElementId from 'Utilities/getUniqueElementId';
 import MenuContext from './MenuContext';
 import styles from './Menu.css';
 
 const viewportPadding = 8;
-const modifiers = {
-  preventOverflow: { boundariesElement: 'viewport', padding: viewportPadding },
-  flip: { boundariesElement: 'viewport', padding: viewportPadding }
-};
 const menuItemSelector = '[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]';
 
 function enabledMenuItems(menu) {
@@ -37,16 +33,8 @@ class Menu extends Component {
   componentDidUpdate(prevProps, prevState) {
     if (!prevState.isOpen && this.state.isOpen) {
       this._addListeners();
-      this._focusFrame = window.requestAnimationFrame(() => {
-        this._focusFrame = undefined;
-        this.focusMenuItem(this._initialKey);
-      });
     } else if (prevState.isOpen && !this.state.isOpen) {
       this._removeListeners();
-    }
-
-    if (this.state.isOpen) {
-      this._scheduleUpdate?.();
     }
   }
 
@@ -56,11 +44,22 @@ class Menu extends Component {
     }
   }
 
+  // Focus only after the asynchronous positioning operation makes the menu visible.
+  onPositioned = () => {
+    if (this.state.isOpen) {
+      window.cancelAnimationFrame(this._focusFrame);
+      this._focusFrame = window.requestAnimationFrame(() => {
+        this._focusFrame = undefined;
+        this.focusMenuItem(this._initialKey);
+      });
+    }
+  };
+
   setReference = (node) => {
     this._reference = node;
   };
 
-  setMenu = (node) => {
+  onFloatingChange = (node) => {
     this._menu = node;
   };
 
@@ -87,8 +86,6 @@ class Menu extends Component {
     const limits = this.getLimits();
     if (limits.maxHeight !== this.state.maxHeight || limits.maxWidth !== this.state.maxWidth) {
       this.setState(limits);
-    } else {
-      this._scheduleUpdate?.();
     }
   };
 
@@ -168,7 +165,6 @@ class Menu extends Component {
     document.removeEventListener('focusin', this.onOutsideInteraction, true);
     window.cancelAnimationFrame(this._focusFrame);
     this._focusFrame = undefined;
-    this._scheduleUpdate = undefined;
   }
 
   onScroll = (event) => {
@@ -248,50 +244,44 @@ class Menu extends Component {
     const triggerId = trigger.props.id ?? this._triggerId;
 
     return (
-      <Manager>
-        <Reference innerRef={this.setReference}>
-          {({ ref }) => (
-            <div ref={ref} className={className}>
-              {React.cloneElement(trigger, {
-                id: triggerId,
-                'aria-haspopup': 'menu',
-                'aria-expanded': isOpen,
-                'aria-controls': isOpen ? this._contentId : undefined,
-                onPress: this.onTriggerPress,
-                onKeyDown: this.onTriggerKeyDown
-              })}
-            </div>
-          )}
-        </Reference>
+      <>
+        <div ref={this.setReference} className={className}>
+          {React.cloneElement(trigger, {
+            id: triggerId,
+            'aria-haspopup': 'menu',
+            'aria-expanded': isOpen,
+            'aria-controls': isOpen ? this._contentId : undefined,
+            onPress: this.onTriggerPress,
+            onKeyDown: this.onTriggerKeyDown
+          })}
+        </div>
 
         {
           isOpen &&
             <Portal target={this._reference.closest('[role="dialog"]') ?? undefined}>
-              <Popper
-                innerRef={this.setMenu}
+              <AnchoredPopup
+                reference={this._reference}
                 placement={alignMenu === align.RIGHT ? 'bottom-end' : 'bottom-start'}
-                positionFixed={true}
-                modifiers={modifiers}
+                strategy="fixed"
+                padding={viewportPadding}
+                onFloatingChange={this.onFloatingChange}
+                onPositioned={this.onPositioned}
               >
-                {({ ref, style, scheduleUpdate }) => {
-                  this._scheduleUpdate = scheduleUpdate;
-
-                  return (
-                    <MenuContext.Provider value={this._menuContext}>
-                      {React.cloneElement(content, {
-                        id: this._contentId,
-                        'aria-labelledby': triggerId,
-                        forwardedRef: ref,
-                        onKeyDown: this.onMenuKeyDown,
-                        style: { ...style, maxWidth, maxHeight }
-                      })}
-                    </MenuContext.Provider>
-                  );
-                }}
-              </Popper>
+                {({ ref, style }) => (
+                  <MenuContext.Provider value={this._menuContext}>
+                    {React.cloneElement(content, {
+                      id: this._contentId,
+                      'aria-labelledby': triggerId,
+                      forwardedRef: ref,
+                      onKeyDown: this.onMenuKeyDown,
+                      style: { ...style, maxWidth, maxHeight }
+                    })}
+                  </MenuContext.Provider>
+                )}
+              </AnchoredPopup>
             </Portal>
         }
-      </Manager>
+      </>
     );
   }
 }

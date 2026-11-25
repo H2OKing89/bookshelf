@@ -1,10 +1,10 @@
 .tooltipContainer {
   z-index: $popperZIndex;
-  margin: 10px;
 }
 
 .tooltip {
   position: relative;
+  overflow: auto;
 
   &.default {
     background-color: var(--popoverBodyBackgroundColor);
@@ -29,10 +29,6 @@
   border-color: transparent;
 }
 
-.arrowDisabled {
-  display: none;
-}
-
 .arrow::after {
   border-width: 10px;
   content: '';
@@ -40,7 +36,6 @@
 
 .top {
   bottom: -11px;
-  margin-left: -11px;
   border-bottom-width: 0;
 
   &::after {
@@ -63,7 +58,6 @@
 
 .right {
   left: -11px;
-  margin-top: -11px;
   border-left-width: 0;
 
   &::after {
@@ -86,7 +80,6 @@
 
 .bottom {
   top: -11px;
-  margin-left: -11px;
   border-top-width: 0;
 
   &::after {
@@ -109,7 +102,6 @@
 
 .left {
   right: -11px;
-  margin-top: -11px;
   border-right-width: 0;
 
   &::after {

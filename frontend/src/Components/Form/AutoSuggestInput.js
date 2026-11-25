@@ -2,8 +2,8 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Autosuggest from 'react-autosuggest';
-import { Manager, Popper, Reference } from 'react-popper';
 import Portal from 'Components/Portal';
+import AnchoredPopup, { popupMaxHeight } from 'Components/Positioning/AnchoredPopup';
 import getUniqueElementId from 'Utilities/getUniqueElementId';
 import styles from './AutoSuggestInput.css';
 
@@ -15,18 +15,15 @@ class AutoSuggestInput extends Component {
   constructor(props, context) {
     super(props, context);
 
-    this._scheduleUpdate = null;
+    this.state = { reference: null };
     this._id = getUniqueElementId();
   }
 
-  componentDidUpdate(prevProps) {
-    if (
-      this._scheduleUpdate &&
-      prevProps.suggestions !== this.props.suggestions
-    ) {
-      this._scheduleUpdate();
+  setReference = (reference) => {
+    if (reference !== this.state.reference) {
+      this.setState({ reference });
     }
-  }
+  };
 
   //
   // Control
@@ -34,88 +31,52 @@ class AutoSuggestInput extends Component {
   renderInputComponent = (inputProps) => {
     const { renderInputComponent } = this.props;
 
-    return (
-      <Reference>
-        {({ ref }) => {
-          if (renderInputComponent) {
-            return renderInputComponent(inputProps, ref);
-          }
+    if (renderInputComponent) {
+      return renderInputComponent(inputProps, this.setReference);
+    }
 
-          return (
-            <div ref={ref}>
-              <input
-                {...inputProps}
-              />
-            </div>
-          );
-        }}
-      </Reference>
+    return (
+      <div ref={this.setReference}>
+        <input {...inputProps} />
+      </div>
     );
   };
 
   renderSuggestionsContainer = ({ containerProps, children }) => {
+    const { minHeight, maxHeight, enforceMaxHeight } = this.props;
+
     return (
       <Portal>
-        <Popper
-          placement='bottom-start'
-          modifiers={{
-            computeMaxHeight: {
-              order: 851,
-              enabled: true,
-              fn: this.onComputeMaxHeight
-            },
-            flip: {
-              padding: this.props.minHeight
-            }
-          }}
+        <AnchoredPopup
+          reference={this.state.reference}
+          open={Boolean(children)}
+          placement="bottom-start"
+          flipPadding={minHeight}
+          fit={true}
+          matchWidth="exact"
+          maxHeight={enforceMaxHeight ? maxHeight : undefined}
         >
-          {({ ref: popperRef, style, scheduleUpdate }) => {
-            this._scheduleUpdate = scheduleUpdate;
-
-            return (
+          {({ ref, style }) => (
+            <div
+              ref={ref}
+              style={style}
+              className={children ? styles.suggestionsContainerOpen : undefined}
+            >
               <div
-                ref={popperRef}
-                style={style}
-                className={children ? styles.suggestionsContainerOpen : undefined}
+                {...containerProps}
+                style={{ maxHeight: popupMaxHeight }}
               >
-                <div
-                  {...containerProps}
-                  style={{
-                    maxHeight: style.maxHeight
-                  }}
-                >
-                  {children}
-                </div>
+                {children}
               </div>
-            );
-          }}
-        </Popper>
+            </div>
+          )}
+        </AnchoredPopup>
       </Portal>
     );
   };
 
   //
   // Listeners
-
-  onComputeMaxHeight = (data) => {
-    const {
-      top,
-      bottom,
-      width
-    } = data.offsets.reference;
-
-    const windowHeight = window.innerHeight;
-
-    if ((/^botton/).test(data.placement)) {
-      data.styles.maxHeight = windowHeight - bottom;
-    } else {
-      data.styles.maxHeight = top;
-    }
-
-    data.styles.width = width;
-
-    return data;
-  };
 
   onInputChange = (event, { newValue }) => {
     this.props.onChange({
@@ -212,23 +173,21 @@ class AutoSuggestInput extends Component {
     };
 
     return (
-      <Manager>
-        <Autosuggest
-          {...otherProps}
-          ref={forwardedRef}
-          id={inputId}
-          inputProps={inputProps}
-          theme={theme}
-          suggestions={suggestions}
-          getSuggestionValue={getSuggestionValue}
-          renderInputComponent={this.renderInputComponent}
-          renderSuggestionsContainer={this.renderSuggestionsContainer}
-          renderSuggestion={renderSuggestion}
-          onSuggestionSelected={onSuggestionSelected}
-          onSuggestionsFetchRequested={onSuggestionsFetchRequested}
-          onSuggestionsClearRequested={onSuggestionsClearRequested}
-        />
-      </Manager>
+      <Autosuggest
+        {...otherProps}
+        ref={forwardedRef}
+        id={inputId}
+        inputProps={inputProps}
+        theme={theme}
+        suggestions={suggestions}
+        getSuggestionValue={getSuggestionValue}
+        renderInputComponent={this.renderInputComponent}
+        renderSuggestionsContainer={this.renderSuggestionsContainer}
+        renderSuggestion={renderSuggestion}
+        onSuggestionSelected={onSuggestionSelected}
+        onSuggestionsFetchRequested={onSuggestionsFetchRequested}
+        onSuggestionsClearRequested={onSuggestionsClearRequested}
+      />
     );
   }
 }

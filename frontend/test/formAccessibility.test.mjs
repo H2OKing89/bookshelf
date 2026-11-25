@@ -59,7 +59,7 @@ const boundaries = {
   'Components/Modal/ModalBody': suppress,
   'Components/Portal': suppress,
   'Components/Scroller/Scroller': suppress,
-  'react-popper': { Manager: ({ children }) => children, Reference: ({ children }) => children({ ref: () => {} }), Popper: suppress }
+  'Components/Positioning/AnchoredPopup': { default: suppress, __esModule: true, popupMaxHeight: 'var(--popup-available-height)' }
 };
 
 const [FormGroup, FormLabel, FormInputGroup, TagInput, PathInput] = loadFrontendModule(

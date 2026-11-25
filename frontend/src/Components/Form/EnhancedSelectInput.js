@@ -2,14 +2,13 @@ import classNames from 'classnames';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import { Manager, Popper, Reference } from 'react-popper';
 import Icon from 'Components/Icon';
 import Link from 'Components/Link/Link';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
-import Measure from 'Components/Measure';
 import Modal from 'Components/Modal/Modal';
 import ModalBody from 'Components/Modal/ModalBody';
 import Portal from 'Components/Portal';
+import AnchoredPopup, { popupMaxHeight } from 'Components/Positioning/AnchoredPopup';
 import Scroller from 'Components/Scroller/Scroller';
 import { icons, scrollDirections, sizes } from 'Helpers/Props';
 import { isMobile as isMobileUtil } from 'Utilities/browser';
@@ -19,10 +18,9 @@ import translate from 'Utilities/String/translate';
 import formControlProps from './formControlProps';
 import HintedSelectInputOption from './HintedSelectInputOption';
 import HintedSelectInputSelectedValue from './HintedSelectInputSelectedValue';
+import { nextEnabledOptionIndex, selectedOptionIndex } from './selectInputSelection';
 import TextInput from './TextInput';
 import styles from './EnhancedSelectInput.css';
-
-const MINIMUM_DISTANCE_FROM_EDGE = 10;
 
 function isArrowKey(keyCode) {
   return keyCode === keyCodes.UP_ARROW || keyCode === keyCodes.DOWN_ARROW;
@@ -32,47 +30,16 @@ function getSelectedOption(selectedIndex, values) {
   return values[selectedIndex];
 }
 
-function findIndex(startingIndex, direction, values) {
-  let indexToTest = startingIndex + direction;
-
-  while (indexToTest !== startingIndex) {
-    if (indexToTest < 0) {
-      indexToTest = values.length - 1;
-    } else if (indexToTest >= values.length) {
-      indexToTest = 0;
-    }
-
-    if (getSelectedOption(indexToTest, values).isDisabled) {
-      indexToTest = indexToTest + direction;
-    } else {
-      return indexToTest;
-    }
-  }
-}
-
 function previousIndex(selectedIndex, values) {
-  return findIndex(selectedIndex, -1, values);
+  return nextEnabledOptionIndex(selectedIndex, -1, values);
 }
 
 function nextIndex(selectedIndex, values) {
-  return findIndex(selectedIndex, 1, values);
+  return nextEnabledOptionIndex(selectedIndex, 1, values);
 }
 
-function getSelectedIndex(props) {
-  const {
-    value,
-    values
-  } = props;
-
-  if (Array.isArray(value)) {
-    return values.findIndex((v) => {
-      return value.size && v.key === value[0];
-    });
-  }
-
-  return values.findIndex((v) => {
-    return v.key === value;
-  });
+function getSelectedIndex({ value, values }) {
+  return selectedOptionIndex(value, values);
 }
 
 function isSelectedItem(index, props) {
@@ -100,7 +67,6 @@ class EnhancedSelectInput extends Component {
   constructor(props, context) {
     super(props, context);
 
-    this._scheduleUpdate = null;
     this._buttonId = getUniqueElementId();
     this._optionsId = getUniqueElementId();
     this._valueId = getUniqueElementId();
@@ -108,27 +74,37 @@ class EnhancedSelectInput extends Component {
     this.state = {
       isOpen: false,
       selectedIndex: getSelectedIndex(props),
-      width: 0,
       isMobile: isMobileUtil()
     };
   }
 
-  componentDidUpdate(prevProps) {
-    if (this._scheduleUpdate) {
-      this._scheduleUpdate();
+  componentDidUpdate(prevProps, prevState) {
+    if (!prevState.isOpen && this.state.isOpen && !this.state.isMobile) {
+      this._addListener();
+    } else if (prevState.isOpen && !this.state.isOpen) {
+      this._removeListener();
     }
 
     if (!Array.isArray(this.props.value)) {
       if (prevProps.value !== this.props.value || prevProps.values !== this.props.values) {
-        this.setState({
-          selectedIndex: getSelectedIndex(this.props)
-        });
+        const selectedIndex = getSelectedIndex(this.props);
+        if (selectedIndex !== this.state.selectedIndex) {
+          this.setState({ selectedIndex });
+        }
       }
     }
   }
 
+  componentWillUnmount() {
+    this._removeListener();
+  }
+
   //
   // Control
+
+  setReference = (reference) => {
+    this._reference = reference;
+  };
 
   _addListener() {
     window.addEventListener('click', this.onWindowClick);
@@ -140,14 +116,6 @@ class EnhancedSelectInput extends Component {
 
   //
   // Listeners
-
-  onComputeMaxHeight = (data) => {
-    const windowHeight = window.innerHeight;
-
-    data.styles.maxHeight = windowHeight - MINIMUM_DISTANCE_FROM_EDGE;
-
-    return data;
-  };
 
   onWindowClick = (event) => {
     const button = document.getElementById(this._buttonId);
@@ -164,13 +132,11 @@ class EnhancedSelectInput extends Component {
       this.state.isOpen
     ) {
       this.setState({ isOpen: false });
-      this._removeListener();
     }
   };
 
   onFocus = () => {
     if (this.state.isOpen) {
-      this._removeListener();
       this.setState({ isOpen: false });
     }
   };
@@ -203,10 +169,12 @@ class EnhancedSelectInput extends Component {
       if (isArrowKey(keyCode)) {
         event.preventDefault();
         newState.isOpen = true;
+        this.props.onOpen?.();
       }
 
       if (
         selectedIndex == null || selectedIndex === -1 ||
+        !getSelectedOption(selectedIndex, values) ||
         getSelectedOption(selectedIndex, values).isDisabled
       ) {
         if (keyCode === keyCodes.UP_ARROW) {
@@ -233,12 +201,16 @@ class EnhancedSelectInput extends Component {
     if (keyCode === keyCodes.ENTER) {
       event.preventDefault();
       newState.isOpen = false;
-      this.onSelect(getKey(selectedIndex, values));
+      if (getSelectedOption(selectedIndex, values) && !getSelectedOption(selectedIndex, values).isDisabled) {
+        this.onSelect(getKey(selectedIndex, values));
+      }
     }
 
     if (keyCode === keyCodes.TAB) {
       newState.isOpen = false;
-      this.onSelect(getKey(selectedIndex, values));
+      if (getSelectedOption(selectedIndex, values) && !getSelectedOption(selectedIndex, values).isDisabled) {
+        this.onSelect(getKey(selectedIndex, values));
+      }
     }
 
     if (keyCode === keyCodes.ESCAPE) {
@@ -254,12 +226,6 @@ class EnhancedSelectInput extends Component {
   };
 
   onPress = () => {
-    if (this.state.isOpen) {
-      this._removeListener();
-    } else {
-      this._addListener();
-    }
-
     if (!this.state.isOpen && this.props.onOpen) {
       this.props.onOpen();
     }
@@ -291,10 +257,6 @@ class EnhancedSelectInput extends Component {
     }
   };
 
-  onMeasure = ({ width }) => {
-    this.setState({ width });
-  };
-
   onOptionsModalClose = () => {
     this.setState({ isOpen: false });
   };
@@ -323,7 +285,6 @@ class EnhancedSelectInput extends Component {
 
     const {
       selectedIndex,
-      width,
       isOpen,
       isMobile
     } = this.state;
@@ -341,190 +302,164 @@ class EnhancedSelectInput extends Component {
 
     return (
       <div>
-        <Manager>
-          <Reference>
-            {({ ref }) => (
-              <div
-                ref={ref}
-                id={this._buttonId}
-              >
-                <Measure
-                  whitelist={['width']}
-                  onMeasure={this.onMeasure}
+        <div
+          ref={this.setReference}
+          id={this._buttonId}
+        >
+          <div>
+            {
+              isEditable ?
+                <div
+                  className={styles.editableContainer}
                 >
-                  {
-                    isEditable ?
-                      <div
-                        className={styles.editableContainer}
-                      >
-                        <TextInput
-                          {...controlProps}
-                          className={className}
-                          name={name}
-                          value={value}
-                          readOnly={isDisabled}
-                          hasError={hasError}
-                          hasWarning={hasWarning}
-                          onFocus={this.onFocus}
-                          onBlur={this.onBlur}
-                          onChange={onChange}
-                        />
-                        <Link
-                          aria-label={translate('Options')}
-                          aria-expanded={isOpen}
-                          className={classNames(
-                            styles.dropdownArrowContainerEditable,
-                            isDisabled ?
-                              styles.dropdownArrowContainerDisabled :
-                              styles.dropdownArrowContainer)
-                          }
-                          isDisabled={isDisabled}
-                          onPress={this.onPress}
-                        >
-                          {
-                            isFetching ?
-                              <LoadingIndicator
-                                className={styles.loading}
-                                size={20}
-                              /> :
-                              null
-                          }
-
-                          {
-                            isFetching ?
-                              null :
-                              <Icon
-                                name={icons.CARET_DOWN}
-                              />
-                          }
-                        </Link>
-                      </div> :
-                      <Link
-                        {...controlProps}
-                        aria-labelledby={labelledBy ? `${labelledBy} ${this._valueId}` : undefined}
-                        aria-expanded={isOpen}
-                        className={classNames(
-                          className,
-                          hasError && styles.hasError,
-                          hasWarning && styles.hasWarning,
-                          isDisabled && disabledClassName
-                        )}
-                        isDisabled={isDisabled}
-                        onBlur={this.onBlur}
-                        onKeyDown={this.onKeyDown}
-                        onPress={this.onPress}
-                      >
-                        <SelectedValueComponent
-                          value={selectedValue}
-                          values={values}
-                          {...selectedValueOptions}
-                          {...selectedOption}
-                          id={this._valueId}
-                          isDisabled={isDisabled}
-                          isMultiSelect={isMultiSelect}
-                        >
-                          {selectedOption ? selectedOption.value : null}
-                        </SelectedValueComponent>
-
-                        <div
-                          className={isDisabled ?
-                            styles.dropdownArrowContainerDisabled :
-                            styles.dropdownArrowContainer
-                          }
-                        >
-
-                          {
-                            isFetching ?
-                              <LoadingIndicator
-                                className={styles.loading}
-                                size={20}
-                              /> :
-                              null
-                          }
-
-                          {
-                            isFetching ?
-                              null :
-                              <Icon
-                                name={icons.CARET_DOWN}
-                              />
-                          }
-                        </div>
-                      </Link>
-                  }
-                </Measure>
-              </div>
-            )}
-          </Reference>
-          <Portal>
-            <Popper
-              placement="bottom-start"
-              modifiers={{
-                computeMaxHeight: {
-                  order: 851,
-                  enabled: true,
-                  fn: this.onComputeMaxHeight
-                },
-                preventOverflow: {
-                  enabled: true,
-                  boundariesElement: 'viewport'
-                }
-              }}
-            >
-              {({ ref, style, scheduleUpdate }) => {
-                this._scheduleUpdate = scheduleUpdate;
-
-                return (
-                  <div
-                    ref={ref}
-                    id={this._optionsId}
-                    className={styles.optionsContainer}
-                    style={{
-                      ...style,
-                      minWidth: width
-                    }}
+                  <TextInput
+                    {...controlProps}
+                    className={className}
+                    name={name}
+                    value={value}
+                    readOnly={isDisabled}
+                    hasError={hasError}
+                    hasWarning={hasWarning}
+                    onFocus={this.onFocus}
+                    onBlur={this.onBlur}
+                    onChange={onChange}
+                  />
+                  <Link
+                    aria-label={translate('Options')}
+                    aria-expanded={isOpen}
+                  aria-controls={isOpen && !isMobile ? this._optionsId : undefined}
+                    className={classNames(
+                      styles.dropdownArrowContainerEditable,
+                      isDisabled ?
+                        styles.dropdownArrowContainerDisabled :
+                        styles.dropdownArrowContainer)
+                    }
+                    isDisabled={isDisabled}
+                    onPress={this.onPress}
                   >
                     {
-                      isOpen && !isMobile ?
-                        <Scroller
-                          className={styles.options}
-                          style={{
-                            maxHeight: style.maxHeight
-                          }}
-                        >
-                          {
-                            values.map((v, index) => {
-                              const hasParent = v.parentKey !== undefined;
-                              const depth = hasParent ? 1 : 0;
-                              const parentSelected = hasParent && value.includes(v.parentKey);
-                              return (
-                                <OptionComponent
-                                  key={v.key}
-                                  id={v.key}
-                                  depth={depth}
-                                  isSelected={isSelectedItem(index, this.props)}
-                                  isDisabled={parentSelected}
-                                  isMultiSelect={isMultiSelect}
-                                  {...valueOptions}
-                                  {...v}
-                                  isMobile={false}
-                                  onSelect={this.onSelect}
-                                >
-                                  {v.value}
-                                </OptionComponent>
-                              );
-                            })
-                          }
-                        </Scroller> :
+                      isFetching ?
+                        <LoadingIndicator
+                          className={styles.loading}
+                          size={20}
+                        /> :
                         null
                     }
+
+                    {
+                      isFetching ?
+                        null :
+                        <Icon
+                          name={icons.CARET_DOWN}
+                        />
+                    }
+                  </Link>
+                </div> :
+                <Link
+                  {...controlProps}
+                  aria-labelledby={labelledBy ? `${labelledBy} ${this._valueId}` : undefined}
+                  aria-expanded={isOpen}
+                  aria-controls={isOpen && !isMobile ? this._optionsId : undefined}
+                  className={classNames(
+                    className,
+                    hasError && styles.hasError,
+                    hasWarning && styles.hasWarning,
+                    isDisabled && disabledClassName
+                  )}
+                  isDisabled={isDisabled}
+                  onBlur={this.onBlur}
+                  onKeyDown={this.onKeyDown}
+                  onPress={this.onPress}
+                >
+                  <SelectedValueComponent
+                    value={selectedValue}
+                    values={values}
+                    {...selectedValueOptions}
+                    {...(isMultiSelect ? {} : selectedOption)}
+                    id={this._valueId}
+                    isDisabled={isDisabled}
+                    isMultiSelect={isMultiSelect}
+                  >
+                    {selectedOption ? selectedOption.value : null}
+                  </SelectedValueComponent>
+
+                  <div
+                    className={isDisabled ?
+                      styles.dropdownArrowContainerDisabled :
+                      styles.dropdownArrowContainer
+                    }
+                  >
+
+                    {
+                      isFetching ?
+                        <LoadingIndicator
+                          className={styles.loading}
+                          size={20}
+                        /> :
+                        null
+                    }
+
+                    {
+                      isFetching ?
+                        null :
+                        <Icon
+                          name={icons.CARET_DOWN}
+                        />
+                    }
                   </div>
-                );
-              }
-              }
-            </Popper>
-          </Portal>
-        </Manager>
+                </Link>
+            }
+          </div>
+        </div>
+        {isOpen && !isMobile &&
+          <Portal>
+            <AnchoredPopup
+              reference={this._reference}
+              placement="bottom-start"
+              fit={true}
+              matchWidth="minimum"
+              padding={10}
+            >
+              {({ ref, style }) => (
+                <div
+                  ref={ref}
+                  id={this._optionsId}
+                  className={styles.optionsContainer}
+                  style={style}
+                >
+                  <Scroller
+                    className={styles.options}
+                    style={{ maxHeight: popupMaxHeight }}
+                  >
+                    {
+                      values.map((v, index) => {
+                        const hasParent = v.parentKey !== undefined;
+                        const depth = hasParent ? 1 : 0;
+                        const parentSelected = hasParent && Array.isArray(value) && value.includes(v.parentKey);
+
+                        return (
+                          <OptionComponent
+                            key={v.key}
+                            id={v.key}
+                            depth={depth}
+                            isSelected={isSelectedItem(index, this.props)}
+                            isDisabled={parentSelected}
+                            isMultiSelect={isMultiSelect}
+                            {...valueOptions}
+                            {...v}
+                            isMobile={false}
+                            onSelect={this.onSelect}
+                          >
+                            {v.value}
+                          </OptionComponent>
+                        );
+                      })
+                    }
+                  </Scroller>
+                </div>
+              )}
+            </AnchoredPopup>
+          </Portal>}
 
         {
           isMobile ?
@@ -559,7 +494,7 @@ class EnhancedSelectInput extends Component {
                     values.map((v, index) => {
                       const hasParent = v.parentKey !== undefined;
                       const depth = hasParent ? 1 : 0;
-                      const parentSelected = hasParent && value.includes(v.parentKey);
+                      const parentSelected = hasParent && Array.isArray(value) && value.includes(v.parentKey);
                       return (
                         <OptionComponent
                           key={v.key}
