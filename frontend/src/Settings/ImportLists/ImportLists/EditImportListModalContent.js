@@ -57,6 +57,7 @@ function EditImportListModalContent(props) {
   ];
 
   const {
+    id,
     advancedSettings,
     isFetching,
     error,
@@ -76,7 +77,6 @@ function EditImportListModalContent(props) {
   } = props;
 
   const {
-    id,
     name,
     enableAutomaticAdd,
     minRefreshInterval,
@@ -456,6 +456,7 @@ function EditImportListModalContent(props) {
 }
 
 EditImportListModalContent.propTypes = {
+  id: PropTypes.number,
   advancedSettings: PropTypes.bool.isRequired,
   isFetching: PropTypes.bool.isRequired,
   error: PropTypes.object,
