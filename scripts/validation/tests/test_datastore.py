@@ -45,7 +45,7 @@ class DatastoreFixtureValueTests(unittest.TestCase):
 
     def test_historical_migration_158_is_preserved_without_inventing_34(self):
         self.assertEqual(len(datastore.LEGACY_HISTORY), 48)
-        self.assertEqual(datastore.HISTORY - datastore.LEGACY_HISTORY, {159, 160, 161, 162, 163})
+        self.assertEqual(datastore.HISTORY - datastore.LEGACY_HISTORY, {159, 160, 161, 162, 163, 164, 165})
         self.assertIn(158, datastore.HISTORY)
         self.assertNotIn(34, datastore.HISTORY)
         self.assertIn(48, datastore.HISTORY)
@@ -54,8 +54,8 @@ class DatastoreFixtureValueTests(unittest.TestCase):
         base = {"BookFiles": {"columns": ["Id", "EditionId"], "rows": [(19, 17)]},
                 "Editions": {"columns": ["Id", "Title"], "rows": [(17, "Owned recording")]}}
         expected = datastore.expected_additive_sqlite_snapshot(base)
-        self.assertEqual(expected["BookFiles"], {"columns": ["Id", "EditionId", "TaggedLanguage"],
-                                               "rows": [(19, 17, None)]})
+        self.assertEqual(expected["BookFiles"], {"columns": ["Id", "EditionId", *datastore.FILE_METADATA_COLUMNS],
+                                               "rows": [(19, 17, None, None)]})
         self.assertEqual(expected["Editions"]["columns"], ["Id", "Title", *datastore.LOCAL_METADATA_COLUMNS])
         self.assertEqual(expected["Editions"]["rows"], [(17, "Owned recording", None, None)])
         self.assertEqual(base["Editions"]["rows"], [(17, "Owned recording")])

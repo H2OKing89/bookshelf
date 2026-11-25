@@ -120,6 +120,7 @@ namespace Readarr.Api.V1.BookFiles
             if (bookFileResource.ReleaseGroup != null)
             {
                 bookFile.ReleaseGroup = bookFileResource.ReleaseGroup.Trim();
+                bookFile.ReleaseGroupEvidence = ReleaseGroupEvidence.ManualChoice(bookFile.ReleaseGroupEvidence, bookFile.ReleaseGroup);
             }
 
             _mediaFileService.Update(bookFile);
@@ -141,6 +142,7 @@ namespace Readarr.Api.V1.BookFiles
                 if (resource.ReleaseGroup != null)
                 {
                     bookFile.ReleaseGroup = resource.ReleaseGroup.Trim();
+                    bookFile.ReleaseGroupEvidence = ReleaseGroupEvidence.ManualChoice(bookFile.ReleaseGroupEvidence, bookFile.ReleaseGroup);
                 }
             }
 

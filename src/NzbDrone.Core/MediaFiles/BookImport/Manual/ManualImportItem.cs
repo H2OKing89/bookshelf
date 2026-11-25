@@ -24,6 +24,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
         public QualityModel Quality { get; set; }
         public string ReleaseGroup { get; set; }
         public string ReleaseGroupOverride { get; set; }
+        public ReleaseGroupEvidence ReleaseGroupEvidence { get; set; }
         public string DownloadId { get; set; }
         public int? DownloadClientId { get; set; }
         public List<CustomFormat> CustomFormats { get; set; }

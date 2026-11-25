@@ -13,6 +13,7 @@ using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
+using NzbDrone.Core.History;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.BookImport;
 using NzbDrone.Core.MediaFiles.BookImport.Aggregation;
@@ -112,6 +113,57 @@ namespace NzbDrone.Core.Test.MediaFiles
 
             item.ReleaseGroup.Should().Be("Detected");
             item.ReleaseGroupOverride.Should().BeNull();
+        }
+
+        [Test]
+        public void should_preserve_scoped_pack_resolution_through_manual_preview_reprocessing_and_commit()
+        {
+            const string recordingId = "audible:us:B111111111";
+            _book.ForeignBookId = recordingId;
+            _edition.ForeignEditionId = recordingId;
+            _edition.Asin = "B111111111";
+            Mocker.GetMock<IEditionService>().Setup(service => service.GetEditionByForeignEditionId(recordingId)).Returns(_edition);
+            Mocker.GetMock<IMetadataTagService>().Setup(service => service.ReadTags(It.IsAny<IFileInfo>()))
+                .Returns(new ParsedTrackInfo { Asin = _edition.Asin, ReleaseGroup = "Preferred" });
+
+            var tracked = new TrackedDownload
+            {
+                DownloadClient = 7,
+                DownloadItem = new DownloadClientItem { DownloadId = "owned-pack", DownloadClientInfo = new DownloadClientItemClientInfo { Id = 7 }, Title = "Mixed Pack M4B-UploaderCrew" },
+                ImportItem = new DownloadClientItem { OutputPath = new OsPath(_path) }
+            };
+            Mocker.GetMock<ITrackedDownloadService>().Setup(service => service.Find("owned-pack", 7)).Returns(tracked);
+            Mocker.GetMock<IHistoryService>().Setup(service => service.FindByDownloadId("owned-pack", 7))
+                .Returns(new List<EntityHistory>
+                {
+                    new EntityHistory
+                    {
+                        EventType = EntityHistoryEventType.Grabbed,
+                        Data = new Dictionary<string, string>
+                        {
+                            ["DownloadClientId"] = "7",
+                            ["ReleaseGroup"] = "UploaderCrew",
+                            [ReleaseGroupPackContext.HistoryKey] = recordingId + "|audible:us:B222222222"
+                        }
+                    }
+                });
+
+            var preview = Subject.GetMediaFiles(_path, "owned-pack", _author, FilterFilesType.None, true, 7).Single();
+            preview.ReleaseGroup.Should().Be("Preferred");
+            preview.ReleaseGroupOverride.Should().BeNull();
+            preview.ReleaseGroupEvidence.PackUploaderGroup.Should().Be("UploaderCrew");
+            preview.CustomFormats.Should().ContainSingle(format => format.Id == _preferred.Id);
+
+            var reviewed = Subject.UpdateItems(new List<ManualImportItem> { preview }).Single();
+            reviewed.ReleaseGroup.Should().Be(preview.ReleaseGroup);
+            reviewed.ReleaseGroupEvidence.Source.Should().Be("recordingFile");
+            var command = Command(null);
+            command.Files.Single().DownloadId = "owned-pack";
+            command.Files.Single().DownloadClientId = 7;
+            Subject.Execute(command);
+            _imported.Single().ReleaseGroup.Should().Be(reviewed.ReleaseGroup);
+            _imported.Single().ReleaseGroupEvidence.RecordingId.Should().Be(recordingId);
+            _imported.Single().ReleaseGroupEvidence.PackUploaderGroup.Should().Be("UploaderCrew");
         }
 
         [TestCase(" Preferred ", "Preferred", 1)]
@@ -473,6 +525,7 @@ namespace NzbDrone.Core.Test.MediaFiles
                 Mocker.GetMock<IIdentificationService>().Object,
                 Mocker.GetMock<IRootFolderService>().Object,
                 Mocker.GetMock<IQualityProfileService>().Object,
+                Mocker.GetMock<IHistoryService>().Object,
                 TestLogger));
 
             var preview = Subject.GetMediaFiles(_path, null, _author, FilterFilesType.None, true).Single();

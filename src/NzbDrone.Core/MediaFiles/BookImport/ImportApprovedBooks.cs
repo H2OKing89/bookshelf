@@ -237,6 +237,9 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                             bookFile.OriginalFilePath = previousFile.OriginalFilePath;
                             bookFile.SceneName = previousFile.SceneName;
                             bookFile.ReleaseGroup = localTrack.ReleaseGroupOverride ?? previousFile.ReleaseGroup;
+                            bookFile.ReleaseGroupEvidence = localTrack.ReleaseGroupOverride == null
+                                ? previousFile.ReleaseGroupEvidence
+                                : ReleaseGroupEvidence.ManualChoice(previousFile.ReleaseGroupEvidence ?? localTrack.ReleaseGroupEvidence, localTrack.ReleaseGroupOverride);
                             bookFile.IndexerFlags = previousFile.IndexerFlags;
                             bookFile.LastRemoteSearchTime = previousFile.LastRemoteSearchTime;
                             bookFile.MediaInfo = MediaInfoAnalysis.PreserveOnScan(previousFile, bookFile.MediaInfo);

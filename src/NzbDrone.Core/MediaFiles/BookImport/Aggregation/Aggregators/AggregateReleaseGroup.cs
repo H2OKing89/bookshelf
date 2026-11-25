@@ -1,4 +1,3 @@
-using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.MediaFiles.BookImport.Aggregation.Aggregators
@@ -7,27 +6,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Aggregation.Aggregators
     {
         public LocalBook Aggregate(LocalBook localTrack, bool otherFiles)
         {
-            if (localTrack.ReleaseGroupOverride != null)
-            {
-                localTrack.ReleaseGroupOverride = localTrack.ReleaseGroupOverride.Trim();
-                localTrack.ReleaseGroup = localTrack.ReleaseGroupOverride;
-                return localTrack;
-            }
-
-            var releaseGroup = localTrack.DownloadClientBookInfo?.ReleaseGroup;
-
-            if (releaseGroup.IsNullOrWhiteSpace())
-            {
-                releaseGroup = localTrack.FolderTrackInfo?.ReleaseGroup;
-            }
-
-            if (releaseGroup.IsNullOrWhiteSpace())
-            {
-                releaseGroup = localTrack.FileTrackInfo?.ReleaseGroup;
-            }
-
-            localTrack.ReleaseGroup = releaseGroup;
-
+            ReleaseGroupResolution.Apply(localTrack);
             return localTrack;
         }
     }

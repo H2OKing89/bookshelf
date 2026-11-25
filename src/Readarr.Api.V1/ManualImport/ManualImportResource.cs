@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NzbDrone.Core.DecisionEngine;
+using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.BookImport.Manual;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
@@ -22,6 +23,7 @@ namespace Readarr.Api.V1.ManualImport
         public QualityModel Quality { get; set; }
         public string ReleaseGroup { get; set; }
         public string ReleaseGroupOverride { get; set; }
+        public ReleaseGroupEvidence ReleaseGroupEvidence { get; set; }
         public List<CustomFormatResource> CustomFormats { get; set; }
         public int CustomFormatScore { get; set; }
         public int QualityWeight { get; set; }
@@ -56,6 +58,7 @@ namespace Readarr.Api.V1.ManualImport
                 Quality = model.Quality,
                 ReleaseGroup = model.ReleaseGroup,
                 ReleaseGroupOverride = model.ReleaseGroupOverride,
+                ReleaseGroupEvidence = model.ReleaseGroupEvidence,
                 CustomFormats = model.CustomFormats.ToResource(false),
                 CustomFormatScore = model.Author?.QualityProfile?.Value?.CalculateCustomFormatScore(model.CustomFormats) ?? 0,
 

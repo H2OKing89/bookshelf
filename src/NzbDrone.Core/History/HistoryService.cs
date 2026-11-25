@@ -155,6 +155,9 @@ namespace NzbDrone.Core.History
             var languages = RecordingLanguageEvidence.ForRelease(message.Book);
             var selectedEditionLanguage = message.Book.SelectedEditionLanguageId ?? RecordingLanguageEvidence.SelectedEditionLanguage(message.Book.Books);
             var audio = AudioFormatEvidence.ForRelease(message.Book).ToStored();
+            var releaseGroupRecordings = message.DownloadClientId > 0 && message.DownloadId.IsNotNullOrWhiteSpace()
+                ? ReleaseGroupPackContext.Capture(message.Book)
+                : null;
             foreach (var book in message.Book.Books)
             {
                 var history = new EntityHistory
@@ -171,6 +174,11 @@ namespace NzbDrone.Core.History
                 history.Data.Add("Indexer", message.Book.Release.Indexer);
                 history.Data.Add("NzbInfoUrl", message.Book.Release.InfoUrl);
                 history.Data.Add("ReleaseGroup", message.Book.ParsedBookInfo.ReleaseGroup);
+                if (releaseGroupRecordings != null)
+                {
+                    history.Data[ReleaseGroupPackContext.HistoryKey] = releaseGroupRecordings;
+                }
+
                 history.Data.Add("Age", message.Book.Release.Age.ToString());
                 history.Data.Add("AgeHours", message.Book.Release.AgeHours.ToString());
                 history.Data.Add("AgeMinutes", message.Book.Release.AgeMinutes.ToString());
@@ -267,7 +275,12 @@ namespace NzbDrone.Core.History
             history.Data.Add("ImportedPath", message.ImportedBook.Path);
             history.Data.Add("DownloadClient", message.DownloadClientInfo?.Type);
             history.Data.Add("DownloadClientName", message.DownloadClientInfo?.Name);
-            history.Data.Add("ReleaseGroup", message.BookInfo.ReleaseGroup);
+            history.Data.Add("ReleaseGroup", message.ImportedBook.ReleaseGroup ?? message.BookInfo.ReleaseGroup);
+            if (message.ImportedBook.ReleaseGroupEvidence != null)
+            {
+                history.Data.Add("releaseGroupEvidence", STJson.ToJson(message.ImportedBook.ReleaseGroupEvidence));
+            }
+
             history.Data.Add("Size", message.BookInfo.Size.ToString());
             history.Data.Add("IndexerFlags", message.BookInfo.IndexerFlags.ToString());
             var edition = message.BookInfo.Edition ?? message.ImportedBook.Edition?.Value;

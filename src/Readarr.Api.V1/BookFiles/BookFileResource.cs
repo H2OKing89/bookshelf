@@ -17,6 +17,7 @@ namespace Readarr.Api.V1.BookFiles
         public DateTime DateAdded { get; set; }
         public QualityModel Quality { get; set; }
         public string ReleaseGroup { get; set; }
+        public ReleaseGroupEvidence ReleaseGroupEvidence { get; set; }
         public int QualityWeight { get; set; }
         public int? IndexerFlags { get; set; }
         public MediaInfoResource MediaInfo { get; set; }
@@ -56,6 +57,7 @@ namespace Readarr.Api.V1.BookFiles
                 DateAdded = model.DateAdded,
                 Quality = model.Quality,
                 ReleaseGroup = model.ReleaseGroup,
+                ReleaseGroupEvidence = model.ReleaseGroupEvidence,
                 QualityWeight = QualityWeight(model.Quality),
                 MediaInfo = model.MediaInfo.ToResource(model.Size, model.Modified)
             };
@@ -79,6 +81,7 @@ namespace Readarr.Api.V1.BookFiles
                 DateAdded = model.DateAdded,
                 Quality = model.Quality,
                 ReleaseGroup = model.ReleaseGroup,
+                ReleaseGroupEvidence = model.ReleaseGroupEvidence,
                 QualityWeight = QualityWeight(model.Quality),
                 MediaInfo = model.MediaInfo.ToResource(model.Size, model.Modified),
                 QualityCutoffNotMet = upgradableSpecification.QualityCutoffNotMet(author.QualityProfile.Value, model.Quality),

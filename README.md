@@ -319,6 +319,24 @@ matched against audiobook titles and authors, and ambiguous recording matches
 are skipped. Legacy API field names used by import lists remain for wire
 compatibility; they do not trigger Goodreads metadata requests.
 
+Open an existing import list in **Settings → Import Lists** and expand **List
+membership** to see its last fully successful snapshot. Failed or incomplete
+fetches retain the saved membership; a successful empty response clears that
+list only. Excluded entries remain visible, and snapshots distinguish source
+IDs from resolved catalog identities without changing monitoring or ownership.
+
+**Library → Statistics** summarizes the stored collection, including distinct
+recordings, reviewed work coverage, file counts and size, known audio duration,
+codec profiles, bitrate, languages, narrators and missing or stale media
+analysis. Filter by author, media type or catalog source. Unresolved files are
+not assigned to an author by their filenames. Duration reflects reliable file
+measurements, not estimated catalog time, and each tracked file is counted once.
+
+For a tracked multi-recording download, a confirmed recording-specific label
+may differ from the pack uploader. **File Details** explains the resolved
+release group and retains the original labels. Ordinary multipart recordings
+keep their existing precedence; a manual group correction always wins.
+
 Changing an audiobook's monitoring or metadata does not reassign its files.
 Conflicting recording IDs require review instead of an automatic title match.
 For libraries with curated filenames, Settings → Metadata → Audio File Metadata

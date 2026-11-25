@@ -6,6 +6,7 @@ import { createSelector } from 'reselect';
 import { clearHistoryRefresh, refreshHistoryPages, scheduleHistoryRefresh } from 'Activity/History/historyPageQuery';
 import { clearQueueRefresh, refreshQueuePages, scheduleQueueRefresh } from 'Activity/Queue/queuePageQuery';
 import { invalidateReleaseSearches } from 'InteractiveSearch/releaseSearchQuery';
+import { clearLibraryStatisticsRefresh, refreshLibraryStatistics, scheduleLibraryStatisticsRefresh } from 'LibraryStatistics/libraryStatisticsQuery';
 import { setAppValue, setVersion } from 'Store/Actions/appActions';
 import { fetchAuthor } from 'Store/Actions/authorActions';
 import { removeItem, update, updateItem } from 'Store/Actions/baseActions';
@@ -131,6 +132,7 @@ class SignalRConnector extends Component {
     clearHistoryRefresh();
     clearQueueRefresh();
     clearWantedRefresh();
+    clearLibraryStatisticsRefresh();
     this.connection.stop();
     this.connection = null;
   }
@@ -204,6 +206,7 @@ class SignalRConnector extends Component {
 
     scheduleHistoryRefresh();
     scheduleWantedRefresh();
+    scheduleLibraryStatisticsRefresh();
   };
 
   handleBookfile = (body) => {
@@ -224,6 +227,7 @@ class SignalRConnector extends Component {
 
     if (['created', 'updated', 'deleted', 'sync'].includes(body.action)) {
       scheduleWantedRefresh();
+      scheduleLibraryStatisticsRefresh();
     }
   };
 
@@ -257,6 +261,13 @@ class SignalRConnector extends Component {
 
     scheduleHistoryRefresh();
     scheduleWantedRefresh();
+    scheduleLibraryStatisticsRefresh();
+  };
+
+  handleLibrarystatistics = (body) => {
+    if (body?.action === 'sync') {
+      scheduleLibraryStatisticsRefresh();
+    }
   };
 
   handleQualitydefinition = () => {
@@ -369,6 +380,7 @@ class SignalRConnector extends Component {
     refreshWantedPages();
     refreshQueuePages();
     invalidateReleaseSearches();
+    refreshLibraryStatistics();
     repopulatePage();
   };
 

@@ -9,6 +9,7 @@ using Dapper;
 using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Exceptions;
+using NzbDrone.Core.LibraryStats;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.MetadataSource.Audiobook;
 
@@ -130,6 +131,7 @@ namespace NzbDrone.Core.Books
 
             var result = ReadSnapshot(connection, transaction, editionId);
             transaction.Commit();
+            _events.PublishEvent(new LibraryStatisticsChangedEvent());
             return result;
         }
 
@@ -234,11 +236,12 @@ namespace NzbDrone.Core.Books
             return connection.Query<RecordingWork>($"""SELECT * FROM "RecordingWorks" WHERE "Id" {InIds}""", new { ids }, transaction).AsList();
         }
 
-        private static string Identity(RecordingWorkRecording recording)
+        private static string Identity(RecordingWorkRecording recording) => Identity(recording.ForeignEditionId, recording.Asin, recording.AudibleRegion);
+
+        internal static string Identity(string id, string asin, string audibleRegion)
         {
             // Native IDs already encode marketplace/ASIN or immutable local ID.
             // Legacy catalogue IDs include separately retained region and ASIN.
-            var id = recording.ForeignEditionId;
             if (string.IsNullOrWhiteSpace(id))
             {
                 return null;
@@ -246,7 +249,7 @@ namespace NzbDrone.Core.Books
 
             return AudiobookId.IsNative(id) || LocalRecordingId.IsLocal(id)
                 ? Hash(id)
-                : Hash(new { id, recording.Asin, recording.AudibleRegion });
+                : Hash(new { id, Asin = asin, AudibleRegion = audibleRegion });
         }
 
         private static string Hash(object value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(STJson.ToJson(value))));

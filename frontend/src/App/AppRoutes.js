@@ -8,6 +8,7 @@ import BookIndexConnector from 'Book/Index/BookIndexConnector';
 import BookshelfConnector from 'Bookshelf/BookshelfConnector';
 import CalendarPageConnector from 'Calendar/CalendarPageConnector';
 import NotFound from 'Components/NotFound';
+import LibraryStatisticsPage from 'LibraryStatistics/LibraryStatisticsPage';
 import AddNewItemConnector from 'Search/AddNewItemConnector';
 import CustomFormatSettingsConnector from 'Settings/CustomFormats/CustomFormatSettingsConnector';
 import DevelopmentSettingsConnector from 'Settings/Development/DevelopmentSettingsConnector';
@@ -41,6 +42,7 @@ export default [
   { path: 'shelf', Component: BookshelfConnector },
   { path: 'books', Component: BookIndexConnector },
   { path: 'unmapped', Component: UnmappedFilesTableConnector },
+  { path: 'statistics', Component: LibraryStatisticsPage },
   { path: 'author/:titleSlug', Component: AuthorDetailsPageConnector },
   { path: 'book/:titleSlug', Component: BookDetailsPageConnector },
   { path: 'calendar', Component: CalendarPageConnector },

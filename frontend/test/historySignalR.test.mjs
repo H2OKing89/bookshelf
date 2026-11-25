@@ -49,6 +49,7 @@ function setup(t) {
   const legacy = [];
   const queue = [];
   const wanted = [];
+  const statistics = [];
   const { default: Connector } = loadFrontendModule('Components/SignalRConnector', {
     '@microsoft/signalr/dist/browser/signalr.js': {},
     'react-redux': { connect: () => (component) => component },
@@ -60,6 +61,11 @@ function setup(t) {
     },
     'App/queryClient': client,
     'InteractiveSearch/releaseSearchQuery': { invalidateReleaseSearches: () => client.invalidateQueries({ queryKey: ['interactiveRelease', '/fixture/api/v1'], refetchType: 'none' }) },
+    'LibraryStatistics/libraryStatisticsQuery': {
+      clearLibraryStatisticsRefresh: () => statistics.push('clear'),
+      refreshLibraryStatistics: () => statistics.push('reconnect'),
+      scheduleLibraryStatisticsRefresh: () => statistics.push('refresh')
+    },
     'Store/Actions/appActions': {},
     'Store/Actions/authorActions': {},
     'Store/Actions/baseActions': {},
@@ -106,7 +112,7 @@ function setup(t) {
     return observer;
   }
 
-  return { client, connector, legacy, options, queue, requests, timers, wanted, watch, scheduleLocalRefresh: history.scheduleHistoryRefresh };
+  return { client, connector, legacy, options, queue, requests, timers, wanted, watch, statistics, scheduleLocalRefresh: history.scheduleHistoryRefresh };
 }
 
 function nextTurn() {
@@ -200,4 +206,17 @@ test('Queue routes list events through its refresh coordinator and preserves sta
 
   assert.deepEqual(queue, ['queue', 'reconnect', 'clear']);
   assert.deepEqual(legacy.slice(0, 2), ['queue details', { section: 'queue.status', data: { totalCount: 2 } }]);
+});
+
+test('Library statistics refresh follows committed book, author, file and membership changes', (t) => {
+  const { connector, statistics } = setup(t);
+  connector.handleMessage({ name: 'bookfile', body: { action: 'updated', resource: { id: 11 } } });
+  connector.handleMessage({ name: 'author', body: { action: 'sync' } });
+  connector.handleMessage({ name: 'book', body: { action: 'updated', resource: { id: 12 } } });
+  connector.handleMessage({ name: 'librarystatistics', body: { action: 'sync' } });
+  connector.handleMessage({ name: 'librarystatistics', body: { action: 'ignored' } });
+  connector.onReconnected();
+  connector.connection = { stop: () => {} };
+  connector.componentWillUnmount();
+  assert.deepEqual(statistics, ['refresh', 'refresh', 'refresh', 'refresh', 'reconnect', 'clear']);
 });

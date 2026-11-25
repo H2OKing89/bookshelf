@@ -60,15 +60,16 @@ class FileDetailsConnector extends Component {
       return <div>This file is no longer available.</div>;
     }
 
-    if (!item.audioTags) {
+    if (!item.audioTags && !item.releaseGroupEvidence) {
       return <div>No audio tags are available for this file.</div>;
     }
 
     return (
       <FileDetails
-        audioTags={item.audioTags}
+        audioTags={item.audioTags ?? { trackNumbers: [] }}
         filename={item.path}
         releaseGroup={item.releaseGroup}
+        releaseGroupEvidence={item.releaseGroupEvidence}
       />
     );
 

@@ -16,6 +16,7 @@
     "./src/Book/WorkCoverage/recordingWorkQuery.ts",
     "./src/InteractiveSearch/releaseSearchQuery.ts",
     "./src/InteractiveSearch/releaseWindow.ts",
+    "./src/LibraryStatistics/libraryStatisticsQuery.ts",
     "./src/Author/Details/RecordingCatalogLabel.tsx",
     "./src/Settings/DownloadClients/Options/downloadClientOptionsState.ts",
     "./src/Utilities/Book/recordingIdentity.ts",

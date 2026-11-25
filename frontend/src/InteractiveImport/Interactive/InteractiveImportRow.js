@@ -180,6 +180,7 @@ class InteractiveImportRow extends Component {
       book,
       quality,
       releaseGroup,
+      releaseGroupEvidence,
       size,
       customFormats,
       customFormatScore,
@@ -232,6 +233,8 @@ class InteractiveImportRow extends Component {
       <FileDetails
         audioTags={audioTags}
         filename={path}
+        releaseGroup={releaseGroup}
+        releaseGroupEvidence={releaseGroupEvidence}
       />
     );
 
@@ -443,6 +446,7 @@ InteractiveImportRow.propTypes = {
   book: PropTypes.object,
   foreignEditionId: PropTypes.string,
   releaseGroup: PropTypes.string,
+  releaseGroupEvidence: PropTypes.object,
   quality: PropTypes.object,
   size: PropTypes.number.isRequired,
   customFormats: PropTypes.arrayOf(PropTypes.object),

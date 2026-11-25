@@ -74,6 +74,29 @@ namespace NzbDrone.Core.Test.MediaFiles
         }
 
         [Test]
+        public void should_persist_release_group_evidence_without_changing_the_file_identity()
+        {
+            var file = Subject.GetFilesByAuthor(_author.Id).First();
+            file.ReleaseGroupEvidence.Should().BeNull("legacy files have unknown acquisition provenance");
+            file.ReleaseGroup = "RecordingCrew";
+            file.ReleaseGroupEvidence = new ReleaseGroupEvidence
+            {
+                PackUploaderGroup = "UploaderCrew",
+                FileGroup = "RecordingCrew",
+                RecordingId = "audible:us:B111111111",
+                PackRecordingIds = new[] { "audible:us:B111111111", "audible:us:B222222222" },
+                Source = "recordingFile",
+                Reason = "exactPackRecording",
+                ResolvedGroup = "RecordingCrew"
+            };
+            Subject.Update(file);
+            var stored = Subject.Get(file.Id);
+            stored.EditionId.Should().Be(file.EditionId);
+            stored.ReleaseGroup.Should().Be("RecordingCrew");
+            stored.ReleaseGroupEvidence.Should().BeEquivalentTo(file.ReleaseGroupEvidence);
+        }
+
+        [Test]
         public void get_files_by_author()
         {
             VerifyData();

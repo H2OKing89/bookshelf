@@ -8,6 +8,7 @@ using NzbDrone.Common.Instrumentation.Extensions;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download;
+using NzbDrone.Core.History;
 using NzbDrone.Core.MediaFiles.BookImport.Aggregation;
 using NzbDrone.Core.MediaFiles.BookImport.Identification;
 using NzbDrone.Core.Parser.Model;
@@ -56,6 +57,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
         private readonly IIdentificationService _identificationService;
         private readonly IRootFolderService _rootFolderService;
         private readonly IQualityProfileService _qualityProfileService;
+        private readonly IHistoryService _history;
         private readonly Logger _logger;
 
         public ImportDecisionMaker(IEnumerable<IImportDecisionEngineSpecification<LocalBook>> trackSpecifications,
@@ -66,6 +68,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                                    IIdentificationService identificationService,
                                    IRootFolderService rootFolderService,
                                    IQualityProfileService qualityProfileService,
+                                   IHistoryService history,
                                    Logger logger)
         {
             _trackSpecifications = trackSpecifications;
@@ -76,6 +79,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
             _identificationService = identificationService;
             _rootFolderService = rootFolderService;
             _qualityProfileService = qualityProfileService;
+            _history = history;
             _logger = logger;
         }
 
@@ -98,7 +102,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport
 
             ParsedBookInfo downloadClientItemInfo = null;
 
-            if (downloadClientItem != null)
+            if (downloadClientItem?.Title.IsNotNullOrWhiteSpace() == true)
             {
                 downloadClientItemInfo = Parser.Parser.ParseBookTitle(downloadClientItem.Title);
             }
@@ -163,12 +167,14 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                 {
                     localTrack.ReleaseGroupOverride = releaseGroup.Trim();
                     localTrack.ReleaseGroup = localTrack.ReleaseGroupOverride;
+                    localTrack.ReleaseGroupEvidence = ReleaseGroupEvidence.ManualChoice(localTrack.ReleaseGroupEvidence, releaseGroup);
                 }
             }
 
             localTracks.ForEach(x => x.ExistingFile = !config.NewDownload);
 
             var releases = _identificationService.Identify(localTracks, idOverrides, config);
+            var pack = ReleaseGroupPackContext.Read(_history, itemInfo.DownloadClientItem);
 
             foreach (var release in releases)
             {
@@ -177,14 +183,32 @@ namespace NzbDrone.Core.MediaFiles.BookImport
                 EnsureData(release);
                 release.NewDownload = config.NewDownload;
 
+                // Exact edition assignment is available only after identification.
+                // Resolve the same group before scoring and staged publication.
+                if (pack != null)
+                {
+                    foreach (var localTrack in release.LocalBooks.Where(track => !track.AdditionalFile))
+                    {
+                        ReleaseGroupResolution.Apply(localTrack, pack);
+                    }
+                }
+
                 if (config.PreserveExistingReleaseGroups)
                 {
-                    foreach (var localTrack in release.LocalBooks.Where(x => x.ReleaseGroupOverride == null))
+                    foreach (var localTrack in release.LocalBooks)
                     {
                         var existingFile = _mediaFileService.GetFileWithPath(localTrack.Path);
                         if (existingFile != null)
                         {
-                            localTrack.ReleaseGroup = existingFile.ReleaseGroup;
+                            if (localTrack.ReleaseGroupOverride == null)
+                            {
+                                localTrack.ReleaseGroup = existingFile.ReleaseGroup;
+                                localTrack.ReleaseGroupEvidence = existingFile.ReleaseGroupEvidence;
+                            }
+                            else
+                            {
+                                localTrack.ReleaseGroupEvidence = ReleaseGroupEvidence.ManualChoice(existingFile.ReleaseGroupEvidence ?? localTrack.ReleaseGroupEvidence, localTrack.ReleaseGroupOverride);
+                            }
                         }
                     }
                 }

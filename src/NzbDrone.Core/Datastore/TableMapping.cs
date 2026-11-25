@@ -243,6 +243,7 @@ namespace NzbDrone.Core.Datastore
             SqlMapper.AddTypeHandler(new EmbeddedDocumentConverter<List<string>>());
             SqlMapper.AddTypeHandler(new EmbeddedDocumentConverter<ParsedBookInfo>());
             SqlMapper.AddTypeHandler(new EmbeddedDocumentConverter<ParsedTrackInfo>());
+            SqlMapper.AddTypeHandler(new EmbeddedDocumentConverter<ReleaseGroupEvidence>());
             SqlMapper.AddTypeHandler(new EmbeddedDocumentConverter<ReleaseInfo>());
             SqlMapper.AddTypeHandler(new EmbeddedDocumentConverter<HashSet<int>>());
             SqlMapper.AddTypeHandler(new OsPathConverter());

@@ -6,6 +6,7 @@ using NLog;
 using NzbDrone.Common;
 using NzbDrone.Core.Books.Events;
 using NzbDrone.Core.Datastore.Events;
+using NzbDrone.Core.LibraryStats;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Messaging.Events;
@@ -72,11 +73,13 @@ namespace NzbDrone.Core.MediaFiles
         public void Update(BookFile bookFile)
         {
             _mediaFileRepository.Update(bookFile);
+            _eventAggregator.PublishEvent(new LibraryStatisticsChangedEvent());
         }
 
         public void ImportFiles(List<BookFile> added, List<BookFile> updated, List<BookFile> replaced)
         {
             _mediaFileRepository.ImportFiles(added, updated, replaced);
+            _eventAggregator.PublishEvent(new LibraryStatisticsChangedEvent());
             foreach (var file in replaced.Where(file => file.EditionId > 0))
             {
                 try
@@ -105,6 +108,10 @@ namespace NzbDrone.Core.MediaFiles
         public void Update(List<BookFile> bookFiles)
         {
             _mediaFileRepository.UpdateMany(bookFiles);
+            if (bookFiles.Count > 0)
+            {
+                _eventAggregator.PublishEvent(new LibraryStatisticsChangedEvent());
+            }
         }
 
         public void Delete(BookFile bookFile, DeleteMediaFileReason reason)
@@ -116,6 +123,10 @@ namespace NzbDrone.Core.MediaFiles
             {
                 _eventAggregator.PublishEvent(new BookFileDeletedEvent(bookFile, reason));
             }
+            else
+            {
+                _eventAggregator.PublishEvent(new LibraryStatisticsChangedEvent());
+            }
         }
 
         public void DeleteMany(List<BookFile> bookFiles, DeleteMediaFileReason reason)
@@ -126,6 +137,11 @@ namespace NzbDrone.Core.MediaFiles
             foreach (var bookFile in bookFiles.Where(x => x.EditionId > 0))
             {
                 _eventAggregator.PublishEvent(new BookFileDeletedEvent(bookFile, reason));
+            }
+
+            if (bookFiles.Any(file => file.EditionId <= 0))
+            {
+                _eventAggregator.PublishEvent(new LibraryStatisticsChangedEvent());
             }
         }
 
@@ -247,6 +263,10 @@ namespace NzbDrone.Core.MediaFiles
         public void UpdateMediaInfo(List<BookFile> bookFiles)
         {
             _mediaFileRepository.UpdateMediaInfo(bookFiles);
+            if (bookFiles.Count > 0)
+            {
+                _eventAggregator.PublishEvent(new LibraryStatisticsChangedEvent());
+            }
         }
 
         public void Handle(AuthorMovedEvent message)
@@ -272,6 +292,8 @@ namespace NzbDrone.Core.MediaFiles
             {
                 _mediaFileRepository.UnlinkFilesByBook(message.Book.Id);
             }
+
+            _eventAggregator.PublishEvent(new LibraryStatisticsChangedEvent());
         }
 
         public void HandleAsync(ModelEvent<RootFolder> message)

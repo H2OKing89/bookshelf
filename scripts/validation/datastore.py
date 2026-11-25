@@ -32,15 +32,20 @@ from . import docker, restore
 IMAGE = "postgres:16-alpine"
 MARKER = ".bookshelf-migration-tests"
 LEGACY_HISTORY = set(range(1, 34)) | set(range(35, 49)) | {158}
-HISTORY = LEGACY_HISTORY | {159, 160, 161, 162, 163}
+HISTORY = LEGACY_HISTORY | {159, 160, 161, 162, 163, 164, 165}
 ACQUISITION_COLUMNS = {("QualityProfiles", "MinUpgradeFormatScore"), ("BookFiles", "TaggedLanguage"),
                        ("Blocklist", "RecordingLanguages"), ("Blocklist", "SelectedEditionLanguageId"),
                        ("Blocklist", "AudioFormatEvidence")}
 LOCAL_METADATA_COLUMNS = ("LocalMetadataRevision", "LocalMetadataProvenance")
-ADDITIVE_COLUMNS = ACQUISITION_COLUMNS | {("Editions", column) for column in LOCAL_METADATA_COLUMNS}
-WORK_TABLE_COLUMNS = {
+FILE_METADATA_COLUMNS = ("TaggedLanguage", "ReleaseGroupEvidence")
+ADDITIVE_COLUMNS = ACQUISITION_COLUMNS | {("Editions", column) for column in LOCAL_METADATA_COLUMNS} | {
+    ("BookFiles", "ReleaseGroupEvidence"), ("ImportLists", "MembershipRevision")}
+ADDITIVE_TABLE_COLUMNS = {
     "RecordingWorks": {"Id", "Title", "Author", "Series", "Position"},
     "RecordingWorkMemberships": {"Id", "EditionId", "WorkId", "RecordingIdentity", "Confirmed"},
+    "ImportListMembershipSnapshots": {"ImportListId", "AttemptToken", "SuccessfulRevision", "LastSuccessfulSync"},
+    "ImportListMembershipItems": {"Id", "ImportListId", "SourceAuthor", "SourceTitle", "SourceAuthorId", "SourceBookId",
+                                  "SourceEditionId", "AuthorId", "BookId", "EditionId"},
 }
 TABLES = restore.TABLES + ("AudiobookMetadataOverrides", "AudiobookMetadataCleanupRules")
 SETTING_KEYS = restore.SETTING_KEYS + ("rescanafterrefresh",)
@@ -342,14 +347,14 @@ def postgres_schema(postgres: OwnedPostgres, names: dict):
 
 
 def expected_additive_sqlite_snapshot(snapshot):
-    additions = {"BookFiles": ("TaggedLanguage",), "Editions": LOCAL_METADATA_COLUMNS}
+    additions = {"BookFiles": FILE_METADATA_COLUMNS, "Editions": LOCAL_METADATA_COLUMNS}
     return {**snapshot, **{table: {"columns": snapshot[table]["columns"] + list(columns),
                                   "rows": [row + (None,) * len(columns) for row in snapshot[table]["rows"]]}
                           for table, columns in additions.items()}}
 
 
 def expected_additive_postgres_snapshot(snapshot):
-    additions = {"BookFiles": ("TaggedLanguage",), "Editions": LOCAL_METADATA_COLUMNS}
+    additions = {"BookFiles": FILE_METADATA_COLUMNS, "Editions": LOCAL_METADATA_COLUMNS}
     return {**snapshot, **{table: [{**row, **dict.fromkeys(columns)} for row in snapshot[table]]
                           for table, columns in additions.items()}}
 
@@ -358,20 +363,23 @@ def postgres_preserved_schema(before, after):
     main = after["main"]
     added = {(column["table_name"], column["column_name"]) for column in main["columns"]
              if (column["table_name"], column["column_name"]) in ADDITIVE_COLUMNS}
-    work_columns = {table: {column["column_name"] for column in main["columns"] if column["table_name"] == table}
-                    for table in WORK_TABLE_COLUMNS}
+    new_table_columns = {table: {column["column_name"] for column in main["columns"] if column["table_name"] == table}
+                         for table in ADDITIVE_TABLE_COLUMNS}
     work_indexes = [item["indexdef"] for item in main["indexes"] if item["tablename"] == "RecordingWorkMemberships"]
     work_constraints = [item["definition"] for item in main["constraints"] if item["tablename"] == "RecordingWorkMemberships"]
     works_have_unique_membership = any("CREATE UNIQUE INDEX" in definition and '("EditionId", "WorkId")' in definition for definition in work_indexes)
     works_have_foreign_keys = (any('REFERENCES "Editions"' in definition and 'ON DELETE CASCADE' in definition for definition in work_constraints)
                                and any('REFERENCES "RecordingWorks"' in definition for definition in work_constraints))
-    remaining = [column for column in main["columns"] if column["table_name"] not in WORK_TABLE_COLUMNS
+    lists_have_cascading_foreign_keys = all(any(item["tablename"] == table and 'REFERENCES "ImportLists"' in item["definition"]
+                                               and 'ON DELETE CASCADE' in item["definition"] for item in main["constraints"])
+                                           for table in ("ImportListMembershipSnapshots", "ImportListMembershipItems"))
+    remaining = [column for column in main["columns"] if column["table_name"] not in ADDITIVE_TABLE_COLUMNS
                  and (column["table_name"], column["column_name"]) not in ADDITIVE_COLUMNS]
     baseline = {**after, "main": {"columns": logical_columns(remaining),
-                                 "indexes": [item for item in main["indexes"] if item["tablename"] not in WORK_TABLE_COLUMNS],
-                                 "constraints": [item for item in main["constraints"] if item["tablename"] not in WORK_TABLE_COLUMNS]}}
-    return (added == ADDITIVE_COLUMNS and work_columns == WORK_TABLE_COLUMNS and works_have_unique_membership
-            and works_have_foreign_keys and before == baseline)
+                                 "indexes": [item for item in main["indexes"] if item["tablename"] not in ADDITIVE_TABLE_COLUMNS],
+                                 "constraints": [item for item in main["constraints"] if item["tablename"] not in ADDITIVE_TABLE_COLUMNS]}}
+    return (added == ADDITIVE_COLUMNS and new_table_columns == ADDITIVE_TABLE_COLUMNS and works_have_unique_membership
+            and works_have_foreign_keys and lists_have_cascading_foreign_keys and before == baseline)
 
 
 def transfer_seed(postgres: OwnedPostgres, names: dict, source: Fixture):

@@ -1,0 +1,82 @@
+.filters {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex: 1 1 180px;
+  flex-direction: column;
+  min-width: 0;
+  gap: 4px;
+
+  select {
+    padding: 6px;
+    width: 100%;
+    border: 1px solid var(--inputBorderColor);
+    border-radius: 3px;
+    background-color: var(--inputBackgroundColor);
+    color: var(--defaultColor);
+  }
+}
+
+.metrics,
+.breakdowns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 12px;
+}
+
+.metric,
+.breakdown {
+  padding: 14px;
+  overflow-wrap: anywhere;
+
+  border: 1px solid var(--borderColor);
+  border-radius: 4px;
+}
+
+.metric {
+  dt {
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  dd {
+    margin: 5px 0 0;
+    font-size: 22px;
+  }
+
+  .detail {
+    font-size: 12px;
+  }
+}
+
+.breakdown {
+  min-width: 0;
+
+  h2 {
+    margin-top: 0;
+    font-size: 16px;
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 6px;
+    border-bottom: 1px solid var(--borderColor);
+    text-align: left;
+  }
+
+  th:last-child,
+  td:last-child {
+    text-align: right;
+  }
+}

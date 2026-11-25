@@ -10,6 +10,41 @@ import stripHtml from 'Utilities/String/stripHtml';
 import translate from 'Utilities/String/translate';
 import styles from './FileDetails.css';
 
+const releaseGroupSourceLabels = {
+  manual: 'Explicit manual choice',
+  download: 'Download label',
+  folder: 'Folder label',
+  file: 'File label',
+  recordingFile: 'Exact recording file label',
+  recordingFolder: 'Exact recording folder label',
+  packUploader: 'Pack uploader',
+  unknown: 'Unknown'
+};
+
+const releaseGroupReviewLabels = {
+  conflictingRecordingLabels: 'File and recording folder labels conflict; no recording-level group was assumed.',
+  noRecordingLabel: 'No identified recording label was available.',
+  unverifiedPackRecording: 'This file could not be matched to an exact recording in the pack; ordinary precedence was retained.'
+};
+
+function releaseGroupDetails(evidence) {
+
+  const labels = [
+    ['Group source', releaseGroupSourceLabels[evidence.source]],
+    ['Group review', releaseGroupReviewLabels[evidence.reason]],
+    ['Pack uploader', evidence.packUploaderGroup],
+    ['Download label', evidence.downloadGroup],
+    ['Folder label', evidence.folderGroup],
+    ['Recording folder label', evidence.recordingFolderGroup],
+    ['File label', evidence.fileGroup],
+    ['Exact recording identity', evidence.recordingId]
+  ];
+
+  return labels.filter(([, value]) => value).map(([label, value]) => (
+    <DescriptionListItem key={label} title={label} data={value} />
+  ));
+}
+
 function renderRejections(rejections) {
   return (
     <span>
@@ -34,6 +69,7 @@ function FileDetails(props) {
   const {
     filename,
     releaseGroup,
+    releaseGroupEvidence,
     audioTags,
     rejections
   } = props;
@@ -51,12 +87,13 @@ function FileDetails(props) {
               />
           }
           {
-            releaseGroup &&
+            (releaseGroup || releaseGroupEvidence) &&
               <DescriptionListItem
                 title={translate('ReleaseGroup')}
-                data={releaseGroup}
+                data={releaseGroup || '—'}
               />
           }
+          {releaseGroupEvidence && releaseGroupDetails(releaseGroupEvidence)}
           {
             audioTags.title !== undefined &&
               <DescriptionListItem
@@ -243,6 +280,7 @@ function FileDetails(props) {
 FileDetails.propTypes = {
   filename: PropTypes.string,
   releaseGroup: PropTypes.string,
+  releaseGroupEvidence: PropTypes.object,
   audioTags: PropTypes.object.isRequired,
   rejections: PropTypes.arrayOf(PropTypes.object)
 };

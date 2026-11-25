@@ -5,6 +5,7 @@ using FizzWare.NBuilder;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
+using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.Download;
@@ -12,6 +13,7 @@ using NzbDrone.Core.History;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.MediaFiles.BookImport;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser.Model;
@@ -88,6 +90,8 @@ namespace NzbDrone.Core.Test.HistoryTests
             var imported = new BookFile
             {
                 Id = 4, EditionId = 5, Part = 2, Path = Path.Combine(TempFolder, "imported.m4b"),
+                ReleaseGroup = "RecordingCrew",
+                ReleaseGroupEvidence = new ReleaseGroupEvidence { FileGroup = "RecordingCrew", PackUploaderGroup = "UploaderCrew", ResolvedGroup = "RecordingCrew", Source = "recordingFile" },
                 MediaInfo = new MediaInfoModel { Source = "MediaInfo", AudioFormat = "FLAC", AudioChannels = 1 }
             };
             EntityHistory saved = null;
@@ -107,6 +111,8 @@ namespace NzbDrone.Core.Test.HistoryTests
             saved.Data["PartCount"].Should().Be("3");
             saved.Data["DownloadClientId"].Should().Be("6");
             saved.Data["SourceModifiedUtc"].Should().Be(modified.ToString("O"));
+            saved.Data["ReleaseGroup"].Should().Be("RecordingCrew");
+            STJson.Deserialize<ReleaseGroupEvidence>(saved.Data["releaseGroupEvidence"]).PackUploaderGroup.Should().Be("UploaderCrew");
             var evidence = AudioFormatEvidence.FromHistory(saved.Data);
             evidence.Origin.Should().Be(AudioEvidenceOrigin.File);
             evidence.Codec.Should().Be(AudioCodecKind.Flac);
@@ -140,6 +146,30 @@ namespace NzbDrone.Core.Test.HistoryTests
             var evidence = AudioFormatEvidence.FromHistory(saved.Data);
             evidence.Origin.Should().Be(AudioEvidenceOrigin.Release);
             evidence.Codec.Should().Be(AudioCodecKind.XheAac);
+        }
+
+        [Test]
+        public void grab_history_should_record_the_same_independent_recording_set_on_each_scoped_row()
+        {
+            var release = new RemoteBook
+            {
+                Release = new ReleaseInfo { Title = "Owned Mixed Pack" },
+                ParsedBookInfo = new ParsedBookInfo { ReleaseGroup = "UploaderCrew", Quality = new QualityModel() },
+                Books = new List<Book>
+                {
+                    new Book { Id = 1, ForeignBookId = "audible:us:B111111111", Editions = new List<Edition>() },
+                    new Book { Id = 2, ForeignBookId = "audible:us:B222222222", Editions = new List<Edition>() }
+                }
+            };
+            var saved = new List<EntityHistory>();
+            Mocker.GetMock<IHistoryRepository>().Setup(repository => repository.Insert(It.IsAny<EntityHistory>()))
+                .Callback<EntityHistory>(history => saved.Add(history));
+
+            Subject.Handle(new BookGrabbedEvent(release) { DownloadId = "owned-pack", DownloadClientId = 7 });
+
+            saved.Should().HaveCount(2).And.OnlyContain(row => row.DownloadId == "owned-pack" &&
+                row.Data["DownloadClientId"] == "7" && row.Data["ReleaseGroup"] == "UploaderCrew" &&
+                row.Data[ReleaseGroupPackContext.HistoryKey] == "audible:us:B111111111|audible:us:B222222222");
         }
 
         [Test]

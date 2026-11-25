@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.BookImport.Identification;
 using NzbDrone.Core.Qualities;
 
@@ -28,6 +29,7 @@ namespace NzbDrone.Core.Parser.Model
         public bool AdditionalFile { get; set; }
         public bool SceneSource { get; set; }
         public string ReleaseGroup { get; set; }
+        public ReleaseGroupEvidence ReleaseGroupEvidence { get; set; }
 
         // An explicit manual choice, including empty to clear. Never inferred from a filename.
         public string ReleaseGroupOverride { get; set; }
