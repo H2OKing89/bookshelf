@@ -21,6 +21,48 @@ COMPONENTS = ("Host", "Port", "User", "Password", "MainDb", "LogDb", "CacheDb")
 STRINGS = {"main": "MainDbConnectionString", "log": "LogDbConnectionString", "cache": "CacheDbConnectionString"}
 ROLE = "p14_app"
 
+# These are only the known additive columns from migrations 159–169. A
+# migration which retypes, re-defaults or removes a pre-P14 field is still a
+# preservation failure. New nullable columns must default to NULL; the policy
+# and revision flags deliberately remain zero/false for pre-existing rows.
+ADDED_COLUMN_CONTRACT = {
+    ("QualityProfiles", "MinUpgradeFormatScore"): ("integer", "NO", "0"),
+    ("BookFiles", "TaggedLanguage"): ("text", "YES", None),
+    ("BookFiles", "ReleaseGroupEvidence"): ("text", "YES", None),
+    ("Blocklist", "RecordingLanguages"): ("character varying", "YES", None),
+    ("Blocklist", "SelectedEditionLanguageId"): ("integer", "YES", None),
+    ("Blocklist", "AudioFormatEvidence"): ("text", "YES", None),
+    ("Editions", "LocalMetadataRevision"): ("character varying", "YES", None),
+    ("Editions", "LocalMetadataProvenance"): ("text", "YES", None),
+    ("ImportLists", "MembershipRevision"): ("bigint", "NO", "0"),
+    ("ImportLists", "TagExisting"): ("integer", "NO", "0"),
+    ("Books", "ImportListOriginId"): ("integer", "YES", None),
+    ("Indexers", "DangerousFileAction"): ("integer", "NO", "0"),
+    ("Indexers", "ExecutableFileAction"): ("integer", "NO", "0"),
+    ("Indexers", "UserRejectedExtensionAction"): ("integer", "NO", "0"),
+    ("Notifications", "OnHealthRestored"): ("boolean", "NO", "false"),
+}
+
+
+def schema_has_no_later_additions(schema: dict) -> bool:
+    return all((column["table_name"], column["column_name"]) not in datastore.ADDITIVE_COLUMNS and
+               column["table_name"] not in datastore.ADDITIVE_TABLE_COLUMNS | datastore.ADDITIVE_VIEW_COLUMNS
+               for column in schema["main"]["columns"])
+
+
+def expected_migration_column_contract(schema: dict) -> bool:
+    actual = {(column["table_name"], column["column_name"]):
+              (column["data_type"], column["is_nullable"], column["column_default"])
+              for column in schema["main"]["columns"]
+              if (column["table_name"], column["column_name"]) in datastore.ADDITIVE_COLUMNS}
+    return set(ADDED_COLUMN_CONTRACT) == datastore.ADDITIVE_COLUMNS and actual == ADDED_COLUMN_CONTRACT
+
+
+def dsn_upgrade_preserves_snapshot(before: dict, after: dict) -> bool:
+    # Compare every captured row and value, including the exact NULLs added to
+    # old records. This is not a projection onto only the old columns.
+    return datastore.expected_additive_postgres_snapshot(before) == after
+
 
 def quoted(value: str) -> str:
     """ADO.NET double-quoted values, including literal quotes and semicolons."""
@@ -152,6 +194,9 @@ def switch_existing(runtime: Path, baseline: Path, output: Path, fixtures: list,
     fixture.stop()
     golden = datastore.postgres_snapshot(postgres, names)
     schema = datastore.postgres_schema(postgres, names)
+    check("component_baseline_has_exact_pre_p14_history", all(value == datastore.LEGACY_HISTORY
+          for value in datastore.postgres_history(postgres, names).values()))
+    check("component_baseline_has_no_later_migration_columns", schema_has_no_later_additions(schema))
     check("component_baseline_has_two_recording_parts", len(golden["BookFiles"]) == 2)
     mapping = strings(postgres, names, password, application=canary)
     replace_postgres(fixture, mapping)
@@ -171,8 +216,12 @@ def switch_existing(runtime: Path, baseline: Path, output: Path, fixtures: list,
                   "WHERE usename=" + datastore.literal(ROLE) + " AND application_name=" + datastore.literal(canary))) == set(names.values()))
     logstorage.backup(fixture, check, "full_strings", sqlite=False)
     fixture.stop()
-    check("dsn_upgrade_preserves_catalog_settings_dates_guids_cache_and_logs", datastore.postgres_snapshot(postgres, names) == golden)
-    check("dsn_upgrade_preserves_all_three_database_schemas", datastore.postgres_schema(postgres, names) == schema)
+    check("dsn_upgrade_preserves_catalog_settings_dates_guids_cache_and_logs", dsn_upgrade_preserves_snapshot(golden, datastore.postgres_snapshot(postgres, names)))
+    upgraded_schema = datastore.postgres_schema(postgres, names)
+    check("dsn_upgrade_preserves_all_three_database_schemas", datastore.postgres_preserved_schema(schema, upgraded_schema))
+    check("dsn_upgrade_has_only_known_additive_column_types_and_defaults", expected_migration_column_contract(upgraded_schema))
+    check("dsn_upgrade_preserves_history_and_applies_known_migrations", all(value == datastore.HISTORY
+          for value in datastore.postgres_history(postgres, names).values()))
     check("dsn_upgrade_never_falls_back_to_sqlite", no_sqlite(fixture))
     check("dsn_upgrade_preserves_owned_recording_bytes", restore.media_unchanged(fixture))
     check("runtime_logs_do_not_expose_dsn_credentials", not leaked(fixture, [canary]))

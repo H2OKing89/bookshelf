@@ -1,3 +1,4 @@
+from copy import deepcopy
 import importlib
 import json
 from pathlib import Path
@@ -85,6 +86,44 @@ class PostgresConnectionBoundaryTests(unittest.TestCase):
             report = pg.run(self.runtime, self.root / "output", baseline_runtime=self.baseline)
         self.assertFalse(report["checks"]["candidate_package_unchanged"])
         self.assertGreater(report["failed"], 0)
+
+    def test_upgrade_snapshot_requires_exact_old_values_and_known_null_additions(self):
+        before = {"BookFiles": [{"Id": 19, "Path": "/owned.m4b"}],
+                  "Editions": [{"Id": 17, "Title": "Owned"}],
+                  "Books": [{"Id": 13, "ReleaseDate": "2027-02-02"}],
+                  "settings": [{"Key": "preferpathasin", "Value": "False"}],
+                  "cache": [{"Id": 999, "Response": "owned"}],
+                  "log": [{"Id": 999, "Message": "owned"}]}
+        after = pg.datastore.expected_additive_postgres_snapshot(before)
+        self.assertTrue(pg.dsn_upgrade_preserves_snapshot(before, after))
+        for table, column, wrong in (("Books", "ReleaseDate", "wrong date"),
+                                     ("BookFiles", "TaggedLanguage", "inferred"),
+                                     ("BookFiles", "Unexpected", None),
+                                     ("Editions", "LocalMetadataRevision", "unexpected revision"),
+                                     ("settings", "Value", "True"),
+                                     ("cache", "Response", "wrong cache"),
+                                     ("log", "Message", "wrong log")):
+            with self.subTest(table=table, column=column):
+                changed = deepcopy(after)
+                changed[table][0][column] = wrong
+                self.assertFalse(pg.dsn_upgrade_preserves_snapshot(before, changed))
+        self.assertFalse(pg.dsn_upgrade_preserves_snapshot(before, before))
+
+    def test_old_schema_and_additive_defaults_are_strict(self):
+        baseline = {"main": {"columns": [{"table_name": "Books", "column_name": "Id"}]}}
+        self.assertTrue(pg.schema_has_no_later_additions(baseline))
+        additions = [{"table_name": table, "column_name": column, "data_type": contract[0],
+                      "is_nullable": contract[1], "column_default": contract[2]}
+                     for (table, column), contract in pg.ADDED_COLUMN_CONTRACT.items()]
+        migrated = {"main": {"columns": [*baseline["main"]["columns"], *additions]}}
+        self.assertFalse(pg.schema_has_no_later_additions(migrated))
+        self.assertTrue(pg.expected_migration_column_contract(migrated))
+        for field, value in (("data_type", "bigint"), ("is_nullable", "YES"), ("column_default", "1")):
+            with self.subTest(field=field):
+                changed = deepcopy(migrated)
+                changed["main"]["columns"][1][field] = value
+                self.assertFalse(pg.expected_migration_column_contract(changed))
+        self.assertFalse(pg.expected_migration_column_contract(baseline))
 
     def test_replacing_component_configuration_removes_presence_not_just_values(self):
         fixture = SimpleNamespace(home=self.root)
