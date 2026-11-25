@@ -27,7 +27,7 @@ test('normal table registration distinguishes false, zero ID, and unmounted row'
   const changes = [];
   const cell = new TableSelectCell({ id: 0, onSelectedChange: (value) => changes.push(value) });
   cell.componentDidMount();
-  cell.onChange({ name: '0', value: true, shiftKey: true });
+  cell.render().props.children.props.onChange({ name: '0', value: true, shiftKey: true });
   cell.componentWillUnmount();
   assert.deepEqual(changes, [
     { id: 0, value: false },

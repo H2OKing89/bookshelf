@@ -37,18 +37,6 @@ class TableSelectCell<Id extends string | number> extends Component<TableSelectC
   }
 
   //
-  // Listeners
-
-  onChange = ({ value, shiftKey }: CheckboxSelectionChange) => {
-    const {
-      id,
-      onSelectedChange
-    } = this.props;
-
-    onSelectedChange({ id, value, shiftKey });
-  };
-
-  //
   // Render
 
   render() {
@@ -56,9 +44,9 @@ class TableSelectCell<Id extends string | number> extends Component<TableSelectC
       className = styles.selectCell,
       id,
       isSelected = false,
+      onSelectedChange,
       ...inputProps
     } = this.props;
-    delete inputProps.onSelectedChange;
 
     return (
       <TableRowCell className={className}>
@@ -67,7 +55,7 @@ class TableSelectCell<Id extends string | number> extends Component<TableSelectC
           name={id.toString()}
           value={isSelected}
           {...inputProps}
-          onChange={this.onChange}
+          onChange={({ value, shiftKey }: CheckboxSelectionChange) => onSelectedChange({ id, value, shiftKey })}
         />
       </TableRowCell>
     );

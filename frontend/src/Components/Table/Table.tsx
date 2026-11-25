@@ -91,7 +91,6 @@ function Table(props: TableProps) {
                 return (
                   <TableHeaderCell
                     key={name}
-                    className={styles[name]}
                     name={name}
                     isSortable={false}
                   >
