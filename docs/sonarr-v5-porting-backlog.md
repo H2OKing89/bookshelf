@@ -75,7 +75,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D05](#d05) | P1 | Verified | M | Prevent custom-format downgrades during import and rename |
 | [D06](#d06) | P1 | Verified | M | Classify rejected extensions, including downloads with no importable files |
 | [D07](#d07) | P1 | Verified | L | Ask download clients for file inventory when the filesystem has no eligible files |
-| [D08](#d08) | P2 | Planned | M | Make automatic failure/blocklist/redownload actions explicit per indexer |
+| [D08](#d08) | P2 | Verified | M | Make automatic failure/blocklist/redownload actions explicit per indexer |
 | [D09](#d09) | P1 | Verified | M | Fail over among eligible download clients |
 | [D10](#d10) | P1 | Verified | M | Remove disappeared tracked items and refresh client configuration promptly |
 | [D11](#d11) | P1 | Verified | M | Separate blocked import state from terminal failure |
@@ -87,16 +87,16 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [D17](#d17) | P1 | Verified | M | Check library free space before grabbing |
 | [D18](#d18) | P2 | Planned | L | Represent one queued download with multiple books |
 | [D19](#d19) | P2 | Verified | M | Refresh pending decisions when policy or metadata changes |
-| [D20](#d20) | P2 | Planned | M | Sort library/history quality according to each profile |
+| [D20](#d20) | P2 | Verified | M | Sort library/history quality according to each profile |
 | [D21](#d21) | P1 | Verified | S | Backport narrow RSS parser fixes, retain existing feed machinery |
 | [D22](#d22) | P1 | Verified | L | Persist successful import-list membership snapshots |
-| [D23](#d23) | P2 | Planned | M | Add additive and synchronized tags for existing list entries |
-| [D24](#d24) | P2 | Planned | M | Offer non-destructive cleanup when books leave all lists |
-| [D25](#d25) | P2 | Planned | M | Add a documented generic JSON import-list endpoint |
+| [D23](#d23) | P2 | Verified | M | Add additive and synchronized tags for existing list entries |
+| [D24](#d24) | P2 | Verified | M | Offer non-destructive cleanup when books leave all lists |
+| [D25](#d25) | P2 | Verified | M | Add a documented generic JSON import-list endpoint |
 | [D26](#d26) | P2 | Verified | M | Enrich webhooks with committed completion and score provenance |
 | [D27](#d27) | P2 | Planned | M | Send health-restored notifications |
 | [D28](#d28) | P3 | Planned | M | Coalesce media-server refreshes for multipart imports |
-| [D29](#d29) | P2 | Planned | M | Support explicit qBittorrent total versus inactive seed time |
+| [D29](#d29) | P2 | Verified | M | Support explicit qBittorrent total versus inactive seed time |
 | [D30](#d30) | P3 | Planned | L | Defer scripted import replacement; study an explicit extension boundary |
 | [U01](#u01) | P1 | Verified | S | Correct accessible names on icon actions |
 | [U02](#u02) | P1 | Verified | M | Named, semantic dialogs |
@@ -2031,6 +2031,14 @@ do not reach filesystem calls or authorize completion. No live client was used.
 
 **P2 · partial · adapt · D02, D06, D07 · M.** S:`src/NzbDrone.Core/Download/RejectedImportService.cs:25` maps typed dangerous/executable/user-extension rejections to the indexer's `FailDownloads` settings; S:`src/NzbDrone.Core/Indexers/FailDownloads.cs` and `CachedIndexerSettingsProvider.cs`. B:`src/NzbDrone.Core/Download/FailedDownloadService.cs:63` handles encrypted/client-failed downloads, but lacks rejection-directed policy. Add defaults conservatively and expose exactly whether a case warns, marks failed, blocklists, searches again, or removes client data. Acceptance: ordinary filename/matching failures do not enter destructive retry loops; unknown/deleted indexers warn; explicit opt-outs/false values survive upgrades; existing blocklist and seed rules remain enforced.
 
+**2026-11-24 implementation:** Exact current indexer/client grab evidence
+allows opt-in automatic review/blocklist/blocklist-and-retry choices for
+confirmed dangerous, executable or user-rejected-extension source files.
+Review remains the default. The single committed terminal marker and
+blocklist write prevent duplicate actions; no client-data removal is added.
+Ambiguous, incomplete and remote-only diagnostics remain review cases.
+See [local validation](local-validation.md#d23-d24-d25-d08-d20-and-d29-policy-verification-2026-11-24).
+
 ### D09
 
 **Fail over among eligible download clients**
@@ -2392,6 +2400,15 @@ See [local validation](local-validation.md#d19-b05-and-d26-verification-2026-11-
 
 **P2 · missing persisted rank mechanism · adapt if quality sorting is wanted · profile migration/query work · M.** S:`src/NzbDrone.Core/Profiles/Qualities/QualityProfileRankService.cs:47` computes normalized equal ranks for grouped qualities; repository migration `233_quality_profile_quality_ranks.cs`; S:`src/NzbDrone.Core/History/HistoryRepository.cs:167` and `Blocklisting/BlocklistRepository.cs:71` join ranks for sorting. Bookshelf has profile ordering and `QualityModelComparer`, but no `QualityProfileRankService` or rank table. This is database-side sorting correctness, not a replacement for custom-format scores or a proven acquisition-speed optimization. Acceptance: reordered profiles/group equality affect paginated sort consistently, unknown quality sorts predictably, profile save/delete invalidates ranks, and migration preserves IDs/settings.
 
+**2026-11-24 implementation:** A database-derived rank view over the saved
+quality profile avoids duplicated rank state and makes profile changes visible
+immediately to paginated History and Blocklist queries. Groups have equal
+normalized rank; absent qualities sort below known values with stable ID ties.
+Files use profile rank and the Books library can sort by the lowest tracked
+file rank in the monitored edition. File/profile edits and individual/bulk author reassignments refresh the
+relevant views without changing custom-format scores or acquisition preferences.
+See [local validation](local-validation.md#d23-d24-d25-d08-d20-and-d29-policy-verification-2026-11-24).
+
 ### D21
 
 **Backport narrow RSS parser fixes, retain existing feed machinery**
@@ -2450,6 +2467,13 @@ library cleanup. See [local validation](local-validation.md#rg04-b09-and-d22-col
 
 **P2 · partial · adapt · D22 · M.** S:`src/NzbDrone.Core/ImportLists/ImportListSyncService.cs:288` accumulates tags across lists for existing series; `RemoveTagsFromSeriesNotOnLists:338` removes synchronized tags only after relevant lists have successfully synced; `TagExistingType.cs`. B:`src/NzbDrone.Core/ImportLists/ImportListDefinition.cs:11` supports monitoring existing items and inherits provider tags, but its sync service has no corresponding `TagExisting` policy. Add separate Add/Sync/None choices, distinguishing manual tags from list-owned tags. Acceptance: shared tags across multiple lists remain while any successful owning list contains the book/author; an offline list never strips tags; manual tags survive; duplicate items aggregate tags without duplicate additions.
 
+**2026-11-24 implementation:** Add/Sync/None author-tag modes distinguish
+persistent manually owned tags and list-created claims. Shared tags are kept
+while another owner still contains the author; incomplete or stale provider
+results cannot strip them, and disabled/deleted owner definitions release
+claims without removal. Older clients omitting the new field preserve a saved
+policy. See [local validation](local-validation.md#d23-d24-d25-d08-d20-and-d29-policy-verification-2026-11-24).
+
 ### D24
 
 **Offer non-destructive cleanup when books leave all lists**
@@ -2463,6 +2487,14 @@ library cleanup. See [local validation](local-validation.md#rg04-b09-and-d22-col
 
 **P2 · missing policy · adapt only after membership reliability · D22, D23 · M.** S:`src/NzbDrone.Core/ImportLists/ImportListSyncService.cs:447` gates cleaning on all-list success and pending cleanup; `CleanLibrary:460` has log-only, keep-and-unmonitor, keep-and-tag modes. B:`src/NzbDrone.Core/ImportLists/ImportListSyncService.cs:412` executes sync/add behavior without equivalent cleanup. Start disabled with log-only preview; choose book versus author scope explicitly, retaining local recordings/unlisted/manual additions. Acceptance: no action on failed/incomplete refreshes, no file deletion, overlapping lists and excluded items are respected, preview names exactly affected entities, and user-owned monitoring changes are not silently overwritten.
 
+**2026-11-24 implementation:** An explicit read-only preview and confirmed
+unmonitor/tag action use exact native recordings directly created by a list,
+not filename/author breadth or guessed historical origin. All enabled lists
+must have reliable complete recent snapshots and safely resolved identities.
+A changed proof requires a fresh preview. No automatic cleanup or file deletion;
+manual ownership and excluded/local recordings are protected. Tag actions
+state their author-level scope. See [local validation](local-validation.md#d23-d24-d25-d08-d20-and-d29-policy-verification-2026-11-24).
+
 ### D25
 
 **Add a documented generic JSON import-list endpoint**
@@ -2475,6 +2507,14 @@ library cleanup. See [local validation](local-validation.md#rg04-b09-and-d22-col
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/ImportLists/ImportListSyncService.cs](../src/NzbDrone.Core/ImportLists/ImportListSyncService.cs).
 
 **P2 · missing provider, existing list framework · adapt · D22 desirable, authoritative book identity schema · M.** S:`src/NzbDrone.Core/ImportLists/Custom/CustomImport.cs:33` fetches a custom endpoint, S:`src/NzbDrone.Core/ImportLists/Custom/CustomImportProxy.cs:36,67` performs HTTP/JSON requests, and S:`src/NzbDrone.Core/ImportLists/Custom/CustomAPIResource.cs:3` defines TV IDs. Reuse the provider/validation pattern, define a versioned author/work/edition/recording schema suitable for Bookshelf, and provide user-managed list examples. Acceptance: authenticated/private endpoints do not leak secrets in logs, unsupported schema versions and missing identifiers fail clearly, partial errors do not replace snapshots, paging/limits are explicit, and excluded books stay excluded. Do not ship the Sonarr TV payload as a Bookshelf contract.
+
+**2026-11-24 implementation:** The Custom JSON provider accepts a bounded
+paginated schema version 1 with exact author/recording identifiers, optional
+explicit work grouping and a consistent provider snapshot token. It rejects
+unsupported versions and incomplete/contradictory pages, preserves prior
+membership, supports an optional bearer credential, and never follows
+redirects. See the [provider contract](custom-json-import-lists.md) and
+[local validation](local-validation.md#d23-d24-d25-d08-d20-and-d29-policy-verification-2026-11-24).
 
 ### D26
 
@@ -2539,6 +2579,14 @@ See [local validation](local-validation.md#d19-b05-and-d26-verification-2026-11-
 - Bookshelf counterpart/integration point: [src/NzbDrone.Core/Download/Clients/QBittorrent/QBittorrent.cs](../src/NzbDrone.Core/Download/Clients/QBittorrent/QBittorrent.cs#L708).
 
 **P2 · partial · port/adapt · no dependency · S–M.** S:`src/NzbDrone.Core/Download/Clients/QBittorrent/QBittorrentSettings.cs:89` exposes `SeedTimeType`; S:`src/NzbDrone.Core/Download/Clients/QBittorrent/QBittorrentProxyV2.cs:243` selects `seedingTimeLimit` or `inactiveSeedingTimeLimit` with API 2.9.2 gating. B:`src/NzbDrone.Core/Download/Clients/QBittorrent/QBittorrent.cs:708` already detects inactive-time stop conditions and the torrent/preferences models have inactive limits, but B:`src/NzbDrone.Core/Download/Clients/QBittorrent/QBittorrentProxyV2.cs:229` sends only total seed time. Add the configuration and validation while preserving the existing total-time default. Acceptance: supported clients receive the correct parameter, older versions show a clear compatibility result, null/-1/-2/unlimited semantics stay intact, and existing seed-ratio/remove-completed safeguards work.
+
+**2026-11-24 implementation:** Total (existing default) and Inactive seed time
+are selectable in qBittorrent settings. The latter requires Web API 2.9.2.
+Unsupported inactive mode fails validation and rejects submission before add,
+rather than silently converting the requested policy. Ratio and time
+null/global/unlimited semantics, existing post-import and seeding protections,
+and the completed-download removal guard remain in place.
+See [local validation](local-validation.md#d23-d24-d25-d08-d20-and-d29-policy-verification-2026-11-24).
 
 ### D30
 

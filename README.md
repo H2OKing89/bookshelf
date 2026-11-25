@@ -325,6 +325,29 @@ fetches retain the saved membership; a successful empty response clears that
 list only. Excluded entries remain visible, and snapshots distinguish source
 IDs from resolved catalog identities without changing monitoring or ownership.
 
+For existing authors, **Tag Existing** can leave tags unchanged, add permanent
+tags, or synchronize tags supplied by the list. Tags you assign yourself are
+not list-owned. **List cleanup** previews formerly list-created recordings
+that are absent from all reliably refreshed lists. It never runs automatically
+or deletes files; unmonitoring exact recordings or adding an author-level tag
+requires confirmation of the current preview. A failed or incomplete refresh
+blocks cleanup. See [Custom JSON import lists](docs/custom-json-import-lists.md)
+for connecting your own versioned list source.
+
+History and Blocklist can sort by Quality using each author's saved profile,
+rather than a global format weight. A profile's grouped qualities have equal
+rank. **Library → Books** can sort by Lowest File Quality Rank (the least
+preferred tracked file in the monitored edition); a missing or unranked file
+is not represented as a higher-quality recording.
+
+Indexer advanced settings provide separate review, blocklist, and
+blocklist-and-retry choices for confirmed dangerous, executable and
+user-rejected-extension imports. All default to review. These policies do not
+remove client data or treat ambiguous matching failures as terminal. The
+qBittorrent client has a Seed Time Type setting: Total (the existing default)
+or Inactive, requiring qBittorrent 4.6.0 / Web API 2.9.2 or later.
+
+
 **Library → Statistics** summarizes the stored collection, including distinct
 recordings, reviewed work coverage, file counts and size, known audio duration,
 codec profiles, bitrate, languages, narrators and missing or stale media

@@ -1397,3 +1397,19 @@ including exact exclusions and unresolved provider identities. Partial or failed
 list responses do not erase previously observed members. This is a read-only
 membership view, not tag synchronization or library-cleanup policy.
 See [local validation](local-validation.md#rg04-b09-and-d22-collection-diagnostics-verification-2026-11-24).
+
+
+### D23–D25, D08, D20 and D29 list and acquisition policies — 2026-11-24
+
+Lists can apply or synchronize author tags with explicit list ownership.
+Non-destructive list cleanup uses a read-only preview and confirmed action on
+exact list-created recordings; it cannot run automatically or remove media.
+The custom JSON provider supports a documented, bounded audiobook-native
+payload and retains last success when complete membership cannot be proven.
+
+Indexer rejection policy is explicit and conservative; terminal handling
+requires confirmed source evidence and never removes client data. Quality
+sorting uses live saved-profile rank with equal group ranks and a lowest-file
+collection sort. qBittorrent total and inactive seeding modes retain current
+defaults and reject unsupported settings rather than changing semantics.
+See [local validation](local-validation.md#d23-d24-d25-d08-d20-and-d29-policy-verification-2026-11-24).

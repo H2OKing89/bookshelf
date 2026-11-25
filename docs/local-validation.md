@@ -180,6 +180,27 @@ membership, exclusion display, statistics filters and release-group evidence
 preservation. The release-group DTO fixture tests an already stored evidence
 record; the source and acquisition tests separately exercise actual resolution.
 
+## Check list policies, quality ranking and provider compatibility
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --baseline-runtime /path/to/older-audiobook-package \
+  --playwright-module /path/to/installed/playwright \
+  --checks listlifecycle providerpolicies indexerrejectionpolicy qualityranking
+```
+
+These hosted checks upgrade disposable libraries from a genuine package before
+D23–D29. The list-policy check uses owned loopback list responses to exercise
+shared tags, failed/partial refreshes, manual ownership and explicit cleanup;
+no deletion is permitted. The custom JSON/qBittorrent check tests real
+provider requests against synthetic local servers and the saved provider
+settings. The indexer policy check creates only disabled synthetic definitions;
+separate repository and service tests exercise terminal rejection and retry
+logic. The quality ranking proof uses real History and Blocklist pagination,
+profile reorder and library/file ranks. Browser checks use desktop and phone
+viewports. The fixture does not submit real downloads or contact real providers.
+
 ## Check refresh cancellation and shutdown
 
 Run the cancellation proof against a package containing P10:
@@ -1519,3 +1540,120 @@ These local RG04/B09/D22 slices are complete. D23/D24 remain separate work.
 No production or existing development library, external provider, real
 indexer/download client or GitHub workflow was used; other platform and CI
 acceptance remain open under P21/P22.
+
+## D23, D24, D25, D08, D20 and D29 policy verification (2026-11-24)
+
+The local implementation includes the qBittorrent mode (`ab21f3d28`), Custom
+JSON provider (`df29bf412`), per-indexer rejection policy (`3d3e53793`), list
+lifecycle (`6fc295263`, `d872f911e`), and profile-based quality ranking
+(`0c4da26bd`). Migration 166 adds provenance for exact list-created recordings
+and list-owned author tags; 167 adds a derived rank view; 168 adds the three
+indexer policy fields with the review default. Existing IDs, user-owned tags,
+quality profiles and media remain unchanged by the migration itself.
+
+- D23/D24: **37 focused SQLite tests, 11 PostgreSQL repository tests and nine
+  API tests** passed. All successful list snapshots must support a cleanup
+  proof; recent exact membership and known list-created origin are required.
+  Older or local/manual records cannot gain cleanup authority retroactively.
+  Tag Existing None preserves existing new-author behavior. Add is persistent;
+  Sync owns only tags it creates, with shared claims across lists. The cleanup
+  tag action is author-level; its unmonitor action targets exact recordings.
+  An explicit same-value user edit relinquishes the relevant list claim.
+- D25: **49 Core and 49 Common transport tests** passed, including page
+  consistency, complete-success gating, response bounds, optional bearer
+  header, and response/redirect diagnostic redaction. The public contract and
+  sample JSON live in [Custom JSON import lists](custom-json-import-lists.md).
+  Explicit work grouping expands to the supplied recordings; it does not
+  invent work membership or create unresolvable work records.
+- D08: **148 focused SQLite/Core tests, 96 API tests and seven PostgreSQL
+  repository tests** passed, including successful terminal claim, atomic
+  blocklist/history writes and concurrent duplicate protection. Unknown or
+  ambiguous source evidence, ordinary matching failures and unsupported
+  remote-only diagnostics remain review cases. Rejecting a file type never
+  authorizes automatic removal; opt-in search still respects the existing
+  global/interactive rules. The source tests cover the real transition;
+  hosted settings verification uses disabled owned indexers only.
+- D20: **53 focused SQLite/Core tests, 10 PostgreSQL tests and 94 API tests**
+  passed on the initial ranking slice. The rank view reads the persisted
+  profile and is not a second table of copied rank rows. History and Blocklist
+  order the complete filtered result before pagination, with equal group
+  ranks and stable ID ties. For the Books sort, the minimum rank of tracked
+  files in the monitored edition represents the least preferred tracked part,
+  not the guaranteed quality or completeness of a recording. The old global
+  quality weight remains available to existing clients and acquisition logic.
+- D29: **135 focused qBittorrent tests** passed. The selected total/inactive
+  parameter is checked in magnet, file-upload and explicit share-limit forms.
+  Null, global, unlimited and zero semantics remain intact. Old clients reject
+  incompatible inactive mode before an add. Existing completion safeguards
+  also recognize a short global inactive-time remove/delete action.
+- The initial combined `88366f339` packages had matching clean glibc/musl
+  source provenance. Both TS projects, ESLint, Vite production verification,
+  **132 frontend tests and 156 Python tooling tests** passed. The full
+  offline source suite passed **6,012 tests** with 94 skips: 4,797 Core,
+  843 Common, 96 API, 181 Host, 20 Updater, 23 PostgreSQL migration and 52
+  focused PostgreSQL regression tests. The fixture-only AcquisitionProbe
+  binding correction `066ffdb40` uses the published rejection service with
+  synthetic unknown-indexer context and rejects any policy write. Its replay
+  passed **306 acquisition checks**, retaining all previous assertions and
+  adding a review-only preservation check.
+- The initial combined package also passed **41 datastore**, **110 auth**,
+  and **72 collection diagnostics** checks; broader UI/navigation, operational
+  paging, metadata-accessibility/library review, recording identity and
+  recording lifecycle receipts passed **194**, **124**, **188**, **262** and
+  **78** checks respectively, including unchanged-package assertions.
+  The focused list, provider and indexer hosted checks passed **45**, **54**
+  and **39** cases respectively, each exercising real API behavior and
+  desktop and phone UI against disposable homes. Initial ranking verification
+  passed 29 cases; subsequent review reproduced a separate cached rank issue
+  after individual and bulk author profile reassignment, requiring the final
+  correction below.
+- `f09759bef` fixes the independently reproduced author-profile reassignment
+  case and updates file editor ranks from the successful response even if
+  SignalR is disconnected. It invalidates per-author and all-library cached
+  statistics after individual and bulk author edits. The rank event refreshes
+  authors only when the stored profile assignment actually changes, so
+  ordinary tag-only edits do not trigger a full rank refresh. **21 focused
+  backend and eight frontend tests** passed, including seven new C# cases.
+  The hosted fixture also warms the individual and global caches and switches
+  profiles via both real author endpoints before validating the resulting
+  library/file and paginated history/blocklist ranks.
+- The final clean glibc and musl Linux x64 candidates were rebuilt from
+  `f09759bef`. All four dedicated hosted receipts pass on that exact source:
+  **45 list lifecycle**, **54 custom-provider/qBittorrent**, **39 indexer
+  policy**, and **34 quality-ranking checks** (172 feature checks; 180 with
+  the unchanged-package assertions). The list receipt verifies actual sync,
+  overlapping membership, both manual ownership boundaries, healthy/failed
+  snapshots, stale confirmation rejection, tag and unmonitor actions, restart,
+  preserved ownership and unchanged media bytes. The quality replay includes
+  the additional individual/bulk reassignment proof; no restart is needed to
+  get fresh ranks. The provider and indexer proof uses local mock responses
+  or disabled indexer definitions, never actual downloads.
+- Final exact-source verification passed **6,019 .NET tests** with 94 skips
+  (4,804 Core, 843 Common, 96 API, 181 Host, 20 Updater, 23 PostgreSQL
+  migrations and 52 focused PostgreSQL tests). The corrected frontend passed
+  both TS projects, ESLint, Vite production verification and **133 frontend
+  tests**. The final tooling suite passed **156 tests**. The existing Python
+  resource warnings originate in the earlier identity/restore test helpers;
+  they are not new provider fixture warnings or failing tests.
+- Final exact-package replay passed **613 delivery checks**, including 306
+  acquisition checks and 56 musl Docker checks, and the datastore/authentication
+  checks again passed 41/110. Replayed collection, library/navigation,
+  operational paging, metadata/library review, identity and lifecycle checks
+  passed 74/194/124/188/262/78 respectively (including unchanged-package
+  assertions). Across all 13 final hosted receipts there were **1,868 passing
+  checks**, including the unchanged-input assertions, with no failed checks.
+
+Final evidence is in `_temp/d23-d29-20261124/`: `source-tests-verified/`,
+`quality-verified/summary.json`, `list-verified/summary.json`,
+`provider-verified/summary.json`, `indexer-verified/summary.json`,
+`delivery-verified/summary.json`, and the other `*-verified/summary.json`
+receipts. The corresponding feature screenshot directories contain the owned
+Chrome desktop and phone views. Focused implementation receipts are in
+`_temp/d23-d24-list-policy/`, `_temp/d25-custom-20261124/`,
+`_temp/d08-20261124/`, and the D20/D29 and assignment logs under
+`_temp/d23-d29-20261124/`.
+
+All six local slices are verified. No production or existing development
+library was modified. No GitHub workflows, external real list providers,
+real indexers, or real download clients were used. Cross-platform release
+and CI acceptance remain separate P21/P22 work.
