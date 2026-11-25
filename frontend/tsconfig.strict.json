@@ -33,6 +33,7 @@
     "./src/Settings/ImportLists/ImportLists/ImportListMembership.tsx",
     "./src/Utilities/Quality/qualityRank.ts",
     "./src/Utilities/Book/recordingIdentity.ts",
+    "./src/Utilities/Scroll/scrollVirtualizedWindow.ts",
     "./src/Utilities/Fetch/**/*.ts",
     "./src/System/Status/MetadataProviders/**/*.ts",
     "./src/System/Status/MetadataProviders/**/*.tsx",

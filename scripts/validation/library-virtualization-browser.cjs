@@ -62,7 +62,7 @@ async function benchmark(page) {
   }, rowSelector);
 }
 
-async function visibleLink(page, route) {
+async function visibleLink(page, route, selector = rowSelector) {
   const href = await page.evaluate(({ selector, route }) => {
     const grid = document.querySelector('.ReactVirtualized__Grid');
     let scroller = grid?.parentElement;
@@ -76,8 +76,90 @@ async function visibleLink(page, route) {
       return { href: link.getAttribute('href'), distance: Math.abs((rect.top + rect.bottom - top - bottom) / 2) };
     });
     return candidates.sort((left, right) => left.distance - right.distance)[0]?.href;
-  }, { selector: rowSelector, route });
-  return href && page.locator(rowSelector + ' a[href="' + href + '"]').first();
+  }, { selector, route });
+  return href && page.locator(selector + ' a[href="' + href + '"]').first();
+}
+
+async function verifyAdditionalView(page, config, layout, section, route, view, check, stage) {
+  const preference = section === 'authors' ? 'authorIndex' : 'bookIndex';
+  const cssPrefix = (section === 'authors' ? 'Author' : 'Book') + 'Index' +
+    (view === 'posters' ? 'Posters' : 'Overviews') + '-grid-';
+  const gridSelector = `.ReactVirtualized__Grid[class*="${cssPrefix}"]`;
+  const grid = page.locator(gridSelector);
+  // Apply the desired layout before the next application bootstrap, after
+  // the outgoing page has finished its ordinary preference persistence.
+  await page.evaluate(({ preference, view }) => {
+    sessionStorage.setItem('owned-library-next-view', JSON.stringify({ preference, view }));
+  }, { preference, view });
+  stage('load');
+  await page.goto(config.url + '/' + section);
+  await grid.locator(`a[href*="/${route}/"]`).first().waitFor();
+  await scrollToFraction(page, 0);
+  const distance = await page.evaluate(() => {
+    const grid = document.querySelector('.ReactVirtualized__Grid');
+    let scroller = grid?.parentElement;
+    while (scroller && !['auto', 'scroll'].includes(getComputedStyle(scroller).overflowY)) scroller = scroller.parentElement;
+    if (!scroller || scroller.scrollHeight <= scroller.clientHeight + 100) scroller = document.scrollingElement;
+    return scroller.scrollHeight - scroller.clientHeight;
+  });
+  const name = section + '_' + view;
+  const endPrefix = section === 'authors' ? '/owned-author-15' : '/owned-recording-14';
+  if (layout === 'desktop') {
+    const jumpBar = page.locator('[class*="PageJumpBar-jumpBar-"]');
+    const z = jumpBar.getByRole('button', { name: 'Z', exact: true });
+    const a = jumpBar.getByRole('button', { name: 'A', exact: true });
+    stage('end_jump');
+    await z.click();
+    await grid.locator(`a[href*="${endPrefix}"]`).first().waitFor();
+    check(name + '_jump_to_end', await scrollPosition(page) > distance * 0.8);
+    stage('top_jump');
+    await a.click();
+    const startPrefix = section === 'authors' ? '/owned-author-100' : '/owned-recording-1000';
+    await grid.locator(`a[href*="${startPrefix}"]`).first().waitFor();
+    check(name + '_jump_to_top', await scrollPosition(page) <= 76);
+    await z.click();
+    await grid.locator(`a[href*="${endPrefix}"]`).first().waitFor();
+  } else {
+    stage('native_scroll');
+    await scrollToFraction(page, 0.95);
+    const firstNearEnd = section === 'authors' ? 1450 : 13800;
+    await page.waitForFunction(({ gridSelector, route, firstNearEnd }) =>
+      [...document.querySelectorAll(gridSelector + ' a[href*="/' + route + '/"]')].some(link => {
+        const id = Number(link.getAttribute('href').split('-').at(-1));
+        const rect = link.getBoundingClientRect();
+        return id >= firstNearEnd && rect.height > 0 && rect.bottom > 0 && rect.top < innerHeight;
+      }), { gridSelector, route, firstNearEnd });
+    check(name + '_native_phone_scroll_reaches_near_end', await scrollPosition(page) > distance * 0.8);
+  }
+
+  stage('navigate');
+  const link = await visibleLink(page, route, gridSelector);
+  if (!link) throw new Error('OwnedVisibleLibraryLinkMissing');
+  const href = await link.getAttribute('href');
+  await page.evaluate(href => {
+    history.scrollRestoration = 'manual';
+    window.ownedLibraryScrollBefore = undefined;
+    document.addEventListener('click', function record(event) {
+      if (event.target.closest('a')?.getAttribute('href') !== href) return;
+      const grid = document.querySelector('.ReactVirtualized__Grid');
+      let scroller = grid?.parentElement;
+      while (scroller && !['auto', 'scroll'].includes(getComputedStyle(scroller).overflowY)) scroller = scroller.parentElement;
+      if (!scroller || scroller.scrollHeight <= scroller.clientHeight + 100) scroller = document.scrollingElement;
+      window.ownedLibraryScrollBefore = scroller.scrollTop;
+      document.removeEventListener('click', record, true);
+    }, true);
+  }, href);
+  await link.click();
+  await page.waitForURL(url => url.pathname === href);
+  const before = await page.evaluate(() => window.ownedLibraryScrollBefore);
+  await grid.waitFor({ state: 'detached' });
+  stage('back');
+  await page.goBack();
+  await page.waitForURL(url => url.pathname.endsWith('/' + section));
+  await grid.locator(`a[href*="/${route}/"]`).first().waitFor();
+  await page.waitForTimeout(350);
+  const after = await scrollPosition(page);
+  check(name + '_back_restores_scroll', Number.isFinite(before) && Math.abs(before - after) <= 76);
 }
 
 async function run(config) {
@@ -115,6 +197,15 @@ async function run(config) {
           return route.continue();
         });
         await context.addInitScript(() => {
+          const nextView = sessionStorage.getItem('owned-library-next-view');
+          if (nextView) {
+            const { preference, view } = JSON.parse(nextView);
+            const state = JSON.parse(localStorage.getItem('readarr') || '{}');
+            state[preference] = { ...state[preference], view };
+            localStorage.setItem('readarr', JSON.stringify(state));
+            sessionStorage.removeItem('owned-library-next-view');
+            return;
+          }
           if (sessionStorage.getItem('owned-library-viewport-seeded')) return;
           sessionStorage.setItem('owned-library-viewport-seeded', '1');
           localStorage.setItem('readarr', JSON.stringify({
@@ -244,6 +335,14 @@ async function run(config) {
           await page.waitForTimeout(200);
           check(section + '_resized_rows_bounded', (await rows.count()) > 0 && (await rows.count()) < 80);
           await page.setViewportSize({ width, height: (await page.viewportSize()).height });
+        }
+        for (const [section, route] of [['authors', 'author'], ['books', 'book']]) {
+          for (const view of ['posters', 'overview']) {
+            failureStep = layout + '_' + section + '_' + view;
+            await verifyAdditionalView(page, config, layout, section, route, view, check, phase => {
+              failureStep = layout + '_' + section + '_' + view + '_' + phase;
+            });
+          }
         }
         failureStep = layout + '_ebook_details';
         await page.goto(config.url + '/book/owned-recording-10007');

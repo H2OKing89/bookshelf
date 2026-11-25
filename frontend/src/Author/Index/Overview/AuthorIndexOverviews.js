@@ -6,6 +6,7 @@ import Measure from 'Components/Measure';
 import dimensions from 'Styles/Variables/dimensions';
 import getIndexOfFirstCharacter from 'Utilities/Array/getIndexOfFirstCharacter';
 import hasDifferentItemsOrOrder from 'Utilities/Object/hasDifferentItemsOrOrder';
+import { scrollVirtualizedWindow, scrollVirtualizedWindowToRow } from 'Utilities/Scroll/scrollVirtualizedWindow';
 import AuthorIndexOverview from './AuthorIndexOverview';
 import styles from './AuthorIndexOverviews.css';
 
@@ -65,6 +66,7 @@ class AuthorIndexOverviews extends Component {
     };
 
     this._grid = null;
+    this._scrollChild = null;
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -100,9 +102,9 @@ class AuthorIndexOverviews extends Component {
       this._grid.recomputeGridSize();
     }
 
-    if (this._grid && scrollTop !== 0 && !scrollRestored) {
+    if (this._grid && this._scrollChild && scrollTop !== 0 && !scrollRestored) {
       this.setState({ scrollRestored: true });
-      this._grid.scrollToPosition({ scrollTop });
+      scrollVirtualizedWindow(this._scrollChild, scrollTop);
     }
 
     if (jumpToCharacter != null && jumpToCharacter !== prevProps.jumpToCharacter) {
@@ -110,10 +112,7 @@ class AuthorIndexOverviews extends Component {
 
       if (this._grid && index != null) {
 
-        this._grid.scrollToCell({
-          rowIndex: index,
-          columnIndex: 0
-        });
+        scrollVirtualizedWindowToRow(this._grid, this._scrollChild, index);
       }
     }
   }
@@ -121,8 +120,9 @@ class AuthorIndexOverviews extends Component {
   //
   // Control
 
-  setGridRef = (ref) => {
+  setGridRef = (ref, onChildScroll) => {
     this._grid = ref;
+    this._scrollChild = ref ? onChildScroll : null;
   };
 
   calculateGrid = (width = this.state.width, isSmallScreen) => {
@@ -238,7 +238,7 @@ class AuthorIndexOverviews extends Component {
             return (
               <div ref={registerChild}>
                 <Grid
-                  ref={this.setGridRef}
+                  ref={(ref) => this.setGridRef(ref, onChildScroll)}
                   className={styles.grid}
                   autoHeight={true}
                   height={height}

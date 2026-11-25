@@ -5,6 +5,7 @@ import Measure from 'Components/Measure';
 import Scroller from 'Components/Scroller/Scroller';
 import { scrollDirections } from 'Helpers/Props';
 import hasDifferentItemsOrOrder from 'Utilities/Object/hasDifferentItemsOrOrder';
+import { scrollVirtualizedWindow, scrollVirtualizedWindowToRow } from 'Utilities/Scroll/scrollVirtualizedWindow';
 import styles from './VirtualTable.css';
 
 function overscanIndicesGetter(options) {
@@ -42,6 +43,7 @@ class VirtualTable extends Component {
     };
 
     this._grid = null;
+    this._scrollChild = null;
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -65,24 +67,22 @@ class VirtualTable extends Component {
       this._grid.recomputeGridSize();
     }
 
-    if (this._grid && scrollTop !== undefined && scrollTop !== 0 && !scrollRestored) {
+    if (this._grid && this._scrollChild && scrollTop !== undefined && scrollTop !== 0 && !scrollRestored) {
       this.setState({ scrollRestored: true });
-      this._grid.scrollToPosition({ scrollTop });
+      scrollVirtualizedWindow(this._scrollChild, scrollTop);
     }
 
     if (this._grid && scrollIndex != null && scrollIndex !== prevProps.scrollIndex) {
-      this._grid.scrollToCell({
-        rowIndex: scrollIndex,
-        columnIndex: 0
-      });
+      scrollVirtualizedWindowToRow(this._grid, this._scrollChild, scrollIndex);
     }
   }
 
   //
   // Control
 
-  setGridRef = (ref) => {
+  setGridRef = (ref, onChildScroll) => {
     this._grid = ref;
+    this._scrollChild = ref ? onChildScroll : null;
   };
 
   //
@@ -151,7 +151,7 @@ class VirtualTable extends Component {
                 {header}
                 <div ref={registerChild}>
                   <Grid
-                    ref={this.setGridRef}
+                    ref={(ref) => this.setGridRef(ref, onChildScroll)}
                     autoContainerWidth={true}
                     autoHeight={true}
                     autoWidth={true}
