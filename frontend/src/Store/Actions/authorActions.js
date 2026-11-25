@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { createAction } from 'redux-actions';
 import { batchActions } from 'redux-batched-actions';
+import { libraryResponseParser, parseLibraryAuthor } from 'Book/LibraryModels';
 import { filterTypePredicates, filterTypes, sortDirections } from 'Helpers/Props';
 import { createThunk, handleThunks } from 'Store/thunks';
 import createAjaxRequest from 'Utilities/createAjaxRequest';
@@ -229,7 +230,7 @@ function getSaveAjaxOptions({ ajaxOptions, payload }) {
 
 export const actionHandlers = handleThunks({
 
-  [FETCH_AUTHOR]: createFetchHandler(section, '/author'),
+  [FETCH_AUTHOR]: createFetchHandler(section, '/author', libraryResponseParser(parseLibraryAuthor)),
   [SAVE_AUTHOR]: createSaveProviderHandler(section, '/author', { getAjaxOptions: getSaveAjaxOptions }),
   [DELETE_AUTHOR]: createRemoveItemHandler(section, '/author'),
 

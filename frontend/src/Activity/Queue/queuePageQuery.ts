@@ -1,5 +1,7 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import queryClient from 'App/queryClient';
+import { parseAssociationId, parseResourceId } from 'Book/BookIdentity';
+import { parseQualityModel } from 'Book/LibraryModels';
 import fetchJson from 'Utilities/Fetch/fetchJson';
 import type { QueueFilters } from './queueFilters';
 
@@ -15,6 +17,15 @@ const sortAliases: Record<string, string> = {
   'books.title': 'book.title',
   'books.releaseDate': 'book.releaseDate'
 };
+
+// eslint-disable-next-line init-declarations -- Nominal type for parsed queue identities.
+declare const queueIdentity: unique symbol;
+export type QueueRowId = string & { readonly [queueIdentity]: 'row' };
+export type QueueRevision = string & { readonly [queueIdentity]: 'revision' };
+
+function isQueueString<Kind extends 'row' | 'revision'>(value: unknown): value is string & { readonly [queueIdentity]: Kind } {
+  return typeof value === 'string' && value.trim().length > 0;
+}
 
 interface QueuePageRequest {
   page: number;
@@ -33,35 +44,29 @@ function isInteger(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value);
 }
 
-function optionalId(value: unknown) {
+function optionalString(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    return value;
+  }
   if (value == null) {
     return undefined;
-  }
-
-  if (!isInteger(value) || value < 0) {
-    throw new TypeError('Invalid queue record association');
-  }
-
-  return value;
-}
-
-function optionalString(value: unknown) {
-  if (value == null || typeof value === 'string') {
-    return value ?? undefined;
   }
 
   throw new TypeError('Invalid queue record text');
 }
 
-function optionalBoolean(value: unknown) {
-  if (value == null || typeof value === 'boolean') {
-    return value ?? undefined;
+function optionalBoolean(value: unknown): boolean | undefined {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (value == null) {
+    return undefined;
   }
 
   throw new TypeError('Invalid queue record flag');
 }
 
-function optionalNumber(value: unknown) {
+function optionalNumber(value: unknown): number | undefined {
   if (value == null) {
     return undefined;
   }
@@ -71,26 +76,6 @@ function optionalNumber(value: unknown) {
   }
 
   return value;
-}
-
-function parseQuality(value: unknown) {
-  if (value == null) {
-    return null;
-  }
-
-  if (!isRecord(value) || !isRecord(value.quality) || typeof value.quality.name !== 'string' ||
-      !isRecord(value.revision)) {
-    throw new TypeError('Invalid queue quality');
-  }
-
-  return {
-    quality: { name: value.quality.name },
-    revision: {
-      real: optionalNumber(value.revision.real),
-      version: optionalNumber(value.revision.version),
-      isRepack: optionalBoolean(value.revision.isRepack)
-    }
-  };
 }
 
 function parseFormats(value: unknown) {
@@ -158,7 +143,7 @@ function parseRecordings(value: unknown) {
       throw new TypeError('Invalid queue recording');
     }
     return {
-      bookId: recording.bookId,
+      bookId: parseResourceId(recording.bookId, 'book'),
       recordingId: optionalString(recording.recordingId),
       title: optionalString(recording.title),
       titleSlug: optionalString(recording.titleSlug),
@@ -172,8 +157,8 @@ function parseRecordings(value: unknown) {
 }
 
 function parseQueueItem(value: unknown) {
-  if (!isRecord(value) || typeof value.id !== 'string' || !value.id ||
-      typeof value.revision !== 'string' || !value.revision ||
+  if (!isRecord(value) || !isQueueString<'row'>(value.id) ||
+      !isQueueString<'revision'>(value.revision) ||
       typeof value.title !== 'string' || typeof value.status !== 'string' ||
       (value.kind !== 'download' && value.kind !== 'pending' && value.kind !== 'unaddressable') ||
       (value.coverageSource !== 'recordedGrab' && value.coverageSource !== 'pendingRelease' &&
@@ -181,7 +166,7 @@ function parseQueueItem(value: unknown) {
     throw new TypeError('Invalid queue record');
   }
 
-  const downloadClientId = optionalId(value.downloadClientId);
+  const downloadClientId = parseAssociationId(value.downloadClientId, 'downloadClient') ?? undefined;
   const downloadId = optionalString(value.downloadId);
   if (value.kind === 'download' && (!downloadClientId || !downloadId ||
       value.id !== `download:${downloadClientId}:${downloadId}`)) {
@@ -189,6 +174,11 @@ function parseQueueItem(value: unknown) {
   }
   if (value.kind === 'pending' && !/^pending:[1-9]\d*$/.test(value.id)) {
     throw new TypeError('Invalid pending release identity');
+  }
+
+  if (value.kind === 'unaddressable' && [value.canRemove, value.canRemoveFromClient, value.canChangeCategory,
+    value.canIgnore, value.canBlocklist, value.canRetry, value.canGrab, value.canImport].some((flag) => flag === true)) {
+    throw new TypeError('Unaddressable queue row cannot authorize actions');
   }
 
   return {
@@ -200,7 +190,7 @@ function parseQueueItem(value: unknown) {
     author: parseAuthor(value.author),
     title: value.title,
     status: value.status,
-    authorId: optionalId(value.authorId),
+    authorId: parseAssociationId(value.authorId, 'author') ?? undefined,
     downloadClientId,
     downloadId,
     canRemove: requiredBoolean(value.canRemove),
@@ -211,7 +201,7 @@ function parseQueueItem(value: unknown) {
     canRetry: requiredBoolean(value.canRetry),
     canGrab: requiredBoolean(value.canGrab),
     canImport: requiredBoolean(value.canImport),
-    quality: parseQuality(value.quality),
+    quality: parseQualityModel(value.quality) ?? null,
     customFormats: parseFormats(value.customFormats),
     customFormatScore: optionalNumber(value.customFormatScore) ?? 0,
     estimatedCompletionTime: optionalString(value.estimatedCompletionTime),
@@ -232,10 +222,10 @@ function parseQueueItem(value: unknown) {
   };
 }
 
-type QueueItem = ReturnType<typeof parseQueueItem>;
-type QueueTarget = Pick<QueueItem, 'id' | 'revision'>;
+export type QueueItem = ReturnType<typeof parseQueueItem>;
+export type QueueTarget = Pick<QueueItem, 'id' | 'revision'>;
 
-interface RemovalOptions {
+export interface RemovalOptions {
   remove: boolean;
   blocklist: boolean;
   skipRedownload: boolean;
@@ -248,7 +238,7 @@ interface ActionTargets {
   pageKey: string;
 }
 
-type QueueAction = ActionTargets & (
+export type QueueAction = ActionTargets & (
   | { kind: 'grab' }
   | { kind: 'remove'; options: RemovalOptions }
 );

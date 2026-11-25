@@ -26,7 +26,10 @@ SpinnerIconButton.propTypes = {
   name: PropTypes.object.isRequired,
   spinningName: PropTypes.object.isRequired,
   isDisabled: PropTypes.bool.isRequired,
-  isSpinning: PropTypes.bool.isRequired
+  isSpinning: PropTypes.bool.isRequired,
+  onPress: PropTypes.func,
+  title: PropTypes.string,
+  'aria-label': PropTypes.string
 };
 
 SpinnerIconButton.defaultProps = {

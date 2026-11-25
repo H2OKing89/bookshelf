@@ -3,7 +3,7 @@ import Icon from 'Components/Icon';
 import { icons } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
 
-interface QueueColumn {
+export interface QueueColumn {
   name: string;
   label?: string | (() => string) | React.ReactNode;
   columnLabel?: () => string;

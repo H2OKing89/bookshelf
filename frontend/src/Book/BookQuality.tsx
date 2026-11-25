@@ -1,11 +1,11 @@
-import PropTypes from 'prop-types';
 import React from 'react';
+import type { QualityModel } from 'Book/LibraryModels';
 import Label from 'Components/Label';
 import { kinds } from 'Helpers/Props';
 import formatBytes from 'Utilities/Number/formatBytes';
 import translate from 'Utilities/String/translate';
 
-function getTooltip(title, quality, size, isMonitored, isCutoffNotMet) {
+function getTooltip(title: string, quality: QualityModel, size: number | null | undefined, isMonitored: boolean, isCutoffNotMet: boolean) {
   const revision = quality.revision;
 
   if (revision.real && revision.real > 0) {
@@ -29,9 +29,9 @@ function getTooltip(title, quality, size, isMonitored, isCutoffNotMet) {
   return title;
 }
 
-function revisionLabel(className, quality, showRevision) {
+function revisionLabel(className: string | undefined, quality: QualityModel, showRevision: boolean) {
   if (!showRevision) {
-    return;
+    return null;
   }
 
   if (quality.revision.isRepack) {
@@ -57,17 +57,28 @@ function revisionLabel(className, quality, showRevision) {
       </Label>
     );
   }
+  return null;
 }
 
-function BookQuality(props) {
+interface BookQualityProps {
+  className?: string;
+  title?: string;
+  quality?: QualityModel | null;
+  size?: number | null;
+  isMonitored?: boolean;
+  isCutoffNotMet?: boolean;
+  showRevision?: boolean;
+}
+
+function BookQuality(props: BookQualityProps) {
   const {
     className,
-    title,
+    title = '',
     quality,
     size,
-    isMonitored,
-    isCutoffNotMet,
-    showRevision
+    isMonitored = true,
+    isCutoffNotMet = false,
+    showRevision = false
   } = props;
 
   let kind = kinds.DEFAULT;
@@ -93,21 +104,5 @@ function BookQuality(props) {
     </span>
   );
 }
-
-BookQuality.propTypes = {
-  className: PropTypes.string,
-  title: PropTypes.string,
-  quality: PropTypes.object.isRequired,
-  size: PropTypes.number,
-  isMonitored: PropTypes.bool,
-  isCutoffNotMet: PropTypes.bool,
-  showRevision: PropTypes.bool
-};
-
-BookQuality.defaultProps = {
-  title: '',
-  isMonitored: true,
-  showRevision: false
-};
 
 export default BookQuality;

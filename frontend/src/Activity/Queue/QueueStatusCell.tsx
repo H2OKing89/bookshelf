@@ -1,13 +1,13 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import Icon from 'Components/Icon';
 import TableRowCell from 'Components/Table/Cells/TableRowCell';
 import Popover from 'Components/Tooltip/Popover';
 import { icons, kinds, tooltipPositions } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
+import type { QueueItem } from './queuePageQuery';
 import styles from './QueueStatusCell.css';
 
-function getDetailedPopoverBody(statusMessages) {
+function getDetailedPopoverBody(statusMessages: QueueItem['statusMessages']) {
   return (
     <div>
       {
@@ -34,14 +34,24 @@ function getDetailedPopoverBody(statusMessages) {
   );
 }
 
-function QueueStatusCell(props) {
+interface QueueStatusCellProps {
+  sourceTitle: string;
+  status: string;
+  trackedDownloadStatus?: string | null;
+  trackedDownloadState?: string | null;
+  downloadClientAvailable?: boolean | null;
+  statusMessages?: QueueItem['statusMessages'] | null;
+  errorMessage?: string | null;
+}
+
+function QueueStatusCell(props: QueueStatusCellProps) {
   const {
     sourceTitle,
     status,
     trackedDownloadStatus,
     trackedDownloadState,
     downloadClientAvailable,
-    statusMessages,
+    statusMessages = [],
     errorMessage
   } = props;
 
@@ -127,7 +137,7 @@ function QueueStatusCell(props) {
     }
   }
 
-  let body = hasWarning || hasError ? getDetailedPopoverBody(statusMessages) : sourceTitle;
+  let body: React.ReactNode = hasWarning || hasError ? getDetailedPopoverBody(statusMessages ?? []) : sourceTitle;
   if (downloadClientAvailable === false) {
     iconKind = kinds.WARNING;
     title = 'Download client unavailable';
@@ -151,20 +161,5 @@ function QueueStatusCell(props) {
     </TableRowCell>
   );
 }
-
-QueueStatusCell.propTypes = {
-  sourceTitle: PropTypes.string.isRequired,
-  status: PropTypes.string.isRequired,
-  trackedDownloadStatus: PropTypes.string.isRequired,
-  trackedDownloadState: PropTypes.string.isRequired,
-  downloadClientAvailable: PropTypes.bool,
-  statusMessages: PropTypes.arrayOf(PropTypes.object),
-  errorMessage: PropTypes.string
-};
-
-QueueStatusCell.defaultProps = {
-  trackedDownloadStatus: 'Ok',
-  trackedDownloadState: 'Downloading'
-};
 
 export default QueueStatusCell;

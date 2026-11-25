@@ -1,13 +1,16 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import Label from 'Components/Label';
 import { kinds } from 'Helpers/Props';
 
-function BookFormats({ formats }) {
+interface BookFormatsProps {
+  formats?: readonly { id: number; name: string }[] | null;
+}
+
+function BookFormats({ formats }: BookFormatsProps) {
   return (
     <div>
       {
-        formats.map((format) => {
+        (formats ?? []).map((format) => {
           return (
             <Label
               key={format.id}
@@ -21,13 +24,5 @@ function BookFormats({ formats }) {
     </div>
   );
 }
-
-BookFormats.propTypes = {
-  formats: PropTypes.arrayOf(PropTypes.object).isRequired
-};
-
-BookFormats.defaultProps = {
-  formats: []
-};
 
 export default BookFormats;

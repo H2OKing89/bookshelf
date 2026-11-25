@@ -1,4 +1,4 @@
-import type { BookId } from 'Book/BookIdentity';
+import { type BookId, parseResourceId } from 'Book/BookIdentity';
 import { isPreferenceRecord, readPreferenceStorage, writePreferenceStorage } from '../../Store/Middleware/preferenceStorage';
 
 const preferenceVersion = 1;
@@ -40,7 +40,7 @@ export function parseHistoryBookId(value: unknown): BookId | undefined {
   const id = typeof value === 'string' && /^[1-9]\d*$/.test(value) ? Number(value) : value;
 
   if (typeof id === 'number' && Number.isSafeInteger(id) && id > 0 && id <= maximumBookId) {
-    return id as BookId;
+    return parseResourceId(id, 'book');
   }
 
   return undefined;

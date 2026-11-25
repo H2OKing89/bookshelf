@@ -4,11 +4,13 @@ import React from 'react';
 import { createAction } from 'redux-actions';
 import { batchActions } from 'redux-batched-actions';
 import bookEntities from 'Book/bookEntities';
+import { parseLibraryBook, parseLibraryCollection } from 'Book/LibraryModels';
 import Icon from 'Components/Icon';
 import { filterTypePredicates, filterTypes, icons, sortDirections } from 'Helpers/Props';
 import { createThunk, handleThunks } from 'Store/thunks';
 import createAjaxRequest from 'Utilities/createAjaxRequest';
 import dateFilterPredicate from 'Utilities/Date/dateFilterPredicate';
+import { ApiError } from 'Utilities/Fetch/fetchJson';
 import { recordingQualityRank } from 'Utilities/Quality/qualityRank';
 import translate from 'Utilities/String/translate';
 import { removeItem, set, update, updateItem } from './baseActions';
@@ -371,6 +373,18 @@ export const actionHandlers = handleThunks({
     });
 
     request.done((data) => {
+      try {
+        data = parseLibraryCollection(data, parseLibraryBook);
+      } catch {
+        dispatch(set({
+          section,
+          isFetching: false,
+          isPopulated: false,
+          error: new ApiError({ kind: 'invalid-response' })
+        }));
+        return;
+      }
+
       // Preserve books for other authors we didn't fetch
       if (payload.hasOwnProperty('authorId')) {
         const oldBooks = getState().books.items;

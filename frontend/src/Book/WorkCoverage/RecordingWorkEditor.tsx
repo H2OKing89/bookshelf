@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import PropTypes from 'prop-types';
 import React, { useRef, useState } from 'react';
 import Alert from 'Components/Alert';
 import Button from 'Components/Link/Button';
@@ -13,38 +12,59 @@ import ModalHeader from 'Components/Modal/ModalHeader';
 import { kinds, sizes } from 'Helpers/Props';
 import PendingChangesModal from 'Settings/PendingChangesModal';
 import useUnsavedNavigation from 'Settings/useUnsavedNavigation';
-import { recordingCoverage, saveWorkCoverage, workCoverageError, workQueryFamily, worksSearch } from './recordingWorkQuery';
+import { recordingCoverage, saveWorkCoverage, type Work, workCoverageError, type WorkDescription, type WorkEditMember, workQueryFamily, type WorkSnapshot, worksSearch } from './recordingWorkQuery';
 import styles from './RecordingWorkCoverage.css';
 
-function describe(work) {
+type EditableMember = { key: string; confirmed: boolean } & (
+  { kind: 'existing'; work: Work } | { kind: 'new'; newWork: WorkDescription }
+);
+
+interface RecordingWorkEditorProps {
+  snapshot: WorkSnapshot;
+  onClose(): void;
+  onSaved(): void;
+}
+
+const workFields: readonly (readonly [keyof WorkDescription, string, number])[] = [
+  ['title', 'Work title', 512],
+  ['author', 'Work author', 512],
+  ['series', 'Work series', 512],
+  ['position', 'Volume / position', 128]
+];
+
+function describe(work: WorkDescription) {
   return [work.title, work.author, [work.series, work.position].filter(Boolean).join(' #')].filter(Boolean).join(' · ');
 }
 
-function editMembers(snapshot) {
+function editMembers(snapshot: WorkSnapshot): EditableMember[] {
   return snapshot.memberships.map(({ work, confirmed }) => ({
     key: `work-${work.id}`,
+    kind: 'existing',
     work,
     confirmed
   }));
 }
 
-function requestMembers(members) {
-  return members.map(({ work, confirmed, newWork }) => (work ?
-    { workId: work.id, confirmed } :
-    { newWork, confirmed }));
+function requestMembers(members: readonly EditableMember[]): WorkEditMember[] {
+  return members.map((member): WorkEditMember => {
+    if (member.kind === 'existing') {
+      return { workId: member.work.id, confirmed: member.confirmed };
+    }
+    return { newWork: member.newWork, confirmed: member.confirmed };
+  });
 }
 
-function RecordingWorkEditor({ snapshot, onClose, onSaved }) {
+function RecordingWorkEditor({ snapshot, onClose, onSaved }: RecordingWorkEditorProps) {
   const client = useQueryClient();
   // Freeze the exact identity and revision reviewed when opening this editor.
   const [original] = useState(snapshot);
   const [members, setMembers] = useState(() => editMembers(original));
   const [term, setTerm] = useState('');
-  const [search, setSearch] = useState(null);
+  const [search, setSearch] = useState<string | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
   const nextKey = useRef(0);
   const dirty = JSON.stringify(requestMembers(members)) !== JSON.stringify(requestMembers(editMembers(original)));
-  const valid = members.every((member) => member.work || member.newWork.title.trim());
+  const valid = members.every((member) => member.kind === 'existing' || !!member.newWork.title.trim());
   const results = useQuery({ ...worksSearch(search ?? ''), enabled: search !== null });
   const mutation = useMutation({
     mutationFn: () => saveWorkCoverage(original.recording.editionId, original.revision, requestMembers(members)),
@@ -68,21 +88,27 @@ function RecordingWorkEditor({ snapshot, onClose, onSaved }) {
     }
   };
 
-  function update(key, change) {
-    setMembers((current) => current.map((member) => (member.key === key ? { ...member, ...change } : member)));
+  function updateConfirmation(key: string, confirmed: boolean) {
+    setMembers((current) => current.map((member) => member.key === key ? { ...member, confirmed } : member));
+  }
+
+  function updateNewWork(key: string, field: keyof WorkDescription, value: string) {
+    setMembers((current) => current.map((member) => member.key === key && member.kind === 'new' ?
+      { ...member, newWork: { ...member.newWork, [field]: value } } : member));
   }
 
   const addNew = () => {
     const key = `new-${nextKey.current++}`;
     setMembers((current) => [...current, {
       key,
+      kind: 'new',
       newWork: { title: '', author: original.recording.author, series: '', position: '' },
       confirmed: false
     }]);
   };
 
-  function addExisting(work) {
-    setMembers((current) => [...current, { key: `work-${work.id}`, work, confirmed: false }]);
+  function addExisting(work: Work) {
+    setMembers((current) => [...current, { key: `work-${work.id}`, kind: 'existing', work, confirmed: false }]);
   }
 
   return (
@@ -101,16 +127,16 @@ function RecordingWorkEditor({ snapshot, onClose, onSaved }) {
               <legend>Work memberships</legend>
               {members.map((member, index) => (
                 <section className={styles.work} key={member.key} aria-label={`Work membership ${index + 1}`}>
-                  {member.work ? <h3>{describe(member.work)}</h3> :
+                  {member.kind === 'existing' ? <h3>{describe(member.work)}</h3> :
                     <div className={styles.fields}>
-                      {[['title', 'Work title', 512], ['author', 'Work author', 512], ['series', 'Work series', 512], ['position', 'Volume / position', 128]].map(([field, label, max]) => (
+                      {workFields.map(([field, label, max]) => (
                         <label key={field} className={styles.field}>
                           {label}
                           <input
                             className={styles.input}
                             maxLength={max}
                             value={member.newWork[field]}
-                            onChange={(event) => update(member.key, { newWork: { ...member.newWork, [field]: event.target.value } })}
+                            onChange={(event) => updateNewWork(member.key, field, event.target.value)}
                           />
                         </label>
                       ))}
@@ -119,7 +145,7 @@ function RecordingWorkEditor({ snapshot, onClose, onSaved }) {
                   <label className={styles.field}>
                     Membership
                     <select className={styles.input} value={member.confirmed ? 'confirmed' : 'uncertain'}
-                      onChange={(event) => update(member.key, { confirmed: event.target.value === 'confirmed' })}
+                      onChange={(event) => updateConfirmation(member.key, event.target.value === 'confirmed')}
                     >
                       <option value="uncertain">Uncertain</option>
                       <option value="confirmed">Confirmed</option>
@@ -153,7 +179,7 @@ function RecordingWorkEditor({ snapshot, onClose, onSaved }) {
                       {results.data.map((work) => (
                         <li key={work.id}>
                           {describe(work)} (Work {work.id})
-                          <Button isDisabled={members.some((member) => member.work?.id === work.id)} onPress={() => addExisting(work)}>Link work</Button>
+                          <Button isDisabled={members.some((member) => member.kind === 'existing' && member.work.id === work.id)} onPress={() => addExisting(work)}>Link work</Button>
                         </li>
                       ))}
                     </ul>
@@ -177,11 +203,5 @@ function RecordingWorkEditor({ snapshot, onClose, onSaved }) {
     </>
   );
 }
-
-RecordingWorkEditor.propTypes = {
-  snapshot: PropTypes.object.isRequired,
-  onClose: PropTypes.func.isRequired,
-  onSaved: PropTypes.func.isRequired
-};
 
 export default RecordingWorkEditor;

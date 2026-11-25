@@ -1,8 +1,10 @@
-function present(value) {
-  return value !== null && value !== undefined && value !== '';
+import type { AudioStreamInfo, MediaInfoModel } from 'Book/LibraryModels';
+
+function present(value: unknown): value is string {
+  return typeof value === 'string' && value !== '';
 }
 
-function formatDuration(seconds) {
+function formatDuration(seconds: number | null | undefined) {
   if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds < 0) {
     return '';
   }
@@ -14,7 +16,7 @@ function formatDuration(seconds) {
   return `${hours}:${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`;
 }
 
-export function getMediaInfoSource(mediaInfo = {}) {
+export function getMediaInfoSource(mediaInfo: MediaInfoModel = {}) {
   if (mediaInfo.source === 'MyAnonaMouse') {
     return 'Reported by MAM';
   }
@@ -37,13 +39,13 @@ export function getMediaInfoSource(mediaInfo = {}) {
   return `Read from file · ${tool}`;
 }
 
-export function getMediaInfoDetails(stream = {}) {
+export function getMediaInfoDetails(stream: AudioStreamInfo = {}) {
   let defaultStream = '';
   if (typeof stream.isDefault === 'boolean') {
     defaultStream = stream.isDefault ? 'Yes' : 'No';
   }
 
-  return [
+  const fields: [string, string | null | undefined][] = [
     ['Format', stream.audioFormat],
     ['Profile', stream.audioProfile],
     ['Features', stream.audioAdditionalFeatures],
@@ -55,12 +57,13 @@ export function getMediaInfoDetails(stream = {}) {
     ['Title', stream.title],
     ['Duration', formatDuration(stream.durationSeconds)],
     ['Default stream', defaultStream]
-  ].filter(([, value]) => present(value));
+  ];
+  return fields.filter((entry): entry is [string, string] => present(entry[1]));
 }
 
-function formatMediaInfo(mediaInfo = {}) {
+function formatMediaInfo(mediaInfo: AudioStreamInfo = {}) {
   const codec = mediaInfo.audioCodec === 'Unknown' ? mediaInfo.audioFormat : mediaInfo.audioCodec;
-  const channels = mediaInfo.audioChannels > 0 ? `${mediaInfo.audioChannels} ${mediaInfo.audioChannels === 1 ? 'channel' : 'channels'}` : '';
+  const channels = mediaInfo.audioChannels != null && mediaInfo.audioChannels > 0 ? `${mediaInfo.audioChannels} ${mediaInfo.audioChannels === 1 ? 'channel' : 'channels'}` : '';
   const bitrate = mediaInfo.audioBitRate && mediaInfo.audioBitRate !== '0 kbps' ?
     `${mediaInfo.audioBitRate}${mediaInfo.audioBitrateMode ? ` (${mediaInfo.audioBitrateMode})` : ''}` : '';
   const sampleRate = mediaInfo.audioSampleRate === '0kHz' ? '' : mediaInfo.audioSampleRate;

@@ -1,18 +1,34 @@
-import PropTypes from 'prop-types';
 import React from 'react';
+import { type MediaInfoModel, parseMediaInfo } from 'Book/LibraryModels';
 import formatMediaInfo, { getMediaInfoDetails, getMediaInfoSource } from './formatMediaInfo';
 import * as mediaInfoTypes from './mediaInfoTypes';
 import styles from './MediaInfo.css';
 
-function MediaInfo(props) {
-  const { type, audioStreams = [], containerFormat } = props;
-  if (type !== mediaInfoTypes.AUDIO) {
+interface MediaInfoProps extends MediaInfoModel {
+  type?: string | null;
+}
+
+function MediaInfo(props: MediaInfoProps) {
+  if (props.type !== mediaInfoTypes.AUDIO) {
     return null;
   }
 
-  const summary = formatMediaInfo(props);
-  const streams = audioStreams.length ? audioStreams : [props];
-  const source = getMediaInfoSource(props);
+  // Releases and older JS connectors may supply media details before the
+  // library file boundary has parsed them. Do not render malformed evidence.
+  let mediaInfo: MediaInfoModel | null | undefined = undefined;
+  try {
+    mediaInfo = parseMediaInfo(props);
+  } catch {
+    return null;
+  }
+  if (!mediaInfo) {
+    return null;
+  }
+  const { containerFormat } = mediaInfo;
+  const audioStreams = mediaInfo.audioStreams ?? [];
+  const summary = formatMediaInfo(mediaInfo);
+  const streams = audioStreams.length ? audioStreams : [mediaInfo];
+  const source = getMediaInfoSource(mediaInfo);
   const hasDetails = streams.some(stream => getMediaInfoDetails(stream).length);
   if (!summary && !hasDetails && !containerFormat) {
     return null;
@@ -52,16 +68,5 @@ function MediaInfo(props) {
     </div>
   );
 }
-
-MediaInfo.propTypes = {
-  type: PropTypes.string.isRequired,
-  audioChannels: PropTypes.number,
-  audioCodec: PropTypes.string,
-  audioBitRate: PropTypes.string,
-  audioBits: PropTypes.string,
-  audioSampleRate: PropTypes.string,
-  audioStreams: PropTypes.arrayOf(PropTypes.object),
-  containerFormat: PropTypes.string
-};
 
 export default MediaInfo;

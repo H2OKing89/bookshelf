@@ -97,9 +97,9 @@ test('Wanted detail queries use only active-page book IDs and never fetch an emp
 
   requests[0].resolve(Response.json([{ id: -2, book: { id: 8 } }, { id: 5, bookId: 22 }]));
   requests[1].resolve(Response.json([
-    { id: 12, bookId: 10, quality: { quality: { name: 'M4B' } } },
-    { id: 22, bookId: 10, quality: { quality: { name: 'M4B' } } },
-    { id: 18, bookId: 33, quality: { quality: { name: 'MP3' } } }
+    { id: 12, bookId: 10, quality: { quality: { name: 'M4B' }, revision: {} } },
+    { id: 22, bookId: 10, quality: { quality: { name: 'M4B' }, revision: {} } },
+    { id: 18, bookId: 33, quality: { quality: { name: 'MP3' }, revision: {} } }
   ]));
   assert.deepEqual(await queue, [8]);
   assert.deepEqual(await files, { 10: ['M4B'] });

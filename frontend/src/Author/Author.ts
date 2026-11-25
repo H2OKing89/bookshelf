@@ -1,12 +1,16 @@
 import ModelBase from 'App/ModelBase';
+import type { AuthorId } from 'Book/BookIdentity';
 
 export type AuthorStatus = 'continuing' | 'ended';
 
 interface Author extends ModelBase {
+  id: AuthorId;
   added: string;
   genres: string[];
   monitored: boolean;
-  overview: string;
+  overview?: string | null;
+  titleSlug?: string | null;
+  foreignAuthorId?: string | null;
   path: string;
   qualityProfileId: number;
   metadataProfileId: number;

@@ -1,8 +1,9 @@
 import { batchActions } from 'redux-batched-actions';
 import createAjaxRequest from 'Utilities/createAjaxRequest';
+import { ApiError } from 'Utilities/Fetch/fetchJson';
 import { set, update, updateItem } from '../baseActions';
 
-export default function createFetchHandler(section, url) {
+export default function createFetchHandler(section, url, parseResponse) {
   return function(getState, payload, dispatch) {
     dispatch(set({ section, isFetching: true }));
 
@@ -18,6 +19,20 @@ export default function createFetchHandler(section, url) {
     });
 
     request.done((data) => {
+      if (parseResponse) {
+        try {
+          data = parseResponse(data, id);
+        } catch {
+          dispatch(set({
+            section,
+            isFetching: false,
+            isPopulated: false,
+            error: new ApiError({ kind: 'invalid-response' })
+          }));
+          return;
+        }
+      }
+
       dispatch(batchActions([
         id == null ? update({ section, data }) : updateItem({ section, ...data }),
 

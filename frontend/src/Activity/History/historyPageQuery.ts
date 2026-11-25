@@ -1,6 +1,6 @@
 import { InvalidateQueryFilters, keepPreviousData, queryOptions } from '@tanstack/react-query';
 import queryClient from 'App/queryClient';
-import type { BookId } from 'Book/BookIdentity';
+import { type BookId, parseAssociationId } from 'Book/BookIdentity';
 import fetchJson from 'Utilities/Fetch/fetchJson';
 import { normalizeHistoryEventTypes, parseHistoryBookId } from './historyFilters';
 
@@ -104,8 +104,8 @@ function parseHistoryRecord(value: unknown) {
 
   return {
     id,
-    bookId,
-    authorId,
+    bookId: parseAssociationId(bookId, 'book'),
+    authorId: parseAssociationId(authorId, 'author'),
     date,
     // The JSON enum serializer emits a number for unknown legacy events.
     eventType: typeof eventType === 'string' ? eventType : 'unknown',

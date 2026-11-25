@@ -23,6 +23,7 @@ function Alert(props) {
 Alert.propTypes = {
   className: PropTypes.string,
   kind: PropTypes.oneOf(kinds.all),
+  role: PropTypes.string,
   children: PropTypes.node.isRequired
 };
 

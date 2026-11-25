@@ -1,8 +1,8 @@
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import ProtocolLabel from 'Activity/Queue/ProtocolLabel';
 import AuthorNameLink from 'Author/AuthorNameLink';
 import BookFormats from 'Book/BookFormats';
+import type { DownloadClientId } from 'Book/BookIdentity';
 import BookQuality from 'Book/BookQuality';
 import BookTitleLink from 'Book/BookTitleLink';
 import Icon from 'Components/Icon';
@@ -20,30 +20,42 @@ import InteractiveImportModal from 'InteractiveImport/InteractiveImportModal';
 import formatBytes from 'Utilities/Number/formatBytes';
 import formatCustomFormatScore from 'Utilities/Number/formatCustomFormatScore';
 import translate from 'Utilities/String/translate';
-import { holdQueueRefresh } from './queuePageQuery';
+import type { QueueColumn } from './queueColumns';
+import { holdQueueRefresh,type QueueItem, type QueueRowId } from './queuePageQuery';
 import QueueStatusCell from './QueueStatusCell';
 import TimeleftCell from './TimeleftCell';
 import styles from './QueueRow.css';
 
-class QueueRow extends Component {
+interface QueueRowProps extends QueueItem {
+  columns: readonly QueueColumn[];
+  showRelativeDates: boolean;
+  shortDateFormat: string;
+  timeFormat: string;
+  isGrabbing?: boolean;
+  isRemoving?: boolean;
+  isSelected?: boolean;
+  canUseRowActions: boolean;
+  onSelectedChange(change: { id: QueueRowId; value: boolean | null | undefined; shiftKey?: boolean }): void;
+  onGrabPress(id: QueueRowId): void;
+  onRemoveQueueItemPress(id: QueueRowId): void;
+}
 
-  //
-  // Lifecycle
+interface QueueRowState {
+  interactiveImport: { downloadId: string; downloadClientId: DownloadClientId; title: string } | null;
+}
 
-  constructor(props, context) {
-    super(props, context);
-
-    this.state = { interactiveImport: null };
-  }
-
+class QueueRow extends Component<QueueRowProps, QueueRowState> {
+  state: QueueRowState = { interactiveImport: null };
   componentWillUnmount() {
     this.releaseImportHold?.();
   }
 
+  private releaseImportHold?: () => void;
+
   onInteractiveImportPress = () => {
     const { canUseRowActions, canImport, downloadId, downloadClientId, title } = this.props;
 
-    if (canUseRowActions && canImport && !this.releaseImportHold) {
+    if (canUseRowActions && canImport && downloadId && downloadClientId && !this.releaseImportHold) {
       this.releaseImportHold = holdQueueRefresh();
       this.setState({ interactiveImport: { downloadId, downloadClientId, title } });
     }
@@ -89,9 +101,9 @@ class QueueRow extends Component {
       showRelativeDates,
       shortDateFormat,
       timeFormat,
-      isGrabbing,
-      isRemoving,
-      isSelected,
+      isGrabbing = false,
+      isRemoving = false,
+      isSelected = false,
       columns,
       canUseRowActions,
       onSelectedChange,
@@ -102,7 +114,7 @@ class QueueRow extends Component {
     const { interactiveImport } = this.state;
 
     const progress = size > 0 ? Math.min(100, Math.max(0, 100 - sizeleft / size * 100)) : 0;
-    const earliestReleaseDate = recordings.map(({ releaseDate }) => releaseDate).filter(Boolean).sort()[0];
+    const earliestReleaseDate = recordings.map(({ releaseDate }) => releaseDate).filter((date): date is string => !!date).sort()[0];
 
     return (
       <TableRow>
@@ -380,53 +392,5 @@ class QueueRow extends Component {
   }
 
 }
-
-QueueRow.propTypes = {
-  id: PropTypes.string.isRequired,
-  downloadId: PropTypes.string,
-  downloadClientId: PropTypes.number,
-  downloadClientAvailable: PropTypes.bool,
-  title: PropTypes.string.isRequired,
-  status: PropTypes.string.isRequired,
-  trackedDownloadStatus: PropTypes.string,
-  trackedDownloadState: PropTypes.string,
-  statusMessages: PropTypes.arrayOf(PropTypes.object),
-  errorMessage: PropTypes.string,
-  author: PropTypes.object,
-  recordings: PropTypes.arrayOf(PropTypes.object).isRequired,
-  coverageSource: PropTypes.string.isRequired,
-  canRemove: PropTypes.bool.isRequired,
-  canGrab: PropTypes.bool.isRequired,
-  canImport: PropTypes.bool.isRequired,
-  quality: PropTypes.object.isRequired,
-  customFormats: PropTypes.arrayOf(PropTypes.object),
-  customFormatScore: PropTypes.number.isRequired,
-  protocol: PropTypes.string.isRequired,
-  indexer: PropTypes.string,
-  outputPath: PropTypes.string,
-  downloadClient: PropTypes.string,
-  downloadForced: PropTypes.bool.isRequired,
-  estimatedCompletionTime: PropTypes.string,
-  timeleft: PropTypes.string,
-  size: PropTypes.number,
-  sizeleft: PropTypes.number,
-  showRelativeDates: PropTypes.bool.isRequired,
-  shortDateFormat: PropTypes.string.isRequired,
-  timeFormat: PropTypes.string.isRequired,
-  isGrabbing: PropTypes.bool.isRequired,
-  isRemoving: PropTypes.bool.isRequired,
-  isSelected: PropTypes.bool,
-  columns: PropTypes.arrayOf(PropTypes.object).isRequired,
-  onSelectedChange: PropTypes.func.isRequired,
-  onGrabPress: PropTypes.func.isRequired,
-  onRemoveQueueItemPress: PropTypes.func.isRequired,
-  canUseRowActions: PropTypes.bool.isRequired
-};
-
-QueueRow.defaultProps = {
-  customFormats: [],
-  isGrabbing: false,
-  isRemoving: false
-};
 
 export default QueueRow;

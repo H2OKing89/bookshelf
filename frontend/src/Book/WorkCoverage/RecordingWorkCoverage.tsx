@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import PropTypes from 'prop-types';
 import React, { useState } from 'react';
+import type { BookId, EditionId } from 'Book/BookIdentity';
 import Alert from 'Components/Alert';
 import Button from 'Components/Link/Button';
 import Link from 'Components/Link/Link';
@@ -8,18 +8,18 @@ import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import { kinds } from 'Helpers/Props';
 import formatBytes from 'Utilities/Number/formatBytes';
 import RecordingWorkEditor from './RecordingWorkEditor';
-import { recordingCoverage, recordingsForBook, workCoverageError } from './recordingWorkQuery';
+import { type Recording, recordingCoverage, recordingsForBook, workCoverageError,type WorkDescription } from './recordingWorkQuery';
 import styles from './RecordingWorkCoverage.css';
 
-function workLabel(work) {
+function workLabel(work: WorkDescription) {
   return [work.title, work.author, [work.series, work.position].filter(Boolean).join(' #')].filter(Boolean).join(' · ');
 }
 
-function recordingLabel(recording) {
+function recordingLabel(recording: Recording) {
   return [recording.title, recording.foreignEditionId, `Edition ${recording.editionId}`].filter(Boolean).join(' · ');
 }
 
-function Coverage({ editionId }) {
+function Coverage({ editionId }: { editionId: EditionId }) {
   const query = useQuery(recordingCoverage(editionId));
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -89,13 +89,9 @@ function Coverage({ editionId }) {
   );
 }
 
-Coverage.propTypes = {
-  editionId: PropTypes.number.isRequired
-};
-
-function RecordingWorkCoverage({ bookId }) {
+function RecordingWorkCoverage({ bookId }: { bookId: BookId }) {
   const query = useQuery(recordingsForBook(bookId));
-  const [selection, setSelection] = useState(0);
+  const [selection, setSelection] = useState<EditionId | null>(null);
   const recordings = query.data || [];
   const selected = recordings.find((recording) => recording.editionId === selection) || recordings[0];
 
@@ -111,7 +107,10 @@ function RecordingWorkCoverage({ bookId }) {
           {recordings.length > 1 &&
             <label className={styles.field}>
               Recording
-              <select className={styles.input} value={selected.editionId} onChange={(event) => setSelection(Number(event.target.value))}>
+              <select className={styles.input} value={selected.editionId} onChange={(event) => {
+                const recording = recordings.find((item) => String(item.editionId) === event.currentTarget.value);
+                setSelection(recording?.editionId ?? null);
+              }}>
                 {recordings.map((recording) => (
                   <option key={recording.editionId} value={recording.editionId}>{recordingLabel(recording)}</option>
                 ))}
@@ -124,9 +123,5 @@ function RecordingWorkCoverage({ bookId }) {
     </section>
   );
 }
-
-RecordingWorkCoverage.propTypes = {
-  bookId: PropTypes.number.isRequired
-};
 
 export default RecordingWorkCoverage;

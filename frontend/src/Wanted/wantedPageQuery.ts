@@ -1,6 +1,7 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import queryClient from 'App/queryClient';
-import type { BookId } from 'Book/BookIdentity';
+import { type BookId, parseAssociationId, parseResourceId } from 'Book/BookIdentity';
+import { parseLibraryBook, parseLibraryBookFile } from 'Book/LibraryModels';
 import fetchJson from 'Utilities/Fetch/fetchJson';
 
 export type WantedKind = 'missing' | 'cutoffUnmet';
@@ -35,35 +36,21 @@ function isId(value: unknown): value is number {
   return isInteger(value) && value > 0;
 }
 
-function optionalString(value: unknown) {
-  if (value == null || typeof value === 'string') {
-    return value ?? undefined;
-  }
-
-  throw new TypeError('Invalid Wanted text field');
-}
-
 function parseWantedBook(value: unknown) {
-  if (!isRecord(value)) {
-    throw new TypeError('Invalid Wanted book');
-  }
-
-  const { id, authorId, title, titleSlug, releaseDate, lastSearchTime, disambiguation, monitored } = value;
-  if (!isId(id) || !isId(authorId) ||
-      typeof title !== 'string' || typeof titleSlug !== 'string' ||
-      typeof monitored !== 'boolean') {
+  const book = parseLibraryBook(value);
+  if (!book.authorId || typeof book.title !== 'string' || typeof book.titleSlug !== 'string' ||
+      typeof book.monitored !== 'boolean') {
     throw new TypeError('Invalid Wanted book fields');
   }
-
   return {
-    id: id as BookId,
-    authorId,
-    title,
-    titleSlug,
-    monitored,
-    releaseDate: optionalString(releaseDate),
-    lastSearchTime: optionalString(lastSearchTime),
-    disambiguation: optionalString(disambiguation)
+    id: book.id,
+    authorId: book.authorId,
+    title: book.title,
+    titleSlug: book.titleSlug,
+    monitored: book.monitored,
+    releaseDate: book.releaseDate ?? undefined,
+    lastSearchTime: book.lastSearchTime ?? undefined,
+    disambiguation: book.disambiguation ?? undefined
   };
 }
 
@@ -77,12 +64,12 @@ function parseWantedPage(value: unknown) {
   return { page, pageSize, totalRecords, records: records.map(parseWantedBook) };
 }
 
-function parseQueueBooks(value: unknown, requested: readonly number[]) {
+function parseQueueBooks(value: unknown, requested: readonly BookId[]) {
   if (!Array.isArray(value)) {
     throw new TypeError('Invalid Wanted queue details');
   }
 
-  const bookIds = new Set<number>();
+  const bookIds = new Set<BookId>();
 
   const rows: unknown[] = value;
   for (const item of rows) {
@@ -90,34 +77,35 @@ function parseQueueBooks(value: unknown, requested: readonly number[]) {
       throw new TypeError('Invalid Wanted queue row');
     }
 
-    if (isId(item.bookId) && requested.includes(item.bookId)) {
-      bookIds.add(item.bookId);
-    } else if (isRecord(item.book) && isId(item.book.id) && requested.includes(item.book.id)) {
-      bookIds.add(item.book.id);
+    const direct = parseAssociationId(item.bookId, 'book');
+    const nested = isRecord(item.book) ? parseAssociationId(item.book.id, 'book') : undefined;
+    if (direct && nested && direct !== nested) {
+      throw new TypeError('Mismatched Wanted queue book identity');
+    }
+    const bookId = direct || nested;
+    if (bookId && requested.includes(bookId)) {
+      bookIds.add(bookId);
     }
   }
 
   return [...bookIds];
 }
 
-function parseFileQualities(value: unknown, requested: readonly number[]) {
+function parseFileQualities(value: unknown, requested: readonly BookId[]) {
   if (!Array.isArray(value)) {
     throw new TypeError('Invalid Wanted file details');
   }
 
-  const files: Record<number, string[]> = {};
+  const files: Partial<Record<BookId, string[]>> = {};
 
   const rows: unknown[] = value;
   for (const item of rows) {
-    if (!isRecord(item) || !isId(item.id)) {
-      throw new TypeError('Invalid Wanted file');
-    }
-
-    if (isId(item.bookId) && requested.includes(item.bookId) &&
-        isRecord(item.quality) && isRecord(item.quality.quality) && typeof item.quality.quality.name === 'string') {
-      const qualities = files[item.bookId] ?? [];
-      if (!qualities.includes(item.quality.quality.name)) {
-        (files[item.bookId] ??= qualities).push(item.quality.quality.name);
+    const file = parseLibraryBookFile(item);
+    if (file.bookId && requested.includes(file.bookId) && file.quality) {
+      const name = file.quality.quality.name;
+      const qualities = files[file.bookId] ?? [];
+      if (!qualities.includes(name)) {
+        (files[file.bookId] ??= qualities).push(name);
       }
     }
   }
@@ -160,12 +148,12 @@ export function wantedPageQuery(kind: WantedKind, request: WantedPageRequest) {
 function wantedDetailsQuery<T>(
   kind: WantedKind,
   type: 'queue' | 'files',
-  ids: readonly number[],
+  ids: readonly BookId[],
   path: string,
   parameter: string,
-  parse: (value: unknown, requested: readonly number[]) => T
+  parse: (value: unknown, requested: readonly BookId[]) => T
 ) {
-  const selected = [...new Set(ids)].sort((a, b) => a - b);
+  const selected = [...new Set(ids.map((id) => parseResourceId(id, 'book')))].sort((a, b) => a - b);
   const search = new URLSearchParams();
   selected.forEach((id) => search.append(parameter, String(id)));
 
@@ -191,11 +179,11 @@ function wantedDetailsQuery<T>(
   });
 }
 
-export function wantedQueueDetailsQuery(kind: WantedKind, ids: readonly number[]) {
+export function wantedQueueDetailsQuery(kind: WantedKind, ids: readonly BookId[]) {
   return wantedDetailsQuery(kind, 'queue', ids, '/queue/details', 'bookIds', parseQueueBooks);
 }
 
-export function wantedFileDetailsQuery(kind: WantedKind, ids: readonly number[]) {
+export function wantedFileDetailsQuery(kind: WantedKind, ids: readonly BookId[]) {
   return wantedDetailsQuery(kind, 'files', ids, '/bookfile', 'bookId', parseFileQualities);
 }
 
@@ -247,11 +235,11 @@ export function scheduleWantedQueueDetailsRefresh() {
     .map((kind) => refreshFamily(kind, true))));
 }
 
-export function setWantedMonitoring(bookIds: readonly number[], monitored: boolean) {
+export function setWantedMonitoring(bookIds: readonly BookId[], monitored: boolean) {
   return fetchJson({
     path: '/book/monitor',
     method: 'PUT',
-    body: { bookIds, monitored },
+    body: { bookIds: bookIds.map((id) => parseResourceId(id, 'book')), monitored },
     parse: () => null,
     timeout: queryTimeout
   });

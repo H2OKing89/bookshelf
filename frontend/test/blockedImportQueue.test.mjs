@@ -4,7 +4,7 @@ import { loadFrontendModule } from './helpers/loadFrontendModule.mjs';
 
 function Icon() {}
 function Popover() {}
-const { default: QueueStatusCell } = loadFrontendModule('Activity/Queue/QueueStatusCell.js', {
+const { default: QueueStatusCell } = loadFrontendModule('Activity/Queue/QueueStatusCell', {
   'Components/Icon': Icon,
   'Components/Table/Cells/TableRowCell': () => null,
   'Components/Tooltip/Popover': Popover,

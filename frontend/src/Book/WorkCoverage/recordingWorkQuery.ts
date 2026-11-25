@@ -1,4 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
+import { type BookId, type EditionId, parseResourceId,type WorkId } from 'Book/BookIdentity';
+import { isRecord } from 'Book/LibraryModels';
 import fetchJson, { ApiError } from 'Utilities/Fetch/fetchJson';
 
 export interface WorkDescription {
@@ -9,12 +11,12 @@ export interface WorkDescription {
 }
 
 export interface Work extends WorkDescription {
-  id: number;
+  id: WorkId;
 }
 
 export interface Recording {
-  editionId: number;
-  bookId: number;
+  editionId: EditionId;
+  bookId: BookId;
   foreignEditionId: string | null;
   asin: string | null;
   audibleRegion: string | null;
@@ -50,16 +52,16 @@ export interface WorkSnapshot {
 }
 
 export type WorkEditMember = { confirmed: boolean } & (
-  { workId: number; newWork?: never } | { newWork: WorkDescription; workId?: never }
+  { workId: WorkId; newWork?: never } | { newWork: WorkDescription; workId?: never }
 );
 
 export const workQueryFamily = () => ['recordingwork', window.Readarr.apiRoot];
 
 function record(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (!isRecord(value)) {
     throw new Error('Invalid work coverage response');
   }
-  return value as Record<string, unknown>;
+  return value;
 }
 
 function number(value: unknown, minimum = 0): number {
@@ -93,7 +95,7 @@ function array<T>(value: unknown, item: (value: unknown) => T): T[] {
 function parseWork(value: unknown): Work {
   const item = record(value);
   return {
-    id: number(item.id, 1),
+    id: parseResourceId(item.id, 'work'),
     title: string(item.title),
     author: string(item.author),
     series: string(item.series),
@@ -104,8 +106,8 @@ function parseWork(value: unknown): Work {
 function parseRecording(value: unknown): Recording {
   const item = record(value);
   return {
-    editionId: number(item.editionId, 1),
-    bookId: number(item.bookId, 1),
+    editionId: parseResourceId(item.editionId, 'edition'),
+    bookId: parseResourceId(item.bookId, 'book'),
     foreignEditionId: item.foreignEditionId == null ? null : string(item.foreignEditionId),
     asin: item.asin == null ? null : string(item.asin),
     audibleRegion: item.audibleRegion == null ? null : string(item.audibleRegion),
@@ -147,23 +149,39 @@ function parseSnapshot(value: unknown): WorkSnapshot {
   };
 }
 
-export function recordingsForBook(bookId: number) {
+function parseExpectedSnapshot(value: unknown, editionId: EditionId): WorkSnapshot {
+  const snapshot = parseSnapshot(value);
+  if (snapshot.recording.editionId !== editionId) {
+    throw new Error('Work coverage belongs to a different recording');
+  }
+  return snapshot;
+}
+
+export function recordingsForBook(bookId: BookId) {
+  parseResourceId(bookId, 'book');
   return queryOptions({
     queryKey: [...workQueryFamily(), 'book', bookId],
     queryFn: ({ signal }) => fetchJson({
       path: `/recordingwork/book/${bookId}`,
-      parse: (value) => array(value, parseRecording),
+      parse: (value) => {
+        const recordings = array(value, parseRecording);
+        if (recordings.some((recording) => recording.bookId !== bookId)) {
+          throw new Error('Recording belongs to a different book');
+        }
+        return recordings;
+      },
       signal
     })
   });
 }
 
-export function recordingCoverage(editionId: number) {
+export function recordingCoverage(editionId: EditionId) {
+  parseResourceId(editionId, 'edition');
   return queryOptions({
     queryKey: [...workQueryFamily(), 'recording', editionId],
     queryFn: ({ signal }) => fetchJson({
       path: `/recordingwork/${editionId}`,
-      parse: parseSnapshot,
+      parse: (value) => parseExpectedSnapshot(value, editionId),
       signal
     })
   });
@@ -180,12 +198,13 @@ export function worksSearch(term: string) {
   });
 }
 
-export function saveWorkCoverage(editionId: number, revision: string, memberships: WorkEditMember[]) {
+export function saveWorkCoverage(editionId: EditionId, revision: string, memberships: WorkEditMember[]) {
+  parseResourceId(editionId, 'edition');
   return fetchJson({
     path: `/recordingwork/${editionId}`,
     method: 'PUT',
     body: { revision, memberships },
-    parse: parseSnapshot
+    parse: (value) => parseExpectedSnapshot(value, editionId)
   });
 }
 
@@ -195,8 +214,8 @@ export function workCoverageError(error: unknown): string {
       return 'Work coverage changed in another session. Close the editor, refresh, and review the recording again.';
     }
     const body = error.details.body;
-    if (body.format === 'json' && body.value && typeof body.value === 'object') {
-      const message = (body.value as { message?: unknown }).message;
+    if (body.format === 'json' && isRecord(body.value)) {
+      const message = body.value.message;
       if (typeof message === 'string') {
         return message;
       }

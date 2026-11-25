@@ -1,38 +1,13 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import test from 'node:test';
-import { Script } from 'node:vm';
+import { loadFrontendModule } from './helpers/loadFrontendModule.mjs';
 
 const require = createRequire(import.meta.url);
 const React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
-const { transformSync } = require('@babel/core');
-const helperSource = await readFile(new URL('../src/BookFile/formatMediaInfo.js', import.meta.url), 'utf8');
-const helpers = await import(`data:text/javascript;base64,${Buffer.from(helperSource).toString('base64')}`);
-const { default: formatMediaInfo, getMediaInfoDetails, getMediaInfoSource } = helpers;
-const componentSource = await readFile(new URL('../src/BookFile/MediaInfo.js', import.meta.url), 'utf8');
-const { code } = transformSync(componentSource, {
-  configFile: false,
-  babelrc: false,
-  presets: [['@babel/preset-env', { targets: { node: 'current' } }], '@babel/preset-react']
-});
-const componentModule = { exports: {} };
-const componentRequire = (name) => {
-  if (name === './formatMediaInfo') {
-    return { __esModule: true, ...helpers };
-  }
-  if (name === './mediaInfoTypes') {
-    return { AUDIO: 'audio' };
-  }
-  if (name === './MediaInfo.css') {
-    return {};
-  }
-  return require(name);
-};
-// Load the real JSX component while substituting only its CSS module for this Node test.
-new Script(code).runInNewContext({ require: componentRequire, module: componentModule, exports: componentModule.exports });
-const MediaInfo = componentModule.exports.default;
+const { default: formatMediaInfo, getMediaInfoDetails, getMediaInfoSource } = loadFrontendModule('BookFile/formatMediaInfo');
+const { default: MediaInfo } = loadFrontendModule('BookFile/MediaInfo');
 
 function render(mediaInfo) {
   return renderToStaticMarkup(React.createElement(MediaInfo, { type: 'audio', ...mediaInfo }));

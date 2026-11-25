@@ -1,5 +1,6 @@
 import { createAction } from 'redux-actions';
 import { batchActions } from 'redux-batched-actions';
+import { libraryResponseParser, parseLibraryEdition } from 'Book/LibraryModels';
 import { createThunk, handleThunks } from 'Store/thunks';
 import getProviderState from 'Utilities/State/getProviderState';
 import { updateItem } from './baseActions';
@@ -41,7 +42,7 @@ export const saveEditions = createThunk(SAVE_EDITIONS);
 // Action Handlers
 
 export const actionHandlers = handleThunks({
-  [FETCH_EDITIONS]: createFetchHandler(section, '/edition'),
+  [FETCH_EDITIONS]: createFetchHandler(section, '/edition', libraryResponseParser(parseLibraryEdition)),
 
   [SAVE_EDITIONS]: function(getState, payload, dispatch) {
     const {

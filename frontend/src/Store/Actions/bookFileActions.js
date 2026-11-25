@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { createAction } from 'redux-actions';
 import { batchActions } from 'redux-batched-actions';
 import bookEntities from 'Book/bookEntities';
+import { libraryResponseParser, parseLibraryBookFile } from 'Book/LibraryModels';
 import { sortDirections } from 'Helpers/Props';
 import { createThunk, handleThunks } from 'Store/thunks';
 import createAjaxRequest from 'Utilities/createAjaxRequest';
@@ -124,7 +125,7 @@ const deleteBookFileHelper = createRemoveItemHandler(section, '/bookFile');
 // Action Handlers
 
 export const actionHandlers = handleThunks({
-  [FETCH_BOOK_FILES]: createFetchHandler(section, '/bookFile'),
+  [FETCH_BOOK_FILES]: createFetchHandler(section, '/bookFile', libraryResponseParser(parseLibraryBookFile)),
 
   [DELETE_BOOK_FILE]: function(getState, payload, dispatch) {
     const {

@@ -198,3 +198,23 @@ test('queue action identity guards client changes and submits only the captured 
   await assert.rejects(removed, /owned queue target changed/);
   assert.equal(requests.length, 1);
 });
+
+test('download-level queue validates positive recording identity and rejects impossible action authority', async (t) => {
+  const { client, options, requests } = setup(t);
+  const malformed = [
+    record(11, { recordings: [{ bookId: 0 }] }),
+    record(11, { id: 'download:99:wrong-client' }),
+    record(11, { kind: 'unaddressable', id: 'unaddressable:1:0' })
+  ];
+  for (const item of malformed) {
+    const pending = client.fetchQuery(options(1));
+    requests.at(-1).resolve(page(1, item));
+    await assert.rejects(pending, TypeError);
+  }
+  const pending = client.fetchQuery(options(1));
+  requests.at(-1).resolve(page(1, record(11, {
+    recordings: [{ bookId: 8, recordingId: 'audible:us:B011111111' }, { bookId: 9, recordingId: 'audible:uk:B011111111' }]
+  })));
+  const value = await pending;
+  assert.deepEqual(value.records[0].recordings.map(({ bookId }) => bookId), [8, 9]);
+});
