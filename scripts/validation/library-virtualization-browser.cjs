@@ -95,6 +95,19 @@ async function verifyAdditionalView(page, config, layout, section, route, view, 
   await page.goto(config.url + '/' + section);
   await grid.locator(`a[href*="/${route}/"]`).first().waitFor();
   await scrollToFraction(page, 0);
+  if (section === 'books' && view === 'overview') {
+    stage('overview_author_editor');
+    const overview = grid.locator('[class*="BookIndexOverview-container-"]').filter({
+      has: page.locator('a[href$="/owned-recording-10000"]')
+    });
+    await overview.getByRole('button', { name: 'Edit Author', exact: true }).click();
+    const editor = page.getByRole('dialog', { name: 'Edit - A Author 0000', exact: true });
+    await editor.waitFor();
+    check('book_overview_edits_owning_author_not_book_id', await editor.isVisible());
+    await editor.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await editor.waitFor({ state: 'detached' });
+    check('book_overview_author_editor_closes_without_changes', await overview.count() === 1);
+  }
   const distance = await page.evaluate(() => {
     const grid = document.querySelector('.ReactVirtualized__Grid');
     let scroller = grid?.parentElement;
