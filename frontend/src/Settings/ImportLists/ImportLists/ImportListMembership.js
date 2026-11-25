@@ -19,7 +19,9 @@ function membershipStatus(item) {
   if (item.excluded) {
     return 'Excluded';
   }
-  return item.bookId || item.authorId ? 'Resolved identity' : 'Unresolved identity';
+  const isBook = item.sourceTitle || item.sourceBookId || item.sourceEditionId;
+  const resolved = isBook ? item.bookId && item.editionId === item.bookId && item.authorId : item.authorId;
+  return resolved ? 'Resolved identity' : 'Unresolved identity';
 }
 
 function ImportListMembership({ id }) {

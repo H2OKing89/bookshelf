@@ -104,6 +104,25 @@ namespace NzbDrone.Core.Test.ImportListTests
             Subject.Get(_first.Id).Items.Should().OnlyContain(item => !item.Excluded);
         }
 
+        [Test]
+        public void should_mark_only_exact_valid_raw_exclusions_when_not_resolved()
+        {
+            const string localId = "local:recording:11111111111111111111111111111111";
+            const string usId = "audible:us:B000000002";
+            const string ukId = "audible:uk:B000000002";
+            var entries = new List<ImportListMembershipItem>
+            {
+                new ImportListMembershipItem { SourceBookId = localId },
+                new ImportListMembershipItem { SourceBookId = usId, SourceEditionId = ukId },
+                new ImportListMembershipItem { SourceBookId = "B000000002" },
+                new ImportListMembershipItem { SourceBookId = "42" }
+            };
+            Subject.Complete(Subject.Begin(_first), entries).Should().BeTrue();
+            using var connection = Mocker.Resolve<IMainDatabase>().OpenConnection();
+            connection.Execute("INSERT INTO \"ImportListExclusions\" (\"ForeignId\", \"Name\") VALUES (@Id, 'Owned exclusion')", new[] { new { Id = localId }, new { Id = ukId }, new { Id = "42" } });
+            Subject.Get(_first.Id).Items.Select(item => item.Excluded).Should().Equal(true, true, false, false);
+        }
+
         private ImportListDefinition AddList(string name)
         {
             var definition = new ImportListDefinition

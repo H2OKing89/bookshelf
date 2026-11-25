@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using NzbDrone.Core.Books;
 using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.MetadataSource.BookInfo;
 using NzbDrone.Core.Parser.Model;
@@ -42,11 +43,61 @@ namespace NzbDrone.Core.ImportLists
             SourceEditionId = report.EditionGoodreadsId
         };
 
-        public void SetResolvedIdentity(ImportListItemInfo report)
+        public bool HasConflictingSourceRecordingIds()
         {
-            AuthorId = QualifiedId(report.AuthorGoodreadsId, true);
-            BookId = QualifiedId(report.BookGoodreadsId, false);
-            EditionId = QualifiedId(report.EditionGoodreadsId, false);
+            var book = QualifiedId(SourceBookId, false);
+            var edition = QualifiedId(SourceEditionId, false);
+            return book != null && edition != null && book != edition;
+        }
+
+        public bool SetResolvedIdentity(ImportListItemInfo report)
+        {
+            var author = QualifiedId(report.AuthorGoodreadsId, true);
+            var book = QualifiedId(report.BookGoodreadsId, false);
+            var edition = QualifiedId(report.EditionGoodreadsId, false);
+            var isBook = !string.IsNullOrWhiteSpace(SourceTitle) || !string.IsNullOrWhiteSpace(SourceBookId) || !string.IsNullOrWhiteSpace(SourceEditionId);
+            if (!isBook)
+            {
+                AuthorId = author;
+                return AuthorId != null;
+            }
+
+            var sourceBook = QualifiedId(SourceBookId, false);
+            var sourceEdition = QualifiedId(SourceEditionId, false);
+            var sourceAuthor = QualifiedId(SourceAuthorId, true);
+
+            // Native audiobook books and editions represent an exact recording.
+            // A contradictory row or an identity-changing lookup is retained as
+            // raw membership, never effective ownership or a download/add action.
+            if (book == null || edition == null || book != edition || author == null ||
+                (sourceBook != null && sourceBook != book) || (sourceEdition != null && sourceEdition != edition) ||
+                (sourceAuthor != null && sourceAuthor != author))
+            {
+                return false;
+            }
+
+            AuthorId = author;
+            BookId = book;
+            EditionId = edition;
+            return true;
+        }
+
+        internal void MarkExcluded(HashSet<string> exclusions)
+        {
+            Excluded = exclusions.Contains(AuthorId ?? QualifiedRawId(SourceAuthorId, true)) ||
+                exclusions.Contains(BookId ?? QualifiedRawId(SourceBookId, false)) ||
+                exclusions.Contains(EditionId ?? QualifiedRawId(SourceEditionId, false));
+        }
+
+        private static string QualifiedRawId(string value, bool author)
+        {
+            if (author ? LocalAuthorId.IsLocal(value) : LocalRecordingId.IsLocal(value))
+            {
+                var parts = value.Split(':');
+                return parts.Length == 3 && Guid.TryParse(parts[2], out _) ? value : null;
+            }
+
+            return QualifiedId(value, author);
         }
 
         private static string QualifiedId(string value, bool allowName)

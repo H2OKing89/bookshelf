@@ -107,19 +107,23 @@ namespace NzbDrone.Core.ImportLists
                 try
                 {
                     var entries = new List<ImportListMembershipItem>();
+                    var resolved = new List<ImportListItemInfo>();
                     foreach (var report in batch.Items)
                     {
                         var entry = ImportListMembershipItem.FromSource(report);
 
                         // An exact local ID from another application is not an
                         // Audible title lookup; keep its raw membership only.
-                        if (!IsLocalSource(report))
+                        if (!IsLocalSource(report) && !entry.HasConflictingSourceRecordingIds())
                         {
                             ResolveReport(report);
-                            entry.SetResolvedIdentity(report);
-                            report.AuthorGoodreadsId = entry.AuthorId;
-                            report.BookGoodreadsId = entry.BookId;
-                            report.EditionGoodreadsId = entry.EditionId;
+                            if (entry.SetResolvedIdentity(report))
+                            {
+                                report.AuthorGoodreadsId = entry.AuthorId;
+                                report.BookGoodreadsId = entry.BookId;
+                                report.EditionGoodreadsId = entry.EditionId;
+                                resolved.Add(report);
+                            }
                         }
 
                         entries.Add(entry);
@@ -131,7 +135,7 @@ namespace NzbDrone.Core.ImportLists
                         var definition = _importListFactory.Find(batch.Attempt.ImportListId);
                         if (definition != null && definition.EnableAutomaticAdd && definition.MembershipRevision == batch.Attempt.Revision)
                         {
-                            items.AddRange(batch.Items.Where(report => !IsLocalSource(report)).Select(report => (batch.Attempt, report)));
+                            items.AddRange(resolved.Select(report => (batch.Attempt, report)));
                         }
                     }
                 }
@@ -195,7 +199,7 @@ namespace NzbDrone.Core.ImportLists
                     continue;
                 }
 
-                if (report.Book.IsNotNullOrWhiteSpace() || report.EditionGoodreadsId.IsNotNullOrWhiteSpace())
+                if (report.Book.IsNotNullOrWhiteSpace() || report.EditionGoodreadsId.IsNotNullOrWhiteSpace() || report.BookGoodreadsId.IsNotNullOrWhiteSpace())
                 {
                     if (AudiobookId.IsNative(report.BookGoodreadsId))
                     {

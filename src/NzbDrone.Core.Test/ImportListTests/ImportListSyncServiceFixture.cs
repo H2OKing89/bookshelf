@@ -333,6 +333,48 @@ namespace NzbDrone.Core.Test.ImportListTests
         }
 
         [Test]
+        public void should_retain_conflicting_regional_source_ids_without_adding_a_recording()
+        {
+            WithBook();
+            WithAuthorId();
+            var report = _importListReports.First();
+            report.BookGoodreadsId = "audible:us:B000000002";
+            report.EditionGoodreadsId = "audible:uk:B000000002";
+
+            Subject.Execute(new ImportListSyncCommand());
+
+            Mocker.GetMock<IImportListMembershipRepository>().Verify(repository => repository.Complete(It.IsAny<ImportListMembershipAttempt>(), It.Is<IReadOnlyList<ImportListMembershipItem>>(items =>
+                items.Count == 1 && items[0].SourceBookId == "audible:us:B000000002" && items[0].SourceEditionId == "audible:uk:B000000002" && items[0].BookId == null && items[0].EditionId == null && items[0].AuthorId == null)));
+            Mocker.GetMock<IAddBookService>().Verify(service => service.AddBooks(It.IsAny<List<Book>>(), false), Times.Never());
+            Mocker.GetMock<IAddAuthorService>().Verify(service => service.AddAuthors(It.IsAny<List<Author>>(), false), Times.Never());
+            Mocker.GetMock<IProvideBookInfo>().Verify(service => service.GetBookInfo(It.IsAny<string>()), Times.Never());
+        }
+
+        [Test]
+        public void should_reject_a_lookup_that_changes_the_exact_source_recording()
+        {
+            WithBook();
+            var report = _importListReports.First();
+            report.BookGoodreadsId = "audible:us:B000000002";
+            var metadata = new AuthorMetadata { ForeignAuthorId = "audible:us:B000000001", Name = report.Author };
+            var mapped = new Book
+            {
+                ForeignBookId = "audible:uk:B000000002",
+                Title = report.Book,
+                AuthorMetadata = metadata,
+                Editions = new List<Edition> { new Edition { ForeignEditionId = "audible:uk:B000000002", Monitored = true } }
+            };
+            Mocker.GetMock<IProvideBookInfo>().Setup(service => service.GetBookInfo("audible:us:B000000002"))
+                .Returns(Tuple.Create(metadata.ForeignAuthorId, mapped, new List<AuthorMetadata> { metadata }));
+
+            Subject.Execute(new ImportListSyncCommand());
+
+            Mocker.GetMock<IImportListMembershipRepository>().Verify(repository => repository.Complete(It.IsAny<ImportListMembershipAttempt>(), It.Is<IReadOnlyList<ImportListMembershipItem>>(items =>
+                items.Count == 1 && items[0].SourceBookId == "audible:us:B000000002" && items[0].BookId == null && items[0].EditionId == null && items[0].AuthorId == null)));
+            Mocker.GetMock<IAddBookService>().Verify(service => service.AddBooks(It.IsAny<List<Book>>(), false), Times.Never());
+        }
+
+        [Test]
         public void should_not_fetch_if_no_lists_are_enabled()
         {
             Mocker.GetMock<IImportListFactory>()

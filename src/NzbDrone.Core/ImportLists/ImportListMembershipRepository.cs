@@ -106,10 +106,15 @@ namespace NzbDrone.Core.ImportLists
             }
 
             const string itemsSql = """
-                SELECT m.*, CASE WHEN EXISTS (SELECT 1 FROM "ImportListExclusions" e WHERE e."ForeignId" = m."AuthorId" OR e."ForeignId" = m."BookId" OR e."ForeignId" = m."EditionId") THEN TRUE ELSE FALSE END AS "Excluded"
-                FROM "ImportListMembershipItems" m WHERE m."ImportListId" = @ImportListId ORDER BY m."Id"
+                SELECT m.* FROM "ImportListMembershipItems" m WHERE m."ImportListId" = @ImportListId ORDER BY m."Id"
                 """;
             header.Items = connection.Query<ImportListMembershipItem>(itemsSql, new { ImportListId = importListId }, transaction).ToList();
+            var exclusions = connection.Query<string>("SELECT \"ForeignId\" FROM \"ImportListExclusions\"", transaction: transaction).ToHashSet(StringComparer.Ordinal);
+            foreach (var item in header.Items)
+            {
+                item.MarkExcluded(exclusions);
+            }
+
             transaction.Commit();
             return header;
         }
