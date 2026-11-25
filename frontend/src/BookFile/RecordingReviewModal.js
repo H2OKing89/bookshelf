@@ -95,7 +95,7 @@ RecordingEvidence.propTypes = {
   review: PropTypes.object.isRequired
 };
 
-function RecordingReviewModal({ isOpen, fileId, onModalClose, onManualImport, onCreateLocalRecording, onAssociated }) {
+function RecordingReviewModal({ isOpen, fileId, onModalClose, onManualImport = undefined, onCreateLocalRecording = undefined, onAssociated = undefined }) {
   const [review, setReview] = useState(null);
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState(null);
