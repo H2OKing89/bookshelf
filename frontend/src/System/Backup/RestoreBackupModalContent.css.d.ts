@@ -2,6 +2,7 @@
 // Please do not change this file!
 interface CssExports {
   'additionalInfo': string;
+  'modalFooter': string;
   'step': string;
   'stepState': string;
   'steps': string;

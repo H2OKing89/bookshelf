@@ -10,6 +10,7 @@ interface CssExports {
   'event': string;
   'info': string;
   'missing': string;
+  'partial': string;
   'statusIcon': string;
   'unmonitored': string;
   'unreleased': string;

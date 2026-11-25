@@ -201,7 +201,7 @@ class RestoreBackupModalContent extends Component {
           </div>
         </ModalBody>
 
-        <ModalFooter>
+        <ModalFooter className={styles.modalFooter}>
           <div className={styles.additionalInfo}>
             {translate('RestartReloadNote')}
           </div>

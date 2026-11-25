@@ -20,21 +20,21 @@ function sourceIdentity() {
   }
 }
 
-class SourceProvenancePlugin {
-  apply(compiler) {
-    let identity = null;
-    compiler.hooks.beforeCompile.tap('SourceProvenancePlugin', () => { identity = sourceIdentity(); });
-    compiler.hooks.thisCompilation.tap('SourceProvenancePlugin', (compilation) => {
-      compilation.hooks.processAssets.tap(
-        { name: 'SourceProvenancePlugin', stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL },
-        () => {
-          const current = sourceIdentity();
-          const receipt = { ...identity, buildDirty: identity.buildDirty || JSON.stringify(current) !== JSON.stringify(identity) };
-          compilation.emitAsset('source-provenance.json', new compiler.webpack.sources.RawSource(JSON.stringify(receipt)));
-        }
-      );
-    });
-  }
+// Record the same backend-compatible identity for production Vite artifacts.
+function SourceProvenancePlugin() {
+  let identity = null;
+  return {
+    name: 'bookshelf-source-provenance',
+    apply: 'build',
+    buildStart() {
+      identity = sourceIdentity();
+    },
+    generateBundle() {
+      const current = sourceIdentity();
+      const receipt = { ...identity, buildDirty: identity.buildDirty || JSON.stringify(current) !== JSON.stringify(identity) };
+      this.emitFile({ type: 'asset', fileName: 'source-provenance.json', source: JSON.stringify(receipt) });
+    }
+  };
 }
 
 module.exports = SourceProvenancePlugin;

@@ -1,4 +1,4 @@
-// Use CommonJS since this is consumed by PostCSS via webpack (node.js).
+// Use CommonJS since this is consumed by PostCSS (Node.js).
 
 module.exports = {
   // Durations

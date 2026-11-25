@@ -7,13 +7,17 @@ const initializeUrl = `${
 }/initialize.json?t=${Date.now()}`;
 const response = await fetch(initializeUrl);
 
-window.Readarr = await response.json();
-
-/* eslint-disable no-undef, @typescript-eslint/ban-ts-comment */
-// @ts-ignore 2304
-__webpack_public_path__ = `${window.Readarr.urlBase}/`;
-/* eslint-enable no-undef, @typescript-eslint/ban-ts-comment */
-
-const { bootstrap } = await import('./bootstrap');
-
-await bootstrap();
+// The development proxy can serve the UI shell before authentication. Let the
+// backend own the actual login flow and preserve the current navigation target.
+const redirectUrl = new URL(response.url);
+if (response.redirected && redirectUrl.pathname === `${window.Readarr.urlBase}/login`) {
+  redirectUrl.searchParams.set('returnUrl', `${window.location.pathname}${window.location.search}${window.location.hash}`);
+  window.location.replace(`${redirectUrl.pathname}${redirectUrl.search}`);
+} else {
+  if (!response.ok) {
+    throw new Error(`Initialization failed (${response.status}).`);
+  }
+  window.Readarr = await response.json();
+  const { bootstrap } = await import('./bootstrap');
+  await bootstrap();
+}

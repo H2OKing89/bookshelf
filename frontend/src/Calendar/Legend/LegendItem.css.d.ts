@@ -5,7 +5,6 @@ interface CssExports {
   'downloading': string;
   'legendItem': string;
   'missing': string;
-  'onAir': string;
   'partial': string;
   'unmonitored': string;
   'unreleased': string;

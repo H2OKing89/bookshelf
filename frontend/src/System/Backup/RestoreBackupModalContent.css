@@ -17,8 +17,12 @@
   margin-right: 8px;
 }
 
-@media only screen and (max-width: $breakpointSmall) {
+.modalFooter {
   composes: modalFooter from '~Components/Modal/ModalFooter.css';
+}
 
-  flex-wrap: wrap;
+@media only screen and (max-width: $breakpointSmall) {
+  .modalFooter {
+    flex-wrap: wrap;
+  }
 }

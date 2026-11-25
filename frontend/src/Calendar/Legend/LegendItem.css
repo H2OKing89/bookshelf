@@ -28,10 +28,6 @@
   composes: unmonitored from '~Calendar/Events/CalendarEvent.css';
 }
 
-.onAir {
-  composes: onAir from '~Calendar/Events/CalendarEvent.css';
-}
-
 .missing {
   composes: missing from '~Calendar/Events/CalendarEvent.css';
 }

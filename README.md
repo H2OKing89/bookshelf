@@ -23,10 +23,24 @@ The application targets .NET 10, with runtime 10.0.15 bundled in self-contained
 release packages. See the [dependency audit](docs/dependency-audit.md) for
 package updates, native requirements and remaining release gates.
 
-The server listens on port 8787. Build the frontend with `yarn build` and the
+The server listens on port 8787. Use Node.js 24.22.3 or newer on the 24.x
+line with Yarn Classic. Build the frontend with `yarn install --frozen-lockfile`
+and `yarn build:verify` (which checks committed CSS declarations), and the
 server with `dotnet build src/NzbDrone.Console/Readarr.Console.csproj`. Serve the
-built UI from the server output's `UI` directory, then run the generated Readarr
-executable with `-nobrowser -data=/path/to/config`.
+built `_output/UI` from the backend's expected UI folder, then run the generated
+Readarr executable with `-nobrowser -data=/path/to/config`. Run `yarn typecheck`
+for both TypeScript projects, or `yarn build` to regenerate CSS declarations.
+
+For frontend HMR, start a separate local development backend and run
+`BOOKSHELF_DEV_BACKEND=http://127.0.0.1:8787 yarn start`. Visit
+`http://127.0.0.1:8788`. The Vite server binds to loopback, proxies API,
+authentication and SignalR requests to that backend, and supports its URL base
+when included in `BOOKSHELF_DEV_BACKEND`. Set `BOOKSHELF_DEV_PORT` to use a
+different frontend port. Start the non-production backend with
+`BOOKSHELF_DEV_LOCALIZATION="$PWD/src/NzbDrone.Core/Localization/Core"` to
+preview translation edits on reload without copying files into the runtime.
+`yarn watch` rebuilds production-style assets without a dev server;
+`yarn build:profile` produces a non-minified React profiling build with source maps.
 
 Run the [local package validation](docs/local-validation.md) checks against a
 complete package to verify startup, backup/restore, upgrades and media handling

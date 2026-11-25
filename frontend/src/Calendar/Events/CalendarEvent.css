@@ -51,6 +51,14 @@ $fullColorGradient: rgba(244, 245, 246, 0.2);
   }
 }
 
+.partial {
+  border-left-color: var(--warningColor) !important;
+
+  &:global(.colorImpaired) {
+    border-left-style: dashed;
+  }
+}
+
 .downloading {
   border-left-color: var(--purple) !important;
 

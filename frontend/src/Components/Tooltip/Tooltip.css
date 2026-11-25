@@ -48,21 +48,15 @@
     margin-left: -10px;
     border-bottom-width: 0;
     content: ' ';
-
-    &.default {
-      border-top-color: var(--popoverArrowBorderColor);
-    }
-
-    &.inverse {
-      border-top-color: var(--popoverArrowBorderInverseColor);
-    }
   }
 
-  &.default {
+  &.default,
+  &.default::after {
     border-top-color: var(--popoverArrowBorderColor);
   }
 
-  &.inverse {
+  &.inverse,
+  &.inverse::after {
     border-top-color: var(--popoverArrowBorderInverseColor);
   }
 }
@@ -77,21 +71,15 @@
     left: 1px;
     border-left-width: 0;
     content: ' ';
-
-    &.default {
-      border-right-color: var(--popoverArrowBorderColor);
-    }
-
-    &.inverse {
-      border-right-color: var(--popoverArrowBorderInverseColor);
-    }
   }
 
-  &.default {
+  &.default,
+  &.default::after {
     border-right-color: var(--popoverArrowBorderColor);
   }
 
-  &.inverse {
+  &.inverse,
+  &.inverse::after {
     border-right-color: var(--popoverArrowBorderInverseColor);
   }
 }
@@ -106,21 +94,15 @@
     margin-left: -10px;
     border-top-width: 0;
     content: ' ';
-
-    &.default {
-      border-bottom-color: var(--popoverArrowBorderColor);
-    }
-
-    &.inverse {
-      border-bottom-color: var(--popoverArrowBorderInverseColor);
-    }
   }
 
-  &.default {
+  &.default,
+  &.default::after {
     border-bottom-color: var(--popoverArrowBorderColor);
   }
 
-  &.inverse {
+  &.inverse,
+  &.inverse::after {
     border-bottom-color: var(--popoverArrowBorderInverseColor);
   }
 }
@@ -135,21 +117,15 @@
     bottom: -10px;
     border-right-width: 0;
     content: ' ';
-
-    &.default {
-      border-left-color: var(--popoverArrowBorderColor);
-    }
-
-    &.inverse {
-      border-left-color: var(--popoverArrowBorderInverseColor);
-    }
   }
 
-  &.default {
+  &.default,
+  &.default::after {
     border-left-color: var(--popoverArrowBorderColor);
   }
 
-  &.inverse {
+  &.inverse,
+  &.inverse::after {
     border-left-color: var(--popoverArrowBorderInverseColor);
   }
 }

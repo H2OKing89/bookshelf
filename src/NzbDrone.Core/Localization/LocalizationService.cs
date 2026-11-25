@@ -119,9 +119,16 @@ namespace NzbDrone.Core.Localization
 
             var startupFolder = _appFolderInfo.StartUpFolder;
 
-            var prefix = Path.Combine(startupFolder, "Localization", "Core");
-            var key = prefix + language;
+            // An explicitly started local development backend can read the live
+            // source dictionaries when Vite reloads after a translation edit.
+            // Official builds always retain their packaged localization cache.
+            var developmentRoot = RuntimeInfo.IsProduction ? null : Environment.GetEnvironmentVariable("BOOKSHELF_DEV_LOCALIZATION");
+            if (!string.IsNullOrWhiteSpace(developmentRoot))
+            {
+                return GetDictionary(Path.GetFullPath(developmentRoot), language, DefaultCulture + ".json").GetAwaiter().GetResult();
+            }
 
+            var prefix = Path.Combine(startupFolder, "Localization", "Core");
             return _cache.Get("localization", () => GetDictionary(prefix, language, DefaultCulture + ".json").GetAwaiter().GetResult());
         }
 
