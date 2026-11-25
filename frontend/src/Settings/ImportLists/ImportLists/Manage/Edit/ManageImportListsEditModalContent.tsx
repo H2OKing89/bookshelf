@@ -54,10 +54,10 @@ function ManageImportListsEditModalContent(
   const { importListIds, onSavePress, onModalClose } = props;
 
   const [enableAutomaticAdd, setEnableAutomaticAdd] = useState(NO_CHANGE);
-  const [qualityProfileId, setQualityProfileId] = useState<string | number>(
+  const [qualityProfileId, setQualityProfileId] = useState<typeof NO_CHANGE | number>(
     NO_CHANGE
   );
-  const [metadataProfileId, setMetadataProfileId] = useState<string | number>(
+  const [metadataProfileId, setMetadataProfileId] = useState<typeof NO_CHANGE | number>(
     NO_CHANGE
   );
   const [rootFolderPath, setRootFolderPath] = useState(NO_CHANGE);
@@ -73,12 +73,12 @@ function ManageImportListsEditModalContent(
 
     if (qualityProfileId !== NO_CHANGE) {
       hasChanges = true;
-      payload.qualityProfileId = qualityProfileId as number;
+      payload.qualityProfileId = qualityProfileId;
     }
 
     if (metadataProfileId !== NO_CHANGE) {
       hasChanges = true;
-      payload.metadataProfileId = metadataProfileId as number;
+      payload.metadataProfileId = metadataProfileId;
     }
 
     if (rootFolderPath !== NO_CHANGE) {
@@ -101,19 +101,27 @@ function ManageImportListsEditModalContent(
   ]);
 
   const onInputChange = useCallback(
-    ({ name, value }: { name: string; value: string }) => {
+    ({ name, value }: { name: string; value: unknown }) => {
       switch (name) {
         case 'enableAutomaticAdd':
-          setEnableAutomaticAdd(value);
+          if (value === 'enabled' || value === 'disabled' || value === NO_CHANGE) {
+            setEnableAutomaticAdd(value);
+          }
           break;
         case 'qualityProfileId':
-          setQualityProfileId(value);
+          if (value === NO_CHANGE || (typeof value === 'number' && Number.isSafeInteger(value) && value > 0)) {
+            setQualityProfileId(value);
+          }
           break;
         case 'metadataProfileId':
-          setMetadataProfileId(value);
+          if (value === NO_CHANGE || (typeof value === 'number' && Number.isSafeInteger(value) && value > 0)) {
+            setMetadataProfileId(value);
+          }
           break;
         case 'rootFolderPath':
-          setRootFolderPath(value);
+          if (typeof value === 'string') {
+            setRootFolderPath(value);
+          }
           break;
         default:
           console.warn(`EditImportListModalContent Unknown Input: '${name}'`);

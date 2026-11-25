@@ -3,7 +3,7 @@ import test from 'node:test';
 import { createBrowserRouter } from 'react-router-dom';
 import { loadFrontendModule } from './helpers/loadFrontendModule.mjs';
 
-const { createUnsavedChanges } = loadFrontendModule('Settings/UnsavedNavigationProvider.js', {
+const { createUnsavedChanges } = loadFrontendModule('Settings/UnsavedNavigationProvider.tsx', {
   './PendingChangesModal': () => null
 });
 const { default: migrateBrowserHistory } = loadFrontendModule('App/migrateBrowserHistory.js');

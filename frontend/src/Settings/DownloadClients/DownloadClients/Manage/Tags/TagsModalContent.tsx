@@ -61,8 +61,10 @@ function TagsModalContent(props: TagsModalContentProps) {
   );
 
   const onApplyTagsChange = useCallback(
-    ({ value }: { value: string }) => {
-      setApplyTags(value);
+    ({ value }: { value: unknown }) => {
+      if (value === 'add' || value === 'remove' || value === 'replace') {
+        setApplyTags(value);
+      }
     },
     [setApplyTags]
   );

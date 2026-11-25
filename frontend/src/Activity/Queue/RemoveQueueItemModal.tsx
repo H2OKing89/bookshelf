@@ -170,15 +170,19 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
   }, [multipleSelected, canBlocklist, canRetry, isPending]);
 
   const handleRemovalMethodChange = useCallback(
-    ({ value }: { value: RemovalMethod }) => {
-      setRemovalMethod(value);
+    ({ value }: { value: unknown }) => {
+      if (value === 'removeFromClient' || value === 'changeCategory' || value === 'ignore') {
+        setRemovalMethod(value);
+      }
     },
     [setRemovalMethod]
   );
 
   const handleBlocklistMethodChange = useCallback(
-    ({ value }: { value: BlocklistMethod }) => {
-      setBlocklistMethod(value);
+    ({ value }: { value: unknown }) => {
+      if (value === 'doNotBlocklist' || value === 'blocklistAndSearch' || value === 'blocklistOnly') {
+        setBlocklistMethod(value);
+      }
     },
     [setBlocklistMethod]
   );

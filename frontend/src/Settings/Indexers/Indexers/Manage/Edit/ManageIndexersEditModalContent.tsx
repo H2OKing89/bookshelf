@@ -57,7 +57,7 @@ function ManageIndexersEditModalContent(
   const [enableAutomaticSearch, setEnableAutomaticSearch] = useState(NO_CHANGE);
   const [enableInteractiveSearch, setEnableInteractiveSearch] =
     useState(NO_CHANGE);
-  const [priority, setPriority] = useState<null | string | number>(null);
+  const [priority, setPriority] = useState<number | null>(null);
 
   const save = useCallback(() => {
     let hasChanges = false;
@@ -80,7 +80,7 @@ function ManageIndexersEditModalContent(
 
     if (priority !== null) {
       hasChanges = true;
-      payload.priority = priority as number;
+      payload.priority = priority;
     }
 
     if (hasChanges) {
@@ -98,19 +98,29 @@ function ManageIndexersEditModalContent(
   ]);
 
   const onInputChange = useCallback(
-    ({ name, value }: { name: string; value: string }) => {
+    ({ name, value }: { name: string; value: unknown }) => {
       switch (name) {
         case 'enableRss':
-          setEnableRss(value);
+          if (value === 'enabled' || value === 'disabled' || value === NO_CHANGE) {
+            setEnableRss(value);
+          }
           break;
         case 'enableAutomaticSearch':
-          setEnableAutomaticSearch(value);
+          if (value === 'enabled' || value === 'disabled' || value === NO_CHANGE) {
+            setEnableAutomaticSearch(value);
+          }
           break;
         case 'enableInteractiveSearch':
-          setEnableInteractiveSearch(value);
+          if (value === 'enabled' || value === 'disabled' || value === NO_CHANGE) {
+            setEnableInteractiveSearch(value);
+          }
           break;
         case 'priority':
-          setPriority(value);
+          if (value === null) {
+            setPriority(null);
+          } else if (typeof value === 'number' && Number.isFinite(value)) {
+            setPriority(value);
+          }
           break;
         default:
           console.warn(`EditIndexersModalContent Unknown Input: '${name}'`);

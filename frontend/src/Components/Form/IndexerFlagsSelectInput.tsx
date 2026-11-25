@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { createSelector } from 'reselect';
 import AppState from 'App/State/AppState';
 import EnhancedSelectInput from './EnhancedSelectInput';
+import type { ValueChange } from './formTypes';
 
 const selectIndexerFlagsValues = (selectedFlags: number) =>
   createSelector(
@@ -32,7 +33,7 @@ const selectIndexerFlagsValues = (selectedFlags: number) =>
 interface IndexerFlagsSelectInputProps {
   name: string;
   indexerFlags: number;
-  onChange(payload: object): void;
+  onChange(payload: ValueChange<number>): void;
 }
 
 function IndexerFlagsSelectInput(props: IndexerFlagsSelectInputProps) {

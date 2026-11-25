@@ -57,7 +57,7 @@ function ManageDownloadClientsEditModalContent(
   const [removeCompletedDownloads, setRemoveCompletedDownloads] =
     useState(NO_CHANGE);
   const [removeFailedDownloads, setRemoveFailedDownloads] = useState(NO_CHANGE);
-  const [priority, setPriority] = useState<null | string | number>(null);
+  const [priority, setPriority] = useState<number | null>(null);
 
   const save = useCallback(() => {
     let hasChanges = false;
@@ -80,7 +80,7 @@ function ManageDownloadClientsEditModalContent(
 
     if (priority !== null) {
       hasChanges = true;
-      payload.priority = priority as number;
+      payload.priority = priority;
     }
 
     if (hasChanges) {
@@ -98,19 +98,29 @@ function ManageDownloadClientsEditModalContent(
   ]);
 
   const onInputChange = useCallback(
-    ({ name, value }: { name: string; value: string }) => {
+    ({ name, value }: { name: string; value: unknown }) => {
       switch (name) {
         case 'enable':
-          setEnable(value);
+          if (value === 'enabled' || value === 'disabled' || value === NO_CHANGE) {
+            setEnable(value);
+          }
           break;
         case 'priority':
-          setPriority(value);
+          if (value === null) {
+            setPriority(null);
+          } else if (typeof value === 'number' && Number.isFinite(value)) {
+            setPriority(value);
+          }
           break;
         case 'removeCompletedDownloads':
-          setRemoveCompletedDownloads(value);
+          if (value === 'enabled' || value === 'disabled' || value === NO_CHANGE) {
+            setRemoveCompletedDownloads(value);
+          }
           break;
         case 'removeFailedDownloads':
-          setRemoveFailedDownloads(value);
+          if (value === 'enabled' || value === 'disabled' || value === NO_CHANGE) {
+            setRemoveFailedDownloads(value);
+          }
           break;
         default:
           console.warn(

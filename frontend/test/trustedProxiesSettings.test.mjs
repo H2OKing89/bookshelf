@@ -16,7 +16,7 @@ function FormInputGroup(props) {
   return null;
 }
 const FormLabel = () => null;
-const { default: FormGroup } = loadFrontendModule('Components/Form/FormGroup.js', {
+const { default: FormGroup } = loadFrontendModule('Components/Form/FormGroup.tsx', {
   'Helpers/Props': props,
   'Helpers/elementChildren': { map: React.Children.map },
   './FormGroup.css': { group: 'group' },
