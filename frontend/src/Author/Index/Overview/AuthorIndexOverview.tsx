@@ -294,7 +294,7 @@ class AuthorIndexOverview extends Component<AuthorIndexOverviewProps, AuthorInde
               >
                 <TextTruncate
                   line={Math.floor(overviewHeight / (defaultFontSize * lineHeight))}
-                  text={stripHtml(overview)}
+                  text={stripHtml(overview) ?? ''}
                 />
               </Link>
 
