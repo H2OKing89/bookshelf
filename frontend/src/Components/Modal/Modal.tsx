@@ -30,10 +30,11 @@ interface OpenState {
   scrollX: number;
   scrollY: number;
 }
+interface DialogRef { current: HTMLDivElement | null }
 interface ModalLayer {
   props: ModalProps;
   focusTargets: (Element | null)[];
-  dialogRef: React.RefObject<HTMLDivElement | null>;
+  dialogRef: DialogRef;
   setState(state: ModalState): void;
 }
 
@@ -122,7 +123,7 @@ class Modal extends Component<ModalProps, ModalState, OpenState | null> {
 
   private _node: HTMLElement | null;
   private _backgroundRef: HTMLDivElement | null;
-  dialogRef: React.RefObject<HTMLDivElement | null>;
+  dialogRef: DialogRef;
   private _titleId: string;
   private _initialOpenState: OpenState | null;
   private _backdropPress: { x: number; y: number } | null = null;
