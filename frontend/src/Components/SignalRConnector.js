@@ -273,6 +273,10 @@ class SignalRConnector extends Component {
 
   handleQualityrank = (body) => {
     if (body?.action === 'sync') {
+      if (body.authorAssignmentsChanged) {
+        this.props.dispatchFetchAuthor();
+      }
+
       this.props.dispatchFetchBooks();
       scheduleHistoryRefresh();
       repopulatePage();

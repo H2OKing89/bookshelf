@@ -230,4 +230,8 @@ test('quality rank events refresh library and the active page plus history witho
   connector.handleMessage({ name: 'qualityrank', body: { action: 'sync' } });
   assert.deepEqual(legacy, ['books', 'repopulate']);
   assert.equal(timers.size, 1);
+
+  connector.handleMessage({ name: 'qualityrank', body: { action: 'sync', authorAssignmentsChanged: true } });
+  assert.deepEqual(legacy, ['books', 'repopulate', 'authors', 'books', 'repopulate']);
+  assert.equal(timers.size, 1);
 });

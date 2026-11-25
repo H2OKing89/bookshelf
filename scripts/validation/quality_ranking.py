@@ -1,5 +1,6 @@
 """Hosted profile-rank preservation against a disposable audiobook upgrade."""
 from datetime import datetime, timezone
+from copy import deepcopy
 import json
 from pathlib import Path
 import sqlite3
@@ -66,6 +67,35 @@ def inspect_ranks(fixture, profile_id):
     fixture.check("per_file_rank_refreshes_after_profile_save", {row["id"]: row["qualityRank"] for row in fixture.api("bookfile?bookId=101")} == {1011: 1 / 7, 1012: 0})
 
 
+def inspect_author_reassignment(fixture, profile_id):
+    # The original profile is now reversed by inspect_ranks. Keep a distinct
+    # alternative with the original profile ordering and warm both rank caches
+    # before each assignment edit to catch stale author/book statistics.
+    profile = fixture.api(f"qualityprofile/{profile_id}")
+    alternate = deepcopy(profile)
+    alternate.update(id=0, name="Owned alternative rank profile")
+    alternate["items"].reverse()
+    alternate = fixture.api("qualityprofile", "POST", alternate)
+    fixture.check("alternate_profile_creation_does_not_change_assigned_rank", fixture.api("book/101")["statistics"]["fileQualityRank"] == 0 and
+                  fixture.api("book")[0].get("statistics") is not None)
+    author = fixture.api("author/11")
+    author["qualityProfileId"] = alternate["id"]
+    fixture.api("author/11", "PUT", author)
+    fixture.check("individual_author_assignment_refreshes_cached_book_and_file_ranks", fixture.api("author/11")["qualityProfileId"] == alternate["id"] and
+                  fixture.api("book/101")["statistics"]["fileQualityRank"] == 6 / 7 and
+                  next(row for row in fixture.api("book") if row["id"] == 101)["statistics"]["fileQualityRank"] == 6 / 7 and
+                  {row["id"]: row["qualityRank"] for row in fixture.api("bookfile?bookId=101")} == {1011: 6 / 7, 1012: 1})
+    fixture.check("history_and_blocklist_follow_current_assigned_profile", rank_ids(fixture, "history", "descending") == [901, 903, 902, 904] and
+                  rank_ids(fixture, "blocklist", "descending") == [901, 903, 902, 904])
+    fixture.api("author/editor", "PUT", {"authorIds": [11], "qualityProfileId": profile_id, "moveFiles": False})
+    fixture.check("bulk_author_assignment_refreshes_both_book_statistics_caches", fixture.api("author/11")["qualityProfileId"] == profile_id and
+                  fixture.api("book/101")["statistics"]["fileQualityRank"] == 0 and
+                  next(row for row in fixture.api("book") if row["id"] == 101)["statistics"]["fileQualityRank"] == 0 and
+                  {row["id"]: row["qualityRank"] for row in fixture.api("bookfile?bookId=101")} == {1011: 1 / 7, 1012: 0})
+    fixture.check("paged_rank_sort_restores_original_assignment_order", rank_ids(fixture, "history", "descending") == [904, 902, 901, 903] and
+                  rank_ids(fixture, "blocklist", "descending") == [904, 902, 901, 903])
+
+
 def run(runtime, output, baseline_runtime, playwright_module):
     runtime, output = common.validate_output(runtime, output)
     baseline_runtime, _ = common.validate_output(baseline_runtime, output)
@@ -85,6 +115,7 @@ def run(runtime, output, baseline_runtime, playwright_module):
         fixture.check("upgrade_does_not_change_existing_profiles_catalog_or_bytes", identity.snapshot(fixture, golden) == golden and restore.media_unchanged(fixture))
         stage = "rank_checks"
         inspect_ranks(fixture, profile_id)
+        inspect_author_reassignment(fixture, profile_id)
         fixture.check("rank_sort_requires_authentication", library_review.request(fixture, "history?page=1&sortKey=quality", key=False)[0] == 401)
         stage = "browser"
         configuration = {"url": "http://" + fixture.backend_host + fixture.URL_BASE,

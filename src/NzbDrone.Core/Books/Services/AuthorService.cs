@@ -268,9 +268,15 @@ namespace NzbDrone.Core.Books
 
             // Never update AddOptions when updating an author, keep it the same as the existing stored author.
             author.AddOptions = storedAuthor.AddOptions;
+            var rankChanged = storedAuthor.QualityProfileId != author.QualityProfileId;
 
             var updatedAuthor = _authorRepository.Update(author);
             _eventAggregator.PublishEvent(new AuthorEditedEvent(updatedAuthor, storedAuthor));
+
+            if (rankChanged)
+            {
+                _eventAggregator.PublishEvent(new QualityRankingChangedEvent(authorAssignmentsChanged: true));
+            }
 
             return updatedAuthor;
         }
@@ -279,6 +285,9 @@ namespace NzbDrone.Core.Books
         {
             _cache.Clear();
             _logger.Debug("Updating {0} author", author.Count);
+            var previousProfiles = _authorRepository.Get(author.Select(item => item.Id).Distinct().ToList())
+                .ToDictionary(item => item.Id, item => item.QualityProfileId);
+            var rankChanged = author.Any(item => previousProfiles.TryGetValue(item.Id, out var profileId) && profileId != item.QualityProfileId);
 
             foreach (var s in author)
             {
@@ -298,6 +307,12 @@ namespace NzbDrone.Core.Books
 
             _authorRepository.UpdateMany(author);
             _eventAggregator.PublishEvent(new AuthorsEditedEvent(author.Select(item => item.Id).ToList()));
+
+            if (rankChanged)
+            {
+                _eventAggregator.PublishEvent(new QualityRankingChangedEvent(authorAssignmentsChanged: true));
+            }
+
             _logger.Debug("{0} authors updated", author.Count);
 
             return author;

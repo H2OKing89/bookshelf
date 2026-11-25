@@ -23,7 +23,7 @@ namespace Readarr.Api.V1.Profiles.Quality
                 {
                     Name = "qualityrank",
                     Action = ModelAction.Sync,
-                    Body = new { action = "sync" }
+                    Body = new { action = "sync", authorAssignmentsChanged = message.AuthorAssignmentsChanged }
                 }).LogExceptions();
             }
         }

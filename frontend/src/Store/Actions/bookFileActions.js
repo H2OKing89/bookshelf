@@ -241,6 +241,7 @@ export const actionHandlers = handleThunks({
           const bookFile = data.find((file) => file.id === id);
 
           props.qualityCutoffNotMet = bookFile.qualityCutoffNotMet;
+          props.qualityRank = bookFile.qualityRank;
           props.releaseGroup = bookFile.releaseGroup;
 
           if (quality) {
