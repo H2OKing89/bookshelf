@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { createSelector } from 'reselect';
 import AppState from 'App/State/AppState';
 import * as commandNames from 'Commands/commandNames';
@@ -19,6 +19,7 @@ import { fetchUpdates } from 'Store/Actions/systemActions';
 import createCommandExecutingSelector from 'Store/Selectors/createCommandExecutingSelector';
 import createSystemStatusSelector from 'Store/Selectors/createSystemStatusSelector';
 import createUISettingsSelector from 'Store/Selectors/createUISettingsSelector';
+import useAppDispatch from 'Store/useAppDispatch';
 import { UpdateMechanism } from 'typings/Settings/General';
 import formatDate from 'Utilities/Date/formatDate';
 import formatDateTime from 'Utilities/Date/formatDateTime';
@@ -71,7 +72,7 @@ function Updates() {
     updateMechanism,
   } = useSelector(createUpdatesSelector());
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [isMajorUpdateModalOpen, setIsMajorUpdateModalOpen] = useState(false);
   const hasError = !!(updatesError || generalSettingsError);
   const updatesUnavailable = builtInUpdatesAvailable === false;

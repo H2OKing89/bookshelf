@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { DownloadClientAppState } from 'App/State/SettingsAppState';
 import Alert from 'Components/Alert';
 import Button from 'Components/Link/Button';
@@ -21,6 +21,7 @@ import {
   setManageDownloadClientsSort,
 } from 'Store/Actions/settingsActions';
 import createClientSideCollectionSelector from 'Store/Selectors/createClientSideCollectionSelector';
+import useAppDispatch from 'Store/useAppDispatch';
 import { SelectStateInputProps } from 'typings/props';
 import getErrorMessage from 'Utilities/Object/getErrorMessage';
 import translate from 'Utilities/String/translate';
@@ -101,7 +102,7 @@ function ManageDownloadClientsModalContent(
   }: DownloadClientAppState = useSelector(
     createClientSideCollectionSelector('settings.downloadClients')
   );
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);

@@ -1,8 +1,8 @@
 import moment from 'moment';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { CommandBody } from 'Commands/Command';
-import Icon, { type IconProps } from 'Components/Icon';
+import Icon from 'Components/Icon';
 import IconButton from 'Components/Link/IconButton';
 import ConfirmModal from 'Components/Modal/ConfirmModal';
 import TableRowCell from 'Components/Table/Cells/TableRowCell';
@@ -11,6 +11,7 @@ import useModalOpenState from 'Helpers/Hooks/useModalOpenState';
 import { icons, kinds } from 'Helpers/Props';
 import { cancelCommand } from 'Store/Actions/commandActions';
 import createUISettingsSelector from 'Store/Selectors/createUISettingsSelector';
+import useAppDispatch from 'Store/useAppDispatch';
 import formatDate from 'Utilities/Date/formatDate';
 import formatDateTime from 'Utilities/Date/formatDateTime';
 import formatTimeSpan from 'Utilities/Date/formatTimeSpan';
@@ -19,7 +20,7 @@ import translate from 'Utilities/String/translate';
 import QueuedTaskRowNameCell from './QueuedTaskRowNameCell';
 import styles from './QueuedTaskRow.css';
 
-function getStatusIconProps(status: string, message: string | undefined): IconProps {
+function getStatusIconProps(status: string, message: string | undefined) {
   const title = titleCase(status);
 
   switch (status) {
@@ -115,7 +116,7 @@ export default function QueuedTaskRow(props: QueuedTaskRowProps) {
     clientUserAgent,
   } = props;
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const { longDateFormat, shortDateFormat, showRelativeDates, timeFormat } =
     useSelector(createUISettingsSelector());
 

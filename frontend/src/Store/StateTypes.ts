@@ -1,3 +1,5 @@
+import type { ThunkDispatch } from 'redux-thunk';
+
 // The registered legacy slices still have different shapes. Their dynamic
 // keys stay unknown here rather than presenting an incomplete AppState as
 // the entire store or allowing unchecked values throughout new reducers.
@@ -12,10 +14,7 @@ export interface StoreAction {
   error?: boolean;
 }
 
-export interface LegacyDispatch {
-  <Result>(thunk: (dispatch: LegacyDispatch, getState: () => LegacyRootState) => Result): Result;
-  <Action extends StoreAction>(action: Action): Action;
-}
+export type LegacyDispatch = ThunkDispatch<LegacyRootState, undefined, StoreAction>;
 
 export type LegacyThunk<Result = unknown> = (
   dispatch: LegacyDispatch,
