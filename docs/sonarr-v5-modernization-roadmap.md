@@ -1367,3 +1367,18 @@ The large-library benchmark confirmed that the current virtualizer keeps
 mounted rows bounded and identified a Back-navigation scroll restoration issue.
 The library views now save the position received from their scroll containers.
 See [local validation](local-validation.md#u19-u20-and-u21-search-and-library-performance-verification-2026-11-24).
+
+### U22, B06 and B03 asset and recording lifecycle — 2026-11-24
+
+Vite replaces Webpack with content-hashed output and a loopback development
+server. Packaged URL-base behavior, search workers, fonts, static pages and
+source provenance are retained. The local hot-reload and localization checks
+are complete; CI and other-platform acceptance remain separate open gates.
+
+Local recordings now support metadata corrections and explicit local author
+creation. Both local edits and publisher-pack work associations use revisions
+to reject stale changes. Work membership is independent of recording and file
+ownership, with confirmed coverage separated from uncertain volume labels.
+The hosted verification upgrades a disposable library, uses both editors and
+checks restart, rescan, backup restoration and deduplicated related-file totals.
+See [local validation](local-validation.md#u22-b06-and-b03-asset-and-recording-lifecycle-verification-2026-11-24).

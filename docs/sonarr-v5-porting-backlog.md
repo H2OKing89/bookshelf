@@ -119,13 +119,13 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [U19](#u19) | P2 | Verified | L | Responsive release cards with variable-height virtualization |
 | [U20](#u20) | P2 | Verified | M | Text filtering and intentional caching of interactive searches |
 | [U21](#u21) | P2 | Verified | M | Simplify existing library virtualization after measuring it |
-| [U22](#u22) | P2 | Planned | L | Vite/HMR and a separately verified asset pipeline |
+| [U22](#u22) | P2 | Verified | L | Vite/HMR and a separately verified asset pipeline |
 | [B01](#b01) | P0 | Verified | M | Make audiobook identity and upgrade invariants the porting contract |
 | [B02](#b02) | P1 | Verified | L | Provide a supported author reconciliation and correction workflow |
-| [B03](#b03) | P2 | Planned | XL | Represent publisher-pack membership without collapsing recording identities |
+| [B03](#b03) | P2 | Verified | XL | Represent publisher-pack membership without collapsing recording identities |
 | [B04](#b04) | P1 | Verified | L | Add audio-specific custom-format rules from trustworthy media evidence |
 | [B05](#b05) | P2 | Verified | M | Version probe metadata and invalidate stale analysis deliberately |
-| [B06](#b06) | P2 | Planned | L | Complete the local-recording metadata lifecycle |
+| [B06](#b06) | P2 | Verified | L | Complete the local-recording metadata lifecycle |
 | [B07](#b07) | P1 | Verified | M | Expose metadata-provider health and partial-result provenance |
 | [B08](#b08) | P1 | Verified | M | Explain and resolve unmapped or conflicting recording evidence |
 | [B09](#b09) | P2 | Planned | M | Add book-native library diagnostics and collection statistics |
@@ -3045,6 +3045,18 @@ used by the virtualizer. The existing library remains in use. See
 
 Treat build tooling as its own change after runtime/query trials. Record the complete current asset contract and backend reverse-proxy/dev-server requirements before replacement. **Dependencies:** CSS module naming/generation, Node compatibility choice, build/package/CI integration. **Acceptance:** clean production package boots without a dev server; both root and nonempty urlBase load entry, lazy chunks, fonts/images/worker assets and login/oauth HTML; cache-busted assets work after update; localization and CSS types update during HMR; maps and profiling policy are deliberate; packaged output parity is checked on supported OSes. Do not copy Sonarr Vite port/environment names or `target: esnext` without a browser support decision. This is a developer-productivity migration, not a prerequisite for fixing accessibility or adding filters.
 
+**2026-11-24 local implementation and verification.** Vite 8.3.4 and Node
+24.22.3 replace the Webpack pipeline while retaining the backend's UI folder,
+source provenance, CSS module names, static asset paths and URL-base rewriting.
+Generated assets use content hashes and resolve chunks and workers relative to
+the entry module. The loopback development server proxies the owned backend,
+supports CSS declarations and live localization, and uses React Fast Refresh
+where supported (legacy class-component CSS can trigger a full reload). Source
+maps and an explicit profiling build remain available. Both Linux x64 packages
+passed local validation. Remote CI and other-platform acceptance remain open
+under P21/P22; the billing constraint was respected. See
+[local validation](local-validation.md#u22-b06-and-b03-asset-and-recording-lifecycle-verification-2026-11-24).
+
 ## Book and audiobook adaptations
 
 ### B01
@@ -3128,6 +3140,16 @@ Sonarr's file-to-multiple-episodes relationship and multi-season handling are co
 
 **Acceptance:** A pack covering volumes 1-2 and two standalone recordings yields correct coverage without duplicate bytes or reassigned file IDs. Fractional volumes, side stories, uncertain ranges and manual membership corrections are supported. Recording monitoring, acquisition and deletion always identify exact recordings, never a display group.
 
+**2026-11-24 implementation.** Migration 163 adds independent reviewed work
+identities and exact edition memberships. The Work coverage editor links
+existing or new works, records confirmation or uncertainty and rejects stale
+edits. Work coverage and related-file totals remain distinct from recording
+ownership; standalone and regional editions remain separate, and files are
+counted once. No series range is expanded automatically, and acquisition and
+monitoring remain recording-specific. SQLite and PostgreSQL remove only the
+deleted edition's memberships. See
+[local validation](local-validation.md#u22-b06-and-b03-asset-and-recording-lifecycle-verification-2026-11-24).
+
 ### B04
 
 **Add audio-specific custom-format rules from trustworthy media evidence**
@@ -3205,6 +3227,17 @@ analysis refresh cases. See [local validation](local-validation.md#d19-b05-and-d
 Extend the existing local-recording feature with a supported metadata editor and, if needed, local-only author creation for publishers absent from Audible. Persist provenance for title, narrator, publisher, language, year and chapters while retaining the immutable local recording ID. Any future publisher integration should offer a reviewed association to that same local recording; it must not fabricate an ASIN or silently replace it with a matching Audible title. Model the local identity boundary separately from the UI form infrastructure borrowed from Sonarr.
 
 **Acceptance:** Local metadata edits survive refresh, restart and forced rescan; concurrent edits are detected. Ordered narrator/chapter values, unknown dates and file IDs are preserved. A missing publisher catalog does not block adding or managing a local recording. Associating a provider is explicit, reversible where feasible and does not rewrite audio merely to edit library metadata.
+
+**2026-11-24 implementation.** Migration 162 adds nullable local edit revisions
+and provenance. The metadata editor corrects ordered narrator and chapter
+values, title, subtitle, language, publisher and year without touching media or
+recording IDs. Unmapped files can create an explicit local-only author using
+an existing folder and root defaults. Atomic writes, stale-version rejection,
+legacy timestamp comparisons and field-limited monitoring updates preserve
+local metadata through refresh, rescan and restart. A future publisher-provider
+association still requires its own reviewed integration; no external identity
+is fabricated. See
+[local validation](local-validation.md#u22-b06-and-b03-asset-and-recording-lifecycle-verification-2026-11-24).
 
 ### B07
 

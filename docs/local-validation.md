@@ -141,6 +141,27 @@ seeds a disposable catalog and uses the real API and views to measure rendered
 rows and scroll restoration. Both exercise desktop and phone layouts. Neither
 contacts a real indexer or download client, or modifies an existing library.
 
+## Check the frontend asset and recording lifecycle contracts
+
+```sh
+python3 scripts/validate-local.py \
+  --runtime _artifacts/linux-x64/net10.0/Readarr \
+  --baseline-runtime /path/to/older-audiobook-package \
+  --playwright-module /path/to/installed/playwright \
+  --checks assetpipeline recordinglifecycle
+```
+
+The asset proof loads the packaged login page and a recording bookmark at
+both `/` and a nonempty URL base. It verifies hashed entry and lazy assets,
+font and image loading, the real search worker, and the OAuth callback HTML
+using a local synthetic callback (no external OAuth provider is contacted).
+The recording lifecycle check requires a genuine older audiobook package. It
+upgrades a synthetic catalog, generates an unmapped audiobook, edits local
+metadata and creates a local author through the candidate API. Explicit pack
+memberships preserve standalone regional copies and count related files once.
+The browser exercises both editors, and the hosted check tests stale revision
+rejection, rescan, restart and application-managed backup restoration.
+
 ## Check refresh cancellation and shutdown
 
 Run the cancellation proof against a package containing P10:
@@ -1326,3 +1347,75 @@ other `*-final/summary.json` receipts. The controlled library comparison is in
 `_temp/u21-library-20261124/{baseline-settled,candidate-settled}/result.json`.
 The independent exact-package search and modal measurements are in
 `_temp/u19-browser-benchmark.RTMFmw/{final-exact,modal-exact2}/measurements.json`.
+
+## U22, B06 and B03 asset and recording lifecycle verification (2026-11-24)
+
+`61b2bef65` moves the frontend from Webpack to Vite 8.3.4 with Node 24.22.3.
+`5719886db` preserves separate Yarn 1 canonical and aliased package entries.
+`b0741e7de` adds the local recording editor, local author creation and explicit
+pack work memberships. `0ddf620a2` corrects invalid-membership HTTP status
+handling, and `f11f21142` preserves claims on unchanged files with older SQLite
+timestamp encodings. Both Linux x64 packages have matching clean provenance
+from `f11f21142`.
+
+- A fresh frozen Yarn 1.22.19 install, both TypeScript projects, ESLint, **124
+  frontend tests**, and **150 Python tooling tests** passed. Vite verified CSS
+  declarations in its production build. Existing CSS imports retain their
+  module behavior; the full Stylelint run reports one pre-existing property
+  ordering violation in `EditQualityProfileModalContent.css`, with no new
+  violations or formatter crash. The local install was also updated.
+- **5,797 source tests** passed across the offline Core, Common, API, Host,
+  Updater, PostgreSQL migration and PostgreSQL recording-repository runs,
+  including **4,634 Core tests** and **86 API tests**. There were **96 skips**
+  across those suites, including platform-specific cases and the SQLite-only
+  timestamp fixtures in the PostgreSQL run. The focused work-membership cases
+  passed **10/10** on SQLite and PostgreSQL 16, and the local recording service
+  and repository's final focused run passed **22/22**.
+- **44 asset checks** passed at the root and nonempty URL base, including
+  authenticated deep bookmarks, generated scripts, fonts, images, real search
+  worker results and the local OAuth callback HTML. The same baseline checks
+  passed on the pre-Vite package. The isolated Vite update proof verified new
+  content hashes, removal of obsolete assets, source maps and a non-minified
+  profiling build. The development proof against `542b91fa3` passed **11
+  checks**, including same-route TSX Fast Refresh, CSS declaration generation
+  and live source localization. Legacy class-component styles may reload the
+  page rather than preserving in-memory state. The later source changes only
+  affect recording validation and repository claims.
+- **76 recording lifecycle checks** passed on the published candidate. They
+  upgraded a synthetic `2581f5c15` home, preserved all baseline IDs and data,
+  edited an older local recording without changing its zero-based chapters,
+  and created local-only authors from real generated audio through the API
+  and browser. Desktop and phone editors saved exact local and work revisions.
+  A pack, independent US/UK recordings and a fractional standalone recording
+  shared two explicitly confirmed works, with five distinct files counted
+  once. The uncertain membership was not counted until reviewed. Stale and
+  duplicate edits were rejected; local metadata and coverage survived refresh,
+  rescan, restart and application-managed backup restoration without modifying
+  owned media.
+- **39 datastore checks** passed on SQLite and PostgreSQL, including the
+  genuine older schema upgrade, expected additive columns and new membership
+  constraints, injected failure and point-in-time restore. The PostgreSQL
+  proof now recreates its own database targets empty before restoring the
+  older dump, since the dump cannot remove newer dependent foreign keys.
+  All **110 authentication policy checks** passed after accounting for the
+  new nullable metadata columns; the original credential and catalog
+  preservation assertions remain in place.
+- The final package passed **612 delivery checks**, including **305
+  acquisition** and **56 musl Docker** checks. Exact-package identity,
+  provider-accessibility/library review, router/settings/search/virtualization
+  and operational paging receipts passed **262**, **188**, **150** and **124**
+  checks respectively, including unchanged-package assertions.
+
+Local evidence is under `_temp/u22-b06-b03-20261124/`, including
+`source-tests-replay/`, `asset-final/summary.json`,
+`lifecycle-phone-replay/summary.json`, `datastore-final/summary.json`, and
+`auth-replay/summary.json`, as well as the other final package receipts.
+The Vite HMR and cache receipts are in
+`_temp/u22-vite-work/dev-final-hmr/result.json` and
+`_temp/u22-vite-work/cache-proof-result.json`.
+
+The local U22/B06/B03 slices are complete. No GitHub workflows, external
+provider lookups, real download clients or production library homes were used.
+CI and supported-platform acceptance outside these Linux x64 packages remain
+open under P21/P22. Future provider associations for local recordings are not
+invented by the editor.
