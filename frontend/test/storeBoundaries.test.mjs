@@ -307,3 +307,80 @@ test('settings draft reducers preserve explicit null, false and zero and provide
     id: 2, fields: [{ name: 'active', value: false }, { name: 'count', value: 0 }]
   });
 });
+
+test('library collection selectors retain sort metadata, empty/filtered rows, and new item order', () => {
+  const { default: predicates } = loadFrontendModule('Helpers/Props/filterTypePredicates');
+  const filterTypes = loadFrontendModule('Helpers/Props/filterTypes');
+  const sortDirections = { ASCENDING: 'ascending', DESCENDING: 'descending' };
+  const [
+    { default: createAuthors }, { default: createBooks }, { default: createSortReducer }
+  ] = loadFrontendModule([
+    'Store/Selectors/createAuthorClientSideCollectionItemsSelector',
+    'Store/Selectors/createBookClientSideCollectionItemsSelector',
+    'Store/Actions/Creators/Reducers/createSetClientSideCollectionSortReducer'
+  ], {
+    'Helpers/Props': { filterTypePredicates: predicates, filterTypes, sortDirections }
+  });
+
+  const authors = [
+    { id: 11, sortName: 'Zed', sortNameLastFirst: 'Zed', monitored: true },
+    { id: 12, sortName: 'Ada', sortNameLastFirst: 'Ada', monitored: false }
+  ];
+  const books = [
+    { id: 21, title: 'Zulu', authorTitle: 'Zed', authorId: 11, monitored: false, qualityRank: 2 },
+    { id: 22, title: 'Alpha', authorTitle: 'Ada', authorId: 12, monitored: true, qualityRank: 1 }
+  ];
+  const filters = [
+    { key: 'monitored', filters: [{ key: 'monitored', type: 'equal', value: true }] },
+    { key: 'none', filters: [{ key: 'id', type: 'equal', value: -99 }] }
+  ];
+  const cases = [
+    { section: 'authorIndex', source: 'authors', selector: createAuthors('authorIndex'), sortKey: 'sortName', ids: [12, 11], monitored: 11 },
+    { section: 'bookIndex', source: 'books', selector: createBooks('bookIndex'), sortKey: 'title', ids: [22, 21], monitored: 22 }
+  ];
+
+  for (const { section, source, selector, sortKey, ids, monitored } of cases) {
+    const ui = { sortKey, sortDirection: 'ascending', selectedFilterKey: 'all', filters };
+    let state = {
+      authors: { items: authors, itemMap: { 11: 0, 12: 1 } },
+      books: { items: books, itemMap: { 21: 0, 22: 1 } },
+      customFilters: { items: [] },
+      [section]: ui
+    };
+    const reduceSort = createSortReducer(section);
+    const selectIds = () => selector(state).items.map(({ id }) => id);
+    const first = selector(state);
+    assert.deepEqual(selectIds(), ids);
+    assert.equal(selector(state), first);
+
+    state = { ...state, [section]: reduceSort(state[section], { payload: { sortKey } }) };
+    assert.equal(selector(state).sortDirection, 'descending');
+    assert.deepEqual(selectIds(), [...ids].reverse());
+
+    // Same order but different sort key/metadata must still reach the menu.
+    state = { ...state, [section]: reduceSort(state[section], { payload: { sortKey: 'id', sortDirection: 'ascending' } }) };
+    assert.equal(selector(state).sortKey, 'id');
+    assert.equal(selector(state).sortDirection, 'ascending');
+
+    state = { ...state, [section]: { ...state[section], selectedFilterKey: 'monitored' } };
+    assert.deepEqual(selectIds(), [monitored]);
+    assert.equal(selector(state).totalItems, 2);
+    state = { ...state, [section]: { ...state[section], selectedFilterKey: 'none' } };
+    assert.deepEqual(selectIds(), []);
+    assert.equal(selector(state).selectedFilterKey, 'none');
+
+    const newItem = source === 'authors' ?
+      { id: 13, sortName: 'Cora', sortNameLastFirst: 'Cora', monitored: true } :
+      { id: 23, title: 'Beta', authorTitle: 'Ada', authorId: 12, monitored: true, qualityRank: 0 };
+    state = {
+      ...state,
+      [section]: { ...state[section], selectedFilterKey: 'all' },
+      [source]: { ...state[source], items: [...state[source].items, newItem] }
+    };
+    assert.deepEqual(selectIds(), [...ids].reverse().concat(newItem.id));
+    assert.equal(selector(state).totalItems, 3);
+    state = { ...state, [source]: { ...state[source], items: [] } };
+    assert.deepEqual(selectIds(), []);
+    assert.equal(selector(state).totalItems, 0);
+  }
+});
