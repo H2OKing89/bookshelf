@@ -1,6 +1,6 @@
 .tableScroll {
-  margin-top: 10px;
   overflow-x: auto;
+  margin-top: 10px;
 }
 
 .table {
