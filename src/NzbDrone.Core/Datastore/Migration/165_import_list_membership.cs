@@ -1,5 +1,6 @@
 using System.Data;
 using FluentMigrator;
+using Npgsql;
 using NzbDrone.Core.Datastore.Migration.Framework;
 
 namespace NzbDrone.Core.Datastore.Migration
@@ -50,16 +51,27 @@ namespace NzbDrone.Core.Datastore.Migration
                     """;
                 command.ExecuteNonQuery();
             });
-            IfDatabase("postgres").Execute.Sql("""
-                CREATE FUNCTION advance_import_list_membership_revision() RETURNS trigger LANGUAGE plpgsql AS $$
-                BEGIN
-                    NEW."MembershipRevision" := OLD."MembershipRevision" + 1;
-                    RETURN NEW;
-                END;
-                $$;
-                CREATE TRIGGER "AdvanceImportListMembershipRevision" BEFORE UPDATE ON "ImportLists"
-                FOR EACH ROW EXECUTE FUNCTION advance_import_list_membership_revision();
-                """);
+            Execute.WithConnection((connection, transaction) =>
+            {
+                if (connection is not NpgsqlConnection)
+                {
+                    return;
+                }
+
+                using var command = connection.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText = """
+                    CREATE FUNCTION advance_import_list_membership_revision() RETURNS trigger LANGUAGE plpgsql AS $$
+                    BEGIN
+                        NEW."MembershipRevision" := OLD."MembershipRevision" + 1;
+                        RETURN NEW;
+                    END;
+                    $$;
+                    CREATE TRIGGER "AdvanceImportListMembershipRevision" BEFORE UPDATE ON "ImportLists"
+                    FOR EACH ROW EXECUTE FUNCTION advance_import_list_membership_revision();
+                    """;
+                command.ExecuteNonQuery();
+            });
         }
     }
 }
