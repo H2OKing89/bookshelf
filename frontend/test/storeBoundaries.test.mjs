@@ -101,7 +101,9 @@ test('the actual registered Redux store executes thunks and multi-action batches
 
 test('legacy preference hydration restores whitelisted drafts only, preserving column getters and zero/false', (t) => {
   const legacyQueue = { paged: { page: 12, sortKey: 'title' } };
+  const customFilter = { id: 7, label: 'Fixture', type: 'authors', filters: [{ key: 'count', value: 0, type: 'equal' }] };
   const old = {
+    bookshelf: { customFilters: [customFilter, null, { id: 8, label: 'Old', type: 'authors', filters: [{ key: 'count', type: 'retired' }] }] },
     history: { pageSize: 0, selectedFilterKey: 7, columns: [
       { name: 'title', label: 'Obsolete', isVisible: false }, { name: 'unused', isVisible: true }
     ], items: [{ id: 999 }] },
@@ -122,7 +124,7 @@ test('legacy preference hydration restores whitelisted drafts only, preserving c
   const { default: prepare } = loadFrontendModule('Store/Middleware/createPersistState', {
     'Store/Actions': [
       { persistState: ['history.pageSize', 'history.selectedFilterKey', 'history.columns'] },
-      { persistState: ['settings.advancedSettings', 'search.authorDefaults'] }
+      { persistState: ['settings.advancedSettings', 'search.authorDefaults', 'bookshelf.customFilters'] }
     ],
     'Activity/Queue/queuePreferences': { initializeQueuePreferences: (value) => initialized.push(value) },
     'Store/Migrators/migrate': () => {}
@@ -131,6 +133,7 @@ test('legacy preference hydration restores whitelisted drafts only, preserving c
   const defaults = {
     history: { pageSize: 20, selectedFilterKey: 'all', columns: [{ name: 'title', isVisible: true, get label() { return label; } }], items: [] },
     settings: { advancedSettings: true },
+    bookshelf: {},
     search: { authorDefaults: { qualityProfileId: 5, rootFolderPath: '', tags: [] } },
     queue: { status: {} }
   };
@@ -147,12 +150,15 @@ test('legacy preference hydration restores whitelisted drafts only, preserving c
   assert.equal(hydrated.history.columns[0].label, 'New translation');
   assert.equal(defaults.history.columns[0].isVisible, true);
   assert.equal(hydrated.settings.advancedSettings, false);
+  assert.deepEqual(hydrated.bookshelf.customFilters, [customFilter]);
+  assert.equal(defaults.bookshelf.customFilters, undefined);
   assert.deepEqual(hydrated.search.authorDefaults, { qualityProfileId: 0, rootFolderPath: '/fixture', tags: [2] });
   assert.deepEqual(hydrated.queue, defaults.queue);
   assert.deepEqual(initialized, [legacyQueue]);
   store.dispatch({ type: 'fixture/persist' });
   const written = JSON.parse(storage.get('readarr'));
   assert.deepEqual(written.queue, legacyQueue);
+  assert.deepEqual(written.bookshelf.customFilters, [customFilter]);
   assert.equal(written.history.items, undefined);
   assert.equal(written.settings.unexpected, undefined);
   detach();
@@ -234,15 +240,34 @@ test('typed ID selectors, filter values and scroll state avoid stale matches and
   assert.equal(findSelectedFilters('preset', filters), filters[0].filters);
   assert.deepEqual(findSelectedFilters(7, filters, [{ id: 7, filters: [{ key: 'custom' }] }]), [{ key: 'custom' }]);
   assert.deepEqual(findSelectedFilters('missing', filters), []);
+  assert.deepEqual(findSelectedFilters(7, null, [null, { id: 7, filters: [null] }]), []);
+  assert.deepEqual(findSelectedFilters(7, undefined, [{ id: 7, filters: {} }]), []);
   assert.equal(getFilterValue(filters, 'preset', 'monitored', true), false);
   assert.equal(getFilterValue(filters, 'preset', 'count', 12), 0);
   assert.equal(getFilterValue(filters, 'preset', 'optional', 12), null);
   assert.equal(getFilterValue(filters, 'preset', 'missing', 12), 12);
+  assert.equal(getFilterValue([null, { key: 'preset', filters: [null] }], 'preset', 'missing', 12), 12);
   assert.equal(predicates.contains('MiXeD Name', 'mixed'), true);
   assert.equal(predicates.contains([0, false], false), true);
   assert.equal(predicates.notContains([0, false], 0), false);
   assert.equal(predicates.notContains(undefined, 'x'), false);
   assert.equal(predicates.greaterThan(4, '3'), true);
+
+  const { default: filterCollection } = loadFrontendModule('Utilities/Array/filterCollection', {
+    'Helpers/Props': {
+      filterTypePredicates: predicates,
+      filterTypes: loadFrontendModule('Helpers/Props/filterTypes')
+    }
+  });
+  const items = [{ title: 'Example' }];
+  assert.deepEqual(filterCollection(items, {
+    selectedFilterKey: 'old',
+    filters: [{ key: 'old', filters: [{ key: 'title', value: 'example', type: 'retired' }] }]
+  }), []);
+  assert.deepEqual(filterCollection(items, {
+    selectedFilterKey: 'old',
+    filters: [{ key: 'old', filters: [{ key: 'title', value: 'example', type: 'inNext' }] }]
+  }), []);
   scroll.saveScrollPosition('authorIndex', 250);
   scroll.saveScrollPosition('bookIndex', 450);
   scroll.saveScrollPosition('authorIndex', NaN);

@@ -3,6 +3,7 @@ import { initializeQueuePreferences } from 'Activity/Queue/queuePreferences';
 import actions from 'Store/Actions';
 import migrate from 'Store/Migrators/migrate';
 import { isStateRecord, LegacyRootState, StateRecord } from 'Store/StateTypes';
+import { isStoredCustomFilter } from 'Utilities/Filter/filterModels';
 import mergeColumnPreferences from './mergeColumnPreferences';
 import { getPreferenceStorage, isPreferenceRecord, readPreferenceStorage, writePreferenceStorage } from './preferenceStorage';
 
@@ -32,6 +33,15 @@ function mergePreference(current: unknown, saved: unknown, path: string): unknow
   if (path.endsWith('.selectedFilterKey')) {
     return saved === null || typeof saved === 'string' || (typeof saved === 'number' && Number.isFinite(saved)) ?
       saved : current;
+  }
+  // One legacy registered path (bookshelf.customFilters) has no current
+  // default field but must remain available after upgrades and rollbacks.
+  if (path.endsWith('.customFilters')) {
+    return Array.isArray(saved) ? saved.filter(isStoredCustomFilter) : current;
+  }
+  if (path.endsWith('.recentFolders') && Array.isArray(saved)) {
+    return saved.filter((value: unknown) => isStateRecord(value) &&
+      typeof value.folder === 'string' && typeof value.lastUsed === 'string');
   }
   if (Array.isArray(current)) {
     return Array.isArray(saved) ? saved : current;
@@ -65,7 +75,11 @@ export default function createPersistState(initialState: LegacyRootState) {
   paths.forEach((path) => {
     const current: unknown = _.get(initialState, path);
     const saved: unknown = _.get(persistedState, path);
-    if (current !== undefined && saved !== undefined) {
+    if (saved !== undefined && (current !== undefined || path.endsWith('.customFilters'))) {
+      const merged = mergePreference(current, saved, path);
+      if (merged === undefined) {
+        return;
+      }
       // The paths are supplied by application-owned slice registrations.
       // Clone the parent before setting, to leave defaults untouched.
       const parts = path.split('.');
@@ -76,7 +90,7 @@ export default function createPersistState(initialState: LegacyRootState) {
           _.set(computedState, parentPath, { ...parent });
         }
       }
-      _.set(computedState, path, mergePreference(current, saved, path));
+      _.set(computedState, path, merged);
     }
   });
 

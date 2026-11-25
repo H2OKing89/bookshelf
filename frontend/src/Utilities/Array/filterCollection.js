@@ -27,7 +27,11 @@ function filterCollection(items, state) {
         type = filterTypes.EQUAL
       } = selectedFilters[i];
 
-      if (filterPredicates && filterPredicates.hasOwnProperty(key)) {
+      // Old/custom filter definitions may contain a retired predicate type.
+      // Do not crash or display all results for an unsupported active filter.
+      if (!filterTypes.all.includes(type)) {
+        accepted = false;
+      } else if (filterPredicates && Object.hasOwn(filterPredicates, key)) {
         const predicate = filterPredicates[key];
 
         if (Array.isArray(value)) {
@@ -42,10 +46,12 @@ function filterCollection(items, state) {
         } else {
           accepted = predicate(item, value, type);
         }
-      } else if (item.hasOwnProperty(key)) {
+      } else if (item && Object.hasOwn(item, key)) {
         const predicate = filterTypePredicates[type];
 
-        if (Array.isArray(value)) {
+        if (typeof predicate !== 'function') {
+          accepted = false;
+        } else if (Array.isArray(value)) {
           if (
             type === filterTypes.NOT_CONTAINS ||
               type === filterTypes.NOT_EQUAL

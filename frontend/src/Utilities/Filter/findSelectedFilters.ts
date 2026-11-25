@@ -1,3 +1,6 @@
+import { isStateRecord } from 'Store/StateTypes';
+import { isFilterEntry } from './filterModels';
+
 interface PresetFilter<Filter> {
   key: string | number;
   filters: Filter[];
@@ -17,8 +20,14 @@ export default function findSelectedFilters<Filter>(
     return [];
   }
 
-  const selected = filters.find((filter) => filter.key === selectedFilterKey) ??
-    customFilters.find((filter) => filter.id === selectedFilterKey);
+  const selected = (Array.isArray(filters) ? filters : []).find(
+    (filter) => isStateRecord(filter) && filter.key === selectedFilterKey
+  ) ?? (Array.isArray(customFilters) ? customFilters : []).find(
+    (filter) => isStateRecord(filter) && filter.id === selectedFilterKey
+  );
 
-  return selected?.filters ?? [];
+  // Old/custom filter data is deserialized independently of these types.
+  // Never apply a partly malformed filter as if it were a valid preset.
+  return selected && Array.isArray(selected.filters) && selected.filters.every(isFilterEntry) ?
+    selected.filters : [];
 }
