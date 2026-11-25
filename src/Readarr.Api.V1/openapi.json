@@ -15379,6 +15379,69 @@
         },
         "additionalProperties": false
       },
+      "PerformanceJobCategory": {
+        "enum": [
+          "authorRefresh",
+          "bookRefresh",
+          "scan",
+          "import",
+          "downloadMonitor",
+          "mediaInfo"
+        ],
+        "type": "string"
+      },
+      "PerformanceJobGroup": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "$ref": "#/components/schemas/PerformanceJobCategory"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/CommandTrigger"
+          },
+          "executions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cancelled": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "meanMilliseconds": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxMilliseconds": {
+            "type": "number",
+            "format": "double"
+          },
+          "sqliteStatements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sqliteMilliseconds": {
+            "type": "number",
+            "format": "double"
+          },
+          "postgresOperations": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "postgresMilliseconds": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
       "PerformanceProfileGroup": {
         "type": "object",
         "properties": {
@@ -15451,6 +15514,17 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PerformanceProfileGroup"
+            },
+            "nullable": true
+          },
+          "jobSamples": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PerformanceJobGroup"
             },
             "nullable": true
           }
