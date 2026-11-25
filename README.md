@@ -21,7 +21,10 @@ narrators, and ASINs, with two optional audiobook presets. See
 Use the .NET 10 SDK selected by [global.json](global.json) (10.0.404 baseline).
 The application targets .NET 10, with runtime 10.0.15 bundled in self-contained
 release packages. See the [dependency audit](docs/dependency-audit.md) for
-package updates, native requirements and remaining release gates.
+package updates, native requirements and remaining release gates. The
+[platform support matrix](docs/platform-support.md) identifies the three Linux
+delivery targets, their architecture/libc requirements and native validation
+limits.
 
 The server listens on port 8787. Use Node.js 24.22.3 or newer on the 24.x
 line with Yarn Classic. Build the frontend with `yarn install --frozen-lockfile`

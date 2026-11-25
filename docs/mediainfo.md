@@ -54,4 +54,13 @@ The Docker build compiles a matching musl binary inside an Alpine build stage fo
 
 `build.sh --packages` includes the matching bundle in each package, alongside its version, source lock, checksums, and license notices. CI builds the bundles before publishing .NET outputs and uses the same source recipe for container images.
 
-To update MediaInfo, choose an official stable release, update the archive URL and checksum together, rebuild each supported helper architecture, and verify `--Version`, JSON extraction from representative audiobook formats, and static linking (`readelf -d` should show no dynamic section). Smoke-test the x64 helper on a glibc Linux image as well as Alpine. Keep all bundled license notices. MediaInfo permits redistribution under its [BSD 2-Clause license](https://mediaarea.net/en/MediaInfo/License); ZenLib and zlib have their own included notices.
+To update MediaInfo, choose an official stable release, update the archive
+URL and checksum together, rebuild each supported helper architecture, and
+verify `--Version`, JSON extraction from representative audiobook formats, and
+static linking (`readelf -l` must show no program interpreter and
+`readelf -d` must show no shared library dependency such as `NEEDED`; static
+PIE helpers may retain a dynamic relocation section). Smoke-test the x64
+helper on a glibc Linux image as well as Alpine. Keep all bundled license
+notices. MediaInfo permits redistribution under its
+[BSD 2-Clause license](https://mediaarea.net/en/MediaInfo/License); ZenLib and
+zlib have their own included notices.

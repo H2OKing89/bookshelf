@@ -24,20 +24,6 @@ UpdateVersionNumber()
         ESCAPED_BRANCH_NAME=${BUILD_SOURCEBRANCHNAME//\//\\/}
         sed -i'' -e "s/<AssemblyVersion>[0-9.*]\+<\/AssemblyVersion>/<AssemblyVersion>$READARRVERSION<\/AssemblyVersion>/g" src/Directory.Build.props
         sed -i'' -e "s/<AssemblyConfiguration>[\$()A-Za-z-]\+<\/AssemblyConfiguration>/<AssemblyConfiguration>${ESCAPED_BRANCH_NAME}<\/AssemblyConfiguration>/g" src/Directory.Build.props
-        sed -i'' -e "s/<string>10.0.0.0<\/string>/<string>$READARRVERSION<\/string>/g" distribution/osx/Readarr.app/Contents/Info.plist
-    fi
-}
-
-EnableExtraPlatformsInSDK()
-{
-    echo "Extra-platform SDK patching is unsupported. See P22 in docs/sonarr-v5-porting-backlog.md." >&2
-    return 1
-}
-
-EnableExtraPlatforms()
-{
-    if grep -qv freebsd-x64 src/Directory.Build.props; then
-        sed -i'' -e "s^<RuntimeIdentifiers>\(.*\)</RuntimeIdentifiers>^<RuntimeIdentifiers>\1;freebsd-x64;linux-x86</RuntimeIdentifiers>^g" src/Directory.Build.props
     fi
 }
 
@@ -184,126 +170,19 @@ PackageLinux()
     ProgressEnd "Creating $runtime Package for $framework"
 }
 
-PackageMacOS()
-{
-    local framework="$1"
-    local runtime="$2"
-
-    ProgressStart "Creating MacOS Package for $framework $runtime"
-
-    local folder=$artifactsFolder/$runtime/$framework/Readarr
-
-    PackageFiles "$folder" "$framework" "$runtime"
-
-    echo "Removing Service helpers"
-    rm -f $folder/ServiceUninstall.*
-    rm -f $folder/ServiceInstall.*
-
-    echo "Removing Readarr.Windows"
-    rm $folder/Readarr.Windows.*
-
-    echo "Adding Readarr.Mono to UpdatePackage"
-    cp $folder/Readarr.Mono.* $folder/Readarr.Update
-    if [ "$framework" = "net10.0" ]; then
-        cp $folder/Mono.Posix.NETStandard.* $folder/Readarr.Update
-        cp $folder/libMonoPosixHelper.* $folder/Readarr.Update
-    fi
-
-    ProgressEnd 'Creating MacOS Package'
-}
-
-PackageMacOSApp()
-{
-    local framework="$1"
-    local runtime="$2"
-
-    ProgressStart "Creating macOS App Package for $framework $runtime"
-
-    local folder="$artifactsFolder/$runtime-app/$framework"
-
-    rm -rf $folder
-    mkdir -p $folder
-    cp -r distribution/osx/Readarr.app $folder
-    mkdir -p $folder/Readarr.app/Contents/MacOS
-
-    echo "Copying Binaries"
-    cp -r $artifactsFolder/$runtime/$framework/Readarr/* $folder/Readarr.app/Contents/MacOS
-
-    echo "Removing Update Folder"
-    rm -r $folder/Readarr.app/Contents/MacOS/Readarr.Update
-
-    ProgressEnd 'Creating macOS App Package'
-}
-
-PackageWindows()
-{
-    local framework="$1"
-    local runtime="$2"
-
-    ProgressStart "Creating $runtime Package for $framework"
-
-    local folder=$artifactsFolder/$runtime/$framework/Readarr
-
-    PackageFiles "$folder" "$framework" "$runtime"
-    cp -r $outputFolder/$framework-windows/$runtime/publish/* $folder
-
-    echo "Removing Readarr.Mono"
-    rm -f $folder/Readarr.Mono.*
-    rm -f $folder/Mono.Posix.NETStandard.*
-    rm -f $folder/libMonoPosixHelper.*
-
-    echo "Adding Readarr.Windows to UpdatePackage"
-    cp $folder/Readarr.Windows.* $folder/Readarr.Update
-
-    ProgressEnd "Creating $runtime Package for $framework"
-}
-
 Package()
 {
     local framework="$1"
     local runtime="$2"
-    local SPLIT
-
-    IFS='-' read -ra SPLIT <<< "$runtime"
-
-    case "${SPLIT[0]}" in
-        linux|freebsd*)
+    case "$runtime" in
+        linux-x64|linux-musl-x64|linux-musl-arm64)
             PackageLinux "$framework" "$runtime"
             ;;
-        win)
-            PackageWindows "$framework" "$runtime"
-            ;;
-        osx)
-            PackageMacOS "$framework" "$runtime"
-            PackageMacOSApp "$framework" "$runtime"
+        *)
+            echo "Unsupported Bookshelf package runtime: $runtime. See docs/platform-support.md." >&2
+            return 1
             ;;
     esac
-}
-
-BuildInstaller()
-{
-    local framework="$1"
-    local runtime="$2"
-
-    ./_inno/ISCC.exe distribution/windows/setup/readarr.iss "//DFramework=$framework" "//DRuntime=$runtime"
-}
-
-InstallInno()
-{
-    ProgressStart "Installing portable Inno Setup"
-
-    rm -rf _inno
-    curl -s --output innosetup.exe "https://files.jrsoftware.org/is/6/innosetup-${INNOVERSION:-6.2.0}.exe"
-    mkdir _inno
-    ./innosetup.exe //portable=1 //silent //currentuser //dir=.\\_inno
-    rm innosetup.exe
-
-    ProgressEnd "Installed portable Inno Setup"
-}
-
-RemoveInno()
-{
-    rm -rf _inno
 }
 
 PackageTests()
@@ -318,8 +197,9 @@ PackageTests()
     ProgressEnd 'Creating Test Package'
 }
 
-# Use mono or .net depending on OS
-case "$(uname -s)" in
+# Keep frontend-only tooling available independently of Linux packaging.
+host_os=$(uname -s)
+case "$host_os" in
     CYGWIN*|MINGW32*|MINGW64*|MSYS*)
         # on windows, use dotnet
         os="windows"
@@ -329,8 +209,6 @@ case "$(uname -s)" in
         os="posix"
         ;;
 esac
-
-POSITIONAL=()
 
 if [ $# -eq 0 ]; then
     echo "No arguments provided, building everything"
@@ -361,14 +239,20 @@ case $key in
         shift # past argument
         ;;
     -r|--runtime)
+        if [[ $# -lt 2 || -z "$2" || "$2" == -* ]]; then
+            echo "Missing runtime identifier. See docs/platform-support.md." >&2
+            exit 1
+        fi
         RID="$2"
-        shift # past argument
-        shift # past value
+        shift 2
         ;;
     -f|--framework)
+        if [[ $# -lt 2 || -z "$2" || "$2" == -* ]]; then
+            echo "Missing package framework. Use net10.0." >&2
+            exit 1
+        fi
         FRAMEWORK="$2"
-        shift # past argument
-        shift # past value
+        shift 2
         ;;
     --frontend)
         FRONTEND=YES
@@ -393,35 +277,46 @@ case $key in
         LINT=YES
         shift # past argument
         ;;
-    *)    # unknown option
-        POSITIONAL+=("$1") # save it in an array for later
-        shift # past argument
+    *)
+        echo "Unknown build argument: $1. See docs/platform-support.md." >&2
+        exit 1
         ;;
 esac
 done
-set -- "${POSITIONAL[@]}" # restore positional parameters
 
-if [ "$ENABLE_EXTRA_PLATFORMS_IN_SDK" = "YES" ];
-then
-    EnableExtraPlatformsInSDK
+# Fail before publishing, modifying source files, or deleting previous outputs.
+# A compilable RID is not necessarily a complete Bookshelf delivery package.
+if [[ "$ENABLE_EXTRA_PLATFORMS_IN_SDK" = "YES" || "$ENABLE_EXTRA_PLATFORMS" = "YES" || "$INSTALLER" = "YES" ]]; then
+    echo "Extra-platform builds and desktop installers are unsupported. See docs/platform-support.md." >&2
+    exit 1
+fi
+if [[ -n "$RID" ]]; then
+    case "$RID" in
+        linux-x64|linux-musl-x64|linux-musl-arm64) ;;
+        *) echo "Unsupported Bookshelf package runtime: $RID. See docs/platform-support.md." >&2; exit 1 ;;
+    esac
+fi
+if [[ -n "$FRAMEWORK" && "$FRAMEWORK" != "net10.0" ]]; then
+    echo "Unsupported Bookshelf package framework: $FRAMEWORK. Use net10.0." >&2
+    exit 1
+fi
+if [[ ( -n "$RID" && -z "$FRAMEWORK" ) || ( -z "$RID" && -n "$FRAMEWORK" ) ]]; then
+    echo "Specify both --runtime and --framework for a targeted package." >&2
+    exit 1
+fi
+
+if [[ "$host_os" != "Linux" && ( "$BACKEND" = "YES" || "$PACKAGES" = "YES" ) ]]; then
+    echo "Bookshelf delivery builds require a Linux host. See docs/platform-support.md." >&2
+    exit 1
 fi
 
 if [ "$BACKEND" = "YES" ];
 then
     UpdateVersionNumber
-    if [ "$ENABLE_EXTRA_PLATFORMS" = "YES" ];
-    then
-        EnableExtraPlatforms
-    fi
     Build
     if [[ -z "$RID" || -z "$FRAMEWORK" ]];
     then
         PackageTests "net10.0" "linux-musl-x64"
-        if [ "$ENABLE_EXTRA_PLATFORMS" = "YES" ];
-        then
-            PackageTests "net10.0" "freebsd-x64"
-            PackageTests "net10.0" "linux-x86"
-        fi
     else
         PackageTests "$FRAMEWORK" "$RID"
     fi
@@ -449,20 +344,7 @@ then
     if [[ -z "$RID" || -z "$FRAMEWORK" ]];
     then
         Package "net10.0" "linux-musl-x64"
-        if [ "$ENABLE_EXTRA_PLATFORMS" = "YES" ];
-        then
-            Package "net10.0" "freebsd-x64"
-            Package "net10.0" "linux-x86"
-        fi
     else
         Package "$FRAMEWORK" "$RID"
     fi
-fi
-
-if [ "$INSTALLER" = "YES" ];
-then
-    InstallInno
-    BuildInstaller "net10.0" "win-x64"
-    BuildInstaller "net10.0" "win-x86"
-    RemoveInno
 fi

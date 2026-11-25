@@ -37,10 +37,7 @@ RUN --mount=type=bind,source=_output,target=_output \
     case "$TARGETPLATFORM" in \
     "linux/amd64") cp -a /_output/net10.0/linux-musl-x64/publish/. /app/readarr/bin/ ;; \
     "linux/arm64") cp -a /_output/net10.0/linux-musl-arm64/publish/. /app/readarr/bin/ ;; \
-    "darwin/amd64") cp -a /_output/net10.0/osx-x64/publish/. /app/readarr/bin/ ;; \
-    "darwin/arm64") cp -a /_output/net10.0/osx-arm64/publish/. /app/readarr/bin/ ;; \
-    "windows/amd64") cp -a /_output/net10.0/win-x64/publish/. /app/readarr/bin/ ;; \
-    *) echo "Unknown platform: $TARGETPLATFORM" && exit 1 ;; \
+    *) echo "Unsupported Bookshelf container platform: $TARGETPLATFORM. Use linux/amd64 or linux/arm64." >&2 && exit 1 ;; \
     esac; \
     cp -r /_output/UI /app/readarr/bin/UI
 
