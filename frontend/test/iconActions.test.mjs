@@ -12,8 +12,8 @@ const boundaries = {
   './Link': Link
 };
 
-const { default: IconButton } = loadFrontendModule('Components/Link/IconButton.js', boundaries);
-const { default: SpinnerIconButton } = loadFrontendModule('Components/Link/SpinnerIconButton.js', {
+const { default: IconButton } = loadFrontendModule('Components/Link/IconButton.tsx', boundaries);
+const { default: SpinnerIconButton } = loadFrontendModule('Components/Link/SpinnerIconButton.tsx', {
   ...boundaries,
   './IconButton': IconButton
 });

@@ -1,17 +1,24 @@
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import React from 'react';
-import Icon from 'Components/Icon';
-import Link from './Link';
+import Icon, { type IconProps } from 'Components/Icon';
+import Link, { type LinkProps } from './Link';
 import styles from './IconButton.css';
 
-function IconButton(props) {
+export interface IconButtonProps extends Omit<LinkProps, 'size' | 'name' | 'kind'> {
+  iconClassName?: string;
+  name: IconProps['name'];
+  kind?: IconProps['kind'];
+  size?: number;
+  isSpinning?: boolean;
+}
+
+function IconButton(props: IconButtonProps) {
   const {
-    className,
+    className = styles.button,
     iconClassName,
     name,
     kind,
-    size,
+    size = 12,
     isSpinning,
     isDisabled,
     title,
@@ -42,22 +49,5 @@ function IconButton(props) {
   );
 }
 
-IconButton.propTypes = {
-  ...Link.propTypes,
-  className: PropTypes.string.isRequired,
-  iconClassName: PropTypes.string,
-  kind: PropTypes.string,
-  name: PropTypes.object.isRequired,
-  size: PropTypes.number,
-  title: PropTypes.string,
-  'aria-label': PropTypes.string,
-  isSpinning: PropTypes.bool,
-  isDisabled: PropTypes.bool
-};
-
-IconButton.defaultProps = {
-  className: styles.button,
-  size: 12
-};
 
 export default IconButton;

@@ -1,21 +1,37 @@
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import React from 'react';
 import { ColorImpairedConsumer } from 'App/ColorImpairedContext';
 import { kinds, sizes } from 'Helpers/Props';
+import type { Kind } from 'Helpers/Props/kinds';
+import type { Size } from 'Helpers/Props/sizes';
 import styles from './ProgressBar.css';
 
-function ProgressBar(props) {
+const styleClasses: Partial<Record<Kind | Size, string>> = styles;
+
+export interface ProgressBarProps {
+  className?: string;
+  containerClassName?: string;
+  title?: string;
+  progress: number;
+  precision?: number;
+  showText?: boolean;
+  text?: string;
+  kind?: Kind;
+  size?: Size;
+  width?: number;
+}
+
+function ProgressBar(props: ProgressBarProps) {
   const {
-    className,
-    containerClassName,
+    className = styles.progressBar,
+    containerClassName = styles.container,
     title,
     progress,
-    precision,
-    showText,
+    precision = 1,
+    showText = false,
     text,
-    kind,
-    size,
+    kind = kinds.PRIMARY,
+    size = sizes.MEDIUM,
     width
   } = props;
 
@@ -30,7 +46,7 @@ function ProgressBar(props) {
           <div
             className={classNames(
               containerClassName,
-              styles[size]
+              styleClasses[size]
             )}
             title={title}
             style={{ width: actualWidth }}
@@ -38,7 +54,7 @@ function ProgressBar(props) {
             {
               showText && width ?
                 <div
-                  className={classNames(styles.backTextContainer, styles[kind])}
+                  className={classNames(styles.backTextContainer, styleClasses[kind])}
                   style={{ width: actualWidth }}
                 >
                   <div className={styles.backText}>
@@ -53,21 +69,21 @@ function ProgressBar(props) {
             <div
               className={classNames(
                 className,
-                styles[kind],
+                styleClasses[kind],
                 enableColorImpairedMode && 'colorImpaired'
               )}
               role="meter"
               aria-label={`Progress Bar at ${progress.toFixed(0)}%`}
-              aria-valuenow={progress.toFixed(0)}
-              aria-valuemin="0"
-              aria-valuemax="100"
+              aria-valuenow={Number(progress.toFixed(0))}
+              aria-valuemin={0}
+              aria-valuemax={100}
               style={{ width: progressPercent }}
             />
 
             {
               showText ?
                 <div
-                  className={classNames(styles.frontTextContainer, styles[kind])}
+                  className={classNames(styles.frontTextContainer, styleClasses[kind])}
                   style={{ width: progressPercent }}
                 >
                   <div
@@ -88,26 +104,5 @@ function ProgressBar(props) {
   );
 }
 
-ProgressBar.propTypes = {
-  className: PropTypes.string,
-  containerClassName: PropTypes.string,
-  title: PropTypes.string,
-  progress: PropTypes.number.isRequired,
-  precision: PropTypes.number.isRequired,
-  showText: PropTypes.bool.isRequired,
-  text: PropTypes.string,
-  kind: PropTypes.oneOf(kinds.all).isRequired,
-  size: PropTypes.oneOf(sizes.all).isRequired,
-  width: PropTypes.number
-};
-
-ProgressBar.defaultProps = {
-  className: styles.progressBar,
-  containerClassName: styles.container,
-  precision: 1,
-  showText: false,
-  kind: kinds.PRIMARY,
-  size: sizes.MEDIUM
-};
 
 export default ProgressBar;

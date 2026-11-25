@@ -3,6 +3,7 @@ import Icon from 'Components/Icon';
 import TableRowCell from 'Components/Table/Cells/TableRowCell';
 import Popover from 'Components/Tooltip/Popover';
 import { icons, kinds, tooltipPositions } from 'Helpers/Props';
+import type { Kind } from 'Helpers/Props/kinds';
 import translate from 'Utilities/String/translate';
 import type { QueueItem } from './queuePageQuery';
 import styles from './QueueStatusCell.css';
@@ -60,7 +61,7 @@ function QueueStatusCell(props: QueueStatusCellProps) {
 
   // status === 'downloading'
   let iconName = icons.DOWNLOADING;
-  let iconKind = kinds.DEFAULT;
+  let iconKind: Kind = kinds.DEFAULT;
   let title = translate('Title');
 
   if (status === 'paused') {

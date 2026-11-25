@@ -1,11 +1,23 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import type { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon, type FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import { kinds } from 'Helpers/Props';
+import type { Kind } from 'Helpers/Props/kinds';
 import styles from './Icon.css';
 
-class Icon extends PureComponent {
+const kindClasses: Partial<Record<Kind, string>> = styles;
+
+export interface IconProps extends Omit<FontAwesomeIconProps, 'icon' | 'size' | 'title' | 'spin' | 'name' | 'ref'> {
+  containerClassName?: string;
+  name: IconProp;
+  kind?: Kind;
+  size?: number;
+  title?: string | (() => string);
+  isSpinning?: boolean;
+}
+
+class Icon extends PureComponent<IconProps> {
 
   //
   // Render
@@ -15,10 +27,11 @@ class Icon extends PureComponent {
       containerClassName,
       className,
       name,
-      kind,
-      size,
+      kind = kinds.DEFAULT,
+      size = 14,
       title,
-      isSpinning,
+      isSpinning = false,
+      fixedWidth = false,
       ...otherProps
     } = this.props;
 
@@ -26,10 +39,11 @@ class Icon extends PureComponent {
       <FontAwesomeIcon
         className={classNames(
           className,
-          styles[kind]
+          kindClasses[kind]
         )}
         icon={name}
         spin={isSpinning}
+        fixedWidth={fixedWidth}
         style={{
           fontSize: `${size}px`
         }}
@@ -52,22 +66,5 @@ class Icon extends PureComponent {
   }
 }
 
-Icon.propTypes = {
-  containerClassName: PropTypes.string,
-  className: PropTypes.string,
-  name: PropTypes.object.isRequired,
-  kind: PropTypes.string.isRequired,
-  size: PropTypes.number.isRequired,
-  title: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-  isSpinning: PropTypes.bool.isRequired,
-  fixedWidth: PropTypes.bool.isRequired
-};
-
-Icon.defaultProps = {
-  kind: kinds.DEFAULT,
-  size: 14,
-  isSpinning: false,
-  fixedWidth: false
-};
 
 export default Icon;

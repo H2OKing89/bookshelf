@@ -22,7 +22,7 @@ const messages = [
   'Loading Battlestation'
 ];
 
-let message = null;
+let message: string | null = null;
 
 function LoadingMessage() {
   if (!message) {

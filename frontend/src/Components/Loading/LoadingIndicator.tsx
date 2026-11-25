@@ -1,9 +1,14 @@
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import React from 'react';
 import styles from './LoadingIndicator.css';
 
-function LoadingIndicator({ className, rippleClassName, size }) {
+interface LoadingIndicatorProps {
+  className?: string;
+  rippleClassName?: string;
+  size?: number;
+}
+
+function LoadingIndicator({ className = styles.loading, rippleClassName = styles.ripple, size = 50 }: LoadingIndicatorProps) {
   const sizeInPx = `${size}px`;
   const width = sizeInPx;
   const height = sizeInPx;
@@ -36,16 +41,5 @@ function LoadingIndicator({ className, rippleClassName, size }) {
   );
 }
 
-LoadingIndicator.propTypes = {
-  className: PropTypes.string,
-  rippleClassName: PropTypes.string,
-  size: PropTypes.number
-};
-
-LoadingIndicator.defaultProps = {
-  className: styles.loading,
-  rippleClassName: styles.ripple,
-  size: 50
-};
 
 export default LoadingIndicator;

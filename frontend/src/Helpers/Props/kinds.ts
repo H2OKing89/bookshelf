@@ -20,4 +20,6 @@ export const all = [
   PURPLE,
   SUCCESS,
   WARNING
-];
+] as const;
+
+export type Kind = typeof all[number];

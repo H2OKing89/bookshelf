@@ -1,13 +1,17 @@
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import ActionStatus from 'Components/ActionStatus';
 import Icon from 'Components/Icon';
-import SpinnerButton from 'Components/Link/SpinnerButton';
+import SpinnerButton, { type SpinnerButtonProps } from 'Components/Link/SpinnerButton';
 import { icons, kinds } from 'Helpers/Props';
+import type { Kind } from 'Helpers/Props/kinds';
 import translate from 'Utilities/String/translate';
 import styles from './SpinnerErrorButton.css';
 
-const resultLabels = {
+type Action = 'action' | 'save' | 'test';
+type Result = 'pending' | 'success' | 'warning' | 'error';
+type CompletedResult = Exclude<Result, 'pending'>;
+
+const resultLabels: Record<Action, Partial<Record<Result, string>>> = {
   action: {
     pending: 'ActionInProgress',
     success: 'ActionSucceeded',
@@ -27,27 +31,38 @@ const resultLabels = {
   }
 };
 
-function getResult(error) {
-  if (error?.aborted) {
+function getResult(error: unknown): CompletedResult | null {
+  if (typeof error === 'object' && error !== null && 'aborted' in error && error.aborted) {
     return null;
   }
-
   if (!error) {
     return 'success';
   }
-
-  const failures = error.responseJSON;
-  return error.status === 400 && Array.isArray(failures) && failures.length &&
-    failures.every((failure) => failure?.isWarning === true) ?
-    'warning' :
-    'error';
+  if (typeof error === 'object' && 'status' in error && error.status === 400 && 'responseJSON' in error && Array.isArray(error.responseJSON)) {
+    const failures: unknown[] = error.responseJSON;
+    if (failures.length && failures.every((failure) => typeof failure === 'object' && failure !== null && 'isWarning' in failure && failure.isWarning === true)) {
+      return 'warning';
+    }
+  }
+  return 'error';
 }
 
-class SpinnerErrorButton extends Component {
+export interface SpinnerErrorButtonProps extends SpinnerButtonProps {
+  action?: Action;
+  error?: unknown;
+  children: React.ReactNode;
+}
 
-  state = { result: null };
+interface SpinnerErrorButtonState {
+  result: CompletedResult | null;
+}
 
-  componentDidUpdate(previous) {
+class SpinnerErrorButton extends Component<SpinnerErrorButtonProps, SpinnerErrorButtonState> {
+  static defaultProps = { action: 'action' as const };
+
+  state: SpinnerErrorButtonState = { result: null };
+
+  componentDidUpdate(previous: SpinnerErrorButtonProps) {
     const { isSpinning, error } = this.props;
 
     if (previous.isSpinning === isSpinning) {
@@ -68,21 +83,23 @@ class SpinnerErrorButton extends Component {
     clearTimeout(this._resultTimeout);
   }
 
+  private _resultTimeout: ReturnType<typeof setTimeout> | undefined;
+
   render() {
     const {
-      action,
+      action = 'action',
       kind,
       isSpinning,
-      error,
       children,
       ...otherProps
     } = this.props;
+    delete otherProps.error;
     const result = isSpinning ? 'pending' : this.state.result;
     const showIcon = result && result !== 'pending';
-    const label = resultLabels[action][result];
+    const label = result ? resultLabels[action][result] : undefined;
 
     let iconName = icons.CHECK;
-    let iconKind = kind === kinds.PRIMARY ? kinds.DEFAULT : kinds.SUCCESS;
+    let iconKind: Kind = kind === kinds.PRIMARY ? kinds.DEFAULT : kinds.SUCCESS;
 
     if (result === 'warning') {
       iconName = icons.WARNING;
@@ -117,16 +134,5 @@ class SpinnerErrorButton extends Component {
   }
 }
 
-SpinnerErrorButton.propTypes = {
-  action: PropTypes.oneOf(Object.keys(resultLabels)),
-  kind: PropTypes.oneOf(kinds.all),
-  isSpinning: PropTypes.bool.isRequired,
-  error: PropTypes.object,
-  children: PropTypes.node.isRequired
-};
-
-SpinnerErrorButton.defaultProps = {
-  action: 'action'
-};
 
 export default SpinnerErrorButton;

@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import translate from 'Utilities/String/translate';
 import styles from './ActionStatus.css';
@@ -9,7 +8,13 @@ export function announceSettingsSaved() {
   document.dispatchEvent(new Event(settingsSavedEvent));
 }
 
-function ActionStatus({ message, isError, sequence }) {
+export interface ActionStatusProps {
+  message?: string;
+  isError?: boolean;
+  sequence?: number;
+}
+
+function ActionStatus({ message, isError, sequence }: ActionStatusProps) {
   return (
     <>
       <span className={styles.visuallyHidden} role="status" aria-atomic={true}>
@@ -22,17 +27,11 @@ function ActionStatus({ message, isError, sequence }) {
   );
 }
 
-ActionStatus.propTypes = {
-  message: PropTypes.string,
-  isError: PropTypes.bool,
-  sequence: PropTypes.number
-};
-
 export function SavedSettingsStatus() {
   const [sequence, setSequence] = useState(0);
 
   useEffect(() => {
-    let timeout = null;
+    let timeout: ReturnType<typeof setTimeout> | undefined = undefined;
 
     function onSettingsSaved() {
       clearTimeout(timeout);

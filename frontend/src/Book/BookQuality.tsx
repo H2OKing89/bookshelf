@@ -2,6 +2,7 @@ import React from 'react';
 import type { QualityModel } from 'Book/LibraryModels';
 import Label from 'Components/Label';
 import { kinds } from 'Helpers/Props';
+import type { Kind } from 'Helpers/Props/kinds';
 import formatBytes from 'Utilities/Number/formatBytes';
 import translate from 'Utilities/String/translate';
 
@@ -81,7 +82,7 @@ function BookQuality(props: BookQualityProps) {
     showRevision = false
   } = props;
 
-  let kind = kinds.DEFAULT;
+  let kind: Kind = kinds.DEFAULT;
   if (!isMonitored) {
     kind = kinds.DISABLED;
   } else if (isCutoffNotMet) {

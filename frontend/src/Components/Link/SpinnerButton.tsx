@@ -1,17 +1,21 @@
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import React from 'react';
-import Icon from 'Components/Icon';
+import Icon, { type IconProps } from 'Components/Icon';
 import { icons } from 'Helpers/Props';
-import Button from './Button';
+import Button, { type ButtonProps } from './Button';
 import styles from './SpinnerButton.css';
 
-function SpinnerButton(props) {
+export interface SpinnerButtonProps extends ButtonProps {
+  isSpinning: boolean;
+  spinnerIcon?: IconProps['name'];
+}
+
+function SpinnerButton(props: SpinnerButtonProps) {
   const {
-    className,
+    className = styles.button,
     isSpinning,
     isDisabled,
-    spinnerIcon,
+    spinnerIcon = icons.SPINNER,
     children,
     ...otherProps
   } = props;
@@ -42,18 +46,5 @@ function SpinnerButton(props) {
   );
 }
 
-SpinnerButton.propTypes = {
-  ...Button.Props,
-  className: PropTypes.string.isRequired,
-  isSpinning: PropTypes.bool.isRequired,
-  isDisabled: PropTypes.bool,
-  spinnerIcon: PropTypes.object.isRequired,
-  children: PropTypes.node
-};
-
-SpinnerButton.defaultProps = {
-  className: styles.button,
-  spinnerIcon: icons.SPINNER
-};
 
 export default SpinnerButton;
