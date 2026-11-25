@@ -1,7 +1,6 @@
 const path = require('path');
 const postcssMixins = require('postcss-mixins');
 const postcssSimpleVars = require('postcss-simple-vars');
-const postcssColorFunction = require('postcss-color-function');
 const postcssNested = require('postcss-nested');
 const reload = require('require-nocache')(module);
 
@@ -21,7 +20,6 @@ module.exports = {
     postcssSimpleVars({
       variables: () => cssVarsFiles.reduce((acc, vars) => Object.assign(acc, reload(vars)), {})
     }),
-    postcssColorFunction(),
     postcssNested()
   ]
 };

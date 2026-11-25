@@ -3,14 +3,14 @@
   <ItemGroup>
     <PackageVersion Include="AutoFixture" Version="4.17.0" />
     <PackageVersion Include="coverlet.collector" Version="10.1.1" PrivateAssets="all" />
-    <PackageVersion Include="Dapper" Version="2.0.151" />
-    <PackageVersion Include="Diacritical.Net" Version="1.0.4" />
+    <PackageVersion Include="Dapper" Version="2.1.100" />
+    <PackageVersion Include="Diacritical.Net" Version="1.0.5" />
     <PackageVersion Include="DryIoc.dll" Version="5.4.3" />
     <PackageVersion Include="DryIoc.Microsoft.DependencyInjection" Version="6.2.0" />
     <PackageVersion Include="Equ" Version="2.3.0" />
     <PackageVersion Include="FluentAssertions" Version="5.10.3" />
-    <PackageVersion Include="IPAddressRange" Version="6.1.0" />
-    <PackageVersion Include="Polly" Version="8.5.2" />
+    <PackageVersion Include="IPAddressRange" Version="6.3.0" />
+    <PackageVersion Include="Polly" Version="8.9.1" />
     <PackageVersion Include="FluentMigrator.Runner.Core" Version="8.0.1" />
     <PackageVersion Include="FluentMigrator.Runner.SQLite" Version="8.0.1" />
     <PackageVersion Include="FluentMigrator.Runner.Postgres" Version="8.0.1" />
@@ -34,7 +34,7 @@
     <PackageVersion Include="Moq" Version="4.17.2" />
     <PackageVersion Include="MonoTorrent" Version="2.0.7" />
     <PackageVersion Include="NBuilder" Version="6.1.0" />
-    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageVersion Include="NLog.Extensions.Logging" Version="5.5.0" />
     <PackageVersion Include="NLog" Version="5.5.1" />
     <PackageVersion Include="NLog.Targets.Syslog" Version="7.0.0" />

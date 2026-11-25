@@ -64,8 +64,8 @@
       },
       "Polly.Core": {
         "type": "Transitive",
-        "resolved": "8.5.2",
-        "contentHash": "1MJKdxv4zwDmiWvYvVN24DsrWUfgQ4F83voH8bhbtLMdPuGy8CfTUzsgQhvyrl1a7hrM6f/ydwLVdVUI0xooUw=="
+        "resolved": "8.9.1",
+        "contentHash": "L0vfggkkI2nDAW9lCFYSqX9g/+3TkVXhAq+sh6owBq656X9XW0kE2NG+dPYGNQGeK66HS1rKHRPWMm1bMv91kw=="
       },
       "ReusableTasks": {
         "type": "Transitive",
@@ -86,11 +86,11 @@
         "type": "Project",
         "dependencies": {
           "DryIoc.dll": "[5.4.3, )",
-          "IPAddressRange": "[6.1.0, )",
+          "IPAddressRange": "[6.3.0, )",
           "Microsoft.Extensions.Hosting.WindowsServices": "[10.0.15, )",
           "NLog": "[5.5.1, )",
           "NLog.Extensions.Logging": "[5.5.0, )",
-          "Newtonsoft.Json": "[13.0.3, )",
+          "Newtonsoft.Json": "[13.0.4, )",
           "SharpZipLib": "[1.4.2, )",
           "SourceGear.sqlite3": "[3.53.4, )",
           "System.Configuration.ConfigurationManager": "[10.0.15, )",
@@ -103,8 +103,8 @@
       "readarr.core": {
         "type": "Project",
         "dependencies": {
-          "Dapper": "[2.0.151, )",
-          "Diacritical.Net": "[1.0.4, )",
+          "Dapper": "[2.1.100, )",
+          "Diacritical.Net": "[1.0.5, )",
           "Equ": "[2.3.0, )",
           "FluentMigrator.Runner.Core": "[8.0.1, )",
           "FluentMigrator.Runner.Postgres": "[8.0.1, )",
@@ -116,10 +116,10 @@
           "MonoTorrent": "[2.0.7, )",
           "NLog": "[5.5.1, )",
           "NLog.Targets.Syslog": "[7.0.0, )",
-          "Newtonsoft.Json": "[13.0.3, )",
+          "Newtonsoft.Json": "[13.0.4, )",
           "Npgsql": "[10.0.3, )",
           "PdfPig": "[0.1.16, )",
-          "Polly": "[8.5.2, )",
+          "Polly": "[8.9.1, )",
           "Readarr.Common": "[1.0.0, )",
           "RestSharp": "[106.15.0, )",
           "System.IO.Abstractions": "[17.0.24, )",
@@ -128,15 +128,15 @@
       },
       "Dapper": {
         "type": "CentralTransitive",
-        "requested": "[2.0.151, )",
-        "resolved": "2.0.151",
-        "contentHash": "mMcZgx1lim0/i1Ozu+lgnBM4GwNIHpCuxV6BV2ovsEfZAXRAq4jb6RIhxGDcVjtmXMLPpdp85jHPdDjBMMwejw=="
+        "requested": "[2.1.100, )",
+        "resolved": "2.1.100",
+        "contentHash": "zKwgGfxkDIVLGU2WIsl57DwTgj17+fa5v0u2eiVMxU92GXN2fRIn2M8QMGtyGFrPSbVOYKgGFxAxEFL6CB9tTw=="
       },
       "Diacritical.Net": {
         "type": "CentralTransitive",
-        "requested": "[1.0.4, )",
-        "resolved": "1.0.4",
-        "contentHash": "0VtPC6qSm8/WVDoufUvaEm6L9W+OEk+iTO/dQL7kHnE4Zds1dTr3AOjAGmEHIvgPn7BPHiOoi3Hmsgl3pe5rag=="
+        "requested": "[1.0.5, )",
+        "resolved": "1.0.5",
+        "contentHash": "OuidkgWgwMJnpXUSmZccm/Lzvt+hoiRGqXOn96RUucEHFXwoKQrPVdDNo0eP1BDdFLLQ1ZFCV1FtIoQjmN3Zig=="
       },
       "DryIoc.dll": {
         "type": "CentralTransitive",
@@ -189,9 +189,9 @@
       },
       "IPAddressRange": {
         "type": "CentralTransitive",
-        "requested": "[6.1.0, )",
-        "resolved": "6.1.0",
-        "contentHash": "qirGMjCD64q5TIVu9VsCw7eHAA1bIuvz/4sabdh2IWcsUDDbQ4jG5Sum6tPMRJBqTcb4NzMJ37GotglfRWzIsw=="
+        "requested": "[6.3.0, )",
+        "resolved": "6.3.0",
+        "contentHash": "VrGoeUz+ZK2QiwHNj+vab9uOvTDucenRseJZjc4uB7ASduQ7RNWnpd8gy1e9z2BsY4VoigVaCRrcQCQKuQVSiw=="
       },
       "LazyCache": {
         "type": "CentralTransitive",
@@ -238,9 +238,9 @@
       },
       "Newtonsoft.Json": {
         "type": "CentralTransitive",
-        "requested": "[13.0.3, )",
-        "resolved": "13.0.3",
-        "contentHash": "HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ=="
+        "requested": "[13.0.4, )",
+        "resolved": "13.0.4",
+        "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
       },
       "NLog": {
         "type": "CentralTransitive",
@@ -281,11 +281,11 @@
       },
       "Polly": {
         "type": "CentralTransitive",
-        "requested": "[8.5.2, )",
-        "resolved": "8.5.2",
-        "contentHash": "vbXsGgkG86nG+TOwY+SmtrGrRHmHH0DQaxtILx//d3Dz/ocJ8izSNYzdvU2gEtWa/LDD8zJLvD3HdjEkdlvkhg==",
+        "requested": "[8.9.1, )",
+        "resolved": "8.9.1",
+        "contentHash": "2a+6qssytViSYiLuvUb7KeFXRcJQyTf0dWLpvtZLNBohF28oXKVExeKdU2aXXVZlVO0swuEtkhhuCK3gFaJmrw==",
         "dependencies": {
-          "Polly.Core": "8.5.2"
+          "Polly.Core": "8.9.1"
         }
       },
       "RestSharp": {
