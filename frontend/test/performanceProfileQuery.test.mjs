@@ -6,7 +6,9 @@ const { parsePerformanceSnapshot } = loadFrontendModule('System/Status/Performan
 const group = { operation: 'Book.GetBooks', method: 'GET', requests: 2, failed: 0, cancelled: 1,
   meanMilliseconds: 1.5, maxMilliseconds: 2, sqliteStatements: 8, sqliteMilliseconds: 0.5,
   postgresOperations: 0, postgresMilliseconds: 0 };
-const snapshot = { enabled: true, retentionMinutes: 10, capacity: 256, samples: 2, operations: [group] };
+const snapshot = { enabled: true, retentionMinutes: 10, capacity: 256, samples: 2, operations: [group], jobSamples: 0, jobs: [] };
+const { method: ignoredMethod, requests: ignoredRequests, ...timing } = group;
+const job = { ...timing, operation: 'RefreshAuthor', category: 'authorRefresh', trigger: 'scheduled', executions: 2 };
 
 test('profiling results expose only the aggregate fields and preserve zero and false', () => {
   assert.deepEqual(parsePerformanceSnapshot({ ...snapshot, rawQuery: 'owned marker', operations: [{ ...group, path: '/owned/private' }] }), snapshot);
@@ -22,5 +24,22 @@ test('profiling parser rejects malformed groups or inconsistent retention', () =
     { ...snapshot, operations: [{ ...group, failed: 3 }] },
     { ...snapshot, operations: [{ ...group, sqliteMilliseconds: Infinity }] },
     { ...snapshot, operations: [{ ...group, postgresOperations: '0' }] }
+  ]) assert.throws(() => parsePerformanceSnapshot(changed));
+});
+
+
+test('job profiling keeps request counts compatible and parses only known aggregate job fields', () => {
+  const { jobSamples, jobs, ...oldSnapshot } = snapshot;
+  assert.deepEqual(parsePerformanceSnapshot(oldSnapshot), snapshot);
+  const withJobs = { ...snapshot, jobSamples: 2, jobs: [job] };
+  assert.deepEqual(parsePerformanceSnapshot({ ...withJobs, jobs: [{ ...job, arguments: 'secret file path' }] }), withJobs);
+  for (const changed of [
+    { ...snapshot, jobSamples: 1 }, { ...snapshot, jobs: [job] },
+    { ...withJobs, capacity: 3 }, { ...withJobs, jobSamples: 1 },
+    { ...withJobs, jobs: [{ ...job, operation: '/owned/private' }] },
+    { ...withJobs, jobs: [{ ...job, category: 'import' }] },
+    { ...withJobs, jobs: [{ ...job, trigger: 'unknown' }] },
+    { ...withJobs, jobs: [{ ...job, failed: 3 }] },
+    { ...withJobs, jobs: [{ ...job, maxMilliseconds: 0 }] }
   ]) assert.throws(() => parsePerformanceSnapshot(changed));
 });

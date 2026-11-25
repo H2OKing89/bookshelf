@@ -5,7 +5,12 @@ using System.Data.SQLite;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using NzbDrone.Core.Books.Commands;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Download;
+using NzbDrone.Core.MediaFiles.BookImport.Manual;
+using NzbDrone.Core.MediaFiles.Commands;
+using NzbDrone.Core.Messaging.Commands;
 
 namespace NzbDrone.Core.Instrumentation
 {
@@ -24,6 +29,32 @@ namespace NzbDrone.Core.Instrumentation
         public double PostgresMilliseconds { get; init; }
     }
 
+    public enum PerformanceJobCategory
+    {
+        AuthorRefresh,
+        BookRefresh,
+        Scan,
+        Import,
+        DownloadMonitor,
+        MediaInfo
+    }
+
+    public sealed class PerformanceJobGroup
+    {
+        public string Operation { get; init; }
+        public PerformanceJobCategory Category { get; init; }
+        public CommandTrigger Trigger { get; init; }
+        public int Executions { get; init; }
+        public int Failed { get; init; }
+        public int Cancelled { get; init; }
+        public double MeanMilliseconds { get; init; }
+        public double MaxMilliseconds { get; init; }
+        public long SqliteStatements { get; init; }
+        public double SqliteMilliseconds { get; init; }
+        public long PostgresOperations { get; init; }
+        public double PostgresMilliseconds { get; init; }
+    }
+
     public sealed class PerformanceProfileSnapshot
     {
         public bool Enabled { get; init; }
@@ -31,6 +62,8 @@ namespace NzbDrone.Core.Instrumentation
         public int Capacity { get; init; }
         public int Samples { get; init; }
         public List<PerformanceProfileGroup> Operations { get; init; }
+        public int JobSamples { get; init; }
+        public List<PerformanceJobGroup> Jobs { get; init; }
     }
 
     // AutoAddServices uses one singleton for service interfaces, whereas
@@ -40,12 +73,13 @@ namespace NzbDrone.Core.Instrumentation
     {
         bool Enabled { get; }
         PerformanceProfiler.RequestCapture Begin(string operation, string method);
+        PerformanceProfiler.RequestCapture BeginJob(Command command, CommandTrigger trigger);
         PerformanceProfileSnapshot Snapshot();
     }
 
-    // Short-lived request aggregates, not a SQL/logging facility. Provider
-    // objects, request IDs, URLs, statements, parameters and user data are
-    // deliberately not retained. Only provider timing aggregates are sampled. PostgreSQL
+    // Short-lived request and command-job aggregates, not a SQL/logging facility.
+    // Provider objects, request/command IDs, URLs, statements, arguments,
+    // parameters and user data are deliberately not retained. PostgreSQL
     // includes command and physical connection-open activities.
     public sealed class PerformanceProfiler : IPerformanceProfiler, IDisposable
     {
@@ -54,7 +88,7 @@ namespace NzbDrone.Core.Instrumentation
         public const int RetentionMinutes = 10;
         private const string ActivityCaptureKey = "Bookshelf.PerformanceCapture";
         private static readonly AsyncLocal<RequestCapture> Current = new ();
-        private readonly Queue<RequestSample> _samples = new ();
+        private readonly Queue<ProfileSample> _samples = new ();
         private readonly object _gate = new ();
         private readonly TimeProvider _time;
         private readonly ActivityListener _listener;
@@ -80,7 +114,7 @@ namespace NzbDrone.Core.Instrumentation
                 ActivityStarted = activity =>
                 {
                     var capture = Current.Value;
-                    if (capture?.Owner == this)
+                    if (capture?.Owner == this && capture.IsRecording)
                     {
                         activity.SetCustomProperty(ActivityCaptureKey, capture);
                     }
@@ -110,7 +144,47 @@ namespace NzbDrone.Core.Instrumentation
                 return null;
             }
 
-            var capture = new RequestCapture(this, Current.Value, operation, method, _time.GetTimestamp());
+            return StartCapture(operation, method, null, CommandTrigger.Unspecified);
+        }
+
+        // Only independent, allowlisted command workers are sampled. No
+        // command arguments, model IDs or arbitrary type names enter a sample.
+        // Synchronous nested service/event work belongs to the outer capture.
+        public RequestCapture BeginJob(Command command, CommandTrigger trigger)
+        {
+            if (!Enabled || _disposed || Current.Value?.IsRecording == true)
+            {
+                return null;
+            }
+
+            (PerformanceJobCategory Category, string Operation) job = command switch
+            {
+                RefreshAuthorCommand => (PerformanceJobCategory.AuthorRefresh, nameof(RefreshAuthorCommand)),
+                BulkRefreshAuthorCommand => (PerformanceJobCategory.AuthorRefresh, nameof(BulkRefreshAuthorCommand)),
+                RefreshBookCommand => (PerformanceJobCategory.BookRefresh, nameof(RefreshBookCommand)),
+                BulkRefreshBookCommand => (PerformanceJobCategory.BookRefresh, nameof(BulkRefreshBookCommand)),
+                RescanFoldersCommand => (PerformanceJobCategory.Scan, nameof(RescanFoldersCommand)),
+                ManualImportCommand => (PerformanceJobCategory.Import, nameof(ManualImportCommand)),
+                DownloadedBooksScanCommand => (PerformanceJobCategory.Import, nameof(DownloadedBooksScanCommand)),
+                ProcessMonitoredDownloadsCommand => (PerformanceJobCategory.Import, nameof(ProcessMonitoredDownloadsCommand)),
+                RefreshMonitoredDownloadsCommand => (PerformanceJobCategory.DownloadMonitor, nameof(RefreshMonitoredDownloadsCommand)),
+                CheckForFinishedDownloadCommand => (PerformanceJobCategory.DownloadMonitor, nameof(CheckForFinishedDownloadCommand)),
+                RefreshMediaInfoCommand => (PerformanceJobCategory.MediaInfo, nameof(RefreshMediaInfoCommand)),
+                RefreshStaleMediaInfoCommand => (PerformanceJobCategory.MediaInfo, nameof(RefreshStaleMediaInfoCommand)),
+                _ => default
+            };
+            if (job.Operation == null)
+            {
+                return null;
+            }
+
+            var safeTrigger = trigger is CommandTrigger.Manual or CommandTrigger.Scheduled ? trigger : CommandTrigger.Unspecified;
+            return StartCapture(job.Operation[..^"Command".Length], null, job.Category, safeTrigger);
+        }
+
+        private RequestCapture StartCapture(string operation, string method, PerformanceJobCategory? category, CommandTrigger trigger)
+        {
+            var capture = new RequestCapture(this, Current.Value, operation, method, category, trigger, _time.GetTimestamp());
             Current.Value = capture;
             return capture;
         }
@@ -126,7 +200,7 @@ namespace NzbDrone.Core.Instrumentation
         public static IDbConnection ObserveConnection(IDbConnection connection)
         {
             var capture = Current.Value;
-            if (capture != null && connection is SQLiteConnection sqlite)
+            if (capture?.IsRecording == true && connection is SQLiteConnection sqlite)
             {
                 // A diagnostic hook must not compromise ordinary DB access if
                 // the native provider on some architecture lacks this feature.
@@ -157,7 +231,8 @@ namespace NzbDrone.Core.Instrumentation
             lock (_gate)
             {
                 ExpireLocked();
-                var groups = _samples.GroupBy(sample => (sample.Operation, sample.Method))
+                var groups = _samples.Where(sample => !sample.Category.HasValue)
+                    .GroupBy(sample => (sample.Operation, sample.Method))
                     .Select(group => new PerformanceProfileGroup
                     {
                         Operation = group.Key.Operation,
@@ -176,18 +251,41 @@ namespace NzbDrone.Core.Instrumentation
                     .ThenBy(group => group.Operation, StringComparer.Ordinal)
                     .ThenBy(group => group.Method, StringComparer.Ordinal)
                     .ToList();
+                var jobs = _samples.Where(sample => sample.Category.HasValue)
+                    .GroupBy(sample => (sample.Operation, Category: sample.Category.Value, sample.Trigger))
+                    .Select(group => new PerformanceJobGroup
+                    {
+                        Operation = group.Key.Operation,
+                        Category = group.Key.Category,
+                        Trigger = group.Key.Trigger,
+                        Executions = group.Count(),
+                        Failed = group.Count(sample => sample.Failed),
+                        Cancelled = group.Count(sample => sample.Cancelled),
+                        MeanMilliseconds = group.Average(sample => sample.DurationMilliseconds),
+                        MaxMilliseconds = group.Max(sample => sample.DurationMilliseconds),
+                        SqliteStatements = group.Sum(sample => sample.SqliteStatements),
+                        SqliteMilliseconds = group.Sum(sample => sample.SqliteMilliseconds),
+                        PostgresOperations = group.Sum(sample => sample.PostgresOperations),
+                        PostgresMilliseconds = group.Sum(sample => sample.PostgresMilliseconds)
+                    })
+                    .OrderByDescending(group => group.MaxMilliseconds)
+                    .ThenBy(group => group.Operation, StringComparer.Ordinal)
+                    .ThenBy(group => group.Trigger)
+                    .ToList();
                 return new PerformanceProfileSnapshot
                 {
                     Enabled = Enabled && !_disposed,
                     RetentionMinutes = RetentionMinutes,
                     Capacity = Capacity,
-                    Samples = _samples.Count,
-                    Operations = groups
+                    Samples = groups.Sum(group => group.Requests),
+                    Operations = groups,
+                    JobSamples = jobs.Sum(group => group.Executions),
+                    Jobs = jobs
                 };
             }
         }
 
-        private ActivitySamplingResult Sample() => Current.Value?.Owner == this
+        private ActivitySamplingResult Sample() => Current.Value is { IsRecording: true } capture && capture.Owner == this
             ? ActivitySamplingResult.PropagationData
             : ActivitySamplingResult.None;
 
@@ -212,7 +310,7 @@ namespace NzbDrone.Core.Instrumentation
             }
         }
 
-        private void Record(RequestSample sample)
+        private void Record(ProfileSample sample)
         {
             lock (_gate)
             {
@@ -248,11 +346,13 @@ namespace NzbDrone.Core.Instrumentation
             _listener?.Dispose();
         }
 
-        private sealed class RequestSample
+        private sealed class ProfileSample
         {
             public long RecordedTimestamp { get; set; }
             public string Operation { get; init; }
             public string Method { get; init; }
+            public PerformanceJobCategory? Category { get; init; }
+            public CommandTrigger Trigger { get; init; }
             public double DurationMilliseconds { get; init; }
             public long SqliteStatements { get; init; }
             public double SqliteMilliseconds { get; init; }
@@ -268,23 +368,29 @@ namespace NzbDrone.Core.Instrumentation
             private readonly RequestCapture _parent;
             private readonly string _operation;
             private readonly string _method;
+            private readonly PerformanceJobCategory? _category;
+            private readonly CommandTrigger _trigger;
             private readonly long _started;
             private long _sqliteStatements;
             private long _postgresOperations;
             private double _sqliteMilliseconds;
             private double _postgresMilliseconds;
-            private bool _complete;
+            private volatile bool _complete;
 
-            internal RequestCapture(PerformanceProfiler owner, RequestCapture parent, string operation, string method, long started)
+            internal RequestCapture(PerformanceProfiler owner, RequestCapture parent, string operation, string method, PerformanceJobCategory? category, CommandTrigger trigger, long started)
             {
                 Owner = owner;
                 _parent = parent;
                 _operation = operation;
                 _method = method;
+                _category = category;
+                _trigger = trigger;
                 _started = started;
             }
 
             internal PerformanceProfiler Owner { get; }
+
+            internal bool IsRecording => !_complete && !Owner._disposed;
 
             internal void RecordSqlite(double milliseconds)
             {
@@ -312,7 +418,7 @@ namespace NzbDrone.Core.Instrumentation
 
             public void Complete(bool failed = false, bool cancelled = false)
             {
-                RequestSample sample;
+                ProfileSample sample;
                 lock (_gate)
                 {
                     if (_complete)
@@ -321,10 +427,12 @@ namespace NzbDrone.Core.Instrumentation
                     }
 
                     _complete = true;
-                    sample = new RequestSample
+                    sample = new ProfileSample
                     {
                         Operation = _operation,
                         Method = _method,
+                        Category = _category,
+                        Trigger = _trigger,
                         DurationMilliseconds = Owner._time.GetElapsedTime(_started).TotalMilliseconds,
                         SqliteStatements = _sqliteStatements,
                         SqliteMilliseconds = _sqliteMilliseconds,

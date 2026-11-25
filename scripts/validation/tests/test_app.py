@@ -65,6 +65,25 @@ class AppFixtureTests(unittest.TestCase):
         self.assertTrue(app.runtime_matches(self.runtime, "10.0.88"))
         self.assertFalse(app.runtime_matches(self.runtime, "11.0.0"))
 
+    def test_owned_http_proxy_is_opt_in_validated_and_loopback_only(self):
+        self.assertEqual(app.owned_http_proxy_environment(None), {})
+        for invalid in (True, "1234", 0, 65536, "http://external.invalid"):
+            with self.subTest(invalid=invalid), self.assertRaises(ValidationFailure):
+                app.Fixture(self.runtime, self.root / "invalid", owned_http_proxy_port=invalid)
+        self.assertFalse((self.root / "invalid").exists())
+        fixture = app.Fixture(self.runtime, self.root / "proxy", owned_http_proxy_port=12345)
+        fixture.configure_home()
+        self.assertEqual(fixture._owned_http_proxy_environment, {
+            "HTTP_PROXY": "http://127.0.0.1:12345", "HTTPS_PROXY": "http://127.0.0.1:12345",
+            "ALL_PROXY": "http://127.0.0.1:12345", "http_proxy": "http://127.0.0.1:12345",
+            "https_proxy": "http://127.0.0.1:12345", "all_proxy": "http://127.0.0.1:12345",
+            "NO_PROXY": "127.0.0.1,localhost,::1", "no_proxy": "127.0.0.1,localhost,::1"})
+        with patch.dict(os.environ, {"HTTP_PROXY": "http://unrelated.invalid", "NO_PROXY": "*"}):
+            clean = app.child_environment(fixture.home, fixture.private_tmp)
+            self.assertNotIn("HTTP_PROXY", clean)
+            self.assertNotIn("NO_PROXY", clean)
+            self.assertEqual({**clean, **fixture._owned_http_proxy_environment}["HTTP_PROXY"], "http://127.0.0.1:12345")
+
     def test_child_environment_drops_app_and_jit_overrides(self):
         with patch.dict(os.environ, {"READARR__APIKEY": "unrelated saved credential",
                                     "DOTNET_TieredCompilation": "0", "LD_PRELOAD": "/unrelated/library.so",

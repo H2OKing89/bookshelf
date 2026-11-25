@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Threading;
 using NLog;
 using NzbDrone.Common;
+using NzbDrone.Core.Instrumentation;
 using NzbDrone.Core.Lifecycle;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.ProgressMessaging;
@@ -25,6 +26,7 @@ namespace NzbDrone.Core.Messaging.Commands
         private readonly IServiceFactory _serviceFactory;
         private readonly IManageCommandQueue _commandQueueManager;
         private readonly IEventAggregator _eventAggregator;
+        private readonly IPerformanceProfiler _performanceProfiler;
 
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly List<Thread> _threads = new List<Thread>();
@@ -33,12 +35,14 @@ namespace NzbDrone.Core.Messaging.Commands
         public CommandExecutor(IServiceFactory serviceFactory,
                                IManageCommandQueue commandQueueManager,
                                IEventAggregator eventAggregator,
+                               IPerformanceProfiler performanceProfiler,
                                Logger logger)
         {
             _logger = logger;
             _serviceFactory = serviceFactory;
             _commandQueueManager = commandQueueManager;
             _eventAggregator = eventAggregator;
+            _performanceProfiler = performanceProfiler;
         }
 
         private void ExecuteCommands()
@@ -73,6 +77,9 @@ namespace NzbDrone.Core.Messaging.Commands
             IExecute<TCommand> handler = null;
             var cancellationToken = commandModel.CancellationState.Start(_cancellationTokenSource.Token);
             using var scope = CommandExecutionContext.Begin(cancellationToken);
+            using var profile = _performanceProfiler.Enabled ? _performanceProfiler.BeginJob(command, commandModel.Trigger) : null;
+            var failed = false;
+            var cancelled = false;
 
             try
             {
@@ -95,36 +102,51 @@ namespace NzbDrone.Core.Messaging.Commands
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
+                cancelled = true;
                 _commandQueueManager.Cancelled(commandModel);
                 _logger.Trace("Cancelled task {0}", command.Name);
             }
             catch (CommandFailedException ex)
             {
+                failed = true;
                 _commandQueueManager.SetMessage(commandModel, "Failed");
                 _commandQueueManager.Fail(commandModel, ex.Message, ex);
                 throw;
             }
             catch (Exception ex)
             {
+                failed = true;
                 _commandQueueManager.SetMessage(commandModel, "Failed");
                 _commandQueueManager.Fail(commandModel, "Failed", ex);
                 throw;
             }
             finally
             {
-                commandModel.CancellationState.Finish();
-                BroadcastCommandUpdate(commandModel);
-
-                _eventAggregator.PublishEvent(new CommandExecutedEvent(commandModel));
-
-                if (ProgressMessageContext.CommandModel == commandModel)
+                try
                 {
-                    ProgressMessageContext.CommandModel = null;
+                    commandModel.CancellationState.Finish();
+                    BroadcastCommandUpdate(commandModel);
+
+                    _eventAggregator.PublishEvent(new CommandExecutedEvent(commandModel));
+
+                    if (ProgressMessageContext.CommandModel == commandModel)
+                    {
+                        ProgressMessageContext.CommandModel = null;
+                    }
+
+                    if (handler != null)
+                    {
+                        _logger.Trace("{0} <- {1} [{2}]", command.GetType().Name, handler.GetType().Name, commandModel.Duration.ToString());
+                    }
                 }
-
-                if (handler != null)
+                catch
                 {
-                    _logger.Trace("{0} <- {1} [{2}]", command.GetType().Name, handler.GetType().Name, commandModel.Duration.ToString());
+                    failed = true;
+                    throw;
+                }
+                finally
+                {
+                    profile?.Complete(failed || commandModel.Result == CommandResult.Unsuccessful, cancelled);
                 }
             }
         }

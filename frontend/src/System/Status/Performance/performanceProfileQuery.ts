@@ -1,10 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import fetchJson from 'Utilities/Fetch/fetchJson';
 
-export interface PerformanceOperation {
-  operation: string;
-  method: string;
-  requests: number;
+interface PerformanceTiming {
   failed: number;
   cancelled: number;
   meanMilliseconds: number;
@@ -15,12 +12,45 @@ export interface PerformanceOperation {
   postgresMilliseconds: number;
 }
 
+export interface PerformanceOperation extends PerformanceTiming {
+  operation: string;
+  method: string;
+  requests: number;
+}
+
+export type PerformanceJobCategory = 'authorRefresh' | 'bookRefresh' | 'scan' | 'import' | 'downloadMonitor' | 'mediaInfo';
+export type PerformanceJobTrigger = 'scheduled' | 'manual' | 'unspecified';
+
+export interface PerformanceJob extends PerformanceTiming {
+  operation: string;
+  category: PerformanceJobCategory;
+  trigger: PerformanceJobTrigger;
+  executions: number;
+}
+
+const jobCategories: Record<string, PerformanceJobCategory> = {
+  RefreshAuthor: 'authorRefresh',
+  BulkRefreshAuthor: 'authorRefresh',
+  RefreshBook: 'bookRefresh',
+  BulkRefreshBook: 'bookRefresh',
+  RescanFolders: 'scan',
+  ManualImport: 'import',
+  DownloadedBooksScan: 'import',
+  ProcessMonitoredDownloads: 'import',
+  RefreshMonitoredDownloads: 'downloadMonitor',
+  CheckForFinishedDownload: 'downloadMonitor',
+  RefreshMediaInfo: 'mediaInfo',
+  RefreshStaleMediaInfo: 'mediaInfo'
+};
+
 export interface PerformanceSnapshot {
   enabled: boolean;
   retentionMinutes: number;
   capacity: number;
   samples: number;
   operations: PerformanceOperation[];
+  jobSamples: number;
+  jobs: PerformanceJob[];
 }
 
 function record(value: unknown): Record<string, unknown> {
@@ -44,6 +74,26 @@ function duration(value: unknown): number {
   return value;
 }
 
+function parseTiming(item: Record<string, unknown>, samples: number): PerformanceTiming {
+  const failed = count(item.failed);
+  const cancelled = count(item.cancelled);
+  const meanMilliseconds = duration(item.meanMilliseconds);
+  const maxMilliseconds = duration(item.maxMilliseconds);
+  if (samples === 0 || failed > samples || cancelled > samples || maxMilliseconds < meanMilliseconds) {
+    throw new Error('Invalid performance timing');
+  }
+  return {
+    failed,
+    cancelled,
+    meanMilliseconds,
+    maxMilliseconds,
+    sqliteStatements: count(item.sqliteStatements),
+    sqliteMilliseconds: duration(item.sqliteMilliseconds),
+    postgresOperations: count(item.postgresOperations),
+    postgresMilliseconds: duration(item.postgresMilliseconds)
+  };
+}
+
 function parseOperation(value: unknown): PerformanceOperation {
   const item = record(value);
   if (typeof item.operation !== 'string' || !/^[A-Za-z][A-Za-z0-9_.]*$/.test(item.operation) ||
@@ -51,23 +101,23 @@ function parseOperation(value: unknown): PerformanceOperation {
     throw new Error('Invalid performance operation');
   }
   const requests = count(item.requests);
-  const failed = count(item.failed);
-  const cancelled = count(item.cancelled);
-  if (requests === 0 || failed > requests || cancelled > requests) {
-    throw new Error('Invalid operation counts');
+  return { operation: item.operation, method: item.method, requests, ...parseTiming(item, requests) };
+}
+
+function parseJob(value: unknown): PerformanceJob {
+  const item = record(value);
+  if (typeof item.operation !== 'string' || !Object.prototype.hasOwnProperty.call(jobCategories, item.operation) ||
+      item.category !== jobCategories[item.operation] ||
+      (item.trigger !== 'scheduled' && item.trigger !== 'manual' && item.trigger !== 'unspecified')) {
+    throw new Error('Invalid performance job');
   }
+  const executions = count(item.executions);
   return {
     operation: item.operation,
-    method: item.method,
-    requests,
-    failed,
-    cancelled,
-    meanMilliseconds: duration(item.meanMilliseconds),
-    maxMilliseconds: duration(item.maxMilliseconds),
-    sqliteStatements: count(item.sqliteStatements),
-    sqliteMilliseconds: duration(item.sqliteMilliseconds),
-    postgresOperations: count(item.postgresOperations),
-    postgresMilliseconds: duration(item.postgresMilliseconds)
+    category: jobCategories[item.operation],
+    trigger: item.trigger,
+    executions,
+    ...parseTiming(item, executions)
   };
 }
 
@@ -80,11 +130,23 @@ export function parsePerformanceSnapshot(value: unknown): PerformanceSnapshot {
   const capacity = count(item.capacity);
   const samples = count(item.samples);
   const operations = item.operations.map(parseOperation);
-  if (!capacity || !retentionMinutes || samples > capacity || (!item.enabled && samples !== 0) ||
-      operations.reduce((sum, operation) => sum + operation.requests, 0) !== samples) {
+  // An older backend may omit both job fields. Retain the request contract,
+  // but reject a partial or malformed job response from a newer backend.
+  let jobSamples = 0;
+  let jobs: PerformanceJob[] = [];
+  if (item.jobSamples !== undefined || item.jobs !== undefined) {
+    if (!Array.isArray(item.jobs)) {
+      throw new Error('Invalid performance jobs');
+    }
+    jobSamples = count(item.jobSamples);
+    jobs = item.jobs.map(parseJob);
+  }
+  if (!capacity || !retentionMinutes || samples + jobSamples > capacity || (!item.enabled && samples + jobSamples !== 0) ||
+      operations.reduce((sum, operation) => sum + operation.requests, 0) !== samples ||
+      jobs.reduce((sum, job) => sum + job.executions, 0) !== jobSamples) {
     throw new Error('Invalid performance retention');
   }
-  return { enabled: item.enabled, retentionMinutes, capacity, samples, operations };
+  return { enabled: item.enabled, retentionMinutes, capacity, samples, operations, jobSamples, jobs };
 }
 
 export function performanceQueryOptions() {

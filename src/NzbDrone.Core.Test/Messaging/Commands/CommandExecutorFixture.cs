@@ -1,8 +1,12 @@
 using System;
+using System.Linq;
 using System.Threading;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Common;
+using NzbDrone.Core.Books.Commands;
+using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Instrumentation;
 using NzbDrone.Core.Lifecycle;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
@@ -86,6 +90,87 @@ namespace NzbDrone.Core.Test.Messaging.Commands
 
             Mocker.GetMock<IManageCommandQueue>()
                   .Verify(v => v.Queue(It.IsAny<CancellationToken>()), Times.AtLeastOnce());
+        }
+
+        [Test]
+        public void disabled_profiling_never_begins_a_job_on_the_worker()
+        {
+            GivenCommandQueue();
+            var handler = new Mock<IExecute<RefreshAuthorCommand>>();
+            Mocker.GetMock<IServiceFactory>().Setup(factory => factory.Build(typeof(IExecute<RefreshAuthorCommand>))).Returns(handler.Object);
+            Subject.Handle(new ApplicationStartedEvent());
+            QueueAndWaitForExecution(new CommandModel { Body = new RefreshAuthorCommand(1), Trigger = CommandTrigger.Scheduled });
+            Mocker.GetMock<IPerformanceProfiler>().Verify(profiler => profiler.BeginJob(It.IsAny<Command>(), It.IsAny<CommandTrigger>()), Times.Never());
+        }
+
+        [TestCase(false, false)]
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        public void worker_records_completed_unsuccessful_and_failed_outcomes(bool unsuccessful, bool exception)
+        {
+            GivenCommandQueue();
+            var config = new Mock<IConfigFileProvider>();
+            config.SetupGet(value => value.PerformanceProfilingEnabled).Returns(true);
+            using var profiler = new PerformanceProfiler(config.Object, TimeProvider.System);
+            Mocker.SetConstant<IPerformanceProfiler>(profiler);
+            var command = new CommandModel { Body = new RefreshAuthorCommand(1), Trigger = CommandTrigger.Scheduled };
+            var handler = new Mock<IExecute<RefreshAuthorCommand>>();
+            handler.Setup(value => value.Execute(It.IsAny<RefreshAuthorCommand>())).Callback(() =>
+            {
+                if (exception)
+                {
+                    throw new InvalidOperationException("Owned failed job");
+                }
+
+                if (unsuccessful)
+                {
+                    command.Result = CommandResult.Unsuccessful;
+                }
+            });
+            Mocker.GetMock<IServiceFactory>().Setup(factory => factory.Build(typeof(IExecute<RefreshAuthorCommand>))).Returns(handler.Object);
+            Subject.Handle(new ApplicationStartedEvent());
+            QueueAndWaitForExecution(command);
+            Subject.Handle(new ApplicationShutdownRequested());
+            Assert.That(Subject.WaitForShutdown(TimeSpan.FromSeconds(5), CancellationToken.None), Is.True);
+            var sample = profiler.Snapshot().Jobs.Single();
+            Assert.That(sample.Executions, Is.EqualTo(1));
+            Assert.That(sample.Trigger, Is.EqualTo(CommandTrigger.Scheduled));
+            Assert.That(sample.Failed, Is.EqualTo(unsuccessful || exception ? 1 : 0));
+            Assert.That(sample.Cancelled, Is.Zero);
+            if (exception)
+            {
+                ExceptionVerification.WaitForErrors(1, 500);
+            }
+        }
+
+        [Test]
+        public void worker_records_cooperative_cancellation_once()
+        {
+            GivenCommandQueue();
+            var config = new Mock<IConfigFileProvider>();
+            config.SetupGet(value => value.PerformanceProfilingEnabled).Returns(true);
+            using var profiler = new PerformanceProfiler(config.Object, TimeProvider.System);
+            Mocker.SetConstant<IPerformanceProfiler>(profiler);
+            using var entered = new ManualResetEventSlim();
+            var handler = new Mock<IExecute<RefreshAuthorCommand>>();
+            handler.Setup(value => value.Execute(It.IsAny<RefreshAuthorCommand>())).Callback(() =>
+            {
+                entered.Set();
+                var token = CommandExecutionContext.CancellationToken;
+                token.WaitHandle.WaitOne(TimeSpan.FromSeconds(10));
+                token.ThrowIfCancellationRequested();
+            });
+            Mocker.GetMock<IServiceFactory>().Setup(factory => factory.Build(typeof(IExecute<RefreshAuthorCommand>))).Returns(handler.Object);
+            Subject.Handle(new ApplicationStartedEvent());
+            _commandQueue.Add(new CommandModel { Body = new RefreshAuthorCommand(1), Trigger = CommandTrigger.Manual });
+            Assert.That(entered.Wait(TimeSpan.FromSeconds(5)), Is.True);
+            Subject.Handle(new ApplicationShutdownRequested());
+            Assert.That(Subject.WaitForShutdown(TimeSpan.FromSeconds(5), CancellationToken.None), Is.True);
+            var sample = profiler.Snapshot().Jobs.Single();
+            Assert.That(sample.Executions, Is.EqualTo(1));
+            Assert.That(sample.Trigger, Is.EqualTo(CommandTrigger.Manual));
+            Assert.That(sample.Cancelled, Is.EqualTo(1));
+            Assert.That(sample.Failed, Is.Zero);
         }
 
         [Test]

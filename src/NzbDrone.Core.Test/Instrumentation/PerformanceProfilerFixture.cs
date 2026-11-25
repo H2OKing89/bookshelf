@@ -1,14 +1,19 @@
 using System;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
+using NzbDrone.Core.Books.Commands;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Instrumentation;
+using NzbDrone.Core.MediaFiles.BookImport.Manual;
+using NzbDrone.Core.MediaFiles.Commands;
+using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.Instrumentation
@@ -32,11 +37,16 @@ namespace NzbDrone.Core.Test.Instrumentation
         [Test]
         public void disabled_profiler_does_not_sample()
         {
-            using var profiler = Create(false);
+            var clock = new OwnedClock();
+            using var profiler = Create(false, clock);
             profiler.Begin("Library.Get", "GET").Should().BeNull();
+            profiler.BeginJob(new RefreshAuthorCommand(1), CommandTrigger.Scheduled).Should().BeNull();
             Query("Owned synthetic unprofiled marker");
+            clock.TimestampReads.Should().Be(0);
+            clock.TimerCreations.Should().Be(0);
             profiler.Snapshot().Enabled.Should().BeFalse();
             profiler.Snapshot().Samples.Should().Be(0);
+            profiler.Snapshot().JobSamples.Should().Be(0);
         }
 
         [Test]
@@ -110,6 +120,78 @@ namespace NzbDrone.Core.Test.Instrumentation
         }
 
         [Test]
+        public async Task independent_job_and_request_scopes_use_provider_timings_without_nested_job_or_argument_samples()
+        {
+            using var profiler = Create(true);
+            var databaseType = Mocker.Resolve<IMainDatabase>().DatabaseType;
+            await Task.WhenAll(Task.Run(() =>
+            {
+                using var capture = profiler.BeginJob(new RefreshAuthorCommand(891234), CommandTrigger.Scheduled);
+                profiler.BeginJob(new RescanFoldersCommand(), CommandTrigger.Unspecified).Should().BeNull();
+                Query("Owned secret job marker");
+                Query("Owned second query inside job");
+                capture.Complete(cancelled: true);
+                Query("Late work is not added to the completed job");
+            }), Task.Run(() =>
+            {
+                using var capture = profiler.Begin("Library.Get", "GET");
+                profiler.BeginJob(new ManualImportCommand(), CommandTrigger.Manual).Should().BeNull();
+                Query("Owned request marker");
+            }));
+
+            var snapshot = profiler.Snapshot();
+            snapshot.Samples.Should().Be(1);
+            snapshot.JobSamples.Should().Be(1);
+            var job = snapshot.Jobs.Single();
+            job.Operation.Should().Be("RefreshAuthor");
+            job.Category.Should().Be(PerformanceJobCategory.AuthorRefresh);
+            job.Trigger.Should().Be(CommandTrigger.Scheduled);
+            job.Cancelled.Should().Be(1);
+            job.Failed.Should().Be(0);
+            job.Executions.Should().Be(1);
+            job.MeanMilliseconds.Should().BeGreaterOrEqualTo(0);
+            if (databaseType == DatabaseType.SQLite)
+            {
+                job.SqliteStatements.Should().BeGreaterOrEqualTo(2);
+                job.PostgresOperations.Should().Be(0);
+            }
+            else
+            {
+                job.PostgresOperations.Should().BeGreaterOrEqualTo(2);
+                job.SqliteStatements.Should().Be(0);
+            }
+
+            var serialized = JsonSerializer.Serialize(snapshot);
+            serialized.Should().NotContain("891234").And.NotContain("Owned secret job marker").And.NotContain("SELECT").And.NotContain("@marker");
+        }
+
+        [Test]
+        public void job_allowlist_splits_triggers_and_shares_capacity_and_expiry_with_requests()
+        {
+            var clock = new OwnedClock();
+            using var profiler = Create(true, clock);
+            profiler.BeginJob(new UnprofiledCommand(), CommandTrigger.Scheduled).Should().BeNull();
+            using (profiler.Begin("Evicted.Get", "GET"))
+            {
+            }
+
+            for (var index = 0; index < PerformanceProfiler.Capacity; index++)
+            {
+                using var job = profiler.BeginJob(new RefreshMediaInfoCommand { BookId = 891234 }, index == 0 ? CommandTrigger.Manual : CommandTrigger.Scheduled);
+                job.Complete(failed: index == 0);
+            }
+
+            var snapshot = profiler.Snapshot();
+            snapshot.Samples.Should().Be(0);
+            snapshot.JobSamples.Should().Be(PerformanceProfiler.Capacity);
+            snapshot.Jobs.Should().HaveCount(2);
+            snapshot.Jobs.Single(job => job.Trigger == CommandTrigger.Manual).Failed.Should().Be(1);
+            snapshot.Jobs.Single(job => job.Trigger == CommandTrigger.Scheduled).Executions.Should().Be(PerformanceProfiler.Capacity - 1);
+            clock.Advance(TimeSpan.FromMinutes(PerformanceProfiler.RetentionMinutes));
+            profiler.Snapshot().JobSamples.Should().Be(0);
+        }
+
+        [Test]
         public void bounded_samples_expire_and_dispose_clears_them()
         {
             var clock = new OwnedClock();
@@ -166,16 +248,32 @@ namespace NzbDrone.Core.Test.Instrumentation
             profiler.Snapshot().Samples.Should().Be(0);
         }
 
+        private sealed class UnprofiledCommand : Command
+        {
+        }
+
         private sealed class OwnedClock : TimeProvider
         {
             private long _timestamp;
 
             public DateTimeOffset Now { get; set; } = new DateTimeOffset(2026, 11, 24, 0, 0, 0, TimeSpan.Zero);
             public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+            public int TimestampReads { get; private set; }
+            public int TimerCreations { get; private set; }
 
             public override DateTimeOffset GetUtcNow() => Now;
 
-            public override long GetTimestamp() => _timestamp;
+            public override long GetTimestamp()
+            {
+                TimestampReads++;
+                return _timestamp;
+            }
+
+            public override ITimer CreateTimer(TimerCallback callback, object state, TimeSpan dueTime, TimeSpan period)
+            {
+                TimerCreations++;
+                return base.CreateTimer(callback, state, dueTime, period);
+            }
 
             public void Advance(TimeSpan duration)
             {

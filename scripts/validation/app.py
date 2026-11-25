@@ -42,6 +42,19 @@ def child_environment(home: Path, temporary: Path) -> dict[str, str]:
     return environment
 
 
+def owned_http_proxy_environment(port: int | None) -> dict[str, str]:
+    """Opt-in fixture-owned loopback HTTP rejection path, not a network sandbox."""
+    if port is None:
+        return {}
+    if type(port) is not int or not 1 <= port <= 65535:
+        raise ValidationFailure("invalid_owned_http_proxy_port")
+    proxy = f"http://127.0.0.1:{port}"
+    bypass = "127.0.0.1,localhost,::1"
+    return {"HTTP_PROXY": proxy, "HTTPS_PROXY": proxy, "ALL_PROXY": proxy,
+            "http_proxy": proxy, "https_proxy": proxy, "all_proxy": proxy,
+            "NO_PROXY": bypass, "no_proxy": bypass}
+
+
 def runtime_expectation(runtime: Path) -> tuple[str, bool]:
     """Return the configured runtime and whether publication was self-contained."""
     options = json.loads((runtime / "Readarr.runtimeconfig.json").read_text())["runtimeOptions"]
@@ -71,7 +84,10 @@ def result(fixture: Fixture, completed: bool, **metadata) -> dict:
 class Fixture:
     URL_BASE = "/bookshelf-validation"
 
-    def __init__(self, runtime: Path, output: Path, *, startup_timeout: float = 90):
+    def __init__(self, runtime: Path, output: Path, *, startup_timeout: float = 90, owned_http_proxy_port: int | None = None):
+        # Keep this override on the fixture, so every helper-driven restart
+        # retains the same owned rejection endpoint without ambient proxies.
+        self._owned_http_proxy_environment = owned_http_proxy_environment(owned_http_proxy_port)
         self.runtime, self.output = validate_output(runtime, output)
         private_directory(self.output)
         self.home: Path | None = None
@@ -185,6 +201,7 @@ class Fixture:
         command = ["/bin/sh", "-c", 'ulimit -c 0; exec "$@"', "bookshelf-validation",
                    str(self.runtime / "Readarr"), "-nobrowser", "-nosingleinstancecheck", "-exitimmediately", "-data=" + str(self.home)]
         environment = child_environment(self.home, self.private_tmp)
+        environment.update(self._owned_http_proxy_environment)
         if log_db_enabled is not None:
             environment["Readarr__Log__DbEnabled"] = str(log_db_enabled).lower()
         if allowed_hosts is not None:
