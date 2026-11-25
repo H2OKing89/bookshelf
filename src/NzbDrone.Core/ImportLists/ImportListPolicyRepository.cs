@@ -241,6 +241,7 @@ namespace NzbDrone.Core.ImportLists
                 var authorIds = preview.Candidates.Select(item => item.AuthorId).ToHashSet();
                 foreach (var author in ReadAuthors(connection, transaction, true).Where(author => authorIds.Contains(author.AuthorId)))
                 {
+                    author.Tags ??= new HashSet<int>();
                     if (author.Tags.Add(request.TagId.Value))
                     {
                         WriteTags(connection, transaction, author);
@@ -374,7 +375,7 @@ namespace NzbDrone.Core.ImportLists
                     !lists.Any(list => list.Items.Any(item => item.BookId == row.RecordingId || item.SourceBookId == row.RecordingId || item.SourceEditionId == row.RecordingId ||
                         (item.BookId == null && item.AuthorId == row.ForeignAuthorId))) &&
                     (mode != ImportListCleanupMode.Unmonitor || row.Monitored) &&
-                    (mode != ImportListCleanupMode.Tag || !row.Tags.Contains(tagId.Value) || existingManagedTag.Contains(row.AuthorId)))
+                    (mode != ImportListCleanupMode.Tag || row.Tags?.Contains(tagId.Value) != true || existingManagedTag.Contains(row.AuthorId)))
                 .ToList();
             result.Candidates.AddRange(eligible);
             if (mode != ImportListCleanupMode.Preview && eligible.Count > 0)
@@ -386,7 +387,7 @@ namespace NzbDrone.Core.ImportLists
                     Lists = lists.Select(list => new { list.Id, list.MembershipRevision, list.LastSuccessfulSync, list.Items }),
                     Exclusions = exclusions.Order(StringComparer.Ordinal),
                     ManagedTagAuthors = existingManagedTag.Order(),
-                    Candidates = eligible.Select(row => new { row.BookId, row.RecordingId, row.Title, row.AuthorId, row.AuthorName, row.Monitored, Tags = row.Tags.Order(), row.ForeignAuthorId, row.ImportListId })
+                    Candidates = eligible.Select(row => new { row.BookId, row.RecordingId, row.Title, row.AuthorId, row.AuthorName, row.Monitored, Tags = (row.Tags ?? new HashSet<int>()).Order(), row.ForeignAuthorId, row.ImportListId })
                 };
                 result.ConfirmationToken = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(evidence)));
             }

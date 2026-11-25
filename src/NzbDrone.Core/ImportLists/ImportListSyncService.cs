@@ -370,7 +370,7 @@ namespace NzbDrone.Core.ImportLists
                     RootFolderPath = importList.RootFolderPath,
                     QualityProfileId = importList.ProfileId,
                     MetadataProfileId = importList.MetadataProfileId,
-                    Tags = importList.TagExisting == ImportListTagExisting.Sync ? new HashSet<int>() : new HashSet<int>(importList.Tags),
+                    Tags = importList.TagExisting == ImportListTagExisting.Sync ? new HashSet<int>() : new HashSet<int>(importList.Tags ?? new HashSet<int>()),
                     AddOptions = new AddAuthorOptions
                     {
                         SearchForMissingBooks = importList.ShouldSearch,
@@ -487,7 +487,7 @@ namespace NzbDrone.Core.ImportLists
                 RootFolderPath = importList.RootFolderPath,
                 QualityProfileId = importList.ProfileId,
                 MetadataProfileId = importList.MetadataProfileId,
-                Tags = importList.TagExisting == ImportListTagExisting.Sync ? new HashSet<int>() : new HashSet<int>(importList.Tags),
+                Tags = importList.TagExisting == ImportListTagExisting.Sync ? new HashSet<int>() : new HashSet<int>(importList.Tags ?? new HashSet<int>()),
                 AddOptions = new AddAuthorOptions
                 {
                     SearchForMissingBooks = importList.ShouldSearch,
