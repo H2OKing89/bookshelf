@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from . import app, common, identity, library_review, upgrade
+from . import app, common, identity, library_review, library_virtualization, upgrade
 
 BROWSER = Path(__file__).with_name("performance-profiling-browser.cjs")
 ROUTE = "system/performance"
@@ -25,8 +25,8 @@ def run(runtime, output, playwright_module=None):
                       "capacity": 256, "samples": 0, "operations": []})
         fixture.check("anonymous_diagnostics_denied_even_before_login_setup",
                       library_review.request(fixture, ROUTE, key=False)[0] == 401)
-        identity.seed(fixture, identity.recipe())
         upgrade.seed_current_account(fixture)
+        expected_catalog = library_virtualization.seed_catalog(fixture)
         stage = "enable"
         settings = fixture.api()
         fixture.check("profiling_host_setting_defaults_false", settings["performanceProfilingEnabled"] is False)
@@ -40,7 +40,8 @@ def run(runtime, output, playwright_module=None):
                       fixture.request(fixture.URL_BASE + "/api/v1/" + ROUTE, headers={"X-Api-Key": "owned-wrong"})[0] == 401)
         private_marker = "owned-private-query-marker"
         books = fixture.api("book?validationMarker=" + private_marker)
-        fixture.check("seeded_library_is_available_while_profiling", bool(books))
+        book_ids = {book["id"] for book in books}
+        fixture.check("large_seeded_library_is_available_while_profiling", len(book_ids) == expected_catalog["books"] and len(book_ids) >= 4160)
         fixture.api("bookfile?bookId=" + str(books[0]["id"]))
         fixture.api("librarystatistics")
         status, headers, body = fixture.request(fixture.URL_BASE + "/api/v1/" + ROUTE, key=True)
@@ -74,7 +75,7 @@ def run(runtime, output, playwright_module=None):
         fixture.stop()
         fixture.start()
         fixture.check("disabling_clears_all_prior_samples", fixture.api(ROUTE) == default)
-        fixture.check("synthetic_library_configuration_unchanged", fixture.api("book") == books)
+        fixture.check("synthetic_library_catalog_unchanged", {book["id"] for book in fixture.api("book")} == book_ids)
         completed = True
     except Exception as error:
         fixture.checks[stage + "_completed"] = False

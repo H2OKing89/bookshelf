@@ -191,8 +191,12 @@ namespace NzbDrone.Core.Instrumentation
 
         private void ExpireLocked()
         {
-            var cutoff = _time.GetUtcNow().AddMinutes(-RetentionMinutes);
-            while (_samples.TryPeek(out var item) && item.At <= cutoff)
+            ExpireLocked(_time.GetTimestamp());
+        }
+
+        private void ExpireLocked(long now)
+        {
+            while (_samples.TryPeek(out var item) && _time.GetElapsedTime(item.RecordedTimestamp, now) >= TimeSpan.FromMinutes(RetentionMinutes))
             {
                 _samples.Dequeue();
             }
@@ -207,12 +211,17 @@ namespace NzbDrone.Core.Instrumentation
                     return;
                 }
 
-                ExpireLocked();
+                // Timestamp while holding the queue's lock: concurrent
+                // completions cannot enqueue an older timestamp behind a
+                // newer one, and wall-clock adjustments do not extend TTL.
+                var now = _time.GetTimestamp();
+                ExpireLocked(now);
                 if (_samples.Count == Capacity)
                 {
                     _samples.Dequeue();
                 }
 
+                sample.RecordedTimestamp = now;
                 _samples.Enqueue(sample);
             }
         }
@@ -231,7 +240,7 @@ namespace NzbDrone.Core.Instrumentation
 
         private sealed class RequestSample
         {
-            public DateTimeOffset At { get; init; }
+            public long RecordedTimestamp { get; set; }
             public string Operation { get; init; }
             public string Method { get; init; }
             public double DurationMilliseconds { get; init; }
@@ -304,7 +313,6 @@ namespace NzbDrone.Core.Instrumentation
                     _complete = true;
                     sample = new RequestSample
                     {
-                        At = Owner._time.GetUtcNow(),
                         Operation = _operation,
                         Method = _method,
                         DurationMilliseconds = Owner._time.GetElapsedTime(_started).TotalMilliseconds,

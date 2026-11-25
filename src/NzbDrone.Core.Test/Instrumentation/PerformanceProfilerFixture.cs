@@ -128,7 +128,7 @@ namespace NzbDrone.Core.Test.Instrumentation
             snapshot.Samples.Should().Be(PerformanceProfiler.Capacity);
             snapshot.Operations.Should().ContainSingle().Which.Operation.Should().Be("Retained.Get");
             snapshot.Operations.Single().Failed.Should().Be(1);
-            clock.Now = clock.Now.AddMinutes(PerformanceProfiler.RetentionMinutes);
+            clock.Advance(TimeSpan.FromMinutes(PerformanceProfiler.RetentionMinutes));
             profiler.Snapshot().Samples.Should().Be(0);
             using (profiler.Begin("New.Get", "GET"))
             {
@@ -140,10 +140,48 @@ namespace NzbDrone.Core.Test.Instrumentation
             profiler.Snapshot().Samples.Should().Be(0);
         }
 
+        [Test]
+        public void retention_uses_order_of_completion_and_monotonic_time_when_wall_clock_jumps()
+        {
+            var clock = new OwnedClock();
+            using var profiler = Create(true, clock);
+            using var longerRequest = profiler.Begin("Longer.Get", "GET");
+            clock.Advance(TimeSpan.FromMinutes(2));
+            using (profiler.Begin("Shorter.Get", "GET"))
+            {
+            }
+
+            clock.Advance(TimeSpan.FromMinutes(1));
+            clock.Now = clock.Now.AddDays(-1);
+            longerRequest.Complete();
+            profiler.Snapshot().Samples.Should().Be(2);
+
+            // The short request finishes first even though it starts second.
+            // A wall clock correction must not leave its sample behind later
+            // completions or prematurely expire the longer request.
+            clock.Advance(TimeSpan.FromMinutes(9));
+            profiler.Snapshot().Operations.Should().ContainSingle().Which.Operation.Should().Be("Longer.Get");
+            clock.Now = clock.Now.AddDays(2);
+            clock.Advance(TimeSpan.FromMinutes(1));
+            profiler.Snapshot().Samples.Should().Be(0);
+        }
+
         private sealed class OwnedClock : TimeProvider
         {
+            private long _timestamp;
+
             public DateTimeOffset Now { get; set; } = new DateTimeOffset(2026, 11, 24, 0, 0, 0, TimeSpan.Zero);
+            public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+
             public override DateTimeOffset GetUtcNow() => Now;
+
+            public override long GetTimestamp() => _timestamp;
+
+            public void Advance(TimeSpan duration)
+            {
+                Now += duration;
+                _timestamp += duration.Ticks;
+            }
         }
     }
 }
