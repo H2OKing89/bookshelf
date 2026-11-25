@@ -1848,6 +1848,17 @@ P02/P13 ARM and broader P01/P09/P21/P22 gates remain open. This work does not
 publish a release or change the running development service or production
 appdata/media.
 
+**2026-11-24 current local candidate:** the exact `7b941a853` clean-source
+`linux-x64` build, version `10.0.0.42949`, was staged and independently
+verified with 803 hashed package files, corresponding licensed source archive,
+and 12 passing exact-package reports (2,325 checks covering all eleven
+required gates). The final complete source and 2,365-check hosted validation
+are recorded in [local validation](local-validation.md#background-profiling-typed-library-resources-dependency-compatibility-and-local-release-2026-11-24).
+The local bundle is unsigned, has `publishable=false` and
+`builtInUpdatesEnabled=false`, and has not been deployed. P25 remains
+**In progress** for signed releases, publication and fork-owned update feed
+acceptance. See [current local candidate](release-policy.md#current-local-candidate-2026-11-24).
+
 ### P26
 
 **Propagate repository write failures and transact general bulk updates**

@@ -1751,3 +1751,124 @@ P22 retains native ARM64 and release acceptance; P23 retains background-job
 profiling and broader overhead evaluation. No production or existing
 application home, saved user configuration or audiobook media was modified.
 No real notification/download/list services or GitHub workflow were used.
+
+## Background profiling, typed library resources, dependency compatibility and local release (2026-11-24)
+
+This follow-up covers P23, U07, P09, D30 and P25. The final release source is
+`7b941a85335e1b5830a483168144ebb44cd7beaf`, tree
+`9fc4dd6397ff692ab557952860ae717efd6cfd9b`. All three declared Linux RIDs were
+built from a clean checkout with matching backend/UI provenance. The actual
+local release candidate is native glibc x64 only; musl x64 image verification
+and musl ARM64 static inspection do not mark native ARM64 or signed release
+acceptance complete.
+
+- **P23** (`bc019a705`, additive OpenAPI `ec4613658`): the exact final package
+  passed 41 profiling checks. Author/book refresh, folder scan, manual and
+  downloaded import, download monitor/processing and MediaInfo command scopes
+  share the 256-sample, ten-minute monotonic store with HTTP scopes. Existing
+  HTTP-only API counters are preserved, with separate typed job groups. Actual
+  scheduled commands, native AAC analysis and an owned manual Copy import
+  prove timing and source preservation; a failed import is not recorded as
+  successful. SQLite and PostgreSQL source regressions cover provider timings,
+  nested scopes, cancellation and bounded retention. The disabled command
+  path never opens a profiling scope. Seven paired local-author worker timings
+  after warm-up gave a final median 3.986 ms disabled (3.683–4.556 ms range)
+  and 4.935 ms enabled (3.881–6.318 ms range). Earlier isolated and integrated
+  pairs are retained; these small synthetic workloads are not a universal
+  overhead threshold. The owned profiling fixture uses a rejecting loopback
+  HTTP proxy, never forwarding startup requests; this is not an OS-level
+  network sandbox. See [diagnostics](host-tls-and-lifecycle.md#opt-in-performance-diagnostics-p23).
+- **U07** (`2367adf9b`): eight component conversions, branded resource IDs,
+  typed work/Wanted/history/download queue paths, and four real library
+  collection decoders preserve legacy fields, null/zero/false and unmapped
+  associations while rejecting malformed identity data. `ce93fb9df` adds a
+  typed external virtualized-scroll helper and unit/browser regressions. The
+  source still has 991 JS and 108 non-declaration TS/TSX files; strictness is
+  incremental, not a full store conversion.
+- **P09** (`987b8a70e`, `efff3d3aa`): maintained major-line/same-line updates
+  include SignalR 10, Fuse 7, Ical.Net 5, NUnit 4, Node 24 types and filesize 11.
+  The new calendar fixture proves inclusive/exclusive all-day publication
+  dates, stable recording UIDs and tag filtering before/after upgrade.
+  Registry audits report zero findings across 25 NuGet projects and 1,344
+  Yarn dependencies; all 29 recorded lock/manifest hashes match the exact
+  release source. Frozen offline workspace install and the repeat Yarn audit
+  succeeded. Ical.Net and NodaTime license/notice files match the pinned source
+  bytes in every package. Wider incompatible major-line trials and native
+  acceptance remain open; see [the dated inventory](dependencies/2026-11-24-major-lines/summary.json)
+  and [the review](dependency-audit.md). The attempted stylelint maintenance
+  version was reverted: full stylesheet lint has three pre-existing unrelated
+  property-order findings, not a newly passing full-CSS-lint gate.
+- **D30** (`02397742e`): completed the pinned-v5 [import extension design](import-extension-design.md).
+  The current importer and existing post-commit notifications are retained;
+  no script-controlled transfer, setting or new execution capability is
+  enabled. Any future transformation requires bounded staging-output mapping,
+  independent media/identity checks, rollback, worker isolation and reliable
+  receipt/Copy/seed preservation.
+- **P25**: prepared and independently verified the actual unsigned local
+  `develop` candidate **10.0.0.42949** for `bookshelf-audiobooks`, RID
+  `linux-x64`. The manifest binds 803 packaged files (hashes and modes),
+  the matching GPL source archive and 12 complete hosted evidence reports
+  (2,325 checks for the exact glibc package), including all eleven required
+  release gates. The package fingerprint is
+  `3c6d8592d33c2c59707745bab5bb76e4bda33b30ac3d580644fbc8f02784a28c`,
+  source archive SHA-256 is
+  `884e29ea4157c35db011e85583e505f8046acd927f526cb55c678ac227a34361`, and
+  manifest SHA-256 is
+  `da0b0fcfcc80bb841506e75d31c37814e6cb6a57a6d65043c227002b0943e078`.
+  Both actual `prepare-release.py prepare` and a separate `verify` invocation
+  passed with the expected product, channel, commit, RID and version. The
+  source archive contains the application GPL license and new dependency
+  notices. `publishable=false` and `builtInUpdatesEnabled=false`; the artifact
+  is a local unsigned candidate, not an authenticated update or published
+  release. See [release policy](release-policy.md#current-local-candidate-2026-11-24).
+
+### Integrated results and corrected regressions
+
+The exact final source checkout passes **6,110 .NET tests with zero failures**
+and 94 existing skips (4,857 Core, 855 Common, 102 API, 193 Host, 21 Updater,
+23 PostgreSQL migrations and 59 focused PostgreSQL), using SDK 10.0.404 and
+NUnit 4.6.1. Both TypeScript projects, **152 frontend tests**, ESLint and Vite
+CSS-declaration/build verification passed. The final Python validation suite
+passed **173 tests**.
+
+The final exact packages passed **2,365 hosted checks across 14 successful
+receipts**, including unchanged-package assertions: delivery 616, auth 112,
+identity/policies 582, UI 214, paging 129, library review/accessibility 188,
+new features 87, TLS/notification 72, datastore 43, PostgreSQL connections 119,
+SQLite 100, log storage 63 and static musl x64/ARM64 20 each. The delivery
+receipt includes 306 acquisition checks and 56 actual x64 musl Docker checks.
+The expanded library virtualization check passed all 62 scenarios, including
+author/book table, poster and overview desktop jumps and phone scroll/back
+restoration. All final reports are complete and have zero failed checks.
+
+The first integrated `bc019a705` artifact and test results are retained. The
+bare Common event-handler test lacked the new host clock and actual Server
+options; `2d437e303` repairs only the test composition to mirror production.
+The real library jump regression in the updated `react-virtualized` graph was
+reproduced and isolated to controlled scrolling (identical U07 UI passed on the
+previous dependency graph). `ce93fb9df` corrects the application using public
+Grid offset and WindowScroller scroll callbacks in all supported views,
+retaining the updated dependency. The initial historical SQLite probe also
+observed an old baseline command succeeding after its lock released; the
+current provider had passed, the isolated baseline replay passed, and the
+final exact SQLite replay was green. No regression checks were removed or
+relaxed to make the release pass.
+
+The ignored evidence root is `_temp/p23-u07-p09-d30-p25-20261124/`. The
+exact release package checkout is `build-source-release-final/`, evidence is
+in `release-*/summary.json`, the unsigned staged bundle is `release-candidate/`
+and its verification summary is `release-verification.json`. The bundle
+contains `release-manifest.json`, `package/`, `source.tar.gz` and the hashed
+receipts. The final complete source receipt is in
+`_temp/final-release-source-regression-20261124/source-tests-release-final/results.json`.
+Earlier attempts and superseded fixture receipts remain alongside the final
+evidence. Later repository commits recording these results are documentation
+only; re-verify the bundle against the exact clean release-source checkout.
+
+The backlog now contains **83 of 92 Verified**, eight In progress and one
+Deferred. P23 and the D30 design study are verified. U07 and P09 remain
+staged, and P25's signed-release/publication gates remain open despite the
+actual local candidate. Native ARM64, CI, and OIDC follow their existing
+external/deferred gates. No production or existing application home, saved
+user configuration or audiobook files were changed, no real download/list or
+notification endpoint was used, and no GitHub workflow or publishing ran.

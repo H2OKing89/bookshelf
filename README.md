@@ -56,6 +56,8 @@ describes v2 download-level actions and the retained v1 compatibility contract.
 Tracked downloads retain sources until their intended books and recording parts
 have verified committed files. See [download completion](docs/download-completion.md)
 for retry, restart, manual Copy and client-cleanup behavior.
+The [import extension design](docs/import-extension-design.md) records the
+recommended post-commit integration boundary and the deferred staged-media transform.
 The [audiobook preservation contract](docs/identity-preservation.md) covers
 recording ownership, upgrade preferences, rejection codes and the reusable
 synthetic API/browser check.

@@ -166,3 +166,27 @@ gates for them. Their retention/removal or migration, a fork-owned feed and trus
 policy, signed releases, GitHub release gating and P22 per-RID native acceptance remain
 separate work. GitHub billing is not needed for the local checks and staging
 commands above.
+
+## Current local candidate (2026-11-24)
+
+The unpublished `develop` candidate **10.0.0.42949** for `linux-x64` was
+built and staged from exact clean commit
+`7b941a85335e1b5830a483168144ebb44cd7beaf` and verified with the normal
+local candidate CLI. It includes 803 package files, corresponding GPL source
+and pinned dependency licenses/notices, and 12 hashed passing validation
+reports (2,325 exact glibc checks covering all eleven required gates).
+The [full local validation](local-validation.md#background-profiling-typed-library-resources-dependency-compatibility-and-local-release-2026-11-24)
+records the exact 6,110 passing source tests, current browser and database
+checks, and original/corrected regression evidence.
+
+The private candidate directory is
+`_temp/p23-u07-p09-d30-p25-20261124/release-candidate/`, with its matching
+clean source checkout at `build-source-release-final/` in the same evidence
+root. Re-verification must use that checkout, not a later documentation-only
+HEAD. Its package fingerprint is
+`3c6d8592d33c2c59707745bab5bb76e4bda33b30ac3d580644fbc8f02784a28c`.
+The `release-verification.json` receipt and the candidate's own
+`release-manifest.json` record the archive/manifest hashes and exact source
+identity. No signature, publishing, deployment or updater activation was
+performed. P25 remains **In progress** for the separately gated signed release
+and publication work.

@@ -1435,3 +1435,25 @@ was run.
 
 See the [detailed backlog](sonarr-v5-porting-backlog.md) and
 [local validation](local-validation.md#dependency-typing-queue-api-host-and-notification-verification-2026-11-24).
+
+### Background profiling, typed library boundaries and local release — 2026-11-24
+
+P23 and D30 now have **Verified** local acceptance (83/92 overall). The
+performance panel separately measures supported background commands and HTTP
+requests, with bounded retention and provider timing, while preserving the
+existing API counters. D30 completes the design decision to retain the
+ordinary importer and use committed observations; a future optional staged
+transform must satisfy the [import extension contract](import-extension-design.md)
+before any execution feature is proposed.
+
+P09's maintained dependency-line trials and U07's eight component conversions
+advance both staged items. A real controlled virtualized-grid navigation
+regression found in the combined package was corrected with an external
+scroll callback and verified across table/poster/overview modes. The final
+release source `7b941a853` passes the source, frontend, tooling and hosted
+checks. P25's actual unsigned local `develop` candidate **10.0.0.42949** was
+staged and independently verified, with matching GPL source, checksums,
+license notices and exact evidence. Publishing and built-in updating remain
+disabled; P25, CI and native ARM64 acceptance are still open.
+See [local validation](local-validation.md#background-profiling-typed-library-resources-dependency-compatibility-and-local-release-2026-11-24)
+and [the local candidate](release-policy.md#current-local-candidate-2026-11-24).
