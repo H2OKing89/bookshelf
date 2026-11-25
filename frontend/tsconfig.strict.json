@@ -129,6 +129,7 @@
     "./src/Book/Index/Overview/BookIndexOverviewInfoRow.tsx",
     "./src/Author/Index/Table/AuthorStatusCell.tsx",
     "./src/Book/Index/Table/BookStatusCell.tsx",
+    "./src/Components/Image/RevealWhenVisible.tsx",
     "./src/Author/AuthorImage.tsx",
     "./src/Author/AuthorPoster.tsx",
     "./src/Author/AuthorBanner.tsx",

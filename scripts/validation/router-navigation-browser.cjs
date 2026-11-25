@@ -1,6 +1,28 @@
 const path = require('path');
 const { report, runBrowser } = require('./history-paging-browser.cjs');
 
+async function verifyTabs(page, check, name) {
+  const tabs = page.getByRole('tablist').getByRole('tab');
+  const first = tabs.first();
+  const last = tabs.last();
+  await first.waitFor();
+  await first.focus();
+  await first.press('ArrowLeft');
+  await page.waitForFunction(node => node === document.activeElement && node.getAttribute('aria-selected') === 'true',
+    await last.elementHandle());
+  const panel = page.locator(`[id="${await last.getAttribute('aria-controls')}"]`);
+  await panel.waitFor();
+  check(name + '_arrow_left_wraps_focus_and_selection', await first.getAttribute('aria-selected') === 'false' &&
+    await panel.getAttribute('aria-labelledby') === await last.getAttribute('id'));
+  await last.press('ArrowRight');
+  await page.waitForFunction(node => node === document.activeElement && node.getAttribute('aria-selected') === 'true',
+    await first.elementHandle());
+  const firstPanel = page.locator(`[id="${await first.getAttribute('aria-controls')}"]`);
+  await firstPanel.waitFor();
+  check(name + '_arrow_right_restores_first_panel', await last.getAttribute('aria-selected') === 'false' &&
+    await firstPanel.getAttribute('aria-labelledby') === await first.getAttribute('id'));
+}
+
 async function verifyNavigation(page, base, config, { check, step, output }) {
   const prefix = base.pathname.replace(/\/$/, '');
   const bookPath = `${prefix}/book/${config.recording.slug}`;
@@ -28,6 +50,7 @@ async function verifyNavigation(page, base, config, { check, step, output }) {
     return await page.title() === title;
   };
   check('recording_document_title', await expectTitle(expectedBookTitle));
+  await verifyTabs(page, check, 'book_tabs');
   check('authentication_returns_to_the_prefixed_book_and_query', page.url() === protectedBook.href &&
     await page.evaluate(value => window.Readarr.urlBase === value, prefix));
 
@@ -46,6 +69,7 @@ async function verifyNavigation(page, base, config, { check, step, output }) {
   await page.waitForURL(new URL(authorPath, base).href);
   await page.getByText(config.author.name, { exact: true }).first().waitFor();
   check('author_document_title_after_client_navigation', await expectTitle(expectedAuthorTitle));
+  await verifyTabs(page, check, 'author_tabs');
   await page.goBack();
   await recordingTitle.waitFor();
   check('back_returns_to_the_exact_recording_bookmark', page.url() === bookmark.href);

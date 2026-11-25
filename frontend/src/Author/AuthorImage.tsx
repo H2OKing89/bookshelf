@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import LazyLoad from 'react-lazyload';
 import type { LibraryImage } from 'Book/LibraryPresentation';
+import RevealWhenVisible from 'Components/Image/RevealWhenVisible';
 
 export interface AuthorImageProps {
   className?: string;
@@ -51,7 +51,7 @@ class AuthorImage extends Component<AuthorImageProps, AuthorImageState> {
   constructor(props: AuthorImageProps) {
     super(props);
 
-    const pixelRatio = Math.ceil(window.devicePixelRatio);
+    const pixelRatio = typeof window === 'undefined' ? 1 : Math.max(1, Math.ceil(window.devicePixelRatio || 1));
 
     const {
       images,
@@ -146,7 +146,6 @@ class AuthorImage extends Component<AuthorImageProps, AuthorImageState> {
       className,
       style,
       placeholder,
-      size,
       lazy,
       overflow,
       blurBackground
@@ -177,10 +176,8 @@ class AuthorImage extends Component<AuthorImageProps, AuthorImageState> {
 
     if (lazy) {
       return (
-        <LazyLoad
-          height={size}
-          offset={100}
-          overflow={overflow}
+        <RevealWhenVisible
+          prefetchClipped={overflow}
           placeholder={
             <img
               className={className}
@@ -196,7 +193,7 @@ class AuthorImage extends Component<AuthorImageProps, AuthorImageState> {
             onError={this.onError}
             onLoad={this.onLoad}
           />
-        </LazyLoad>
+        </RevealWhenVisible>
       );
     }
 
