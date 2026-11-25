@@ -21,6 +21,7 @@ namespace NzbDrone.Core.MediaFiles
         void ImportFiles(List<BookFile> added, List<BookFile> updated, List<BookFile> replaced);
         void Update(BookFile bookFile);
         void Update(List<BookFile> bookFiles);
+        void UpdateQualityAndReleaseGroup(List<BookFile> bookFiles, bool updateQuality, bool updateReleaseGroup);
         void Delete(BookFile bookFile, DeleteMediaFileReason reason);
         void DeleteMany(List<BookFile> bookFiles, DeleteMediaFileReason reason);
         List<BookFile> GetFiles();
@@ -112,6 +113,32 @@ namespace NzbDrone.Core.MediaFiles
             {
                 _eventAggregator.PublishEvent(new LibraryStatisticsChangedEvent());
             }
+        }
+
+        public void UpdateQualityAndReleaseGroup(List<BookFile> bookFiles, bool updateQuality, bool updateReleaseGroup)
+        {
+            if (bookFiles.Count == 0 || (!updateQuality && !updateReleaseGroup))
+            {
+                return;
+            }
+
+            // Editor saves are field updates, not import or probe operations.
+            // Do not rewrite an existing file's ownership, state or analysis
+            // document (including its exact timestamp) from an earlier read.
+            if (updateQuality && updateReleaseGroup)
+            {
+                _mediaFileRepository.SetFields(bookFiles, file => file.Quality, file => file.ReleaseGroup, file => file.ReleaseGroupEvidence);
+            }
+            else if (updateQuality)
+            {
+                _mediaFileRepository.SetFields(bookFiles, file => file.Quality);
+            }
+            else
+            {
+                _mediaFileRepository.SetFields(bookFiles, file => file.ReleaseGroup, file => file.ReleaseGroupEvidence);
+            }
+
+            _eventAggregator.PublishEvent(new LibraryStatisticsChangedEvent());
         }
 
         public void Delete(BookFile bookFile, DeleteMediaFileReason reason)

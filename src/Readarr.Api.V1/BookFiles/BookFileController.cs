@@ -123,7 +123,7 @@ namespace Readarr.Api.V1.BookFiles
                 bookFile.ReleaseGroupEvidence = ReleaseGroupEvidence.ManualChoice(bookFile.ReleaseGroupEvidence, bookFile.ReleaseGroup);
             }
 
-            _mediaFileService.Update(bookFile);
+            _mediaFileService.UpdateQualityAndReleaseGroup(new List<BookFile> { bookFile }, bookFileResource.Quality != null, bookFileResource.ReleaseGroup != null);
             return Accepted(bookFile.Id);
         }
 
@@ -146,7 +146,7 @@ namespace Readarr.Api.V1.BookFiles
                 }
             }
 
-            _mediaFileService.Update(bookFiles);
+            _mediaFileService.UpdateQualityAndReleaseGroup(bookFiles, resource.Quality != null, resource.ReleaseGroup != null);
 
             return Accepted(bookFiles.ConvertAll(MapToResource));
         }

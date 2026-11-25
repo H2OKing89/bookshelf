@@ -1,11 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using Dapper;
 using FizzWare.NBuilder;
 using FluentAssertions;
+using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Books;
+using NzbDrone.Core.Datastore;
+using NzbDrone.Core.LibraryStats;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.MediaFiles.MediaInfo;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Test.Framework;
@@ -94,6 +101,102 @@ namespace NzbDrone.Core.Test.MediaFiles
             stored.EditionId.Should().Be(file.EditionId);
             stored.ReleaseGroup.Should().Be("RecordingCrew");
             stored.ReleaseGroupEvidence.Should().BeEquivalentTo(file.ReleaseGroupEvidence);
+        }
+
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        [TestCase(true, true)]
+        public void property_editor_should_preserve_exact_media_analysis_and_publish_once_after_commit(bool quality, bool group)
+        {
+            var files = Subject.GetFilesByAuthor(_author.Id).Take(2).ToList();
+            var expected = new Dictionary<int, (string Path, long Size, int Edition, DateTime Modified, string Media, string Group)>();
+            foreach (var file in files)
+            {
+                file.Size = 12345;
+                file.Modified = new DateTime(2026, 11, 24, 8, 0, 0, DateTimeKind.Utc).AddTicks(7574270);
+                Subject.SetFields(file, item => item.Size, item => item.Modified);
+
+                // A real saved probe may have a fractional timestamp in its
+                // document. Seed that exact storage value without a serializer
+                // round trip, which must not happen during an unrelated edit.
+                var metadata = JsonSerializer.Serialize(new
+                {
+                    source = "MediaInfo",
+                    analysis = new { revision = MediaInfoAnalysis.CurrentRevision, size = file.Size, modifiedUtc = file.Modified, complete = true }
+                });
+                using (var connection = Db.OpenConnection())
+                {
+                    connection.Execute("UPDATE \"BookFiles\" SET \"MediaInfo\" = @metadata WHERE \"Id\" = @Id", new { metadata, file.Id });
+                }
+
+                expected.Add(file.Id, (file.Path, file.Size, file.EditionId, file.Modified, metadata, file.ReleaseGroup));
+            }
+
+            files = files.Select(file => Subject.Get(file.Id)).ToList();
+            foreach (var file in files)
+            {
+                MediaInfoAnalysis.IsInvalidatedByFileState(file.MediaInfo, file.Size, file.Modified).Should().BeFalse();
+                file.Quality = new QualityModel(Quality.M4B);
+                file.ReleaseGroup = "ReviewedCrew";
+                file.ReleaseGroupEvidence = ReleaseGroupEvidence.ManualChoice(file.ReleaseGroupEvidence, file.ReleaseGroup);
+
+                // Also prove unrelated fields from a stale resource cannot
+                // replace a newer stored file state or recording association.
+                file.Path = "stale path";
+                file.Size++;
+                file.Modified = file.Modified.AddSeconds(1);
+                file.EditionId = 0;
+            }
+
+            var service = new MediaFileService(Subject, Mocker.GetMock<IEventAggregator>().Object, TestLogger);
+            Mocker.GetMock<IEventAggregator>().Setup(events => events.PublishEvent(It.IsAny<LibraryStatisticsChangedEvent>()))
+                .Callback(() =>
+                {
+                    foreach (var file in files)
+                    {
+                        var stored = Subject.Get(file.Id);
+                        var before = expected[file.Id];
+                        stored.Path.Should().Be(before.Path);
+                        stored.Size.Should().Be(before.Size);
+                        stored.EditionId.Should().Be(before.Edition);
+                        stored.Modified.Should().Be(before.Modified);
+                        stored.Quality.Quality.Should().Be(quality ? Quality.M4B : Quality.MP3);
+                        stored.ReleaseGroup.Should().Be(group ? "ReviewedCrew" : before.Group);
+                        if (group)
+                        {
+                            stored.ReleaseGroupEvidence.Source.Should().Be("manual");
+                            stored.ReleaseGroupEvidence.ResolvedGroup.Should().Be("ReviewedCrew");
+                        }
+                        else
+                        {
+                            stored.ReleaseGroupEvidence.Should().BeNull();
+                        }
+
+                        MediaInfoAnalysis.IsInvalidatedByFileState(stored.MediaInfo, stored.Size, stored.Modified).Should().BeFalse();
+                        using var connection = Db.OpenConnection();
+                        connection.QuerySingle<string>("SELECT \"MediaInfo\" FROM \"BookFiles\" WHERE \"Id\" = @Id", new { file.Id }).Should().Be(before.Media);
+                    }
+                });
+
+            service.UpdateQualityAndReleaseGroup(files, quality, group);
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<LibraryStatisticsChangedEvent>()), Times.Once());
+        }
+
+        [Test]
+        public void property_editor_should_rollback_all_fields_when_any_selected_file_is_missing()
+        {
+            var file = Subject.GetFilesByAuthor(_author.Id).First();
+            var previousGroup = file.ReleaseGroup;
+            file.ReleaseGroup = "ReviewedCrew";
+            file.ReleaseGroupEvidence = ReleaseGroupEvidence.ManualChoice(file.ReleaseGroupEvidence, file.ReleaseGroup);
+            var missing = new BookFile { Id = 99999, ReleaseGroup = "OtherCrew" };
+            var service = new MediaFileService(Subject, Mocker.GetMock<IEventAggregator>().Object, TestLogger);
+
+            Assert.Throws<ModelNotFoundException>(() => service.UpdateQualityAndReleaseGroup(new List<BookFile> { file, missing }, false, true));
+
+            Subject.Get(file.Id).ReleaseGroup.Should().Be(previousGroup);
+            Subject.Get(file.Id).ReleaseGroupEvidence.Should().BeNull();
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<LibraryStatisticsChangedEvent>()), Times.Never());
         }
 
         [Test]
