@@ -1,7 +1,13 @@
 import * as filterTypes from 'Helpers/Props/filterTypes';
 import { isStateRecord } from 'Store/StateTypes';
 
-export function isFilterEntry(value: unknown): boolean {
+export interface FilterEntry {
+  key: string;
+  value?: unknown;
+  type?: unknown;
+}
+
+export function isFilterEntry(value: unknown): value is FilterEntry {
   return isStateRecord(value) && typeof value.key === 'string';
 }
 

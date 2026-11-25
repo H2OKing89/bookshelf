@@ -123,7 +123,7 @@ export const filterPredicates = {
   qualityProfileId: function(item, filterValue, type) {
     const predicate = filterTypePredicates[type];
 
-    return predicate(item.author.qualityProfileId, filterValue);
+    return !!item.author && predicate(item.author.qualityProfileId, filterValue);
   },
 
   ratings: function(item, filterValue, type) {
@@ -135,7 +135,7 @@ export const filterPredicates = {
   path: function(item, filterValue, type) {
     const predicate = filterTypePredicates[type];
 
-    return predicate(item.author.path, filterValue);
+    return !!item.author && predicate(item.author.path, filterValue);
   },
 
   bookFileCount: function(item, filterValue, type) {
@@ -168,7 +168,7 @@ export const sortPredicates = {
   },
 
   path: function(item) {
-    return item.author.path;
+    return item.author?.path;
   },
 
   series: function(item) {

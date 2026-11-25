@@ -91,6 +91,8 @@
     "./src/Settings/ImportLists/ImportListCleanup.tsx",
     "./src/Settings/ImportLists/ImportLists/ImportListMembership.tsx",
     "./src/Utilities/Array/getIndexOfFirstCharacter.ts",
+    "./src/Utilities/Array/filterCollection.ts",
+    "./src/Utilities/Array/sortCollection.ts",
     "./src/Utilities/Array/sortByName.ts",
     "./src/Utilities/Constants/*.ts",
     "./src/Utilities/Date/*.ts",

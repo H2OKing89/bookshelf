@@ -176,7 +176,7 @@ export const defaultState = {
     ...sortPredicates,
 
     authorName: function(item) {
-      return item.author.sortName;
+      return item.author?.sortName;
     },
 
     bookFileCount: function(item) {
@@ -202,7 +202,7 @@ export const defaultState = {
     author: function(item, filterValue, type) {
       const predicate = filterTypePredicates[type];
 
-      return predicate(item.author.authorName, filterValue);
+      return !!item.author && predicate(item.author.authorName, filterValue);
     },
 
     anyEditionOk: function(item, filterValue, type) {
