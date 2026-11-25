@@ -131,7 +131,6 @@ namespace NzbDrone.Host
             });
 
             services.AddSingleton(TimeProvider.System);
-            services.AddSingleton<PerformanceProfiler>();
             services.AddAuthorization(options => options.AddPolicy(PerformanceProfiler.AuthorizationPolicy, policy => policy
                 .AddAuthenticationSchemes("API")
                 .RequireAuthenticatedUser()

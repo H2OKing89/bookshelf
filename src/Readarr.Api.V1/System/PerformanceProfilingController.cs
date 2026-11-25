@@ -9,9 +9,9 @@ namespace Readarr.Api.V1.System
     [V1ApiController("system/performance")]
     public class PerformanceProfilingController : Controller
     {
-        private readonly PerformanceProfiler _profiler;
+        private readonly IPerformanceProfiler _profiler;
 
-        public PerformanceProfilingController(PerformanceProfiler profiler)
+        public PerformanceProfilingController(IPerformanceProfiler profiler)
         {
             _profiler = profiler;
         }

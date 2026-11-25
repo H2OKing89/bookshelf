@@ -33,11 +33,21 @@ namespace NzbDrone.Core.Instrumentation
         public List<PerformanceProfileGroup> Operations { get; init; }
     }
 
+    // AutoAddServices uses one singleton for service interfaces, whereas
+    // concrete auto-registrations are transient. Both the middleware and
+    // API must see the same host-owned profiler, not separate instances.
+    public interface IPerformanceProfiler
+    {
+        bool Enabled { get; }
+        PerformanceProfiler.RequestCapture Begin(string operation, string method);
+        PerformanceProfileSnapshot Snapshot();
+    }
+
     // Short-lived request aggregates, not a SQL/logging facility. Provider
     // objects, request IDs, URLs, statements, parameters and user data are
     // deliberately not retained. Only provider timing aggregates are sampled. PostgreSQL
     // includes command and physical connection-open activities.
-    public sealed class PerformanceProfiler : IDisposable
+    public sealed class PerformanceProfiler : IPerformanceProfiler, IDisposable
     {
         public const string AuthorizationPolicy = "PerformanceDiagnostics";
         public const int Capacity = 256;

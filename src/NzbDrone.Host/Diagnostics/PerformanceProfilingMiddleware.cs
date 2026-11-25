@@ -15,7 +15,7 @@ namespace NzbDrone.Host.Diagnostics
             _next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context, PerformanceProfiler profiler)
+        public async Task InvokeAsync(HttpContext context, IPerformanceProfiler profiler)
         {
             // Only a genuine API principal after authorization. Exclude the
             // profiler itself, static pages, SignalR and anonymous/bypass routes.
