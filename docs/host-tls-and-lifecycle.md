@@ -42,29 +42,41 @@ Unit regressions exercise actual SSL streams, configuration round-tripping, exac
 In **Settings → General**, enable advanced settings and turn **Performance
 profiling** on. Save and restart Bookshelf. Open **System → Status → Performance
 diagnostics**, perform the library operation you want to measure, and select
-**Refresh timings**. The panel groups authenticated API requests by controller
-operation and HTTP method, reporting the number of requests, mean and maximum
-request duration, failures/cancellations, SQLite statement count and duration,
-and PostgreSQL provider operation count and duration (which includes physical
-connection opens). These are aggregates, not a per-request or per-query trace.
+**Refresh timings**. The display has separate tables for:
+
+- Authenticated API requests, grouped by controller operation and HTTP method.
+- Background jobs, grouped by the application's command type, category and
+  actual manual/scheduled/unspecified trigger. This covers author and book
+  refresh commands, folder scans, manual/downloaded import commands, download
+  monitor and completion checks, and explicit/stale MediaInfo refresh jobs.
+  Other independent command types are not automatically timed.
+
+Both tables report completed executions, failures/cancellations, mean and
+maximum duration, SQLite statement count and duration, and PostgreSQL provider
+operation count and duration (which includes physical connection opens). These
+are aggregates, not a per-request, per-file, per-job or per-query trace. The
+background timer starts on the command worker when supported work executes,
+not when an API request queues the command. Direct nested service work belongs
+to its enclosing request/job scope; a single import does not also create a
+separate MediaInfo job just because the importer calls the analyzer. A queued
+or interrupted operation is not counted as a successfully completed job.
 
 The setting is off by default and applies at host startup. The diagnostic API
 (`GET /api/v1/system/performance`) requires the actual application API key,
 including when other UI routes permit a local or external authentication mode.
-Responses are marked non-cacheable and the diagnostics endpoint itself is not
-sampled. The view includes up to 256 completed request samples from the last ten
-minutes, measured with a monotonic clock; expired samples are pruned on read,
-on new samples, and once per minute while idle. No SQL text, parameters,
-request URLs, bodies, file paths, credentials or per-user identifiers are
-retained by this profiler. Turning the setting off and restarting clears all
-samples. The setting can also be overridden with
-`Readarr__Server__PerformanceProfilingEnabled`.
+Responses are non-cacheable and the diagnostics endpoint itself is not sampled.
+The last ten minutes of samples, up to 256 completed requests **and jobs
+combined**, are retained using monotonic time; expired samples are pruned on
+read, on new samples, and once per minute while idle. The API retains its
+HTTP-only `samples` and `operations` fields, adding `jobSamples` and `jobs`.
+No SQL text, parameters, request URLs, bodies, command arguments or IDs, file
+paths, credentials or per-user identifiers are retained by this profiler.
+Turning the setting off and restarting clears all samples; the setting can
+also be overridden with `Readarr__Server__PerformanceProfilingEnabled`.
 
-The current capability profiles API request work and database activity in
-that request's execution scope. Independently scheduled background metadata
-refreshes, imports, download polling, and native analysis jobs are not timed
-as separate operations by this panel. Do not interpret the duration of a
-request that queues a background job as the job's execution time. The local
-validation exercises the feature on a large synthetic catalogue and both
-supported database providers; broader background profiling and overhead studies
-remain follow-up work.
+Local acceptance exercises actual scheduler, command worker, import and bundled
+MediaInfo work on disposable media and a large synthetic catalogue, with
+provider-specific database timing tests and both desktop and phone views. The
+view is diagnostic evidence, not a comprehensive distributed profiler or a
+benchmark for every workload. Use the separate job table instead of inferring
+background execution time from the API request that queued it.
