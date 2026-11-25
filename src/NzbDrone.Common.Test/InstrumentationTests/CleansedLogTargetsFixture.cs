@@ -77,10 +77,44 @@ namespace NzbDrone.Common.Test.InstrumentationTests
             target.RenderEntry(new LogEventInfo(LogLevel.Error, "Caller", "?apikey=" + Secret)).Should().Be(Failure);
         }
 
+        [Test]
+        public void rolling_archives_should_keep_the_current_file_and_numbered_history()
+        {
+            var path = Path.Combine(TempFolder, "rolled.txt");
+            using var target = new NzbDroneFileTarget
+            {
+                Name = "rolling-test",
+                FileName = path,
+                Layout = new SimpleLayout("${message}"),
+                KeepFileOpen = false,
+                ConcurrentWrites = false,
+                ArchiveAboveSize = 128,
+                MaxArchiveFiles = 2,
+                ArchiveNumbering = ArchiveNumberingMode.Rolling
+            };
+            var configuration = new LoggingConfiguration();
+            configuration.AddRule(LogLevel.Trace, LogLevel.Fatal, target);
+            using var factory = new LogFactory { ThrowExceptions = true };
+            factory.Configuration = configuration;
+            var logger = factory.GetLogger("Caller");
+
+            for (var i = 0; i < 6; i++)
+            {
+                logger.Info("entry-{0} {1} ?apikey={2}", i, new string('x', 128), Secret);
+            }
+
+            factory.Flush(TimeSpan.FromSeconds(5));
+            var files = Directory.GetFiles(TempFolder, "rolled*.txt");
+            files.Should().BeEquivalentTo(path, Path.Combine(TempFolder, "rolled.0.txt"), Path.Combine(TempFolder, "rolled.1.txt"));
+            File.ReadAllText(path).Should().Contain("entry-5").And.NotContain(Secret);
+            File.ReadAllText(Path.Combine(TempFolder, "rolled.0.txt")).Should().Contain("entry-4").And.NotContain(Secret);
+            File.ReadAllText(Path.Combine(TempFolder, "rolled.1.txt")).Should().Contain("entry-3").And.NotContain(Secret);
+        }
+
         private static void WriteFile(string path, string message, bool wrappedLayout)
         {
             var inner = new SimpleLayout("${level}|${logger}|${message}");
-            var target = wrappedLayout ? new FileTarget() : new NzbDroneFileTarget();
+            var target = wrappedLayout ? new ConcurrentFileTarget() : new NzbDroneFileTarget();
             target.Name = "private-file";
             target.FileName = path;
             target.Layout = wrappedLayout ? new CleansedLayout(inner) : inner;

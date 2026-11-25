@@ -83,7 +83,7 @@ namespace NzbDrone.Common.Test.InstrumentationTests
         {
             var path = Path.Combine(TempFolder, "database-private.txt");
             var inner = "${level}|${message}|${exception:format=ToString}|${exception:format=Data}";
-            var target = wrapped ? new FileTarget() : new NzbDroneFileTarget();
+            var target = wrapped ? new ConcurrentFileTarget() : new NzbDroneFileTarget();
             target.Name = "database-privacy";
             target.FileName = path;
             target.KeepFileOpen = false;

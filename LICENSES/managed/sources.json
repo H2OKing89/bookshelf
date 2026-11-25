@@ -193,5 +193,96 @@
       "commit": "6ffef067536270495eaa91cc4dd52c364745a721"
     },
     "packageSha512Base64": "N1XAJDRjRBbqhxDHN9T8PZF2tchmThRsuZ0W7cjqGiusInHFQiO8im7YMO6wPT2nnJDdukqcHdw3lpjItv5HEg=="
+  },
+  "NLog/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/NLog/NLog/d9ebf823ee8ba54977c336709928a96ea58c6259/LICENSE.txt",
+    "package": "NLog",
+    "version": "6.2.2",
+    "bytes": 1553,
+    "sha256": "0bf6ba2a9fc4e8b4b2fccbd712a9bf118989a60b8a1767551c23150f4154b08c",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/NLog/NLog.git",
+      "commit": "d9ebf823ee8ba54977c336709928a96ea58c6259"
+    },
+    "packageSha512Base64": "EIBddjZZJ5AgrbkkxI0v+e6pKj/8aRNp24Itv1tMw26Om2I/vkQZ/UrkqKiwlAbGBmDUV3M3B53zJCKd6nmcSQ=="
+  },
+  "NLog/Extensions.Logging-LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/NLog/NLog.Extensions.Logging/f49aafab3ab4272e9ab9f9d7800a2c606da6998b/LICENSE",
+    "package": "NLog.Extensions.Logging",
+    "version": "6.3.0",
+    "bytes": 1287,
+    "sha256": "c25be2e28dcb98f726ecb89d86093897a16451405d975559f89692585398959f",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/NLog/NLog.Extensions.Logging.git",
+      "commit": "f49aafab3ab4272e9ab9f9d7800a2c606da6998b"
+    },
+    "packageSha512Base64": "a7NYebpP2w2FSzDMT8pubu9D8i7KMxLE3tyJrYDSSzqax6YVvVIqSqTXai3gH0zlME/cnVU0sf78Uo94rpTNpA=="
+  },
+  "NLog/ConcurrentFile-LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/NLog/NLog.Targets.ConcurrentFile/410a614e3913423630320076a668fc378612ea76/LICENSE",
+    "package": "NLog.Targets.ConcurrentFile",
+    "version": "6.2.2",
+    "bytes": 1512,
+    "sha256": "f11851f3667939926a0cc800ccddf724dd24173e428bcddcf13d04b3a54c1038",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/NLog/NLog.Targets.ConcurrentFile.git",
+      "commit": "410a614e3913423630320076a668fc378612ea76"
+    },
+    "packageSha512Base64": "ZmMayc90exuC3bM4tpPEr1hvF4jGQOm8r2oK8sdGSJY3WxWHTWsYaM2TGXipLz01YxWEHq9pc6eRjWOg9uduEQ=="
+  },
+  "Swashbuckle/Annotations-LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/domaindrivendev/Swashbuckle.AspNetCore/1070368afe936b06bd4579053ea228f0fd7bce33/LICENSE",
+    "package": "Swashbuckle.AspNetCore.Annotations",
+    "version": "9.0.6",
+    "bytes": 1081,
+    "sha256": "c87a9ab2520595bc7c31343b5250e8f3779a65c6051612118b0accd200f24d07",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git",
+      "commit": "1070368afe936b06bd4579053ea228f0fd7bce33"
+    },
+    "packageSha512Base64": "3fUoLbjOmbUlpHIbihy0Gpex+o/oIQSY23A0rXSXc2HZRx+FB2GKavJc/+GedABlGZTPc804vu5M0S41ffUCSQ=="
+  },
+  "Swashbuckle/SwaggerGen-LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/domaindrivendev/Swashbuckle.AspNetCore/1070368afe936b06bd4579053ea228f0fd7bce33/LICENSE",
+    "package": "Swashbuckle.AspNetCore.SwaggerGen",
+    "version": "9.0.6",
+    "bytes": 1081,
+    "sha256": "c87a9ab2520595bc7c31343b5250e8f3779a65c6051612118b0accd200f24d07",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git",
+      "commit": "1070368afe936b06bd4579053ea228f0fd7bce33"
+    },
+    "packageSha512Base64": "Rg6NwYO7w7FveS7b+uPaoNWv02H3PThgIz7JGBlWo5f+s9plL71gTTSBq9GI7f7eu+pPQMeaVy/KDR+tXp67ag=="
+  },
+  "Swashbuckle/Swagger-LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/domaindrivendev/Swashbuckle.AspNetCore/1070368afe936b06bd4579053ea228f0fd7bce33/LICENSE",
+    "package": "Swashbuckle.AspNetCore.Swagger",
+    "version": "9.0.6",
+    "bytes": 1081,
+    "sha256": "c87a9ab2520595bc7c31343b5250e8f3779a65c6051612118b0accd200f24d07",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git",
+      "commit": "1070368afe936b06bd4579053ea228f0fd7bce33"
+    },
+    "packageSha512Base64": "T0qjym6PfE94xoB9qGuFtrIkbutOU181DKG50bstL6U3+rhNQwcBYGVcdGYTnQN+9Kqg9KA6FdzmOnzpESVW6Q=="
+  },
+  "Microsoft.OpenApi/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/Microsoft/OpenAPI.NET/0ba1965e28e950efcf657b61f01bd96707ce63fd/LICENSE",
+    "package": "Microsoft.OpenApi",
+    "version": "1.6.25",
+    "bytes": 1116,
+    "sha256": "5d177f23ecfeb0ea8e050b6a5a16355e1ae9a0b286436ca8f83ed08b3795be6b",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/Microsoft/OpenAPI.NET",
+      "commit": "0ba1965e28e950efcf657b61f01bd96707ce63fd"
+    },
+    "packageSha512Base64": "CEkFDMa391Rhahe5nALwVJINLlZwXkvr45h2k9sfwPJRfE4J1UTYKfFW4k5ScKaiY56Dsm9z7mrIgs1eNtjZ7Q=="
   }
 }

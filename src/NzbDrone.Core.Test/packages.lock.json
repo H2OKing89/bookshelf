@@ -556,8 +556,9 @@
           "IPAddressRange": "[6.3.0, )",
           "Microsoft.Extensions.DependencyInjection": "[10.0.15, )",
           "Microsoft.Extensions.Hosting.WindowsServices": "[10.0.15, )",
-          "NLog": "[5.5.1, )",
-          "NLog.Extensions.Logging": "[5.5.0, )",
+          "NLog": "[6.2.2, )",
+          "NLog.Extensions.Logging": "[6.3.0, )",
+          "NLog.Targets.ConcurrentFile": "[6.2.2, )",
           "Newtonsoft.Json": "[13.0.4, )",
           "SharpZipLib": "[1.4.2, )",
           "SourceGear.sqlite3": "[3.53.4, )",
@@ -586,7 +587,7 @@
           "Microsoft.Extensions.DependencyInjection": "[10.0.15, )",
           "Microsoft.Extensions.Logging": "[10.0.15, )",
           "MonoTorrent": "[2.0.7, )",
-          "NLog": "[5.5.1, )",
+          "NLog": "[6.2.2, )",
           "NLog.Targets.Syslog": "[7.0.0, )",
           "Newtonsoft.Json": "[13.0.4, )",
           "Npgsql": "[10.0.4, )",
@@ -601,7 +602,7 @@
         "type": "Project",
         "dependencies": {
           "Mono.Posix.NETStandard": "[5.20.1.34-servarr22, )",
-          "NLog": "[5.5.1, )",
+          "NLog": "[6.2.2, )",
           "Readarr.Common": "[1.0.0, )",
           "System.IO.Abstractions": "[23.1.0, )"
         }
@@ -612,7 +613,8 @@
           "FluentAssertions": "[7.2.2, )",
           "FluentValidation": "[9.5.4, )",
           "Moq": "[4.21.0, )",
-          "NLog": "[5.5.1, )",
+          "NLog": "[6.2.2, )",
+          "NLog.Targets.ConcurrentFile": "[6.2.2, )",
           "NUnit": "[4.6.1, )",
           "Newtonsoft.Json": "[13.0.4, )",
           "Readarr.Common": "[1.0.0, )",
@@ -626,7 +628,7 @@
       "readarr.windows": {
         "type": "Project",
         "dependencies": {
-          "NLog": "[5.5.1, )",
+          "NLog": "[6.2.2, )",
           "Readarr.Common": "[1.0.0, )",
           "System.IO.FileSystem.AccessControl": "[5.0.0, )"
         }
@@ -826,19 +828,28 @@
       },
       "NLog": {
         "type": "CentralTransitive",
-        "requested": "[5.5.1, )",
-        "resolved": "5.5.1",
-        "contentHash": "ZpLbXSi91tZJPjzNefE+3NugAkQtpWZpSLfZWJGcP1y8qMiXDKxW/nAQ+LYWo7GwH2iYsbKOdsLCK9S3BeRQxA=="
+        "requested": "[6.2.2, )",
+        "resolved": "6.2.2",
+        "contentHash": "Hoxigm/d7wY/+y4y2ILF2ERSojhxgLd8ASBZQbrnm52jB5NHkF4AWW5tZzMxJ/HTOp0bLwClGOokrA31iSXuMA=="
       },
       "NLog.Extensions.Logging": {
         "type": "CentralTransitive",
-        "requested": "[5.5.0, )",
-        "resolved": "5.5.0",
-        "contentHash": "l8gxUThXCiV5Vcilz9SF2/mf39p9ccdm+V3zoadQIfnv5dMHiy6BH8PSF/9ptOMHfUXZI5qOlBTiO+YcoMY/4Q==",
+        "requested": "[6.3.0, )",
+        "resolved": "6.3.0",
+        "contentHash": "ZTgiFC5LrNp32CrgqfOf2CIQmfIVEh2/E2IknNu1c/AofW/Gi7J+rEpIa7yAJoH+BTb1RX13D3XZ4HB0LKzT5A==",
         "dependencies": {
-          "Microsoft.Extensions.Configuration.Abstractions": "8.0.0",
-          "Microsoft.Extensions.Logging": "8.0.0",
-          "NLog": "5.5.0"
+          "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Logging": "10.0.0",
+          "NLog": "6.2.2"
+        }
+      },
+      "NLog.Targets.ConcurrentFile": {
+        "type": "CentralTransitive",
+        "requested": "[6.2.2, )",
+        "resolved": "6.2.2",
+        "contentHash": "iIoQF/Br63RYP0/cdy3eJGr+pha7KRIE3fNNSe9xhIiPtiP0lv5VgYeOckF3ZkYVUxrBiTjybnzcG0mqXQCWWw==",
+        "dependencies": {
+          "NLog": "6.2.2"
         }
       },
       "NLog.Targets.Syslog": {

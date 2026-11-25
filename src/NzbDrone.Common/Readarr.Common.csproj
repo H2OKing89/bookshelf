@@ -12,6 +12,7 @@
     <PackageReference Include="NLog.Extensions.Logging" />
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="NLog" />
+    <PackageReference Include="NLog.Targets.ConcurrentFile" />
     <PackageReference Include="SharpZipLib" />
     <PackageReference Include="System.IO.Abstractions" />
     <PackageReference Include="System.ValueTuple" />
