@@ -308,9 +308,17 @@ def inspect_custom(fixture, endpoint):
     fixture.check("disabled_custom_list_retains_stale_snapshot_without_fetch", not historical["isCurrent"] and historical["items"] == excluded["items"] and
                   historical["lastSuccessfulSync"] == excluded["lastSuccessfulSync"] and sum(endpoint.pages.values()) == before)
     fixture.api(f"importlist/{list_id}", "PUT", unchanged)
-    wait_membership(fixture, list_id)
+    # Updating the provider enqueues its own refresh before returning. A current
+    # snapshot is not proof that the command has finished. Join that command (or
+    # complete a new one) with the successful endpoint still in place before
+    # switching its response, so the subsequent command cannot coalesce with it.
+    restored = sync(fixture, list_id)
+    fixture.check("re_enabled_custom_list_has_completed_current_membership", restored["isCurrent"] and
+                  restored.get("lastSuccessfulSync") is not None and {item["sourceBookId"] for item in restored["items"]} == expected)
     endpoint.mode = "empty"
+    before = sum(endpoint.pages.values())
     empty = sync(fixture, list_id)
+    fixture.check("custom_empty_sync_fetches_a_new_response", sum(endpoint.pages.values()) > before)
     fixture.check("custom_confirmed_empty_list_replaces_its_membership", empty["isCurrent"] and not empty["items"] and empty.get("lastSuccessfulSync") is not None)
     endpoint.mode = "success"
     final = sync(fixture, list_id)
