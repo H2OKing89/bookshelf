@@ -7,6 +7,7 @@ import DiskSpaceConnector from './DiskSpace/DiskSpaceConnector';
 import HealthConnector from './Health/HealthConnector';
 import MetadataProviders from './MetadataProviders/MetadataProviders';
 import MoreInfo from './MoreInfo/MoreInfo';
+import PerformanceProfiling from './Performance/PerformanceProfiling';
 
 class Status extends Component {
 
@@ -19,6 +20,7 @@ class Status extends Component {
         <PageContentBody>
           <HealthConnector />
           <MetadataProviders />
+          <PerformanceProfiling />
           <DiskSpaceConnector />
           <AboutConnector />
           <MoreInfo />

@@ -5,6 +5,7 @@ using System.Data.SQLite;
 using Dapper;
 using NLog;
 using NzbDrone.Common.Instrumentation;
+using NzbDrone.Core.Instrumentation;
 
 namespace NzbDrone.Core.Datastore
 {
@@ -32,7 +33,7 @@ namespace NzbDrone.Core.Datastore
 
         public IDbConnection OpenConnection()
         {
-            return _datamapperFactory();
+            return PerformanceProfiler.ObserveConnection(_datamapperFactory());
         }
 
         public DatabaseType DatabaseType

@@ -1,0 +1,20 @@
+.tableScroll {
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 8px;
+    border-bottom: 1px solid var(--borderColor);
+    text-align: left;
+  }
+
+  td {
+    white-space: nowrap;
+  }
+}

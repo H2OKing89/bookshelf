@@ -27,6 +27,8 @@
     "./src/Utilities/Fetch/**/*.ts",
     "./src/System/Status/MetadataProviders/**/*.ts",
     "./src/System/Status/MetadataProviders/**/*.tsx",
+    "./src/System/Status/Performance/**/*.ts",
+    "./src/System/Status/Performance/**/*.tsx",
     "./src/Wanted/**/*.ts",
     "./src/Wanted/**/*.tsx",
     "./test/types/**/*.ts"

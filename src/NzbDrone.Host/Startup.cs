@@ -21,6 +21,7 @@ using NzbDrone.Core.Instrumentation;
 using NzbDrone.Core.Lifecycle;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Host.AccessControl;
+using NzbDrone.Host.Diagnostics;
 using NzbDrone.Http.Authentication;
 using NzbDrone.SignalR;
 using Readarr.Api.V1.System;
@@ -130,6 +131,11 @@ namespace NzbDrone.Host
             });
 
             services.AddSingleton(TimeProvider.System);
+            services.AddSingleton<PerformanceProfiler>();
+            services.AddAuthorization(options => options.AddPolicy(PerformanceProfiler.AuthorizationPolicy, policy => policy
+                .AddAuthenticationSchemes("API")
+                .RequireAuthenticatedUser()
+                .RequireClaim("ApiKey", "true")));
             services.AddAppAuthentication();
         }
 
@@ -198,6 +204,7 @@ namespace NzbDrone.Host
             app.UseCors();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseMiddleware<PerformanceProfilingMiddleware>();
             app.UseResponseCompression();
             app.Properties["host.AppName"] = BuildInfo.AppName;
 
