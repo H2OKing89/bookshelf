@@ -42,8 +42,8 @@ namespace NzbDrone.Host
 
         public void AcquireForStartup()
         {
-            // The existing restart strategy spawns its replacement just before
-            // the old host disposes its singleton services and releases the lock.
+            // Retain a bounded retry for externally supervised and legacy
+            // updater hand-offs; an internal restart now releases this lock first.
             var timer = Stopwatch.StartNew();
             while (true)
             {

@@ -95,9 +95,10 @@ namespace NzbDrone.Common.Test
         [TestCase(true, false, true)]
         public void performance_profiling_should_preserve_option_override_and_explicit_false(bool? option, bool saved, bool expected)
         {
-            Subject.SetValue(nameof(Subject.PerformanceProfilingEnabled), saved);
+            _configFileContents = $"<Config><PerformanceProfilingEnabled>{saved}</PerformanceProfilingEnabled></Config>";
             Mocker.GetMock<IOptions<ServerOptions>>().Setup(v => v.Value).Returns(new ServerOptions { PerformanceProfilingEnabled = option });
-            Mocker.Resolve<ConfigFileProvider>().PerformanceProfilingEnabled.Should().Be(expected);
+            Subject.PerformanceProfilingEnabled.Should().Be(expected);
+            XDocument.Parse(_configFileContents).Root.Element(nameof(Subject.PerformanceProfilingEnabled)).Value.Should().Be(saved.ToString());
         }
 
         [Test]

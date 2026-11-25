@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using System.Threading;
+using NLog;
 using NzbDrone.Common;
 using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Core.Lifecycle.Commands;
@@ -12,6 +13,7 @@ namespace NzbDrone.Core.Lifecycle
     {
         void Shutdown();
         void Restart();
+        void NotifyHostStopping();
     }
 
     public class LifecycleService : ILifecycleService, IExecute<ShutdownCommand>, IExecute<RestartCommand>
@@ -20,6 +22,7 @@ namespace NzbDrone.Core.Lifecycle
         private readonly IRuntimeInfo _runtimeInfo;
         private readonly IServiceProvider _serviceProvider;
         private readonly Logger _logger;
+        private int _shutdownRequested;
 
         public LifecycleService(IEventAggregator eventAggregator,
                                 IRuntimeInfo runtimeInfo,
@@ -34,8 +37,10 @@ namespace NzbDrone.Core.Lifecycle
 
         public void Shutdown()
         {
-            _logger.Info("Shutdown requested.");
-            _eventAggregator.PublishEvent(new ApplicationShutdownRequested());
+            if (!PublishShutdown(false))
+            {
+                return;
+            }
 
             if (_runtimeInfo.IsWindowsService)
             {
@@ -45,14 +50,35 @@ namespace NzbDrone.Core.Lifecycle
 
         public void Restart()
         {
-            _logger.Info("Restart requested.");
-
-            _eventAggregator.PublishEvent(new ApplicationShutdownRequested(true));
+            if (!PublishShutdown(true))
+            {
+                return;
+            }
 
             if (_runtimeInfo.IsWindowsService)
             {
                 _serviceProvider.Restart(ServiceProvider.SERVICE_NAME);
             }
+        }
+
+        // SIGTERM, console Ctrl+C and SCM stop requests use the same domain
+        // shutdown notification without recursively stopping/restarting SCM.
+        public void NotifyHostStopping()
+        {
+            PublishShutdown(false);
+        }
+
+        private bool PublishShutdown(bool restarting)
+        {
+            if (Interlocked.Exchange(ref _shutdownRequested, 1) != 0)
+            {
+                return false;
+            }
+
+            _runtimeInfo.IsExiting = true;
+            _logger.Info(restarting ? "Restart requested." : "Shutdown requested.");
+            _eventAggregator.PublishEvent(new ApplicationShutdownRequested(restarting));
+            return true;
         }
 
         public void Execute(ShutdownCommand message)

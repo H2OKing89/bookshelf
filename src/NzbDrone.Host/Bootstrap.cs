@@ -22,6 +22,7 @@ using NzbDrone.Common.Http;
 using NzbDrone.Common.Instrumentation;
 using NzbDrone.Common.Instrumentation.Extensions;
 using NzbDrone.Common.Options;
+using NzbDrone.Common.Processes;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Datastore.Extensions;
 using NzbDrone.Core.Lifecycle;
@@ -70,8 +71,8 @@ namespace NzbDrone.Host
                     {
                         Logger.Debug("Service selected");
 
-                        CreateConsoleHostBuilder(args, startupContext).UseWindowsService().Build().Run();
-                        break;
+                        RunHost(CreateConsoleHostBuilder(args, startupContext).UseWindowsService().Build(), startupContext);
+                        return;
                     }
 
                     case ApplicationModes.Interactive:
@@ -84,8 +85,8 @@ namespace NzbDrone.Host
                             trayCallback(builder);
                         }
 
-                        builder.Build().Run();
-                        break;
+                        RunHost(builder.Build(), startupContext);
+                        return;
                     }
 
                     // Utility mode
@@ -138,6 +139,52 @@ namespace NzbDrone.Host
                 LogManager.Configuration = null;
             }
 
+            ClearDatabasePools();
+        }
+
+        private static void RunHost(IHost host, IStartupContext startupContext)
+        {
+            var runtime = host.Services.GetRequiredService<IRuntimeInfo>();
+            var home = Path.GetFullPath(host.Services.GetRequiredService<IAppFolderInfo>().AppDataFolder);
+            host.Run();
+
+            // Run disposes the host, including its home lock. Keep the external
+            // process boundary, but close logs and release DB pools first.
+            var restarting = runtime.RestartPending && !runtime.IsWindowsService;
+            if (restarting)
+            {
+                Logger.Info("Attempting restart after host disposal");
+            }
+
+            LogManager.Shutdown();
+            ClearDatabasePools();
+            if (restarting)
+            {
+                var restartArgs = GetRestartArgs(startupContext, home);
+                using var replacement = new ProcessProvider(Logger).SpawnNewProcess(runtime.ExecutingApplication, restartArgs);
+            }
+        }
+
+        internal static string GetRestartArgs(IStartupContext startupContext, string home)
+        {
+            // Explicitly retain the resolved home even for an implicit default.
+            // A process-name check must not reject this intentional replacement.
+            var args = StartupContext.QuoteArgument("/data=" + home) + " /restart /nobrowser";
+            if (startupContext.Flags.Contains(StartupContext.NO_SINGLE_INSTANCE_CHECK))
+            {
+                args += " /" + StartupContext.NO_SINGLE_INSTANCE_CHECK;
+            }
+
+            if (startupContext.Flags.Contains(StartupContext.EXIT_IMMEDIATELY))
+            {
+                args += " /" + StartupContext.EXIT_IMMEDIATELY;
+            }
+
+            return args;
+        }
+
+        private static void ClearDatabasePools()
+        {
             // Make sure there are no lingering database connections
             GC.Collect();
             GC.WaitForPendingFinalizers();

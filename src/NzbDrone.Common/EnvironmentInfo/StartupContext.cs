@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace NzbDrone.Common.EnvironmentInfo
 {
@@ -37,17 +38,23 @@ namespace NzbDrone.Common.EnvironmentInfo
 
             foreach (var s in args)
             {
-                var flag = s.Trim(' ', '/', '-');
+                var flag = s.TrimStart(' ', '/', '-');
 
-                var argParts = flag.Split('=');
+                var argParts = flag.Split('=', 2);
 
                 if (argParts.Length == 2)
                 {
-                    Args.Add(argParts[0].Trim().ToLower(), argParts[1].Trim(' ', '"'));
+                    var value = argParts[1];
+                    if (value.Length >= 2 && value[0] == '"' && value[^1] == '"')
+                    {
+                        value = value[1..^1];
+                    }
+
+                    Args.Add(argParts[0].Trim().ToLowerInvariant(), value);
                 }
                 else
                 {
-                    Flags.Add(flag.ToLower());
+                    Flags.Add(flag.TrimEnd(' ', '/', '-').ToLowerInvariant());
                 }
             }
         }
@@ -70,7 +77,7 @@ namespace NzbDrone.Common.EnvironmentInfo
 
                 if (Args.ContainsKey(APPDATA))
                 {
-                    args = "/data=" + Args[APPDATA];
+                    args = QuoteArgument("/data=" + Args[APPDATA]);
                 }
 
                 if (Flags.Contains(NO_BROWSER))
@@ -80,6 +87,35 @@ namespace NzbDrone.Common.EnvironmentInfo
 
                 return args.Trim();
             }
+        }
+
+        // ProcessStartInfo.Arguments uses .NET's command-line quoting rules on
+        // every platform. Preserve one argument, including a path's spaces,
+        // equal signs, quotes and backslashes, into either restart or updater.
+        public static string QuoteArgument(string value)
+        {
+            if (value.Length > 0 && !value.Any(c => char.IsWhiteSpace(c) || c == '"'))
+            {
+                return value;
+            }
+
+            var builder = new StringBuilder().Append('"');
+            var backslashes = 0;
+
+            foreach (var character in value)
+            {
+                if (character == '\\')
+                {
+                    backslashes++;
+                    continue;
+                }
+
+                builder.Append('\\', character == '"' ? (backslashes * 2) + 1 : backslashes);
+                builder.Append(character);
+                backslashes = 0;
+            }
+
+            return builder.Append('\\', backslashes * 2).Append('"').ToString();
         }
     }
 }

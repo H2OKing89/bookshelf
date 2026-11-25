@@ -222,7 +222,7 @@ namespace NzbDrone.Core.Update
         {
             var processId = _processProvider.GetCurrentProcess().Id.ToString();
             var executingApplication = _runtimeInfo.ExecutingApplication;
-            var args = string.Join(" ", processId, updateSandboxFolder.TrimEnd(Path.DirectorySeparatorChar).WrapInQuotes(), executingApplication.WrapInQuotes(), _startupContext.PreservedArguments);
+            var args = string.Join(" ", processId, StartupContext.QuoteArgument(updateSandboxFolder.TrimEnd(Path.DirectorySeparatorChar)), StartupContext.QuoteArgument(executingApplication), _startupContext.PreservedArguments);
             _logger.Info("Updater Arguments: " + args);
             return args;
         }

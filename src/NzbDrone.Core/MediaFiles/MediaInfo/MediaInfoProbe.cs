@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using NLog;
+using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.MediaFiles.MediaInfo
@@ -43,6 +44,10 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
 
                 MediaInfoAnalysis.Stamp(result, before, DateTime.UtcNow);
                 return result;
+            }
+            catch (OperationCanceledException) when (CommandExecutionContext.CancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {

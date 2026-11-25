@@ -76,6 +76,7 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
 
             foreach (var file in files)
             {
+                CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
                 if (!force && inspected >= AutomaticLimit)
                 {
                     break;
@@ -158,6 +159,10 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
             try
             {
                 return _audioTagService.ReadAudioTag(file.Path)?.MediaInfo;
+            }
+            catch (OperationCanceledException) when (CommandExecutionContext.CancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {

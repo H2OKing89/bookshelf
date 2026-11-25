@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using NzbDrone.Core.Messaging.Commands;
 
 namespace NzbDrone.Core.MediaFiles.MediaInfo
 {
@@ -21,6 +22,8 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
 
         public string Read(string executable, string path, TimeSpan timeout)
         {
+            var commandCancellation = CommandExecutionContext.CancellationToken;
+            commandCancellation.ThrowIfCancellationRequested();
             var startInfo = new ProcessStartInfo
             {
                 FileName = executable,
@@ -35,7 +38,8 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
 
             using var process = new Process { StartInfo = startInfo };
             process.Start();
-            using var cancellation = new CancellationTokenSource(timeout);
+            using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(commandCancellation);
+            cancellation.CancelAfter(timeout);
             try
             {
                 var output = ReadBounded(process.StandardOutput, MediaInfoJsonParser.MaximumJsonLength, cancellation);

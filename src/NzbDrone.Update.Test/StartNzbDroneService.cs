@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Common;
@@ -37,6 +38,21 @@ namespace NzbDrone.Update.Test
             Mocker.GetMock<IProcessProvider>().Verify(c => c.SpawnNewProcess(targetProcess, "/" + StartupContext.NO_BROWSER, null, false), Times.Once());
 
             ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
+        public void should_preserve_exact_home_argument_when_handing_back_to_console()
+        {
+            var appHome = "c:\\owned fixture=edition\\".AsOsAgnostic();
+            var installation = "c:\\Readarr\\".AsOsAgnostic();
+            var context = new StartupContext("/data=" + appHome);
+            Mocker.SetConstant<IStartupContext>(context);
+
+            Subject.Start(AppType.Console, installation);
+
+            var target = Path.Combine(installation, "Readarr.Console".ProcessNameToExe());
+            var arguments = StartupContext.QuoteArgument("/data=" + appHome) + " /nobrowser";
+            Mocker.GetMock<IProcessProvider>().Verify(process => process.SpawnNewProcess(target, arguments, null, false), Times.Once());
         }
     }
 }

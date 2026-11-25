@@ -1,12 +1,13 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using NLog;
 using NzbDrone.Common.EnvironmentInfo;
-using NzbDrone.Common.Processes;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Lifecycle;
 using NzbDrone.Core.Messaging;
+using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 
 namespace NzbDrone.Host
@@ -18,7 +19,8 @@ namespace NzbDrone.Host
         private readonly IRuntimeInfo _runtimeInfo;
         private readonly IStartupContext _startupContext;
         private readonly IBrowserService _browserService;
-        private readonly IProcessProvider _processProvider;
+        private readonly ILifecycleService _lifecycleService;
+        private readonly ICommandExecutionShutdown _commandExecution;
         private readonly IEventAggregator _eventAggregator;
         private readonly Logger _logger;
 
@@ -27,7 +29,8 @@ namespace NzbDrone.Host
             IRuntimeInfo runtimeInfo,
             IStartupContext startupContext,
             IBrowserService browserService,
-            IProcessProvider processProvider,
+            ILifecycleService lifecycleService,
+            ICommandExecutionShutdown commandExecution,
             IEventAggregator eventAggregator,
             Logger logger)
         {
@@ -36,12 +39,13 @@ namespace NzbDrone.Host
             _runtimeInfo = runtimeInfo;
             _startupContext = startupContext;
             _browserService = browserService;
-            _processProvider = processProvider;
+            _lifecycleService = lifecycleService;
+            _commandExecution = commandExecution;
             _eventAggregator = eventAggregator;
             _logger = logger;
 
             appLifetime.ApplicationStarted.Register(OnAppStarted);
-            appLifetime.ApplicationStopped.Register(OnAppStopped);
+            appLifetime.ApplicationStopping.Register(_lifecycleService.NotifyHostStopping);
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -51,11 +55,21 @@ namespace NzbDrone.Host
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
+            if (!_commandExecution.WaitForShutdown(TimeSpan.FromSeconds(5), cancellationToken))
+            {
+                _logger.Warn("Some command workers did not finish within the shutdown grace period.");
+            }
+
             return Task.CompletedTask;
         }
 
         private void OnAppStarted()
         {
+            if (_appLifetime.ApplicationStopping.IsCancellationRequested)
+            {
+                return;
+            }
+
             _runtimeInfo.IsStarting = false;
             _runtimeInfo.IsExiting = false;
 
@@ -68,39 +82,6 @@ namespace NzbDrone.Host
             _eventAggregator.PublishEvent(new ApplicationStartedEvent());
         }
 
-        private void OnAppStopped()
-        {
-            if (_runtimeInfo.RestartPending && !_runtimeInfo.IsWindowsService)
-            {
-                var restartArgs = GetRestartArgs();
-
-                _logger.Info("Attempting restart with arguments: {0}", restartArgs);
-                _processProvider.SpawnNewProcess(_runtimeInfo.ExecutingApplication, restartArgs);
-            }
-        }
-
-        private void Shutdown()
-        {
-            _logger.Info("Attempting to stop application.");
-            _logger.Info("Application has finished stop routine.");
-            _runtimeInfo.IsExiting = true;
-            _appLifetime.StopApplication();
-        }
-
-        private string GetRestartArgs()
-        {
-            var args = _startupContext.PreservedArguments;
-
-            args += " /restart";
-
-            if (!args.Contains("/nobrowser"))
-            {
-                args += " /nobrowser";
-            }
-
-            return args;
-        }
-
         [EventHandleOrder(EventHandleOrder.Last)]
         public void Handle(ApplicationShutdownRequested message)
         {
@@ -111,8 +92,11 @@ namespace NzbDrone.Host
                     _runtimeInfo.RestartPending = true;
                 }
 
-                LogManager.Configuration = null;
-                Shutdown();
+                if (!_appLifetime.ApplicationStopping.IsCancellationRequested)
+                {
+                    _logger.Info("Attempting to stop application.");
+                    _appLifetime.StopApplication();
+                }
             }
         }
     }

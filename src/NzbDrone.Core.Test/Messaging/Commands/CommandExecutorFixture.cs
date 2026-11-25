@@ -37,8 +37,7 @@ namespace NzbDrone.Core.Test.Messaging.Commands
         {
             Subject.Handle(new ApplicationShutdownRequested());
 
-            // Give the threads a bit of time to shut down.
-            Thread.Sleep(10);
+            Assert.That(Subject.WaitForShutdown(TimeSpan.FromSeconds(5), CancellationToken.None), Is.True);
         }
 
         private void GivenCommandQueue()
@@ -47,7 +46,7 @@ namespace NzbDrone.Core.Test.Messaging.Commands
 
             Mocker.GetMock<IManageCommandQueue>()
                   .Setup(s => s.Queue(It.IsAny<CancellationToken>()))
-                  .Returns(_commandQueue.GetConsumingEnumerable);
+                  .Returns((CancellationToken token) => _commandQueue.GetConsumingEnumerable(token));
         }
 
         private void QueueAndWaitForExecution(CommandModel commandModel, bool waitPublish = false)
@@ -87,6 +86,28 @@ namespace NzbDrone.Core.Test.Messaging.Commands
 
             Mocker.GetMock<IManageCommandQueue>()
                   .Verify(v => v.Queue(It.IsAny<CancellationToken>()), Times.AtLeastOnce());
+        }
+
+        [Test]
+        public void should_wait_for_running_cooperative_command_to_cancel_before_worker_shutdown()
+        {
+            GivenCommandQueue();
+            using var entered = new ManualResetEventSlim();
+            _executorA.Setup(executor => executor.Execute(It.IsAny<CommandA>())).Callback(() =>
+            {
+                entered.Set();
+                var token = CommandExecutionContext.CancellationToken;
+                token.WaitHandle.WaitOne(TimeSpan.FromSeconds(10));
+                token.ThrowIfCancellationRequested();
+            });
+            var model = new CommandModel { Body = new CommandA() };
+            Subject.Handle(new ApplicationStartedEvent());
+            _commandQueue.Add(model);
+            Assert.That(entered.Wait(TimeSpan.FromSeconds(5)), Is.True);
+
+            Subject.Handle(new ApplicationShutdownRequested());
+            Assert.That(Subject.WaitForShutdown(TimeSpan.FromSeconds(5), CancellationToken.None), Is.True);
+            Mocker.GetMock<IManageCommandQueue>().Verify(manager => manager.Cancelled(model), Times.Once());
         }
 
         [Test]

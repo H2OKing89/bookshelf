@@ -59,5 +59,21 @@ namespace NzbDrone.Common.Test.EnvironmentTests
             var args = new StartupContext(new[] { "/data=test", "/Nobrowser" });
             args.PreservedArguments.Should().Be("/data=test /nobrowser");
         }
+
+        [TestCase("/data=/tmp/synthetic home=value/", "/tmp/synthetic home=value/", "\"/data=/tmp/synthetic home=value/\"")]
+        [TestCase("/data=/tmp/home-with-dash-", "/tmp/home-with-dash-", "/data=/tmp/home-with-dash-")]
+        [TestCase("/data=/tmp/home=edition", "/tmp/home=edition", "/data=/tmp/home=edition")]
+        public void should_preserve_exact_home_argument(string argument, string path, string preserved)
+        {
+            var context = new StartupContext(argument);
+            context.Args[StartupContext.APPDATA].Should().Be(path);
+            context.PreservedArguments.Should().Be(preserved);
+        }
+
+        [Test]
+        public void should_escape_trailing_backslashes_when_quoting_windows_paths()
+        {
+            StartupContext.QuoteArgument(@"/data=C:\synthetic home\").Should().Be("\"/data=C:\\synthetic home\\\\\"");
+        }
     }
 }

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using NLog;
 using NzbDrone.Common;
@@ -8,7 +10,13 @@ using NzbDrone.Core.ProgressMessaging;
 
 namespace NzbDrone.Core.Messaging.Commands
 {
-    public class CommandExecutor : IHandle<ApplicationStartedEvent>,
+    public interface ICommandExecutionShutdown
+    {
+        bool WaitForShutdown(TimeSpan timeout, CancellationToken cancellationToken);
+    }
+
+    public class CommandExecutor : ICommandExecutionShutdown,
+                                   IHandle<ApplicationStartedEvent>,
                                    IHandle<ApplicationShutdownRequested>
     {
         private const int THREAD_LIMIT = 3;
@@ -19,6 +27,7 @@ namespace NzbDrone.Core.Messaging.Commands
         private readonly IEventAggregator _eventAggregator;
 
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        private readonly List<Thread> _threads = new List<Thread>();
         private int _started;
 
         public CommandExecutor(IServiceFactory serviceFactory,
@@ -135,10 +144,19 @@ namespace NzbDrone.Core.Messaging.Commands
                 return;
             }
 
-            for (var i = 0; i < THREAD_LIMIT; i++)
+            lock (_threads)
             {
-                var thread = new Thread(ExecuteCommands);
-                thread.Start();
+                if (_cancellationTokenSource.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                for (var i = 0; i < THREAD_LIMIT; i++)
+                {
+                    var thread = new Thread(ExecuteCommands);
+                    thread.Start();
+                    _threads.Add(thread);
+                }
             }
         }
 
@@ -146,6 +164,40 @@ namespace NzbDrone.Core.Messaging.Commands
         {
             _logger.Info("Shutting down task execution");
             _cancellationTokenSource.Cancel(true);
+        }
+
+        public bool WaitForShutdown(TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            Thread[] threads;
+            lock (_threads)
+            {
+                threads = _threads.ToArray();
+            }
+
+            // Do not dispose the command database while cooperative commands
+            // are persisting their final cancelled status. Bound the wait for
+            // older, non-cooperative handlers, and never wait on ourselves.
+            var deadline = Stopwatch.StartNew();
+            foreach (var thread in threads)
+            {
+                if (thread == Thread.CurrentThread)
+                {
+                    continue;
+                }
+
+                while (thread.IsAlive)
+                {
+                    var remaining = timeout - deadline.Elapsed;
+                    if (remaining <= TimeSpan.Zero || cancellationToken.IsCancellationRequested)
+                    {
+                        return false;
+                    }
+
+                    thread.Join(remaining < TimeSpan.FromMilliseconds(100) ? remaining : TimeSpan.FromMilliseconds(100));
+                }
+            }
+
+            return true;
         }
     }
 }
