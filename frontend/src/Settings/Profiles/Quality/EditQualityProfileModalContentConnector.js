@@ -7,6 +7,7 @@ import { fetchQualityProfileSchema, saveQualityProfile, setQualityProfileValue }
 import createProfileInUseSelector from 'Store/Selectors/createProfileInUseSelector';
 import createProviderSettingsSelector from 'Store/Selectors/createProviderSettingsSelector';
 import EditQualityProfileModalContent from './EditQualityProfileModalContent';
+import { adjustQualityDropMove, parseIndex } from './qualityProfileDragTypes';
 
 function getQualityItemGroupId(qualityProfile) {
   // Get items with an `id` and filter out null/undefined values
@@ -15,21 +16,6 @@ function getQualityItemGroupId(qualityProfile) {
   return Math.max(1000, ...ids) + 1;
 }
 
-function parseIndex(index) {
-  const split = index.split('.');
-
-  if (split.length === 1) {
-    return [
-      null,
-      parseInt(split[0]) - 1
-    ];
-  }
-
-  return [
-    parseInt(split[0]) - 1,
-    parseInt(split[1]) - 1
-  ];
-}
 
 function createQualitiesSelector() {
   return createSelector(
@@ -300,99 +286,28 @@ class EditQualityProfileModalContentConnector extends Component {
     this.ensureCutoff(qualityProfile);
   };
 
-  onQualityProfileItemDragMove = (options) => {
-    const {
-      dragQualityIndex,
-      dropQualityIndex,
-      dropPosition
-    } = options;
-
-    const [dragGroupIndex, dragItemIndex] = parseIndex(dragQualityIndex);
-    const [dropGroupIndex, dropItemIndex] = parseIndex(dropQualityIndex);
-
-    if (
-      (dropPosition === 'below' && dropItemIndex - 1 === dragItemIndex) ||
-      (dropPosition === 'above' && dropItemIndex + 1 === dragItemIndex)
-    ) {
-      if (
-        this.state.dragQualityIndex != null &&
-        this.state.dropQualityIndex != null &&
-        this.state.dropPosition != null
-      ) {
-        this.setState({
-          dragQualityIndex: null,
-          dropQualityIndex: null,
-          dropPosition: null
-        });
-      }
-
-      return;
-    }
-
-    let adjustedDropQualityIndex = dropQualityIndex;
-
-    // Correct dragging out of a group to the position above
-    if (
-      dropPosition === 'above' &&
-      dragGroupIndex !== dropGroupIndex &&
-      dropGroupIndex != null
-    ) {
-      // Add 1 to the group index and 2 to the item index so it's inserted above in the correct group
-      adjustedDropQualityIndex = `${dropGroupIndex + 1}.${dropItemIndex + 2}`;
-    }
-
-    // Correct inserting above outside a group
-    if (
-      dropPosition === 'above' &&
-      dragGroupIndex !== dropGroupIndex &&
-      dropGroupIndex == null
-    ) {
-      // Add 2 to the item index so it's entered in the correct place
-      adjustedDropQualityIndex = `${dropItemIndex + 2}`;
-    }
-
-    // Correct inserting below a quality within the same group (when moving a lower item)
-    if (
-      dropPosition === 'below' &&
-      dragGroupIndex === dropGroupIndex &&
-      dropGroupIndex != null &&
-      dragItemIndex < dropItemIndex
-    ) {
-      // Add 1 to the group index leave the item index
-      adjustedDropQualityIndex = `${dropGroupIndex + 1}.${dropItemIndex}`;
-    }
-
-    // Correct inserting below a quality outside a group (when moving a lower item)
-    if (
-      dropPosition === 'below' &&
-      dragGroupIndex === dropGroupIndex &&
-      dropGroupIndex == null &&
-      dragItemIndex < dropItemIndex
-    ) {
-      // Leave the item index so it's inserted below the item
-      adjustedDropQualityIndex = `${dropItemIndex}`;
-    }
+  onQualityProfileItemDragMove = (move) => {
+    const adjusted = adjustQualityDropMove(move);
+    const dragQualityIndex = adjusted?.dragQualityIndex ?? null;
+    const dropQualityIndex = adjusted?.dropQualityIndex ?? null;
+    const dropPosition = adjusted?.dropPosition ?? null;
 
     if (
       dragQualityIndex !== this.state.dragQualityIndex ||
-      adjustedDropQualityIndex !== this.state.dropQualityIndex ||
+      dropQualityIndex !== this.state.dropQualityIndex ||
       dropPosition !== this.state.dropPosition
     ) {
-      this.setState({
-        dragQualityIndex,
-        dropQualityIndex: adjustedDropQualityIndex,
-        dropPosition
-      });
+      this.setState({ dragQualityIndex, dropQualityIndex, dropPosition });
     }
   };
 
-  onQualityProfileItemDragEnd = (didDrop) => {
-    const {
-      dragQualityIndex,
-      dropQualityIndex
-    } = this.state;
+  onQualityProfileItemDragEnd = (move) => {
+    // Hover feedback is visual state only. Hook endDrag can occur in the
+    // same batched event as hover, before React commits that state.
+    const adjusted = move && adjustQualityDropMove(move);
 
-    if (didDrop && dropQualityIndex != null) {
+    if (adjusted) {
+      const { dragQualityIndex, dropQualityIndex } = adjusted;
       const qualityProfile = _.cloneDeep(this.props.item);
       const items = qualityProfile.items.value;
       const [dragGroupIndex, dragItemIndex] = parseIndex(dragQualityIndex);

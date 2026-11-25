@@ -57,7 +57,47 @@ async function verifySignalRResync(page, base, signalR, check) {
   }
 }
 
-async function verifyTableOptionsReorder(page, opener, check) {
+async function reorderByPointer(page, source, target, touch, position = 'below') {
+  await source.scrollIntoViewIfNeeded();
+  await target.scrollIntoViewIfNeeded();
+  const from = await source.boundingBox();
+  const to = await target.boundingBox();
+  if (!from || !to) {
+    throw new Error('DragTargetNotVisible');
+  }
+
+  const x = to.x + to.width / 2;
+  const y = to.y + (position === 'below' ? to.height - 7 : 7);
+  if (!touch) {
+    await source.dragTo(target, {
+      steps: 12,
+      targetPosition: { x: to.width / 2, y: y - to.y }
+    });
+    return;
+  }
+
+  // Chromium's CDP produces real touchstart/move/end events. Synthetic
+  // DragEvents would only exercise the HTML5 backend on a phone viewport.
+  const session = await page.context().newCDPSession(page);
+  const startX = from.x + from.width / 2;
+  const startY = from.y + from.height / 2;
+  try {
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchStart', touchPoints: [{ x: startX, y: startY, id: 0 }]
+    });
+    for (let step = 1; step <= 15; step++) {
+      await session.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: startX + (x - startX) * step / 15, y: startY + (y - startY) * step / 15, id: 0 }]
+      });
+    }
+    await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  } finally {
+    await session.detach();
+  }
+}
+
+async function verifyTableOptionsReorder(page, opener, check, touch = false) {
   await opener.click();
   const dialog = page.getByRole('dialog', { name: 'Table Options', exact: true });
   await dialog.waitFor();
@@ -68,19 +108,18 @@ async function verifyTableOptionsReorder(page, opener, check) {
   check('table_options_fixture_order', await order() === 'size,dateAdded');
 
   const rows = dialog.locator('[class*="TableOptionsColumnDragSource-columnDragSource"]');
-  const source = rows.filter({ has: page.locator('input[name="size"]') }).locator('[draggable="true"]');
+  const source = rows.filter({ has: page.locator('input[name="size"]') }).locator('[class*="TableOptionsColumn-dragHandle"]');
   const target = rows.filter({ has: page.locator('input[name="dateAdded"]') });
   const box = await target.boundingBox();
   check('table_options_drop_target_is_visible', Boolean(box));
 
-  await source.dragTo(target, {
-    steps: 12,
-    targetPosition: { x: box.width / 2, y: box.height - 7 }
-  });
+  await reorderByPointer(page, source, target, touch);
   await page.waitForFunction(({ element, fieldSelector }) =>
     Array.from(element.querySelectorAll(fieldSelector), input => input.name).join(',') === 'dateAdded,size',
   { element: await dialog.elementHandle(), fieldSelector });
   check('table_options_reorders_columns', await order() === 'dateAdded,size');
+  const nativeDraggable = await source.getAttribute('draggable');
+  check('table_options_uses_expected_drag_backend', touch ? nativeDraggable !== 'true' : nativeDraggable === 'true');
 
   await page.keyboard.press('Escape');
   await dialog.waitFor({ state: 'hidden' });
@@ -115,4 +154,4 @@ function observeReactWarnings(page) {
   return counts;
 }
 
-module.exports = { observeReactWarnings, observeSignalR, verifySignalRResync, verifyTableOptionsReorder };
+module.exports = { observeReactWarnings, observeSignalR, verifySignalRResync, verifyTableOptionsReorder, reorderByPointer };

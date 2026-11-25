@@ -1,6 +1,5 @@
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import React, { Component, type RefCallback } from 'react';
 import Icon from 'Components/Icon';
 import Link from 'Components/Link/Link';
 import ConfirmModal from 'Components/Modal/ConfirmModal';
@@ -11,7 +10,7 @@ import translate from 'Utilities/String/translate';
 import EditDelayProfileModalConnector from './EditDelayProfileModalConnector';
 import styles from './DelayProfile.css';
 
-function getDelay(enabled, delay) {
+function getDelay(enabled: boolean, delay: number) {
   if (!enabled) {
     return '-';
   }
@@ -28,13 +27,37 @@ function getDelay(enabled, delay) {
   return `${delay} Minutes`;
 }
 
-class DelayProfile extends Component {
+export interface DelayProfileDragItem {
+  id: number;
+  order: number;
+  enableUsenet: boolean;
+  enableTorrent: boolean;
+  preferredProtocol: string;
+  usenetDelay: number;
+  torrentDelay: number;
+  tags: number[];
+  tagList: { id: number; label: string }[];
+}
+
+interface DelayProfileProps extends DelayProfileDragItem {
+  isDragging: boolean;
+  isPreview?: boolean;
+  dragHandleRef?: RefCallback<HTMLDivElement>;
+  onConfirmDeleteDelayProfile?: (id: number) => void;
+}
+
+interface DelayProfileState {
+  isEditDelayProfileModalOpen: boolean;
+  isDeleteDelayProfileModalOpen: boolean;
+}
+
+class DelayProfile extends Component<DelayProfileProps, DelayProfileState> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: DelayProfileProps) {
+    super(props);
 
     this.state = {
       isEditDelayProfileModalOpen: false,
@@ -65,7 +88,7 @@ class DelayProfile extends Component {
   };
 
   onConfirmDeleteDelayProfile = () => {
-    this.props.onConfirmDeleteDelayProfile(this.props.id);
+    this.props.onConfirmDeleteDelayProfile?.(this.props.id);
   };
 
   //
@@ -82,7 +105,8 @@ class DelayProfile extends Component {
       tags,
       tagList,
       isDragging,
-      connectDragSource
+      dragHandleRef,
+      isPreview
     } = this.props;
 
     let preferred = titleCase(preferredProtocol);
@@ -112,62 +136,48 @@ class DelayProfile extends Component {
         <div className={styles.actions}>
           <Link
             className={id === 1 ? styles.editButton : undefined}
-            onPress={this.onEditDelayProfilePress}
+            onPress={isPreview ? undefined : this.onEditDelayProfilePress}
+            tabIndex={isPreview ? -1 : undefined}
           >
             <Icon name={icons.EDIT} />
           </Link>
 
           {
             id !== 1 &&
-              connectDragSource(
-                <div className={styles.dragHandle}>
-                  <Icon
-                    className={styles.dragIcon}
-                    name={icons.REORDER}
-                  />
-                </div>
-              )
+              <div ref={dragHandleRef} className={styles.dragHandle}>
+                <Icon
+                  className={styles.dragIcon}
+                  name={icons.REORDER}
+                />
+              </div>
           }
         </div>
 
-        <EditDelayProfileModalConnector
-          id={id}
-          isOpen={this.state.isEditDelayProfileModalOpen}
-          onModalClose={this.onEditDelayProfileModalClose}
-          onDeleteDelayProfilePress={this.onDeleteDelayProfilePress}
-        />
+        {
+          !isPreview &&
+            <>
+              <EditDelayProfileModalConnector
+                id={id}
+                isOpen={this.state.isEditDelayProfileModalOpen}
+                onModalClose={this.onEditDelayProfileModalClose}
+                onDeleteDelayProfilePress={this.onDeleteDelayProfilePress}
+              />
 
-        <ConfirmModal
-          isOpen={this.state.isDeleteDelayProfileModalOpen}
-          kind={kinds.DANGER}
-          title={translate('DeleteDelayProfile')}
-          message={translate('DeleteDelayProfileMessageText')}
-          confirmLabel={translate('Delete')}
-          onConfirm={this.onConfirmDeleteDelayProfile}
-          onCancel={this.onDeleteDelayProfileModalClose}
-        />
+              <ConfirmModal
+                isOpen={this.state.isDeleteDelayProfileModalOpen}
+                kind={kinds.DANGER}
+                title={translate('DeleteDelayProfile')}
+                message={translate('DeleteDelayProfileMessageText')}
+                confirmLabel={translate('Delete')}
+                onConfirm={this.onConfirmDeleteDelayProfile}
+                onCancel={this.onDeleteDelayProfileModalClose}
+              />
+            </>
+        }
       </div>
     );
   }
 }
 
-DelayProfile.propTypes = {
-  id: PropTypes.number.isRequired,
-  enableUsenet: PropTypes.bool.isRequired,
-  enableTorrent: PropTypes.bool.isRequired,
-  preferredProtocol: PropTypes.string.isRequired,
-  usenetDelay: PropTypes.number.isRequired,
-  torrentDelay: PropTypes.number.isRequired,
-  tags: PropTypes.arrayOf(PropTypes.number).isRequired,
-  tagList: PropTypes.arrayOf(PropTypes.object).isRequired,
-  isDragging: PropTypes.bool.isRequired,
-  connectDragSource: PropTypes.func,
-  onConfirmDeleteDelayProfile: PropTypes.func.isRequired
-};
-
-DelayProfile.defaultProps = {
-  // The drag preview will not connect the drag handle.
-  connectDragSource: (node) => node
-};
 
 export default DelayProfile;

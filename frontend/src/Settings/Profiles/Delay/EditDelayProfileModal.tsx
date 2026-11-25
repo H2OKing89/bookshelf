@@ -1,10 +1,16 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import Modal from 'Components/Modal/Modal';
 import { sizes } from 'Helpers/Props';
 import EditDelayProfileModalContentConnector from './EditDelayProfileModalContentConnector';
 
-function EditDelayProfileModal({ isOpen, onModalClose, ...otherProps }) {
+export interface EditDelayProfileModalProps {
+  id?: number;
+  isOpen: boolean;
+  onModalClose: () => void;
+  onDeleteDelayProfilePress?: () => void;
+}
+
+function EditDelayProfileModal({ isOpen, onModalClose, ...otherProps }: EditDelayProfileModalProps) {
   return (
     <Modal
       size={sizes.MEDIUM}
@@ -19,9 +25,5 @@ function EditDelayProfileModal({ isOpen, onModalClose, ...otherProps }) {
   );
 }
 
-EditDelayProfileModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onModalClose: PropTypes.func.isRequired
-};
 
 export default EditDelayProfileModal;

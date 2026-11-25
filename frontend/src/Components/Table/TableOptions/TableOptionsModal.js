@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import PropTypes from 'prop-types';
+import { HTML5toTouch } from 'rdndmb-html5-to-touch';
 import React, { Component } from 'react';
 import { DndProvider } from 'react-dnd-multi-backend';
-import HTML5toTouch from 'react-dnd-multi-backend/dist/esm/HTML5toTouch';
 import Form from 'Components/Form/Form';
 import FormGroup from 'Components/Form/FormGroup';
 import FormInputGroup from 'Components/Form/FormInputGroup';
@@ -82,18 +82,18 @@ class TableOptionsModal extends Component {
     }
   };
 
-  onColumnDragEnd = ({ id }, didDrop) => {
-    const {
-      dragIndex,
-      dropIndex
-    } = this.state;
-
-    if (didDrop && dropIndex !== null) {
+  onColumnDragEnd = ({ name }, targetName) => {
+    if (targetName !== null) {
       const columns = _.cloneDeep(this.props.columns);
-      const items = columns.splice(dragIndex, 1);
-      columns.splice(dropIndex, 0, items[0]);
+      const dragIndex = columns.findIndex((column) => column.name === name && column.isModifiable !== false);
+      const dropIndex = columns.findIndex((column) => column.name === targetName && column.isModifiable !== false);
 
-      this.props.onTableOptionChange({ columns });
+      if (dragIndex !== -1 && dropIndex !== -1 && dragIndex !== dropIndex) {
+        const items = columns.splice(dragIndex, 1);
+        columns.splice(dropIndex, 0, items[0]);
+
+        this.props.onTableOptionChange({ columns });
+      }
     }
 
     this.setState({

@@ -75,12 +75,16 @@ export default {
       const moving = _.find(delayProfiles, { id });
 
       // Don't move if the order hasn't changed
-      if (moving.order === moveOrder) {
+      if (!moving || moving.order === moveOrder) {
         return;
       }
 
       const after = moveIndex > 0 ? _.find(delayProfiles, { order: moveIndex }) : null;
-      const afterQueryParam = after ? `after=${after.id}` : '';
+      if (moveIndex > 0 && !after) {
+        return;
+      }
+
+      const afterQueryParam = after ? `afterId=${after.id}` : '';
 
       const promise = createAjaxRequest({
         method: 'PUT',

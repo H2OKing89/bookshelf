@@ -12,7 +12,7 @@ import tempfile
 from validation import common
 
 
-CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization", "assetpipeline", "recordinglifecycle", "collectiondiagnostics", "listlifecycle", "providerpolicies", "indexerrejectionpolicy", "qualityranking", "hosttlslifecycle", "downloadqueue", "apidocuments", "notificationlifecycle", "performanceprofiling", "docker")
+CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization", "assetpipeline", "recordinglifecycle", "collectiondiagnostics", "listlifecycle", "providerpolicies", "indexerrejectionpolicy", "qualityranking", "hosttlslifecycle", "downloadqueue", "apidocuments", "notificationlifecycle", "performanceprofiling", "dragreorder", "docker")
 
 
 def parser():
@@ -58,7 +58,7 @@ def main(argv=None):
         parser().error("--checks historypaging requires --playwright-module")
     if "historysync" in chosen and not arguments.playwright_module:
         parser().error("--checks historysync requires --playwright-module")
-    for check in ("wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization", "assetpipeline", "performanceprofiling"):
+    for check in ("wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization", "assetpipeline", "performanceprofiling", "dragreorder"):
         if check in chosen and not arguments.playwright_module:
             parser().error(f"--checks {check} requires --playwright-module")
     if "docker" in chosen and not arguments.docker_runtime:
@@ -94,14 +94,14 @@ def main(argv=None):
             output = common.private_directory(arguments.output.expanduser().resolve())
         for label, runtime in inputs.items():
             snapshots[label] = common.snapshot_runtime(runtime)
-        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization", "assetpipeline", "recordinglifecycle", "collectiondiagnostics", "listlifecycle", "providerpolicies", "indexerrejectionpolicy", "qualityranking", "hosttlslifecycle", "downloadqueue", "apidocuments", "notificationlifecycle", "performanceprofiling")):
+        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization", "assetpipeline", "recordinglifecycle", "collectiondiagnostics", "listlifecycle", "providerpolicies", "indexerrejectionpolicy", "qualityranking", "hosttlslifecycle", "downloadqueue", "apidocuments", "notificationlifecycle", "performanceprofiling", "dragreorder")):
             common.ensure_host_compatible(inputs["candidate"])
         for label in ("baseline", "legacy"):
             if label in inputs:
                 common.ensure_host_compatible(inputs[label])
         # Imports are deliberately after validation; modules never launch on import.
         from validation import accesspolicy, acquisition, app, asset_pipeline, authpolicy, cancellation, collection_diagnostics, datastore, docker, history_paging, identity, indexer_rejection_policy, interactive_search, library_review, list_lifecycle, library_virtualization, logstorage, media, metadata_accessibility, operational_paging, package, postgresconnections, provider_policies, quality_ranking, releaseidentity, recording_lifecycle, restore, router_navigation, settings_drafts, sqlite, upgrade
-        from validation import api_documents, download_queue, host_tls_lifecycle, notification_lifecycle, performance_profiling
+        from validation import api_documents, drag_reorder, download_queue, host_tls_lifecycle, notification_lifecycle, performance_profiling
         callbacks = {
             "package": lambda: package.run(inputs["candidate"], output / "package", repo),
             "app": lambda: app.run(inputs["candidate"], output / "app"),
@@ -139,6 +139,7 @@ def main(argv=None):
             "downloadqueue": lambda: download_queue.run(inputs["candidate"], output / "downloadqueue"),
             "apidocuments": lambda: api_documents.run(inputs["candidate"], output / "apidocuments"),
             "notificationlifecycle": lambda: notification_lifecycle.run(inputs["candidate"], output / "notificationlifecycle", inputs["baseline"], arguments.playwright_module),
+            "dragreorder": lambda: drag_reorder.run(inputs["candidate"], output / "dragreorder", arguments.playwright_module),
             "performanceprofiling": lambda: performance_profiling.run(inputs["candidate"], output / "performanceprofiling", arguments.playwright_module),
             "docker": lambda: docker.run(inputs["docker"], output / "docker", repo),
         }

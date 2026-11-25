@@ -214,10 +214,8 @@ async function verify(config) {
           await tableOptions.count() > 0 && await page.locator('[aria-label="Table Options Button"]').count() === 0);
         failureStep = layout + '_signalr_reconnect';
         await verifySignalRResync(page, base, signalR, check);
-        if (layout === 'desktop') {
-          failureStep = layout + '_table_options_reorder';
-          await verifyTableOptionsReorder(page, tableOptions.first(), check);
-        }
+        failureStep = layout + '_table_options_reorder';
+        await verifyTableOptionsReorder(page, tableOptions.first(), check, layout === 'phone');
         failureStep = layout + '_file_delete_confirmation';
         await deleteFile.focus();
         await page.keyboard.press('Enter');

@@ -65,13 +65,9 @@ class DelayProfilesConnector extends Component {
     }
   };
 
-  onDelayProfileDragEnd = ({ id }, didDrop) => {
-    const {
-      dropIndex
-    } = this.state;
-
-    if (didDrop && dropIndex !== null) {
-      this.props.reorderDelayProfile({ id, moveIndex: dropIndex - 1 });
+  onDelayProfileDragEnd = ({ id }, dropOrder) => {
+    if (dropOrder !== null) {
+      this.props.reorderDelayProfile({ id, moveIndex: dropOrder - 1 });
     }
 
     this.setState({

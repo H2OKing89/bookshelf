@@ -27,7 +27,7 @@ class RunnerResultTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.runtime = package(self.root / "runtime")
         self.modules = {"validation." + name: types.ModuleType("validation." + name)
-                        for name in ("accesspolicy", "acquisition", "api_documents", "app", "authpolicy", "cancellation", "datastore", "docker", "download_queue", "host_tls_lifecycle", "identity", "logstorage", "media", "notification_lifecycle", "package", "performance_profiling", "postgresconnections", "releaseidentity", "restore", "settings_drafts", "sqlite", "upgrade")}
+                        for name in ("accesspolicy", "acquisition", "api_documents", "app", "authpolicy", "cancellation", "datastore", "docker", "download_queue", "drag_reorder", "host_tls_lifecycle", "identity", "logstorage", "media", "notification_lifecycle", "package", "performance_profiling", "postgresconnections", "releaseidentity", "restore", "settings_drafts", "sqlite", "upgrade")}
         self.output = self.root / "results"
 
     @contextlib.contextmanager
@@ -143,6 +143,22 @@ class RunnerResultTests(unittest.TestCase):
             status = runner.main([*arguments, "--playwright-module", str(browser)])
         self.assertEqual(status, 0)
         self.assertEqual(calls, [(self.runtime.resolve(), self.output / "settingsdrafts", browser)])
+
+    def test_drag_reorder_requires_and_passes_the_browser_module(self):
+        browser = self.root / "playwright"
+        calls = []
+        self.modules["validation.drag_reorder"].run = lambda *args: (
+            calls.append(args) or {"checks": {"owned": True}, "passed": 1, "failed": 0, "completed": True})
+        console = io.StringIO()
+        arguments = ["--runtime", str(self.runtime), "--output", str(self.output), "--checks", "dragreorder"]
+        with (self.mocked_modules(), patch.object(runner.common, "ensure_host_compatible"),
+              contextlib.redirect_stdout(console), contextlib.redirect_stderr(console)):
+            with self.assertRaises(SystemExit):
+                runner.main(arguments)
+            self.assertFalse(self.output.exists())
+            status = runner.main([*arguments, "--playwright-module", str(browser)])
+        self.assertEqual(status, 0)
+        self.assertEqual(calls, [(self.runtime.resolve(), self.output / "dragreorder", browser)])
 
     def test_explicit_accesspolicy_check_uses_candidate_without_requiring_a_baseline(self):
         calls = []
