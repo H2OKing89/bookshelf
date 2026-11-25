@@ -47,7 +47,7 @@ function Tooltip({
 }: TooltipProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [reference, setReference] = useState<HTMLSpanElement | null>(null);
-  const closeTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const closeTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const clearCloseTimeout = () => {
     clearTimeout(closeTimeout.current);

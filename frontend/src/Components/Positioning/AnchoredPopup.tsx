@@ -15,7 +15,7 @@ interface PopupPosition {
   ref: (element: HTMLElement | null) => void;
   style: React.CSSProperties;
   placement: Placement;
-  arrowRef: React.RefObject<HTMLDivElement>;
+  arrowRef: React.Ref<HTMLDivElement>;
   arrowStyle: React.CSSProperties;
 }
 
