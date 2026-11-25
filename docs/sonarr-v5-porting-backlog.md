@@ -64,7 +64,7 @@ The two keep/test gates D01 and B01 apply to every subsequent feature port.
 | [P20](#p20) | P2 | Verified | M | Keep API versions coexistable and generate matching OpenAPI documents |
 | [P21](#p21) | P1 | In progress | L | Run the delivery artifact through unit, DB and HTTP integration gates |
 | [P22](#p22) | P2 | In progress | L | Define a truthful support matrix and package each native dependency |
-| [P23](#p23) | P3 | In progress | M | Add opt-in request/SQL profiling only after core correctness |
+| [P23](#p23) | P3 | Verified | M | Add opt-in request/SQL profiling only after core correctness |
 | [P24](#p24) | P2 | Verified | S | Correct URL-base boundary handling on login redirects |
 | [P25](#p25) | P0 | In progress | L | Isolate fork release channels and require matching source/artifact identity |
 | [P26](#p26) | P0 | Verified | M | Propagate repository write failures and transact general bulk updates |
@@ -1693,6 +1693,24 @@ uses a 4,161-book synthetic catalogue. This working feature profiles request
 scope, not independently scheduled background refresh/import work. P23 stays
 **In progress** for background-workload/overhead acceptance rather than claiming
 those measurements. See [performance diagnostics](host-tls-and-lifecycle.md#opt-in-performance-diagnostics-p23).
+
+**2026-11-24 background-workload verification:** `bc019a705` extends the
+host-owned profiler to independent author/book refresh, folder scan, manual and
+downloaded imports, download monitor/processing and MediaInfo refresh commands.
+HTTP-only counters remain compatible; separate job groups use actual fixed
+command category and trigger, with one shared bounded monotonic sample store.
+Disabled workers do not begin profiling scopes; nested synchronous work is
+accounted for once, and completed scopes ignore later asynchronously inherited
+work. Actual SQLite and PostgreSQL execution, cancellation/failure accounting,
+retention and parser regressions passed. The exact integrated Linux x64 package
+passed 41 profiling checks, including real scheduled jobs, bundled AAC analysis,
+a real owned manual Copy import, a failed import and both browser layouts. Seven
+paired local-author worker timings after warm-up had medians 4.222 ms disabled
+and 4.390 ms enabled (observed ranges 3.836–9.781 and 4.000–10.014 ms); this is
+bounded synthetic evidence rather than a universal performance threshold. The
+actual API remains authenticated and the fixture's optional loopback rejecting
+HTTP proxy never forwards requests. **Verified** for the documented supported
+request and job scope. See [performance diagnostics](host-tls-and-lifecycle.md#opt-in-performance-diagnostics-p23).
 
 ### P24
 
