@@ -3,53 +3,35 @@ import React, { useState } from 'react';
 import FieldSet from 'Components/FieldSet';
 import Button from 'Components/Link/Button';
 import fetchJson from 'Utilities/Fetch/fetchJson';
+import { type CleanupAction, cleanupConfirmation, type CleanupMode, type CleanupPreview, cleanupPreviewPath, type CleanupSelection, cleanupSelection, parseCleanupMode, parseCleanupPreview, parseCleanupTags } from './importListPolicyQuery';
 import styles from './ImportListCleanup.css';
-
-function parseTags(value) {
-  if (!Array.isArray(value) || value.some((tag) => !tag || !Number.isInteger(tag.id) || typeof tag.label !== 'string')) {
-    throw new Error('Invalid tags response');
-  }
-  return value;
-}
-
-function parsePreview(value) {
-  if (!value || !['preview', 'unmonitor', 'tag'].includes(value.mode) ||
-    !Array.isArray(value.blockers) || value.blockers.some((blocker) => typeof blocker !== 'string') ||
-    !Array.isArray(value.candidates) ||
-    value.candidates.some((candidate) => !candidate || !Number.isInteger(candidate.bookId) ||
-      !Number.isInteger(candidate.authorId) || ['recordingId', 'title', 'authorName'].some((field) => typeof candidate[field] !== 'string') ||
-      typeof candidate.monitored !== 'boolean') ||
-    (value.tagId != null && !Number.isInteger(value.tagId)) ||
-    (value.confirmationToken != null && typeof value.confirmationToken !== 'string')) {
-    throw new Error('Invalid cleanup preview');
-  }
-  return value;
-}
 
 function ImportListCleanup() {
   const [isOpen, setIsOpen] = useState(false);
-  const [mode, setMode] = useState('preview');
+  const [mode, setMode] = useState<CleanupMode>('preview');
   const [tagId, setTagId] = useState('');
-  const [preview, setPreview] = useState(null);
-  const [receipt, setReceipt] = useState(null);
+  const [preview, setPreview] = useState<CleanupPreview | null>(null);
+  const [receipt, setReceipt] = useState<CleanupPreview | null>(null);
+  const selection = cleanupSelection(mode, tagId);
+  const confirmation = cleanupConfirmation(preview, selection);
   const tags = useQuery({
     queryKey: ['importlistcleanup', 'tags', window.Readarr.apiRoot],
-    queryFn: ({ signal }) => fetchJson({ path: '/tag', parse: parseTags, signal }),
+    queryFn: ({ signal }) => fetchJson({ path: '/tag', parse: parseCleanupTags, signal }),
     enabled: isOpen && mode === 'tag'
   });
   const getPreview = useMutation({
-    mutationFn: () => fetchJson({
-      path: `/importlistcleanup?mode=${mode}${mode === 'tag' ? `&tagId=${encodeURIComponent(tagId)}` : ''}`,
-      parse: parsePreview
+    mutationFn: (selected: CleanupSelection) => fetchJson({
+      path: cleanupPreviewPath(selected),
+      parse: (value) => parseCleanupPreview(value, selected)
     }),
     onSuccess: (data) => setPreview(data)
   });
   const apply = useMutation({
-    mutationFn: (confirmed) => fetchJson({
+    mutationFn: (confirmed: CleanupAction) => fetchJson({
       path: '/importlistcleanup',
       method: 'POST',
       body: { mode: confirmed.mode, tagId: confirmed.tagId, confirmationToken: confirmed.confirmationToken },
-      parse: parsePreview
+      parse: (value) => parseCleanupPreview(value, confirmed)
     }),
     onSuccess: (data) => {
       setReceipt(data);
@@ -78,7 +60,7 @@ function ImportListCleanup() {
               value={mode}
               disabled={busy}
               onChange={(event) => {
-                setMode(event.target.value);
+                setMode(parseCleanupMode(event.target.value));
                 clearPreview();
               }}
             >
@@ -104,10 +86,12 @@ function ImportListCleanup() {
             </label>
           }
           <Button
-            isDisabled={busy || (mode === 'tag' && !tagId)}
+            isDisabled={busy || !selection}
             onPress={() => {
               clearPreview();
-              getPreview.mutate();
+              if (selection) {
+                getPreview.mutate(selection);
+              }
             }}
           >
             Generate preview
@@ -135,8 +119,8 @@ function ImportListCleanup() {
             }
             {mode === 'tag' && preview.candidates.length > 0 &&
               <p>{new Set(preview.candidates.map((candidate) => candidate.authorId)).size} distinct author(s) would receive the selected tag.</p>}
-            {preview.confirmationToken && mode !== 'preview' &&
-              <Button isDisabled={busy} onPress={() => apply.mutate(preview)}>
+            {confirmation &&
+              <Button isDisabled={busy} onPress={() => apply.mutate(confirmation)}>
                 {mode === 'unmonitor' ? 'Confirm unmonitoring' : 'Confirm tagging authors'}
               </Button>
             }

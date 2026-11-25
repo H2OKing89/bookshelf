@@ -1,35 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
-import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import Button from 'Components/Link/Button';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import fetchJson from 'Utilities/Fetch/fetchJson';
+import { membershipStatus, parseMembershipSnapshot } from '../importListPolicyQuery';
 
-function parseSnapshot(value) {
-  const textFields = ['sourceAuthor', 'sourceTitle', 'sourceAuthorId', 'sourceBookId', 'sourceEditionId', 'authorId', 'bookId', 'editionId'];
-  if (!value || !Number.isInteger(value.importListId) || typeof value.isCurrent !== 'boolean' || !Array.isArray(value.items) ||
-    (value.lastSuccessfulSync != null && (typeof value.lastSuccessfulSync !== 'string' || Number.isNaN(Date.parse(value.lastSuccessfulSync)))) ||
-    value.items.some((item) => !item || typeof item.excluded !== 'boolean' || textFields.some((field) => item[field] != null && typeof item[field] !== 'string'))) {
-    throw new Error('Invalid list membership response');
-  }
-  return value;
+interface ImportListMembershipProps {
+  id: number;
 }
 
-function membershipStatus(item) {
-  if (item.excluded) {
-    return 'Excluded';
-  }
-  const isBook = item.sourceTitle || item.sourceBookId || item.sourceEditionId;
-  const resolved = isBook ? item.bookId && item.editionId === item.bookId && item.authorId : item.authorId;
-  return resolved ? 'Resolved identity' : 'Unresolved identity';
-}
-
-function ImportListMembership({ id }) {
+function ImportListMembership({ id }: ImportListMembershipProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [visible, setVisible] = useState(50);
   const query = useQuery({
     queryKey: ['importlistmembership', window.Readarr.apiRoot, id],
-    queryFn: ({ signal }) => fetchJson({ path: `/importlistmembership/${id}`, parse: parseSnapshot, signal }),
+    queryFn: ({ signal }) => fetchJson({ path: `/importlistmembership/${id}`, parse: (value) => parseMembershipSnapshot(value, id), signal }),
     staleTime: 0,
     enabled: isOpen
   });
@@ -69,6 +54,5 @@ function ImportListMembership({ id }) {
   );
 }
 
-ImportListMembership.propTypes = { id: PropTypes.number.isRequired };
 
 export default ImportListMembership;

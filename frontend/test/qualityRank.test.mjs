@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { loadFrontendModule } from './helpers/loadFrontendModule.mjs';
 
-const [{ bookFileQualityRank, recordingQualityRank, formatRecordingQualityRank }] = loadFrontendModule(['Utilities/Quality/qualityRank.js']);
+const [{ bookFileQualityRank, recordingQualityRank, formatRecordingQualityRank }] = loadFrontendModule(['Utilities/Quality/qualityRank.ts']);
 
 test('profile rank keeps zero, unranked and missing distinct without old global weight', () => {
   assert.equal(bookFileQualityRank({ qualityRank: 0, qualityWeight: 100 }), 0);
