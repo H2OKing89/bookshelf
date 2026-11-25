@@ -32,14 +32,14 @@ from . import docker, restore
 IMAGE = "postgres:16-alpine"
 MARKER = ".bookshelf-migration-tests"
 LEGACY_HISTORY = set(range(1, 34)) | set(range(35, 49)) | {158}
-HISTORY = LEGACY_HISTORY | {159, 160, 161, 162, 163, 164, 165, 166, 167, 168}
+HISTORY = LEGACY_HISTORY | {159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169}
 ACQUISITION_COLUMNS = {("QualityProfiles", "MinUpgradeFormatScore"), ("BookFiles", "TaggedLanguage"),
                        ("Blocklist", "RecordingLanguages"), ("Blocklist", "SelectedEditionLanguageId"),
                        ("Blocklist", "AudioFormatEvidence")}
 LOCAL_METADATA_COLUMNS = ("LocalMetadataRevision", "LocalMetadataProvenance")
 FILE_METADATA_COLUMNS = ("TaggedLanguage", "ReleaseGroupEvidence")
 ADDITIVE_COLUMNS = ACQUISITION_COLUMNS | {("Editions", column) for column in LOCAL_METADATA_COLUMNS} | {
-    ("BookFiles", "ReleaseGroupEvidence"), ("ImportLists", "MembershipRevision"),
+    ("Notifications", "OnHealthRestored"), ("BookFiles", "ReleaseGroupEvidence"), ("ImportLists", "MembershipRevision"),
     ("Books", "ImportListOriginId"), ("ImportLists", "TagExisting"),
     ("Indexers", "DangerousFileAction"), ("Indexers", "ExecutableFileAction"), ("Indexers", "UserRejectedExtensionAction")}
 ADDITIVE_TABLE_COLUMNS = {
