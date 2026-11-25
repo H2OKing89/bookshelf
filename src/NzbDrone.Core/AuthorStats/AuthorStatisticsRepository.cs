@@ -5,6 +5,7 @@ using Dapper;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.Profiles.Qualities;
 
 namespace NzbDrone.Core.AuthorStats
 {
@@ -49,7 +50,7 @@ namespace NzbDrone.Core.AuthorStats
         {
             var trueIndicator = _database.DatabaseType == DatabaseType.PostgreSQL ? "true" : "1";
 
-            return new SqlBuilder(_database.DatabaseType)
+            var builder = new SqlBuilder(_database.DatabaseType)
             .Select($@"""Authors"".""Id"" AS ""AuthorId"",
                      ""Books"".""Id"" AS ""BookId"",
                      SUM(COALESCE(""BookFiles"".""Size"", 0)) AS ""SizeOnDisk"",
@@ -64,6 +65,12 @@ namespace NzbDrone.Core.AuthorStats
             .GroupBy<Author>(x => x.Id)
             .GroupBy<Book>(x => x.Id)
             .AddParameters(new Dictionary<string, object> { { "currentDate", DateTime.UtcNow } });
+
+            var rank = QualityProfileRank.Join(builder, "BookFiles");
+
+            // Lowest ranked tracked part of the monitored recording, not a
+            // claim that all its parts are present. No file remains null.
+            return builder.Select($"MIN(CASE WHEN \"BookFiles\".\"Id\" IS NULL THEN NULL ELSE {rank} END) AS \"FileQualityRank\"");
         }
     }
 }

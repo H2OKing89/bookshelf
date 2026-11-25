@@ -5,6 +5,7 @@ import dimensions from 'Styles/Variables/dimensions';
 import formatDateTime from 'Utilities/Date/formatDateTime';
 import getRelativeDate from 'Utilities/Date/getRelativeDate';
 import formatBytes from 'Utilities/Number/formatBytes';
+import { formatRecordingQualityRank } from 'Utilities/Quality/qualityRank';
 import translate from 'Utilities/String/translate';
 import BookIndexOverviewInfoRow from './BookIndexOverviewInfoRow';
 import styles from './BookIndexOverviewInfo.css';
@@ -39,6 +40,11 @@ const rows = [
     valueProp: 'author'
   },
   {
+    name: 'fileQualityRank',
+    showProp: 'showFileQualityRank',
+    valueProp: 'fileQualityRank'
+  },
+  {
     name: 'sizeOnDisk',
     showProp: 'showSizeOnDisk',
     valueProp: 'sizeOnDisk'
@@ -51,6 +57,10 @@ function isVisible(row, props) {
     showProp,
     valueProp
   } = row;
+
+  if (name === 'fileQualityRank') {
+    return props.sortKey === name;
+  }
 
   if (props[valueProp] == null) {
     return false;
@@ -70,6 +80,10 @@ function getInfoRowProps(row, props) {
       iconName: props.monitored ? icons.MONITORED : icons.UNMONITORED,
       label: monitoredText
     };
+  }
+
+  if (name === 'fileQualityRank') {
+    return { title: 'Lowest file quality rank', iconName: icons.PROFILE, label: formatRecordingQualityRank(props.fileQualityRank) };
   }
 
   if (name === 'qualityProfileId' && !!props.qualityProfile?.name) {
@@ -196,6 +210,7 @@ BookIndexOverviewInfo.propTypes = {
   releaseDate: PropTypes.string,
   added: PropTypes.string,
   sizeOnDisk: PropTypes.number,
+  fileQualityRank: PropTypes.number,
   sortKey: PropTypes.string.isRequired,
   showRelativeDates: PropTypes.bool.isRequired,
   shortDateFormat: PropTypes.string.isRequired,

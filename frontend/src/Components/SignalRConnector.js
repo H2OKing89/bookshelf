@@ -10,7 +10,7 @@ import { clearLibraryStatisticsRefresh, refreshLibraryStatistics, scheduleLibrar
 import { setAppValue, setVersion } from 'Store/Actions/appActions';
 import { fetchAuthor } from 'Store/Actions/authorActions';
 import { removeItem, update, updateItem } from 'Store/Actions/baseActions';
-import { deleteAuthorBooks } from 'Store/Actions/bookActions';
+import { deleteAuthorBooks, fetchBooks } from 'Store/Actions/bookActions';
 import { fetchCommands, finishCommand, updateCommand } from 'Store/Actions/commandActions';
 import { fetchQueueDetails } from 'Store/Actions/queueActions';
 import { fetchQualityDefinitions, fetchRootFolders } from 'Store/Actions/settingsActions';
@@ -51,6 +51,7 @@ const mapDispatchToProps = {
   dispatchRemoveItem: removeItem,
   dispatchDeleteAuthorBooks: deleteAuthorBooks,
   dispatchFetchAuthor: fetchAuthor,
+  dispatchFetchBooks: fetchBooks,
   dispatchFetchHealth: fetchHealth,
   dispatchFetchQualityDefinitions: fetchQualityDefinitions,
   dispatchFetchQueueDetails: fetchQueueDetails,
@@ -270,6 +271,14 @@ class SignalRConnector extends Component {
     }
   };
 
+  handleQualityrank = (body) => {
+    if (body?.action === 'sync') {
+      this.props.dispatchFetchBooks();
+      scheduleHistoryRefresh();
+      repopulatePage();
+    }
+  };
+
   handleQualitydefinition = () => {
     this.props.dispatchFetchQualityDefinitions();
   };
@@ -362,6 +371,7 @@ class SignalRConnector extends Component {
     const {
       dispatchFetchCommands,
       dispatchFetchAuthor,
+      dispatchFetchBooks,
       dispatchSetAppValue
     } = this.props;
 
@@ -375,6 +385,7 @@ class SignalRConnector extends Component {
     // Repopulate the page (if a repopulator is set) to ensure things
     // are in sync after reconnecting.
     dispatchFetchAuthor();
+    dispatchFetchBooks();
     dispatchFetchCommands();
     refreshHistoryPages();
     refreshWantedPages();
@@ -415,6 +426,7 @@ SignalRConnector.propTypes = {
   dispatchRemoveItem: PropTypes.func.isRequired,
   dispatchDeleteAuthorBooks: PropTypes.func.isRequired,
   dispatchFetchAuthor: PropTypes.func.isRequired,
+  dispatchFetchBooks: PropTypes.func.isRequired,
   dispatchFetchHealth: PropTypes.func.isRequired,
   dispatchFetchQualityDefinitions: PropTypes.func.isRequired,
   dispatchFetchQueueDetails: PropTypes.func.isRequired,

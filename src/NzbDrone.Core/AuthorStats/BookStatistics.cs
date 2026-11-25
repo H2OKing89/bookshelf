@@ -11,5 +11,6 @@ namespace NzbDrone.Core.AuthorStats
         public int AvailableBookCount { get; set; }
         public int TotalBookCount { get; set; }
         public long SizeOnDisk { get; set; }
+        public double? FileQualityRank { get; set; }
     }
 }

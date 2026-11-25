@@ -276,6 +276,7 @@ class BookIndexPoster extends Component {
             author={author}
             bookFileCount={bookFileCount}
             sizeOnDisk={sizeOnDisk}
+            fileQualityRank={statistics.fileQualityRank}
             qualityProfile={qualityProfile}
             showQualityProfile={showQualityProfile}
             showRelativeDates={showRelativeDates}

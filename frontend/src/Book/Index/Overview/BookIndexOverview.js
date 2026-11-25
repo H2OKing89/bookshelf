@@ -253,6 +253,7 @@ class BookIndexOverview extends Component {
                 height={overviewHeight}
                 monitored={monitored}
                 sizeOnDisk={sizeOnDisk}
+                fileQualityRank={statistics.fileQualityRank}
                 qualityProfile={qualityProfile}
                 showRelativeDates={showRelativeDates}
                 shortDateFormat={shortDateFormat}

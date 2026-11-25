@@ -111,6 +111,12 @@ export const defaultState = {
       isVisible: true
     },
     {
+      name: 'fileQualityRank',
+      label: 'Lowest File Quality Rank',
+      isSortable: true,
+      isVisible: false
+    },
+    {
       name: 'added',
       label: 'Added',
       isSortable: true,

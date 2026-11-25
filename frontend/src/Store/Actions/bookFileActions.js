@@ -5,6 +5,7 @@ import bookEntities from 'Book/bookEntities';
 import { sortDirections } from 'Helpers/Props';
 import { createThunk, handleThunks } from 'Store/thunks';
 import createAjaxRequest from 'Utilities/createAjaxRequest';
+import { bookFileQualityRank } from 'Utilities/Quality/qualityRank';
 import { removeItem, set, updateItem } from './baseActions';
 import createFetchHandler from './Creators/createFetchHandler';
 import createHandleActions from './Creators/createHandleActions';
@@ -35,9 +36,7 @@ export const defaultState = {
   items: [],
 
   sortPredicates: {
-    quality: function(item, direction) {
-      return item.quality ? item.qualityWeight : 0;
-    }
+    quality: bookFileQualityRank
   },
 
   columns: [

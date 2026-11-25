@@ -2,9 +2,11 @@ using System.Collections.Generic;
 using System.Linq;
 using NzbDrone.Common.Cache;
 using NzbDrone.Core.Books.Events;
+using NzbDrone.Core.LibraryStats;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.Profiles.Qualities;
 
 namespace NzbDrone.Core.AuthorStats
 {
@@ -24,7 +26,9 @@ namespace NzbDrone.Core.AuthorStats
         IHandle<BookImportedEvent>,
         IHandle<BookEditedEvent>,
         IHandle<BookUpdatedEvent>,
-        IHandle<BookFileDeletedEvent>
+        IHandle<BookFileDeletedEvent>,
+        IHandle<LibraryStatisticsChangedEvent>,
+        IHandle<QualityRankingChangedEvent>
     {
         private readonly IAuthorStatisticsRepository _authorStatisticsRepository;
         private readonly ICached<List<BookStatistics>> _cache;
@@ -69,6 +73,18 @@ namespace NzbDrone.Core.AuthorStats
             };
 
             return authorStatistics;
+        }
+
+        [EventHandleOrder(EventHandleOrder.First)]
+        public void Handle(LibraryStatisticsChangedEvent message)
+        {
+            _cache.Clear();
+        }
+
+        [EventHandleOrder(EventHandleOrder.First)]
+        public void Handle(QualityRankingChangedEvent message)
+        {
+            _cache.Clear();
         }
 
         [EventHandleOrder(EventHandleOrder.First)]

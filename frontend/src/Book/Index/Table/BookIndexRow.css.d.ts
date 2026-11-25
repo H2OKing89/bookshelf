@@ -6,6 +6,7 @@ interface CssExports {
   'authorName': string;
   'bannerImage': string;
   'bookFileCount': string;
+  'fileQualityRank': string;
   'bookProgress': string;
   'cell': string;
   'checkInput': string;

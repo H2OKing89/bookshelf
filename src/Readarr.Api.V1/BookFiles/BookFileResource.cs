@@ -3,6 +3,7 @@ using System.Linq;
 using NzbDrone.Core.DecisionEngine.Specifications;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Parser.Model;
+using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.Qualities;
 using Readarr.Http.REST;
 
@@ -19,6 +20,7 @@ namespace Readarr.Api.V1.BookFiles
         public string ReleaseGroup { get; set; }
         public ReleaseGroupEvidence ReleaseGroupEvidence { get; set; }
         public int QualityWeight { get; set; }
+        public double? QualityRank { get; set; }
         public int? IndexerFlags { get; set; }
         public MediaInfoResource MediaInfo { get; set; }
 
@@ -83,6 +85,7 @@ namespace Readarr.Api.V1.BookFiles
                 ReleaseGroup = model.ReleaseGroup,
                 ReleaseGroupEvidence = model.ReleaseGroupEvidence,
                 QualityWeight = QualityWeight(model.Quality),
+                QualityRank = QualityProfileRank.GetRank(author.QualityProfile.Value, model.Quality?.Quality),
                 MediaInfo = model.MediaInfo.ToResource(model.Size, model.Modified),
                 QualityCutoffNotMet = upgradableSpecification.QualityCutoffNotMet(author.QualityProfile.Value, model.Quality),
                 IndexerFlags = (int)model.IndexerFlags

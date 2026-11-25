@@ -10,6 +10,7 @@ using NzbDrone.Core.LibraryStats;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.RootFolders;
 
 namespace NzbDrone.Core.MediaFiles
@@ -139,6 +140,10 @@ namespace NzbDrone.Core.MediaFiles
             }
 
             _eventAggregator.PublishEvent(new LibraryStatisticsChangedEvent());
+            if (updateQuality)
+            {
+                _eventAggregator.PublishEvent(new QualityRankingChangedEvent());
+            }
         }
 
         public void Delete(BookFile bookFile, DeleteMediaFileReason reason)

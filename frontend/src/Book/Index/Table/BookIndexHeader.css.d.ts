@@ -5,6 +5,7 @@ interface CssExports {
   'added': string;
   'authorName': string;
   'bookFileCount': string;
+  'fileQualityRank': string;
   'genres': string;
   'metadataProfileId': string;
   'narrators': string;

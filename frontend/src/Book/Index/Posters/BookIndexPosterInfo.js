@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import getRelativeDate from 'Utilities/Date/getRelativeDate';
 import formatBytes from 'Utilities/Number/formatBytes';
+import { formatRecordingQualityRank } from 'Utilities/Quality/qualityRank';
 import styles from './BookIndexPosterInfo.css';
 
 function BookIndexPosterInfo(props) {
@@ -13,6 +14,7 @@ function BookIndexPosterInfo(props) {
     author,
     bookFileCount,
     sizeOnDisk,
+    fileQualityRank,
     sortKey,
     showRelativeDates,
     shortDateFormat,
@@ -87,6 +89,14 @@ function BookIndexPosterInfo(props) {
     );
   }
 
+  if (sortKey === 'fileQualityRank') {
+    return (
+      <div className={styles.info} title="Lowest file quality rank">
+        {formatRecordingQualityRank(fileQualityRank)}
+      </div>
+    );
+  }
+
   if (sortKey === 'sizeOnDisk') {
     return (
       <div className={styles.info}>
@@ -106,6 +116,7 @@ BookIndexPosterInfo.propTypes = {
   releaseDate: PropTypes.string,
   bookFileCount: PropTypes.number.isRequired,
   sizeOnDisk: PropTypes.number,
+  fileQualityRank: PropTypes.number,
   sortKey: PropTypes.string.isRequired,
   showRelativeDates: PropTypes.bool.isRequired,
   shortDateFormat: PropTypes.string.isRequired,

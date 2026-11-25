@@ -92,6 +92,15 @@ function BookIndexSortMenu(props) {
         </SortMenuItem>
 
         <SortMenuItem
+          name="fileQualityRank"
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onPress={onSortSelect}
+        >
+          Lowest File Quality Rank
+        </SortMenuItem>
+
+        <SortMenuItem
           name="sizeOnDisk"
           sortKey={sortKey}
           sortDirection={sortDirection}

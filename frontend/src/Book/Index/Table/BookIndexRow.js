@@ -15,6 +15,7 @@ import VirtualTableSelectCell from 'Components/Table/Cells/VirtualTableSelectCel
 import TagListConnector from 'Components/TagListConnector';
 import { icons } from 'Helpers/Props';
 import formatBytes from 'Utilities/Number/formatBytes';
+import { formatRecordingQualityRank } from 'Utilities/Quality/qualityRank';
 import translate from 'Utilities/String/translate';
 import BookStatusCell from './BookStatusCell';
 import styles from './BookIndexRow.css';
@@ -208,6 +209,16 @@ class BookIndexRow extends Component {
               return (
                 <VirtualTableRowCell key={name} className={styles.narrators}>
                   <span title={narratorNames}>{narratorNames}</span>
+                </VirtualTableRowCell>
+              );
+            }
+
+            if (name === 'fileQualityRank') {
+              return (
+                <VirtualTableRowCell key={name} className={styles.fileQualityRank}>
+                  <span title="Lowest ranked file in the monitored edition (relative to its quality profile)">
+                    {formatRecordingQualityRank(statistics.fileQualityRank)}
+                  </span>
                 </VirtualTableRowCell>
               );
             }

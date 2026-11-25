@@ -85,6 +85,7 @@ function setup(t) {
   });
   const connector = new Connector({
     dispatchFetchAuthor: () => legacy.push('authors'),
+    dispatchFetchBooks: () => legacy.push('books'),
     dispatchFetchCommands: () => legacy.push('commands'),
     dispatchFetchQueueDetails: () => legacy.push('queue details'),
     dispatchSetAppValue: () => legacy.push('connection'),
@@ -169,7 +170,7 @@ test('reconnect invalidates inactive history, absorbs scheduled work, and preser
   assert.equal(timers.size, 0);
   assert.equal(requests.length, 0);
   assert.equal(client.getQueryState(options.queryKey).isInvalidated, true);
-  assert.deepEqual(legacy, ['connection', 'authors', 'commands', 'repopulate']);
+  assert.deepEqual(legacy, ['connection', 'authors', 'books', 'commands', 'repopulate']);
 
   connector.connection = { stop: () => legacy.push('stop') };
   connector.handleHistory({ action: 'sync' });
@@ -219,4 +220,14 @@ test('Library statistics refresh follows committed book, author, file and member
   connector.connection = { stop: () => {} };
   connector.componentWillUnmount();
   assert.deepEqual(statistics, ['refresh', 'refresh', 'refresh', 'refresh', 'reconnect', 'clear']);
+});
+
+
+test('quality rank events refresh library and the active page plus history without changing other queries', (t) => {
+  const { connector, legacy, timers } = setup(t);
+  connector.handleMessage({ name: 'qualityrank', body: { action: 'ignored' } });
+  assert.equal(legacy.length, 0);
+  connector.handleMessage({ name: 'qualityrank', body: { action: 'sync' } });
+  assert.deepEqual(legacy, ['books', 'repopulate']);
+  assert.equal(timers.size, 1);
 });

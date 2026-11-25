@@ -9,6 +9,7 @@ import { filterTypePredicates, filterTypes, icons, sortDirections } from 'Helper
 import { createThunk, handleThunks } from 'Store/thunks';
 import createAjaxRequest from 'Utilities/createAjaxRequest';
 import dateFilterPredicate from 'Utilities/Date/dateFilterPredicate';
+import { recordingQualityRank } from 'Utilities/Quality/qualityRank';
 import translate from 'Utilities/String/translate';
 import { removeItem, set, update, updateItem } from './baseActions';
 import createHandleActions from './Creators/createHandleActions';
@@ -153,6 +154,7 @@ export const filterPredicates = {
 };
 
 export const sortPredicates = {
+  fileQualityRank: recordingQualityRank,
   title: function(item) {
     return item.displayTitle || item.title;
   },

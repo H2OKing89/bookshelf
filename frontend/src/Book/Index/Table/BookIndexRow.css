@@ -53,6 +53,7 @@
 }
 
 .bookFileCount,
+.fileQualityRank,
 .qualityProfileId,
 .metadataProfileId {
   composes: cell;

@@ -4,6 +4,7 @@ using System.Linq;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.Qualities;
 
 namespace NzbDrone.Core.History
@@ -96,6 +97,17 @@ namespace NzbDrone.Core.History
         public void DeleteForAuthor(int authorId)
         {
             Delete(c => c.AuthorId == authorId);
+        }
+
+        protected override string GetPagedSortOrder(SqlBuilder builder, string key, string direction)
+        {
+            if (QualityProfileRank.IsQualitySort(key, "History"))
+            {
+                var rank = QualityProfileRank.Join(builder, "History");
+                return $"{rank} {direction}, \"History\".\"Id\" ASC";
+            }
+
+            return base.GetPagedSortOrder(builder, key, direction);
         }
 
         protected override SqlBuilder PagedBuilder() => new SqlBuilder(_database.DatabaseType)

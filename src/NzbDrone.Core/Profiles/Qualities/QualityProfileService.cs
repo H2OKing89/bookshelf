@@ -72,6 +72,8 @@ namespace NzbDrone.Core.Profiles.Qualities
             {
                 _eventAggregator.PublishEvent(new QualityProfileUpdatedEvent(profile.Id));
             }
+
+            _eventAggregator.PublishEvent(new QualityRankingChangedEvent());
         }
 
         public void Delete(int id)
@@ -85,6 +87,7 @@ namespace NzbDrone.Core.Profiles.Qualities
             }
 
             _profileRepository.Delete(id);
+            _eventAggregator.PublishEvent(new QualityRankingChangedEvent());
         }
 
         public List<QualityProfile> All()

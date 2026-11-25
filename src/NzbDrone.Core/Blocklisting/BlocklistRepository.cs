@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using NzbDrone.Core.Books;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.Profiles.Qualities;
 
 namespace NzbDrone.Core.Blocklisting
 {
@@ -32,6 +33,17 @@ namespace NzbDrone.Core.Blocklisting
         public List<Blocklist> BlocklistedByAuthor(int authorId)
         {
             return Query(b => b.AuthorId == authorId);
+        }
+
+        protected override string GetPagedSortOrder(SqlBuilder builder, string key, string direction)
+        {
+            if (QualityProfileRank.IsQualitySort(key, "Blocklist"))
+            {
+                var rank = QualityProfileRank.Join(builder, "Blocklist");
+                return $"{rank} {direction}, \"Blocklist\".\"Id\" ASC";
+            }
+
+            return base.GetPagedSortOrder(builder, key, direction);
         }
 
         protected override SqlBuilder PagedBuilder() => new SqlBuilder(_database.DatabaseType)

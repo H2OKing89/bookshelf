@@ -43,6 +43,7 @@ export const defaultState = {
     {
       name: 'quality',
       label: 'Quality',
+      isSortable: true,
       isVisible: true
     },
     {

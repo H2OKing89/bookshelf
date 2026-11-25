@@ -481,12 +481,17 @@ namespace NzbDrone.Core.Datastore
                 pagingSpec.SortKey = $"{_table}.{_keyProperty.Name}";
             }
 
-            var sortKey = TableMapping.Mapper.GetSortKey(pagingSpec.SortKey);
             var sortDirection = pagingSpec.SortDirection == SortDirection.Descending ? "DESC" : "ASC";
             var pagingOffset = Math.Max(pagingSpec.Page - 1, 0) * pagingSpec.PageSize;
-            builder.OrderBy($"\"{sortKey.Table ?? _table}\".\"{sortKey.Column}\" {sortDirection} LIMIT {pagingSpec.PageSize} OFFSET {pagingOffset}");
+            builder.OrderBy($"{GetPagedSortOrder(builder, pagingSpec.SortKey, sortDirection)} LIMIT {pagingSpec.PageSize} OFFSET {pagingOffset}");
 
             return queryFunc(builder).ToList();
+        }
+
+        protected virtual string GetPagedSortOrder(SqlBuilder builder, string key, string direction)
+        {
+            var sortKey = TableMapping.Mapper.GetSortKey(key);
+            return $"\"{sortKey.Table ?? _table}\".\"{sortKey.Column}\" {direction}";
         }
 
         protected int GetPagedRecordCount(SqlBuilder builder, PagingSpec<TModel> pagingSpec, string template = null)

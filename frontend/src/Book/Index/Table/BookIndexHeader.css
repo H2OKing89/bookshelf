@@ -17,6 +17,7 @@
 }
 
 .bookFileCount,
+.fileQualityRank,
 .qualityProfileId,
 .metadataProfileId {
   composes: headerCell from '~Components/Table/VirtualTableHeaderCell.css';

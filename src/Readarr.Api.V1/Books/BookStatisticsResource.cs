@@ -8,6 +8,7 @@ namespace Readarr.Api.V1.Books
         public int BookCount { get; set; }
         public int TotalBookCount { get; set; }
         public long SizeOnDisk { get; set; }
+        public double? FileQualityRank { get; set; }
 
         public decimal PercentOfBooks
         {
@@ -37,6 +38,7 @@ namespace Readarr.Api.V1.Books
                 BookFileCount = model.BookFileCount,
                 BookCount = model.BookCount,
                 SizeOnDisk = model.SizeOnDisk,
+                FileQualityRank = model.FileQualityRank,
                 TotalBookCount = model.TotalBookCount
             };
         }
