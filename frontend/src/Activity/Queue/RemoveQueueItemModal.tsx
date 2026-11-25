@@ -24,6 +24,9 @@ interface RemoveQueueItemModalProps {
   sourceTitle?: string;
   canChangeCategory: boolean;
   canIgnore: boolean;
+  canRemoveFromClient: boolean;
+  canBlocklist: boolean;
+  hasPending: boolean;
   isPending: boolean;
   isRemoveDisabled: boolean;
   selectedCount?: number;
@@ -42,6 +45,9 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
     isOpen,
     sourceTitle = '',
     canIgnore,
+    canRemoveFromClient,
+    canBlocklist,
+    hasPending,
     canChangeCategory,
     isPending,
     isRemoveDisabled,
@@ -56,6 +62,15 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
     useState<RemovalMethod>('removeFromClient');
   const [blocklistMethod, setBlocklistMethod] =
     useState<BlocklistMethod>('doNotBlocklist');
+  const effectiveRemovalMethod = removalMethod === 'removeFromClient' && canRemoveFromClient ||
+    removalMethod === 'changeCategory' && canChangeCategory ||
+    removalMethod === 'ignore' && (canIgnore || canBlocklist)
+    ? removalMethod : canRemoveFromClient ? 'removeFromClient' : canChangeCategory ? 'changeCategory' : 'ignore';
+  const effectiveBlocklistMethod = canBlocklist
+    ? (isPending && blocklistMethod === 'blocklistAndSearch' ? 'blocklistOnly' : blocklistMethod)
+    : 'doNotBlocklist';
+  const unavailable = !isPending && effectiveRemovalMethod === 'ignore' &&
+    !canIgnore && effectiveBlocklistMethod === 'doNotBlocklist';
 
   const { title, message } = useMemo(() => {
     if (!selectedCount) {
@@ -84,6 +99,7 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
     return [
       {
         key: 'removeFromClient',
+        isDisabled: !canRemoveFromClient,
         value: translate('RemoveFromDownloadClient'),
         hint: multipleSelected
           ? translate('RemoveMultipleFromDownloadClientHint')
@@ -102,13 +118,13 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
         value: multipleSelected
           ? translate('IgnoreDownloads')
           : translate('IgnoreDownload'),
-        isDisabled: !canIgnore,
+        isDisabled: !canIgnore && !canBlocklist,
         hint: multipleSelected
           ? translate('IgnoreDownloadsHint')
           : translate('IgnoreDownloadHint'),
       },
     ];
-  }, [canChangeCategory, canIgnore, multipleSelected]);
+  }, [canChangeCategory, canIgnore, canRemoveFromClient, canBlocklist, multipleSelected]);
 
   const blocklistMethodOptions = useMemo(() => {
     return [
@@ -119,6 +135,7 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
       },
       {
         key: 'blocklistAndSearch',
+        isDisabled: isPending || !canBlocklist,
         value: translate('BlocklistAndSearch'),
         hint: multipleSelected
           ? translate('BlocklistAndSearchMultipleHint')
@@ -126,13 +143,14 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
       },
       {
         key: 'blocklistOnly',
+        isDisabled: !canBlocklist,
         value: translate('BlocklistOnly'),
         hint: multipleSelected
           ? translate('BlocklistMultipleOnlyHint')
           : translate('BlocklistOnlyHint'),
       },
     ];
-  }, [multipleSelected]);
+  }, [multipleSelected, canBlocklist, isPending]);
 
   const handleRemovalMethodChange = useCallback(
     ({ value }: { value: RemovalMethod }) => {
@@ -149,23 +167,25 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
   );
 
   const handleConfirmRemove = useCallback(() => {
-    if (isRemoveDisabled) {
+    if (isRemoveDisabled || unavailable) {
       return;
     }
 
     onRemovePress({
-      remove: removalMethod === 'removeFromClient',
-      changeCategory: removalMethod === 'changeCategory',
-      blocklist: blocklistMethod !== 'doNotBlocklist',
-      skipRedownload: blocklistMethod === 'blocklistOnly',
+      remove: !isPending && effectiveRemovalMethod === 'removeFromClient',
+      changeCategory: !isPending && effectiveRemovalMethod === 'changeCategory',
+      blocklist: effectiveBlocklistMethod !== 'doNotBlocklist',
+      skipRedownload: effectiveBlocklistMethod === 'blocklistOnly',
     });
 
     setRemovalMethod('removeFromClient');
     setBlocklistMethod('doNotBlocklist');
   }, [
     isRemoveDisabled,
-    removalMethod,
-    blocklistMethod,
+    effectiveRemovalMethod,
+    effectiveBlocklistMethod,
+    unavailable,
+    isPending,
     setRemovalMethod,
     setBlocklistMethod,
     onRemovePress,
@@ -186,6 +206,8 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
         <ModalBody>
           <div className={styles.message}>{message}</div>
 
+          {hasPending && <div className={styles.message}>{translate('QueuePendingRemovalHint')}</div>}
+
           {isPending ? null : (
             <FormGroup>
               <FormLabel>{translate('RemoveQueueItemRemovalMethod')}</FormLabel>
@@ -193,9 +215,9 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
               <FormInputGroup
                 type={inputTypes.SELECT}
                 name="removalMethod"
-                value={removalMethod}
+                value={effectiveRemovalMethod}
                 values={removalMethodOptions}
-                isDisabled={!canChangeCategory && !canIgnore}
+                isDisabled={!canChangeCategory && !canIgnore && !canBlocklist}
                 helpTextWarning={translate(
                   'RemoveQueueItemRemovalMethodHelpTextWarning'
                 )}
@@ -214,8 +236,9 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
             <FormInputGroup
               type={inputTypes.SELECT}
               name="blocklistMethod"
-              value={blocklistMethod}
+              value={effectiveBlocklistMethod}
               values={blocklistMethodOptions}
+              isDisabled={!canBlocklist}
               helpText={translate('BlocklistReleaseHelpText')}
               onChange={handleBlocklistMethodChange}
             />
@@ -225,7 +248,7 @@ function RemoveQueueItemModal(props: RemoveQueueItemModalProps) {
         <ModalFooter>
           <Button onPress={handleModalClose}>{translate('Close')}</Button>
 
-          <Button kind={kinds.DANGER} isDisabled={isRemoveDisabled} onPress={handleConfirmRemove}>
+          <Button kind={kinds.DANGER} isDisabled={isRemoveDisabled || unavailable} onPress={handleConfirmRemove}>
             {translate('Remove')}
           </Button>
         </ModalFooter>

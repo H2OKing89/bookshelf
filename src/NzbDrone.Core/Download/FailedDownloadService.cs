@@ -16,6 +16,7 @@ namespace NzbDrone.Core.Download
         void MarkAsFailed(int historyId, bool skipRedownload = false);
         void MarkAsFailed(string downloadId, bool skipRedownload = false);
         void MarkAsFailed(string downloadId, int downloadClientId, bool skipRedownload = false);
+        void BlockQueueDownload(List<EntityHistory> grabbedItems, TrackedDownload trackedDownload, bool skipRedownload);
         void Check(TrackedDownload trackedDownload);
         void ProcessFailed(TrackedDownload trackedDownload);
     }
@@ -106,6 +107,11 @@ namespace NzbDrone.Core.Download
             }
         }
 
+        public void BlockQueueDownload(List<EntityHistory> grabbedItems, TrackedDownload trackedDownload, bool skipRedownload)
+        {
+            PublishDownloadFailedEvent(grabbedItems, "Manually marked as failed", trackedDownload, skipRedownload, suppressAutomaticRemoval: true);
+        }
+
         private static int? GetClientId(EntityHistory history)
         {
             var value = history.Data?.FirstOrDefault(pair => string.Equals(pair.Key, "downloadClientId", StringComparison.OrdinalIgnoreCase)).Value;
@@ -171,7 +177,7 @@ namespace NzbDrone.Core.Download
             PublishDownloadFailedEvent(grabbedItems, failure, trackedDownload);
         }
 
-        private void PublishDownloadFailedEvent(List<EntityHistory> historyItems, string message, TrackedDownload trackedDownload = null, bool skipRedownload = false)
+        private void PublishDownloadFailedEvent(List<EntityHistory> historyItems, string message, TrackedDownload trackedDownload = null, bool skipRedownload = false, bool suppressAutomaticRemoval = false)
         {
             var historyItem = historyItems.Last();
             Enum.TryParse(historyItem.Data.GetValueOrDefault(EntityHistory.RELEASE_SOURCE, ReleaseSourceType.Unknown.ToString()), out ReleaseSourceType releaseSource);
@@ -188,6 +194,7 @@ namespace NzbDrone.Core.Download
                 Data = historyItem.Data,
                 TrackedDownload = trackedDownload,
                 SkipRedownload = skipRedownload,
+                SuppressAutomaticRemoval = suppressAutomaticRemoval,
                 ReleaseSource = releaseSource
             };
 

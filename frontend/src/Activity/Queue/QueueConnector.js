@@ -1,12 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import * as commandNames from 'Commands/commandNames';
 import withCurrentPage from 'Components/withCurrentPage';
 import * as commandActions from 'Store/Actions/commandActions';
-import * as queueActions from 'Store/Actions/queueActions';
 import createCommandExecutingSelector from 'Store/Selectors/createCommandExecutingSelector';
 import Queue from './Queue';
 import queuePageQuery, {
@@ -22,29 +21,18 @@ const emptyRecords = [];
 
 function createMapStateToProps() {
   return createSelector(
-    (state) => state.authors,
-    (state) => state.books,
     createCommandExecutingSelector(commandNames.REFRESH_MONITORED_DOWNLOADS),
-    (authors, books, isRefreshMonitoredDownloadsExecuting) => ({
-      isAuthorFetching: authors.isFetching,
-      isAuthorPopulated: authors.isPopulated,
-      isBooksFetching: books.isFetching,
-      isBooksPopulated: books.isPopulated,
-      booksError: books.error,
-      isRefreshMonitoredDownloadsExecuting
-    })
+    (isRefreshMonitoredDownloadsExecuting) => ({ isRefreshMonitoredDownloadsExecuting })
   );
 }
 
 const mapDispatchToProps = {
-  fetchQueueStatus: queueActions.fetchQueueStatus,
   executeCommand: commandActions.executeCommand
 };
 
 function QueueConnector({
   useCurrentPage,
   isRefreshMonitoredDownloadsExecuting,
-  fetchQueueStatus,
   executeCommand,
   ...otherProps
 }) {
@@ -83,10 +71,6 @@ function QueueConnector({
       setQueuePage(totalPages);
     }
   }, [needsClamp, pageInitialized, totalPages]);
-
-  useEffect(() => {
-    fetchQueueStatus();
-  }, [fetchQueueStatus]);
 
   useLayoutEffect(() => {
     if (isRefreshMonitoredDownloadsExecuting) {
@@ -162,7 +146,6 @@ function QueueConnector({
 QueueConnector.propTypes = {
   useCurrentPage: PropTypes.bool.isRequired,
   isRefreshMonitoredDownloadsExecuting: PropTypes.bool.isRequired,
-  fetchQueueStatus: PropTypes.func.isRequired,
   executeCommand: PropTypes.func.isRequired
 };
 

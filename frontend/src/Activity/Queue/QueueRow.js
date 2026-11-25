@@ -41,9 +41,9 @@ class QueueRow extends Component {
   }
 
   onInteractiveImportPress = () => {
-    const { canUseRowActions, downloadId, downloadClientId, title } = this.props;
+    const { canUseRowActions, canImport, downloadId, downloadClientId, title } = this.props;
 
-    if (canUseRowActions && !this.releaseImportHold) {
+    if (canUseRowActions && canImport && !this.releaseImportHold) {
       this.releaseImportHold = holdQueueRefresh();
       this.setState({ interactiveImport: { downloadId, downloadClientId, title } });
     }
@@ -69,7 +69,11 @@ class QueueRow extends Component {
       statusMessages,
       errorMessage,
       author,
-      book,
+      recordings,
+      coverageSource,
+      canRemove,
+      canGrab,
+      canImport,
       quality,
       customFormats,
       customFormatScore,
@@ -97,16 +101,15 @@ class QueueRow extends Component {
 
     const { interactiveImport } = this.state;
 
-    const progress = 100 - (sizeleft / size * 100);
-    const showInteractiveImport = downloadClientAvailable !== false && status === 'completed' && trackedDownloadStatus === 'warning';
-    const isPending = status === 'delay' || status === 'downloadClientUnavailable';
+    const progress = size > 0 ? Math.min(100, Math.max(0, 100 - sizeleft / size * 100)) : 0;
+    const earliestReleaseDate = recordings.map(({ releaseDate }) => releaseDate).filter(Boolean).sort()[0];
 
     return (
       <TableRow>
         <TableSelectCell
           id={id}
           isSelected={isSelected}
-          isDisabled={!canUseRowActions}
+          isDisabled={!canUseRowActions || !(canRemove || canGrab)}
           onSelectedChange={onSelectedChange}
         />
 
@@ -140,12 +143,12 @@ class QueueRow extends Component {
               return (
                 <TableRowCell key={name}>
                   {
-                    author ?
+                    author?.titleSlug ?
                       <AuthorNameLink
                         titleSlug={author.titleSlug}
                         authorName={author.authorName}
                       /> :
-                      title
+                      author?.authorName || title
                   }
                 </TableRowCell>
               );
@@ -155,32 +158,37 @@ class QueueRow extends Component {
               return (
                 <TableRowCell key={name}>
                   {
-                    book ?
-                      <BookTitleLink
-                        titleSlug={book.titleSlug}
-                        title={book.title}
-                        disambiguation={book.disambiguation}
-                      /> :
-                      '-'
+                    recordings.map((recording) => (
+                      <div key={recording.bookId}>
+                        {
+                          recording.titleSlug && recording.title ?
+                            <BookTitleLink titleSlug={recording.titleSlug} title={recording.title} /> :
+                            recording.title || translate('QueueRecordingMissing', { bookId: recording.bookId })
+                        }
+                        {
+                          recording.recordingId &&
+                            <small className={styles.recordingId}>{recording.recordingId}</small>
+                        }
+                      </div>
+                    ))
+                  }
+                  {
+                    coverageSource === 'mappedCandidates' &&
+                      <small>{translate('QueueMappedCandidates')}</small>
+                  }
+                  {
+                    coverageSource === 'unknown' &&
+                      <small>{translate('QueueUnresolvedRecording')}</small>
                   }
                 </TableRowCell>
               );
             }
 
             if (name === 'books.releaseDate') {
-              if (book) {
-                return (
-                  <RelativeDateCellConnector
-                    key={name}
-                    date={book.releaseDate}
-                  />
-                );
-              }
-
-              return (
-                <TableRowCell key={name}>
-                  -
-                </TableRowCell>
+              return earliestReleaseDate ? (
+                <RelativeDateCellConnector key={name} date={earliestReleaseDate} />
+              ) : (
+                <TableRowCell key={name}>-</TableRowCell>
               );
             }
 
@@ -325,7 +333,7 @@ class QueueRow extends Component {
                   }
 
                   {
-                    showInteractiveImport &&
+                    canImport &&
                       <IconButton
                         name={icons.INTERACTIVE}
                         aria-label={translate('ManualImport')}
@@ -335,7 +343,7 @@ class QueueRow extends Component {
                   }
 
                   {
-                    isPending &&
+                    canGrab &&
                       <SpinnerIconButton
                         name={icons.DOWNLOAD}
                         isSpinning={isGrabbing}
@@ -349,7 +357,7 @@ class QueueRow extends Component {
                     title={translate('RemoveFromQueue')}
                     name={icons.REMOVE}
                     isSpinning={isRemoving}
-                    isDisabled={!canUseRowActions}
+                    isDisabled={!canUseRowActions || !canRemove}
                     onPress={() => onRemoveQueueItemPress(id)}
                   />
                 </TableRowCell>
@@ -374,7 +382,7 @@ class QueueRow extends Component {
 }
 
 QueueRow.propTypes = {
-  id: PropTypes.number.isRequired,
+  id: PropTypes.string.isRequired,
   downloadId: PropTypes.string,
   downloadClientId: PropTypes.number,
   downloadClientAvailable: PropTypes.bool,
@@ -385,7 +393,11 @@ QueueRow.propTypes = {
   statusMessages: PropTypes.arrayOf(PropTypes.object),
   errorMessage: PropTypes.string,
   author: PropTypes.object,
-  book: PropTypes.object,
+  recordings: PropTypes.arrayOf(PropTypes.object).isRequired,
+  coverageSource: PropTypes.string.isRequired,
+  canRemove: PropTypes.bool.isRequired,
+  canGrab: PropTypes.bool.isRequired,
+  canImport: PropTypes.bool.isRequired,
   quality: PropTypes.object.isRequired,
   customFormats: PropTypes.arrayOf(PropTypes.object),
   customFormatScore: PropTypes.number.isRequired,

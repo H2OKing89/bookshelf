@@ -12,6 +12,7 @@ namespace Readarr.Http
             return new ApiInfoResource
             {
                 Current = "v1",
+                Available = new List<string> { "v1", "v2" },
                 Deprecated = new List<string>()
             };
         }

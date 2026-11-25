@@ -417,7 +417,7 @@ async function runBrowser(config, verifyDesktop, verifyMobile) {
             externalRequests++;
             return route.abort();
           }
-          if (url.pathname.includes('/api/v1/') && !['GET', 'HEAD'].includes(request.method())) {
+          if (/\/api\/v[12]\//.test(url.pathname) && !['GET', 'HEAD'].includes(request.method())) {
             writes++;
             return route.abort();
           }

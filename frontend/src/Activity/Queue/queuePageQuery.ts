@@ -132,20 +132,84 @@ function parseStatusMessages(value: unknown) {
   });
 }
 
+function requiredBoolean(value: unknown): boolean {
+  if (typeof value !== 'boolean') {
+    throw new TypeError('Invalid queue action capability');
+  }
+  return value;
+}
+
+function parseAuthor(value: unknown) {
+  if (value == null) {
+    return undefined;
+  }
+  if (!isRecord(value) || typeof value.authorName !== 'string') {
+    throw new TypeError('Invalid queue author');
+  }
+  return { authorName: value.authorName, titleSlug: optionalString(value.titleSlug) };
+}
+
+function parseRecordings(value: unknown) {
+  if (!Array.isArray(value)) {
+    throw new TypeError('Missing queue recording coverage');
+  }
+  const records = value.map((recording: unknown) => {
+    if (!isRecord(recording) || !isInteger(recording.bookId) || recording.bookId < 1) {
+      throw new TypeError('Invalid queue recording');
+    }
+    return {
+      bookId: recording.bookId,
+      recordingId: optionalString(recording.recordingId),
+      title: optionalString(recording.title),
+      titleSlug: optionalString(recording.titleSlug),
+      releaseDate: optionalString(recording.releaseDate)
+    };
+  });
+  if (new Set(records.map(({ bookId }) => bookId)).size !== records.length) {
+    throw new TypeError('Duplicate queue recording');
+  }
+  return records;
+}
+
 function parseQueueItem(value: unknown) {
-  if (!isRecord(value) || !isInteger(value.id) || value.id < 1 ||
-      typeof value.title !== 'string' || typeof value.status !== 'string') {
+  if (!isRecord(value) || typeof value.id !== 'string' || !value.id ||
+      typeof value.revision !== 'string' || !value.revision ||
+      typeof value.title !== 'string' || typeof value.status !== 'string' ||
+      (value.kind !== 'download' && value.kind !== 'pending' && value.kind !== 'unaddressable') ||
+      (value.coverageSource !== 'recordedGrab' && value.coverageSource !== 'pendingRelease' &&
+       value.coverageSource !== 'mappedCandidates' && value.coverageSource !== 'unknown')) {
     throw new TypeError('Invalid queue record');
+  }
+
+  const downloadClientId = optionalId(value.downloadClientId);
+  const downloadId = optionalString(value.downloadId);
+  if (value.kind === 'download' && (!downloadClientId || !downloadId ||
+      value.id !== `download:${downloadClientId}:${downloadId}`)) {
+    throw new TypeError('Invalid download identity');
+  }
+  if (value.kind === 'pending' && !/^pending:[1-9]\d*$/.test(value.id)) {
+    throw new TypeError('Invalid pending release identity');
   }
 
   return {
     id: value.id,
+    revision: value.revision,
+    kind: value.kind,
+    coverageSource: value.coverageSource,
+    recordings: parseRecordings(value.recordings),
+    author: parseAuthor(value.author),
     title: value.title,
     status: value.status,
     authorId: optionalId(value.authorId),
-    bookId: optionalId(value.bookId),
-    downloadClientId: optionalId(value.downloadClientId),
-    downloadId: optionalString(value.downloadId),
+    downloadClientId,
+    downloadId,
+    canRemove: requiredBoolean(value.canRemove),
+    canRemoveFromClient: requiredBoolean(value.canRemoveFromClient),
+    canChangeCategory: requiredBoolean(value.canChangeCategory),
+    canIgnore: requiredBoolean(value.canIgnore),
+    canBlocklist: requiredBoolean(value.canBlocklist),
+    canGrab: requiredBoolean(value.canGrab),
+    canImport: requiredBoolean(value.canImport),
     quality: parseQuality(value.quality),
     customFormats: parseFormats(value.customFormats),
     customFormatScore: optionalNumber(value.customFormatScore) ?? 0,
@@ -168,7 +232,7 @@ function parseQueueItem(value: unknown) {
 }
 
 type QueueItem = ReturnType<typeof parseQueueItem>;
-type QueueTarget = Pick<QueueItem, 'id' | 'authorId' | 'bookId' | 'downloadClientId' | 'downloadId'>;
+type QueueTarget = Pick<QueueItem, 'id' | 'revision'>;
 
 interface RemovalOptions {
   remove: boolean;
@@ -203,42 +267,61 @@ function parseQueuePage(value: unknown) {
   return { page: value.page, pageSize: value.pageSize, totalRecords: value.totalRecords, records };
 }
 
-export function queueTarget({ id, authorId, bookId, downloadClientId, downloadId }: QueueItem): QueueTarget {
-  return { id, authorId, bookId, downloadClientId, downloadId };
+export function queueTarget({ id, revision }: QueueItem): QueueTarget {
+  return { id, revision };
 }
 
 export function queueTargetsAreCurrent(items: readonly QueueItem[], targets: readonly QueueTarget[]) {
   const current = new Map(items.map((item) => [item.id, item]));
-  return targets.length > 0 && targets.every((target) => {
-    const item = current.get(target.id);
-    return item !== undefined && item.authorId === target.authorId && item.bookId === target.bookId &&
-      item.downloadClientId === target.downloadClientId && item.downloadId === target.downloadId;
-  });
+  return targets.length > 0 && targets.every((target) => current.get(target.id)?.revision === target.revision);
 }
 
 export function submitQueueAction(action: QueueAction) {
-  const ids = action.targets.map(({ id }) => id);
+  const targets = action.targets;
+  const ids = targets.map(({ id }) => id);
   if (!ids.length || new Set(ids).size !== ids.length || (!action.bulk && ids.length !== 1) ||
-      ids.some((id) => !isInteger(id) || id < 1)) {
+      targets.some(({ id, revision }) => typeof id !== 'string' || !id || typeof revision !== 'string' || !revision)) {
     throw new TypeError('Invalid queue action targets');
   }
 
-  const selection = action.bulk ? 'bulk' : String(ids[0]);
-  const body = action.bulk ? { ids } : undefined;
-
   if (action.kind === 'grab') {
-    return fetchJson({ path: `/queue/grab/${selection}`, method: 'POST', body, timeout: actionTimeout, parse: () => null });
+    return fetchJson({ apiVersion: 2, path: '/queue/grab', method: 'POST', body: { targets }, timeout: actionTimeout, parse: () => null });
   }
 
   const { remove, blocklist, skipRedownload, changeCategory } = action.options;
-  const params = new URLSearchParams({
-    removeFromClient: String(remove),
-    blocklist: String(blocklist),
-    skipRedownload: String(skipRedownload),
-    changeCategory: String(changeCategory)
+  return fetchJson({
+    apiVersion: 2, path: '/queue/remove', method: 'POST',
+    body: { targets, removeFromClient: remove, blocklist, skipRedownload, changeCategory },
+    timeout: actionTimeout, parse: () => null
   });
+}
 
-  return fetchJson({ path: `/queue/${selection}?${params}`, method: 'DELETE', body, timeout: actionTimeout, parse: () => null });
+function parseQueueStatus(value: unknown) {
+  if (!isRecord(value) || !isInteger(value.count) || !isInteger(value.totalCount) ||
+      !isInteger(value.unknownCount) || value.count < 0 || value.unknownCount < 0 ||
+      value.totalCount !== value.count + value.unknownCount) {
+    throw new TypeError('Invalid queue status');
+  }
+  return {
+    count: value.count,
+    totalCount: value.totalCount,
+    unknownCount: value.unknownCount,
+    errors: requiredBoolean(value.errors),
+    warnings: requiredBoolean(value.warnings),
+    unknownErrors: requiredBoolean(value.unknownErrors),
+    unknownWarnings: requiredBoolean(value.unknownWarnings)
+  };
+}
+
+export function queueStatusQuery() {
+  return queryOptions({
+    queryKey: [...queuePageFamilyKey(), 'status'] as const,
+    queryFn: ({ signal }) => fetchJson({ apiVersion: 2, path: '/queue/status', signal, timeout: 30_000, parse: parseQueueStatus }),
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    networkMode: 'always',
+    retry: false
+  });
 }
 
 export function queuePageFamilyKey() {
@@ -337,7 +420,7 @@ export default function queuePageQuery({
 
   return queryOptions({
     queryKey: [...queuePageFamilyKey(), search] as const,
-    queryFn: ({ signal }) => fetchJson({ path: `/queue?${search}`, signal, timeout: 30_000, parse: parseQueuePage }),
+    queryFn: ({ signal }) => fetchJson({ apiVersion: 2, path: `/queue?${search}`, signal, timeout: 30_000, parse: parseQueuePage }),
     placeholderData: keepPreviousData,
     networkMode: 'always',
     refetchOnWindowFocus: false,

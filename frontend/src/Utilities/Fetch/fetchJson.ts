@@ -32,6 +32,7 @@ export class ApiError extends Error {
 
 export interface FetchJsonOptions<T, TBody = unknown> {
   path: string;
+  apiVersion?: 2;
   parse(value: unknown): T;
   method?: string;
   headers?: HeadersInit;
@@ -40,13 +41,13 @@ export interface FetchJsonOptions<T, TBody = unknown> {
   timeout?: number;
 }
 
-function requestTarget(path: string) {
+function requestTarget(path: string, apiVersion?: 2) {
   const origin = window.location.origin;
 
   if (/^(https?:)?\/\//i.test(path)) {
     const url = new URL(path, origin);
 
-    if (url.username || url.password) {
+    if (apiVersion !== undefined || url.username || url.password) {
       throw new ApiError({ kind: 'invalid-request' });
     }
 
@@ -54,7 +55,15 @@ function requestTarget(path: string) {
   }
 
   const root = new URL(window.Readarr.apiRoot, origin);
-  const prefix = root.pathname.replace(/\/+$/, '');
+  let prefix = root.pathname.replace(/\/+$/, '');
+
+  if (apiVersion !== undefined) {
+    if (apiVersion !== 2 || !prefix.endsWith('/api/v1')) {
+      throw new ApiError({ kind: 'invalid-request' });
+    }
+
+    prefix = prefix.slice(0, -1) + '2';
+  }
 
   if (
     root.origin !== origin ||
@@ -78,9 +87,9 @@ function requestTarget(path: string) {
   return { url, isApi: true };
 }
 
-function prepareRequest(path: string, requestHeaders: HeadersInit | undefined, body: unknown) {
+function prepareRequest(path: string, requestHeaders: HeadersInit | undefined, body: unknown, apiVersion?: 2) {
   try {
-    const target = requestTarget(path);
+    const target = requestTarget(path, apiVersion);
     const headers = new Headers(requestHeaders);
     const json = body === undefined ? undefined : JSON.stringify(body);
 
@@ -131,6 +140,7 @@ function parseResponse<T>(text: string | undefined, parse: (value: unknown) => T
 
 async function fetchJson<T, TBody = unknown>({
   path,
+  apiVersion,
   parse,
   method,
   headers: requestHeaders,
@@ -142,7 +152,7 @@ async function fetchJson<T, TBody = unknown>({
     throw new ApiError({ kind: 'aborted' });
   }
 
-  const { url, isApi, headers, json } = prepareRequest(path, requestHeaders, body);
+  const { url, isApi, headers, json } = prepareRequest(path, requestHeaders, body, apiVersion);
 
   const controller = new AbortController();
   const onAbort = () => controller.abort('aborted');

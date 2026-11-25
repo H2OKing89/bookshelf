@@ -34,5 +34,11 @@ namespace NzbDrone.Core.Queue
         public string OutputPath { get; set; }
         public string ErrorMessage { get; set; }
         public bool DownloadForced { get; set; }
+
+        // Internal provenance for the download-level queue; not exposed by v1.
+        public int? PendingReleaseId { get; set; }
+        public List<int> PendingRecordedBookIds { get; set; }
+        public string DownloadCategory { get; set; }
+        public bool Removed { get; set; }
     }
 }

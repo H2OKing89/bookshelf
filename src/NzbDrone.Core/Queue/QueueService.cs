@@ -92,6 +92,8 @@ namespace NzbDrone.Core.Queue
                 Indexer = trackedDownload.Indexer,
                 OutputPath = trackedDownload.DownloadItem.OutputPath.ToString(),
                 DownloadForced = downloadForced,
+                DownloadCategory = trackedDownload.DownloadItem.Category,
+                Removed = trackedDownload.DownloadItem.Removed,
                 DownloadClientHasPostImportCategory = trackedDownload.DownloadItem.DownloadClientInfo.HasPostImportCategory
             };
 

@@ -1,79 +1,25 @@
-import PropTypes from 'prop-types';
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { createSelector } from 'reselect';
+import { useQuery } from '@tanstack/react-query';
+import React from 'react';
+import { useSelector } from 'react-redux';
 import PageSidebarStatus from 'Components/Page/Sidebar/PageSidebarStatus';
-import { fetchQueueStatus } from 'Store/Actions/queueActions';
+import { queueStatusQuery } from '../queuePageQuery';
 import { useIncludeUnknownAuthorItems } from '../queuePreferences';
-
-function createMapStateToProps() {
-  return createSelector(
-    (state) => state.app,
-    (state) => state.queue.status,
-    (_state, props) => props.includeUnknownAuthorItems,
-    (app, status, includeUnknownAuthorItems) => {
-      const {
-        errors,
-        warnings,
-        unknownErrors,
-        unknownWarnings,
-        count,
-        totalCount
-      } = status.item;
-
-      return {
-        isConnected: app.isConnected,
-        isReconnecting: app.isReconnecting,
-        isPopulated: status.isPopulated,
-        ...status.item,
-        count: includeUnknownAuthorItems ? totalCount : count,
-        errors: includeUnknownAuthorItems ? errors || unknownErrors : errors,
-        warnings: includeUnknownAuthorItems ? warnings || unknownWarnings : warnings
-      };
-    }
-  );
-}
-
-const mapDispatchToProps = {
-  fetchQueueStatus
-};
-
-class QueueStatus extends Component {
-
-  //
-  // Lifecycle
-
-  componentDidMount() {
-    if (!this.props.isPopulated) {
-      this.props.fetchQueueStatus();
-    }
-  }
-
-  componentDidUpdate(prevProps) {
-    if (this.props.isConnected && prevProps.isReconnecting) {
-      this.props.fetchQueueStatus();
-    }
-  }
-
-  //
-  // Render
-
-  render() {
-    return <PageSidebarStatus {...this.props} />;
-  }
-}
-
-QueueStatus.propTypes = {
-  isConnected: PropTypes.bool.isRequired,
-  isReconnecting: PropTypes.bool.isRequired,
-  isPopulated: PropTypes.bool.isRequired,
-  fetchQueueStatus: PropTypes.func.isRequired
-};
-
-const ConnectedQueueStatus = connect(createMapStateToProps, mapDispatchToProps)(QueueStatus);
 
 export default function QueueStatusConnector() {
   const includeUnknownAuthorItems = useIncludeUnknownAuthorItems();
+  const isConnected = useSelector((state) => state.app.isConnected);
+  const isReconnecting = useSelector((state) => state.app.isReconnecting);
+  const query = useQuery(queueStatusQuery());
+  const status = query.data;
 
-  return <ConnectedQueueStatus includeUnknownAuthorItems={includeUnknownAuthorItems} />;
+  return (
+    <PageSidebarStatus
+      isConnected={isConnected}
+      isReconnecting={isReconnecting}
+      isPopulated={!!status}
+      count={(includeUnknownAuthorItems ? status?.totalCount : status?.count) ?? 0}
+      errors={!!(status?.errors || (includeUnknownAuthorItems && status?.unknownErrors))}
+      warnings={!!(status?.warnings || (includeUnknownAuthorItems && status?.unknownWarnings))}
+    />
+  );
 }

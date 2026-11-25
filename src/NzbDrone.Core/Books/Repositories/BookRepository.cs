@@ -13,6 +13,7 @@ namespace NzbDrone.Core.Books
     public interface IBookRepository : IBasicRepository<Book>
     {
         List<Book> GetBooks(int authorId);
+        List<Book> FindByIds(IEnumerable<int> ids);
         List<Book> GetLastBooks(IEnumerable<int> authorMetadataIds);
         List<Book> GetNextBooks(IEnumerable<int> authorMetadataIds);
         List<Book> GetBooksByAuthorMetadataId(int authorMetadataId);
@@ -68,6 +69,11 @@ namespace NzbDrone.Core.Books
             }
 
             transaction.Commit();
+        }
+
+        public List<Book> FindByIds(IEnumerable<int> ids)
+        {
+            return Query(book => ids.Contains(book.Id));
         }
 
         public List<Book> GetBooks(int authorId)

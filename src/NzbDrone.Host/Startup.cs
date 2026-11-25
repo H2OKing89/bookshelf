@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.OpenApi.Models;
 using NLog.Extensions.Logging;
 using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Common.Instrumentation;
@@ -100,74 +99,8 @@ namespace NzbDrone.Host
             })
             .AddControllersAsServices();
 
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo
-                {
-                    Version = "1.0.0",
-                    Title = "Readarr",
-                    Description = "Readarr API docs",
-                    License = new OpenApiLicense
-                    {
-                        Name = "GPL-3.0",
-                        Url = new Uri("https://github.com/Readarr/Readarr/blob/develop/LICENSE.md")
-                    }
-                });
-
-                var apiKeyHeader = new OpenApiSecurityScheme
-                {
-                    Name = "X-Api-Key",
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = "apiKey",
-                    Description = "Apikey passed as header",
-                    In = ParameterLocation.Header,
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "X-Api-Key"
-                    },
-                };
-
-                c.AddSecurityDefinition("X-Api-Key", apiKeyHeader);
-
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
-                    { apiKeyHeader, Array.Empty<string>() }
-                });
-
-                var apikeyQuery = new OpenApiSecurityScheme
-                {
-                    Name = "apikey",
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = "apiKey",
-                    Description = "Apikey passed as query parameter",
-                    In = ParameterLocation.Query,
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "apikey"
-                    },
-                };
-
-                c.AddServer(new OpenApiServer
-                {
-                    Url = "{protocol}://{hostpath}",
-                    Variables = new Dictionary<string, OpenApiServerVariable>
-                    {
-                        { "protocol", new OpenApiServerVariable { Default = "http", Enum = new List<string> { "http", "https" } } },
-                        { "hostpath", new OpenApiServerVariable { Default = "localhost:8787" } }
-                    }
-                });
-
-                c.AddSecurityDefinition("apikey", apikeyQuery);
-
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
-                    { apikeyQuery, Array.Empty<string>() }
-                });
-
-                c.DescribeAllParametersInCamelCase();
-            });
+            services.ConfigureHttpJsonOptions(options => STJson.ApplySerializerSettings(options.SerializerOptions));
+            services.AddBookshelfApiDocuments();
 
             services
             .AddSignalR()
@@ -277,19 +210,11 @@ namespace NzbDrone.Host
 
             app.UseWebSockets();
 
-            // Enable middleware to serve generated Swagger as a JSON endpoint.
-            if (BuildInfo.IsDebug)
-            {
-                app.UseSwagger(c =>
-                {
-                    c.RouteTemplate = "docs/{documentName}/openapi.json";
-                });
-            }
-
             app.UseEndpoints(x =>
             {
                 x.MapHub<MessageHub>("/signalr/messages").RequireAuthorization("SignalR");
                 x.MapControllers();
+                x.MapBookshelfApiDocuments();
             });
         }
     }

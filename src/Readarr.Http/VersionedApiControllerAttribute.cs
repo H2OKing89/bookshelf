@@ -12,11 +12,13 @@ namespace Readarr.Http
 
         public VersionedApiControllerAttribute(int version, string resource = CONTROLLER_RESOURCE)
         {
+            Version = version;
             Resource = resource;
             Template = $"api/v{version}/{resource}";
             PolicyName = API_CORS_POLICY;
         }
 
+        public int Version { get; }
         public string Resource { get; }
         public string Template { get; }
         public int? Order => 2;
@@ -28,6 +30,14 @@ namespace Readarr.Http
     {
         public V1ApiControllerAttribute(string resource = "[controller]")
             : base(1, resource)
+        {
+        }
+    }
+
+    public class V2ApiControllerAttribute : VersionedApiControllerAttribute
+    {
+        public V2ApiControllerAttribute(string resource = CONTROLLER_RESOURCE)
+            : base(2, resource)
         {
         }
     }

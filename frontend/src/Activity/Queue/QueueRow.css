@@ -27,3 +27,8 @@
 
   width: 90px;
 }
+
+.recordingId {
+  display: block;
+  overflow-wrap: anywhere;
+}

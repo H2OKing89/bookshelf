@@ -43,9 +43,10 @@ class Queue extends Component {
     const { items, canUseRowActions } = this.props;
     if (canUseRowActions && (items !== prevProps.items || !prevProps.canUseRowActions)) {
       this.setState((state) => {
-        const ids = new Set(items.map(({ id }) => id));
+        const previous = new Map(prevProps.items.map(({ id, revision }) => [id, revision]));
+        const ids = new Set(items.filter((item) => (item.canRemove || item.canGrab) && previous.get(item.id) === item.revision).map(({ id }) => id));
         const selectedEntries = Object.entries(state.selectedState);
-        const activeSelection = selectedEntries.filter(([id]) => ids.has(Number(id)));
+        const activeSelection = selectedEntries.filter(([id]) => ids.has(id));
         const lastToggled = ids.has(state.lastToggled) ? state.lastToggled : null;
 
         if (activeSelection.length !== selectedEntries.length || lastToggled !== state.lastToggled) {
@@ -62,14 +63,14 @@ class Queue extends Component {
   }
 
   getSelectedItems() {
-    return this.props.items.filter(({ id }) => this.state.selectedState[id]);
+    return this.props.items.filter(({ id, canRemove, canGrab }) => (canRemove || canGrab) && this.state.selectedState[id]);
   }
 
   onSelectAllChange = ({ value }) => {
     if (this.props.canUseRowActions) {
       this.setState({
         lastToggled: null,
-        selectedState: value ? Object.fromEntries(this.props.items.map(({ id }) => [id, true])) : {}
+        selectedState: value ? Object.fromEntries(this.props.items.filter(({ canRemove, canGrab }) => canRemove || canGrab).map(({ id }) => [id, true])) : {}
       });
     }
   };
@@ -77,23 +78,23 @@ class Queue extends Component {
   onSelectedChange = ({ id, value, shiftKey = false }) => {
     const { canUseRowActions, items } = this.props;
     // TableSelectCell also calls this when mounting or unmounting.
-    if (!canUseRowActions || value == null || !items.some((item) => item.id === id)) {
+    if (!canUseRowActions || value == null || !items.some((item) => item.id === id && (item.canRemove || item.canGrab))) {
       return;
     }
 
     this.setState((state) => (value === !!state.selectedState[id] ?
-      null : toggleSelected(state, items, id, value, shiftKey)));
+      null : toggleSelected(state, items.filter(({ canRemove, canGrab }) => canRemove || canGrab), id, value, shiftKey)));
   };
 
   grab(items, bulk) {
-    if (this.props.canUseRowActions && items.length) {
+    if (this.props.canUseRowActions && items.length && items.every(({ canGrab }) => canGrab)) {
       this.props.onQueueAction({ kind: 'grab', bulk, pageKey: this.props.pageKey, targets: items.map(queueTarget) });
     }
   }
 
   onGrabSelectedPress = () => {
     const items = this.getSelectedItems();
-    if (items.every(({ status }) => status === 'delay')) {
+    if (items.every(({ canGrab }) => canGrab)) {
       this.grab(items, true);
     }
   };
@@ -103,7 +104,7 @@ class Queue extends Component {
   };
 
   openRemoval(items, bulk) {
-    if (!this.props.canUseRowActions || !items.length || this.releaseRemovalHold) {
+    if (!this.props.canUseRowActions || !items.length || !items.every(({ canRemove }) => canRemove) || this.releaseRemovalHold) {
       return;
     }
 
@@ -114,9 +115,12 @@ class Queue extends Component {
         pageKey: this.props.pageKey,
         targets: items.map(queueTarget),
         sourceTitle: bulk ? undefined : items[0].title,
-        canChangeCategory: items.every((item) => item.downloadClientHasPostImportCategory),
-        canIgnore: items.every((item) => item.authorId && (!bulk || item.bookId)),
-        isPending: items.every(({ status }) => status === 'delay' || status === 'downloadClientUnavailable')
+        canChangeCategory: items.every((item) => item.kind === 'pending' || item.canChangeCategory),
+        canRemoveFromClient: items.every((item) => item.kind === 'pending' || item.canRemoveFromClient),
+        canIgnore: items.every((item) => item.kind === 'pending' || item.canIgnore),
+        canBlocklist: items.every((item) => item.canBlocklist),
+        hasPending: items.some(({ kind }) => kind === 'pending'),
+        isPending: items.every(({ kind }) => kind === 'pending')
       }
     });
   }
@@ -151,11 +155,6 @@ class Queue extends Component {
       isFetching,
       isPopulated,
       error,
-      isAuthorFetching,
-      isAuthorPopulated,
-      isBooksFetching,
-      isBooksPopulated,
-      booksError,
       columns,
       items,
       hasQueueFilters,
@@ -169,9 +168,9 @@ class Queue extends Component {
     } = this.props;
 
     const { removal, selectedState } = this.state;
-    const isRefreshing = isFetching || isAuthorFetching || isBooksFetching || isRefreshMonitoredDownloadsExecuting;
-    const isAllPopulated = isPopulated && ((isAuthorPopulated && isBooksPopulated) || !items.length || items.every((item) => !item.bookId));
-    const hasError = error || booksError;
+    const isRefreshing = isFetching || isRefreshMonitoredDownloadsExecuting;
+    const isAllPopulated = isPopulated;
+    const hasError = error;
     const selectedItems = this.getSelectedItems();
     const selectedCount = selectedItems.length;
     const canActOnSelected = canUseRowActions && selectedCount > 0;
@@ -196,7 +195,7 @@ class Queue extends Component {
             <PageToolbarButton
               label={translate('GrabSelected')}
               iconName={icons.DOWNLOAD}
-              isDisabled={!canActOnSelected || !selectedItems.every(({ status }) => status === 'delay')}
+              isDisabled={!canActOnSelected || !selectedItems.every(({ canGrab }) => canGrab)}
               isSpinning={pendingAction?.kind === 'grab' && pendingAction.bulk}
               onPress={this.onGrabSelectedPress}
             />
@@ -204,7 +203,7 @@ class Queue extends Component {
             <PageToolbarButton
               label={translate('RemoveSelected')}
               iconName={icons.REMOVE}
-              isDisabled={!canActOnSelected}
+              isDisabled={!canActOnSelected || !selectedItems.every(({ canRemove }) => canRemove)}
               isSpinning={pendingAction?.kind === 'remove' && pendingAction.bulk}
               onPress={this.onRemoveSelectedPress}
             />
@@ -248,9 +247,9 @@ class Queue extends Component {
                 <Table
                   columns={columns}
                   selectAll={true}
-                  allSelected={selectedCount === items.length}
+                  allSelected={selectedCount > 0 && selectedCount === items.filter(({ canRemove, canGrab }) => canRemove || canGrab).length}
                   allUnselected={selectedCount === 0}
-                  isSelectAllDisabled={!canUseRowActions}
+                  isSelectAllDisabled={!canUseRowActions || !items.some(({ canRemove, canGrab }) => canRemove || canGrab)}
                   {...otherProps}
                   optionsComponent={QueueOptions}
                   onSelectAllChange={this.onSelectAllChange}
@@ -290,6 +289,9 @@ class Queue extends Component {
           selectedCount={removal?.bulk ? removal.targets.length : undefined}
           canChangeCategory={!!removal?.canChangeCategory}
           canIgnore={!!removal?.canIgnore}
+          canRemoveFromClient={!!removal?.canRemoveFromClient}
+          canBlocklist={!!removal?.canBlocklist}
+          hasPending={!!removal?.hasPending}
           isPending={!!removal?.isPending}
           isRemoveDisabled={confirmationIsStale}
           onRemovePress={this.onRemoveConfirmed}
@@ -307,11 +309,6 @@ Queue.propTypes = {
   items: PropTypes.arrayOf(PropTypes.object).isRequired,
   hasQueueFilters: PropTypes.bool.isRequired,
   pageKey: PropTypes.string.isRequired,
-  isAuthorFetching: PropTypes.bool.isRequired,
-  isAuthorPopulated: PropTypes.bool.isRequired,
-  isBooksFetching: PropTypes.bool.isRequired,
-  isBooksPopulated: PropTypes.bool.isRequired,
-  booksError: PropTypes.object,
   columns: PropTypes.arrayOf(PropTypes.object).isRequired,
   totalRecords: PropTypes.number,
   canUseRowActions: PropTypes.bool.isRequired,

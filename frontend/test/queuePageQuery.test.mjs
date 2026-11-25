@@ -6,7 +6,16 @@ import { loadFrontendModule } from './helpers/loadFrontendModule.mjs';
 const nextTurn = () => new Promise((resolve) => setImmediate(resolve));
 
 function record(id, extras) {
-  return { id, title: 'Owned queue fixture', status: 'queued', bookId: id, authorId: 33, downloadClientId: 7, downloadId: 'owned-task', ...extras };
+  const clientId = extras?.downloadClientId ?? 7;
+  const downloadId = `owned-task-${id}`;
+  return {
+    id: `download:${clientId}:${downloadId}`, revision: 'fixture-revision', kind: 'download',
+    coverageSource: 'recordedGrab', recordings: [{ bookId: id, recordingId: 'owned-recording' }],
+    title: 'Owned queue fixture', status: 'queued', authorId: 33, downloadClientId: clientId, downloadId,
+    canRemove: true, canRemoveFromClient: true, canChangeCategory: false, canIgnore: true,
+    canBlocklist: true, canGrab: false, canImport: false,
+    ...extras
+  };
 }
 
 function page(pageNumber, ...records) {
@@ -85,6 +94,7 @@ test('queue keys retain explicit false and previous rows and discard a supersede
   const initial = options(1);
   const observer = watch(initial);
   assert.deepEqual(initial.queryKey.slice(0, 2), ['activityQueue', '/fixture/api/v1']);
+  assert.equal(requests[0].apiVersion, 2);
   assert.match(requests[0].path, /^\/queue\?page=1&pageSize=20&sortKey=book.title&sortDirection=ascending&includeUnknownAuthorItems=false$/);
   assert.notDeepEqual(initial.queryKey, options(1, { includeUnknownAuthorItems: true }).queryKey);
 
@@ -93,16 +103,16 @@ test('queue keys retain explicit false and previous rows and discard a supersede
   await first;
   observer.setOptions(options(2));
   assert.equal(observer.getCurrentResult().isPlaceholderData, true);
-  assert.equal(observer.getCurrentResult().data.records[0].id, 12);
+  assert.equal(observer.getCurrentResult().data.records[0].id, record(12).id);
 
   observer.setOptions(options(3));
   assert.equal(requests[1].signal.aborted, true);
   const current = observer.refetch({ cancelRefetch: false });
   requests[2].resolve(page(3, record(14)));
-  assert.equal((await current).data.records[0].id, 14);
+  assert.equal((await current).data.records[0].id, record(14).id);
   requests[1].resolve(page(2, record(13)));
   await nextTurn();
-  assert.equal(observer.getCurrentResult().data.records[0].id, 14);
+  assert.equal(observer.getCurrentResult().data.records[0].id, record(14).id);
   assert.equal(client.getQueryData(options(2).queryKey), undefined);
 });
 
@@ -142,7 +152,7 @@ test('queue refresh waits for all interaction holds and coalesces while a read i
   assert.equal(requests.length, 3);
   requests[2].resolve(page(1, record(13)));
   await nextTurn();
-  assert.equal(observer.getCurrentResult().data.records[0].id, 13);
+  assert.equal(observer.getCurrentResult().data.records[0].id, record(13).id);
   assert.equal(timers.size, 0);
 });
 
@@ -169,6 +179,8 @@ test('queue action identity guards client changes and submits only the captured 
   assert.equal(queue.queueTargetsAreCurrent([second, first], targets), true);
   assert.equal(queue.queueTargetsAreCurrent([record(11, { downloadClientId: 8 }), second], targets), false);
   assert.equal(queue.queueTargetsAreCurrent([first], targets), false);
+  assert.equal(queue.queueTargetsAreCurrent([{ ...first, revision: 'new-grab' }, second], targets), false);
+  assert.equal(queue.queueTargetsAreCurrent([{ ...first, sizeleft: 0 }, second], targets), true);
 
   const removed = queue.submitQueueAction({
     kind: 'remove',
@@ -177,9 +189,10 @@ test('queue action identity guards client changes and submits only the captured 
     targets,
     options: { remove: false, blocklist: true, skipRedownload: true, changeCategory: false }
   });
-  assert.equal(requests[0].method, 'DELETE');
-  assert.equal(requests[0].path, '/queue/bulk?removeFromClient=false&blocklist=true&skipRedownload=true&changeCategory=false');
-  assert.deepEqual(requests[0].body, { ids: [11, 16] });
+  assert.equal(requests[0].method, 'POST');
+  assert.equal(requests[0].apiVersion, 2);
+  assert.equal(requests[0].path, '/queue/remove');
+  assert.deepEqual(requests[0].body, { targets, removeFromClient: false, blocklist: true, skipRedownload: true, changeCategory: false });
   assert.equal(requests[0].timeout, 120_000);
   requests[0].reject(new Error('owned queue target changed'));
   await assert.rejects(removed, /owned queue target changed/);

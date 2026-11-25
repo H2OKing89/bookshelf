@@ -175,3 +175,16 @@ test('response and network failure both clear the deadline and detach from the c
     assert.equal(sent.signal.aborted, false);
   }
 });
+
+test('explicit v2 keeps the configured base path and leaves v1 as default', async (context) => {
+  const request = mockBrowser(context, () => Response.json([]), '/owned/base/api/v1/');
+  await fetchJson({ path: '/queue', apiVersion: 2, parse });
+  await fetchJson({ path: '/queue', parse });
+  assert.equal(request.mock.calls[0].arguments[0].href, origin + '/owned/base/api/v2/queue');
+  assert.equal(request.mock.calls[1].arguments[0].href, origin + '/owned/base/api/v1/queue');
+  assert.equal(request.mock.calls[0].arguments[1].headers.get('X-Api-Key'), key);
+  await assert.rejects(fetchJson({ path: 'https://external.invalid/queue', apiVersion: 2, parse }), { kind: 'invalid-request' });
+  await assert.rejects(fetchJson({ path: '/../v1/queue', apiVersion: 2, parse }), { kind: 'invalid-request' });
+  await assert.rejects(fetchJson({ path: '/queue', apiVersion: 3, parse }), { kind: 'invalid-request' });
+  assert.equal(request.mock.callCount(), 2);
+});

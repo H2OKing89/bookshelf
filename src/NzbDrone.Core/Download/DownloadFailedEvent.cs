@@ -27,6 +27,9 @@ namespace NzbDrone.Core.Download
         // Set only after the automatic import rejection's blocklist and failure
         // marker have committed. This path must never remove client data.
         public bool AutomaticRejectionRecorded { get; set; }
+
+        // Explicit queue actions handle removal/category changes themselves.
+        public bool SuppressAutomaticRemoval { get; set; }
         public string ImportRejectionCode { get; set; }
         public string ImportRejectionAction { get; set; }
         public ReleaseSourceType ReleaseSource { get; set; }

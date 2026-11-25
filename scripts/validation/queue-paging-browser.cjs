@@ -1,31 +1,69 @@
 const path = require('path');
 const { report, runBrowser, signIn } = require('./history-paging-browser.cjs');
-const { api, isAuthenticatedFetch, observeHub, requestArgs, responseFor, rows, selection, setCheckbox } = require('./operational-paging-browser.cjs');
+const { api, isAuthenticatedFetch, observeHub, rows, setCheckbox } = require('./operational-paging-browser.cjs');
+
+function queueApi(base, resource) {
+  const url = api(base, resource);
+  return resource.startsWith('queue') ? url.replace('/api/v1/', '/api/v2/') : url;
+}
+
+function requestArgs(base, request, resource, method = 'GET') {
+  const url = new URL(request.url());
+  return request.method() === method && url.origin + url.pathname === queueApi(base, resource) ? url.searchParams : null;
+}
+
+function responseFor(page, base, resource, match = () => true) {
+  return page.waitForResponse(response => {
+    const args = requestArgs(base, response.request(), resource);
+    return response.ok() && args !== null && match(args);
+  });
+}
+
+function selection(page, id) {
+  return page.getByRole('table').locator(`tbody input[type="checkbox"][name="${queueRecord(id).id}"]`);
+}
 
 function confirmedRow(page, id) {
-  return rows(page).filter({ has: page.locator(`input[type="checkbox"][name="${id}"]`) });
+  return rows(page).filter({ has: page.locator(`input[type="checkbox"][name="${queueRecord(id).id}"]`) });
 }
 
 function queueRecord(id) {
   const unknown = id === 799;
+  const downloadClientId = id % 2 ? 21 : 22;
+  const downloadId = id === 702 || id === 703 ? 'owned-shared-download-identifier' : 'owned-task-' + id;
+  const recordings = unknown ? [] : [
+    { bookId: 104, title: 'Owned recording US', titleSlug: 'owned-us', recordingId: 'owned-us' },
+    ...(id % 2 ? [{ bookId: 105, title: 'Owned recording UK', titleSlug: 'owned-uk', recordingId: 'owned-uk' }] : [])
+  ];
   return {
-    id,
+    id: `download:${downloadClientId}:${downloadId}`,
+    revision: 'owned-revision-' + id,
+    kind: 'download',
+    coverageSource: unknown ? 'unknown' : 'recordedGrab',
+    recordings,
+    author: unknown ? undefined : { authorName: 'Owned author', titleSlug: 'owned-author' },
+    canRemove: true,
+    canRemoveFromClient: true,
+    canIgnore: !unknown,
+    canChangeCategory: true,
+    canBlocklist: !unknown,
+    canGrab: false,
+    canImport: false,
     title: 'Owned Queue Release ' + id,
     status: 'downloading',
     trackedDownloadStatus: 'ok',
     trackedDownloadState: 'downloading',
     statusMessages: [],
     authorId: unknown ? undefined : 11,
-    bookId: unknown ? undefined : id % 2 ? 104 : 105,
     quality: { quality: { id: 12, name: 'M4B' }, revision: { version: 1, real: 0, isRepack: false } },
     customFormats: [],
     customFormatScore: 0,
     size: 11000,
     sizeleft: 3500,
     timeleft: '00:04:00',
-    downloadId: 'owned-shared-download-identifier',
+    downloadId,
     downloadClient: id % 2 ? 'Owned Queue Client A' : 'Owned Queue Client B',
-    downloadClientId: id % 2 ? 21 : 22,
+    downloadClientId,
     downloadClientAvailable: true,
     downloadClientHasPostImportCategory: true,
     protocol: 'torrent',
@@ -122,7 +160,7 @@ async function verifyQueuePreferences(page, base, { check, step }) {
 
 async function verifyQueueFilters(page, base, apiKey, { check, step, output }) {
   step('queue_filter_api_accepts_only_supported_values');
-  const request = search => page.context().request.get(api(base, 'queue') + '?' + search, {
+  const request = search => page.context().request.get(queueApi(base, 'queue') + '?' + search, {
     headers: { 'X-Api-Key': apiKey }, maxRedirects: 0
   });
   const [valid, invalidStatus, invalidProtocol] = await Promise.all([
@@ -189,7 +227,7 @@ async function verifyQueue(page, base, config, { check, step, output }) {
   const removalCalls = [];
   let known = [701, 702];
   let fixtureIsEmpty;
-  await page.route(url => url.origin + url.pathname === api(base, 'queue'), async route => {
+  await page.route(url => url.origin + url.pathname === queueApi(base, 'queue'), async route => {
     const args = requestArgs(base, route.request(), 'queue');
     if (!args) return route.fallback();
     if (fixtureIsEmpty === undefined) {
@@ -211,12 +249,12 @@ async function verifyQueue(page, base, config, { check, step, output }) {
       records
     } });
   });
-  await page.route(url => url.origin + url.pathname === api(base, 'queue/bulk'), route => {
-    const args = requestArgs(base, route.request(), 'queue/bulk', 'DELETE');
+  await page.route(url => url.origin + url.pathname === queueApi(base, 'queue/remove'), route => {
+    const args = requestArgs(base, route.request(), 'queue/remove', 'POST');
     if (!args) return route.fallback();
-    removalCalls.push({ ids: route.request().postDataJSON()?.ids, options: Object.fromEntries(args) });
+    removalCalls.push(route.request().postDataJSON());
     // The synthetic IDs exist in the browser response only. No removal reaches the backend.
-    return route.fulfill({ status: 404, json: { message: 'Owned queue target has already left the client' } });
+    return route.fulfill({ status: 409, json: { message: 'Owned queue target has already left the client' } });
   });
   await page.route(api(base, 'command'), route => {
     if (route.request().method() === 'POST' && route.request().postDataJSON()?.name === 'RefreshMonitoredDownloads') {
@@ -232,6 +270,10 @@ async function verifyQueue(page, base, config, { check, step, output }) {
   check('queue_uses_authenticated_prefixed_native_fetch', fixtureIsEmpty === true &&
     await isAuthenticatedFetch(page, initial.request()) && (await initial.json()).records.length === 3 && readCalls[0] === 'true');
   await selection(page, 799).waitFor();
+  check('one_row_lists_all_recorded_coverage_and_unresolved_downloads_are_visible',
+    await confirmedRow(page, 701).getByText('Owned recording US').count() === 1 &&
+    await confirmedRow(page, 701).getByText('Owned recording UK').count() === 1 &&
+    await confirmedRow(page, 799).getByText('Unresolved recording coverage').count() === 1);
 
   step('queue_distinguishes_saved_unknown_author_option');
   await page.getByRole('button', { name: 'Table Options', exact: true }).first().click();
@@ -284,16 +326,17 @@ async function verifyQueue(page, base, config, { check, step, output }) {
     await selection(page, 702).isVisible() && readCalls.length === readsWhileBulkOpen &&
     await blocklist.isVisible() && await changeCategory.isVisible());
   step('bulk_confirmation_sends_the_captured_removal');
-  const removal = page.waitForResponse(response => requestArgs(base, response.request(), 'queue/bulk', 'DELETE') !== null);
+  const removal = page.waitForResponse(response => requestArgs(base, response.request(), 'queue/remove', 'POST') !== null);
   const afterConflict = responseFor(page, base, 'queue');
   await bulk.getByRole('button', { name: 'Remove', exact: true }).click();
   const refused = await removal;
   await afterConflict;
   await selection(page, 704).waitFor();
-  check('bulk_action_sends_captured_queue_ids_even_when_download_ids_agree', refused.status() === 404 &&
-    removalCalls.length === 1 && removalCalls[0].ids?.slice().sort().join(',') === '702,703' &&
-    removalCalls[0].options.removeFromClient === 'false' && removalCalls[0].options.changeCategory === 'true' &&
-    removalCalls[0].options.blocklist === 'true' && removalCalls[0].options.skipRedownload === 'true' &&
+  check('bulk_action_sends_captured_queue_ids_even_when_download_ids_agree', refused.status() === 409 &&
+    removalCalls.length === 1 && removalCalls[0].targets?.map(({ id, revision }) => id + ':' + revision).sort().join(',') ===
+      [702, 703].map(queueRecord).map(({ id, revision }) => id + ':' + revision).sort().join(',') &&
+    removalCalls[0].removeFromClient === false && removalCalls[0].changeCategory === true &&
+    removalCalls[0].blocklist === true && removalCalls[0].skipRedownload === true &&
     await selection(page, 702).count() === 0);
   check('removed_target_is_reported_without_retrying_the_mutation', await page.getByRole('alert')
     .filter({ hasText: 'Unable to complete the queue action.' }).isVisible() && removalCalls.length === 1);
@@ -329,4 +372,23 @@ async function verifyQueue(page, base, config, { check, step, output }) {
   await verifyQueuePreferences(page, base, { check, step });
 }
 
-report(config => runBrowser(config, verifyQueue));
+async function verifyQueuePhone(page, base, config, { check, step, output }) {
+  step('phone_queue_lists_all_recordings_once');
+  await page.route(url => url.origin + url.pathname === queueApi(base, 'queue'), route => route.fulfill({
+    json: { page: 1, pageSize: 20, totalRecords: 2, records: [queueRecord(701), queueRecord(799)] }
+  }));
+  await signIn(page, config, '/activity/queue');
+  await selection(page, 701).waitFor();
+  check('single_download_row_has_distinct_recording_links', await confirmedRow(page, 701).getByRole('link', { name: 'Owned recording US', exact: true }).count() === 1 &&
+    await confirmedRow(page, 701).getByRole('link', { name: 'Owned recording UK', exact: true }).count() === 1 &&
+    await confirmedRow(page, 799).getByText('Unresolved recording coverage').count() === 1);
+  await setCheckbox(selection(page, 701), true);
+  await page.getByRole('button', { name: 'Remove Selected', exact: true }).click();
+  const modal = page.getByRole('dialog', { name: 'Remove Selected Item', exact: true });
+  await modal.waitFor();
+  check('phone_selection_removes_one_download_not_its_book_count', await modal.getByRole('button', { name: 'Remove', exact: true }).isEnabled());
+  await page.screenshot({ path: path.join(output, 'owned-activity-queue-phone.png'), fullPage: true });
+  await modal.getByRole('button', { name: 'Close', exact: true }).last().click();
+}
+
+report(config => runBrowser(config, verifyQueue, verifyQueuePhone));

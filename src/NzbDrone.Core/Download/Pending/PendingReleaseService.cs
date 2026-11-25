@@ -35,6 +35,7 @@ namespace NzbDrone.Core.Download.Pending
         List<Queue.Queue> GetPendingQueue();
         Queue.Queue FindPendingQueueItem(int queueId);
         void RemovePendingQueueItems(int queueId);
+        void RemovePendingQueueRelease(int pendingReleaseId);
         RemoteBook OldestPendingRelease(int authorId, int[] bookIds);
     }
 
@@ -257,6 +258,8 @@ namespace NzbDrone.Core.Download.Pending
                     var queue = new Queue.Queue
                     {
                         Id = GetQueueId(pendingRelease, book),
+                        PendingReleaseId = pendingRelease.Id,
+                        PendingRecordedBookIds = pendingRelease.AdditionalInfo?.BookIds,
                         Author = pendingRelease.RemoteBook.Author,
                         Book = book,
                         Quality = pendingRelease.RemoteBook.ParsedBookInfo.Quality,
@@ -298,6 +301,12 @@ namespace NzbDrone.Core.Download.Pending
                 c => c.ParsedBookInfo.BookTitle == targetItem.ParsedBookInfo.BookTitle);
 
             _repository.DeleteMany(releasesToRemove.Select(c => c.Id));
+        }
+
+        public void RemovePendingQueueRelease(int pendingReleaseId)
+        {
+            _repository.Delete(pendingReleaseId);
+            _eventAggregator.PublishEvent(new PendingReleasesUpdatedEvent());
         }
 
         public RemoteBook OldestPendingRelease(int authorId, int[] bookIds)
