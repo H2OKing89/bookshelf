@@ -7,7 +7,9 @@ These files accompany the pinned libraries used by Bookshelf:
 | Magick.NET-Q8-AnyCPU / Magick.NET.Core | 15.1.0 | [Apache license](Magick.NET/LICENSE.txt), [native and third-party notices](Magick.NET/NOTICE.txt) |
 | PdfPig | 0.1.16 | [License and included component terms](PdfPig/LICENSE.txt) |
 | FluentMigrator and its runner components | 8.0.1 | [Apache license](FluentMigrator/LICENSE.txt) |
-| Npgsql | 10.0.3 | [PostgreSQL license](Npgsql/LICENSE.txt) |
+| Npgsql | 10.0.4 | [PostgreSQL license](Npgsql/LICENSE.txt) |
+| System.IO.Abstractions / TestableIO abstraction and wrapper packages | 23.1.0 | [MIT license](System.IO.Abstractions/LICENSE.txt), [abstraction package attribution](System.IO.Abstractions/TestableIO.System.IO.Abstractions.NOTICE.nuspec), [wrapper package attribution](System.IO.Abstractions/TestableIO.System.IO.Abstractions.Wrappers.NOTICE.nuspec) |
+| Testably.Abstractions.FileSystem.Interface | 11.1.0 | [MIT license](Testably.Abstractions/LICENSE.txt) |
 | System.Data.SQLite | 2.0.4 | [Public-domain declaration and attribution](System.Data.SQLite/NOTICE.nuspec), [upstream copyright notice](System.Data.SQLite/COPYRIGHT.wiki) |
 | SourceGear.sqlite3 | 3.53.4 | [SQLite public-domain notice](SourceGear.sqlite3/LICENSE.txt), [package attribution](SourceGear.sqlite3/NOTICE.nuspec) |
 | Ical.Net | 5.2.4 | [MIT license](Ical.Net/LICENSE.md) |
@@ -43,3 +45,9 @@ revision.
 
 The iCal.NET and NodaTime notices come from the exact repository commits
 recorded in their restored NuGet package metadata.
+
+The System.IO.Abstractions compatibility package and split TestableIO runtime
+packages share the exact upstream MIT license. The two new runtime package
+metadata notices retain their package attribution and source revision.
+The resolved Testably file-system interface dependency has its own pinned
+upstream MIT notice.

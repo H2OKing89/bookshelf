@@ -42,7 +42,7 @@ namespace NzbDrone.Core.Test.Profiles
             added.Cutoff.Should().Be(Quality.MP3.Id);
             added.MinUpgradeFormatScore.Should().Be(0);
             added.Items.Where(item => item.Allowed).SelectMany(item => item.GetQualities())
-                .Should().BeEquivalentTo(Quality.UnknownAudio, Quality.MP3, Quality.M4B, Quality.FLAC);
+                .Should().BeEquivalentTo(new[] { Quality.UnknownAudio, Quality.MP3, Quality.M4B, Quality.FLAC });
         }
 
         [TestCase(9, 10, 1)]

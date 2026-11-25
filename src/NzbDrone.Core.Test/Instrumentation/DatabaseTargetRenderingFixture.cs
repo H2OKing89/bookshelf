@@ -34,7 +34,7 @@ namespace NzbDrone.Core.Test.Instrumentation
             StoredModel.ExceptionType.Should().Be(typeof(InvalidOperationException).FullName);
             StoredModel.Logger.Should().Be("Caller");
             StoredModel.Level.Should().Be("Error");
-            StoredModel.Time.ToUniversalTime().Should().BeCloseTo(entry.TimeStamp.ToUniversalTime());
+            StoredModel.Time.ToUniversalTime().Should().BeCloseTo(entry.TimeStamp.ToUniversalTime(), TimeSpan.FromMilliseconds(20));
         }
 
         [Test]

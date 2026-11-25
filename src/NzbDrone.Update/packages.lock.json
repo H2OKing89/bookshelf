@@ -292,6 +292,27 @@
         "resolved": "10.0.15",
         "contentHash": "AG49oTxB0R4YQJzeIIHRgqyaI3SOT8Q8vEfGUcju2WxOvsBkDJU4FKTQ8gYQAYCxmHOHqyJL0UDGcCf8nzRoiw=="
       },
+      "TestableIO.System.IO.Abstractions": {
+        "type": "Transitive",
+        "resolved": "23.1.0",
+        "contentHash": "qjFP81HmvWUknpayYKNrwssB9OOaFjZlURL3pXuuAkRJ7ppmlGMX3M4Gj/MOcfHivi+LYoGk83dchqTecyK8Nw==",
+        "dependencies": {
+          "Testably.Abstractions.FileSystem.Interface": "11.1.0"
+        }
+      },
+      "TestableIO.System.IO.Abstractions.Wrappers": {
+        "type": "Transitive",
+        "resolved": "23.1.0",
+        "contentHash": "GQLGGQQ11UPcP2dKmmNqRtynom5i7TLI+gJosfxAazuH4KObUQv19DxCugO9YFxvTCRk6QCm02Tb/EYYg8oJkw==",
+        "dependencies": {
+          "Testably.Abstractions.FileSystem.Interface": "11.1.0"
+        }
+      },
+      "Testably.Abstractions.FileSystem.Interface": {
+        "type": "Transitive",
+        "resolved": "11.1.0",
+        "contentHash": "ijeocqwxQWPlcneMvPrPvKbVMTVtqwp3lAOZXuAtMGJFKmzFnFc7W02QsIi8bEZDkpK8ubTz7tLAoSaYVIo7Ng=="
+      },
       "readarr.common": {
         "type": "Project",
         "dependencies": {
@@ -306,7 +327,7 @@
           "SourceGear.sqlite3": "[3.53.4, )",
           "System.Configuration.ConfigurationManager": "[10.0.15, )",
           "System.Data.SQLite": "[2.0.4, )",
-          "System.IO.Abstractions": "[17.0.24, )",
+          "System.IO.Abstractions": "[23.1.0, )",
           "System.ServiceProcess.ServiceController": "[10.0.15, )",
           "System.ValueTuple": "[4.6.2, )"
         }
@@ -405,9 +426,13 @@
       },
       "System.IO.Abstractions": {
         "type": "CentralTransitive",
-        "requested": "[17.0.24, )",
-        "resolved": "17.0.24",
-        "contentHash": "hA7bacntMiZv1Yf9xtjwl/GP3GT1mG84QxhAk7ijAUD0pJhJaVVwXScE13vMpXnNtlaRDW6SeyZdWg2j2qrh4w=="
+        "requested": "[23.1.0, )",
+        "resolved": "23.1.0",
+        "contentHash": "QsO1BbLR5TLX6TaNj9PaazubbgcxKEQCjGNGQJmH078wdJZJTlhCQ4ymDVaCcuy+emjq/1HK44PM54Bcw+GgFg==",
+        "dependencies": {
+          "TestableIO.System.IO.Abstractions": "23.1.0",
+          "TestableIO.System.IO.Abstractions.Wrappers": "23.1.0"
+        }
       },
       "System.ServiceProcess.ServiceController": {
         "type": "CentralTransitive",

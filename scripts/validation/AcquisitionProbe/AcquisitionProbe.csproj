@@ -16,6 +16,9 @@
     <Reference Include="NLog"><HintPath>$(CandidateDir)/NLog.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="System.Data.SQLite"><HintPath>$(CandidateDir)/System.Data.SQLite.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="System.IO.Abstractions"><HintPath>$(CandidateDir)/System.IO.Abstractions.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="TestableIO.System.IO.Abstractions"><HintPath>$(CandidateDir)/TestableIO.System.IO.Abstractions.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="TestableIO.System.IO.Abstractions.Wrappers"><HintPath>$(CandidateDir)/TestableIO.System.IO.Abstractions.Wrappers.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Testably.Abstractions.FileSystem.Interface"><HintPath>$(CandidateDir)/Testably.Abstractions.FileSystem.Interface.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
   <Target Name="RequirePublishedCandidate" BeforeTargets="ResolveReferences">
     <Error Condition="'$(ValidationOutputDir)' == ''" Text="Use scripts/validate-local.py so build outputs stay in an owned validation directory." />

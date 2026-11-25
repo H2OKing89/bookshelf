@@ -49,7 +49,7 @@ namespace NzbDrone.Core.Test.ImportListTests
             Complete(_first, Entry(_recording));
             Complete(_second, Entry(_recording));
             Subject.ReconcileTags(new[] { _first.Id, _second.Id });
-            Tags().Should().BeEquivalentTo(_manualTag, _syncTag);
+            Tags().Should().BeEquivalentTo(new[] { _manualTag, _syncTag });
             Claims().Should().Be(2);
             Complete(_first);
             Subject.ReconcileTags(new[] { _first.Id });
@@ -59,7 +59,7 @@ namespace NzbDrone.Core.Test.ImportListTests
             Tags().Should().Contain(_syncTag);
             Complete(_second);
             Subject.ReconcileTags(new[] { _second.Id });
-            Tags().Should().BeEquivalentTo(_manualTag);
+            Tags().Should().BeEquivalentTo(new[] { _manualTag });
             Claims().Should().Be(0);
         }
 
@@ -115,7 +115,7 @@ namespace NzbDrone.Core.Test.ImportListTests
             WriteTags(_manualTag, extra, _syncTag);
             Complete(_first);
             Subject.ReconcileTags(new[] { _first.Id });
-            Tags().Should().BeEquivalentTo(_manualTag, extra, _syncTag);
+            Tags().Should().BeEquivalentTo(new[] { _manualTag, extra, _syncTag });
         }
 
         [Test]
@@ -224,7 +224,7 @@ namespace NzbDrone.Core.Test.ImportListTests
             var preview = Subject.Preview(ImportListCleanupMode.Tag, _syncTag);
             preview.Candidates.Should().ContainSingle();
             Subject.Apply(Request(preview));
-            Tags().Should().BeEquivalentTo(_manualTag, _syncTag);
+            Tags().Should().BeEquivalentTo(new[] { _manualTag, _syncTag });
             ReadBook(_recording.Id).Monitored.Should().BeTrue();
             Claims().Should().Be(0);
             Subject.Preview(ImportListCleanupMode.Tag, _syncTag).Candidates.Should().BeEmpty();

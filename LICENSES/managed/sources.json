@@ -54,17 +54,17 @@
     "packageSha512Base64": "GcToFZg8MjT+VG7GhA1NRhRbg6XwZipL8Pt0ytAakkqoKrZka2y+F/PkApRNhgI7Pl5IJn/S9miebd7grWXp5w=="
   },
   "Npgsql/LICENSE.txt": {
-    "source": "https://raw.githubusercontent.com/npgsql/npgsql/d3768398c17877b3a916c3c4d87e8e11698991fc/LICENSE",
+    "source": "https://raw.githubusercontent.com/npgsql/npgsql/a445c040bf90b22e8921c4a079549c6ce154c9e3/LICENSE",
     "package": "Npgsql",
-    "version": "10.0.3",
+    "version": "10.0.4",
     "bytes": 903,
     "sha256": "2e1d9cc6ed4eb7fe6fa82091846c06b4f58571a2c3b54777db6baeca10dd2d74",
     "repository": {
       "type": "git",
       "url": "https://github.com/npgsql/npgsql",
-      "commit": "d3768398c17877b3a916c3c4d87e8e11698991fc"
+      "commit": "a445c040bf90b22e8921c4a079549c6ce154c9e3"
     },
-    "packageSha512Base64": "9wZYlR6r1uLGnAxBuUPOCmgbS6SDtVKyGkZ0tDGPaBHYbbdEDEajD0VErq+W/dn3gHfJ3WvOdZaNNNybnFCupA=="
+    "packageSha512Base64": "XnFM94iudYzR9C+qhk2Eb+fb7ShzZ5mCVfZmDcfoWexge0CdNOX/KAE7KZwJfvRhbCN66FMeHBJbSgrzB31oFw=="
   },
   "System.Data.SQLite/NOTICE.nuspec": {
     "source": "https://api.nuget.org/v3-flatcontainer/system.data.sqlite/2.0.4/system.data.sqlite.2.0.4.nupkg#System.Data.SQLite.nuspec",
@@ -141,5 +141,57 @@
       "commit": "e56daa2599a4d1917065c015bda923e7a352a236"
     },
     "packageSha512Base64": "hEWuDyT8VW5qaFTURZD/QxtAex3bZibkXM308qtEmkdyIFq3+P6PYK7cUCbUQqsrahKBl+6tKpgIiA+Lw+sp2w=="
+  },
+  "System.IO.Abstractions/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/TestableIO/System.IO.Abstractions/7f444c9d8202f9abad854d6ee8c5554ccdad737d/LICENSE",
+    "package": "System.IO.Abstractions",
+    "version": "23.1.0",
+    "bytes": 1113,
+    "sha256": "9b4f46dc8e65bb14714479eb4de76b7a1e2e7f9eff7ab1eb0e9dea712f19b1ed",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/TestableIO/System.IO.Abstractions.git",
+      "commit": "7f444c9d8202f9abad854d6ee8c5554ccdad737d"
+    },
+    "packageSha512Base64": "nCkVz+jYjaFzOOSjlH2uwsGjFqe+xBxgMYUD21n99e5Fqlnnto7pxMKp/zfV5NNOIb6gSxKcWfm5fHqr241onA=="
+  },
+  "System.IO.Abstractions/TestableIO.System.IO.Abstractions.NOTICE.nuspec": {
+    "source": "https://api.nuget.org/v3-flatcontainer/testableio.system.io.abstractions/23.1.0/testableio.system.io.abstractions.23.1.0.nupkg#TestableIO.System.IO.Abstractions.nuspec",
+    "package": "TestableIO.System.IO.Abstractions",
+    "version": "23.1.0",
+    "bytes": 2295,
+    "sha256": "eb5e268e09fdc7baa77a728df835db61b5d401da82e978028ab5319b794cc686",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/TestableIO/System.IO.Abstractions.git",
+      "commit": "7f444c9d8202f9abad854d6ee8c5554ccdad737d"
+    },
+    "packageSha512Base64": "7ytSNzkNNiKsh+m6XlptUBX4pj9vTob5PkXzurQkl5xbrBvMMbeX2/cul2Yw6JrNJksOVl/lqivBAOsnn7XzdA=="
+  },
+  "System.IO.Abstractions/TestableIO.System.IO.Abstractions.Wrappers.NOTICE.nuspec": {
+    "source": "https://api.nuget.org/v3-flatcontainer/testableio.system.io.abstractions.wrappers/23.1.0/testableio.system.io.abstractions.wrappers.23.1.0.nupkg#TestableIO.System.IO.Abstractions.Wrappers.nuspec",
+    "package": "TestableIO.System.IO.Abstractions.Wrappers",
+    "version": "23.1.0",
+    "bytes": 2514,
+    "sha256": "9d181e4232fc82c61912520b531470d82dbb934a61efccedc4cb35c01ba2d0da",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/TestableIO/System.IO.Abstractions.git",
+      "commit": "7f444c9d8202f9abad854d6ee8c5554ccdad737d"
+    },
+    "packageSha512Base64": "Khs7DP2vLHXWpTcIv1oovm2ipcGQbt1TpiDCGHEbHtrv7h5LHnOBBAQOr+k+KmEs9/JsFZ0Pakd7BYaRwCsjGg=="
+  },
+  "Testably.Abstractions/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/Testably/Testably.Abstractions/6ffef067536270495eaa91cc4dd52c364745a721/LICENSE",
+    "package": "Testably.Abstractions.FileSystem.Interface",
+    "version": "11.1.0",
+    "bytes": 1072,
+    "sha256": "024f2e034ea52d1b47be884bda1bd9b776ceddbfb2a7cc4d49f79255c8ed483c",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/Testably/Testably.Abstractions.git",
+      "commit": "6ffef067536270495eaa91cc4dd52c364745a721"
+    },
+    "packageSha512Base64": "N1XAJDRjRBbqhxDHN9T8PZF2tchmThRsuZ0W7cjqGiusInHFQiO8im7YMO6wPT2nnJDdukqcHdw3lpjItv5HEg=="
   }
 }

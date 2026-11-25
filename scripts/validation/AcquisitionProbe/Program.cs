@@ -804,7 +804,7 @@ internal static class Program
                     "GetFileSize" => new FileInfo((string)arguments[0]).Length,
                     "FileGetLastWrite" => File.GetLastWriteTimeUtc((string)arguments[0]),
                     "GetFileAttributes" => File.GetAttributes((string)arguments[0]),
-                    "GetDirectoryInfo" => new System.IO.Abstractions.FileSystem().DirectoryInfo.FromDirectoryName((string)arguments[0]),
+                    "GetDirectoryInfo" => new System.IO.Abstractions.FileSystem().DirectoryInfo.New((string)arguments[0]),
                     "GetFiles" => Directory.GetFiles((string)arguments[0], "*", (bool)arguments[1] ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly),
                     "GetDirectories" => Directory.GetDirectories((string)arguments[0]),
                     "DeleteFile" => DeleteOwnedSource((string)arguments[0]),

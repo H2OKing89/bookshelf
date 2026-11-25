@@ -28,6 +28,47 @@ namespace NzbDrone.Common.Test.DiskTests
         }
 
         [Test]
+        public void read_stream_preserves_binary_content_and_read_only_access()
+        {
+            var path = GetTempFilePath();
+            var expected = new byte[] { 0, 1, 127, 255 };
+            File.WriteAllBytes(path, expected);
+
+            using var stream = Subject.OpenReadStream(path);
+            using var copy = new MemoryStream();
+            stream.CanRead.Should().BeTrue();
+            stream.CanWrite.Should().BeFalse();
+            stream.CopyTo(copy);
+
+            copy.ToArray().Should().Equal(expected);
+        }
+
+        [Test]
+        public void write_stream_truncates_existing_files_and_preserves_binary_content()
+        {
+            var path = GetTempFilePath();
+            File.WriteAllBytes(path, new byte[] { 1, 2, 3, 4 });
+            var expected = new byte[] { 255, 0 };
+
+            using (var stream = Subject.OpenWriteStream(path))
+            {
+                stream.CanWrite.Should().BeTrue();
+                stream.Write(expected, 0, expected.Length);
+            }
+
+            File.ReadAllBytes(path).Should().Equal(expected);
+        }
+
+        [Test]
+        public void read_stream_rejects_a_missing_file_without_creating_it()
+        {
+            var path = GetTempFilePath();
+
+            Assert.Throws<FileNotFoundException>(() => Subject.OpenReadStream(path));
+            File.Exists(path).Should().BeFalse();
+        }
+
+        [Test]
         public void directory_exist_should_be_able_to_find_existing_folder()
         {
             Subject.FolderExists(TempFolder).Should().BeTrue();

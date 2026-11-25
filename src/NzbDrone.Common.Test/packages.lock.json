@@ -494,6 +494,36 @@
         "resolved": "10.0.15",
         "contentHash": "AG49oTxB0R4YQJzeIIHRgqyaI3SOT8Q8vEfGUcju2WxOvsBkDJU4FKTQ8gYQAYCxmHOHqyJL0UDGcCf8nzRoiw=="
       },
+      "TestableIO.System.IO.Abstractions": {
+        "type": "Transitive",
+        "resolved": "23.1.0",
+        "contentHash": "qjFP81HmvWUknpayYKNrwssB9OOaFjZlURL3pXuuAkRJ7ppmlGMX3M4Gj/MOcfHivi+LYoGk83dchqTecyK8Nw==",
+        "dependencies": {
+          "Testably.Abstractions.FileSystem.Interface": "11.1.0"
+        }
+      },
+      "TestableIO.System.IO.Abstractions.TestingHelpers": {
+        "type": "Transitive",
+        "resolved": "23.1.0",
+        "contentHash": "VEUGfp8BvWTbqIz2wKuijEsOwYW9mdAgDmvByjIZVuYv9Po/acEETFax6svxa+0/aPw//yYbDOiBeH4xlmoDYw==",
+        "dependencies": {
+          "TestableIO.System.IO.Abstractions.Wrappers": "23.1.0",
+          "Testably.Abstractions.FileSystem.Interface": "11.1.0"
+        }
+      },
+      "TestableIO.System.IO.Abstractions.Wrappers": {
+        "type": "Transitive",
+        "resolved": "23.1.0",
+        "contentHash": "GQLGGQQ11UPcP2dKmmNqRtynom5i7TLI+gJosfxAazuH4KObUQv19DxCugO9YFxvTCRk6QCm02Tb/EYYg8oJkw==",
+        "dependencies": {
+          "Testably.Abstractions.FileSystem.Interface": "11.1.0"
+        }
+      },
+      "Testably.Abstractions.FileSystem.Interface": {
+        "type": "Transitive",
+        "resolved": "11.1.0",
+        "contentHash": "ijeocqwxQWPlcneMvPrPvKbVMTVtqwp3lAOZXuAtMGJFKmzFnFc7W02QsIi8bEZDkpK8ubTz7tLAoSaYVIo7Ng=="
+      },
       "readarr.api.v1": {
         "type": "Project",
         "dependencies": {
@@ -505,7 +535,7 @@
           "Readarr.Http": "[1.0.0, )",
           "Readarr.SignalR": "[1.0.0, )",
           "Swashbuckle.AspNetCore.Annotations": "[6.6.2, )",
-          "System.IO.Abstractions": "[17.0.24, )",
+          "System.IO.Abstractions": "[23.1.0, )",
           "System.Reflection.TypeExtensions": "[4.7.0, )"
         }
       },
@@ -523,7 +553,7 @@
           "SourceGear.sqlite3": "[3.53.4, )",
           "System.Configuration.ConfigurationManager": "[10.0.15, )",
           "System.Data.SQLite": "[2.0.4, )",
-          "System.IO.Abstractions": "[17.0.24, )",
+          "System.IO.Abstractions": "[23.1.0, )",
           "System.ServiceProcess.ServiceController": "[10.0.15, )",
           "System.ValueTuple": "[4.6.2, )"
         }
@@ -549,11 +579,11 @@
           "NLog": "[5.5.1, )",
           "NLog.Targets.Syslog": "[7.0.0, )",
           "Newtonsoft.Json": "[13.0.4, )",
-          "Npgsql": "[10.0.3, )",
+          "Npgsql": "[10.0.4, )",
           "PdfPig": "[0.1.16, )",
           "Polly": "[8.9.1, )",
           "Readarr.Common": "[1.0.0, )",
-          "System.IO.Abstractions": "[17.0.24, )",
+          "System.IO.Abstractions": "[23.1.0, )",
           "TagLibSharp-Lidarr": "[2.2.0.19, )"
         }
       },
@@ -590,7 +620,7 @@
       "readarr.test.common": {
         "type": "Project",
         "dependencies": {
-          "FluentAssertions": "[5.10.3, )",
+          "FluentAssertions": "[7.2.2, )",
           "FluentValidation": "[9.5.4, )",
           "Moq": "[4.21.0, )",
           "NLog": "[5.5.1, )",
@@ -600,8 +630,8 @@
           "Readarr.Core": "[1.0.0, )",
           "RestSharp": "[106.15.0, )",
           "RestSharp.Serializers.SystemTextJson": "[106.15.0, )",
-          "System.IO.Abstractions": "[17.0.24, )",
-          "System.IO.Abstractions.TestingHelpers": "[17.0.24, )"
+          "System.IO.Abstractions": "[23.1.0, )",
+          "System.IO.Abstractions.TestingHelpers": "[23.1.0, )"
         }
       },
       "readarr.test.dummy": {
@@ -643,11 +673,11 @@
       },
       "FluentAssertions": {
         "type": "CentralTransitive",
-        "requested": "[5.10.3, )",
-        "resolved": "5.10.3",
-        "contentHash": "gVPEVp1hLVqcv+7Q2wiDf7kqCNn7+bQcQ0jbJ2mcRT6CeRoZl1tNkqvzSIhvekyldDptk77j1b03MXTTRIqqpg==",
+        "requested": "[7.2.2, )",
+        "resolved": "7.2.2",
+        "contentHash": "B6FJmtTadaqtLXH5qfn9hlYF5ruNOAdtjA9+1V3fuYp/MZzj7lB3Ys5cdgy72uv7w1GE5Y9PEX369UD3N1sfHg==",
         "dependencies": {
-          "System.Configuration.ConfigurationManager": "4.4.0"
+          "System.Configuration.ConfigurationManager": "6.0.0"
         }
       },
       "FluentMigrator.Runner.Core": {
@@ -851,9 +881,9 @@
       },
       "Npgsql": {
         "type": "CentralTransitive",
-        "requested": "[10.0.3, )",
-        "resolved": "10.0.3",
-        "contentHash": "7nb5YzXuvWWJxB0J8DiyL3we+X4FOctZrt0fIBnucOIaIevFEEwGQVZKtiu9olXdlNAK1eNgqSral6r/jlhI4w==",
+        "requested": "[10.0.4, )",
+        "resolved": "10.0.4",
+        "contentHash": "m2VCpcU9MKD8lLxTn+YaNIRWd+Gz3y/9wIaM+2ifDF24xZ2Kvvjx4CDB2BIgobr1Gj6a/gsdmfz1sQ+kmd7liw==",
         "dependencies": {
           "Microsoft.Extensions.Logging.Abstractions": "10.0.0"
         }
@@ -936,17 +966,21 @@
       },
       "System.IO.Abstractions": {
         "type": "CentralTransitive",
-        "requested": "[17.0.24, )",
-        "resolved": "17.0.24",
-        "contentHash": "hA7bacntMiZv1Yf9xtjwl/GP3GT1mG84QxhAk7ijAUD0pJhJaVVwXScE13vMpXnNtlaRDW6SeyZdWg2j2qrh4w=="
+        "requested": "[23.1.0, )",
+        "resolved": "23.1.0",
+        "contentHash": "QsO1BbLR5TLX6TaNj9PaazubbgcxKEQCjGNGQJmH078wdJZJTlhCQ4ymDVaCcuy+emjq/1HK44PM54Bcw+GgFg==",
+        "dependencies": {
+          "TestableIO.System.IO.Abstractions": "23.1.0",
+          "TestableIO.System.IO.Abstractions.Wrappers": "23.1.0"
+        }
       },
       "System.IO.Abstractions.TestingHelpers": {
         "type": "CentralTransitive",
-        "requested": "[17.0.24, )",
-        "resolved": "17.0.24",
-        "contentHash": "PePTkh5aFsCWSUmc3msyRdJS+aJ15DZDmhgnnjuR7lBSfEyeOi3+CfQqpU28+lpmLH1tFv16K2ODcUNg7lzOPA==",
+        "requested": "[23.1.0, )",
+        "resolved": "23.1.0",
+        "contentHash": "e03Q/r4YHGAnA8TOPO3+u627dRPUbFcHG/XkIgneEKKdvv7tC6zIKfj+fd6r1IcEgcRkvdWQKHXhNfwh1A8lOA==",
         "dependencies": {
-          "System.IO.Abstractions": "17.0.24"
+          "TestableIO.System.IO.Abstractions.TestingHelpers": "23.1.0"
         }
       },
       "System.Reflection.TypeExtensions": {
