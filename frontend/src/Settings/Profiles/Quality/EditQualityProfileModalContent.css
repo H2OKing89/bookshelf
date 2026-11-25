@@ -20,8 +20,8 @@
   margin: 20px 0;
 
   & summary {
-    cursor: pointer;
     font-weight: 600;
+    cursor: pointer;
   }
 }
 
