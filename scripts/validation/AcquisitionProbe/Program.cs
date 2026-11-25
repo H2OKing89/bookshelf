@@ -538,6 +538,7 @@ internal static class Program
             var hashes = fixture.SourceHashes();
             fixture.Import();
             Check("published_executable_only_download_has_specific_diagnostic", fixture.Tracked.State == TrackedDownloadState.ImportBlocked && fixture.HasCode(RejectionCode.ExecutableFile) && fixture.HasCode(RejectionCode.NoEligibleFiles));
+            Check("published_rejection_without_saved_indexer_remains_review", fixture.Tracked.State == TrackedDownloadState.ImportBlocked && fixture.HasCode(RejectionCode.IndexerRejectionReview) && fixture.Removed == 0);
             fixture.AssertRetained(Phase, hashes);
             Check("published_ebook_container_and_sidecars_are_classified_by_book_policy", fixture.Extensions.Classify("Book.EPUB") == DownloadFileKind.Media && fixture.Extensions.Classify("Book.M4B") == DownloadFileKind.Media && fixture.Extensions.Classify("Book.cue") == DownloadFileKind.Sidecar && fixture.Extensions.Classify("Book.m3u") == DownloadFileKind.Sidecar);
             Check("published_archive_download_is_recoverable_not_executable", fixture.Extensions.GetRejection("Book.ZIP") is { Code: RejectionCode.ArchiveNotExtracted, Type: RejectionType.Temporary });
@@ -781,6 +782,7 @@ internal static class Program
             var sources = Fake<IDownloadImportSourceService>((method, arguments) =>
             {
                 if (method.Name == "Scan") return publishedSources.Scan((TrackedDownload)arguments[0]);
+                if (method.Name == "IsSafeRejectionSource") return publishedSources.IsSafeRejectionSource((TrackedDownload)arguments[0]);
                 if (method.Name == "Validate") return publishedSources.Validate((TrackedDownload)arguments[0], (DownloadImportReceipt)arguments[1]);
                 if (method.Name == "Retire")
                 {
@@ -912,6 +914,12 @@ internal static class Program
             _services[typeof(IDownloadImportDiagnostics)] = new DownloadImportDiagnostics(disk, clientProvider, Extensions, _logger);
             _services[typeof(ITrackedDownloadService)] = tracked;
             _services[typeof(IFailedDownloadService)] = Fake<IFailedDownloadService>((method, _) => Unexpected(method));
+            // Existing acquisition scenarios have no opted-in indexer rejection
+            // policy. Exercise the published service and its actual source guard,
+            // and fail the synthetic probe if it attempts a blocklist write.
+            _services[typeof(IIndexerFactory)] = Fake<IIndexerFactory>((method, _) => method.Name == "Find" ? null : Unexpected(method));
+            _services[typeof(IRejectedImportRepository)] = Fake<IRejectedImportRepository>((method, _) => Unexpected(method));
+            _services[typeof(IRejectedImportService)] = Construct<RejectedImportService>(_services);
             _services[typeof(ITrackedDownloadAlreadyImported)] = Construct<TrackedDownloadAlreadyImported>(_services);
             _hub = Construct<DownloadEventHub>(_services);
             _completed = Construct<CompletedDownloadService>(_services);
