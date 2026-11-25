@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-25",
+  "baseCommit": "7953a4c2f",
+  "sourceCommit": "efffe2792d63c0d4bec52fd99ee0ee37fc03d64a",
+  "isolatedTestedDependencyCommit": "f40ade0904a8b7a3e3a69423d4302f6ac6a096bd",
+  "isolatedTestedTree": "77595a48f3d6939dfa0db5fe4db078e8c1b6d980",
+  "nugetLockfiles": 25,
+  "managedPackageIds": 124,
+  "managedComponents": 124,
+  "nugetAuditedProjects": 25,
+  "nugetReportedVulnerablePackages": 0,
+  "nugetRegistryPins": 70,
+  "registryRequestErrors": [],
+  "removedDormantCentralPins": 12,
+  "dormantPinRemovalIndependentlyChangedLockfiles": false,
+  "styleCopTrial": {
+    "diagnosticsBeforeFormattingIncludingCascades": 47,
+    "csharpFilesTouched": 189,
+    "whitespaceOnlyFiles": 119,
+    "tokenChangeFiles": 70,
+    "directDistinctDiagnosticsAfterFormatting": 22,
+    "accepted": false
+  },
+  "offlineSourcePassCounts": {
+    "core": 4857,
+    "common": 855,
+    "api": 102,
+    "host": 193,
+    "updater": 21,
+    "mono-disk": 36,
+    "postgres-migrations": 23,
+    "postgres-recording": 59
+  },
+  "offlineSourceNotExecutedCounts": {
+    "core": 55,
+    "common": 38,
+    "api": 0,
+    "host": 4,
+    "updater": 0,
+    "mono-disk": 3,
+    "postgres-migrations": 0,
+    "postgres-recording": 0
+  },
+  "sourceTestsCompleted": true,
+  "ownedPostgresStopped": true,
+  "exactIntegratedPackageValidation": false,
+  "nativeArm64ExecutionVerified": false,
+  "nativeCodeAudit": false,
+  "frontendInventoryIncluded": false
+}

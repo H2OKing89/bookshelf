@@ -520,3 +520,88 @@ and two focused unit tests, both TS projects, ESLint and Vite verification.
 The final lock graph is unchanged, so the dated inventory above remains exact.
 The initial failed receipt is retained; exact corrected package replay is
 recorded in local validation.
+
+## Managed dependency modernization, 2026-11-25
+
+The [dated managed inventory](dependencies/2026-11-25-managed/summary.json)
+records the locked graph, official NuGet registry metadata for all 70 public
+central pins and the isolated source-test receipt. The custom Servarr
+Mono.Posix pin remains excluded from the public registry comparison. This
+slice does not change the pinned .NET 10 runtime or SDK, native provider,
+MediaInfo, SQLite, Magick.NET or PdfPig delivery versions.
+
+| Dependency | Before | Selected | Decision |
+| --- | --- | --- | --- |
+| FluentAssertions | 5.10.3 | 7.2.2 | Adopt the last open-source major; the [vendor's licensing guidance](https://fluentassertions.com/introduction#licensing) distinguishes v7 from the commercial-use terms introduced in v8. |
+| Npgsql | 10.0.3 | 10.0.4 | Current same-major stable patch; preserve the .NET 10 provider and verify PostgreSQL migrations and repository behavior. |
+| System.IO.Abstractions and TestingHelpers | 17.0.24 | 23.1.0 | Updated together to the latest stable registry line. Migrate deprecated factory methods to `New` and return `Stream` from the internal disk provider, matching the new library wrapper. |
+
+FluentAssertions now uses explicit 20 ms precision where its former default
+applied, retains the explicitly requested audio precision, and compares typed
+collections and predicates rather than legacy object comparisons. The first
+full intermediate regression exposed six ineffective `Should().Equals(...)`
+expressions as exceptions; the corrected assertions use `Be(...)` and enforce
+the original expected file counts. Its [initial receipt](dependencies/2026-11-25-managed/initial-intermediate-test-result.json)
+is retained; no assertions were suppressed. Three new cases exercise
+real binary reads, write/truncation and missing-file behavior through the
+filesystem wrapper. The existing backup, import and receipt tests cover the
+`Stream` change; the acquisition delivery probe also migrates its directory
+factory and references the three type-forwarded interface/wrapper assemblies
+from the candidate itself, rather than adding probe-only packages. The Media
+probe still returns FileStream instances, which satisfy the Stream contract.
+
+The expanded IO package graph includes the split TestableIO 23.1.0 abstraction
+and wrapper assemblies and Testably.Abstractions.FileSystem.Interface 11.1.0.
+All are MIT-licensed according to restored package metadata. The new distributed
+[notices and source manifest](../LICENSES/managed/README.md) preserve upstream
+bytes, exact package checksums and the identified repository revisions; Npgsql
+10.0.4's PostgreSQL license is similarly pinned. The independently restored
+solution and Windows-targetable GUI graphs initially had 12 central declarations
+that did not resolve in any lockfile. Removing those declarations alone changed
+no lockfile, so dormant SQL client, JWT, buffer, memory and framework pins do
+not introduce unrelated package dependencies. Actual resolved versions after
+subsequent upgrades are recorded in the registry review.
+
+### Remaining managed lines
+
+| Retained dependency | Registry candidate | Decision |
+| --- | --- | --- |
+| DryIoc 5.4.3 / adapter 6.2.0 | 6.0.0 / 8.0.0 | Coupled container/lifetime review; the adapter 8 package declares .NET 11-generation DI abstractions. Keep the tested .NET 10 host registration behavior. |
+| FluentValidation 9.5.4 | 12.2.0 | Custom validators, cascade behavior and several removed APIs require a separate domain validation migration. The donor also retains 9.5.4. |
+| MailKit 4.18.2 | 5.0.0 | Package metadata changes MimeKit to MimeKit.Core 5; require owned SMTP/auth/TLS behavior proof. |
+| Microsoft ASP.NET, Extensions and System 10.0.15 | 11.0.0 | Move runtime-generation dependencies together, not piecemeal into the .NET 10 package. |
+| MonoTorrent 2.0.7 | 3.0.2 | Donor changes torrent/magnet identity to `InfoHashes.V1OrV2`; v2-only and hybrid receipt, client and blocklist semantics require their own acquisition migration. |
+| NLog 5.5.1 / extensions 5.5.0 | 6.2.2 / 6.3.0 | Keep logging configuration, redaction, shutdown and profiler semantics; the donor stays on v5. |
+| NUnit 4.6.1 | 5.0.0 | Separate next-major assertion/runner behavior migration; retain the already-proven NUnit 4 major. |
+| Npgsql 10.0.4 | 11.0.0 | Provider major and coupled runtime/repository changes need distinct migration validation. |
+| RestSharp 106.15.0 | 114.1.0 | Only legacy test clients retain the obsolete request/client interface; production graph does not resolve it. Rewrite the test harness separately. |
+| Selenium.Support 3.141.0 / ChromeDriver 134 | 4.54.0 / 158 | Legacy automation migration rather than a drop-in driver update; the maintained owned browser gates use Playwright. |
+| StyleCop.Analyzers 1.1.118 | 1.3.180 | A real isolated compile of the newer stable version produced 47 total errors including build cascades. The focused analyzer formatter trial touched 189 C# files: 119 whitespace-only, but 70 token changes. A second complete compile still showed 22 distinct direct diagnostics including inherited parameter names. Such names can affect named argument contracts; defer deliberate migration rather than applying broad mechanical renames or suppressions. |
+| Swashbuckle 6.6.2 | 6.9.0 same-line / 11.0.1 latest | OpenAPI source/static schema and operation contract comparison is separate from this filesystem/provider/test update. |
+| Mono.Posix.NETStandard 5.20.1.34-servarr22 | Custom feed | No native POSIX ABI replacement without architecture-specific acceptance. |
+
+The [registry review](dependencies/2026-11-25-managed/registry-lines.json)
+retains each before/selected/latest version and [reviewed package metadata](dependencies/2026-11-25-managed/reviewed-nuget-metadata.json).
+Neither the registry's highest stable version nor Sonarr v5's choices alone
+establish compatibility. FluentAssertions 8 remains unadopted because of the
+commercial terms; no license key or paid library was introduced.
+
+### Managed validation
+
+Both the solution and explicit Windows-targeted GUI graph passed locked restore.
+The clean isolated candidate passed all eight suites: 6,146 total cases
+(Core 4,857, Common 855, API 102, Host 193, Updater 21, native Linux disk 36,
+owned PostgreSQL migrations 23 and focused PostgreSQL repository cases 59).
+There were no failing tests; 100 cases were not executed (platform/explicit
+skips). The owned PostgreSQL instance stopped and the source stayed unchanged.
+The [audit](dependencies/2026-11-25-managed/nuget-audit.json) reports zero known
+vulnerable packages across all 25 projects. The [CycloneDX inventory](dependencies/2026-11-25-managed/inventory.cdx.json)
+uses exact lock hashes; [SHA-256 file hashes](dependencies/2026-11-25-managed/lock-sha256.json)
+identify the input locks and central/SDK declarations. The [source-test receipt](dependencies/2026-11-25-managed/source-tests.json)
+records each executed offline suite, platform skips, private PostgreSQL
+migration and focused repository cases and native Linux disk tests. No live
+home, external provider, credentials or actual download client was used.
+This audit is a registry advisory snapshot, not a complete security or native
+code audit; integrated native x64 package replay and native ARM64 execution are
+separate gates. P09 remains in progress for outstanding coupled migrations and
+native release acceptance.

@@ -1,0 +1,5326 @@
+{
+  "DryIoc.Microsoft.DependencyInjection": {
+    "selected": "6.2.0",
+    "reviewedVersions": {
+      "6.2.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "DryIoc.dll",
+            "version": "5.4.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "7.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "DryIoc.dll",
+            "version": "5.4.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "7.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "DryIoc.dll",
+            "version": "5.4.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "6.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/dryioc.microsoft.dependencyinjection/6.2.0/dryioc.microsoft.dependencyinjection.nuspec",
+        "repository": {
+          "commit": "313ef86777dbdf464a01f9f2b69a5d76929680cc",
+          "type": "git",
+          "url": "https://github.com/dadhi/DryIoc.git"
+        }
+      },
+      "8.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "DryIoc.dll",
+            "version": "6.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "DryIoc.dll",
+            "version": "6.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "DryIoc.dll",
+            "version": "6.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.5.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "DryIoc.dll",
+            "version": "6.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "DryIoc.dll",
+            "version": "6.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "11.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/dryioc.microsoft.dependencyinjection/8.0.0/dryioc.microsoft.dependencyinjection.nuspec",
+        "repository": {
+          "commit": "ab01e16e2f83a28b39af31b86e7ef0eb88be1e53",
+          "type": "git",
+          "url": "https://github.com/dadhi/DryIoc.git"
+        }
+      }
+    }
+  },
+  "DryIoc.dll": {
+    "selected": "5.4.3",
+    "reviewedVersions": {
+      "5.4.3": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.5.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Reflection.Emit.Lightweight",
+            "version": "4.7.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/dryioc.dll/5.4.3/dryioc.dll.nuspec",
+        "repository": {
+          "commit": "8ab5c24f3de23a76bd2823cd84e1902f182c817c",
+          "type": "git",
+          "url": "https://github.com/dadhi/DryIoc.git"
+        }
+      },
+      "6.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.5.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/dryioc.dll/6.0.0/dryioc.dll.nuspec",
+        "repository": {
+          "commit": "ab01e16e2f83a28b39af31b86e7ef0eb88be1e53",
+          "type": "git",
+          "url": "https://github.com/dadhi/DryIoc.git"
+        }
+      }
+    }
+  },
+  "FluentAssertions": {
+    "selected": "7.2.2",
+    "reviewedVersions": {
+      "5.10.3": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.4.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NETStandard.Library",
+            "version": "1.6.1"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Reflection.TypeExtensions",
+            "version": "4.4.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.4.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyModel",
+            "version": "1.1.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NETStandard.Library",
+            "version": "1.6.1"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.4.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Configuration.ConfigurationManager",
+            "version": "4.4.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Configuration.ConfigurationManager",
+            "version": "4.4.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Configuration.ConfigurationManager",
+            "version": "4.4.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Configuration.ConfigurationManager",
+            "version": "4.4.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "Apache-2.0"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/Apache-2.0"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/fluentassertions/5.10.3/fluentassertions.nuspec",
+        "repository": {
+          "type": "git",
+          "url": "https://github.com/fluentassertions/fluentassertions.git"
+        }
+      },
+      "7.2.2": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.5.4"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Configuration.ConfigurationManager",
+            "version": "6.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.5.4"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "Apache-2.0"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/Apache-2.0"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/fluentassertions/7.2.2/fluentassertions.nuspec",
+        "repository": {
+          "commit": "16e5b2d96a6ebfa1600844024362ad93489065c6",
+          "type": "git",
+          "url": "https://github.com/fluentassertions/fluentassertions"
+        }
+      },
+      "8.11.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.5.4"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.5.4"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "file"
+            },
+            "value": "LICENSE"
+          },
+          {
+            "attributes": {},
+            "value": "https://aka.ms/deprecateLicenseUrl"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/fluentassertions/8.11.0/fluentassertions.nuspec",
+        "repository": {
+          "commit": "9ed9dc02c47e6ad6bb0b00401fe8ab21b6fd60eb",
+          "type": "git",
+          "url": "https://github.com/fluentassertions/fluentassertions"
+        }
+      }
+    }
+  },
+  "FluentValidation": {
+    "selected": "9.5.4",
+    "reviewedVersions": {
+      "12.2.0": {
+        "dependencies": [],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "Apache-2.0"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/Apache-2.0"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/fluentvalidation/12.2.0/fluentvalidation.nuspec",
+        "repository": {
+          "branch": "refs/heads/main",
+          "commit": "299ef377bde844af7d28b7aa21786a6853f930e3",
+          "type": "git",
+          "url": "https://github.com/JeremySkinner/fluentvalidation"
+        }
+      },
+      "9.5.4": {
+        "dependencies": [],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "Apache-2.0"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/Apache-2.0"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/fluentvalidation/9.5.4/fluentvalidation.nuspec",
+        "repository": {
+          "commit": "3b3b616723d67c9c164119d045800ee0b115899e",
+          "type": "git",
+          "url": "https://github.com/JeremySkinner/fluentvalidation"
+        }
+      }
+    }
+  },
+  "Mailkit": {
+    "selected": "4.18.2",
+    "reviewedVersions": {
+      "4.18.2": {
+        "dependencies": [
+          {
+            "id": "System.Formats.Asn1",
+            "version": "10.0.13"
+          },
+          {
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          },
+          {
+            "id": "MimeKit",
+            "version": "4.18.2"
+          },
+          {
+            "id": "System.Formats.Asn1",
+            "version": "10.0.13"
+          },
+          {
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          },
+          {
+            "id": "MimeKit",
+            "version": "4.18.2"
+          },
+          {
+            "id": "System.Formats.Asn1",
+            "version": "10.0.13"
+          },
+          {
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          },
+          {
+            "id": "MimeKit",
+            "version": "4.18.2"
+          },
+          {
+            "id": "System.Formats.Asn1",
+            "version": "10.0.13"
+          },
+          {
+            "id": "MimeKit",
+            "version": "4.18.2"
+          },
+          {
+            "id": "System.Formats.Asn1",
+            "version": "10.0.13"
+          },
+          {
+            "id": "MimeKit",
+            "version": "4.18.2"
+          },
+          {
+            "id": "System.Formats.Asn1",
+            "version": "10.0.13"
+          },
+          {
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          },
+          {
+            "id": "MimeKit",
+            "version": "4.18.2"
+          },
+          {
+            "id": "System.Formats.Asn1",
+            "version": "10.0.13"
+          },
+          {
+            "id": "MimeKit",
+            "version": "4.18.2"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/mailkit/4.18.2/mailkit.nuspec",
+        "repository": {
+          "type": "git",
+          "url": "https://github.com/jstedfast/MailKit"
+        }
+      },
+      "5.0.0": {
+        "dependencies": [
+          {
+            "id": "System.Formats.Asn1",
+            "version": "10.0.0"
+          },
+          {
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "10.0.0"
+          },
+          {
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          },
+          {
+            "id": "MimeKit.Core",
+            "version": "5.0.0"
+          },
+          {
+            "id": "System.Formats.Asn1",
+            "version": "10.0.0"
+          },
+          {
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "10.0.0"
+          },
+          {
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          },
+          {
+            "id": "MimeKit.Core",
+            "version": "5.0.0"
+          },
+          {
+            "id": "System.Formats.Asn1",
+            "version": "10.0.0"
+          },
+          {
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "10.0.0"
+          },
+          {
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          },
+          {
+            "id": "MimeKit.Core",
+            "version": "5.0.0"
+          },
+          {
+            "id": "System.Formats.Asn1",
+            "version": "10.0.0"
+          },
+          {
+            "id": "MimeKit.Core",
+            "version": "5.0.0"
+          },
+          {
+            "id": "System.Formats.Asn1",
+            "version": "10.0.0"
+          },
+          {
+            "id": "MimeKit.Core",
+            "version": "5.0.0"
+          },
+          {
+            "id": "System.Formats.Asn1",
+            "version": "10.0.0"
+          },
+          {
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "10.0.0"
+          },
+          {
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          },
+          {
+            "id": "MimeKit.Core",
+            "version": "5.0.0"
+          },
+          {
+            "id": "System.Formats.Asn1",
+            "version": "10.0.0"
+          },
+          {
+            "id": "MimeKit.Core",
+            "version": "5.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/mailkit/5.0.0/mailkit.nuspec",
+        "repository": {
+          "type": "git",
+          "url": "https://github.com/jstedfast/MailKit"
+        }
+      }
+    }
+  },
+  "Microsoft.AspNetCore.SignalR.Client": {
+    "selected": "10.0.15",
+    "reviewedVersions": {
+      "10.0.15": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.SignalR.Client.Core",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.Http.Connections.Client",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.SignalR.Client.Core",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.Http.Connections.Client",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.SignalR.Client.Core",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.Http.Connections.Client",
+            "version": "10.0.15"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.aspnetcore.signalr.client/10.0.15/microsoft.aspnetcore.signalr.client.nuspec",
+        "repository": {
+          "commit": "8e0f8ed2312954727f8919d7d1c2f78b483b4ee7",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      },
+      "11.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.SignalR.Client.Core",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.Http.Connections.Client",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.SignalR.Client.Core",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.Http.Connections.Client",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.SignalR.Client.Core",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.Http.Connections.Client",
+            "version": "11.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.aspnetcore.signalr.client/11.0.0/microsoft.aspnetcore.signalr.client.nuspec",
+        "repository": {
+          "commit": "297acf930fb0f5c07fd4e51d78e521b4ad2e5d1f",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      }
+    }
+  },
+  "Microsoft.Data.SqlClient": {
+    "selected": null,
+    "reviewedVersions": {
+      "2.1.7": {
+        "dependencies": [
+          {
+            "id": "Microsoft.Data.SqlClient.SNI",
+            "version": "2.1.1"
+          },
+          {
+            "id": "Microsoft.Identity.Client",
+            "version": "4.21.1"
+          },
+          {
+            "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect",
+            "version": "6.8.0"
+          },
+          {
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.8.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Data.SqlClient.SNI.runtime",
+            "version": "2.1.1"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Win32.Registry",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Security.Principal.Windows",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Text.Encoding.CodePages",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Diagnostics.DiagnosticSource",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Configuration.ConfigurationManager",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Runtime.Caching",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Identity.Client",
+            "version": "4.21.1"
+          },
+          {
+            "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect",
+            "version": "6.8.0"
+          },
+          {
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.8.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Data.SqlClient.SNI.runtime",
+            "version": "2.1.1"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Win32.Registry",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Security.Principal.Windows",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Text.Encoding.CodePages",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Diagnostics.DiagnosticSource",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Configuration.ConfigurationManager",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Runtime.Caching",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Identity.Client",
+            "version": "4.21.1"
+          },
+          {
+            "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect",
+            "version": "6.8.0"
+          },
+          {
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.8.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Data.SqlClient.SNI.runtime",
+            "version": "2.1.1"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Win32.Registry",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Buffers",
+            "version": "4.5.1"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Memory",
+            "version": "4.5.4"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Security.Principal.Windows",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Text.Encoding.CodePages",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Runtime.Caching",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Identity.Client",
+            "version": "4.21.1"
+          },
+          {
+            "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect",
+            "version": "6.8.0"
+          },
+          {
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.8.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Data.SqlClient.SNI.runtime",
+            "version": "2.1.1"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Win32.Registry",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Buffers",
+            "version": "4.5.1"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Memory",
+            "version": "4.5.4"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Security.Principal.Windows",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Text.Encoding.CodePages",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Runtime.Caching",
+            "version": "4.7.0"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Identity.Client",
+            "version": "4.21.1"
+          },
+          {
+            "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect",
+            "version": "6.8.0"
+          },
+          {
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.8.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/2.1.7/microsoft.data.sqlclient.nuspec",
+        "repository": {
+          "type": "git",
+          "url": "https://github.com/dotnet/sqlclient"
+        }
+      },
+      "7.1.2": {
+        "dependencies": [
+          {
+            "id": "Microsoft.Bcl.Cryptography",
+            "version": "8.0.0"
+          },
+          {
+            "id": "Microsoft.Bcl.TimeProvider",
+            "version": "8.0.1"
+          },
+          {
+            "id": "Microsoft.Data.SqlClient.Extensions.Abstractions",
+            "version": "[7.1.2, 8.0.0)"
+          },
+          {
+            "id": "Microsoft.Data.SqlClient.Internal.Logging",
+            "version": "[7.1.2, 8.0.0)"
+          },
+          {
+            "id": "Microsoft.Data.SqlClient.SNI",
+            "version": "[7.1.2, 8.0.0)"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Extensions.Caching.Memory",
+            "version": "8.0.1"
+          },
+          {
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "8.16.0"
+          },
+          {
+            "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect",
+            "version": "8.16.0"
+          },
+          {
+            "id": "System.Buffers",
+            "version": "4.6.1"
+          },
+          {
+            "id": "System.Data.Common",
+            "version": "4.3.0"
+          },
+          {
+            "id": "System.Diagnostics.DiagnosticSource",
+            "version": "10.0.3"
+          },
+          {
+            "id": "System.Memory",
+            "version": "4.6.3"
+          },
+          {
+            "id": "System.Runtime.InteropServices.RuntimeInformation",
+            "version": "4.3.0"
+          },
+          {
+            "id": "System.Security.Cryptography.Pkcs",
+            "version": "8.0.2"
+          },
+          {
+            "id": "System.Text.Json",
+            "version": "10.0.3"
+          },
+          {
+            "id": "System.Threading.Channels",
+            "version": "10.0.3"
+          },
+          {
+            "id": "System.Threading.RateLimiting",
+            "version": "8.0.0"
+          },
+          {
+            "id": "System.ValueTuple",
+            "version": "4.6.2"
+          },
+          {
+            "id": "Microsoft.Bcl.Cryptography",
+            "version": "8.0.0"
+          },
+          {
+            "id": "Microsoft.Data.SqlClient.Extensions.Abstractions",
+            "version": "[7.1.2, 8.0.0)"
+          },
+          {
+            "id": "Microsoft.Data.SqlClient.Internal.Logging",
+            "version": "[7.1.2, 8.0.0)"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Data.SqlClient.SNI.runtime",
+            "version": "[7.1.2, 8.0.0)"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Extensions.Caching.Memory",
+            "version": "8.0.1"
+          },
+          {
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "8.16.0"
+          },
+          {
+            "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect",
+            "version": "8.16.0"
+          },
+          {
+            "id": "Microsoft.SqlServer.Server",
+            "version": "[1.0.0, 2.0.0)"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Configuration.ConfigurationManager",
+            "version": "8.0.1"
+          },
+          {
+            "id": "System.Security.Cryptography.Pkcs",
+            "version": "8.0.2"
+          },
+          {
+            "id": "System.Threading.RateLimiting",
+            "version": "8.0.0"
+          },
+          {
+            "id": "Microsoft.Bcl.Cryptography",
+            "version": "9.0.21"
+          },
+          {
+            "id": "Microsoft.Data.SqlClient.Extensions.Abstractions",
+            "version": "[7.1.2, 8.0.0)"
+          },
+          {
+            "id": "Microsoft.Data.SqlClient.Internal.Logging",
+            "version": "[7.1.2, 8.0.0)"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Data.SqlClient.SNI.runtime",
+            "version": "[7.1.2, 8.0.0)"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Extensions.Caching.Memory",
+            "version": "9.0.21"
+          },
+          {
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "8.16.0"
+          },
+          {
+            "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect",
+            "version": "8.16.0"
+          },
+          {
+            "id": "Microsoft.SqlServer.Server",
+            "version": "[1.0.0, 2.0.0)"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Configuration.ConfigurationManager",
+            "version": "9.0.21"
+          },
+          {
+            "id": "System.Security.Cryptography.Pkcs",
+            "version": "9.0.21"
+          },
+          {
+            "id": "System.Threading.RateLimiting",
+            "version": "9.0.21"
+          },
+          {
+            "id": "Microsoft.Bcl.Cryptography",
+            "version": "8.0.0"
+          },
+          {
+            "id": "Microsoft.Bcl.TimeProvider",
+            "version": "8.0.1"
+          },
+          {
+            "id": "Microsoft.Data.SqlClient.Extensions.Abstractions",
+            "version": "[7.1.2, 8.0.0)"
+          },
+          {
+            "id": "Microsoft.Data.SqlClient.Internal.Logging",
+            "version": "[7.1.2, 8.0.0)"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Data.SqlClient.SNI.runtime",
+            "version": "[7.1.2, 8.0.0)"
+          },
+          {
+            "exclude": "Compile",
+            "id": "Microsoft.Extensions.Caching.Memory",
+            "version": "8.0.1"
+          },
+          {
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "8.16.0"
+          },
+          {
+            "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect",
+            "version": "8.16.0"
+          },
+          {
+            "id": "Microsoft.SqlServer.Server",
+            "version": "[1.0.0, 2.0.0)"
+          },
+          {
+            "exclude": "Compile",
+            "id": "System.Configuration.ConfigurationManager",
+            "version": "8.0.1"
+          },
+          {
+            "id": "System.Security.Cryptography.Pkcs",
+            "version": "8.0.2"
+          },
+          {
+            "id": "System.Text.Json",
+            "version": "10.0.3"
+          },
+          {
+            "id": "System.Threading.Channels",
+            "version": "10.0.3"
+          },
+          {
+            "id": "System.Threading.RateLimiting",
+            "version": "8.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/7.1.2/microsoft.data.sqlclient.nuspec",
+        "repository": {
+          "commit": "b1dd9db72cd9e6eb9fc83ca308558e73b57dd449",
+          "type": "git",
+          "url": "https://github.com/dotnet/sqlclient"
+        }
+      }
+    }
+  },
+  "Microsoft.Extensions.Caching.Memory": {
+    "selected": "10.0.15",
+    "reviewedVersions": {
+      "10.0.15": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Caching.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Caching.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Caching.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Caching.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Caching.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "10.0.15"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.caching.memory/10.0.15/microsoft.extensions.caching.memory.nuspec",
+        "repository": {
+          "commit": "8e0f8ed2312954727f8919d7d1c2f78b483b4ee7",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      },
+      "11.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Caching.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.DiagnosticSource",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Caching.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.DiagnosticSource",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Caching.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.DiagnosticSource",
+            "version": "11.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.caching.memory/11.0.0/microsoft.extensions.caching.memory.nuspec",
+        "repository": {
+          "commit": "297acf930fb0f5c07fd4e51d78e521b4ad2e5d1f",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      }
+    }
+  },
+  "Microsoft.Extensions.Configuration": {
+    "selected": "10.0.15",
+    "reviewedVersions": {
+      "10.0.15": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "10.0.15"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.configuration/10.0.15/microsoft.extensions.configuration.nuspec",
+        "repository": {
+          "commit": "8e0f8ed2312954727f8919d7d1c2f78b483b4ee7",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      },
+      "11.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Primitives",
+            "version": "11.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.configuration/11.0.0/microsoft.extensions.configuration.nuspec",
+        "repository": {
+          "commit": "297acf930fb0f5c07fd4e51d78e521b4ad2e5d1f",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      }
+    }
+  },
+  "Microsoft.Extensions.DependencyInjection": {
+    "selected": "10.0.15",
+    "reviewedVersions": {
+      "10.0.15": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "10.0.15"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.dependencyinjection/10.0.15/microsoft.extensions.dependencyinjection.nuspec",
+        "repository": {
+          "commit": "8e0f8ed2312954727f8919d7d1c2f78b483b4ee7",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      },
+      "11.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "11.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.dependencyinjection/11.0.0/microsoft.extensions.dependencyinjection.nuspec",
+        "repository": {
+          "commit": "297acf930fb0f5c07fd4e51d78e521b4ad2e5d1f",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      }
+    }
+  },
+  "Microsoft.Extensions.Hosting.WindowsServices": {
+    "selected": "10.0.15",
+    "reviewedVersions": {
+      "10.0.15": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Hosting",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.EventLog",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Hosting",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.EventLog",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ServiceProcess.ServiceController",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Hosting",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.EventLog",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ServiceProcess.ServiceController",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Hosting",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.EventLog",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ServiceProcess.ServiceController",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Hosting",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.EventLog",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ServiceProcess.ServiceController",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Hosting",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.EventLog",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ServiceProcess.ServiceController",
+            "version": "10.0.15"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.hosting.windowsservices/10.0.15/microsoft.extensions.hosting.windowsservices.nuspec",
+        "repository": {
+          "commit": "8e0f8ed2312954727f8919d7d1c2f78b483b4ee7",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      },
+      "11.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Hosting",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.EventLog",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ServiceProcess.ServiceController",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Hosting",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.EventLog",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ServiceProcess.ServiceController",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Hosting",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.EventLog",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Hosting",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.EventLog",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ServiceProcess.ServiceController",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Hosting",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.EventLog",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ServiceProcess.ServiceController",
+            "version": "11.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.hosting.windowsservices/11.0.0/microsoft.extensions.hosting.windowsservices.nuspec",
+        "repository": {
+          "commit": "297acf930fb0f5c07fd4e51d78e521b4ad2e5d1f",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      }
+    }
+  },
+  "Microsoft.Extensions.Logging": {
+    "selected": "10.0.15",
+    "reviewedVersions": {
+      "10.0.15": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.DiagnosticSource",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.DiagnosticSource",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.DiagnosticSource",
+            "version": "10.0.15"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.logging/10.0.15/microsoft.extensions.logging.nuspec",
+        "repository": {
+          "commit": "8e0f8ed2312954727f8919d7d1c2f78b483b4ee7",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      },
+      "11.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.DiagnosticSource",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.DiagnosticSource",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Options",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.DiagnosticSource",
+            "version": "11.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.logging/11.0.0/microsoft.extensions.logging.nuspec",
+        "repository": {
+          "commit": "297acf930fb0f5c07fd4e51d78e521b4ad2e5d1f",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      }
+    }
+  },
+  "Microsoft.IdentityModel.JsonWebTokens": {
+    "selected": null,
+    "reviewedVersions": {
+      "6.35.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encoding",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encodings.Web",
+            "version": "4.7.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Json",
+            "version": "4.7.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encoding",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encodings.Web",
+            "version": "4.7.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Json",
+            "version": "4.7.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encoding",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encodings.Web",
+            "version": "4.7.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Json",
+            "version": "4.7.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encoding",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encodings.Web",
+            "version": "4.7.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Json",
+            "version": "4.7.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encoding",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encodings.Web",
+            "version": "4.7.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Json",
+            "version": "4.7.2"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.identitymodel.jsonwebtokens/6.35.0/microsoft.identitymodel.jsonwebtokens.nuspec",
+        "repository": {
+          "commit": "c94c7fc235501d478221e979062bd8837a55575b",
+          "type": "git",
+          "url": "https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet"
+        }
+      },
+      "6.36.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.36.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.identitymodel.jsonwebtokens/6.36.0/microsoft.identitymodel.jsonwebtokens.nuspec",
+        "repository": {
+          "commit": "7d5829c831926d87615a786da48ad08d003bdb22",
+          "type": "git",
+          "url": "https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet"
+        }
+      },
+      "8.23.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.TimeProvider",
+            "version": "8.0.1"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.TimeProvider",
+            "version": "8.0.1"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.TimeProvider",
+            "version": "8.0.1"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.TimeProvider",
+            "version": "8.0.1"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/microsoft.identitymodel.jsonwebtokens/8.23.0/microsoft.identitymodel.jsonwebtokens.nuspec",
+        "repository": {
+          "commit": "8b16f418b3d587416d293e9ba34c5d310781cdb3",
+          "type": "git",
+          "url": "https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet"
+        }
+      }
+    }
+  },
+  "MonoTorrent": {
+    "selected": "2.0.7",
+    "reviewedVersions": {
+      "2.0.7": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Mono.Nat",
+            "version": "[3.0.1, 4.0.0)"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "ReusableTasks",
+            "version": "[2.0.0, 3.0.0)"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "file"
+            },
+            "value": "LICENSE"
+          },
+          {
+            "attributes": {},
+            "value": "https://aka.ms/deprecateLicenseUrl"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/monotorrent/2.0.7/monotorrent.nuspec",
+        "repository": {
+          "branch": "monotorrent-2.0",
+          "commit": "0c4e9bb3fd69421982954467ca6d99ed878d5b4f",
+          "type": "git",
+          "url": "https://github.com/mono/monotorrent"
+        }
+      },
+      "3.0.2": {
+        "dependencies": [
+          {
+            "exclude": "Compile,Build,Analyzers",
+            "id": "Mono.Nat",
+            "version": "3.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "ReusableTasks",
+            "version": "4.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "StandardSocketsHttpHandler",
+            "version": "2.2.0.4"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.5.1"
+          },
+          {
+            "exclude": "Compile,Build,Analyzers",
+            "id": "Mono.Nat",
+            "version": "3.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "ReusableTasks",
+            "version": "4.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "StandardSocketsHttpHandler",
+            "version": "2.2.0.4"
+          },
+          {
+            "exclude": "Compile,Build,Analyzers",
+            "id": "Mono.Nat",
+            "version": "3.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "ReusableTasks",
+            "version": "4.0.0"
+          },
+          {
+            "exclude": "Compile,Build,Analyzers",
+            "id": "Mono.Nat",
+            "version": "3.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "ReusableTasks",
+            "version": "4.0.0"
+          },
+          {
+            "exclude": "Compile,Build,Analyzers",
+            "id": "Mono.Nat",
+            "version": "3.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "ReusableTasks",
+            "version": "4.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "StandardSocketsHttpHandler",
+            "version": "2.2.0.4"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.5.1"
+          },
+          {
+            "exclude": "Compile,Build,Analyzers",
+            "id": "Mono.Nat",
+            "version": "3.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "ReusableTasks",
+            "version": "4.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "StandardSocketsHttpHandler",
+            "version": "2.2.0.4"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "file"
+            },
+            "value": "LICENSE"
+          },
+          {
+            "attributes": {},
+            "value": "https://aka.ms/deprecateLicenseUrl"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/monotorrent/3.0.2/monotorrent.nuspec",
+        "repository": {
+          "branch": "master",
+          "commit": "e78faebd0aec117146cffccaaea987ab0629eec0",
+          "type": "git",
+          "url": "https://github.com/alanmcgovern/monotorrent"
+        }
+      }
+    }
+  },
+  "NLog": {
+    "selected": "5.5.1",
+    "reviewedVersions": {
+      "5.5.1": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NETStandard.Library",
+            "version": "1.6.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ComponentModel.Primitives",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ComponentModel.TypeConverter",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Data.Common",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.StackTrace",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Net.Http",
+            "version": "4.3.4"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Net.NameResolution",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Net.Requests",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Reflection.TypeExtensions",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.RegularExpressions",
+            "version": "4.3.1"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Xml.XmlDocument",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NETStandard.Library",
+            "version": "1.6.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ComponentModel.Primitives",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ComponentModel.TypeConverter",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Data.Common",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.Process",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.StackTrace",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.TraceSource",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.FileSystem.Watcher",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Net.Http",
+            "version": "4.3.4"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Net.NameResolution",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Net.Requests",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Reflection.TypeExtensions",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Runtime.Loader",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.RegularExpressions",
+            "version": "4.3.1"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Threading.Thread",
+            "version": "4.3.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Xml.XmlDocument",
+            "version": "4.3.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "BSD-3-Clause"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/BSD-3-Clause"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/nlog/5.5.1/nlog.nuspec",
+        "repository": {
+          "commit": "afa9a2046639736a54530be3ee34c32e8bc94ea6",
+          "type": "git",
+          "url": "https://github.com/NLog/NLog.git"
+        }
+      },
+      "6.2.2": {
+        "dependencies": [],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "BSD-3-Clause"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/BSD-3-Clause"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/nlog/6.2.2/nlog.nuspec",
+        "repository": {
+          "commit": "d9ebf823ee8ba54977c336709928a96ea58c6259",
+          "type": "git",
+          "url": "https://github.com/NLog/NLog.git"
+        }
+      }
+    }
+  },
+  "NLog.Extensions.Logging": {
+    "selected": "5.5.0",
+    "reviewedVersions": {
+      "5.5.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "2.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging",
+            "version": "2.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NLog",
+            "version": "5.5.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "1.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "1.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NETStandard.Library",
+            "version": "1.6.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NLog",
+            "version": "5.5.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "1.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "1.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NETStandard.Library",
+            "version": "1.6.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NLog",
+            "version": "5.5.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "6.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging",
+            "version": "6.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NLog",
+            "version": "5.5.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "8.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging",
+            "version": "8.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NLog",
+            "version": "5.5.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "2.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging",
+            "version": "2.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NLog",
+            "version": "5.5.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "3.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging",
+            "version": "3.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NLog",
+            "version": "5.5.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "BSD-2-Clause"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/BSD-2-Clause"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/nlog.extensions.logging/5.5.0/nlog.extensions.logging.nuspec",
+        "repository": {
+          "commit": "5caec9dd9186024b333b5ea4d1c37388ef9c309a",
+          "type": "git",
+          "url": "https://github.com/NLog/NLog.Extensions.Logging.git"
+        }
+      },
+      "6.3.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "10.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging",
+            "version": "10.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NLog",
+            "version": "6.2.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NLog",
+            "version": "6.2.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "8.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging",
+            "version": "8.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NLog",
+            "version": "6.2.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "8.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging",
+            "version": "8.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NLog",
+            "version": "6.2.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "8.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging",
+            "version": "8.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NLog",
+            "version": "6.2.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Configuration.Abstractions",
+            "version": "8.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging",
+            "version": "8.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "NLog",
+            "version": "6.2.2"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "BSD-2-Clause"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/BSD-2-Clause"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/nlog.extensions.logging/6.3.0/nlog.extensions.logging.nuspec",
+        "repository": {
+          "commit": "f49aafab3ab4272e9ab9f9d7800a2c606da6998b",
+          "type": "git",
+          "url": "https://github.com/NLog/NLog.Extensions.Logging.git"
+        }
+      }
+    }
+  },
+  "NUnit": {
+    "selected": "4.6.1",
+    "reviewedVersions": {
+      "4.6.1": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.5.4"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.4.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/nunit/4.6.1/nunit.nuspec",
+        "repository": {
+          "type": "git",
+          "url": "https://github.com/nunit/nunit"
+        }
+      },
+      "5.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.6.2"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/nunit/5.0.0/nunit.nuspec",
+        "repository": {
+          "type": "git",
+          "url": "https://github.com/nunit/nunit"
+        }
+      }
+    }
+  },
+  "Npgsql": {
+    "selected": "10.0.4",
+    "reviewedVersions": {
+      "10.0.3": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "10.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "8.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.DiagnosticSource",
+            "version": "9.0.11"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "9.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "PostgreSQL"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/PostgreSQL"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/npgsql/10.0.3/npgsql.nuspec",
+        "repository": {
+          "commit": "d3768398c17877b3a916c3c4d87e8e11698991fc",
+          "type": "git",
+          "url": "https://github.com/npgsql/npgsql"
+        }
+      },
+      "10.0.4": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "10.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "8.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.DiagnosticSource",
+            "version": "9.0.11"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "9.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "PostgreSQL"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/PostgreSQL"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/npgsql/10.0.4/npgsql.nuspec",
+        "repository": {
+          "commit": "a445c040bf90b22e8921c4a079549c6ce154c9e3",
+          "type": "git",
+          "url": "https://github.com/npgsql/npgsql"
+        }
+      },
+      "11.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Extensions.Logging.Abstractions",
+            "version": "11.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "PostgreSQL"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/PostgreSQL"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/npgsql/11.0.0/npgsql.nuspec",
+        "repository": {
+          "commit": "4d174200ed48e3e3ab16419dbf84dd655da59de6",
+          "type": "git",
+          "url": "https://github.com/npgsql/npgsql"
+        }
+      }
+    }
+  },
+  "RestSharp": {
+    "selected": "106.15.0",
+    "reviewedVersions": {
+      "106.15.0": {
+        "dependencies": [],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "Apache-2.0"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/Apache-2.0"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/restsharp/106.15.0/restsharp.nuspec",
+        "repository": {
+          "commit": "ca15b2599d9e85efd9ac43c7112188b9b0cc67a0",
+          "type": "git",
+          "url": "https://github.com/restsharp/RestSharp.git"
+        }
+      },
+      "114.1.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Json",
+            "version": "10.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Json",
+            "version": "10.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Json",
+            "version": "10.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "Apache-2.0"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/Apache-2.0"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/restsharp/114.1.0/restsharp.nuspec",
+        "repository": {
+          "commit": "e24f076f217c1397844a2b87e0ba6027804988bb",
+          "type": "git",
+          "url": "https://github.com/restsharp/RestSharp.git"
+        }
+      }
+    }
+  },
+  "Selenium.Support": {
+    "selected": "3.141.0",
+    "reviewedVersions": {
+      "3.141.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Selenium.WebDriver",
+            "version": "3.141.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Selenium.WebDriver",
+            "version": "3.141.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Selenium.WebDriver",
+            "version": "3.141.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Selenium.WebDriver",
+            "version": "3.141.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {},
+            "value": "http://www.apache.org/licenses/LICENSE-2.0"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/selenium.support/3.141.0/selenium.support.nuspec",
+        "repository": null
+      },
+      "4.54.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Selenium.WebDriver",
+            "version": "4.54.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "Apache-2.0"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/Apache-2.0"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/selenium.support/4.54.0/selenium.support.nuspec",
+        "repository": {
+          "type": "GitHub",
+          "url": "https://github.com/SeleniumHQ/selenium"
+        }
+      }
+    }
+  },
+  "Selenium.WebDriver.ChromeDriver": {
+    "selected": "134.0.6998.16500",
+    "reviewedVersions": {
+      "134.0.6998.16500": {
+        "dependencies": [],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "Unlicense"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/Unlicense"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/selenium.webdriver.chromedriver/134.0.6998.16500/selenium.webdriver.chromedriver.nuspec",
+        "repository": {
+          "type": "git",
+          "url": "https://github.com/jsakamoto/nupkg-selenium-webdriver-chromedriver/"
+        }
+      },
+      "158.0.8127.8800": {
+        "dependencies": [],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "Unlicense"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/Unlicense"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/selenium.webdriver.chromedriver/158.0.8127.8800/selenium.webdriver.chromedriver.nuspec",
+        "repository": {
+          "type": "git",
+          "url": "https://github.com/jsakamoto/nupkg-selenium-webdriver-chromedriver/"
+        }
+      }
+    }
+  },
+  "StyleCop.Analyzers": {
+    "selected": "1.1.118",
+    "reviewedVersions": {
+      "1.1.118": {
+        "dependencies": [],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "Apache-2.0"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/Apache-2.0"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/stylecop.analyzers/1.1.118/stylecop.analyzers.nuspec",
+        "repository": null
+      },
+      "1.3.180": {
+        "dependencies": [],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/stylecop.analyzers/1.3.180/stylecop.analyzers.nuspec",
+        "repository": null
+      }
+    }
+  },
+  "Swashbuckle.AspNetCore.Annotations": {
+    "selected": "6.6.2",
+    "reviewedVersions": {
+      "11.0.1": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "11.0.1"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "11.0.1"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.annotations/11.0.1/swashbuckle.aspnetcore.annotations.nuspec",
+        "repository": {
+          "commit": "5e0111cb0742acd1fea0cbbf32d2aa5e8b67a3cb",
+          "type": "git",
+          "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git"
+        }
+      },
+      "6.6.2": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.6.2"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.annotations/6.6.2/swashbuckle.aspnetcore.annotations.nuspec",
+        "repository": {
+          "commit": "fe87e6d4ce56cda59474763067b929d4d92fd146",
+          "type": "git",
+          "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git"
+        }
+      },
+      "6.9.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.9.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.9.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.9.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.9.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.9.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.SwaggerGen",
+            "version": "6.9.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.annotations/6.9.0/swashbuckle.aspnetcore.annotations.nuspec",
+        "repository": {
+          "commit": "92ba260e2af7eb08961cf2414ea86b6548b06740",
+          "type": "git",
+          "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git"
+        }
+      }
+    }
+  },
+  "Swashbuckle.AspNetCore.SwaggerGen": {
+    "selected": "6.6.2",
+    "reviewedVersions": {
+      "11.0.1": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "11.0.1"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "11.0.1"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.swaggergen/11.0.1/swashbuckle.aspnetcore.swaggergen.nuspec",
+        "repository": {
+          "commit": "5e0111cb0742acd1fea0cbbf32d2aa5e8b67a3cb",
+          "type": "git",
+          "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git"
+        }
+      },
+      "6.6.2": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.Mvc.ApiExplorer",
+            "version": "2.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.Mvc.DataAnnotations",
+            "version": "2.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Json",
+            "version": "4.6.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.swaggergen/6.6.2/swashbuckle.aspnetcore.swaggergen.nuspec",
+        "repository": {
+          "commit": "fe87e6d4ce56cda59474763067b929d4d92fd146",
+          "type": "git",
+          "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git"
+        }
+      },
+      "6.9.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.9.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.9.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.9.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.9.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.9.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Swashbuckle.AspNetCore.Swagger",
+            "version": "6.9.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.Mvc.ApiExplorer",
+            "version": "2.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.AspNetCore.Mvc.DataAnnotations",
+            "version": "2.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Json",
+            "version": "4.6.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.swaggergen/6.9.0/swashbuckle.aspnetcore.swaggergen.nuspec",
+        "repository": {
+          "commit": "92ba260e2af7eb08961cf2414ea86b6548b06740",
+          "type": "git",
+          "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git"
+        }
+      }
+    }
+  },
+  "System.Configuration.ConfigurationManager": {
+    "selected": "10.0.15",
+    "reviewedVersions": {
+      "10.0.15": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.EventLog",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Security.Cryptography.ProtectedData",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.EventLog",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Security.Cryptography.ProtectedData",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.EventLog",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Security.Cryptography.ProtectedData",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Security.Cryptography.ProtectedData",
+            "version": "10.0.15"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.configuration.configurationmanager/10.0.15/system.configuration.configurationmanager.nuspec",
+        "repository": {
+          "commit": "8e0f8ed2312954727f8919d7d1c2f78b483b4ee7",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      },
+      "11.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.EventLog",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Security.Cryptography.ProtectedData",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.EventLog",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Security.Cryptography.ProtectedData",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Security.Cryptography.ProtectedData",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.configuration.configurationmanager/11.0.0/system.configuration.configurationmanager.nuspec",
+        "repository": {
+          "commit": "297acf930fb0f5c07fd4e51d78e521b4ad2e5d1f",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      }
+    }
+  },
+  "System.IO.Abstractions": {
+    "selected": "23.1.0",
+    "reviewedVersions": {
+      "17.0.24": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.FileSystem.AccessControl",
+            "version": "5.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.FileSystem.AccessControl",
+            "version": "5.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.FileSystem.AccessControl",
+            "version": "5.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.io.abstractions/17.0.24/system.io.abstractions.nuspec",
+        "repository": {
+          "commit": "96f9886a085510e686f14dcc1abca2cc0287bc5a",
+          "type": "git",
+          "url": "https://github.com/TestableIO/System.IO.Abstractions"
+        }
+      },
+      "17.2.26": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.Wrappers",
+            "version": "17.2.26"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions",
+            "version": "17.2.26"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.Wrappers",
+            "version": "17.2.26"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions",
+            "version": "17.2.26"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.Wrappers",
+            "version": "17.2.26"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions",
+            "version": "17.2.26"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.Wrappers",
+            "version": "17.2.26"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions",
+            "version": "17.2.26"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.Wrappers",
+            "version": "17.2.26"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions",
+            "version": "17.2.26"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.io.abstractions/17.2.26/system.io.abstractions.nuspec",
+        "repository": {
+          "commit": "f67894572c44b205226bb767ed0de555103b0827",
+          "type": "git",
+          "url": "https://github.com/TestableIO/System.IO.Abstractions"
+        }
+      },
+      "23.1.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.Wrappers",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.Wrappers",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.Wrappers",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.Wrappers",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.Wrappers",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.Wrappers",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.Wrappers",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.Wrappers",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions",
+            "version": "23.1.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.io.abstractions/23.1.0/system.io.abstractions.nuspec",
+        "repository": {
+          "commit": "7f444c9d8202f9abad854d6ee8c5554ccdad737d",
+          "type": "git",
+          "url": "https://github.com/TestableIO/System.IO.Abstractions.git"
+        }
+      }
+    }
+  },
+  "System.IO.Abstractions.TestingHelpers": {
+    "selected": "23.1.0",
+    "reviewedVersions": {
+      "17.0.24": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Abstractions",
+            "version": "17.0.24"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Abstractions",
+            "version": "17.0.24"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Abstractions",
+            "version": "17.0.24"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Abstractions",
+            "version": "17.0.24"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Abstractions",
+            "version": "17.0.24"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.io.abstractions.testinghelpers/17.0.24/system.io.abstractions.testinghelpers.nuspec",
+        "repository": {
+          "commit": "96f9886a085510e686f14dcc1abca2cc0287bc5a",
+          "type": "git",
+          "url": "https://github.com/TestableIO/System.IO.Abstractions"
+        }
+      },
+      "17.2.26": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Abstractions",
+            "version": "17.2.26"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Abstractions",
+            "version": "17.2.26"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Abstractions",
+            "version": "17.2.26"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Abstractions",
+            "version": "17.2.26"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Abstractions",
+            "version": "17.2.26"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.io.abstractions.testinghelpers/17.2.26/system.io.abstractions.testinghelpers.nuspec",
+        "repository": {
+          "commit": "f67894572c44b205226bb767ed0de555103b0827",
+          "type": "git",
+          "url": "https://github.com/TestableIO/System.IO.Abstractions"
+        }
+      },
+      "23.1.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.TestingHelpers",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.TestingHelpers",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.TestingHelpers",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.TestingHelpers",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.TestingHelpers",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.TestingHelpers",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.TestingHelpers",
+            "version": "23.1.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "TestableIO.System.IO.Abstractions.TestingHelpers",
+            "version": "23.1.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.io.abstractions.testinghelpers/23.1.0/system.io.abstractions.testinghelpers.nuspec",
+        "repository": {
+          "commit": "7f444c9d8202f9abad854d6ee8c5554ccdad737d",
+          "type": "git",
+          "url": "https://github.com/TestableIO/System.IO.Abstractions.git"
+        }
+      }
+    }
+  },
+  "System.IdentityModel.Tokens.Jwt": {
+    "selected": null,
+    "reviewedVersions": {
+      "6.35.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.35.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.35.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.identitymodel.tokens.jwt/6.35.0/system.identitymodel.tokens.jwt.nuspec",
+        "repository": {
+          "commit": "c94c7fc235501d478221e979062bd8837a55575b",
+          "type": "git",
+          "url": "https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet"
+        }
+      },
+      "6.36.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "6.36.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "6.36.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.identitymodel.tokens.jwt/6.36.0/system.identitymodel.tokens.jwt.nuspec",
+        "repository": {
+          "commit": "7d5829c831926d87615a786da48ad08d003bdb22",
+          "type": "git",
+          "url": "https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet"
+        }
+      },
+      "8.23.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.JsonWebTokens",
+            "version": "8.23.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.IdentityModel.Tokens",
+            "version": "8.23.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.identitymodel.tokens.jwt/8.23.0/system.identitymodel.tokens.jwt.nuspec",
+        "repository": {
+          "commit": "8b16f418b3d587416d293e9ba34c5d310781cdb3",
+          "type": "git",
+          "url": "https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet"
+        }
+      }
+    }
+  },
+  "System.Resources.Extensions": {
+    "selected": "10.0.15",
+    "reviewedVersions": {
+      "10.0.15": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Nrbf",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Nrbf",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Nrbf",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Nrbf",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Nrbf",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.resources.extensions/10.0.15/system.resources.extensions.nuspec",
+        "repository": {
+          "commit": "8e0f8ed2312954727f8919d7d1c2f78b483b4ee7",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      },
+      "11.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Nrbf",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Nrbf",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Nrbf",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Nrbf",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.resources.extensions/11.0.0/system.resources.extensions.nuspec",
+        "repository": {
+          "commit": "297acf930fb0f5c07fd4e51d78e521b4ad2e5d1f",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      }
+    }
+  },
+  "System.Security.Cryptography.Pkcs": {
+    "selected": "10.0.15",
+    "reviewedVersions": {
+      "10.0.15": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.Cryptography",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.Cryptography",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Asn1",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.Cryptography",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Asn1",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.Cryptography",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Asn1",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Buffers",
+            "version": "4.6.1"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Runtime.CompilerServices.Unsafe",
+            "version": "6.1.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Security.Cryptography.Cng",
+            "version": "5.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.Cryptography",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Asn1",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Runtime.CompilerServices.Unsafe",
+            "version": "6.1.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Security.Cryptography.Cng",
+            "version": "5.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.security.cryptography.pkcs/10.0.15/system.security.cryptography.pkcs.nuspec",
+        "repository": {
+          "commit": "8e0f8ed2312954727f8919d7d1c2f78b483b4ee7",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      },
+      "11.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Asn1",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.Cryptography",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.Cryptography",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Asn1",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Buffers",
+            "version": "4.6.1"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Runtime.CompilerServices.Unsafe",
+            "version": "6.1.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Security.Cryptography.Cng",
+            "version": "5.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.Cryptography",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Formats.Asn1",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Runtime.CompilerServices.Unsafe",
+            "version": "6.1.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Security.Cryptography.Cng",
+            "version": "5.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.security.cryptography.pkcs/11.0.0/system.security.cryptography.pkcs.nuspec",
+        "repository": {
+          "commit": "297acf930fb0f5c07fd4e51d78e521b4ad2e5d1f",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      }
+    }
+  },
+  "System.Security.Permissions": {
+    "selected": null,
+    "reviewedVersions": {
+      "10.0.15": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Security.AccessControl",
+            "version": "6.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Windows.Extensions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Windows.Extensions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Windows.Extensions",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Security.AccessControl",
+            "version": "6.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.security.permissions/10.0.15/system.security.permissions.nuspec",
+        "repository": {
+          "commit": "8e0f8ed2312954727f8919d7d1c2f78b483b4ee7",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      },
+      "11.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Windows.Extensions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Windows.Extensions",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Security.AccessControl",
+            "version": "6.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Security.AccessControl",
+            "version": "6.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.security.permissions/11.0.0/system.security.permissions.nuspec",
+        "repository": {
+          "commit": "297acf930fb0f5c07fd4e51d78e521b4ad2e5d1f",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      }
+    }
+  },
+  "System.ServiceProcess.ServiceController": {
+    "selected": "10.0.15",
+    "reviewedVersions": {
+      "10.0.15": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.EventLog",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.EventLog",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.EventLog",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.EventLog",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.EventLog",
+            "version": "10.0.15"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.serviceprocess.servicecontroller/10.0.15/system.serviceprocess.servicecontroller.nuspec",
+        "repository": {
+          "commit": "8e0f8ed2312954727f8919d7d1c2f78b483b4ee7",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      },
+      "11.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.EventLog",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.EventLog",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.EventLog",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Diagnostics.EventLog",
+            "version": "11.0.0"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.serviceprocess.servicecontroller/11.0.0/system.serviceprocess.servicecontroller.nuspec",
+        "repository": {
+          "commit": "297acf930fb0f5c07fd4e51d78e521b4ad2e5d1f",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      }
+    }
+  },
+  "System.Text.Encoding.CodePages": {
+    "selected": null,
+    "reviewedVersions": {
+      "10.0.15": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Runtime.CompilerServices.Unsafe",
+            "version": "6.1.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Runtime.CompilerServices.Unsafe",
+            "version": "6.1.2"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.text.encoding.codepages/10.0.15/system.text.encoding.codepages.nuspec",
+        "repository": {
+          "commit": "8e0f8ed2312954727f8919d7d1c2f78b483b4ee7",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      },
+      "11.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Runtime.CompilerServices.Unsafe",
+            "version": "6.1.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Runtime.CompilerServices.Unsafe",
+            "version": "6.1.2"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.text.encoding.codepages/11.0.0/system.text.encoding.codepages.nuspec",
+        "repository": {
+          "commit": "297acf930fb0f5c07fd4e51d78e521b4ad2e5d1f",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      }
+    }
+  },
+  "System.Text.Json": {
+    "selected": null,
+    "reviewedVersions": {
+      "10.0.15": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Pipelines",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encodings.Web",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Buffers",
+            "version": "4.6.1"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Runtime.CompilerServices.Unsafe",
+            "version": "6.1.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Pipelines",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encodings.Web",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Pipelines",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encodings.Web",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Pipelines",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encodings.Web",
+            "version": "10.0.15"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Buffers",
+            "version": "4.6.1"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Runtime.CompilerServices.Unsafe",
+            "version": "6.1.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.text.json/10.0.15/system.text.json.nuspec",
+        "repository": {
+          "commit": "8e0f8ed2312954727f8919d7d1c2f78b483b4ee7",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      },
+      "11.0.0": {
+        "dependencies": [
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Pipelines",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encodings.Web",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Pipelines",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encodings.Web",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Buffers",
+            "version": "4.6.1"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Runtime.CompilerServices.Unsafe",
+            "version": "6.1.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.ValueTuple",
+            "version": "4.6.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "Microsoft.Bcl.AsyncInterfaces",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.IO.Pipelines",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Text.Encodings.Web",
+            "version": "11.0.0"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Buffers",
+            "version": "4.6.1"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Memory",
+            "version": "4.6.3"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Runtime.CompilerServices.Unsafe",
+            "version": "6.1.2"
+          },
+          {
+            "exclude": "Build,Analyzers",
+            "id": "System.Threading.Tasks.Extensions",
+            "version": "4.6.3"
+          }
+        ],
+        "licenses": [
+          {
+            "attributes": {
+              "type": "expression"
+            },
+            "value": "MIT"
+          },
+          {
+            "attributes": {},
+            "value": "https://licenses.nuget.org/MIT"
+          }
+        ],
+        "nuspec": "https://api.nuget.org/v3-flatcontainer/system.text.json/11.0.0/system.text.json.nuspec",
+        "repository": {
+          "commit": "297acf930fb0f5c07fd4e51d78e521b4ad2e5d1f",
+          "type": "git",
+          "url": "https://github.com/dotnet/dotnet"
+        }
+      }
+    }
+  }
+}

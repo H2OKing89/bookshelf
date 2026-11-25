@@ -1,0 +1,1023 @@
+{
+  "baseCommit": "7953a4c2f",
+  "integratedDependencyCommit": "efffe2792d63c0d4bec52fd99ee0ee37fc03d64a",
+  "registryDateLocal": "2026-11-25",
+  "nugetVersionSelection": "highest stable version from official NuGet flat-container index",
+  "excludedCustomFeedPin": {
+    "name": "Mono.Posix.NETStandard",
+    "retained": "5.20.1.34-servarr22",
+    "reason": "Existing custom-feed Servarr native POSIX ABI delivery."
+  },
+  "nuget": {
+    "AutoFixture": {
+      "before": "4.18.1",
+      "highestStable": "4.18.1",
+      "latestInOriginalMajor": "4.18.1",
+      "selected": "4.18.1",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/autofixture/index.json",
+      "resolvedVersions": [
+        "4.18.1"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/autofixture/4.18.1/autofixture.nuspec"
+      ]
+    },
+    "Dapper": {
+      "before": "2.1.100",
+      "highestStable": "2.1.100",
+      "latestInOriginalMajor": "2.1.100",
+      "selected": "2.1.100",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/dapper/index.json",
+      "resolvedVersions": [
+        "2.1.100"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/dapper/2.1.100/dapper.nuspec"
+      ]
+    },
+    "Diacritical.Net": {
+      "before": "1.0.5",
+      "highestStable": "1.0.5",
+      "latestInOriginalMajor": "1.0.5",
+      "selected": "1.0.5",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/diacritical.net/index.json",
+      "resolvedVersions": [
+        "1.0.5"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/diacritical.net/1.0.5/diacritical.net.nuspec"
+      ]
+    },
+    "DryIoc.Microsoft.DependencyInjection": {
+      "before": "6.2.0",
+      "highestStable": "8.0.0",
+      "latestInOriginalMajor": "6.2.0",
+      "selected": "6.2.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/dryioc.microsoft.dependencyinjection/index.json",
+      "resolvedVersions": [
+        "6.2.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/dryioc.microsoft.dependencyinjection/6.2.0/dryioc.microsoft.dependencyinjection.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/dryioc.microsoft.dependencyinjection/8.0.0/dryioc.microsoft.dependencyinjection.nuspec"
+      ]
+    },
+    "DryIoc.dll": {
+      "before": "5.4.3",
+      "highestStable": "6.0.0",
+      "latestInOriginalMajor": "5.4.3",
+      "selected": "5.4.3",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/dryioc.dll/index.json",
+      "resolvedVersions": [
+        "5.4.3"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/dryioc.dll/5.4.3/dryioc.dll.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/dryioc.dll/6.0.0/dryioc.dll.nuspec"
+      ]
+    },
+    "Equ": {
+      "before": "2.3.0",
+      "highestStable": "2.3.0",
+      "latestInOriginalMajor": "2.3.0",
+      "selected": "2.3.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/equ/index.json",
+      "resolvedVersions": [
+        "2.3.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/equ/2.3.0/equ.nuspec"
+      ]
+    },
+    "FluentAssertions": {
+      "before": "5.10.3",
+      "highestStable": "8.11.0",
+      "latestInOriginalMajor": "5.10.3",
+      "selected": "7.2.2",
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/fluentassertions/index.json",
+      "resolvedVersions": [
+        "7.2.2"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/fluentassertions/5.10.3/fluentassertions.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/fluentassertions/7.2.2/fluentassertions.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/fluentassertions/8.11.0/fluentassertions.nuspec"
+      ]
+    },
+    "FluentMigrator.Runner.Core": {
+      "before": "8.0.1",
+      "highestStable": "8.0.1",
+      "latestInOriginalMajor": "8.0.1",
+      "selected": "8.0.1",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/fluentmigrator.runner.core/index.json",
+      "resolvedVersions": [
+        "8.0.1"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/fluentmigrator.runner.core/8.0.1/fluentmigrator.runner.core.nuspec"
+      ]
+    },
+    "FluentMigrator.Runner.Postgres": {
+      "before": "8.0.1",
+      "highestStable": "8.0.1",
+      "latestInOriginalMajor": "8.0.1",
+      "selected": "8.0.1",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/fluentmigrator.runner.postgres/index.json",
+      "resolvedVersions": [
+        "8.0.1"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/fluentmigrator.runner.postgres/8.0.1/fluentmigrator.runner.postgres.nuspec"
+      ]
+    },
+    "FluentMigrator.Runner.SQLite": {
+      "before": "8.0.1",
+      "highestStable": "8.0.1",
+      "latestInOriginalMajor": "8.0.1",
+      "selected": "8.0.1",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/fluentmigrator.runner.sqlite/index.json",
+      "resolvedVersions": [
+        "8.0.1"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/fluentmigrator.runner.sqlite/8.0.1/fluentmigrator.runner.sqlite.nuspec"
+      ]
+    },
+    "FluentValidation": {
+      "before": "9.5.4",
+      "highestStable": "12.2.0",
+      "latestInOriginalMajor": "9.5.4",
+      "selected": "9.5.4",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/fluentvalidation/index.json",
+      "resolvedVersions": [
+        "9.5.4"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/fluentvalidation/12.2.0/fluentvalidation.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/fluentvalidation/9.5.4/fluentvalidation.nuspec"
+      ]
+    },
+    "IPAddressRange": {
+      "before": "6.3.0",
+      "highestStable": "6.3.0",
+      "latestInOriginalMajor": "6.3.0",
+      "selected": "6.3.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/ipaddressrange/index.json",
+      "resolvedVersions": [
+        "6.3.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/ipaddressrange/6.3.0/ipaddressrange.nuspec"
+      ]
+    },
+    "Ical.Net": {
+      "before": "5.2.4",
+      "highestStable": "5.2.4",
+      "latestInOriginalMajor": "5.2.4",
+      "selected": "5.2.4",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/ical.net/index.json",
+      "resolvedVersions": [
+        "5.2.4"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/ical.net/5.2.4/ical.net.nuspec"
+      ]
+    },
+    "ImpromptuInterface": {
+      "before": "8.1.0",
+      "highestStable": "8.1.0",
+      "latestInOriginalMajor": "8.1.0",
+      "selected": "8.1.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/impromptuinterface/index.json",
+      "resolvedVersions": [
+        "8.1.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/impromptuinterface/8.1.0/impromptuinterface.nuspec"
+      ]
+    },
+    "LazyCache": {
+      "before": "2.4.0",
+      "highestStable": "2.4.0",
+      "latestInOriginalMajor": "2.4.0",
+      "selected": "2.4.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/lazycache/index.json",
+      "resolvedVersions": [
+        "2.4.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/lazycache/2.4.0/lazycache.nuspec"
+      ]
+    },
+    "Magick.NET-Q8-AnyCPU": {
+      "before": "15.1.0",
+      "highestStable": "15.1.0",
+      "latestInOriginalMajor": "15.1.0",
+      "selected": "15.1.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/magick.net-q8-anycpu/index.json",
+      "resolvedVersions": [
+        "15.1.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/magick.net-q8-anycpu/15.1.0/magick.net-q8-anycpu.nuspec"
+      ]
+    },
+    "Mailkit": {
+      "before": "4.18.2",
+      "highestStable": "5.0.0",
+      "latestInOriginalMajor": "4.18.2",
+      "selected": "4.18.2",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/mailkit/index.json",
+      "resolvedVersions": [
+        "4.18.2"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/mailkit/4.18.2/mailkit.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/mailkit/5.0.0/mailkit.nuspec"
+      ]
+    },
+    "Microsoft.AspNetCore.SignalR.Client": {
+      "before": "10.0.15",
+      "highestStable": "11.0.0",
+      "latestInOriginalMajor": "10.0.15",
+      "selected": "10.0.15",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/microsoft.aspnetcore.signalr.client/index.json",
+      "resolvedVersions": [
+        "10.0.15"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/microsoft.aspnetcore.signalr.client/10.0.15/microsoft.aspnetcore.signalr.client.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/microsoft.aspnetcore.signalr.client/11.0.0/microsoft.aspnetcore.signalr.client.nuspec"
+      ]
+    },
+    "Microsoft.Data.SqlClient": {
+      "before": "2.1.7",
+      "highestStable": "7.1.2",
+      "latestInOriginalMajor": "2.1.7",
+      "selected": null,
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/index.json",
+      "resolvedVersions": [],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/2.1.7/microsoft.data.sqlclient.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/microsoft.data.sqlclient/7.1.2/microsoft.data.sqlclient.nuspec"
+      ],
+      "reason": "Dormant declaration; removal independently restored all graphs without altering any lockfiles before other updates."
+    },
+    "Microsoft.Extensions.Caching.Memory": {
+      "before": "10.0.15",
+      "highestStable": "11.0.0",
+      "latestInOriginalMajor": "10.0.15",
+      "selected": "10.0.15",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.caching.memory/index.json",
+      "resolvedVersions": [
+        "10.0.15"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.caching.memory/10.0.15/microsoft.extensions.caching.memory.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.caching.memory/11.0.0/microsoft.extensions.caching.memory.nuspec"
+      ]
+    },
+    "Microsoft.Extensions.Configuration": {
+      "before": "10.0.15",
+      "highestStable": "11.0.0",
+      "latestInOriginalMajor": "10.0.15",
+      "selected": "10.0.15",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.configuration/index.json",
+      "resolvedVersions": [
+        "10.0.15"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.configuration/10.0.15/microsoft.extensions.configuration.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.configuration/11.0.0/microsoft.extensions.configuration.nuspec"
+      ]
+    },
+    "Microsoft.Extensions.DependencyInjection": {
+      "before": "10.0.15",
+      "highestStable": "11.0.0",
+      "latestInOriginalMajor": "10.0.15",
+      "selected": "10.0.15",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.dependencyinjection/index.json",
+      "resolvedVersions": [
+        "10.0.15"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.dependencyinjection/10.0.15/microsoft.extensions.dependencyinjection.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.dependencyinjection/11.0.0/microsoft.extensions.dependencyinjection.nuspec"
+      ]
+    },
+    "Microsoft.Extensions.Hosting.WindowsServices": {
+      "before": "10.0.15",
+      "highestStable": "11.0.0",
+      "latestInOriginalMajor": "10.0.15",
+      "selected": "10.0.15",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.hosting.windowsservices/index.json",
+      "resolvedVersions": [
+        "10.0.15"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.hosting.windowsservices/10.0.15/microsoft.extensions.hosting.windowsservices.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.hosting.windowsservices/11.0.0/microsoft.extensions.hosting.windowsservices.nuspec"
+      ]
+    },
+    "Microsoft.Extensions.Logging": {
+      "before": "10.0.15",
+      "highestStable": "11.0.0",
+      "latestInOriginalMajor": "10.0.15",
+      "selected": "10.0.15",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.logging/index.json",
+      "resolvedVersions": [
+        "10.0.15"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.logging/10.0.15/microsoft.extensions.logging.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/microsoft.extensions.logging/11.0.0/microsoft.extensions.logging.nuspec"
+      ]
+    },
+    "Microsoft.IdentityModel.JsonWebTokens": {
+      "before": "6.35.0",
+      "highestStable": "8.23.0",
+      "latestInOriginalMajor": "6.36.0",
+      "selected": null,
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/microsoft.identitymodel.jsonwebtokens/index.json",
+      "resolvedVersions": [],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/microsoft.identitymodel.jsonwebtokens/6.35.0/microsoft.identitymodel.jsonwebtokens.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/microsoft.identitymodel.jsonwebtokens/6.36.0/microsoft.identitymodel.jsonwebtokens.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/microsoft.identitymodel.jsonwebtokens/8.23.0/microsoft.identitymodel.jsonwebtokens.nuspec"
+      ],
+      "reason": "Dormant declaration; removal independently restored all graphs without altering any lockfiles before other updates."
+    },
+    "Microsoft.NET.Test.Sdk": {
+      "before": "18.12.0",
+      "highestStable": "18.12.0",
+      "latestInOriginalMajor": "18.12.0",
+      "selected": "18.12.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/microsoft.net.test.sdk/index.json",
+      "resolvedVersions": [
+        "18.12.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/microsoft.net.test.sdk/18.12.0/microsoft.net.test.sdk.nuspec"
+      ]
+    },
+    "Microsoft.Win32.Registry": {
+      "before": "5.0.0",
+      "highestStable": "5.0.0",
+      "latestInOriginalMajor": "5.0.0",
+      "selected": null,
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/microsoft.win32.registry/index.json",
+      "resolvedVersions": [],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/microsoft.win32.registry/5.0.0/microsoft.win32.registry.nuspec"
+      ],
+      "reason": "Dormant declaration; removal independently restored all graphs without altering any lockfiles before other updates."
+    },
+    "MonoTorrent": {
+      "before": "2.0.7",
+      "highestStable": "3.0.2",
+      "latestInOriginalMajor": "2.0.7",
+      "selected": "2.0.7",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/monotorrent/index.json",
+      "resolvedVersions": [
+        "2.0.7"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/monotorrent/2.0.7/monotorrent.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/monotorrent/3.0.2/monotorrent.nuspec"
+      ]
+    },
+    "Moq": {
+      "before": "4.21.0",
+      "highestStable": "4.21.0",
+      "latestInOriginalMajor": "4.21.0",
+      "selected": "4.21.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/moq/index.json",
+      "resolvedVersions": [
+        "4.21.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/moq/4.21.0/moq.nuspec"
+      ]
+    },
+    "NBuilder": {
+      "before": "6.1.0",
+      "highestStable": "6.1.0",
+      "latestInOriginalMajor": "6.1.0",
+      "selected": "6.1.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/nbuilder/index.json",
+      "resolvedVersions": [
+        "6.1.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/nbuilder/6.1.0/nbuilder.nuspec"
+      ]
+    },
+    "NLog": {
+      "before": "5.5.1",
+      "highestStable": "6.2.2",
+      "latestInOriginalMajor": "5.5.1",
+      "selected": "5.5.1",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/nlog/index.json",
+      "resolvedVersions": [
+        "5.5.1"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/nlog/5.5.1/nlog.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/nlog/6.2.2/nlog.nuspec"
+      ]
+    },
+    "NLog.Extensions.Logging": {
+      "before": "5.5.0",
+      "highestStable": "6.3.0",
+      "latestInOriginalMajor": "5.5.0",
+      "selected": "5.5.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/nlog.extensions.logging/index.json",
+      "resolvedVersions": [
+        "5.5.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/nlog.extensions.logging/5.5.0/nlog.extensions.logging.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/nlog.extensions.logging/6.3.0/nlog.extensions.logging.nuspec"
+      ]
+    },
+    "NLog.Targets.Syslog": {
+      "before": "7.0.0",
+      "highestStable": "7.0.0",
+      "latestInOriginalMajor": "7.0.0",
+      "selected": "7.0.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/nlog.targets.syslog/index.json",
+      "resolvedVersions": [
+        "7.0.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/nlog.targets.syslog/7.0.0/nlog.targets.syslog.nuspec"
+      ]
+    },
+    "NUnit": {
+      "before": "4.6.1",
+      "highestStable": "5.0.0",
+      "latestInOriginalMajor": "4.6.1",
+      "selected": "4.6.1",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/nunit/index.json",
+      "resolvedVersions": [
+        "4.6.1"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/nunit/4.6.1/nunit.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/nunit/5.0.0/nunit.nuspec"
+      ]
+    },
+    "NUnit3TestAdapter": {
+      "before": "6.3.1",
+      "highestStable": "6.3.1",
+      "latestInOriginalMajor": "6.3.1",
+      "selected": "6.3.1",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/nunit3testadapter/index.json",
+      "resolvedVersions": [
+        "6.3.1"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/nunit3testadapter/6.3.1/nunit3testadapter.nuspec"
+      ]
+    },
+    "Newtonsoft.Json": {
+      "before": "13.0.4",
+      "highestStable": "13.0.4",
+      "latestInOriginalMajor": "13.0.4",
+      "selected": "13.0.4",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/newtonsoft.json/index.json",
+      "resolvedVersions": [
+        "13.0.4"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/newtonsoft.json/13.0.4/newtonsoft.json.nuspec"
+      ]
+    },
+    "Npgsql": {
+      "before": "10.0.3",
+      "highestStable": "11.0.0",
+      "latestInOriginalMajor": "10.0.4",
+      "selected": "10.0.4",
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/npgsql/index.json",
+      "resolvedVersions": [
+        "10.0.4"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/npgsql/10.0.3/npgsql.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/npgsql/10.0.4/npgsql.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/npgsql/11.0.0/npgsql.nuspec"
+      ]
+    },
+    "NunitXml.TestLogger": {
+      "before": "8.1.0",
+      "highestStable": "8.1.0",
+      "latestInOriginalMajor": "8.1.0",
+      "selected": "8.1.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/nunitxml.testlogger/index.json",
+      "resolvedVersions": [
+        "8.1.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/nunitxml.testlogger/8.1.0/nunitxml.testlogger.nuspec"
+      ]
+    },
+    "PdfPig": {
+      "before": "0.1.16",
+      "highestStable": "0.1.16",
+      "latestInOriginalMajor": "0.1.16",
+      "selected": "0.1.16",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/pdfpig/index.json",
+      "resolvedVersions": [
+        "0.1.16"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/pdfpig/0.1.16/pdfpig.nuspec"
+      ]
+    },
+    "Polly": {
+      "before": "8.9.1",
+      "highestStable": "8.9.1",
+      "latestInOriginalMajor": "8.9.1",
+      "selected": "8.9.1",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/polly/index.json",
+      "resolvedVersions": [
+        "8.9.1"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/polly/8.9.1/polly.nuspec"
+      ]
+    },
+    "RestSharp": {
+      "before": "106.15.0",
+      "highestStable": "114.1.0",
+      "latestInOriginalMajor": "106.15.0",
+      "selected": "106.15.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/restsharp/index.json",
+      "resolvedVersions": [
+        "106.15.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/restsharp/106.15.0/restsharp.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/restsharp/114.1.0/restsharp.nuspec"
+      ]
+    },
+    "RestSharp.Serializers.SystemTextJson": {
+      "before": "106.15.0",
+      "highestStable": "106.15.0",
+      "latestInOriginalMajor": "106.15.0",
+      "selected": "106.15.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/restsharp.serializers.systemtextjson/index.json",
+      "resolvedVersions": [
+        "106.15.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/restsharp.serializers.systemtextjson/106.15.0/restsharp.serializers.systemtextjson.nuspec"
+      ]
+    },
+    "Selenium.Support": {
+      "before": "3.141.0",
+      "highestStable": "4.54.0",
+      "latestInOriginalMajor": "3.141.0",
+      "selected": "3.141.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/selenium.support/index.json",
+      "resolvedVersions": [
+        "3.141.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/selenium.support/3.141.0/selenium.support.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/selenium.support/4.54.0/selenium.support.nuspec"
+      ]
+    },
+    "Selenium.WebDriver.ChromeDriver": {
+      "before": "134.0.6998.16500",
+      "highestStable": "158.0.8127.8800",
+      "latestInOriginalMajor": "134.0.6998.16500",
+      "selected": "134.0.6998.16500",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/selenium.webdriver.chromedriver/index.json",
+      "resolvedVersions": [
+        "134.0.6998.16500"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/selenium.webdriver.chromedriver/134.0.6998.16500/selenium.webdriver.chromedriver.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/selenium.webdriver.chromedriver/158.0.8127.8800/selenium.webdriver.chromedriver.nuspec"
+      ]
+    },
+    "SharpZipLib": {
+      "before": "1.4.2",
+      "highestStable": "1.4.2",
+      "latestInOriginalMajor": "1.4.2",
+      "selected": "1.4.2",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/sharpziplib/index.json",
+      "resolvedVersions": [
+        "1.4.2"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/sharpziplib/1.4.2/sharpziplib.nuspec"
+      ]
+    },
+    "SourceGear.sqlite3": {
+      "before": "3.53.4",
+      "highestStable": "3.53.4",
+      "latestInOriginalMajor": "3.53.4",
+      "selected": "3.53.4",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/sourcegear.sqlite3/index.json",
+      "resolvedVersions": [
+        "3.53.4"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/sourcegear.sqlite3/3.53.4/sourcegear.sqlite3.nuspec"
+      ]
+    },
+    "StyleCop.Analyzers": {
+      "before": "1.1.118",
+      "highestStable": "1.3.180",
+      "latestInOriginalMajor": "1.3.180",
+      "selected": "1.1.118",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/stylecop.analyzers/index.json",
+      "resolvedVersions": [
+        "1.1.118"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/stylecop.analyzers/1.1.118/stylecop.analyzers.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/stylecop.analyzers/1.3.180/stylecop.analyzers.nuspec"
+      ]
+    },
+    "Swashbuckle.AspNetCore.Annotations": {
+      "before": "6.6.2",
+      "highestStable": "11.0.1",
+      "latestInOriginalMajor": "6.9.0",
+      "selected": "6.6.2",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.annotations/index.json",
+      "resolvedVersions": [
+        "6.6.2"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.annotations/11.0.1/swashbuckle.aspnetcore.annotations.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.annotations/6.6.2/swashbuckle.aspnetcore.annotations.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.annotations/6.9.0/swashbuckle.aspnetcore.annotations.nuspec"
+      ]
+    },
+    "Swashbuckle.AspNetCore.SwaggerGen": {
+      "before": "6.6.2",
+      "highestStable": "11.0.1",
+      "latestInOriginalMajor": "6.9.0",
+      "selected": "6.6.2",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.swaggergen/index.json",
+      "resolvedVersions": [
+        "6.6.2"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.swaggergen/11.0.1/swashbuckle.aspnetcore.swaggergen.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.swaggergen/6.6.2/swashbuckle.aspnetcore.swaggergen.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/swashbuckle.aspnetcore.swaggergen/6.9.0/swashbuckle.aspnetcore.swaggergen.nuspec"
+      ]
+    },
+    "System.Buffers": {
+      "before": "4.6.1",
+      "highestStable": "4.6.1",
+      "latestInOriginalMajor": "4.6.1",
+      "selected": null,
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.buffers/index.json",
+      "resolvedVersions": [],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.buffers/4.6.1/system.buffers.nuspec"
+      ],
+      "reason": "Dormant declaration; removal independently restored all graphs without altering any lockfiles before other updates."
+    },
+    "System.Configuration.ConfigurationManager": {
+      "before": "10.0.15",
+      "highestStable": "11.0.0",
+      "latestInOriginalMajor": "10.0.15",
+      "selected": "10.0.15",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.configuration.configurationmanager/index.json",
+      "resolvedVersions": [
+        "10.0.15"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.configuration.configurationmanager/10.0.15/system.configuration.configurationmanager.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/system.configuration.configurationmanager/11.0.0/system.configuration.configurationmanager.nuspec"
+      ]
+    },
+    "System.Data.SQLite": {
+      "before": "2.0.4",
+      "highestStable": "2.0.4",
+      "latestInOriginalMajor": "2.0.4",
+      "selected": "2.0.4",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.data.sqlite/index.json",
+      "resolvedVersions": [
+        "2.0.4"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.data.sqlite/2.0.4/system.data.sqlite.nuspec"
+      ]
+    },
+    "System.IO.Abstractions": {
+      "before": "17.0.24",
+      "highestStable": "23.1.0",
+      "latestInOriginalMajor": "17.2.26",
+      "selected": "23.1.0",
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.io.abstractions/index.json",
+      "resolvedVersions": [
+        "23.1.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.io.abstractions/17.0.24/system.io.abstractions.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/system.io.abstractions/17.2.26/system.io.abstractions.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/system.io.abstractions/23.1.0/system.io.abstractions.nuspec"
+      ]
+    },
+    "System.IO.Abstractions.TestingHelpers": {
+      "before": "17.0.24",
+      "highestStable": "23.1.0",
+      "latestInOriginalMajor": "17.2.26",
+      "selected": "23.1.0",
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.io.abstractions.testinghelpers/index.json",
+      "resolvedVersions": [
+        "23.1.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.io.abstractions.testinghelpers/17.0.24/system.io.abstractions.testinghelpers.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/system.io.abstractions.testinghelpers/17.2.26/system.io.abstractions.testinghelpers.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/system.io.abstractions.testinghelpers/23.1.0/system.io.abstractions.testinghelpers.nuspec"
+      ]
+    },
+    "System.IO.FileSystem.AccessControl": {
+      "before": "5.0.0",
+      "highestStable": "5.0.0",
+      "latestInOriginalMajor": "5.0.0",
+      "selected": "5.0.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.io.filesystem.accesscontrol/index.json",
+      "resolvedVersions": [
+        "5.0.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.io.filesystem.accesscontrol/5.0.0/system.io.filesystem.accesscontrol.nuspec"
+      ]
+    },
+    "System.IdentityModel.Tokens.Jwt": {
+      "before": "6.35.0",
+      "highestStable": "8.23.0",
+      "latestInOriginalMajor": "6.36.0",
+      "selected": null,
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.identitymodel.tokens.jwt/index.json",
+      "resolvedVersions": [],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.identitymodel.tokens.jwt/6.35.0/system.identitymodel.tokens.jwt.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/system.identitymodel.tokens.jwt/6.36.0/system.identitymodel.tokens.jwt.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/system.identitymodel.tokens.jwt/8.23.0/system.identitymodel.tokens.jwt.nuspec"
+      ],
+      "reason": "Dormant declaration; removal independently restored all graphs without altering any lockfiles before other updates."
+    },
+    "System.Memory": {
+      "before": "4.6.3",
+      "highestStable": "4.6.3",
+      "latestInOriginalMajor": "4.6.3",
+      "selected": null,
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.memory/index.json",
+      "resolvedVersions": [],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.memory/4.6.3/system.memory.nuspec"
+      ],
+      "reason": "Dormant declaration; removal independently restored all graphs without altering any lockfiles before other updates."
+    },
+    "System.Private.Uri": {
+      "before": "4.3.2",
+      "highestStable": "4.3.2",
+      "latestInOriginalMajor": "4.3.2",
+      "selected": null,
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.private.uri/index.json",
+      "resolvedVersions": [],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.private.uri/4.3.2/system.private.uri.nuspec"
+      ],
+      "reason": "Dormant declaration; removal independently restored all graphs without altering any lockfiles before other updates."
+    },
+    "System.Reflection.TypeExtensions": {
+      "before": "4.7.0",
+      "highestStable": "4.7.0",
+      "latestInOriginalMajor": "4.7.0",
+      "selected": "4.7.0",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.reflection.typeextensions/index.json",
+      "resolvedVersions": [
+        "4.7.0"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.reflection.typeextensions/4.7.0/system.reflection.typeextensions.nuspec"
+      ]
+    },
+    "System.Resources.Extensions": {
+      "before": "10.0.15",
+      "highestStable": "11.0.0",
+      "latestInOriginalMajor": "10.0.15",
+      "selected": "10.0.15",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.resources.extensions/index.json",
+      "resolvedVersions": [
+        "10.0.15"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.resources.extensions/10.0.15/system.resources.extensions.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/system.resources.extensions/11.0.0/system.resources.extensions.nuspec"
+      ]
+    },
+    "System.Security.Cryptography.Pkcs": {
+      "before": "10.0.15",
+      "highestStable": "11.0.0",
+      "latestInOriginalMajor": "10.0.15",
+      "selected": "10.0.15",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.security.cryptography.pkcs/index.json",
+      "resolvedVersions": [
+        "10.0.15"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.security.cryptography.pkcs/10.0.15/system.security.cryptography.pkcs.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/system.security.cryptography.pkcs/11.0.0/system.security.cryptography.pkcs.nuspec"
+      ]
+    },
+    "System.Security.Permissions": {
+      "before": "10.0.15",
+      "highestStable": "11.0.0",
+      "latestInOriginalMajor": "10.0.15",
+      "selected": null,
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.security.permissions/index.json",
+      "resolvedVersions": [],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.security.permissions/10.0.15/system.security.permissions.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/system.security.permissions/11.0.0/system.security.permissions.nuspec"
+      ],
+      "reason": "Dormant declaration; removal independently restored all graphs without altering any lockfiles before other updates."
+    },
+    "System.Security.Principal.Windows": {
+      "before": "5.0.0",
+      "highestStable": "5.0.0",
+      "latestInOriginalMajor": "5.0.0",
+      "selected": null,
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.security.principal.windows/index.json",
+      "resolvedVersions": [],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.security.principal.windows/5.0.0/system.security.principal.windows.nuspec"
+      ],
+      "reason": "Dormant declaration; removal independently restored all graphs without altering any lockfiles before other updates."
+    },
+    "System.ServiceProcess.ServiceController": {
+      "before": "10.0.15",
+      "highestStable": "11.0.0",
+      "latestInOriginalMajor": "10.0.15",
+      "selected": "10.0.15",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.serviceprocess.servicecontroller/index.json",
+      "resolvedVersions": [
+        "10.0.15"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.serviceprocess.servicecontroller/10.0.15/system.serviceprocess.servicecontroller.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/system.serviceprocess.servicecontroller/11.0.0/system.serviceprocess.servicecontroller.nuspec"
+      ]
+    },
+    "System.Text.Encoding.CodePages": {
+      "before": "10.0.15",
+      "highestStable": "11.0.0",
+      "latestInOriginalMajor": "10.0.15",
+      "selected": null,
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.text.encoding.codepages/index.json",
+      "resolvedVersions": [],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.text.encoding.codepages/10.0.15/system.text.encoding.codepages.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/system.text.encoding.codepages/11.0.0/system.text.encoding.codepages.nuspec"
+      ],
+      "reason": "Dormant declaration; removal independently restored all graphs without altering any lockfiles before other updates."
+    },
+    "System.Text.Json": {
+      "before": "10.0.15",
+      "highestStable": "11.0.0",
+      "latestInOriginalMajor": "10.0.15",
+      "selected": null,
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.text.json/index.json",
+      "resolvedVersions": [],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.text.json/10.0.15/system.text.json.nuspec",
+        "https://api.nuget.org/v3-flatcontainer/system.text.json/11.0.0/system.text.json.nuspec"
+      ],
+      "reason": "Dormant declaration; removal independently restored all graphs without altering any lockfiles before other updates."
+    },
+    "System.Text.RegularExpressions": {
+      "before": "4.3.1",
+      "highestStable": "4.3.1",
+      "latestInOriginalMajor": "4.3.1",
+      "selected": null,
+      "changed": true,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.text.regularexpressions/index.json",
+      "resolvedVersions": [],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.text.regularexpressions/4.3.1/system.text.regularexpressions.nuspec"
+      ],
+      "reason": "Dormant declaration; removal independently restored all graphs without altering any lockfiles before other updates."
+    },
+    "System.ValueTuple": {
+      "before": "4.6.2",
+      "highestStable": "4.6.2",
+      "latestInOriginalMajor": "4.6.2",
+      "selected": "4.6.2",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/system.valuetuple/index.json",
+      "resolvedVersions": [
+        "4.6.2"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/system.valuetuple/4.6.2/system.valuetuple.nuspec"
+      ]
+    },
+    "TagLibSharp-Lidarr": {
+      "before": "2.2.0.19",
+      "highestStable": "2.2.0.19",
+      "latestInOriginalMajor": "2.2.0.19",
+      "selected": "2.2.0.19",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/taglibsharp-lidarr/index.json",
+      "resolvedVersions": [
+        "2.2.0.19"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/taglibsharp-lidarr/2.2.0.19/taglibsharp-lidarr.nuspec"
+      ]
+    },
+    "coverlet.collector": {
+      "before": "10.1.1",
+      "highestStable": "10.1.1",
+      "latestInOriginalMajor": "10.1.1",
+      "selected": "10.1.1",
+      "changed": false,
+      "registry": "https://api.nuget.org/v3-flatcontainer/coverlet.collector/index.json",
+      "resolvedVersions": [
+        "10.1.1"
+      ],
+      "reviewedNuspecs": [
+        "https://api.nuget.org/v3-flatcontainer/coverlet.collector/10.1.1/coverlet.collector.nuspec"
+      ]
+    }
+  }
+}

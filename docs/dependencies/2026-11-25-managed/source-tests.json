@@ -1,0 +1,188 @@
+{
+  "sourceCommit": "f40ade0904a8b7a3e3a69423d4302f6ac6a096bd",
+  "sourceTree": "77595a48f3d6939dfa0db5fe4db078e8c1b6d980",
+  "sourceCleanAtStart": true,
+  "suites": {
+    "core": {
+      "returnCode": 0,
+      "filter": "TestCategory!=IntegrationTest&FullyQualifiedName!~BookInfoProxyFixture&FullyQualifiedName!~BookInfoProxySearchFixture&FullyQualifiedName!~GoodreadsProxySearchFixture&FullyQualifiedName!~IdentificationServiceFixture",
+      "counters": {
+        "total": 4912,
+        "executed": 4857,
+        "passed": 4857,
+        "failed": 0,
+        "error": 0,
+        "timeout": 0,
+        "aborted": 0,
+        "inconclusive": 0,
+        "passedButRunAborted": 0,
+        "notRunnable": 0,
+        "notExecuted": 0,
+        "disconnected": 0,
+        "warning": 0,
+        "completed": 0,
+        "inProgress": 0,
+        "pending": 0
+      }
+    },
+    "common": {
+      "returnCode": 0,
+      "filter": "TestCategory!=IntegrationTest",
+      "counters": {
+        "total": 893,
+        "executed": 855,
+        "passed": 855,
+        "failed": 0,
+        "error": 0,
+        "timeout": 0,
+        "aborted": 0,
+        "inconclusive": 0,
+        "passedButRunAborted": 0,
+        "notRunnable": 0,
+        "notExecuted": 0,
+        "disconnected": 0,
+        "warning": 0,
+        "completed": 0,
+        "inProgress": 0,
+        "pending": 0
+      }
+    },
+    "api": {
+      "returnCode": 0,
+      "filter": "TestCategory!=IntegrationTest",
+      "counters": {
+        "total": 102,
+        "executed": 102,
+        "passed": 102,
+        "failed": 0,
+        "error": 0,
+        "timeout": 0,
+        "aborted": 0,
+        "inconclusive": 0,
+        "passedButRunAborted": 0,
+        "notRunnable": 0,
+        "notExecuted": 0,
+        "disconnected": 0,
+        "warning": 0,
+        "completed": 0,
+        "inProgress": 0,
+        "pending": 0
+      }
+    },
+    "host": {
+      "returnCode": 0,
+      "filter": "TestCategory!=IntegrationTest",
+      "counters": {
+        "total": 197,
+        "executed": 193,
+        "passed": 193,
+        "failed": 0,
+        "error": 0,
+        "timeout": 0,
+        "aborted": 0,
+        "inconclusive": 0,
+        "passedButRunAborted": 0,
+        "notRunnable": 0,
+        "notExecuted": 0,
+        "disconnected": 0,
+        "warning": 0,
+        "completed": 0,
+        "inProgress": 0,
+        "pending": 0
+      }
+    },
+    "updater": {
+      "returnCode": 0,
+      "filter": "TestCategory!=IntegrationTest",
+      "counters": {
+        "total": 21,
+        "executed": 21,
+        "passed": 21,
+        "failed": 0,
+        "error": 0,
+        "timeout": 0,
+        "aborted": 0,
+        "inconclusive": 0,
+        "passedButRunAborted": 0,
+        "notRunnable": 0,
+        "notExecuted": 0,
+        "disconnected": 0,
+        "warning": 0,
+        "completed": 0,
+        "inProgress": 0,
+        "pending": 0
+      }
+    },
+    "mono-disk": {
+      "returnCode": 0,
+      "filter": "FullyQualifiedName~DiskProviderFixture&TestCategory!=IntegrationTest",
+      "counters": {
+        "total": 39,
+        "executed": 36,
+        "passed": 36,
+        "failed": 0,
+        "error": 0,
+        "timeout": 0,
+        "aborted": 0,
+        "inconclusive": 0,
+        "passedButRunAborted": 0,
+        "notRunnable": 0,
+        "notExecuted": 0,
+        "disconnected": 0,
+        "warning": 0,
+        "completed": 0,
+        "inProgress": 0,
+        "pending": 0
+      }
+    },
+    "postgres-migrations": {
+      "returnCode": 0,
+      "filter": "TestCategory=DbMigrationTest",
+      "counters": {
+        "total": 23,
+        "executed": 23,
+        "passed": 23,
+        "failed": 0,
+        "error": 0,
+        "timeout": 0,
+        "aborted": 0,
+        "inconclusive": 0,
+        "passedButRunAborted": 0,
+        "notRunnable": 0,
+        "notExecuted": 0,
+        "disconnected": 0,
+        "warning": 0,
+        "completed": 0,
+        "inProgress": 0,
+        "pending": 0
+      }
+    },
+    "postgres-recording": {
+      "returnCode": 0,
+      "filter": "FullyQualifiedName~ImportListMembershipRepositoryFixture|FullyQualifiedName~LibraryStatisticsServiceFixture|FullyQualifiedName~ReleaseGroupResolutionFixture|FullyQualifiedName~QualityProfileRankFixture|FullyQualifiedName~AuthorStatisticsFixture|FullyQualifiedName~ImportListPolicyRepositoryFixture|FullyQualifiedName~RejectedImportRepositoryFixture|FullyQualifiedName~PerformanceProfilerFixture",
+      "counters": {
+        "total": 59,
+        "executed": 59,
+        "passed": 59,
+        "failed": 0,
+        "error": 0,
+        "timeout": 0,
+        "aborted": 0,
+        "inconclusive": 0,
+        "passedButRunAborted": 0,
+        "notRunnable": 0,
+        "notExecuted": 0,
+        "disconnected": 0,
+        "warning": 0,
+        "completed": 0,
+        "inProgress": 0,
+        "pending": 0
+      }
+    }
+  },
+  "sdk": "10.0.404",
+  "nunitFramework": "4.6.1",
+  "postgresStopped": true,
+  "sourceStillMatches": true,
+  "completed": true
+}
