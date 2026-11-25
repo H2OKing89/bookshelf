@@ -10,6 +10,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Http;
 using NzbDrone.Core.Blocklisting;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.MediaFiles.TorrentInfo;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.RemotePathMappings;
@@ -66,8 +67,17 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
             }
         }
 
+        private void EnsureSeedTimeTypeSupported(RemoteBook remoteBook)
+        {
+            if ((QBittorrentSeedTimeType)Settings.SeedTimeType == QBittorrentSeedTimeType.Inactive && ProxyApiVersion < new Version(2, 9, 2))
+            {
+                throw new DownloadClientRejectedReleaseException(remoteBook.Release, "Inactive seed time requires qBittorrent 4.6.0 or later (Web API 2.9.2).");
+            }
+        }
+
         protected override string AddFromMagnetLink(RemoteBook remoteBook, string hash, string magnetLink)
         {
+            EnsureSeedTimeTypeSupported(remoteBook);
             if (!Proxy.GetConfig(Settings).DhtEnabled && !magnetLink.Contains("&tr="))
             {
                 throw new DownloadClientMagnetNotSupportedException("Magnet Links without trackers not supported if DHT is disabled");
@@ -90,8 +100,6 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
 
                 if (!addHasSetShareLimits && setShareLimits)
                 {
-                    Proxy.SetTorrentSeedingConfiguration(hash.ToLower(), remoteBook.SeedConfiguration, Settings);
-
                     try
                     {
                         Proxy.SetTorrentSeedingConfiguration(hash.ToLower(), remoteBook.SeedConfiguration, Settings);
@@ -132,6 +140,7 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
 
         protected override string AddFromTorrentFile(RemoteBook remoteBook, string hash, string filename, byte[] fileContent)
         {
+            EnsureSeedTimeTypeSupported(remoteBook);
             var setShareLimits = remoteBook.SeedConfiguration != null && (remoteBook.SeedConfiguration.Ratio.HasValue || remoteBook.SeedConfiguration.SeedTime.HasValue);
             var addHasSetShareLimits = setShareLimits && ProxyApiVersion >= new Version(2, 8, 1);
             var isRecentBook = remoteBook.IsRecentBook();
@@ -446,7 +455,8 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
         private bool RemovesCompletedDownloads(QBittorrentPreferences config)
         {
             var minimumRetention = 60 * 24 * 14; // 14 days in minutes
-            return (config.MaxRatioEnabled || (config.MaxSeedingTimeEnabled && config.MaxSeedingTime < minimumRetention)) && (config.MaxRatioAction == QBittorrentMaxRatioAction.Remove || config.MaxRatioAction == QBittorrentMaxRatioAction.DeleteFiles);
+            return (config.MaxRatioEnabled || (config.MaxSeedingTimeEnabled && config.MaxSeedingTime < minimumRetention) ||
+                (config.MaxInactiveSeedingTimeEnabled && config.MaxInactiveSeedingTime < minimumRetention)) && (config.MaxRatioAction == QBittorrentMaxRatioAction.Remove || config.MaxRatioAction == QBittorrentMaxRatioAction.DeleteFiles);
         }
 
         protected override void Test(List<ValidationFailure> failures)
@@ -467,6 +477,14 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
             try
             {
                 var version = _proxySelector.GetProxy(Settings, true).GetApiVersion(Settings);
+                if ((QBittorrentSeedTimeType)Settings.SeedTimeType == QBittorrentSeedTimeType.Inactive && version < new Version(2, 9, 2))
+                {
+                    return new NzbDroneValidationFailure(nameof(Settings.SeedTimeType), "Inactive seed time requires qBittorrent 4.6.0 or later (Web API 2.9.2).")
+                    {
+                        DetailedDescription = "Upgrade qBittorrent or select Total seed time. The setting is not converted automatically."
+                    };
+                }
+
                 if (version < Version.Parse("1.5"))
                 {
                     // API version 5 introduced the "save_path" property in /query/torrents

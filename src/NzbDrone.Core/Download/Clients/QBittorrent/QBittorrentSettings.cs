@@ -1,3 +1,4 @@
+using System;
 using FluentValidation;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Annotations;
@@ -12,6 +13,7 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
         {
             RuleFor(c => c.Host).ValidHost();
             RuleFor(c => c.Port).InclusiveBetween(1, 65535);
+            RuleFor(c => c.SeedTimeType).Must(value => Enum.IsDefined(typeof(QBittorrentSeedTimeType), value));
             RuleFor(c => c.UrlBase).ValidUrlBase().When(c => c.UrlBase.IsNotNullOrWhiteSpace());
 
             RuleFor(c => c.Username).Empty()
@@ -81,6 +83,9 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
 
         [FieldDefinition(14, Label = "DownloadClientQbittorrentSettingsContentLayout", Type = FieldType.Select, SelectOptions = typeof(QBittorrentContentLayout), HelpText = "DownloadClientQbittorrentSettingsContentLayoutHelpText")]
         public int ContentLayout { get; set; }
+
+        [FieldDefinition(15, Label = "DownloadClientQbittorrentSettingsSeedTimeType", Type = FieldType.Select, SelectOptions = typeof(QBittorrentSeedTimeType), HelpText = "DownloadClientQbittorrentSettingsSeedTimeTypeHelpText")]
+        public int SeedTimeType { get; set; }
 
         public NzbDroneValidationResult Validate()
         {

@@ -152,7 +152,7 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
 
             if (seedConfiguration != null)
             {
-                AddTorrentSeedingFormParameters(request, seedConfiguration);
+                AddTorrentSeedingFormParameters(request, seedConfiguration, settings);
             }
 
             var result = ProcessRequest(request, settings);
@@ -174,7 +174,7 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
 
             if (seedConfiguration != null)
             {
-                AddTorrentSeedingFormParameters(request, seedConfiguration);
+                AddTorrentSeedingFormParameters(request, seedConfiguration, settings);
             }
 
             var result = ProcessRequest(request, settings);
@@ -223,7 +223,7 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
             return Json.Deserialize<Dictionary<string, QBittorrentLabel>>(ProcessRequest(request, settings));
         }
 
-        private void AddTorrentSeedingFormParameters(HttpRequestBuilder request, TorrentSeedConfiguration seedConfiguration, bool always = false)
+        private void AddTorrentSeedingFormParameters(HttpRequestBuilder request, TorrentSeedConfiguration seedConfiguration, QBittorrentSettings settings, bool always = false)
         {
             var ratioLimit = seedConfiguration.Ratio.HasValue ? seedConfiguration.Ratio : -2;
             var seedingTimeLimit = seedConfiguration.SeedTime.HasValue ? (long)seedConfiguration.SeedTime.Value.TotalMinutes : -2;
@@ -235,7 +235,18 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
 
             if (seedingTimeLimit != -2 || always)
             {
-                request.AddFormParameter("seedingTimeLimit", seedingTimeLimit);
+                var parameter = "seedingTimeLimit";
+                if ((QBittorrentSeedTimeType)settings.SeedTimeType == QBittorrentSeedTimeType.Inactive)
+                {
+                    if (GetApiVersion(settings) < new Version(2, 9, 2))
+                    {
+                        throw new DownloadClientException("Inactive seed time requires qBittorrent 4.6.0 or later (Web API 2.9.2).");
+                    }
+
+                    parameter = "inactiveSeedingTimeLimit";
+                }
+
+                request.AddFormParameter(parameter, seedingTimeLimit);
             }
         }
 
@@ -288,7 +299,7 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
                                                 .Post()
                                                 .AddFormParameter("hashes", hash);
 
-            AddTorrentSeedingFormParameters(request, seedConfiguration, true);
+            AddTorrentSeedingFormParameters(request, seedConfiguration, settings, true);
 
             try
             {

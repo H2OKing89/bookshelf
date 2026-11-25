@@ -434,6 +434,8 @@
   "DownloadClientDelugeSettingsDirectoryHelpText": "Optional location to put downloads in, leave blank to use the default Deluge location",
   "DownloadClientQbittorrentSettingsContentLayout": "Content Layout",
   "DownloadClientQbittorrentSettingsContentLayoutHelpText": "Whether to use qBittorrent's configured content layout, the original layout from the torrent or always create a subfolder (qBittorrent 4.3.2+)",
+  "DownloadClientQbittorrentSettingsSeedTimeType": "Seed Time Type",
+  "DownloadClientQbittorrentSettingsSeedTimeTypeHelpText": "Apply the configured torrent seed time to total seeding time or time without activity. Inactive seed time requires qBittorrent 4.6.0 or later.",
   "DownloadClientRemovesCompletedDownloadsHealthCheckMessage": "Download client {0} is set to remove completed downloads. This can result in downloads being removed from your client before {1} can import them.",
   "DownloadClientSettings": "Download Client Settings",
   "DownloadClientStatusCheckAllClientMessage": "All download clients are unavailable due to failures",

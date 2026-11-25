@@ -978,6 +978,49 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.QBittorrentTests
             torrent.Eta.ToString().Should().Be("18446744073709335000");
         }
 
+        [TestCase("1.6")]
+        [TestCase("2.9.1")]
+        public void test_connection_rejects_inactive_seed_time_for_unsupported_versions(string version)
+        {
+            Subject.Definition.Settings.As<QBittorrentSettings>().SeedTimeType = (int)QBittorrentSeedTimeType.Inactive;
+            Mocker.GetMock<IQBittorrentProxy>().Setup(proxy => proxy.GetApiVersion(It.IsAny<QBittorrentSettings>())).Returns(Version.Parse(version));
+            Subject.Test().Errors.Should().Contain(error => error.PropertyName == "SeedTimeType" && error.ErrorMessage.Contains("4.6.0"));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void unsupported_inactive_mode_prevents_torrent_add(bool magnet)
+        {
+            var settings = Subject.Definition.Settings.As<QBittorrentSettings>();
+            settings.SeedTimeType = (int)QBittorrentSeedTimeType.Inactive;
+            Mocker.GetMock<IQBittorrentProxySelector>().Setup(selector => selector.GetApiVersion(settings, It.IsAny<bool>())).Returns(new Version(2, 9, 1));
+            var book = CreateRemoteBook();
+            if (magnet)
+            {
+                book.Release.DownloadUrl = "magnet:?xt=urn:btih:ZPBPA2P6ROZPKRHK44D5OW6NHXU5Z6KR&tr=udp";
+            }
+
+            book.SeedConfiguration = new TorrentSeedConfiguration { SeedTime = TimeSpan.FromMinutes(30) };
+            Assert.ThrowsAsync<DownloadClientRejectedReleaseException>(async () => await Subject.Download(book, CreateIndexer()));
+            Mocker.GetMock<IQBittorrentProxy>().Verify(proxy => proxy.AddTorrentFromUrl(It.IsAny<string>(), It.IsAny<TorrentSeedConfiguration>(), It.IsAny<QBittorrentSettings>()), Times.Never());
+            Mocker.GetMock<IQBittorrentProxy>().Verify(proxy => proxy.AddTorrentFromFile(It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<TorrentSeedConfiguration>(), It.IsAny<QBittorrentSettings>()), Times.Never());
+        }
+
+        [TestCase(QBittorrentMaxRatioAction.Remove, true)]
+        [TestCase(QBittorrentMaxRatioAction.DeleteFiles, true)]
+        [TestCase(QBittorrentMaxRatioAction.Pause, false)]
+        public void short_global_inactive_limit_preserves_remove_completed_guard(QBittorrentMaxRatioAction action, bool expected)
+        {
+            Mocker.GetMock<IQBittorrentProxy>().Setup(proxy => proxy.GetConfig(It.IsAny<QBittorrentSettings>())).Returns(new QBittorrentPreferences
+            {
+                SavePath = @"C:\Downloads".AsOsAgnostic(),
+                MaxInactiveSeedingTime = 10,
+                MaxInactiveSeedingTimeEnabled = true,
+                MaxRatioAction = action
+            });
+            Subject.GetStatus().RemovesCompletedDownloads.Should().Be(expected);
+        }
+
         [Test]
         public void Test_should_force_api_version_check()
         {
