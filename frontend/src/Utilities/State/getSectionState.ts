@@ -3,7 +3,6 @@ import { asStateRecord, StateRecord } from 'Store/StateTypes';
 
 // Legacy full-tree queries may return any resource, whereas section reducers
 // always work with a shallow record. Overloads make that distinction explicit.
-/* eslint-disable no-redeclare */
 function getSectionState(state: StateRecord, section: string, isFullStateTree: true): unknown;
 function getSectionState(state: StateRecord, section: string, isFullStateTree?: false): StateRecord;
 function getSectionState(state: StateRecord, section: string, isFullStateTree = false): unknown {
@@ -23,6 +22,5 @@ function getSectionState(state: StateRecord, section: string, isFullStateTree = 
     { ...state };
 }
 
-/* eslint-enable no-redeclare */
 
 export default getSectionState;

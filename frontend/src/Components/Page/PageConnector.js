@@ -31,7 +31,7 @@ function testLocalStorage() {
     localStorage.removeItem(key);
 
     return true;
-  } catch (e) {
+  } catch {
     return false;
   }
 }

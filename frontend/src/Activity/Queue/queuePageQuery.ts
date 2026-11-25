@@ -18,7 +18,6 @@ const sortAliases: Record<string, string> = {
   'books.releaseDate': 'book.releaseDate'
 };
 
-// eslint-disable-next-line init-declarations -- Nominal type for parsed queue identities.
 declare const queueIdentity: unique symbol;
 export type QueueRowId = string & { readonly [queueIdentity]: 'row' };
 export type QueueRevision = string & { readonly [queueIdentity]: 'revision' };

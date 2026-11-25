@@ -12,7 +12,7 @@ const validTagRegex = new RegExp('[^-_a-z0-9]', 'i');
 function isValidTag(tagName) {
   try {
     return !validTagRegex.test(tagName);
-  } catch (e) {
+  } catch {
     return false;
   }
 }

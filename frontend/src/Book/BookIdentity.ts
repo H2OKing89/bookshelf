@@ -1,4 +1,3 @@
-// eslint-disable-next-line init-declarations -- This symbol exists only during type checking.
 declare const resourceKind: unique symbol;
 
 export type ResourceKind = 'book' | 'author' | 'edition' | 'bookFile' | 'work' | 'downloadClient';
