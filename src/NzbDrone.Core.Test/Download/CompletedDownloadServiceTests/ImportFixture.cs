@@ -83,6 +83,23 @@ namespace NzbDrone.Core.Test.Download.CompletedDownloadServiceTests
             _tracked.State.Should().NotBe(TrackedDownloadState.Imported);
         }
 
+        [Test]
+        public void completed_no_media_import_should_apply_only_committed_rejection_policy()
+        {
+            _results.Clear();
+            var rejection = new Rejection("Owned rejection", code: RejectionCode.ExecutableFile);
+            Mocker.GetMock<IDownloadImportDiagnostics>().Setup(service => service.Inspect(_tracked)).Returns(new DownloadImportInspection { LocalRejection = rejection });
+            Mocker.GetMock<IRejectedImportService>().Setup(service => service.TryProcess(_tracked, _results, rejection))
+                .Callback(() => _tracked.State = TrackedDownloadState.DownloadFailed).Returns(true);
+
+            Subject.Import(_tracked);
+
+            _tracked.State.Should().Be(TrackedDownloadState.DownloadFailed);
+            AssertNoCompletion();
+            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<BookImportIncompleteEvent>()), Times.Never());
+            Mocker.GetMock<IDownloadImportSourceService>().Verify(service => service.Retire(It.IsAny<TrackedDownload>(), It.IsAny<DownloadImportReceipt>()), Times.Never());
+        }
+
         [TestCase(false)]
         [TestCase(true)]
         public void rejected_or_skipped_files_should_remain_failed_without_cleanup(bool rejected)

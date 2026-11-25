@@ -65,6 +65,46 @@ namespace NzbDrone.Core.Test.Download
             FileSystem.File.ReadAllText(Path.Combine(_output, name)).Should().Be("owned bytes");
         }
 
+        [TestCase("payload.EXE", RejectionCode.ExecutableFile)]
+        [TestCase("payload.PS1", RejectionCode.DangerousFile)]
+        [TestCase("payload.zzz", RejectionCode.UserRejectedExtension)]
+        public void complete_local_single_kind_rejection_is_policy_evidence(string name, string code)
+        {
+            Mocker.GetMock<IConfigService>().SetupGet(config => config.UserRejectedExtensions).Returns(".zzz");
+            File(name);
+            File("cover.jpg");
+
+            Subject.Inspect(_tracked).LocalRejection.Code.Should().Be(code);
+        }
+
+        [TestCase("book.m4b")]
+        [TestCase("archive.zip")]
+        [TestCase("other.ps1")]
+        [TestCase("other.unknown")]
+        public void mixed_inventory_never_authorizes_policy(string other)
+        {
+            File("payload.exe");
+            File(other);
+            Subject.Inspect(_tracked).LocalRejection.Should().BeNull();
+        }
+
+        [Test]
+        public void remote_only_executable_is_diagnostic_not_policy_authority()
+        {
+            _client.Setup(client => client.GetFiles(_tracked.DownloadItem)).Returns(new[] { new DownloadClientFile { RelativePath = "payload.exe" } });
+            var inspection = Subject.Inspect(_tracked);
+            Codes(inspection.Warnings).Should().Contain(RejectionCode.ExecutableFile);
+            inspection.LocalRejection.Should().BeNull();
+        }
+
+        [Test]
+        public void client_inventory_disagreeing_with_local_rejection_is_review_only()
+        {
+            File("payload.exe");
+            _client.Setup(client => client.GetFiles(_tracked.DownloadItem)).Returns(new[] { new DownloadClientFile { RelativePath = "book.m4b" } });
+            Subject.Inspect(_tracked).LocalRejection.Should().BeNull();
+        }
+
         [TestCase("book.M4B")]
         [TestCase("book.EPUB")]
         [TestCase("book.kepub")]

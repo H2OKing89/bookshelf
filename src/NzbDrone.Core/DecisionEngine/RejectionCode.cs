@@ -4,6 +4,7 @@ namespace NzbDrone.Core.DecisionEngine
     // are edited or localized; consumers must preserve unfamiliar values.
     public static class RejectionCode
     {
+        public const string IndexerRejectionReview = "indexer_rejection_review";
         public const string InventoryUnavailable = "inventory_unavailable";
         public const string InventoryInvalid = "inventory_invalid";
         public const string InventoryTruncated = "inventory_truncated";

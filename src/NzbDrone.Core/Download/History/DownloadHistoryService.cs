@@ -370,8 +370,9 @@ namespace NzbDrone.Core.Download.History
 
         public void Handle(DownloadFailedEvent message)
         {
-            // Don't track failed download for an unknown download
-            if (message.TrackedDownload == null)
+            // Automatic rejection already committed its blocklist and marker.
+            // Don't track a failure for an unknown download either.
+            if (message.AutomaticRejectionRecorded || message.TrackedDownload == null)
             {
                 return;
             }

@@ -37,6 +37,27 @@ namespace NzbDrone.Core.Download
             _logger = logger;
         }
 
+        public bool IsSafeRejectionSource(TrackedDownload trackedDownload)
+        {
+            try
+            {
+                var item = trackedDownload.ImportItem;
+                if (item == null || item.DownloadId != trackedDownload.DownloadItem.DownloadId || item.DownloadClientInfo?.Id != trackedDownload.DownloadClient)
+                {
+                    return false;
+                }
+
+                var root = Normalize(item.OutputPath.FullPath);
+                ValidateSourceRoot(root);
+                return _diskProvider.FileExists(root) || _diskProvider.FolderExists(root);
+            }
+            catch (Exception error)
+            {
+                _logger.Debug("Unable to validate rejection source ({0}); retaining the download for review", error.GetType().Name);
+                return false;
+            }
+        }
+
         public List<DownloadImportSourceFile> Scan(TrackedDownload trackedDownload)
         {
             var root = OutputPath(trackedDownload);

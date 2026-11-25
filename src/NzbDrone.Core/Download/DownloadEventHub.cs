@@ -41,7 +41,7 @@ namespace NzbDrone.Core.Download
         {
             var trackedDownload = message.TrackedDownload;
 
-            if (trackedDownload == null ||
+            if (message.AutomaticRejectionRecorded || trackedDownload == null ||
                 message.TrackedDownload.DownloadItem.Removed ||
                 !trackedDownload.DownloadItem.CanBeRemoved)
             {

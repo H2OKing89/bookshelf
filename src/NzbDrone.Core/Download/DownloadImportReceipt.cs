@@ -44,6 +44,7 @@ namespace NzbDrone.Core.Download
 
     public interface IDownloadImportSourceService
     {
+        bool IsSafeRejectionSource(TrackedDownload trackedDownload);
         List<DownloadImportSourceFile> Scan(TrackedDownload trackedDownload);
         bool Validate(TrackedDownload trackedDownload, DownloadImportReceipt receipt);
         bool Retire(TrackedDownload trackedDownload, DownloadImportReceipt receipt);

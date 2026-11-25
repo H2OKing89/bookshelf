@@ -152,6 +152,14 @@ namespace NzbDrone.Core.Test.Download
         }
 
         [Test]
+        public void committed_import_rejection_never_removes_client_item_even_with_legacy_removal_enabled()
+        {
+            Subject.Handle(new DownloadFailedEvent { TrackedDownload = _tracked, AutomaticRejectionRecorded = true });
+            _client.Verify(client => client.RemoveItem(It.IsAny<DownloadClientItem>(), It.IsAny<bool>()), Times.Never());
+            _tracked.DownloadItem.Removed.Should().BeFalse();
+        }
+
+        [Test]
         public void client_settings_still_control_completed_task_removal()
         {
             GivenReceipt();

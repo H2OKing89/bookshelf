@@ -19,6 +19,9 @@ namespace NzbDrone.Core.Indexers
         public bool SupportsRss { get; set; }
         public bool SupportsSearch { get; set; }
         public int Priority { get; set; }
+        public RejectedImportAction DangerousFileAction { get; set; }
+        public RejectedImportAction ExecutableFileAction { get; set; }
+        public RejectedImportAction UserRejectedExtensionAction { get; set; }
 
         public override bool Enable => EnableRss || EnableAutomaticSearch || EnableInteractiveSearch;
 

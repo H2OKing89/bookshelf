@@ -23,6 +23,12 @@ namespace NzbDrone.Core.Download
         public Dictionary<string, string> Data { get; set; }
         public TrackedDownload TrackedDownload { get; set; }
         public bool SkipRedownload { get; set; }
+
+        // Set only after the automatic import rejection's blocklist and failure
+        // marker have committed. This path must never remove client data.
+        public bool AutomaticRejectionRecorded { get; set; }
+        public string ImportRejectionCode { get; set; }
+        public string ImportRejectionAction { get; set; }
         public ReleaseSourceType ReleaseSource { get; set; }
     }
 }

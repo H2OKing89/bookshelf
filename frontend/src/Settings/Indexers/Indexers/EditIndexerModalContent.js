@@ -17,6 +17,18 @@ import AdvancedSettingsButton from 'Settings/AdvancedSettingsButton';
 import translate from 'Utilities/String/translate';
 import styles from './EditIndexerModalContent.css';
 
+const rejectionActions = [
+  { key: 'review', value: 'Warn and review' },
+  { key: 'blocklist', value: 'Mark failed and blocklist' },
+  { key: 'blocklistAndRetry', value: 'Mark failed, blocklist and search again' }
+];
+
+const rejectionFields = [
+  { name: 'dangerousFileAction', label: 'Potentially dangerous files' },
+  { name: 'executableFileAction', label: 'Executable files' },
+  { name: 'userRejectedExtensionAction', label: 'User-rejected file extensions' }
+];
+
 function EditIndexerModalContent(props) {
   const {
     advancedSettings,
@@ -185,6 +197,26 @@ function EditIndexerModalContent(props) {
                   onChange={onInputChange}
                 />
               </FormGroup>
+
+              {
+                rejectionFields.map(({ name: fieldName, label }) => (
+                  <FormGroup
+                    key={fieldName}
+                    advancedSettings={advancedSettings}
+                    isAdvanced={true}
+                  >
+                    <FormLabel>{label}</FormLabel>
+                    <FormInputGroup
+                      type={inputTypes.SELECT}
+                      name={fieldName}
+                      values={rejectionActions}
+                      helpText="Applies only to completed downloads from this indexer with an unambiguous rejected-file inventory and no imported parts. Keeps the download and files in the client; search again also requires Failed Download Handling to allow automatic redownload."
+                      {...item[fieldName]}
+                      onChange={onInputChange}
+                    />
+                  </FormGroup>
+                ))
+              }
 
               <FormGroup>
                 <FormLabel>

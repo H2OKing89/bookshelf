@@ -36,6 +36,7 @@ namespace NzbDrone.Core.Download
         private readonly IDownloadImportDiagnostics _diagnostics;
         private readonly IImportRetryService _retry;
         private readonly IManualInteractionRequiredService _manualInteraction;
+        private readonly IRejectedImportService _rejectedImports;
         private readonly Logger _logger;
 
         public CompletedDownloadService(IEventAggregator eventAggregator,
@@ -48,6 +49,7 @@ namespace NzbDrone.Core.Download
                                         IDownloadImportDiagnostics diagnostics,
                                         IImportRetryService retry,
                                         IManualInteractionRequiredService manualInteraction,
+                                        IRejectedImportService rejectedImports,
                                         Logger logger)
         {
             _eventAggregator = eventAggregator;
@@ -60,6 +62,7 @@ namespace NzbDrone.Core.Download
             _diagnostics = diagnostics;
             _retry = retry;
             _manualInteraction = manualInteraction;
+            _rejectedImports = rejectedImports;
             _logger = logger;
         }
 
@@ -142,10 +145,11 @@ namespace NzbDrone.Core.Download
                     return;
                 }
 
+                Rejection localRejection = null;
                 if (importResults.Empty())
                 {
                     trackedDownload.WarnCode(RejectionCode.NoEligibleFiles, "No files found are eligible for import in {0}", outputPath);
-                    AddDiagnostics(trackedDownload);
+                    localRejection = AddDiagnostics(trackedDownload, inspectForPolicy: true);
                 }
                 else if (importResults.Any(result => result.Result != ImportResultType.Imported))
                 {
@@ -155,6 +159,18 @@ namespace NzbDrone.Core.Download
                     {
                         trackedDownload.Warn(messages);
                     }
+
+                    if (importResults.All(result => result.Result == ImportResultType.Rejected && result.Rejections.All(rejection => RejectedImportService.IsPolicyCode(rejection.Code))))
+                    {
+                        localRejection = AddDiagnostics(trackedDownload, inspectForPolicy: true);
+                    }
+                }
+
+                if (localRejection != null && _rejectedImports?.TryProcess(trackedDownload, importResults, localRejection) == true)
+                {
+                    _retry.Reset(trackedDownload);
+                    UpdateIntervention(trackedDownload, recovered: true);
+                    return;
                 }
 
                 _retry.Block(trackedDownload);
@@ -232,19 +248,23 @@ namespace NzbDrone.Core.Download
             return true;
         }
 
-        private void AddDiagnostics(TrackedDownload trackedDownload)
+        private Rejection AddDiagnostics(TrackedDownload trackedDownload, bool inspectForPolicy = false)
         {
             try
             {
-                var warnings = _diagnostics.GetWarnings(trackedDownload);
+                var inspection = inspectForPolicy ? _diagnostics.Inspect(trackedDownload) : null;
+                var warnings = inspection?.Warnings ?? _diagnostics.GetWarnings(trackedDownload);
                 if (warnings?.Count > 0)
                 {
                     trackedDownload.Warn(trackedDownload.StatusMessages.Concat(warnings).ToArray());
                 }
+
+                return inspection?.LocalRejection;
             }
             catch (Exception error)
             {
                 _logger.Debug("Import diagnostics were unavailable ({0}); retaining the original warning", error.GetType().Name);
+                return null;
             }
         }
 

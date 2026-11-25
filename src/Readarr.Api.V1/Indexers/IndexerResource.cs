@@ -12,6 +12,9 @@ namespace Readarr.Api.V1.Indexers
         public DownloadProtocol Protocol { get; set; }
         public int Priority { get; set; }
         public int DownloadClientId { get; set; }
+        public RejectedImportAction? DangerousFileAction { get; set; }
+        public RejectedImportAction? ExecutableFileAction { get; set; }
+        public RejectedImportAction? UserRejectedExtensionAction { get; set; }
     }
 
     public class IndexerResourceMapper : ProviderResourceMapper<IndexerResource, IndexerDefinition>
@@ -33,6 +36,9 @@ namespace Readarr.Api.V1.Indexers
             resource.Protocol = definition.Protocol;
             resource.Priority = definition.Priority;
             resource.DownloadClientId = definition.DownloadClientId;
+            resource.DangerousFileAction = definition.DangerousFileAction;
+            resource.ExecutableFileAction = definition.ExecutableFileAction;
+            resource.UserRejectedExtensionAction = definition.UserRejectedExtensionAction;
 
             return resource;
         }
@@ -51,6 +57,9 @@ namespace Readarr.Api.V1.Indexers
             definition.EnableInteractiveSearch = resource.EnableInteractiveSearch;
             definition.Priority = resource.Priority;
             definition.DownloadClientId = resource.DownloadClientId;
+            definition.DangerousFileAction = resource.DangerousFileAction ?? RejectedImportAction.Review;
+            definition.ExecutableFileAction = resource.ExecutableFileAction ?? RejectedImportAction.Review;
+            definition.UserRejectedExtensionAction = resource.UserRejectedExtensionAction ?? RejectedImportAction.Review;
 
             return definition;
         }

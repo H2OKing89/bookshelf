@@ -178,6 +178,16 @@ namespace NzbDrone.Core.Blocklisting
 
         public void Handle(DownloadFailedEvent message)
         {
+            if (message.AutomaticRejectionRecorded)
+            {
+                return;
+            }
+
+            _blocklistRepository.Insert(CreateFailedDownloadBlocklist(message));
+        }
+
+        internal static Blocklist CreateFailedDownloadBlocklist(DownloadFailedEvent message)
+        {
             var blocklist = new Blocklist
             {
                 AuthorId = message.AuthorId,
@@ -201,7 +211,7 @@ namespace NzbDrone.Core.Blocklisting
                 blocklist.IndexerFlags = flags;
             }
 
-            _blocklistRepository.Insert(blocklist);
+            return blocklist;
         }
 
         public void HandleAsync(AuthorDeletedEvent message)

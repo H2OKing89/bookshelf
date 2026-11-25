@@ -15,9 +15,18 @@ namespace NzbDrone.Core.Download
     public interface IDownloadImportDiagnostics
     {
         List<TrackedDownloadStatusMessage> GetWarnings(TrackedDownload trackedDownload);
+        DownloadImportInspection Inspect(TrackedDownload trackedDownload);
     }
 
-    // Inventory explains an import block. It is never import or cleanup authority.
+    public class DownloadImportInspection
+    {
+        public List<TrackedDownloadStatusMessage> Warnings { get; } = new List<TrackedDownloadStatusMessage>();
+        public Rejection LocalRejection { get; set; }
+    }
+
+    // Inventory explains an import block. A complete, unambiguous local
+    // classification may authorize a non-destructive rejection policy, never
+    // library import or removal of a download or its source files.
     public class DownloadImportDiagnostics : IDownloadImportDiagnostics
     {
         private readonly IDiskProvider _disk;
@@ -33,9 +42,13 @@ namespace NzbDrone.Core.Download
             _logger = logger;
         }
 
-        public List<TrackedDownloadStatusMessage> GetWarnings(TrackedDownload trackedDownload)
+        public List<TrackedDownloadStatusMessage> GetWarnings(TrackedDownload trackedDownload) => Inspect(trackedDownload).Warnings;
+
+        public DownloadImportInspection Inspect(TrackedDownload trackedDownload)
         {
-            var warnings = new List<TrackedDownloadStatusMessage>();
+            var result = new DownloadImportInspection();
+            var warnings = result.Warnings;
+            var localComplete = false;
             var paths = new List<string>();
             var output = trackedDownload.ImportItem?.OutputPath.FullPath;
             try
@@ -98,6 +111,8 @@ namespace NzbDrone.Core.Download
                 {
                     throw new DirectoryNotFoundException();
                 }
+
+                localComplete = true;
             }
             catch (InventoryLimitException)
             {
@@ -112,8 +127,10 @@ namespace NzbDrone.Core.Download
             AddClassification(warnings, paths, false);
             if (paths.Any(path => _extensions.Classify(path) == DownloadFileKind.Media))
             {
-                return warnings;
+                return result;
             }
+
+            var localRejection = localComplete ? PolicyRejection(paths) : null;
 
             // Remote names are passed only to the pure extension classifier. Never
             // combine them with output or pass them to a filesystem API.
@@ -134,20 +151,29 @@ namespace NzbDrone.Core.Download
                     if (file == null || file.Size < 0 || !DownloadClientFile.TryNormalizeRelativePath(file.RelativePath, out var path))
                     {
                         warnings.Add(Warning(RejectionCode.InventoryInvalid, "The download client returned an invalid file inventory. Existing import diagnostics remain available."));
-                        return warnings;
+                        return result;
                     }
 
                     characters += path.Length;
                     if (remote.Count >= DownloadClientFile.MaximumFiles || characters > DownloadClientFile.MaximumInventoryPathCharacters)
                     {
                         warnings.Add(Warning(RejectionCode.InventoryTruncated, "The download client file inventory exceeds the diagnostic limit."));
-                        return warnings;
+                        return result;
                     }
 
                     remote.Add(path);
                 }
 
                 AddClassification(warnings, remote, true);
+
+                // Only complete local inventory may authorize a rejection. If
+                // a client can enumerate its contents, require a corroborating
+                // classification; missing, mixed or conflicting data is review.
+                if (localRejection != null && (remote.Count == 0 || PolicyRejection(remote)?.Code == localRejection.Code))
+                {
+                    result.LocalRejection = localRejection;
+                }
+
                 if (remote.Any(path => _extensions.Classify(path) == DownloadFileKind.Media))
                 {
                     warnings.Add(Warning(RejectionCode.ImportPathUnavailable, "The download client reports supported book files, but none are accessible for local import. Check the completed output path and mount or remote path mapping."));
@@ -159,7 +185,18 @@ namespace NzbDrone.Core.Download
                 warnings.Add(Warning(RejectionCode.InventoryUnavailable, "The download client file list could not be retrieved. Existing import diagnostics remain available."));
             }
 
-            return warnings;
+            return result;
+        }
+
+        private Rejection PolicyRejection(List<string> paths)
+        {
+            var kinds = paths.Select(_extensions.Classify).Where(kind => kind != DownloadFileKind.Sidecar).Distinct().ToList();
+            if (kinds.Count != 1 || (kinds[0] != DownloadFileKind.Dangerous && kinds[0] != DownloadFileKind.Executable && kinds[0] != DownloadFileKind.UserRejected))
+            {
+                return null;
+            }
+
+            return _extensions.GetRejection(paths);
         }
 
         private void AddClassification(List<TrackedDownloadStatusMessage> warnings, List<string> paths, bool remote)

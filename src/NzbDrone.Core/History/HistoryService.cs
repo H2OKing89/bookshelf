@@ -329,6 +329,13 @@ namespace NzbDrone.Core.History
                     message.Data?.FirstOrDefault(pair => string.Equals(pair.Key, "downloadClientId", StringComparison.OrdinalIgnoreCase)).Value ?? "0");
                 history.Data.Add("DownloadClientName", message.TrackedDownload?.DownloadItem.DownloadClientInfo.Name);
                 history.Data.Add("Message", message.Message);
+                if (message.AutomaticRejectionRecorded)
+                {
+                    history.Data.Add("ImportRejectionCode", message.ImportRejectionCode);
+                    history.Data.Add("ImportRejectionAction", message.ImportRejectionAction);
+                    history.Data.Add("ClientItemsRetained", "true");
+                }
+
                 history.Data.Add("ReleaseGroup", message.TrackedDownload?.RemoteBook?.ParsedBookInfo?.ReleaseGroup ?? message.Data.GetValueOrDefault(EntityHistory.RELEASE_GROUP));
                 history.Data.Add("Size", message.TrackedDownload?.DownloadItem.TotalSize.ToString() ?? message.Data.GetValueOrDefault(EntityHistory.SIZE));
                 history.Data.Add("Indexer", message.TrackedDownload?.RemoteBook?.Release?.Indexer ?? message.Data.GetValueOrDefault(EntityHistory.INDEXER));
