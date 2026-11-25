@@ -27,7 +27,9 @@ function HostSettings(props) {
     enableSsl,
     sslPort,
     sslCertPath,
+    sslKeyPath,
     sslCertPassword,
+    performanceProfilingEnabled,
     launchBrowser
   } = settings;
 
@@ -218,6 +220,28 @@ function HostSettings(props) {
             isAdvanced={true}
           >
             <FormLabel>
+              {translate('SSLKeyPath')}
+            </FormLabel>
+
+            <FormInputGroup
+              type={inputTypes.TEXT}
+              name="sslKeyPath"
+              helpText={translate('SslKeyPathHelpText')}
+              helpTextWarning={translate('SslCertPathHelpTextWarning')}
+              onChange={onInputChange}
+              {...sslKeyPath}
+            />
+          </FormGroup> :
+          null
+      }
+
+      {
+        enableSsl.value ?
+          <FormGroup
+            advancedSettings={advancedSettings}
+            isAdvanced={true}
+          >
+            <FormLabel>
               {translate('SSLCertPassword')}
             </FormLabel>
 
@@ -232,6 +256,23 @@ function HostSettings(props) {
           </FormGroup> :
           null
       }
+
+      <FormGroup
+        advancedSettings={advancedSettings}
+        isAdvanced={true}
+        size={sizes.MEDIUM}
+      >
+        <FormLabel>{translate('PerformanceProfiling')}</FormLabel>
+
+        <FormInputGroup
+          type={inputTypes.CHECK}
+          name="performanceProfilingEnabled"
+          helpText={translate('PerformanceProfilingHelpText')}
+          helpTextWarning={translate('SslCertPathHelpTextWarning')}
+          onChange={onInputChange}
+          {...performanceProfilingEnabled}
+        />
+      </FormGroup>
 
       {
         isWindows && mode !== 'service' &&

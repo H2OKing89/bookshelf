@@ -4,12 +4,12 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Common.Http;
 using NzbDrone.Common.Network;
 using NzbDrone.Core.Authentication;
 using NzbDrone.Core.Configuration;
@@ -92,13 +92,17 @@ namespace Readarr.Api.V1.Config
             SharedValidator.RuleFor(c => c.SslPort).ValidPort().When(c => c.EnableSsl);
             SharedValidator.RuleFor(c => c.SslPort).NotEqual(c => c.Port).When(c => c.EnableSsl);
 
-            SharedValidator.RuleFor(c => c.SslCertPath)
-                .Cascade(CascadeMode.Stop)
-                .NotEmpty()
-                .IsValidPath()
-                .SetValidator(fileExistsValidator)
-                .Must((resource, path) => IsValidSslCertificate(resource)).WithMessage("Invalid SSL certificate file or password")
-                .When(c => c.EnableSsl);
+            SharedValidator.RuleFor(c => c).Custom((resource, context) =>
+            {
+                if (resource.EnableSsl)
+                {
+                    var failure = ValidateSslCertificate(resource);
+                    if (failure != null)
+                    {
+                        context.AddFailure(failure);
+                    }
+                }
+            });
 
             SharedValidator.RuleFor(c => c.Branch).NotEmpty().WithMessage("Branch name is required, 'master' is the default");
             SharedValidator.RuleFor(c => c.UpdateScriptPath).IsValidPath().When(c => c.UpdateMechanism == UpdateMechanism.Script);
@@ -108,17 +112,26 @@ namespace Readarr.Api.V1.Config
             SharedValidator.RuleFor(c => c.BackupRetention).InclusiveBetween(1, 90);
         }
 
-        private bool IsValidSslCertificate(HostConfigResource resource)
+        private ValidationFailure ValidateSslCertificate(HostConfigResource resource)
         {
             try
             {
-                using var certificate = X509CertificateLoader.LoadPkcs12FromFile(resource.SslCertPath, resource.SslCertPassword, X509KeyStorageFlags.DefaultKeySet);
-                return certificate != null;
+                using var certificate = SslCertificateLoader.Load(resource.SslCertPath,
+                    resource.SslKeyPath ?? _configFileProvider.SslKeyPath,
+                    PreserveSslPassword(resource) ? _configFileProvider.SslCertPassword : resource.SslCertPassword);
+                return null;
             }
-            catch
+            catch (SslCertificateLoadException error)
             {
-                return false;
+                return new ValidationFailure(error.Field == SslCertificateField.KeyPath
+                    ? nameof(resource.SslKeyPath)
+                    : nameof(resource.SslCertPath), error.Message);
             }
+        }
+
+        private static bool PreserveSslPassword(HostConfigResource resource)
+        {
+            return resource.SslCertPassword == null || resource.SslCertPassword == PrivateValue;
         }
 
         private bool IsMatchingPassword(HostConfigResource resource)
@@ -233,6 +246,9 @@ namespace Readarr.Api.V1.Config
                                                     prop.Name != nameof(HostConfigResource.UserIdentifier) &&
                                                     prop.Name != nameof(HostConfigResource.Accounts) &&
                                                     prop.Name != nameof(HostConfigResource.AccountSelectionRequired) &&
+                                                    (prop.Name != nameof(HostConfigResource.SslCertPassword) || !PreserveSslPassword(resource)) &&
+                                                    (prop.Name != nameof(HostConfigResource.SslKeyPath) || resource.SslKeyPath != null) &&
+                                                    (prop.Name != nameof(HostConfigResource.PerformanceProfilingEnabled) || resource.PerformanceProfilingEnabled.HasValue) &&
                                                     (prop.Name != nameof(HostConfigResource.AllowedHosts) || resource.AllowedHosts != null) &&
                                                     (prop.Name != nameof(HostConfigResource.TrustedNetworks) || resource.TrustedNetworks != null))
                                      .ToDictionary(prop => prop.Name, prop => prop.GetValue(resource, null));

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
 using System.Reflection;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using DryIoc;
 using DryIoc.Microsoft.DependencyInjection;
@@ -20,6 +18,7 @@ using NzbDrone.Common.Disk;
 using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Common.Exceptions;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Common.Http;
 using NzbDrone.Common.Instrumentation;
 using NzbDrone.Common.Instrumentation.Extensions;
 using NzbDrone.Common.Options;
@@ -155,11 +154,20 @@ namespace NzbDrone.Host
             var sslPort = config.GetValue<int?>($"Readarr:Server:{nameof(ServerOptions.SslPort)}") ?? config.GetValue(nameof(ConfigFileProvider.SslPort), 6868);
             var enableSsl = config.GetValue<bool?>($"Readarr:Server:{nameof(ServerOptions.EnableSsl)}") ?? config.GetValue(nameof(ConfigFileProvider.EnableSsl), false);
             var sslCertPath = config.GetValue<string>($"Readarr:Server:{nameof(ServerOptions.SslCertPath)}") ?? config.GetValue<string>(nameof(ConfigFileProvider.SslCertPath));
+            var sslKeyPath = config.GetValue<string>($"Readarr:Server:{nameof(ServerOptions.SslKeyPath)}") ?? config.GetValue<string>(nameof(ConfigFileProvider.SslKeyPath));
             var sslCertPassword = config.GetValue<string>($"Readarr:Server:{nameof(ServerOptions.SslCertPassword)}") ?? config.GetValue<string>(nameof(ConfigFileProvider.SslCertPassword));
 
+            // Legacy certificate-hash homes previously migrated to HTTP when
+            // no file was configured; don't reinterpret them as PEM. An explicit
+            // modern HTTPS setting without a certificate fails rather than
+            // silently dropping the HTTPS listener.
+            var legacyCertificateHash = enableSsl && sslCertPath.IsNullOrWhiteSpace() &&
+                config.GetValue<bool?>($"Readarr:Server:{nameof(ServerOptions.EnableSsl)}") == null &&
+                config.GetValue<string>("SslCertHash").IsNotNullOrWhiteSpace();
+            var useHttps = enableSsl && !legacyCertificateHash;
             var urls = new List<string> { BuildUrl("http", bindAddress, port) };
 
-            if (enableSsl && sslCertPath.IsNotNullOrWhiteSpace())
+            if (useHttps)
             {
                 urls.Add(BuildUrl("https", bindAddress, sslPort));
             }
@@ -184,6 +192,12 @@ namespace NzbDrone.Host
                     services.Configure<ServerOptions>(config.GetSection("Readarr:Server"));
                     services.Configure<LogOptions>(config.GetSection("Readarr:Log"));
                     services.Configure<UpdateOptions>(config.GetSection("Readarr:Update"));
+                    if (useHttps)
+                    {
+                        // Factory-owned disposable certificate material survives
+                        // every handshake and is released with the old host.
+                        services.AddSingleton(_ => LoadSslCertificate(sslCertPath, sslKeyPath, sslCertPassword));
+                    }
                 })
                 .ConfigureWebHost(builder =>
                 {
@@ -191,11 +205,13 @@ namespace NzbDrone.Host
                     builder.UseUrls(urls.ToArray());
                     builder.UseKestrel(options =>
                     {
-                        if (enableSsl && sslCertPath.IsNotNullOrWhiteSpace())
+                        if (useHttps)
                         {
+                            var certificate = options.ApplicationServices.GetRequiredService<LoadedSslCertificate>();
                             options.ConfigureHttpsDefaults(configureOptions =>
                             {
-                                configureOptions.ServerCertificate = ValidateSslCertificate(sslCertPath, sslCertPassword);
+                                configureOptions.ServerCertificate = certificate.Context.TargetCertificate;
+                                configureOptions.OnAuthenticate = (_, authOptions) => authOptions.ServerCertificateContext = certificate.Context;
                             });
                         }
                     });
@@ -313,26 +329,16 @@ namespace NzbDrone.Host
             return $"{scheme}://{bindAddress}:{port}";
         }
 
-        private static X509Certificate2 ValidateSslCertificate(string cert, string password)
+        private static LoadedSslCertificate LoadSslCertificate(string certificatePath, string keyPath, string password)
         {
-            X509Certificate2 certificate;
-
             try
             {
-                certificate = X509CertificateLoader.LoadPkcs12FromFile(cert, password, X509KeyStorageFlags.DefaultKeySet);
+                return SslCertificateLoader.Load(certificatePath, keyPath, password);
             }
-            catch (CryptographicException ex)
+            catch (SslCertificateLoadException error)
             {
-                if (ex.HResult == 0x2 || ex.HResult == 0x2006D080)
-                {
-                    throw new ReadarrStartupException(ex,
-                        $"The SSL certificate file {cert} does not exist");
-                }
-
-                throw new ReadarrStartupException(ex);
+                throw new ReadarrStartupException(error.Message);
             }
-
-            return certificate;
         }
     }
 }

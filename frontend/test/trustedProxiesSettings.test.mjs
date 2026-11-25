@@ -111,3 +111,20 @@ test('unchanged, rejected and unfinished proxy saves do not prompt for a restart
   assert.equal(finishSave('', 'invalid', { saveError: { status: 400 } }).state.isRestartRequiredModalOpen, false);
   assert.equal(finishSave('', '192.0.2.10', { isSaving: true }).state.isRestartRequiredModalOpen, false);
 });
+
+function finishHostSave(key, before, entered, saved) {
+  const current = { isSaving: false, isResettingApiKey: false, saveError: null, settings: { [key]: { value: saved } } };
+  const component = new GeneralSettings(current);
+  component.setState = (update) => { component.state = { ...component.state, ...update }; };
+  component.componentDidUpdate({ ...current, isSaving: true, settings: { [key]: { previousValue: before, value: entered, pending: true } } });
+  return component.state.isRestartRequiredModalOpen;
+}
+
+test('replacing a TLS password prompts to restart even though saved passwords are always masked', () => {
+  assert.equal(finishHostSave('sslCertPassword', '********', 'synthetic-new-password', '********'), true);
+  assert.equal(finishHostSave('sslCertPassword', '********', '********', '********'), false);
+  assert.equal(finishHostSave('sslCertPassword', '********', '', ''), true);
+  assert.equal(finishHostSave('sslKeyPath', '', '/synthetic/key.pem', '/synthetic/key.pem'), true);
+  assert.equal(finishHostSave('performanceProfilingEnabled', false, true, true), true);
+  assert.equal(finishHostSave('performanceProfilingEnabled', true, false, false), true);
+});

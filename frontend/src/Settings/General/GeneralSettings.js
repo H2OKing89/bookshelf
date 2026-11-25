@@ -26,7 +26,9 @@ const requiresRestartKeys = [
   'enableSsl',
   'sslPort',
   'sslCertPath',
-  'sslCertPassword'
+  'sslKeyPath',
+  'sslCertPassword',
+  'performanceProfilingEnabled'
 ];
 
 class GeneralSettings extends Component {
@@ -71,6 +73,13 @@ class GeneralSettings extends Component {
 
       const previousValue = prevSetting.previousValue;
       const value = setting.value;
+
+      // Saved SSL passwords are always masked. Replacing a masked password
+      // with a new nonempty one still requires a restart even when the
+      // response contains the same placeholder as before.
+      if (key === 'sslCertPassword' && prevSetting.pending && previousValue != null && previousValue !== prevSetting.value) {
+        return true;
+      }
 
       return previousValue != null && previousValue !== value;
     });

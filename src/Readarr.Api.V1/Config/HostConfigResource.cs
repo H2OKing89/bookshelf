@@ -31,7 +31,9 @@ namespace Readarr.Api.V1.Config
         public string Branch { get; set; }
         public string ApiKey { get; set; }
         public string SslCertPath { get; set; }
+        public string SslKeyPath { get; set; }
         public string SslCertPassword { get; set; }
+        public bool? PerformanceProfilingEnabled { get; set; }
         public string UrlBase { get; set; }
         public string InstanceName { get; set; }
         public string ApplicationUrl { get; set; }
@@ -84,7 +86,12 @@ namespace Readarr.Api.V1.Config
                 Branch = model.Branch,
                 ApiKey = model.ApiKey,
                 SslCertPath = model.SslCertPath,
-                SslCertPassword = model.SslCertPassword,
+                SslKeyPath = model.SslKeyPath,
+
+                // Existing password controls can round-trip the placeholder,
+                // but the actual TLS credential must never enter a response.
+                SslCertPassword = string.IsNullOrEmpty(model.SslCertPassword) ? string.Empty : "********",
+                PerformanceProfilingEnabled = model.PerformanceProfilingEnabled,
                 UrlBase = model.UrlBase,
                 InstanceName = model.InstanceName,
                 UpdateAutomatically = model.UpdateAutomatically,

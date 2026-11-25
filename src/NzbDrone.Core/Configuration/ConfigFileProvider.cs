@@ -45,7 +45,9 @@ namespace NzbDrone.Core.Configuration
         string Branch { get; }
         string ApiKey { get; }
         string SslCertPath { get; }
+        string SslKeyPath { get; }
         string SslCertPassword { get; }
+        bool PerformanceProfilingEnabled { get; }
         string UrlBase { get; }
         string UiFolder { get; }
         string InstanceName { get; }
@@ -278,7 +280,9 @@ namespace NzbDrone.Core.Configuration
         public bool LogSql => _logOptions.Sql ?? GetValueBoolean("LogSql", false, persist: false);
         public int LogRotate => _logOptions.Rotate ?? GetValueInt("LogRotate", 50, persist: false);
         public string SslCertPath => _serverOptions.SslCertPath ?? GetValue("SslCertPath", "");
+        public string SslKeyPath => _serverOptions.SslKeyPath ?? GetValue("SslKeyPath", "", false);
         public string SslCertPassword => _serverOptions.SslCertPassword ?? GetValue("SslCertPassword", "");
+        public bool PerformanceProfilingEnabled => _serverOptions.PerformanceProfilingEnabled ?? GetValueBoolean("PerformanceProfilingEnabled", false, persist: false);
 
         public string UrlBase
         {
@@ -355,7 +359,8 @@ namespace NzbDrone.Core.Configuration
 
                     if (valueHolder.Count() == 1)
                     {
-                        return valueHolder.First().Value.Trim();
+                        var value = valueHolder.First().Value;
+                        return PreserveSslValue(key) ? value : value.Trim();
                     }
 
                     //Save the value
@@ -371,26 +376,42 @@ namespace NzbDrone.Core.Configuration
 
         public void SetValue(string key, object value)
         {
-            var valueString = value.ToString().Trim();
+            var untrimmedValue = value.ToString();
+            var preserveValue = PreserveSslValue(key);
+            var valueString = preserveValue ? untrimmedValue : untrimmedValue.Trim();
             var xDoc = LoadConfigFile();
             var config = xDoc.Descendants(CONFIG_ELEMENT_NAME).Single();
 
             var parentContainer = config;
 
-            var keyHolder = parentContainer.Descendants(key);
-
-            if (keyHolder.Count() != 1)
+            var keyHolder = parentContainer.Descendants(key).ToList();
+            var element = keyHolder.Count == 1 ? keyHolder[0] : new XElement(key);
+            if (element.Parent == null)
             {
-                parentContainer.Add(new XElement(key, valueString));
+                parentContainer.Add(element);
+            }
+
+            if (preserveValue && valueString.Length > 0 && string.IsNullOrWhiteSpace(valueString))
+            {
+                // Both XML readers ignore whitespace-only text unless it is
+                // CDATA. An exact password must survive config reload/startup.
+                element.ReplaceNodes(new XCData(valueString));
             }
             else
             {
-                parentContainer.Descendants(key).Single().Value = valueString;
+                element.Value = valueString;
             }
 
             _cache.Set(key, valueString);
 
             SaveConfigFile(xDoc);
+        }
+
+        private static bool PreserveSslValue(string key)
+        {
+            return string.Equals(key, nameof(SslCertPassword), StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(key, nameof(SslCertPath), StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(key, nameof(SslKeyPath), StringComparison.OrdinalIgnoreCase);
         }
 
         public void SetValue(string key, Enum value)

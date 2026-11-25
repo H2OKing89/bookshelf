@@ -75,6 +75,37 @@ namespace NzbDrone.Common.Test
                 .Returns(new UpdateOptions());
         }
 
+        [TestCase(" synthetic password ")]
+        [TestCase("   ")]
+        [TestCase("")]
+        public void saved_tls_password_should_survive_xml_restart_exactly(string password)
+        {
+            Subject.SetValue(nameof(Subject.SslCertPassword), password);
+            Subject.SslCertPassword.Should().Be(password);
+            using var bytes = new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(_configFileContents));
+            var startupConfiguration = new ConfigurationBuilder().AddXmlStream(bytes).Build();
+            startupConfiguration[nameof(Subject.SslCertPassword)].Should().Be(password);
+            Mocker.GetMock<IOptions<ServerOptions>>().Setup(v => v.Value).Returns(new ServerOptions());
+            Mocker.Resolve<ConfigFileProvider>().SslCertPassword.Should().Be(password);
+        }
+
+        [TestCase(null, false, false)]
+        [TestCase(null, true, true)]
+        [TestCase(false, true, false)]
+        [TestCase(true, false, true)]
+        public void performance_profiling_should_preserve_option_override_and_explicit_false(bool? option, bool saved, bool expected)
+        {
+            Subject.SetValue(nameof(Subject.PerformanceProfilingEnabled), saved);
+            Mocker.GetMock<IOptions<ServerOptions>>().Setup(v => v.Value).Returns(new ServerOptions { PerformanceProfilingEnabled = option });
+            Mocker.Resolve<ConfigFileProvider>().PerformanceProfilingEnabled.Should().Be(expected);
+        }
+
+        [Test]
+        public void performance_profiling_is_disabled_by_default()
+        {
+            Subject.PerformanceProfilingEnabled.Should().BeFalse();
+        }
+
         [Test]
         public void GetValue_Success()
         {
