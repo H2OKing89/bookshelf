@@ -33,8 +33,8 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  setNotificationValue: setNotificationValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
-  setNotificationFieldValue: setNotificationFieldValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
+  setNotificationValue,
+  setNotificationFieldValue,
   saveNotification,
   testNotification,
   toggleAdvancedSettings

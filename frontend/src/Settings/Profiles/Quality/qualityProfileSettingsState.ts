@@ -108,13 +108,7 @@ export function parseQualityItems(value: unknown): QualityProfileItem[] | null {
       return null;
     }
 
-    if (entry.quality != null) {
-      const leaf = readLeaf(entry);
-      if (!leaf) {
-        return null;
-      }
-      result.push(leaf);
-    } else {
+    if (entry.quality == null) {
       const id = numberValue(entry.id);
       if (id === null || typeof entry.name !== 'string' || typeof entry.allowed !== 'boolean' || !Array.isArray(entry.items)) {
         return null;
@@ -129,6 +123,12 @@ export function parseQualityItems(value: unknown): QualityProfileItem[] | null {
         items.push(leaf);
       }
       result.push({ ...entry, id, name: entry.name, quality: null, allowed: entry.allowed, items });
+    } else {
+      const leaf = readLeaf(entry);
+      if (!leaf) {
+        return null;
+      }
+      result.push(leaf);
     }
   }
 

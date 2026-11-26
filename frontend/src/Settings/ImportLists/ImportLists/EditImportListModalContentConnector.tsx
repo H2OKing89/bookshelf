@@ -35,8 +35,8 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  setImportListValue: setImportListValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
-  setImportListFieldValue: setImportListFieldValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
+  setImportListValue,
+  setImportListFieldValue,
   saveImportList,
   testImportList,
   toggleAdvancedSettings

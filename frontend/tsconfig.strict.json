@@ -235,6 +235,10 @@
     "./src/Settings/Metadata/Metadata/EditMetadataModalConnector.tsx",
     "./src/Settings/Metadata/Metadata/EditMetadataModalContentConnector.tsx",
     "./src/Settings/Profiles/Quality/*.tsx",
-    "./src/Settings/Profiles/Quality/qualityProfileSettingsState.ts"
+    "./src/Settings/Profiles/Quality/qualityProfileSettingsState.ts",
+    "./src/Components/Form/TagInputConnector.tsx",
+    "./src/Components/Form/TagSelectInputConnector.tsx",
+    "./src/Components/Form/TextTagInputConnector.tsx",
+    "./src/Components/Form/tagInputState.ts"
   ]
 }

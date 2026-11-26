@@ -30,7 +30,7 @@ function createMapStateToProps() {
 
 const mapDispatchToProps = {
   fetchNamingSettings,
-  setNamingSettingsValue: setNamingSettingsValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
+  setNamingSettingsValue,
   fetchNamingExamples,
   clearPendingChanges
 };

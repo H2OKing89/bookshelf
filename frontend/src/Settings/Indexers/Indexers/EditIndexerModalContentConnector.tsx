@@ -27,8 +27,8 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  setIndexerValue: setIndexerValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
-  setIndexerFieldValue: setIndexerFieldValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
+  setIndexerValue,
+  setIndexerFieldValue,
   saveIndexer,
   testIndexer,
   toggleAdvancedSettings

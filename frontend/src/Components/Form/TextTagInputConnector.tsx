@@ -1,40 +1,38 @@
 
-import PropTypes from 'prop-types';
 import { Component } from 'react';
-import { connect } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { createSelector } from 'reselect';
 import split from 'Utilities/String/split';
+import type { FormControlProps } from './formControlProps';
+import type { ValueChange } from './formTypes';
 import TagInput from './TagInput';
+import { removeTag, type TagOption, type TagRemoval,textTags } from './tagInputState';
+
+interface OwnProps extends FormControlProps {
+  name: string;
+  value?: unknown;
+  onChange: (change: ValueChange<string[]>) => void;
+}
 
 function createMapStateToProps() {
   return createSelector(
-    (state, { value }) => value,
+    (_state: unknown, { value }: OwnProps) => value,
     (tags) => {
-      const tagsArray = Array.isArray(tags) ? tags : split(tags);
-
-      return {
-        tags: tagsArray.reduce((result, tag) => {
-          if (tag) {
-            result.push({
-              id: tag,
-              name: tag
-            });
-          }
-
-          return result;
-        }, []),
-        valueArray: tagsArray
-      };
+      const tagsArray = textTags(tags);
+      return { tags: tagsArray.map((name) => ({ id: name, name })), valueArray: tagsArray };
     }
   );
 }
 
-class TextTagInputConnector extends Component {
+const connector = connect(createMapStateToProps);
+type Props = OwnProps & ConnectedProps<typeof connector>;
+
+class TextTagInputConnector extends Component<Props> {
 
   //
   // Listeners
 
-  onTagAdd = (tag) => {
+  onTagAdd = (tag: TagOption) => {
     const {
       name,
       valueArray,
@@ -55,15 +53,14 @@ class TextTagInputConnector extends Component {
     onChange({ name, value: newValue });
   };
 
-  onTagDelete = ({ index }) => {
+  onTagDelete = (removal: TagRemoval) => {
     const {
       name,
       valueArray,
       onChange
     } = this.props;
 
-    const newValue = [...valueArray];
-    newValue.splice(index, 1);
+    const newValue = removeTag(valueArray, removal);
 
     onChange({
       name,
@@ -71,15 +68,14 @@ class TextTagInputConnector extends Component {
     });
   };
 
-  onTagReplace = (tagToReplace, newTag) => {
+  onTagReplace = (tagToReplace: TagRemoval, newTag: TagOption) => {
     const {
       name,
       valueArray,
       onChange
     } = this.props;
 
-    const newValue = [...valueArray];
-    newValue.splice(tagToReplace.index, 1);
+    const newValue = removeTag(valueArray, tagToReplace);
     newValue.push(newTag.name.trim());
 
     onChange({ name, value: newValue });
@@ -102,10 +98,4 @@ class TextTagInputConnector extends Component {
   }
 }
 
-TextTagInputConnector.propTypes = {
-  name: PropTypes.string.isRequired,
-  valueArray: PropTypes.arrayOf(PropTypes.string).isRequired,
-  onChange: PropTypes.func.isRequired
-};
-
-export default connect(createMapStateToProps, null)(TextTagInputConnector);
+export default connector(TextTagInputConnector);

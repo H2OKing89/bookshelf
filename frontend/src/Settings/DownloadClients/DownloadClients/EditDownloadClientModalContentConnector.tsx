@@ -34,8 +34,8 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  setDownloadClientValue: setDownloadClientValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
-  setDownloadClientFieldValue: setDownloadClientFieldValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
+  setDownloadClientValue,
+  setDownloadClientFieldValue,
   saveDownloadClient,
   testDownloadClient,
   toggleAdvancedSettings

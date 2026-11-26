@@ -16,8 +16,8 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  setMetadataValue: setMetadataValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
-  setMetadataFieldValue: setMetadataFieldValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
+  setMetadataValue,
+  setMetadataFieldValue,
   saveMetadata
 };
 

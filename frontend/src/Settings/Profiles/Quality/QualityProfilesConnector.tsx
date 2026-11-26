@@ -27,7 +27,7 @@ function createMapStateToProps() {
 const mapDispatchToProps = {
   dispatchFetchQualityProfiles: fetchQualityProfiles,
   dispatchDeleteQualityProfile: deleteQualityProfile,
-  dispatchCloneQualityProfile: cloneQualityProfile as unknown as (payload: { id: number }) => { type: string; payload?: unknown }
+  dispatchCloneQualityProfile: cloneQualityProfile
 };
 
 const connector = connect(createMapStateToProps, mapDispatchToProps);

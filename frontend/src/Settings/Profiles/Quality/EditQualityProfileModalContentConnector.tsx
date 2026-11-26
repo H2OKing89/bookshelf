@@ -36,7 +36,7 @@ function createMapStateToProps() {
 const mapDispatchToProps = {
   fetchQualityProfileSchema,
   saveQualityProfile,
-  setQualityProfileValue: setQualityProfileValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown }
+  setQualityProfileValue
 };
 
 const connector = connect(createMapStateToProps, mapDispatchToProps);
