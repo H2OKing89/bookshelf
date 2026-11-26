@@ -11,8 +11,7 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.Writers;
+using Microsoft.OpenApi;
 using Readarr.Http;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -39,13 +38,12 @@ namespace NzbDrone.Host
                 {
                     Type = SecuritySchemeType.Http,
                     Scheme = "bearer",
-                    Description = "API key supplied as a Bearer token",
-                    Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "BearerApiKey" }
+                    Description = "API key supplied as a Bearer token"
                 };
                 options.AddSecurityDefinition("BearerApiKey", bearer);
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement { { header, Array.Empty<string>() } });
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement { { query, Array.Empty<string>() } });
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement { { bearer, Array.Empty<string>() } });
+                options.AddSecurityRequirement(document => new OpenApiSecurityRequirement { { new OpenApiSecuritySchemeReference(header.Name, document), new List<string>() } });
+                options.AddSecurityRequirement(document => new OpenApiSecurityRequirement { { new OpenApiSecuritySchemeReference(query.Name, document), new List<string>() } });
+                options.AddSecurityRequirement(document => new OpenApiSecurityRequirement { { new OpenApiSecuritySchemeReference("BearerApiKey", document), new List<string>() } });
             });
         }
 
@@ -81,7 +79,7 @@ namespace NzbDrone.Host
                 using var writer = new StringWriter(CultureInfo.InvariantCulture);
                 var json = new OpenApiJsonWriter(writer);
                 document.SerializeAsV3(json);
-                json.Flush();
+                writer.Flush();
                 return Results.Text(writer.ToString(), "application/json");
             }).RequireAuthorization(new AuthorizationPolicyBuilder("API").RequireAuthenticatedUser().Build()).ExcludeFromDescription();
         }
@@ -100,8 +98,7 @@ namespace NzbDrone.Host
             Type = SecuritySchemeType.ApiKey,
             Scheme = "apiKey",
             Description = "API key supplied as " + location.ToString().ToLowerInvariant(),
-            In = location,
-            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = name }
+            In = location
         };
     }
 

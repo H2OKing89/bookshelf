@@ -234,56 +234,56 @@
     "packageSha512Base64": "ZmMayc90exuC3bM4tpPEr1hvF4jGQOm8r2oK8sdGSJY3WxWHTWsYaM2TGXipLz01YxWEHq9pc6eRjWOg9uduEQ=="
   },
   "Swashbuckle/Annotations-LICENSE.txt": {
-    "source": "https://raw.githubusercontent.com/domaindrivendev/Swashbuckle.AspNetCore/1070368afe936b06bd4579053ea228f0fd7bce33/LICENSE",
+    "source": "https://raw.githubusercontent.com/domaindrivendev/Swashbuckle.AspNetCore/5e0111cb0742acd1fea0cbbf32d2aa5e8b67a3cb/LICENSE",
     "package": "Swashbuckle.AspNetCore.Annotations",
-    "version": "9.0.6",
+    "version": "11.0.1",
     "bytes": 1081,
     "sha256": "c87a9ab2520595bc7c31343b5250e8f3779a65c6051612118b0accd200f24d07",
     "repository": {
       "type": "git",
       "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git",
-      "commit": "1070368afe936b06bd4579053ea228f0fd7bce33"
+      "commit": "5e0111cb0742acd1fea0cbbf32d2aa5e8b67a3cb"
     },
-    "packageSha512Base64": "3fUoLbjOmbUlpHIbihy0Gpex+o/oIQSY23A0rXSXc2HZRx+FB2GKavJc/+GedABlGZTPc804vu5M0S41ffUCSQ=="
+    "packageSha512Base64": "2+heWYswteiZ0wLNEhyiDqgmxPDqb0YqXPdH050GrSCxSdWZh/BUMTXwfrOIgRTnxASjRB8ORzDcI7Tha3njxA=="
   },
   "Swashbuckle/SwaggerGen-LICENSE.txt": {
-    "source": "https://raw.githubusercontent.com/domaindrivendev/Swashbuckle.AspNetCore/1070368afe936b06bd4579053ea228f0fd7bce33/LICENSE",
+    "source": "https://raw.githubusercontent.com/domaindrivendev/Swashbuckle.AspNetCore/5e0111cb0742acd1fea0cbbf32d2aa5e8b67a3cb/LICENSE",
     "package": "Swashbuckle.AspNetCore.SwaggerGen",
-    "version": "9.0.6",
+    "version": "11.0.1",
     "bytes": 1081,
     "sha256": "c87a9ab2520595bc7c31343b5250e8f3779a65c6051612118b0accd200f24d07",
     "repository": {
       "type": "git",
       "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git",
-      "commit": "1070368afe936b06bd4579053ea228f0fd7bce33"
+      "commit": "5e0111cb0742acd1fea0cbbf32d2aa5e8b67a3cb"
     },
-    "packageSha512Base64": "Rg6NwYO7w7FveS7b+uPaoNWv02H3PThgIz7JGBlWo5f+s9plL71gTTSBq9GI7f7eu+pPQMeaVy/KDR+tXp67ag=="
+    "packageSha512Base64": "iYCR9RQpjA0b8DjHWy5yvQ5dW++TRThFf5xboz6zFEu+jq5wVoaXDVQBe6qJ/y850SlNQsMp0WQZdUnC4k7yDA=="
   },
   "Swashbuckle/Swagger-LICENSE.txt": {
-    "source": "https://raw.githubusercontent.com/domaindrivendev/Swashbuckle.AspNetCore/1070368afe936b06bd4579053ea228f0fd7bce33/LICENSE",
+    "source": "https://raw.githubusercontent.com/domaindrivendev/Swashbuckle.AspNetCore/5e0111cb0742acd1fea0cbbf32d2aa5e8b67a3cb/LICENSE",
     "package": "Swashbuckle.AspNetCore.Swagger",
-    "version": "9.0.6",
+    "version": "11.0.1",
     "bytes": 1081,
     "sha256": "c87a9ab2520595bc7c31343b5250e8f3779a65c6051612118b0accd200f24d07",
     "repository": {
       "type": "git",
       "url": "https://github.com/domaindrivendev/Swashbuckle.AspNetCore.git",
-      "commit": "1070368afe936b06bd4579053ea228f0fd7bce33"
+      "commit": "5e0111cb0742acd1fea0cbbf32d2aa5e8b67a3cb"
     },
-    "packageSha512Base64": "T0qjym6PfE94xoB9qGuFtrIkbutOU181DKG50bstL6U3+rhNQwcBYGVcdGYTnQN+9Kqg9KA6FdzmOnzpESVW6Q=="
+    "packageSha512Base64": "EzZR/aoQC1KJzm1Zzdg3UfoLIWzAHU40IH/M/2bhdhzeIbwTwbHfdxDDyPRVYUODEP3BGC5XoAI9cB5wTBQiqw=="
   },
   "Microsoft.OpenApi/LICENSE.txt": {
-    "source": "https://raw.githubusercontent.com/Microsoft/OpenAPI.NET/0ba1965e28e950efcf657b61f01bd96707ce63fd/LICENSE",
+    "source": "https://raw.githubusercontent.com/Microsoft/OpenAPI.NET/197aeb967e4a742a70a906f1d7edda043394e2dd/LICENSE",
     "package": "Microsoft.OpenApi",
-    "version": "1.6.25",
+    "version": "3.11.1",
     "bytes": 1116,
     "sha256": "5d177f23ecfeb0ea8e050b6a5a16355e1ae9a0b286436ca8f83ed08b3795be6b",
     "repository": {
       "type": "git",
       "url": "https://github.com/Microsoft/OpenAPI.NET",
-      "commit": "0ba1965e28e950efcf657b61f01bd96707ce63fd"
+      "commit": "197aeb967e4a742a70a906f1d7edda043394e2dd"
     },
-    "packageSha512Base64": "CEkFDMa391Rhahe5nALwVJINLlZwXkvr45h2k9sfwPJRfE4J1UTYKfFW4k5ScKaiY56Dsm9z7mrIgs1eNtjZ7Q=="
+    "packageSha512Base64": "PGpH/JBoF6itHE/CJh45IE1a4NF7964RNh1snKbiTO75INXe+XjBhQkgE70MaczGz1RBbGQkASYPxU3kDLrJcw=="
   },
   "FluentValidation/LICENSE.txt": {
     "source": "https://raw.githubusercontent.com/FluentValidation/FluentValidation/299ef377bde844af7d28b7aa21786a6853f930e3/License.txt",

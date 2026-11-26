@@ -16,8 +16,8 @@ These files accompany the pinned libraries used by Bookshelf:
 | NodaTime | 3.2.2 | [Apache-2.0 license](NodaTime/LICENSE.txt), [attribution notice](NodaTime/NOTICE.txt) |
 | NLog / NLog.Targets.ConcurrentFile | 6.2.2 | NLog/LICENSE.txt, NLog/ConcurrentFile-LICENSE.txt |
 | NLog.Extensions.Logging | 6.3.0 | NLog/Extensions.Logging-LICENSE.txt |
-| Swashbuckle ASP.NET Core annotations, SwaggerGen and Swagger | 9.0.6 | Swashbuckle/*-LICENSE.txt |
-| Microsoft.OpenApi | 1.6.25 | Microsoft.OpenApi/LICENSE.txt |
+| Swashbuckle ASP.NET Core annotations, SwaggerGen and Swagger | 11.0.1 | Swashbuckle/*-LICENSE.txt |
+| Microsoft.OpenApi | 3.11.1 | Microsoft.OpenApi/LICENSE.txt |
 | FluentValidation | 12.2.0 | [Apache-2.0 license](FluentValidation/LICENSE.txt) |
 | MailKit | 5.0.0 | [MIT license](MailKit/LICENSE.txt) |
 | MimeKit.Core | 5.0.0 | [MIT license](MimeKit.Core/LICENSE.txt) |
