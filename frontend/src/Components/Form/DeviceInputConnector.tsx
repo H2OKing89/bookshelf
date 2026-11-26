@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 import { createSelector } from 'reselect';
 import { clearOptions, defaultState, fetchOptions } from 'Store/Actions/providerOptionActions';

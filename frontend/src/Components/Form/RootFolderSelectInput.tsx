@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import EditRootFolderModalConnector from 'Settings/MediaManagement/RootFolder/EditRootFolderModalConnector';
 import EnhancedSelectInput from './EnhancedSelectInput';
 import type { FormControlProps } from './formControlProps';

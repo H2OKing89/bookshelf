@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import Icon from 'Components/Icon';
 import { icons } from 'Helpers/Props';
 import formControlProps, { type FormControlProps } from './formControlProps';

@@ -336,6 +336,7 @@ async function verifyQualitySlider(page, base, { check, step, output }, touch = 
   const response = page.waitForResponse(result => requestArgs(base, result.request(), 'qualityDefinition/update', 'PUT') !== null);
   await save.click();
   const result = await response;
+  const canonical = (await result.json()).find(item => item.id === original.id);
   await saved.waitFor();
   check('quality_save_preserves_untouched_minimum_and_submits_finite_maximum',
     result.status() === 202 && write.length === 1 && write[0].id === original.id &&
@@ -347,7 +348,6 @@ async function verifyQualitySlider(page, base, { check, step, output }, touch = 
   await page.reload();
   await maximum.waitFor();
   await saved.waitFor();
-  const canonical = (await result.json()).find(item => item.id === original.id);
   const refreshed = (await (await reloaded).json()).find(item => item.id === original.id);
   check('bulk_quality_save_returns_fresh_canonical_limits',
     canonical.maxSize === write[0].maxSize && canonical.minSize === original.minSize);
