@@ -4,6 +4,8 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -13,6 +15,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
 using Readarr.Http;
+using Readarr.Http.ClientSchema;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -20,6 +23,8 @@ namespace NzbDrone.Host
 {
     public static class ApiDocuments
     {
+        private static readonly JsonSerializerOptions DocumentJsonOptions = new JsonSerializerOptions { WriteIndented = true };
+
         public static void AddBookshelfApiDocuments(this IServiceCollection services)
         {
             services.AddSwaggerGen(options =>
@@ -76,12 +81,31 @@ namespace NzbDrone.Host
                 // Use a relative origin path. This works at a reverse proxy or
                 // base path without trusting a supplied Host header.
                 document.Servers = new List<OpenApiServer> { new OpenApiServer { Url = context.Request.PathBase.HasValue ? context.Request.PathBase.Value : "/" } };
-                using var writer = new StringWriter(CultureInfo.InvariantCulture);
-                var json = new OpenApiJsonWriter(writer);
-                document.SerializeAsV3(json);
-                writer.Flush();
-                return Results.Text(writer.ToString(), "application/json");
+                return Results.Text(SerializeOpenApi30(document), "application/json");
             }).RequireAuthorization(new AuthorizationPolicyBuilder("API").RequireAuthenticatedUser().Build()).ExcludeFromDescription();
+        }
+
+        private static string SerializeOpenApi30(OpenApiDocument document)
+        {
+            using var writer = new StringWriter(CultureInfo.InvariantCulture);
+            document.SerializeAsV3(new OpenApiJsonWriter(writer));
+
+            // Keep the existing OpenAPI 3.0 contract across the generator upgrade.
+            // The newer generator synthesizes a top-level tag registry from the
+            // existing operation tags; the published v1/v2 documents omit it.
+            var json = JsonNode.Parse(writer.ToString()).AsObject();
+            json.Remove("tags");
+
+            // Field.Value is a free-form JSON value (including null, booleans,
+            // numbers, strings, arrays and objects). Preserve its legacy nullable
+            // marker when the generator emits an unconstrained schema. Giving it
+            // a Null or Object type in the newer model would restrict valid values.
+            if (json["components"]?["schemas"]?[nameof(Field)]?["properties"]?["value"] is JsonObject value && value.Count == 0)
+            {
+                value["nullable"] = true;
+            }
+
+            return json.ToJsonString(DocumentJsonOptions);
         }
 
         private static OpenApiInfo Info(string version, string description) => new OpenApiInfo
