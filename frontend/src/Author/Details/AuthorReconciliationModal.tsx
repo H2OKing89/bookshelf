@@ -1,9 +1,10 @@
-import PropTypes from 'prop-types';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode,useCallback, useEffect, useRef, useState } from 'react';
+import type { AuthorId } from 'Book/BookIdentity';
 import Alert from 'Components/Alert';
 import FormGroup from 'Components/Form/FormGroup';
 import FormInputGroup from 'Components/Form/FormInputGroup';
 import FormLabel from 'Components/Form/FormLabel';
+import type { ValueChange } from 'Components/Form/formTypes';
 import SelectInput from 'Components/Form/SelectInput';
 import Button from 'Components/Link/Button';
 import SpinnerButton from 'Components/Link/SpinnerButton';
@@ -14,12 +15,14 @@ import ModalContent from 'Components/Modal/ModalContent';
 import ModalFooter from 'Components/Modal/ModalFooter';
 import ModalHeader from 'Components/Modal/ModalHeader';
 import { inputTypes, kinds, sizes } from 'Helpers/Props';
+import { asStateRecord } from 'Store/StateTypes';
 import createAjaxRequest from 'Utilities/createAjaxRequest';
 import getUniqueElementId from 'Utilities/getUniqueElementId';
 import getErrorMessage from 'Utilities/Object/getErrorMessage';
+import { parseCandidates, parseReconciliationPreview, type ReconciliationPreviewData,type ReconciliationProfile } from './reconciliationState';
 
 const terminalStates = new Set(['failed', 'cancelled', 'aborted', 'orphaned']);
-const referenceNames = {
+const referenceNames: Record<string, string> = {
   Blocklist: 'Blocklist entries',
   DownloadHistory: 'Download history entries',
   ExtraFiles: 'Extra files',
@@ -28,7 +31,7 @@ const referenceNames = {
   PendingReleases: 'Pending releases'
 };
 
-const settings = [
+const settings: readonly [string, string, (profile: ReconciliationProfile) => ReactNode][] = [
   ['qualityProfile', 'Quality profile ID', (profile) => profile.qualityProfileId],
   ['metadataProfile', 'Metadata profile ID', (profile) => profile.metadataProfileId],
   ['monitoring', 'Author monitored', (profile) => (profile.monitored ? 'Yes' : 'No')],
@@ -36,7 +39,7 @@ const settings = [
   ['tags', 'Tag IDs', (profile) => profile.tags?.join(', ') || 'None']
 ];
 
-function ReconciliationPreview({ preview }) {
+function ReconciliationPreview({ preview }: { preview: ReconciliationPreviewData }) {
   const {
     source,
     target,
@@ -107,27 +110,34 @@ function ReconciliationPreview({ preview }) {
   );
 }
 
-ReconciliationPreview.propTypes = {
-  preview: PropTypes.object.isRequired
-};
+interface Props {
+  sourceAuthorId: AuthorId;
+  onModalClose: () => void;
+  onReconciled: (titleSlug: string) => void;
+}
+interface Options {
+  url: string;
+  data?: Record<string, number | string> | string;
+  method?: 'POST';
+}
 
-function AuthorReconciliationModal({ sourceAuthorId, onModalClose, onReconciled }) {
+function AuthorReconciliationModal({ sourceAuthorId, onModalClose, onReconciled }: Props) {
   const [candidateInputId] = useState(getUniqueElementId);
-  const [candidates, setCandidates] = useState(null);
+  const [candidates, setCandidates] = useState<ReturnType<typeof parseCandidates> | null>(null);
   const [fields, setFields] = useState({ targetAuthorId: '', evidenceUrl: '', reason: '' });
-  const [preview, setPreview] = useState(null);
+  const [preview, setPreview] = useState<ReconciliationPreviewData | null>(null);
   const [keepCanonicalSettings, setKeepCanonicalSettings] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [isReviewing, setIsReviewing] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
-  const abortCurrent = useRef(null);
-  const pollTimer = useRef(null);
+  const abortCurrent = useRef<(() => void) | null>(null);
+  const pollTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const send = useCallback((options, done, failed) => {
+  const send = useCallback((options: Options, done: (result: unknown) => void, failed: (error: unknown) => void) => {
     const { request, abortRequest } = createAjaxRequest({ dataType: 'json', ...options });
     abortCurrent.current = abortRequest;
-    request.done(done).fail((xhr) => {
-      if (!xhr.aborted) {
+    request.done(done).fail((xhr: unknown) => {
+      if (!asStateRecord(xhr).aborted) {
         failed(xhr);
       }
     }).always(() => {
@@ -140,7 +150,14 @@ function AuthorReconciliationModal({ sourceAuthorId, onModalClose, onReconciled 
   useEffect(() => {
     send(
       { url: '/authorreconciliation/candidates', data: { sourceAuthorId } },
-      setCandidates,
+      (result) => {
+        try {
+          setCandidates(parseCandidates(result));
+        } catch {
+          setCandidates([]);
+          setError('Unable to validate canonical author profiles.');
+        }
+      },
       (xhr) => {
         setCandidates([]);
         setError(getErrorMessage(xhr, 'Unable to find canonical author profiles.'));
@@ -152,7 +169,10 @@ function AuthorReconciliationModal({ sourceAuthorId, onModalClose, onReconciled 
     };
   }, [send, sourceAuthorId]);
 
-  const updateField = ({ name, value }) => {
+  const updateField = ({ name, value }: ValueChange<string>) => {
+    if (name !== 'targetAuthorId' && name !== 'evidenceUrl' && name !== 'reason') {
+      return;
+    }
     setFields((previous) => ({ ...previous, [name]: value }));
     setPreview(null);
     setKeepCanonicalSettings(false);
@@ -172,7 +192,15 @@ function AuthorReconciliationModal({ sourceAuthorId, onModalClose, onReconciled 
     send(
       { url: '/authorreconciliation/preview', method: 'POST', data: JSON.stringify(requestBody()) },
       (result) => {
-        setPreview(result);
+        try {
+          const reviewed = parseReconciliationPreview(result);
+          if (reviewed.source.id !== sourceAuthorId || reviewed.target.id !== Number(fields.targetAuthorId)) {
+            throw new TypeError('Unexpected reviewed author identity');
+          }
+          setPreview(reviewed);
+        } catch {
+          setError('Unable to validate author reconciliation preview.');
+        }
         setIsReviewing(false);
       },
       (xhr) => {
@@ -182,18 +210,22 @@ function AuthorReconciliationModal({ sourceAuthorId, onModalClose, onReconciled 
     );
   };
   const apply = () => {
+    if (!preview?.canApply || (preview.settingsDifferences.length && !keepCanonicalSettings)) {
+      return;
+    }
     setIsApplying(true);
     setError(null);
-    const fail = (message) => {
+    const fail = (message: string) => {
       setIsApplying(false);
       setPreview(null);
       setError(message);
     };
-    const poll = (commandId) => {
-      send({ url: `/command/${commandId}` }, (command) => {
+    const poll = (commandId: number) => {
+      send({ url: `/command/${commandId}` }, (result) => {
+        const command = asStateRecord(result);
         if (command.status === 'completed') {
           onReconciled(preview.target.titleSlug);
-        } else if (terminalStates.has(command.status)) {
+        } else if (typeof command.status !== 'string' || terminalStates.has(command.status)) {
           fail('Reconciliation did not complete. Review the current profiles and try again.');
         } else {
           pollTimer.current = setTimeout(() => poll(commandId), 500);
@@ -204,7 +236,14 @@ function AuthorReconciliationModal({ sourceAuthorId, onModalClose, onReconciled 
       url: '/authorreconciliation',
       method: 'POST',
       data: JSON.stringify({ ...requestBody(), previewToken: preview.previewToken, keepCanonicalSettings })
-    }, ({ commandId }) => poll(commandId), (xhr) => fail(getErrorMessage(xhr, 'Unable to apply author reconciliation.')));
+    }, (result) => {
+      const { commandId } = asStateRecord(result);
+      if (typeof commandId === 'number' && Number.isSafeInteger(commandId) && commandId > 0) {
+        poll(commandId);
+      } else {
+        fail('Unable to validate the reconciliation command result.');
+      }
+    }, (xhr) => fail(getErrorMessage(xhr, 'Unable to apply author reconciliation.')));
   };
   const close = () => {
     if (!isApplying) {
@@ -247,7 +286,7 @@ function AuthorReconciliationModal({ sourceAuthorId, onModalClose, onReconciled 
                     name="evidenceUrl"
                     helpText="Link to the source that connects this name credit to the canonical author."
                     value={fields.evidenceUrl}
-                    isDisabled={busy}
+                    readOnly={busy}
                     onChange={updateField}
                   />
                 </FormGroup>
@@ -257,7 +296,7 @@ function AuthorReconciliationModal({ sourceAuthorId, onModalClose, onReconciled 
                     type={inputTypes.TEXT_AREA}
                     name="reason"
                     value={fields.reason}
-                    isDisabled={busy}
+                    readOnly={busy}
                     onChange={updateField}
                   />
                 </FormGroup>
@@ -295,11 +334,5 @@ function AuthorReconciliationModal({ sourceAuthorId, onModalClose, onReconciled 
     </Modal>
   );
 }
-
-AuthorReconciliationModal.propTypes = {
-  sourceAuthorId: PropTypes.number.isRequired,
-  onModalClose: PropTypes.func.isRequired,
-  onReconciled: PropTypes.func.isRequired
-};
 
 export default AuthorReconciliationModal;

@@ -1,7 +1,9 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import AuthorPoster from 'Author/AuthorPoster';
 import { getAuthorStatusDetails } from 'Author/AuthorStatus';
+import type { AuthorId } from 'Book/BookIdentity';
+import type { authorHeaderData } from 'Book/Details/detailPresentation';
+import type { LibraryImage } from 'Book/LibraryPresentation';
 import HeartRating from 'Components/HeartRating';
 import Icon from 'Components/Icon';
 import Label from 'Components/Label';
@@ -25,16 +27,24 @@ import styles from './AuthorDetailsHeader.css';
 const defaultFontSize = parseInt(fonts.defaultFontSize);
 const lineHeight = parseFloat(fonts.lineHeight);
 
-function getFanartUrl(images) {
+function getFanartUrl(images: readonly LibraryImage[]) {
   return images.find((x) => x.coverType === 'fanart')?.url;
 }
 
-class AuthorDetailsHeader extends Component {
+export type AuthorDetailsHeaderProps = ReturnType<typeof authorHeaderData> & {
+  id: AuthorId;
+  width: number;
+  isSmallScreen: boolean;
+  onMonitorTogglePress: (monitored: boolean) => void;
+};
+interface State { overviewHeight: number; titleWidth: number; }
+
+class AuthorDetailsHeader extends Component<AuthorDetailsHeaderProps, State> {
 
   //
   // Lifecyle
 
-  constructor(props) {
+  constructor(props: AuthorDetailsHeaderProps) {
     super(props);
 
     this.state = {
@@ -46,11 +56,11 @@ class AuthorDetailsHeader extends Component {
   //
   // Listeners
 
-  onOverviewMeasure = ({ height }) => {
+  onOverviewMeasure = ({ height }: { height: number }) => {
     this.setState({ overviewHeight: height });
   };
 
-  onTitleMeasure = ({ width }) => {
+  onTitleMeasure = ({ width }: { width: number }) => {
     this.setState({ titleWidth: width });
   };
 
@@ -97,7 +107,7 @@ class AuthorDetailsHeader extends Component {
 
     if (bookFileCount === 1) {
       bookFilesCountMessage = '1 book file';
-    } else if (bookFileCount > 1) {
+    } else if ((bookFileCount ?? 0) > 1) {
       bookFilesCountMessage = `${bookFileCount} book files`;
     }
 
@@ -108,7 +118,7 @@ class AuthorDetailsHeader extends Component {
           style={
             fanartUrl ?
               { backgroundImage: `url(${fanartUrl})` } :
-              null
+              undefined
           }
         >
           <div className={styles.backdropOverlay} />
@@ -171,7 +181,7 @@ class AuthorDetailsHeader extends Component {
               </div>
             </div>
 
-            <div className={styles.detailsLabels}>
+            <div>
               <Label
                 className={styles.detailsLabel}
                 size={sizes.LARGE}
@@ -316,25 +326,5 @@ class AuthorDetailsHeader extends Component {
     );
   }
 }
-
-AuthorDetailsHeader.propTypes = {
-  id: PropTypes.number.isRequired,
-  width: PropTypes.number.isRequired,
-  authorName: PropTypes.string.isRequired,
-  ratings: PropTypes.object.isRequired,
-  path: PropTypes.string.isRequired,
-  statistics: PropTypes.object.isRequired,
-  qualityProfileId: PropTypes.number.isRequired,
-  monitored: PropTypes.bool.isRequired,
-  status: PropTypes.string.isRequired,
-  overview: PropTypes.string,
-  links: PropTypes.arrayOf(PropTypes.object).isRequired,
-  images: PropTypes.arrayOf(PropTypes.object).isRequired,
-  alternateTitles: PropTypes.arrayOf(PropTypes.string).isRequired,
-  tags: PropTypes.arrayOf(PropTypes.number).isRequired,
-  isSaving: PropTypes.bool.isRequired,
-  isSmallScreen: PropTypes.bool.isRequired,
-  onMonitorTogglePress: PropTypes.func.isRequired
-};
 
 export default AuthorDetailsHeader;

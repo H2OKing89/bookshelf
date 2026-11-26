@@ -92,7 +92,7 @@ test('new file rows retain registration and removing the shift-selection anchor 
   assert.deepEqual(table.getSelectedIds(), [2]);
 });
 
-const { default: seriesConnector } = loadFrontendModule('Author/Details/AuthorDetailsSeriesConnector.js', {
+const { default: seriesConnector } = loadFrontendModule('Author/Details/AuthorDetailsSeriesConnector.tsx', {
   'react-redux': { connect: (createSelector) => (component) => ({ createSelector, component }) },
   'Store/Actions/bookActions': { toggleBooksMonitored() {} },
   'Store/Actions/commandActions': { executeCommand() {} },
@@ -127,7 +127,7 @@ test('book details renders the local-recording source badge supplied by the API'
     'Components/Icon', 'Components/Marquee', 'Components/Measure', 'Components/MonitorToggleButton',
     'Components/Tooltip/Tooltip', 'Components/TextTruncate', './BookDetailsLinks'
   ].map((name) => [name, () => null]));
-  const { default: Header } = loadFrontendModule('Book/Details/BookDetailsHeader.js', {
+  const { default: Header } = loadFrontendModule('Book/Details/BookDetailsHeader.tsx', {
     ...boundaries,
     'Components/Label': Label,
     'Helpers/Props': { icons: {}, kinds: {}, sizes: {}, tooltipPositions: {} },

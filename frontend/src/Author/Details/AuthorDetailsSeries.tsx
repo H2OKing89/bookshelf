@@ -1,26 +1,49 @@
-import _ from 'lodash';
-import PropTypes from 'prop-types';
 import { Component } from 'react';
+import type { AuthorId, BookId } from 'Book/BookIdentity';
 import Icon from 'Components/Icon';
 import IconButton from 'Components/Link/IconButton';
 import Link from 'Components/Link/Link';
 import MonitorToggleButton from 'Components/MonitorToggleButton';
+import type Column from 'Components/Table/Column';
 import Table from 'Components/Table/Table';
 import TableBody from 'Components/Table/TableBody';
-import { icons, sortDirections } from 'Helpers/Props';
+import { icons } from 'Helpers/Props';
+import type { SortDirection } from 'Helpers/Props/sortDirections';
+import type { StateRecord } from 'Store/StateTypes';
 import { summarizeSeriesRecordings } from 'Utilities/Book/recordingIdentity';
 import translate from 'Utilities/String/translate';
-import getToggledRange from 'Utilities/Table/getToggledRange';
 import BookRowConnector from './BookRowConnector';
+import { type DetailBookRow, monitorRange, type PositionMap } from './detailRowsState';
 import styles from './AuthorDetailsSeries.css';
 
-class AuthorDetailsSeries extends Component {
+interface CommonProps {
+  items: readonly DetailBookRow[];
+  columns: readonly Column[];
+  sortKey?: string;
+  sortDirection?: SortDirection;
+  onSortPress: (sortKey: string) => void;
+  onTableOptionChange: (payload: StateRecord) => void;
+  onMonitorBookPress: (ids: BookId[], monitored: boolean) => void;
+}
+export interface AuthorDetailsSeriesProps extends CommonProps {
+  id: number;
+  authorId: AuthorId;
+  label: string;
+  positionMap: PositionMap;
+  isExpanded?: boolean;
+  isSmallScreen: boolean;
+  authorMonitored: boolean;
+  onExpandPress: (id: number, expanded: boolean) => void;
+}
+interface State { isOrganizeModalOpen: boolean; isManageBooksOpen: boolean; lastToggledBook: BookId | null; }
+
+class AuthorDetailsSeries extends Component<AuthorDetailsSeriesProps, State> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: AuthorDetailsSeriesProps) {
+    super(props);
 
     this.state = {
       isOrganizeModalOpen: false,
@@ -33,7 +56,7 @@ class AuthorDetailsSeries extends Component {
     this._expandByDefault();
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: AuthorDetailsSeriesProps) {
     const {
       authorId
     } = this.props;
@@ -56,11 +79,11 @@ class AuthorDetailsSeries extends Component {
     onExpandPress(id, true);
   }
 
-  isSeriesMonitored(series) {
+  isSeriesMonitored(series: AuthorDetailsSeriesProps) {
     return series.items.every((book) => book.monitored);
   }
 
-  isSeriesSaving(series) {
+  isSeriesSaving(series: AuthorDetailsSeriesProps) {
     return series.items.some((book) => book.isSaving);
   }
 
@@ -76,28 +99,16 @@ class AuthorDetailsSeries extends Component {
     this.props.onExpandPress(id, !isExpanded);
   };
 
-  onMonitorBookPress = (bookId, monitored, { shiftKey }) => {
-    const lastToggled = this.state.lastToggledBook;
-    const bookIds = [bookId];
-
-    if (shiftKey && lastToggled) {
-      const { lower, upper } = getToggledRange(this.props.items, bookId, lastToggled);
-      const items = this.props.items;
-
-      for (let i = lower; i < upper; i++) {
-        bookIds.push(items[i].id);
-      }
-    }
-
+  onMonitorBookPress = (bookId: BookId, monitored: boolean, { shiftKey }: { shiftKey?: boolean }) => {
+    const bookIds = monitorRange(this.props.items, bookId, this.state.lastToggledBook, shiftKey);
     this.setState({ lastToggledBook: bookId });
-
-    this.props.onMonitorBookPress(_.uniq(bookIds), monitored);
+    this.props.onMonitorBookPress(bookIds, monitored);
   };
 
-  onMonitorSeriesPress = (monitored, { shiftKey }) => {
+  onMonitorSeriesPress = (monitored: boolean) => {
     const bookIds = this.props.items.map((book) => book.id);
 
-    this.props.onMonitorBookPress(_.uniq(bookIds), monitored);
+    this.props.onMonitorBookPress([...new Set(bookIds)], monitored);
   };
 
   //
@@ -181,7 +192,7 @@ class AuthorDetailsSeries extends Component {
               </span>
               {
                 recordings.ownedVolumeCount != null &&
-                  <span>{translate('SeriesVolumesWithFiles', { ownedVolumeCount: recordings.ownedVolumeCount, volumeCount: recordings.volumeCount })}</span>
+                  <span>{translate('SeriesVolumesWithFiles', { ownedVolumeCount: recordings.ownedVolumeCount, volumeCount: recordings.volumeCount ?? 0 })}</span>
               }
               {
                 recordings.hasAlternates &&
@@ -211,6 +222,8 @@ class AuthorDetailsSeries extends Component {
                             {...item}
                             position={positionMap[item.id]}
                             onMonitorBookPress={this.onMonitorBookPress}
+                            onSelectedChange={() => undefined}
+                            isEditorActive={false}
                           />
                         );
                       })
@@ -234,24 +247,5 @@ class AuthorDetailsSeries extends Component {
     );
   }
 }
-
-AuthorDetailsSeries.propTypes = {
-  id: PropTypes.number.isRequired,
-  authorId: PropTypes.number.isRequired,
-  label: PropTypes.string.isRequired,
-  sortKey: PropTypes.string,
-  sortDirection: PropTypes.oneOf(sortDirections.all),
-  items: PropTypes.arrayOf(PropTypes.object).isRequired,
-  positionMap: PropTypes.object.isRequired,
-  columns: PropTypes.arrayOf(PropTypes.object).isRequired,
-  isExpanded: PropTypes.bool,
-  isSmallScreen: PropTypes.bool.isRequired,
-  onTableOptionChange: PropTypes.func.isRequired,
-  onExpandPress: PropTypes.func.isRequired,
-  onSortPress: PropTypes.func.isRequired,
-  onMonitorBookPress: PropTypes.func.isRequired,
-  uiSettings: PropTypes.object.isRequired,
-  authorMonitored: PropTypes.bool.isRequired
-};
 
 export default AuthorDetailsSeries;

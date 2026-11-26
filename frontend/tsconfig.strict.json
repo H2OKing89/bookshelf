@@ -295,6 +295,14 @@
     "./src/Store/Actions/retagPreviewActions.ts",
     "./src/Store/Actions/systemActions.ts",
     "./src/Store/Actions/tagActions.ts",
-    "./src/Store/Actions/Creators/operationalRequests.ts"
+    "./src/Store/Actions/Creators/operationalRequests.ts",
+    "./src/Author/Details/AuthorDetailsHeader*.tsx",
+    "./src/Book/Details/BookDetailsHeader*.tsx",
+    "./src/Book/Details/detailPresentation.ts",
+    "./src/Author/Details/AuthorReconciliationModal.tsx",
+    "./src/Author/Details/reconciliationState.ts",
+    "./src/Author/Details/AuthorDetailsSeason*.tsx",
+    "./src/Author/Details/AuthorDetailsSeries*.tsx",
+    "./src/Author/Details/detailRowsState.ts"
   ]
 }

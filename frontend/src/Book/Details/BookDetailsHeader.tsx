@@ -1,8 +1,8 @@
 import moment from 'moment';
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import AuthorNameLink from 'Author/AuthorNameLink';
 import BookCover from 'Book/BookCover';
+import type { LibraryImage } from 'Book/LibraryPresentation';
 import Alert from 'Components/Alert';
 import HeartRating from 'Components/HeartRating';
 import Icon from 'Components/Icon';
@@ -18,21 +18,31 @@ import formatBytes from 'Utilities/Number/formatBytes';
 import stripHtml from 'Utilities/String/stripHtml';
 import translate from 'Utilities/String/translate';
 import BookDetailsLinks from './BookDetailsLinks';
+import type { authorReference, bookHeaderData } from './detailPresentation';
 import styles from './BookDetailsHeader.css';
 
 const defaultFontSize = parseInt(fonts.defaultFontSize);
 const lineHeight = parseFloat(fonts.lineHeight);
 
-function getFanartUrl(images) {
+function getFanartUrl(images: readonly LibraryImage[]) {
   return images.find((x) => x.coverType === 'fanart')?.url;
 }
 
-class BookDetailsHeader extends Component {
+export type BookDetailsHeaderProps = ReturnType<typeof bookHeaderData> & {
+  width: number;
+  shortDateFormat: string;
+  author: ReturnType<typeof authorReference>;
+  isSmallScreen: boolean;
+  onMonitorTogglePress: (monitored: boolean) => void;
+};
+interface State { overviewHeight: number; }
+
+class BookDetailsHeader extends Component<BookDetailsHeaderProps, State> {
 
   //
   // Lifecycle
 
-  constructor(props) {
+  constructor(props: BookDetailsHeaderProps) {
     super(props);
 
     this.state = {
@@ -43,7 +53,7 @@ class BookDetailsHeader extends Component {
   //
   // Listeners
 
-  onOverviewMeasure = ({ height }) => {
+  onOverviewMeasure = ({ height }: { height: number }) => {
     this.setState({ overviewHeight: height });
   };
 
@@ -53,7 +63,6 @@ class BookDetailsHeader extends Component {
   render() {
     const {
       width,
-      titleSlug,
       title,
       displayTitle,
       subtitle,
@@ -72,7 +81,7 @@ class BookDetailsHeader extends Component {
       ratings,
       images,
       links,
-      isSaving,
+      isSaving = false,
       shortDateFormat,
       author,
       isSmallScreen,
@@ -83,7 +92,7 @@ class BookDetailsHeader extends Component {
       overviewHeight
     } = this.state;
 
-    const fanartUrl = getFanartUrl(author.images);
+    const fanartUrl = getFanartUrl(author?.images ?? []);
     const visibleSubtitle = displaySubtitle === undefined ? subtitle : displaySubtitle;
     const visibleSeries = displaySeriesTitle === undefined ? seriesTitle : displaySeriesTitle;
 
@@ -95,7 +104,7 @@ class BookDetailsHeader extends Component {
             style={
               fanartUrl ?
                 { backgroundImage: `url(${fanartUrl})` } :
-                null
+                undefined
             }
           >
             <div className={styles.backdropOverlay} />
@@ -133,7 +142,7 @@ class BookDetailsHeader extends Component {
               <div className={styles.details}>
                 {
                   displayTitle && displayTitle !== title &&
-                    <div>{translate('PublishedTitle', [title])}</div>
+                    <div>{translate('PublishedTitle', { 0: title })}</div>
                 }
 
                 {
@@ -155,7 +164,7 @@ class BookDetailsHeader extends Component {
                   {
                     !!runtimeLengthMinutes &&
                       <span className={styles.duration}>
-                        {translate('RuntimeMinutes', [runtimeLengthMinutes])}
+                        {translate('RuntimeMinutes', { 0: runtimeLengthMinutes })}
                       </span>
                   }
 
@@ -175,12 +184,12 @@ class BookDetailsHeader extends Component {
                 {
                   narrators.length > 0 &&
                     <div>
-                      {translate('NarratedBy', [narrators.join(', ')])}
+                      {translate('NarratedBy', { 0: narrators.join(', ') })}
                     </div>
                 }
               </div>
 
-              <div className={styles.detailsLabels}>
+              <div>
                 {
                   metadataLabels.map((label) => (
                     <Label key={label} className={styles.detailsLabel} size={sizes.LARGE}>
@@ -255,7 +264,6 @@ class BookDetailsHeader extends Component {
                   }
                   tooltip={
                     <BookDetailsLinks
-                      titleSlug={titleSlug}
                       links={links}
                     />
                   }
@@ -287,38 +295,5 @@ class BookDetailsHeader extends Component {
     );
   }
 }
-
-BookDetailsHeader.propTypes = {
-  id: PropTypes.number.isRequired,
-  width: PropTypes.number.isRequired,
-  titleSlug: PropTypes.string.isRequired,
-  title: PropTypes.string.isRequired,
-  displayTitle: PropTypes.string,
-  subtitle: PropTypes.string,
-  displaySubtitle: PropTypes.string,
-  seriesTitle: PropTypes.string.isRequired,
-  displaySeriesTitle: PropTypes.string,
-  metadataLabels: PropTypes.arrayOf(PropTypes.string),
-  metadataWarnings: PropTypes.arrayOf(PropTypes.string),
-  pageCount: PropTypes.number,
-  narrators: PropTypes.arrayOf(PropTypes.string),
-  runtimeLengthMinutes: PropTypes.number,
-  overview: PropTypes.string,
-  statistics: PropTypes.object.isRequired,
-  releaseDate: PropTypes.string,
-  ratings: PropTypes.object.isRequired,
-  images: PropTypes.arrayOf(PropTypes.object).isRequired,
-  links: PropTypes.arrayOf(PropTypes.object).isRequired,
-  monitored: PropTypes.bool.isRequired,
-  shortDateFormat: PropTypes.string.isRequired,
-  isSaving: PropTypes.bool.isRequired,
-  author: PropTypes.object,
-  isSmallScreen: PropTypes.bool.isRequired,
-  onMonitorTogglePress: PropTypes.func.isRequired
-};
-
-BookDetailsHeader.defaultProps = {
-  isSaving: false
-};
 
 export default BookDetailsHeader;

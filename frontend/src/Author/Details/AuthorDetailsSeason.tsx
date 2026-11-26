@@ -1,21 +1,41 @@
-import _ from 'lodash';
-import PropTypes from 'prop-types';
 import { Component } from 'react';
+import type { BookId } from 'Book/BookIdentity';
+import type Column from 'Components/Table/Column';
 import Table from 'Components/Table/Table';
 import TableBody from 'Components/Table/TableBody';
-import { sortDirections } from 'Helpers/Props';
+import type { TableSelectionChange } from 'Components/Table/tableSelection';
+import type { SortDirection } from 'Helpers/Props/sortDirections';
+import type { StateRecord } from 'Store/StateTypes';
 import hasDifferentItemsOrOrder from 'Utilities/Object/hasDifferentItemsOrOrder';
-import getToggledRange from 'Utilities/Table/getToggledRange';
+import type { SelectedState } from 'Utilities/Table/selectionTypes';
 import BookRowConnector from './BookRowConnector';
+import { type DetailBookRow,monitorRange } from './detailRowsState';
 import styles from './AuthorDetailsSeason.css';
 
-class AuthorDetailsSeason extends Component {
+interface CommonProps {
+  items: readonly DetailBookRow[];
+  columns: readonly Column[];
+  sortKey?: string;
+  sortDirection?: SortDirection;
+  onSortPress: (sortKey: string) => void;
+  onTableOptionChange: (payload: StateRecord) => void;
+  onMonitorBookPress: (ids: BookId[], monitored: boolean) => void;
+}
+export interface AuthorDetailsSeasonProps extends CommonProps {
+  isEditorActive: boolean;
+  selectedState: SelectedState;
+  setSelectedState: (items: readonly DetailBookRow[]) => void;
+  onSelectedChange: (items: readonly DetailBookRow[], id: BookId, value: boolean | null, shiftKey: boolean) => void;
+}
+interface State { lastToggledBook: BookId | null; }
+
+class AuthorDetailsSeason extends Component<AuthorDetailsSeasonProps, State> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: AuthorDetailsSeasonProps) {
+    super(props);
 
     this.state = {
       lastToggledBook: null
@@ -26,7 +46,7 @@ class AuthorDetailsSeason extends Component {
     this.props.setSelectedState(this.props.items);
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: AuthorDetailsSeasonProps) {
     const {
       items,
       sortKey,
@@ -45,25 +65,13 @@ class AuthorDetailsSeason extends Component {
   //
   // Listeners
 
-  onMonitorBookPress = (bookId, monitored, { shiftKey }) => {
-    const lastToggled = this.state.lastToggledBook;
-    const bookIds = [bookId];
-
-    if (shiftKey && lastToggled) {
-      const { lower, upper } = getToggledRange(this.props.items, bookId, lastToggled);
-      const items = this.props.items;
-
-      for (let i = lower; i < upper; i++) {
-        bookIds.push(items[i].id);
-      }
-    }
-
+  onMonitorBookPress = (bookId: BookId, monitored: boolean, { shiftKey }: { shiftKey?: boolean }) => {
+    const bookIds = monitorRange(this.props.items, bookId, this.state.lastToggledBook, shiftKey);
     this.setState({ lastToggledBook: bookId });
-
-    this.props.onMonitorBookPress(_.uniq(bookIds), monitored);
+    this.props.onMonitorBookPress(bookIds, monitored);
   };
 
-  onSelectedChange = ({ id, value, shiftKey = false }) => {
+  onSelectedChange = ({ id, value, shiftKey = false }: TableSelectionChange<BookId>) => {
     const {
       onSelectedChange,
       items
@@ -114,7 +122,7 @@ class AuthorDetailsSeason extends Component {
                       {...item}
                       onMonitorBookPress={this.onMonitorBookPress}
                       isEditorActive={isEditorActive}
-                      isSelected={selectedState[item.id]}
+                      isSelected={selectedState[item.id] === true}
                       onSelectedChange={this.onSelectedChange}
                     />
                   );
@@ -127,21 +135,5 @@ class AuthorDetailsSeason extends Component {
     );
   }
 }
-
-AuthorDetailsSeason.propTypes = {
-  sortKey: PropTypes.string,
-  sortDirection: PropTypes.oneOf(sortDirections.all),
-  items: PropTypes.arrayOf(PropTypes.object).isRequired,
-  isEditorActive: PropTypes.bool.isRequired,
-  selectedState: PropTypes.object.isRequired,
-  columns: PropTypes.arrayOf(PropTypes.object).isRequired,
-  onTableOptionChange: PropTypes.func.isRequired,
-  onExpandPress: PropTypes.func.isRequired,
-  setSelectedState: PropTypes.func.isRequired,
-  onSelectedChange: PropTypes.func.isRequired,
-  onSortPress: PropTypes.func.isRequired,
-  onMonitorBookPress: PropTypes.func.isRequired,
-  uiSettings: PropTypes.object.isRequired
-};
 
 export default AuthorDetailsSeason;
