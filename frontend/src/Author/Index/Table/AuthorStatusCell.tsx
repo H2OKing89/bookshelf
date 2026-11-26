@@ -45,9 +45,4 @@ function AuthorStatusCell(props: AuthorStatusCellProps) {
   );
 }
 
-AuthorStatusCell.defaultProps = {
-  className: styles.status,
-  component: VirtualTableRowCell
-};
-
 export default AuthorStatusCell;

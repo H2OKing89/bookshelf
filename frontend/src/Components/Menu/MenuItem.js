@@ -7,9 +7,9 @@ import styles from './MenuItem.css';
 
 function MenuItem(props) {
   const {
-    className,
+    className = styles.menuItem,
     children,
-    isDisabled,
+    isDisabled = false,
     to,
     onPress,
     ...otherProps
@@ -43,14 +43,9 @@ function MenuItem(props) {
 MenuItem.propTypes = {
   className: PropTypes.string,
   children: PropTypes.node.isRequired,
-  isDisabled: PropTypes.bool.isRequired,
+  isDisabled: PropTypes.bool,
   to: PropTypes.string,
   onPress: PropTypes.func
-};
-
-MenuItem.defaultProps = {
-  className: styles.menuItem,
-  isDisabled: false
 };
 
 export default MenuItem;

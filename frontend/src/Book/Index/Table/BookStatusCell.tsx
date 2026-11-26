@@ -33,9 +33,4 @@ function BookStatusCell(props: BookStatusCellProps) {
   );
 }
 
-BookStatusCell.defaultProps = {
-  className: styles.status,
-  component: VirtualTableRowCell
-};
-
 export default BookStatusCell;
