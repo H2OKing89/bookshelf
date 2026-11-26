@@ -439,9 +439,10 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
         private bool StoredCreditsAgree(Book book, AuthorMetadata owner, string asin)
         {
-            return CreditsAgree((_editionService.GetEditionsByBook(book.Id) ?? new List<Edition>())
+            var credits = (_editionService.GetEditionsByBook(book.Id) ?? new List<Edition>())
                 .Where(edition => edition.ForeignEditionId == book.ForeignBookId)
-                .SelectMany(edition => edition.Contributors ?? new List<AudiobookContributor>()), owner, asin);
+                .SelectMany(edition => edition.Contributors ?? new List<AudiobookContributor>());
+            return CreditsAgree(credits, owner, asin);
         }
 
         private static bool CreditsAgree(IEnumerable<AudiobookContributor> credits, AuthorMetadata owner, string asin)
