@@ -172,3 +172,25 @@ Manual preview exposes the same explanation. An explicitly submitted manual
 import retains its existing override behavior; it still obeys the staged
 ownership, database and source-retention boundaries. The guard does not add a
 silent automatic override.
+
+## Upgrading an existing name-only author identity
+
+An author originally discovered without an ASIN can later acquire an explicit
+catalog identity. A name search alone is not sufficient to promote the record.
+The author catalog must return an exact previously stored native recording in
+its original marketplace, whose saved edition confirms the recording ID and
+whose primary author credit matches the existing name and supplies an ASIN.
+Matching explicit credits must agree across the observed owned recordings and
+stored credits. An ambiguous name, contradictory author ASIN, local recording,
+wrong-market edition, missing evidence or existing canonical owner does not
+authorize a promotion.
+
+Catalog and individual recording lookups never persist the proposed upgrade.
+A real author refresh rechecks the incumbent author/metadata IDs, supporting
+recording and destination uniqueness across supported marketplaces in a database
+transaction, then updates the existing metadata row. Numeric IDs, route slug,
+local author preferences, folder, recording/file identities and history remain
+intact. A change to the author identity alone does not force a tag rewrite.
+Existing canonical or duplicate authors still require the reviewed **Reconcile
+Author** workflow; promotion never merges them by name. Subsequent refreshes
+reuse the canonical author and retain the original route slug.

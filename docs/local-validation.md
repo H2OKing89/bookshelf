@@ -2140,3 +2140,37 @@ before a new browser clamp probe was merged; the resulting clamp timeout was
 not treated as acceptance. The exact-source rerun includes matching seed and
 browser probe and passes all checks. Existing development service, appdata,
 media, production, GitHub Actions and release publishing were untouched.
+
+## Verified name-only author promotion — 2026-11-25
+
+A previously stored Audible name-only author can miss upcoming releases after
+its catalog begins to include an explicit contributor ASIN. The fix anchors the
+new identity to an exact already stored recording and edition in the same
+marketplace, checks conflicting catalog/stored credits and existing owners, and
+rekeys the original metadata row only during the real refresh apply phase.
+
+The [preservation contract](identity-preservation.md#upgrading-an-existing-name-only-author-identity)
+explains the identity boundary. The independent clean package source was
+`4c34aef552fc7f650fd9b6d903c16b9ecd8835af` (tree
+`a7a0348fa0780324e19b4ad6fe9412de0bbf9e70`). The old package reproduces the
+new focused hosted test's missing upcoming-recording result; the corrected
+package passes all 14 behavioral checks, including read-only preview, in-place
+promotion, future release discovery, unrelated homonym exclusion, intact file
+bytes/history/IDs/preferences, and restart/repeated-refresh idempotence.
+
+Run the focused synthetic check with a newly built package:
+
+```sh
+python3 scripts/validate-local.py --runtime /path/to/Readarr \
+  --checks authoridentitypromotion --output /path/to/new-evidence-directory
+```
+
+All metadata-provider responses, credentials and library files in this hosted
+check belong to the disposable loopback fixture. No existing home is accepted.
+Both SQLite and owned PostgreSQL transaction cases passed. The exact-source
+eight-suite managed run passed **6,225 tests**, 100 existing skips, zero failures
+(including 9 promotion repository cases on PostgreSQL). The exact package
+passed **632 hosted checks** over the new focused promotion, identity,
+recording lifecycle, collection diagnostics, metadata accessibility and library
+review groups (including unchanged-input verification). Both TS checks, lint,
+Vite build verification, 215 frontend tests and 174 tooling tests passed.
