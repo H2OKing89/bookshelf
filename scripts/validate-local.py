@@ -12,7 +12,7 @@ import tempfile
 from validation import common
 
 
-CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization", "assetpipeline", "recordinglifecycle", "collectiondiagnostics", "listlifecycle", "providerpolicies", "indexerrejectionpolicy", "qualityranking", "hosttlslifecycle", "downloadqueue", "apidocuments", "notificationlifecycle", "performanceprofiling", "dragreorder", "docker")
+CHECKS = ("package", "app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "authoridentitypromotion", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization", "assetpipeline", "recordinglifecycle", "collectiondiagnostics", "listlifecycle", "providerpolicies", "indexerrejectionpolicy", "qualityranking", "hosttlslifecycle", "downloadqueue", "apidocuments", "notificationlifecycle", "performanceprofiling", "dragreorder", "docker")
 
 
 def parser():
@@ -94,14 +94,14 @@ def main(argv=None):
             output = common.private_directory(arguments.output.expanduser().resolve())
         for label, runtime in inputs.items():
             snapshots[label] = common.snapshot_runtime(runtime)
-        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization", "assetpipeline", "recordinglifecycle", "collectiondiagnostics", "listlifecycle", "providerpolicies", "indexerrejectionpolicy", "qualityranking", "hosttlslifecycle", "downloadqueue", "apidocuments", "notificationlifecycle", "performanceprofiling", "dragreorder")):
+        if any(name in chosen for name in ("app", "restore", "upgrade", "media", "cancellation", "datastore", "sqlite", "logstorage", "postgresconnections", "authpolicy", "accesspolicy", "releaseidentity", "acquisition", "identity", "authoridentitypromotion", "metadataaccessibility", "libraryreview", "historypaging", "historysync", "wantedpaging", "queuepaging", "settingsdrafts", "routernavigation", "interactivesearch", "libraryvirtualization", "assetpipeline", "recordinglifecycle", "collectiondiagnostics", "listlifecycle", "providerpolicies", "indexerrejectionpolicy", "qualityranking", "hosttlslifecycle", "downloadqueue", "apidocuments", "notificationlifecycle", "performanceprofiling", "dragreorder")):
             common.ensure_host_compatible(inputs["candidate"])
         for label in ("baseline", "legacy"):
             if label in inputs:
                 common.ensure_host_compatible(inputs[label])
         # Imports are deliberately after validation; modules never launch on import.
         from validation import accesspolicy, acquisition, app, asset_pipeline, authpolicy, cancellation, collection_diagnostics, datastore, docker, history_paging, identity, indexer_rejection_policy, interactive_search, library_review, list_lifecycle, library_virtualization, logstorage, media, metadata_accessibility, operational_paging, package, postgresconnections, provider_policies, quality_ranking, releaseidentity, recording_lifecycle, restore, router_navigation, settings_drafts, sqlite, upgrade
-        from validation import api_documents, drag_reorder, download_queue, host_tls_lifecycle, notification_lifecycle, performance_profiling
+        from validation import api_documents, author_identity_promotion, drag_reorder, download_queue, host_tls_lifecycle, notification_lifecycle, performance_profiling
         callbacks = {
             "package": lambda: package.run(inputs["candidate"], output / "package", repo),
             "app": lambda: app.run(inputs["candidate"], output / "app"),
@@ -117,6 +117,7 @@ def main(argv=None):
             "releaseidentity": lambda: releaseidentity.run(inputs["candidate"], output / "releaseidentity"),
             "acquisition": lambda: acquisition.run(inputs["candidate"], output / "acquisition"),
             "identity": lambda: identity.run(inputs["candidate"], output / "identity", baseline_runtime=inputs["baseline"], playwright_module=arguments.playwright_module),
+            "authoridentitypromotion": lambda: author_identity_promotion.run(inputs["candidate"], output / "authoridentitypromotion"),
             "metadataaccessibility": lambda: metadata_accessibility.run(inputs["candidate"], output / "metadataaccessibility", arguments.playwright_module),
             "libraryreview": lambda: library_review.run(inputs["candidate"], output / "libraryreview", arguments.playwright_module),
             "historypaging": lambda: history_paging.run(inputs["candidate"], output / "historypaging", arguments.playwright_module),

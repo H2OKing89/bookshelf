@@ -206,7 +206,14 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
             EnrichChapters(book, identity.Region, observation);
 
-            var authors = AudiobookContributors.All(resource).Where(credit => credit.Role == "Author")
+            // A known recording can now carry an explicit ASIN for its legacy
+            // name-only owner. Keep that single owner until the author refresh
+            // verifies and applies the identity upgrade; do not upsert a second
+            // metadata row as a side effect of refreshing an individual book.
+            var legacyCredit = AudiobookId.Parse(book.AuthorMetadata.Value.ForeignAuthorId).IsName
+                ? VerifiedLegacyCredit(resource, identity.Region, _bookService.FindById(id), book.AuthorMetadata.Value)
+                : null;
+            var authors = AudiobookContributors.All(resource).Where(credit => credit.Role == "Author" && (legacyCredit == null || credit.Asin != legacyCredit.Asin))
                 .Select(credit => MapAuthor(new AudnexusContributorResource { Asin = credit.Asin, Name = credit.Name, Role = credit.Role }, identity.Region))
                 .Prepend(book.AuthorMetadata.Value)
                 .DistinctBy(a => a.ForeignAuthorId).ToList();
@@ -233,6 +240,11 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             var local = _authorService.FindById(id);
             var profile = local == null ? null : _metadataProfiles.Get(local.MetadataProfileId);
             var metadata = local?.Metadata.Value ?? _authors.Find(id);
+            if (identity.IsName && local != null)
+            {
+                metadata = metadata.JsonClone();
+            }
+
             if (metadata != null)
             {
                 PreserveAuthorMetadata(metadata, _authors.Find(id));
@@ -277,11 +289,12 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
             // Read every alias page before optional detail lookups, so a detail
             // outage cannot interrupt discovery of the rest of the bibliography.
-            var resources = _overrides.AuthorSearchNames(metadata, identity.Region)
+            var catalog = _overrides.AuthorSearchNames(metadata, identity.Region)
                 .SelectMany(name => provider == MetadataProvider.Audible
                     ? _audible.GetAuthorBooks(name, identity.Region)
                     : _audnexus.SearchBooks(name, identity.Region))
-                .DistinctBy(resource => resource.Asin).ToList();
+                .ToList();
+            var resources = catalog.DistinctBy(resource => resource.Asin).ToList();
             var authorIdentity = _overrides.FindAuthor(new AudnexusContributorResource
             {
                 Asin = identity.IsName ? null : identity.Value,
@@ -291,6 +304,13 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
             // Neither a capped search nor a regional catalog is an authoritative deletion feed.
             var known = local == null ? new List<Book>() : _bookService.GetBooksByAuthorMetadataId(local.AuthorMetadataId);
+            var promotion = FindLegacyPromotion(local, metadata, identity.Region, catalog, known);
+            if (promotion != null)
+            {
+                metadata = promotion.Metadata;
+                id = metadata.ForeignAuthorId;
+            }
+
             var knownIds = known.Select(book => book.ForeignBookId).ToHashSet();
             var discovered = new List<Book>();
             foreach (var resource in resources.Where(AudiobookCatalogPolicy.IsRecording).Where(resource => MatchesProfileLanguage(resource, profile)))
@@ -306,7 +326,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                     continue;
                 }
 
-                var book = Enrich(resource, identity.Region, metadata, observation);
+                var book = Enrich(resource, identity.Region, metadata, observation, promotion);
                 if (book.AuthorMetadata.Value.ForeignAuthorId == id)
                 {
                     discovered.Add(book);
@@ -316,6 +336,13 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             if (provider == MetadataProvider.Audnexus)
             {
                 observation.Partial(MetadataProviderReason.KeywordCoverage);
+            }
+
+            if (promotion != null)
+            {
+                // The catalog response is a proposal, not a write. In particular
+                // don't reparent model instances that were read from the library.
+                known = known.Select(CopyKnownBook).ToList();
             }
 
             foreach (var book in known)
@@ -330,7 +357,9 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 Metadata = metadata,
                 CleanName = Parser.Parser.CleanAuthorName(metadata.Name),
                 Books = allBooks,
-                Series = MergeSeries(allBooks)
+                Series = MergeSeries(allBooks),
+                IdentityPromotionFrom = promotion?.OldId,
+                IdentityPromotionRecordingId = promotion?.RecordingId
             };
             if (local != null)
             {
@@ -345,8 +374,185 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 book.AuthorMetadataId = metadata.Id;
             }
 
-            RememberAuthor(metadata);
+            if (promotion == null)
+            {
+                RememberAuthor(metadata);
+            }
+
             return result;
+        }
+
+        private sealed class LegacyAuthorPromotion
+        {
+            public LegacyAuthorPromotion(string oldId, string recordingId, AuthorMetadata metadata)
+            {
+                OldId = oldId;
+                RecordingId = recordingId;
+                Metadata = metadata;
+            }
+
+            public string OldId { get; }
+            public string RecordingId { get; }
+            public AuthorMetadata Metadata { get; }
+        }
+
+        private static bool MatchesLegacyName(AuthorMetadata metadata, string name)
+        {
+            return new[] { metadata.Name }.Concat(metadata.Aliases ?? new List<string>())
+                .Any(alias => string.Equals(AudiobookTextNormalizer.Text(alias), AudiobookTextNormalizer.Text(name), StringComparison.OrdinalIgnoreCase));
+        }
+
+        // A name search is not identity evidence. Only an exact, locally stored
+        // recording (including its edition and marketplace) can supply an anchor.
+        private bool IsStoredRecording(AudnexusBookResource resource, string region, Book book, AuthorMetadata owner)
+        {
+            if (book == null || owner == null || owner.Id <= 0 || book.Id <= 0 || book.AuthorMetadataId != owner.Id ||
+                !AudiobookCatalogPolicy.IsRecording(resource) || resource.Region != region || !AudiobookId.IsAsin(resource.Asin) ||
+                book.ForeignBookId != AudiobookId.ForAsin(region, resource.Asin))
+            {
+                return false;
+            }
+
+            return (_editionService.GetEditionsByBook(book.Id) ?? new List<Edition>()).Any(edition => edition.Id > 0 && edition.BookId == book.Id &&
+                edition.ForeignEditionId == book.ForeignBookId && edition.Asin == resource.Asin && edition.AudibleRegion == region);
+        }
+
+        private static AudnexusContributorResource UniqueLegacyCredit(AudnexusBookResource resource, AuthorMetadata owner)
+        {
+            var primary = AudiobookContributors.PrimaryAuthor(resource);
+            if (primary == null || !AudiobookId.IsAsin(primary.Asin) || !MatchesLegacyName(owner, primary.Name))
+            {
+                return null;
+            }
+
+            var matchingAsins = AudiobookContributors.All(resource)
+                .Where(credit => credit.Role == "Author" && AudiobookId.IsAsin(credit.Asin) && MatchesLegacyName(owner, credit.Name))
+                .Select(credit => credit.Asin).Distinct().ToList();
+            return matchingAsins.Count == 1 && matchingAsins[0] == primary.Asin ? primary : null;
+        }
+
+        private bool HasOtherAuthorOwner(string asin, string region, AuthorMetadata owner)
+        {
+            return AudiobookId.LookupRegions(region).Select(market => _authorService.FindById(AudiobookId.ForAsin(market, asin)))
+                .Any(author => author != null && author.AuthorMetadataId != owner.Id);
+        }
+
+        private bool StoredCreditsAgree(Book book, AuthorMetadata owner, string asin)
+        {
+            return CreditsAgree((_editionService.GetEditionsByBook(book.Id) ?? new List<Edition>())
+                .Where(edition => edition.ForeignEditionId == book.ForeignBookId)
+                .SelectMany(edition => edition.Contributors ?? new List<AudiobookContributor>()), owner, asin);
+        }
+
+        private static bool CreditsAgree(IEnumerable<AudiobookContributor> credits, AuthorMetadata owner, string asin)
+        {
+            return credits.Where(credit => credit?.Role == "Author" && AudiobookId.IsAsin(credit.Asin) && MatchesLegacyName(owner, credit.Name))
+                .All(credit => credit.Asin == asin);
+        }
+
+        private AudnexusContributorResource VerifiedLegacyCredit(AudnexusBookResource resource, string region, Book book, AuthorMetadata owner)
+        {
+            if (owner == null || !AudiobookId.IsNative(owner.ForeignAuthorId))
+            {
+                return null;
+            }
+
+            var identity = AudiobookId.Parse(owner.ForeignAuthorId);
+            if (!identity.IsName || identity.Region != region || !IsStoredRecording(resource, region, book, owner))
+            {
+                return null;
+            }
+
+            var credit = UniqueLegacyCredit(resource, owner);
+            return credit != null && StoredCreditsAgree(book, owner, credit.Asin) && !HasOtherAuthorOwner(credit.Asin, region, owner) &&
+                _overrides.CanonicalAuthorId(AudiobookId.ForAsin(region, credit.Asin)) == AudiobookId.ForAsin(region, credit.Asin) ? credit : null;
+        }
+
+        private LegacyAuthorPromotion FindLegacyPromotion(Author local, AuthorMetadata metadata, string region, List<AudnexusBookResource> catalog, List<Book> known)
+        {
+            if (local == null || local.Id <= 0 || local.AuthorMetadataId <= 0 || !AudiobookId.IsNative(local.ForeignAuthorId))
+            {
+                return null;
+            }
+
+            var legacy = AudiobookId.Parse(local.ForeignAuthorId);
+            if (!legacy.IsName || legacy.Region != region)
+            {
+                return null;
+            }
+
+            // Read all returned copies of a known recording, including copies
+            // returned through different aliases. Conflicting positive evidence
+            // is not resolved by taking the first provider result.
+            var anchors = new List<(AudnexusContributorResource Credit, string RecordingId)>();
+            foreach (var resource in catalog.Where(resource => AudiobookCatalogPolicy.IsRecording(resource) && resource.Region == region))
+            {
+                CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
+                var recordingId = AudiobookId.ForAsin(region, resource.Asin);
+                var book = known.FirstOrDefault(item => item.ForeignBookId == recordingId);
+                if (!IsStoredRecording(resource, region, book, metadata))
+                {
+                    continue;
+                }
+
+                var primary = AudiobookContributors.PrimaryAuthor(resource);
+                if (primary != null && !AudiobookId.IsAsin(primary.Asin) && MatchesLegacyName(metadata, primary.Name))
+                {
+                    if (AudiobookContributors.All(resource).Any(credit => credit.Role == "Author" && AudiobookId.IsAsin(credit.Asin) && MatchesLegacyName(metadata, credit.Name)))
+                    {
+                        return null;
+                    }
+
+                    // Still name-only: this record neither confirms nor disproves
+                    // the new ASIN. Do not treat absence of an ID as evidence.
+                    continue;
+                }
+
+                var credit = UniqueLegacyCredit(resource, metadata);
+                if (credit == null)
+                {
+                    return null;
+                }
+
+                anchors.Add((credit, recordingId));
+            }
+
+            if (anchors.Count == 0 || anchors.Select(anchor => anchor.Credit.Asin).Distinct().Count() != 1)
+            {
+                return null;
+            }
+
+            var evidence = anchors[0];
+            var canonicalId = AudiobookId.ForAsin(region, evidence.Credit.Asin);
+            if (HasOtherAuthorOwner(evidence.Credit.Asin, region, metadata) || _overrides.CanonicalAuthorId(canonicalId) != canonicalId ||
+                known.Where(book => book.Id > 0 && book.AuthorMetadataId == metadata.Id && book.ForeignBookId?.StartsWith($"audible:{region}:", StringComparison.Ordinal) == true)
+                    .Any(book => !StoredCreditsAgree(book, metadata, evidence.Credit.Asin)))
+            {
+                return null;
+            }
+
+            var promoted = metadata.JsonClone();
+            promoted.ForeignAuthorId = canonicalId;
+            promoted.Links = (promoted.Links ?? new List<Links>()).Concat(MapAuthor(evidence.Credit, region).Links).DistinctBy(link => link.Url).ToList();
+            return new LegacyAuthorPromotion(local.ForeignAuthorId, evidence.RecordingId, promoted);
+        }
+
+        private static Book CopyKnownBook(Book original)
+        {
+            var copy = new Book { ImportListOriginId = original.ImportListOriginId, BookFiles = original.BookFiles };
+            copy.UseMetadataFrom(original);
+            copy.UseDbFieldsFrom(original);
+            copy.SeriesLinks = (original.SeriesLinks?.Value ?? new List<SeriesBookLink>()).Select(link =>
+            {
+                var series = new Series { ForeignAuthorId = link.Series.Value.ForeignAuthorId };
+                series.UseMetadataFrom(link.Series.Value);
+                series.UseDbFieldsFrom(link.Series.Value);
+                var result = new SeriesBookLink { Series = series, Book = copy };
+                result.UseMetadataFrom(link);
+                result.UseDbFieldsFrom(link);
+                return result;
+            }).ToList();
+            return copy;
         }
 
         private List<Book> Lookup(string id)
@@ -405,21 +611,34 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 }).DistinctBy(a => a.ForeignAuthorId).ToList();
         }
 
-        private Book Map(AudnexusBookResource resource, string region, AuthorMetadata expectedAuthor = null, bool preferStoredSeries = false)
+        private Book Map(AudnexusBookResource resource, string region, AuthorMetadata expectedAuthor = null, bool preferStoredSeries = false, LegacyAuthorPromotion promotion = null)
         {
             var existing = resource == null ? null : _bookService.FindById(AudiobookId.ForAsin(region, resource.Asin));
             var contributor = AudiobookContributors.PrimaryAuthor(resource);
             var identity = contributor == null ? null : _overrides.FindAuthor(contributor, region);
             var establishedAuthor = existing?.AuthorMetadata.Value ?? expectedAuthor ?? FindEstablishedAuthor(contributor, region);
-            var book = AudiobookMetadataMapper.Book(resource, region, establishedAuthor, identity);
+            var promotingOwner = promotion != null && existing?.AuthorMetadata.Value?.ForeignAuthorId == promotion.OldId &&
+                existing.AuthorMetadataId == promotion.Metadata.Id;
+            if (promotingOwner)
+            {
+                establishedAuthor = promotion.Metadata;
+            }
+
+            var retainLegacyOwner = promotion == null && VerifiedLegacyCredit(resource, region, existing, establishedAuthor) != null;
+            var book = AudiobookMetadataMapper.Book(resource, region, establishedAuthor, identity, retainVerifiedOwner: retainLegacyOwner);
             var metadata = book.AuthorMetadata.Value;
             if (existing?.AuthorMetadata?.Value != null &&
-                _overrides.CanonicalAuthorId(existing.AuthorMetadata.Value.ForeignAuthorId) != _overrides.CanonicalAuthorId(metadata.ForeignAuthorId))
+                _overrides.CanonicalAuthorId(existing.AuthorMetadata.Value.ForeignAuthorId) != _overrides.CanonicalAuthorId(metadata.ForeignAuthorId) &&
+                !(promotingOwner && metadata.ForeignAuthorId == promotion.Metadata.ForeignAuthorId))
             {
                 throw IdentityConflict("The recording's author credits conflict with its established owner.");
             }
 
-            RememberAuthor(metadata);
+            if (promotion == null)
+            {
+                RememberAuthor(metadata);
+            }
+
             foreach (var credit in book.Editions.Value.SelectMany(edition => edition.Contributors)
                 .Where(credit => credit.Role == "Author" &&
                     (AudiobookId.IsAsin(credit.Asin) ? !AudiobookId.Parse(metadata.ForeignAuthorId).IsName &&
@@ -510,9 +729,9 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                     string.Equals(AudiobookTextNormalizer.Text(name), AudiobookTextNormalizer.Text(contributor.Name), StringComparison.OrdinalIgnoreCase)));
         }
 
-        private Book Enrich(AudnexusBookResource resource, string region, AuthorMetadata expectedAuthor, MetadataProviderObservation observation)
+        private Book Enrich(AudnexusBookResource resource, string region, AuthorMetadata expectedAuthor, MetadataProviderObservation observation, LegacyAuthorPromotion promotion = null)
         {
-            var book = Map(resource, region, expectedAuthor, true);
+            var book = Map(resource, region, expectedAuthor, true, promotion);
 
             // A catalog can look complete while omitting another series, genres or
             // a fuller synopsis. Revisit details periodically even for rich records.
@@ -520,7 +739,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             var details = OptionalDetails(() => _audnexus.GetBook(resource.Asin, region), book.ForeignBookId, MetadataProvider.Audnexus, observation);
             if (details != null)
             {
-                MergeDetails(book, details, region, true, observation);
+                MergeDetails(book, details, region, true, observation, promotion);
             }
 
             if (NeedsDetails(book) && _config.AudibleRsEnabled)
@@ -528,7 +747,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 details = OptionalDetails(() => _audible.GetBook(resource.Asin, region), book.ForeignBookId, MetadataProvider.Audible, observation);
                 if (details != null)
                 {
-                    MergeDetails(book, details, region, false, observation);
+                    MergeDetails(book, details, region, false, observation, promotion);
                 }
             }
 
@@ -628,7 +847,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         private string DetailKey(string recordingId, MetadataProvider provider) => provider + ":" +
             (provider == MetadataProvider.Audnexus ? _config.AudnexusUrl : _config.AudibleRsUrl + ":" + _config.AudibleRsAccount) + ":" + recordingId;
 
-        private void MergeDetails(Book book, AudnexusBookResource details, string region, bool preferSeries, MetadataProviderObservation observation)
+        private void MergeDetails(Book book, AudnexusBookResource details, string region, bool preferSeries, MetadataProviderObservation observation, LegacyAuthorPromotion promotion = null)
         {
             if (details.Asin != AudiobookId.Parse(book.ForeignBookId).Value || details.Region != region ||
                 !AudiobookCatalogPolicy.IsRecording(details))
@@ -642,12 +861,21 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                 return;
             }
 
-            if (!MatchesAuthor(details, region, book.AuthorMetadata.Value))
+            var owner = book.AuthorMetadata.Value;
+            var matches = MatchesAuthor(details, region, owner);
+            if (AudiobookId.Parse(owner.ForeignAuthorId).IsName && AudiobookContributors.All(details)
+                .Any(credit => credit.Role == "Author" && AudiobookId.IsAsin(credit.Asin) && MatchesLegacyName(owner, credit.Name)))
+            {
+                var verified = VerifiedLegacyCredit(details, region, _bookService.FindById(book.ForeignBookId), owner);
+                matches = verified != null && CreditsAgree(book.Editions.Value.SelectMany(edition => edition.Contributors), owner, verified.Asin);
+            }
+
+            if (!matches)
             {
                 throw IdentityConflict("Audiobook details do not match this recording, marketplace, or author.");
             }
 
-            var detailed = Map(details, region, book.AuthorMetadata.Value);
+            var detailed = Map(details, region, book.AuthorMetadata.Value, promotion: promotion);
             AudiobookMetadataMerger.PreserveMissing(book, detailed, detailed.Editions.Value, preferSeries);
             var edition = book.Editions.Value.Single();
             var detailedOverview = detailed.Editions.Value.Single().Overview;
@@ -748,6 +976,14 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             }
 
             AudiobookAuthorIdentity.PreserveNames(target, previous);
+
+            // A verified name-to-ASIN promotion retains the old route slug.
+            // Subsequent canonical profile refreshes must not change that route.
+            if (previous.TitleSlug.IsNotNullOrWhiteSpace())
+            {
+                target.TitleSlug = previous.TitleSlug;
+            }
+
             if (target.Overview.IsNullOrWhiteSpace())
             {
                 target.Overview = previous.Overview;

@@ -166,7 +166,7 @@ namespace NzbDrone.Core.Books
 
             foreach (var book in remoteBooks.Concat(prepared.Books.Values.Select(data => data.Entity)).Where(book => book != null))
             {
-                PrepareParent(book, prepared);
+                PrepareParent(book, prepared, remoteData);
             }
 
             CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
@@ -185,10 +185,18 @@ namespace NzbDrone.Core.Books
             return PrepareBookInfo(new List<Book> { local }, new List<Book> { remote }, data);
         }
 
-        private void PrepareParent(Book remote, PreparedBookData prepared)
+        private void PrepareParent(Book remote, PreparedBookData prepared, Author remoteData)
         {
             CommandExecutionContext.CancellationToken.ThrowIfCancellationRequested();
             var metadata = remote.AuthorMetadata.Value;
+            if (remoteData?.IdentityPromotionFrom != null && remoteData.IdentityPromotionRecordingId != null &&
+                metadata.Id == remoteData.AuthorMetadataId && metadata.ForeignAuthorId == remoteData.ForeignAuthorId)
+            {
+                // The existing owner will be re-keyed during the author's apply
+                // phase. Do not prepare a second author before that happens.
+                return;
+            }
+
             if (_authorService.FindById(metadata.ForeignAuthorId) == null && !prepared.Parents.ContainsKey(metadata.ForeignAuthorId))
             {
                 prepared.Parents[metadata.ForeignAuthorId] = _addAuthorService.PrepareAuthor(new Author { Metadata = metadata });

@@ -45,6 +45,26 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
         }
 
         [Test]
+        public void author_identity_promotion_preparation_should_not_prepare_a_duplicate_parent()
+        {
+            var (local, remote) = GivenRecordingRefresh();
+            var parent = remote.Author.Value;
+            parent.IdentityPromotionFrom = AudiobookId.ForName("us", parent.Metadata.Value.Name);
+            parent.IdentityPromotionRecordingId = local.ForeignBookId;
+            parent.AuthorMetadataId = local.AuthorMetadataId;
+            remote.AuthorMetadata.Value.Id = local.AuthorMetadataId;
+            Mocker.GetMock<IAuthorService>().Setup(service => service.FindById(parent.ForeignAuthorId)).Returns((Author)null);
+            using var source = new CancellationTokenSource();
+            using var scope = CommandExecutionContext.Begin(source.Token);
+
+            using (Subject.PrepareBookInfo(new List<Book> { local }, new List<Book> { remote }, parent))
+            {
+                Mocker.GetMock<IAddAuthorService>().Verify(service => service.PrepareAuthor(It.IsAny<Author>()), Times.Never());
+                Mocker.GetMock<IAddAuthorService>().Verify(service => service.AddAuthor(It.IsAny<Author>(), It.IsAny<Author>(), It.IsAny<bool>()), Times.Never());
+            }
+        }
+
+        [Test]
         public void cancelling_missing_parent_preparation_should_not_save_the_recording_or_series()
         {
             var (local, remote) = GivenRecordingRefresh();

@@ -33,6 +33,7 @@ namespace NzbDrone.Core.Books
     {
         private readonly IProvideAuthorInfo _authorInfo;
         private readonly IAuthorService _authorService;
+        private readonly IAuthorMetadataService _authorMetadataService;
         private readonly IBookService _bookService;
         private readonly IMetadataProfileService _metadataProfileService;
         private readonly IRefreshBookService _refreshBookService;
@@ -69,6 +70,7 @@ namespace NzbDrone.Core.Books
         {
             _authorInfo = authorInfo;
             _authorService = authorService;
+            _authorMetadataService = authorMetadataService;
             _bookService = bookService;
             _metadataProfileService = metadataProfileService;
             _refreshBookService = refreshBookService;
@@ -132,7 +134,7 @@ namespace NzbDrone.Core.Books
 
             var remoteBooks = GetRemoteChildren(local, remote);
             var localBooks = GetLocalChildren(local, remoteBooks);
-            if (local.ForeignAuthorId != remote.ForeignAuthorId)
+            if (remote.IdentityPromotionFrom == null && local.ForeignAuthorId != remote.ForeignAuthorId)
             {
                 var target = GetEntityByForeignId(remote);
                 if (target != null)
@@ -142,6 +144,43 @@ namespace NzbDrone.Core.Books
             }
 
             return _refreshBookService.PrepareBookInfo(localBooks, remoteBooks, data);
+        }
+
+        protected override UpdateResult ApplyPreparedRefresh(Author local, Author remote, RemoteData data)
+        {
+            if (remote.IdentityPromotionFrom == null && remote.IdentityPromotionRecordingId == null)
+            {
+                return UpdateResult.None;
+            }
+
+            if (remote.IdentityPromotionFrom != local.ForeignAuthorId || remote.Metadata.Value.Id != local.AuthorMetadataId ||
+                local.Id != remote.Id || remote.IdentityPromotionRecordingId == null)
+            {
+                throw new InvalidOperationException("The author identity promotion no longer matches the local author.");
+            }
+
+            var metadata = _authorMetadataService.PromoteIdentity(local.Id,
+                local.AuthorMetadataId,
+                remote.IdentityPromotionFrom,
+                remote.ForeignAuthorId,
+                remote.IdentityPromotionRecordingId);
+
+            // The in-place identity update is already committed. Rebind the
+            // catalog to the persisted metadata, preserving the original slug
+            // and all local fields. Bypass ordinary upsert/merge and do not
+            // force a tag rewrite solely because the identity key changed.
+            local.Metadata = metadata;
+            remote.Metadata = metadata;
+            remote.CleanName = local.CleanName;
+            foreach (var book in remote.Books.Value)
+            {
+                book.AuthorMetadata = metadata;
+                book.AuthorMetadataId = metadata.Id;
+                book.Author = remote;
+            }
+
+            data.Metadata = null;
+            return UpdateResult.Standard;
         }
 
         protected override void LogProgress(Author local)
@@ -168,6 +207,13 @@ namespace NzbDrone.Core.Books
             local.Metadata = remote.Metadata;
             local.Series = remote.Series.Value;
             local.LastInfoSync = DateTime.UtcNow;
+
+            if (remote.IdentityPromotionFrom != null)
+            {
+                // An identity rekey must not alter even the casing or spelling
+                // of the folder chosen by the user.
+                return result;
+            }
 
             try
             {

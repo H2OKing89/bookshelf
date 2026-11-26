@@ -6,6 +6,7 @@ namespace NzbDrone.Core.Books
     {
         bool Upsert(AuthorMetadata author);
         bool UpsertMany(List<AuthorMetadata> authors);
+        AuthorMetadata PromoteIdentity(int authorId, int metadataId, string previousForeignId, string canonicalForeignId, string recordingId);
     }
 
     public class AuthorMetadataService : IAuthorMetadataService
@@ -25,6 +26,11 @@ namespace NzbDrone.Core.Books
         public bool UpsertMany(List<AuthorMetadata> authors)
         {
             return _authorMetadataRepository.UpsertMany(authors);
+        }
+
+        public AuthorMetadata PromoteIdentity(int authorId, int metadataId, string previousForeignId, string canonicalForeignId, string recordingId)
+        {
+            return _authorMetadataRepository.PromoteIdentity(authorId, metadataId, previousForeignId, canonicalForeignId, recordingId);
         }
     }
 }

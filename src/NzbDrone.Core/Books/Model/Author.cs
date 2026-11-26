@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using Equ;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Datastore;
@@ -30,6 +31,17 @@ namespace NzbDrone.Core.Books
         public HashSet<int> Tags { get; set; }
         [MemberwiseEqualityIgnore]
         public AddAuthorOptions AddOptions { get; set; }
+
+        // Internal, provider-verified refresh proposal. Never persist or accept
+        // these markers from an API model.
+        [MemberwiseEqualityIgnore]
+        [JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
+        public string IdentityPromotionFrom { get; set; }
+        [MemberwiseEqualityIgnore]
+        [JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
+        public string IdentityPromotionRecordingId { get; set; }
 
         // Dynamically loaded from DB
         [MemberwiseEqualityIgnore]

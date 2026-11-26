@@ -16,6 +16,7 @@ using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.MetadataSource;
+using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.Profiles.Metadata;
 using NzbDrone.Core.RootFolders;
 using NzbDrone.Core.Test.Framework;
@@ -120,6 +121,77 @@ namespace NzbDrone.Core.Test.MusicTests
             Mocker.GetMock<IAuthorService>(MockBehavior.Strict)
                 .Setup(x => x.UpdateAuthor(It.IsAny<Author>()))
                 .Returns((Author a) => a);
+        }
+
+        private Author GivenIdentityPromotion()
+        {
+            _author.ForeignAuthorId = AudiobookId.ForName("us", "Synthetic Author");
+            _author.AuthorMetadataId = _author.Metadata.Value.Id;
+            _author.Metadata.Value.TitleSlug = "stable-author-slug";
+            _book1.ForeignBookId = AudiobookId.ForAsin("us", "B099999912");
+            _remoteBooks[0].ForeignBookId = _book1.ForeignBookId;
+            var remote = _author.JsonClone();
+            remote.Metadata = _author.Metadata.Value.JsonClone();
+            remote.ForeignAuthorId = AudiobookId.ForAsin("us", "B099999902");
+            remote.Metadata.Value.TitleSlug = "different-provider-slug";
+            remote.IdentityPromotionFrom = _author.ForeignAuthorId;
+            remote.IdentityPromotionRecordingId = _book1.ForeignBookId;
+            remote.Books = _remoteBooks;
+            GivenNewAuthorInfo(remote);
+            GivenBooksForRefresh(_books);
+            return remote;
+        }
+
+        [Test]
+        public void should_apply_a_verified_promotion_without_merging_or_forcing_tag_updates()
+        {
+            var remote = GivenIdentityPromotion();
+            var promoted = _author.Metadata.Value.JsonClone();
+            promoted.ForeignAuthorId = remote.ForeignAuthorId;
+            var authorId = _author.Id;
+            var metadataId = _author.AuthorMetadataId;
+            var path = _author.Path;
+            AllowAuthorUpdate();
+            Mocker.GetMock<IAuthorMetadataService>()
+                .Setup(service => service.PromoteIdentity(authorId, metadataId, remote.IdentityPromotionFrom, remote.ForeignAuthorId, remote.IdentityPromotionRecordingId))
+                .Returns(promoted);
+            Mocker.GetMock<IRefreshBookService>()
+                .Setup(service => service.RefreshBookInfo(It.IsAny<List<Book>>(), It.IsAny<List<Book>>(), remote, true, false, null))
+                .Returns(true);
+
+            Subject.Execute(new RefreshAuthorCommand(authorId));
+
+            _author.Id.Should().Be(authorId);
+            _author.AuthorMetadataId.Should().Be(metadataId);
+            _author.ForeignAuthorId.Should().Be(promoted.ForeignAuthorId);
+            _author.Path.Should().Be(path);
+            _author.Metadata.Value.TitleSlug.Should().Be("stable-author-slug");
+            remote.Books.Value.Should().OnlyContain(book => book.AuthorMetadataId == metadataId && book.AuthorMetadata.Value.ForeignAuthorId == promoted.ForeignAuthorId);
+            Mocker.GetMock<IAuthorMetadataService>().Verify(service => service.UpsertMany(It.IsAny<List<AuthorMetadata>>()), Times.Never());
+            Mocker.GetMock<IAuthorService>().Verify(service => service.DeleteAuthor(It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never());
+            Mocker.GetMock<IRefreshBookService>().Verify(service => service.RefreshBookInfo(It.IsAny<List<Book>>(), It.IsAny<List<Book>>(), remote, true, false, null), Times.Once());
+            VerifyEventPublished<AuthorUpdatedEvent>();
+        }
+
+        [Test]
+        public void should_not_apply_an_identity_promotion_if_remote_preparation_is_cancelled()
+        {
+            var remote = GivenIdentityPromotion();
+            using var source = new CancellationTokenSource();
+            Mocker.GetMock<IRefreshBookService>().Setup(service => service.PrepareBookInfo(It.IsAny<List<Book>>(), It.IsAny<List<Book>>(), remote))
+                .Callback(() =>
+                {
+                    source.Cancel();
+                    source.Token.ThrowIfCancellationRequested();
+                });
+            using var scope = CommandExecutionContext.Begin(source.Token);
+
+            Assert.Throws<OperationCanceledException>(() => Subject.Execute(new RefreshAuthorCommand(_author.Id)));
+
+            _author.ForeignAuthorId.Should().Be(remote.IdentityPromotionFrom);
+            Mocker.GetMock<IAuthorMetadataService>().Verify(service => service.PromoteIdentity(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never());
+            Mocker.GetMock<IAuthorMetadataService>().Verify(service => service.UpsertMany(It.IsAny<List<AuthorMetadata>>()), Times.Never());
+            Mocker.GetMock<IAuthorService>().Verify(service => service.UpdateAuthor(It.IsAny<Author>()), Times.Never());
         }
 
         [Test]

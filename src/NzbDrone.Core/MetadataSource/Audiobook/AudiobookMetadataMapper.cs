@@ -54,7 +54,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             return result;
         }
 
-        public static Book Book(AudnexusBookResource resource, string region, AuthorMetadata expectedAuthor = null, AudiobookAuthorIdentity identity = null)
+        public static Book Book(AudnexusBookResource resource, string region, AuthorMetadata expectedAuthor = null, AudiobookAuthorIdentity identity = null, bool retainVerifiedOwner = false)
         {
             if (resource != null && !AudiobookCatalogPolicy.IsRecording(resource))
             {
@@ -75,7 +75,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             // their explicit identity is among the recording's author credits.
             // Names are a fallback only when the primary credit has no ASIN.
             if (expectedAuthor != null &&
-                (contributors.Any(credit => credit.Role == "Author" && AudiobookId.IsAsin(credit.Asin) &&
+                (retainVerifiedOwner || contributors.Any(credit => credit.Role == "Author" && AudiobookId.IsAsin(credit.Asin) &&
                     !AudiobookId.Parse(expectedAuthor.ForeignAuthorId).IsName &&
                     credit.Asin == AudiobookId.Parse(expectedAuthor.ForeignAuthorId).Value) ||
                  (AudiobookId.Parse(expectedAuthor.ForeignAuthorId).Region == region && !AudiobookId.IsAsin(contributor.Asin) &&

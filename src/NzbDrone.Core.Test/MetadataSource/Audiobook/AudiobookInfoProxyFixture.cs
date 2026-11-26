@@ -24,6 +24,8 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
     public class AudiobookInfoProxyFixture : CoreTest<AudiobookInfoProxy>
     {
         private const string AuthorId = "audible:us:B0GVW7FF1Q";
+        private const string LegacyAuthorName = "Alex Example";
+        private const string PromotedAuthorAsin = "B000000011";
         private List<AudnexusBookResource> _resources;
         private MetadataProviderStatusService _status;
 
@@ -484,6 +486,346 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
             identity.IsName.Should().BeTrue();
             identity.Value.Should().Be("Yu Omiya");
             found.AuthorMetadata.Value.TitleSlug.Should().NotContain(":").And.NotContain("%");
+        }
+
+        private (Author Author, List<Book> Books) GivenLegacyAuthor(bool audibleCatalog = true)
+        {
+            foreach (var recording in _resources)
+            {
+                recording.Authors = new List<AudnexusContributorResource>
+                {
+                    new AudnexusContributorResource { Name = LegacyAuthorName, Asin = PromotedAuthorAsin }
+                };
+            }
+
+            // The catalog originally omitted the author ASIN for this exact recording.
+            var storedResource = Recording(_resources[0].Asin, _resources[0].Title);
+            storedResource.Authors = new List<AudnexusContributorResource>
+            {
+                new AudnexusContributorResource { Name = LegacyAuthorName }
+            };
+            var stored = AudiobookMetadataMapper.Book(storedResource, "us");
+            var metadata = stored.AuthorMetadata.Value;
+            metadata.Id = 6;
+            metadata.TitleSlug = "established-author-slug";
+            metadata.Overview = "Stored author biography";
+            metadata.Aliases.Add("Alex E. Example");
+            metadata.Links.Add(new Links { Name = "Website", Url = "https://example.com/author" });
+            var author = new Author
+            {
+                Id = 5, AuthorMetadataId = 6, Metadata = metadata, Monitored = false,
+                MonitorNewItems = NewItemMonitorTypes.New, Path = "/library/Alex Example", QualityProfileId = 3,
+                MetadataProfileId = 1, Tags = new HashSet<int> { 11 }
+            };
+            var known = new List<Book>();
+            RememberLegacyRecording(author, known, stored, 42, 43);
+            Mocker.GetMock<IAuthorService>().Setup(service => service.FindById(author.ForeignAuthorId)).Returns(author);
+            Mocker.GetMock<IBookService>().Setup(service => service.GetBooksByAuthorMetadataId(author.AuthorMetadataId)).Returns(known);
+            Mocker.GetMock<IConfigService>().SetupGet(config => config.AudibleRsEnabled).Returns(audibleCatalog);
+            Mocker.GetMock<IAudibleCatalogProxy>().Setup(proxy => proxy.GetAuthorBooks(It.IsAny<string>(), "us")).Returns(() => _resources);
+            Mocker.GetMock<IAudibleCatalogProxy>().Setup(proxy => proxy.GetBook(It.IsAny<string>(), "us"))
+                .Returns((string asin, string region) => _resources.SingleOrDefault(recording => recording.Asin == asin));
+            return (author, known);
+        }
+
+        private void RememberLegacyRecording(Author author, List<Book> known, Book book, int id, int editionId)
+        {
+            book.Id = id;
+            book.AuthorMetadataId = author.AuthorMetadataId;
+            book.AuthorMetadata = author.Metadata.Value;
+            book.Author = author;
+            book.Monitored = false;
+            book.AnyEditionOk = true;
+            var edition = book.Editions.Value.Single();
+            edition.Id = editionId;
+            edition.BookId = id;
+            edition.Monitored = false;
+            edition.ManualAdd = true;
+            known.Add(book);
+            Mocker.GetMock<IBookService>().Setup(service => service.FindById(book.ForeignBookId)).Returns(book);
+            Mocker.GetMock<IEditionService>().Setup(service => service.GetEditionsByBook(id)).Returns(book.Editions.Value);
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void should_promote_a_name_only_author_using_an_exact_owned_recording_and_discover_the_next_release(bool audibleCatalog)
+        {
+            var (author, known) = GivenLegacyAuthor(audibleCatalog);
+            var oldId = author.ForeignAuthorId;
+            var canonicalId = AudiobookId.ForAsin("us", PromotedAuthorAsin);
+            _resources[1].ReleaseDate = DateTime.UtcNow.AddDays(30);
+
+            // A homonym in the catalog is not evidence against the verified owner.
+            var homonym = Recording("B000000020", "Unrelated release");
+            homonym.Authors = new List<AudnexusContributorResource>
+            {
+                new AudnexusContributorResource { Name = LegacyAuthorName, Asin = "B000000012" }
+            };
+            _resources.Add(homonym);
+
+            var result = Subject.GetAuthorInfo(oldId);
+
+            result.ForeignAuthorId.Should().Be(canonicalId);
+            result.IdentityPromotionFrom.Should().Be(oldId);
+            result.IdentityPromotionRecordingId.Should().Be(known[0].ForeignBookId);
+            result.Id.Should().Be(author.Id);
+            result.AuthorMetadataId.Should().Be(author.AuthorMetadataId);
+            result.Metadata.Value.Id.Should().Be(author.AuthorMetadataId);
+            result.Metadata.Value.TitleSlug.Should().Be(author.Metadata.Value.TitleSlug);
+            result.Metadata.Value.Name.Should().Be(author.Name);
+            result.Metadata.Value.Overview.Should().Be(author.Metadata.Value.Overview);
+            result.Metadata.Value.Aliases.Should().Contain("Alex E. Example");
+            result.Metadata.Value.Links.Should().Contain(link => link.Url == "https://example.com/author");
+            result.Metadata.Value.Links.Should().Contain(link => link.Name == "Audible" && link.Url.Contains(PromotedAuthorAsin));
+            result.Path.Should().Be(author.Path);
+            result.Monitored.Should().BeFalse();
+            result.MonitorNewItems.Should().Be(NewItemMonitorTypes.New);
+            result.QualityProfileId.Should().Be(author.QualityProfileId);
+            result.MetadataProfileId.Should().Be(author.MetadataProfileId);
+            result.Tags.Should().Equal(11);
+
+            result.Books.Value.Select(book => book.ForeignBookId).Should().BeEquivalentTo(new[]
+            {
+                AudiobookId.ForAsin("us", _resources[0].Asin), AudiobookId.ForAsin("us", _resources[1].Asin)
+            });
+            result.Books.Value.Should().OnlyContain(book => book.AuthorMetadata.Value.ForeignAuthorId == canonicalId && book.AuthorMetadataId == author.AuthorMetadataId);
+            var previous = result.Books.Value.Single(book => book.ForeignBookId == known[0].ForeignBookId);
+            previous.Id.Should().Be(42);
+            previous.Monitored.Should().BeFalse();
+            previous.AnyEditionOk.Should().BeTrue();
+            var previousEdition = previous.Editions.Value.Single();
+            previousEdition.Id.Should().Be(43);
+            previousEdition.BookId.Should().Be(42);
+            previousEdition.Monitored.Should().BeFalse();
+            previousEdition.ManualAdd.Should().BeTrue();
+
+            // Metadata lookup/preview must not persist a promotion or alter shared model instances.
+            author.ForeignAuthorId.Should().Be(oldId);
+            known[0].AuthorMetadata.Value.ForeignAuthorId.Should().Be(oldId);
+            known[0].Editions.Value.Single().Contributors.Should().Contain(credit => credit.Role == "Author" && credit.Asin == null);
+        }
+
+        [TestCase("unanchored")]
+        [TestCase("unsaved-book")]
+        [TestCase("wrong-book-owner")]
+        [TestCase("no-persisted-edition")]
+        [TestCase("wrong-edition-recording")]
+        [TestCase("wrong-edition-marketplace")]
+        [TestCase("wrong-edition-owner")]
+        [TestCase("wrong-catalog-marketplace")]
+        [TestCase("different-name")]
+        [TestCase("ambiguous-credit")]
+        [TestCase("nonprimary-credit")]
+        [TestCase("stored-credit-conflict")]
+        [TestCase("local-recording")]
+        [TestCase("canonical-owner-us")]
+        [TestCase("canonical-owner-uk")]
+        public void should_not_promote_a_legacy_author_without_unambiguous_recording_evidence(string conflict)
+        {
+            var (author, known) = GivenLegacyAuthor();
+            var oldId = author.ForeignAuthorId;
+            var book = known[0];
+            var edition = book.Editions.Value.Single();
+            switch (conflict)
+            {
+                case "unanchored":
+                    _resources.RemoveAt(0);
+                    break;
+                case "unsaved-book":
+                    book.Id = 0;
+                    edition.BookId = 0;
+                    Mocker.GetMock<IEditionService>().Setup(service => service.GetEditionsByBook(0)).Returns(book.Editions.Value);
+                    break;
+                case "wrong-book-owner":
+                    book.AuthorMetadataId = 99;
+                    break;
+                case "no-persisted-edition":
+                    edition.Id = 0;
+                    break;
+                case "wrong-edition-recording":
+                    edition.ForeignEditionId = AudiobookId.ForAsin("us", "B000000030");
+                    edition.Asin = "B000000030";
+                    break;
+                case "wrong-edition-marketplace":
+                    edition.AudibleRegion = "uk";
+                    break;
+                case "wrong-edition-owner":
+                    edition.BookId = 99;
+                    break;
+                case "wrong-catalog-marketplace":
+                    _resources[0].Region = "uk";
+                    break;
+                case "different-name":
+                    _resources[0].Authors[0].Name = "Different Author";
+                    break;
+                case "ambiguous-credit":
+                    _resources[0].Authors.Add(new AudnexusContributorResource { Name = LegacyAuthorName, Asin = "B000000012" });
+                    break;
+                case "nonprimary-credit":
+                    _resources[0].Authors.Insert(0, new AudnexusContributorResource { Name = "Different Author", Asin = "B000000012" });
+                    break;
+                case "stored-credit-conflict":
+                    edition.Contributors.Single(credit => credit.Role == "Author").Asin = "B000000012";
+                    break;
+                case "local-recording":
+                    book.ForeignBookId = LocalRecordingId.NewId();
+                    edition.ForeignEditionId = book.ForeignBookId;
+                    edition.Asin = null;
+                    break;
+                case "canonical-owner-us":
+                case "canonical-owner-uk":
+                    var region = conflict.EndsWith("-us", StringComparison.Ordinal) ? "us" : "uk";
+                    var metadata = AudiobookMetadataMapper.Author(_resources[0].Authors[0], region);
+                    metadata.Id = 100;
+                    Mocker.GetMock<IAuthorService>().Setup(service => service.FindById(metadata.ForeignAuthorId)).Returns(
+                        new Author { Id = 99, AuthorMetadataId = 100, Metadata = metadata });
+                    break;
+            }
+
+            var result = Subject.GetAuthorInfo(oldId);
+
+            result.ForeignAuthorId.Should().Be(oldId);
+            result.IdentityPromotionFrom.Should().BeNull();
+            result.IdentityPromotionRecordingId.Should().BeNull();
+            result.Books.Value.Select(item => item.ForeignBookId).Should().Equal(book.ForeignBookId);
+            author.ForeignAuthorId.Should().Be(oldId);
+        }
+
+        [Test]
+        public void should_not_promote_when_multiple_owned_recordings_disagree_about_the_author_asin()
+        {
+            var (author, known) = GivenLegacyAuthor();
+            var other = Recording(_resources[1].Asin, _resources[1].Title);
+            other.Authors = new List<AudnexusContributorResource> { new AudnexusContributorResource { Name = LegacyAuthorName } };
+            RememberLegacyRecording(author, known, AudiobookMetadataMapper.Book(other, "us"), 44, 45);
+            _resources[1].Authors[0].Asin = "B000000012";
+
+            var result = Subject.GetAuthorInfo(author.ForeignAuthorId);
+
+            result.ForeignAuthorId.Should().Be(author.ForeignAuthorId);
+            result.IdentityPromotionFrom.Should().BeNull();
+            result.Books.Value.Select(book => book.Id).Should().BeEquivalentTo(new[] { 42, 44 });
+        }
+
+        [Test]
+        public void should_not_promote_when_alias_catalogs_disagree_about_the_same_recording()
+        {
+            var (author, known) = GivenLegacyAuthor();
+            var alternate = Recording(_resources[0].Asin, _resources[0].Title);
+            alternate.Authors = new List<AudnexusContributorResource>
+            {
+                new AudnexusContributorResource { Name = LegacyAuthorName, Asin = "B000000012" }
+            };
+            Mocker.GetMock<IAudibleCatalogProxy>().Setup(proxy => proxy.GetAuthorBooks("Alex E. Example", "us"))
+                .Returns(new List<AudnexusBookResource> { alternate });
+
+            var result = Subject.GetAuthorInfo(author.ForeignAuthorId);
+
+            result.ForeignAuthorId.Should().Be(author.ForeignAuthorId);
+            result.IdentityPromotionFrom.Should().BeNull();
+            result.Books.Value.Select(book => book.Id).Should().Equal(known[0].Id);
+        }
+
+        [Test]
+        public void should_keep_a_known_recording_omitted_by_the_catalog_when_promoting_and_preserve_the_original_models()
+        {
+            var (author, known) = GivenLegacyAuthor();
+            var oldId = author.ForeignAuthorId;
+            var omitted = Recording("B000000031", "An older catalog release");
+            omitted.Authors = new List<AudnexusContributorResource> { new AudnexusContributorResource { Name = LegacyAuthorName } };
+            RememberLegacyRecording(author, known, AudiobookMetadataMapper.Book(omitted, "us"), 44, 45);
+
+            var result = Subject.GetAuthorInfo(oldId);
+
+            result.ForeignAuthorId.Should().Be(AudiobookId.ForAsin("us", PromotedAuthorAsin));
+            result.Books.Value.Should().HaveCount(3);
+            var returned = result.Books.Value.Single(book => book.Id == 44);
+            returned.Editions.Value.Single().Id.Should().Be(45);
+            returned.AuthorMetadata.Value.ForeignAuthorId.Should().Be(result.ForeignAuthorId);
+            returned.AuthorMetadataId.Should().Be(author.AuthorMetadataId);
+            known[1].AuthorMetadata.Value.ForeignAuthorId.Should().Be(oldId);
+            known[1].Author.Value.Should().BeSameAs(author);
+        }
+
+        [Test]
+        public void should_not_promote_an_existing_name_only_author_during_a_catalog_outage()
+        {
+            var (author, known) = GivenLegacyAuthor();
+            var oldId = author.ForeignAuthorId;
+            Mocker.GetMock<IAudibleCatalogProxy>().Setup(proxy => proxy.GetAuthorBooks(It.IsAny<string>(), "us"))
+                .Throws(new BookInfoException("Catalog unavailable"));
+
+            Assert.Throws<BookInfoException>(() => Subject.GetAuthorInfo(oldId));
+
+            author.ForeignAuthorId.Should().Be(oldId);
+            known[0].AuthorMetadata.Value.ForeignAuthorId.Should().Be(oldId);
+        }
+
+        [Test]
+        public void should_keep_an_exact_owned_recording_with_its_legacy_author_until_promotion()
+        {
+            var (author, known) = GivenLegacyAuthor();
+            var oldId = author.ForeignAuthorId;
+
+            var result = Subject.GetBookInfo(known[0].ForeignBookId);
+
+            result.Item2.Id.Should().Be(42);
+            result.Item2.Editions.Value.Single().Id.Should().Be(43);
+            result.Item2.AuthorMetadataId.Should().Be(author.AuthorMetadataId);
+            result.Item2.AuthorMetadata.Value.ForeignAuthorId.Should().Be(oldId);
+            result.Item3.Select(metadata => metadata.ForeignAuthorId).Should().Equal(oldId);
+            author.ForeignAuthorId.Should().Be(oldId);
+        }
+
+        [Test]
+        public void should_reject_conflicting_detail_author_credits_for_the_same_owned_recording()
+        {
+            var (author, known) = GivenLegacyAuthor();
+            var originalId = author.ForeignAuthorId;
+            var conflicting = Recording(_resources[0].Asin, _resources[0].Title);
+            conflicting.Authors = new List<AudnexusContributorResource>
+            {
+                new AudnexusContributorResource { Name = LegacyAuthorName, Asin = "B000000012" }
+            };
+            Mocker.GetMock<IAudibleCatalogProxy>().Setup(proxy => proxy.GetBook(_resources[0].Asin, "us")).Returns(conflicting);
+
+            Assert.Throws<BookInfoException>(() => Subject.GetBookInfo(known[0].ForeignBookId));
+            author.ForeignAuthorId.Should().Be(originalId);
+        }
+
+        [Test]
+        public void should_keep_the_existing_author_slug_and_ownership_after_a_promotion_is_applied()
+        {
+            var (author, known) = GivenLegacyAuthor();
+            var oldId = author.ForeignAuthorId;
+            var proposed = Subject.GetAuthorInfo(oldId);
+            var canonicalId = AudiobookId.ForAsin("us", PromotedAuthorAsin);
+            proposed.ForeignAuthorId.Should().Be(canonicalId);
+
+            // Model the persisted state after the author refresh applies the proposal.
+            // A normal canonical refresh and a new exact-ASIN lookup must use that same row.
+            var persisted = new Author { Metadata = proposed.Metadata.Value };
+            persisted.UseDbFieldsFrom(proposed);
+            known[0].AuthorMetadata = persisted.Metadata.Value;
+            known[0].Author = persisted;
+            Mocker.GetMock<IAuthorService>().Setup(service => service.FindById(oldId)).Returns((Author)null);
+            Mocker.GetMock<IAuthorService>().Setup(service => service.FindById(canonicalId)).Returns(persisted);
+            Mocker.GetMock<IAudnexusProxy>().Setup(proxy => proxy.GetAuthor(PromotedAuthorAsin, "us"))
+                .Returns(new AudnexusAuthorResource { Asin = PromotedAuthorAsin, Region = "us", Name = LegacyAuthorName });
+
+            var refreshed = Subject.GetAuthorInfo(canonicalId);
+
+            refreshed.ForeignAuthorId.Should().Be(canonicalId);
+            refreshed.Metadata.Value.TitleSlug.Should().Be(author.Metadata.Value.TitleSlug);
+            refreshed.Id.Should().Be(author.Id);
+            refreshed.AuthorMetadataId.Should().Be(author.AuthorMetadataId);
+            refreshed.IdentityPromotionFrom.Should().BeNull();
+            refreshed.IdentityPromotionRecordingId.Should().BeNull();
+            refreshed.Books.Value.Should().HaveCount(2);
+            var next = Subject.SearchByAsin(_resources[1].Asin).Single();
+            next.Author.Value.Id.Should().Be(author.Id);
+            next.AuthorMetadataId.Should().Be(author.AuthorMetadataId);
+            next.AuthorMetadata.Value.ForeignAuthorId.Should().Be(canonicalId);
         }
 
         [Test]

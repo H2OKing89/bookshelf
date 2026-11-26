@@ -112,6 +112,8 @@ namespace NzbDrone.Core.Datastore
                   .Ignore(s => s.RootFolderPath)
                   .Ignore(s => s.Name)
                   .Ignore(s => s.ForeignAuthorId)
+                  .Ignore(s => s.IdentityPromotionFrom)
+                  .Ignore(s => s.IdentityPromotionRecordingId)
                   .HasOne(a => a.Metadata, a => a.AuthorMetadataId)
                   .HasOne(a => a.QualityProfile, a => a.QualityProfileId)
                   .HasOne(s => s.MetadataProfile, s => s.MetadataProfileId)

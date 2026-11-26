@@ -65,6 +65,11 @@ namespace NzbDrone.Core.Books
             return null;
         }
 
+        protected virtual UpdateResult ApplyPreparedRefresh(TEntity local, TEntity remote, RemoteData data)
+        {
+            return UpdateResult.None;
+        }
+
         protected virtual void EnsureNewParent(TEntity local, TEntity remote)
         {
         }
@@ -155,6 +160,10 @@ namespace NzbDrone.Core.Books
             // Remote retrieval is cancellable. Finish this apply unit once writes
             // begin so cancellation cannot leave only some of its children saved.
             using var applyScope = CommandExecutionContext.Begin(CancellationToken.None);
+
+            var preparedResult = ApplyPreparedRefresh(local, remote, data);
+            updated |= preparedResult >= UpdateResult.Standard;
+            forceUpdateFileTags |= preparedResult == UpdateResult.UpdateTags;
 
             if (data.Metadata != null)
             {
