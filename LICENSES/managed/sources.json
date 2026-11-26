@@ -1,31 +1,31 @@
 {
   "Magick.NET/LICENSE.txt": {
-    "source": "https://raw.githubusercontent.com/dlemstra/Magick.NET/15.1.0/License.txt",
+    "source": "https://raw.githubusercontent.com/dlemstra/Magick.NET/971fff54d619b8bba4e600e6706c70f18fc5e7f6/License.txt",
     "package": "Magick.NET-Q8-AnyCPU",
-    "version": "15.1.0",
+    "version": "15.1.1",
     "bytes": 11560,
     "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
     "repository": {
       "type": "git",
       "url": "https://github.com/dlemstra/Magick.NET",
       "branch": "main",
-      "commit": "80d8318173db37bd2ee9f3b53c4c736a1267e689"
+      "commit": "971fff54d619b8bba4e600e6706c70f18fc5e7f6"
     },
-    "packageSha512Base64": "eBN5RobAi01ChlRu0LwolnjK1ZFSUh7mUeosjdQTCRrMPUzUyIUSm5me7f7//9sS4zwr4aU9shl1aOErIEcE/A=="
+    "packageSha512Base64": "ipIJUtXh6aNooC9URoOoI0GCtW8Ji+9CpQ9hlTTyGbGd9JB2orPnpWvUb1L69YHSjlCk5Coef3CuaJ6K3ci0wA=="
   },
   "Magick.NET/NOTICE.txt": {
-    "source": "https://api.nuget.org/v3-flatcontainer/magick.net-q8-anycpu/15.1.0/magick.net-q8-anycpu.15.1.0.nupkg#Notice.txt",
+    "source": "https://api.nuget.org/v3-flatcontainer/magick.net-q8-anycpu/15.1.1/magick.net-q8-anycpu.15.1.1.nupkg#Notice.txt",
     "package": "Magick.NET-Q8-AnyCPU",
-    "version": "15.1.0",
+    "version": "15.1.1",
     "bytes": 431274,
-    "sha256": "d66c427812efbf0fccb98957e47dde3fc47b41b991cb79e7b5f11d5a76185efe",
+    "sha256": "5c264d5301136cf5e454f37e0beb78ae969245681ab0c7832f881deb3e71f103",
     "repository": {
       "type": "git",
       "url": "https://github.com/dlemstra/Magick.NET",
       "branch": "main",
-      "commit": "80d8318173db37bd2ee9f3b53c4c736a1267e689"
+      "commit": "971fff54d619b8bba4e600e6706c70f18fc5e7f6"
     },
-    "packageSha512Base64": "eBN5RobAi01ChlRu0LwolnjK1ZFSUh7mUeosjdQTCRrMPUzUyIUSm5me7f7//9sS4zwr4aU9shl1aOErIEcE/A=="
+    "packageSha512Base64": "ipIJUtXh6aNooC9URoOoI0GCtW8Ji+9CpQ9hlTTyGbGd9JB2orPnpWvUb1L69YHSjlCk5Coef3CuaJ6K3ci0wA=="
   },
   "PdfPig/LICENSE.txt": {
     "source": "https://raw.githubusercontent.com/UglyToad/PdfPig/v0.1.16/LICENSE",
