@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import type { BookFileId } from 'Book/BookIdentity';
 import FileDetailsModal from 'BookFile/FileDetailsModal';
 import IconButton from 'Components/Link/IconButton';

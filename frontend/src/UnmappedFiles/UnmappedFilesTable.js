@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import BookTitleLink from 'Book/BookTitleLink';
 import LocalRecordingModal from 'Book/Edit/LocalRecordingModal';
 import Alert from 'Components/Alert';

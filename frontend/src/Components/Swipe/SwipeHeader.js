@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import Measure from 'Components/Measure';
 import { isMobile as isMobileUtil } from 'Utilities/browser';
 import styles from './SwipeHeader.css';

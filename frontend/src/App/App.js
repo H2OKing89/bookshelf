@@ -1,6 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
 import { SavedSettingsStatus } from 'Components/ActionStatus';

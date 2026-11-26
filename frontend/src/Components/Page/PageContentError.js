@@ -1,4 +1,3 @@
-import React from 'react';
 import ErrorBoundaryError from 'Components/Error/ErrorBoundaryError';
 import translate from 'Utilities/String/translate';
 import PageContentBody from './PageContentBody';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { getRecordingIdentity } from 'Utilities/Book/recordingIdentity';
 import translate from 'Utilities/String/translate';
 import styles from './BookRow.css';

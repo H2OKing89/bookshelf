@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import RetagAuthorModal from 'Author/Editor/AudioTags/RetagAuthorModal';
 import AuthorEditorFooter from 'Author/Editor/AuthorEditorFooter';
 import OrganizeAuthorModal from 'Author/Editor/Organize/OrganizeAuthorModal';

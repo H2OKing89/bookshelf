@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import NoAuthor from 'Author/NoAuthor';
 import BookEditorFooter from 'Book/Editor/BookEditorFooter';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';

@@ -1,6 +1,6 @@
 /* eslint-disable no-bitwise */
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import EnhancedSelectInput from './EnhancedSelectInput';
 import formControlProps from './formControlProps';
 import styles from './UMaskInput.css';

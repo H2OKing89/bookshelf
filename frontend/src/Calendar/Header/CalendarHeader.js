@@ -1,7 +1,7 @@
 /* eslint max-params: 0 */
 import moment from 'moment';
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import * as calendarViews from 'Calendar/calendarViews';
 import Icon from 'Components/Icon';
 import Button from 'Components/Link/Button';

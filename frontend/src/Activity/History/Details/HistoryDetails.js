@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import DescriptionList from 'Components/DescriptionList/DescriptionList';
 import DescriptionListItem from 'Components/DescriptionList/DescriptionListItem';
 import DescriptionListItemDescription from 'Components/DescriptionList/DescriptionListItemDescription';

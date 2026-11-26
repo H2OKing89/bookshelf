@@ -1,5 +1,4 @@
 import classNames from 'classnames';
-import React from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 import Icon from 'Components/Icon';
 import { icons } from 'Helpers/Props';

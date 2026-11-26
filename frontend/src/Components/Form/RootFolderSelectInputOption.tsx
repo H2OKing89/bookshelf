@@ -1,5 +1,4 @@
 import classNames from 'classnames';
-import React from 'react';
 import formatBytes from 'Utilities/Number/formatBytes';
 import EnhancedSelectInputOption, { type EnhancedSelectInputOptionProps } from './EnhancedSelectInputOption';
 import styles from './RootFolderSelectInputOption.css';

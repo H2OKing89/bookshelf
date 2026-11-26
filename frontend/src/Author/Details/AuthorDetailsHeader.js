@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import AuthorPoster from 'Author/AuthorPoster';
 import { getAuthorStatusDetails } from 'Author/AuthorStatus';
 import HeartRating from 'Components/HeartRating';

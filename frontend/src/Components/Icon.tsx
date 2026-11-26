@@ -1,7 +1,7 @@
 import type { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon, type FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import classNames from 'classnames';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { kinds } from 'Helpers/Props';
 import type { Kind } from 'Helpers/Props/kinds';
 import styles from './Icon.css';

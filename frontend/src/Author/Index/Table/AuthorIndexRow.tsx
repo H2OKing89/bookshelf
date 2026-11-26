@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import type { AuthorStatus } from 'Author/Author';
 import AuthorBanner from 'Author/AuthorBanner';
 import AuthorNameLink from 'Author/AuthorNameLink';

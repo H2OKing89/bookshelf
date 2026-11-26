@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Alert from 'Components/Alert';
 import Button from 'Components/Link/Button';
 import ConfirmModal from 'Components/Modal/ConfirmModal';

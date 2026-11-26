@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import MenuContent from 'Components/Menu/MenuContent';
 import ViewMenu from 'Components/Menu/ViewMenu';
 import ViewMenuItem from 'Components/Menu/ViewMenuItem';

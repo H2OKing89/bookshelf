@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 import { createSelector } from 'reselect';
 import type { ValueChange } from 'Components/Form/formTypes';

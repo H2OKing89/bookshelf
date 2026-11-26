@@ -1,4 +1,3 @@
-import React from 'react';
 import ProgressBar from 'Components/ProgressBar';
 import { sizes } from 'Helpers/Props';
 import getProgressBarKind from 'Utilities/Author/getProgressBarKind';

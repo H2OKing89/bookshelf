@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { Grid, WindowScroller } from 'react-virtualized';
 import AuthorIndexItemConnector from 'Author/Index/AuthorIndexItemConnector';
 import Measure from 'Components/Measure';

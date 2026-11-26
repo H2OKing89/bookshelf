@@ -1,6 +1,5 @@
 import moment from 'moment';
 import PropTypes from 'prop-types';
-import React from 'react';
 import Icon from 'Components/Icon';
 import { icons, kinds } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';

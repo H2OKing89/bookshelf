@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import AuthorHistoryTable from 'Author/History/AuthorHistoryTable';
 import DeleteBookModal from 'Book/Delete/DeleteBookModal';

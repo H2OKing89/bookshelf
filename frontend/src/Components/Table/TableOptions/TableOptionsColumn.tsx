@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import React, { type RefCallback } from 'react';
+import { type RefCallback } from 'react';
 import CheckInput from 'Components/Form/CheckInput';
 import Icon from 'Components/Icon';
 import { icons } from 'Helpers/Props';

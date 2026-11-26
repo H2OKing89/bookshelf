@@ -1,4 +1,3 @@
-import React from 'react';
 import type { LibraryLink } from 'Book/LibraryPresentation';
 import Label from 'Components/Label';
 import Link from 'Components/Link/Link';

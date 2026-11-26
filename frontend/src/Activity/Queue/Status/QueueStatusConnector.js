@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import React from 'react';
 import { useSelector } from 'react-redux';
 import PageSidebarStatus from 'Components/Page/Sidebar/PageSidebarStatus';
 import { queueStatusQuery } from '../queuePageQuery';

@@ -1,5 +1,5 @@
 import { HTML5toTouch } from 'rdndmb-html5-to-touch';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { DndProvider } from 'react-dnd-multi-backend';
 import PageContent from 'Components/Page/PageContent';
 import PageContentBody from 'Components/Page/PageContentBody';

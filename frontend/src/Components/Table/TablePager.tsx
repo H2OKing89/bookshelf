@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import SelectInput from 'Components/Form/SelectInput';
 import Icon from 'Components/Icon';
 import Link from 'Components/Link/Link';

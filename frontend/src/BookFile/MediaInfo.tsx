@@ -1,4 +1,3 @@
-import React from 'react';
 import { type MediaInfoModel, parseMediaInfo } from 'Book/LibraryModels';
 import formatMediaInfo, { getMediaInfoDetails, getMediaInfoSource } from './formatMediaInfo';
 import * as mediaInfoTypes from './mediaInfoTypes';

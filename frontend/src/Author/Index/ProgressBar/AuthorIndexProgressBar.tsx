@@ -1,4 +1,3 @@
-import React from 'react';
 import type { AuthorStatus } from 'Author/Author';
 import ProgressBar from 'Components/ProgressBar';
 import { sizes } from 'Helpers/Props';

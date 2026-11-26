@@ -1,4 +1,3 @@
-import React from 'react';
 import type { BookReference, NamedProfile } from 'Book/LibraryPresentation';
 import { icons } from 'Helpers/Props';
 import dimensions from 'Styles/Variables/dimensions';

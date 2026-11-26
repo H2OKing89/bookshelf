@@ -1,4 +1,3 @@
-import React from 'react';
 import type { AuthorId } from 'Book/BookIdentity';
 import Modal from 'Components/Modal/Modal';
 import EditAuthorModalContentConnector from './EditAuthorModalContentConnector';

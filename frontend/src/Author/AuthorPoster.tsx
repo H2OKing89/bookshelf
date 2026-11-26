@@ -1,4 +1,3 @@
-import React from 'react';
 import type { AuthorImageProps } from 'Author/AuthorImage';
 import AuthorImage from './AuthorImage';
 

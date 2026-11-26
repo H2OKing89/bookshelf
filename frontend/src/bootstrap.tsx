@@ -1,4 +1,3 @@
-import React from 'react';
 import { createRoot } from 'react-dom/client';
 import createAppStore from 'Store/createAppStore';
 import App, { createAppRouter } from './App/App';

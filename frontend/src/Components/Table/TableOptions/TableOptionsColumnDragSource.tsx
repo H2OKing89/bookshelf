@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import React, { useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { type DropTargetMonitor, useDrag, useDrop } from 'react-dnd';
 import { TABLE_COLUMN } from 'Helpers/dragTypes';
 import { getColumnDropIndex, getDropPosition } from 'Utilities/Drag/reorderGeometry';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigationType } from 'react-router-dom';
 
 function withCurrentPage(WrappedComponent) {

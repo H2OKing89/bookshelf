@@ -1,4 +1,3 @@
-import React from 'react';
 import monitorOptions from 'Utilities/Author/monitorOptions';
 import translate from 'Utilities/String/translate';
 import SelectInput, { type SelectInputProps, type SelectOption } from './SelectInput';

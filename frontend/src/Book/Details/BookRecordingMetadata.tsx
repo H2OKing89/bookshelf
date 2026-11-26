@@ -1,4 +1,3 @@
-import React from 'react';
 import type { LibraryBook, LibraryEdition } from 'Book/LibraryModels';
 import titleCase from 'Utilities/String/titleCase';
 import translate from 'Utilities/String/translate';

@@ -1,4 +1,3 @@
-import React from 'react';
 import formatBytes from 'Utilities/Number/formatBytes';
 import EnhancedSelectInputSelectedValue, { type EnhancedSelectInputSelectedValueProps } from './EnhancedSelectInputSelectedValue';
 import styles from './RootFolderSelectInputSelectedValue.css';

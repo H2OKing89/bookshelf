@@ -168,7 +168,7 @@ export default defineConfig(({ command, mode }) => {
       legacyCssModules(),
       patchCssModules({ exportMode: 'default' }),
       legacyJavaScript(production),
-      react({ jsxRuntime: 'classic' }),
+      react({ jsxRuntime: 'automatic' }),
       staticFiles(),
       developmentHtml(urlBase),
       sourceProvenance()

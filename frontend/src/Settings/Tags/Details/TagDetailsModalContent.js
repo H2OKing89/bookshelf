@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import FieldSet from 'Components/FieldSet';
 import Label from 'Components/Label';
 import Button from 'Components/Link/Button';

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import ProtocolLabel from 'Activity/Queue/ProtocolLabel';
 import AuthorNameLink from 'Author/AuthorNameLink';
 import BookFormats from 'Book/BookFormats';

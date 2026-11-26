@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import React, { useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { type DropTargetMonitor, useDrag, useDrop } from 'react-dnd';
 import { QUALITY_PROFILE_ITEM } from 'Helpers/dragTypes';
 import { getDropPosition } from 'Utilities/Drag/reorderGeometry';

@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import { icons, sortDirections } from 'Helpers/Props';
 import SelectedMenuItem from './SelectedMenuItem';
 

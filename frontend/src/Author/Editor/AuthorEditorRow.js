@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import AuthorNameLink from 'Author/AuthorNameLink';
 import AuthorStatusCell from 'Author/Index/Table/AuthorStatusCell';
 import TableRowCell from 'Components/Table/Cells/TableRowCell';

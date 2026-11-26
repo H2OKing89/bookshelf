@@ -1,4 +1,3 @@
-import React from 'react';
 import SpinnerErrorButton from 'Components/Link/SpinnerErrorButton';
 import { kinds } from 'Helpers/Props';
 import formControlProps, { type FormControlProps } from './formControlProps';

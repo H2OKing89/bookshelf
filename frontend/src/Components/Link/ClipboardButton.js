@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import ActionStatus from 'Components/ActionStatus';
 import FormInputButton from 'Components/Form/FormInputButton';
 import Icon from 'Components/Icon';

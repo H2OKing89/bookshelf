@@ -1,4 +1,4 @@
-import React, { type HTMLAttributes } from 'react';
+import { type HTMLAttributes } from 'react';
 import styles from './DragPreviewLayer.css';
 
 function DragPreviewLayer({ children, className = styles.dragLayer, ...otherProps }: HTMLAttributes<HTMLDivElement>) {

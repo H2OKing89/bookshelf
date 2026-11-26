@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import FilterMenuItem from './FilterMenuItem';
 import MenuContent from './MenuContent';
 import MenuItem from './MenuItem';

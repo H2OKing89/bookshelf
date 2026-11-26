@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import titleCase from 'Utilities/String/titleCase';
 
 function TagDetailsDelayProfile(props) {

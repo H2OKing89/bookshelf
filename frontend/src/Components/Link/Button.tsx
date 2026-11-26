@@ -1,5 +1,4 @@
 import classNames from 'classnames';
-import React from 'react';
 import { kinds, sizes } from 'Helpers/Props';
 import type { Alignment } from 'Helpers/Props/align';
 import type { Kind } from 'Helpers/Props/kinds';

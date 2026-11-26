@@ -1,4 +1,3 @@
-import React from 'react';
 import BookFileEditorTableContentConnector from './BookFileEditorTableContentConnector';
 import styles from './BookFileEditorTable.css';
 

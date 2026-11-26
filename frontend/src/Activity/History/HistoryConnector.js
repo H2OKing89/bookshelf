@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
-import React, { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import withCurrentPage from 'Components/withCurrentPage';

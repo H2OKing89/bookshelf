@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import { shortcuts } from 'Components/keyboardShortcuts';
 import Button from 'Components/Link/Button';
 import ModalBody from 'Components/Modal/ModalBody';

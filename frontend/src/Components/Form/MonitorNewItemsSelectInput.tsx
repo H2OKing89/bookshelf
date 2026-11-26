@@ -1,4 +1,3 @@
-import React from 'react';
 import monitorNewItemsOptions from 'Utilities/Author/monitorNewItemsOptions';
 import translate from 'Utilities/String/translate';
 import SelectInput, { type SelectInputProps, type SelectOption } from './SelectInput';

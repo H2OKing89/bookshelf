@@ -1,5 +1,5 @@
 import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import React, { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { announceSettingsSaved } from 'Components/ActionStatus';
 import DownloadClientOptions from './DownloadClientOptions';

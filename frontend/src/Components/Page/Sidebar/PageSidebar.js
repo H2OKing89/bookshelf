@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import QueueStatusConnector from 'Activity/Queue/Status/QueueStatusConnector';
 import OverlayScroller from 'Components/Scroller/OverlayScroller';
 import Scroller from 'Components/Scroller/Scroller';

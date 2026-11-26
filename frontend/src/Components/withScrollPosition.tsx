@@ -1,4 +1,4 @@
-import React, { ComponentType } from 'react';
+import { ComponentType } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 import { getScrollPosition, ScrollPositionKey } from 'Store/scrollPositions';
 import { isStateRecord } from 'Store/StateTypes';

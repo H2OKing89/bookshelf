@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import type { ValueChange } from './formTypes';
 import TextInput, { type TextInputChange, type TextInputProps } from './TextInput';
 

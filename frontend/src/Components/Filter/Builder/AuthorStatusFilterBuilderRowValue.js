@@ -1,4 +1,3 @@
-import React from 'react';
 import FilterBuilderRowValue from './FilterBuilderRowValue';
 
 const protocols = [

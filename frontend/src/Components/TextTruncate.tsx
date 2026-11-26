@@ -1,4 +1,3 @@
-import React from 'react';
 
 interface TextTruncateProps {
   text?: string | null;

@@ -1,4 +1,3 @@
-import React from 'react';
 import type { AuthorReference, NamedProfile } from 'Book/LibraryPresentation';
 import getRelativeDate from 'Utilities/Date/getRelativeDate';
 import formatBytes from 'Utilities/Number/formatBytes';

@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import AuthorNameLink from 'Author/AuthorNameLink';
 import bookEntities from 'Book/bookEntities';
 import BookSearchCellConnector from 'Book/BookSearchCellConnector';

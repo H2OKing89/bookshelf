@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Alert from 'Components/Alert';
 import Button from 'Components/Link/Button';
 import Link from 'Components/Link/Link';

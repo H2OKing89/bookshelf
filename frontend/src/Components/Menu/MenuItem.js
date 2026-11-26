@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
-import React, { useCallback, useContext } from 'react';
+import { useCallback, useContext } from 'react';
 import Link from 'Components/Link/Link';
 import MenuContext from './MenuContext';
 import styles from './MenuItem.css';

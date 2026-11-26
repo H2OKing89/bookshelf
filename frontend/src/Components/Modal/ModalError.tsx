@@ -1,4 +1,3 @@
-import React from 'react';
 import type { BoundaryErrorProps } from 'Components/Error/ErrorBoundary';
 import ErrorBoundaryError from 'Components/Error/ErrorBoundaryError';
 import Button from 'Components/Link/Button';

@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import BookFormats from 'Book/BookFormats';
 import BookQuality from 'Book/BookQuality';
 import IndexerFlags from 'Book/IndexerFlags';

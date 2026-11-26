@@ -1,4 +1,3 @@
-import React from 'react';
 import AuthorImage, { type AuthorImageProps } from 'Author/AuthorImage';
 
 type BookCoverProps = Omit<AuthorImageProps, 'placeholder' | 'coverType' | 'size' | 'lazy' | 'overflow' | 'blurBackground'> & Partial<Pick<AuthorImageProps, 'coverType' | 'size' | 'lazy' | 'overflow' | 'blurBackground'>>;

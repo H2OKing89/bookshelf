@@ -1,4 +1,3 @@
-import React from 'react';
 import { useDragLayer } from 'react-dnd';
 import DragPreviewLayer from 'Components/DragPreviewLayer';
 import { TABLE_COLUMN } from 'Helpers/dragTypes';

@@ -1,4 +1,3 @@
-import React from 'react';
 import Scroller, { type ScrollerProps } from 'Components/Scroller/Scroller';
 import { scrollDirections } from 'Helpers/Props';
 import styles from './ModalBody.css';

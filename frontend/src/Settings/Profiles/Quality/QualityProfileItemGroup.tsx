@@ -1,5 +1,4 @@
 import classNames from 'classnames';
-import React from 'react';
 import CheckInput from 'Components/Form/CheckInput';
 import TextInput from 'Components/Form/TextInput';
 import Icon from 'Components/Icon';

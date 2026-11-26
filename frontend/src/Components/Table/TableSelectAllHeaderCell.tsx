@@ -1,4 +1,3 @@
-import React from 'react';
 import CheckInput from 'Components/Form/CheckInput';
 import VirtualTableHeaderCell from './TableHeaderCell';
 import { type CheckboxSelectionChange, getSelectAllValue } from './tableSelection';

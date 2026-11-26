@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import Link from 'Components/Link/Link';
 
 class InlineMarkdown extends Component {

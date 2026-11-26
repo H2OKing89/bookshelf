@@ -1,4 +1,3 @@
-import React from 'react';
 import Link, { type LinkProps } from 'Components/Link/Link';
 
 interface AuthorNameLinkProps extends Omit<LinkProps, 'to' | 'children'> {

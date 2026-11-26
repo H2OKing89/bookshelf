@@ -1,6 +1,5 @@
 import moment from 'moment';
 import PropTypes from 'prop-types';
-import React from 'react';
 import AgendaEventConnector from './AgendaEventConnector';
 import styles from './Agenda.css';
 

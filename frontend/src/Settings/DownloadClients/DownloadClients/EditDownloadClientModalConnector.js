@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash';
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { connect } from 'react-redux';
 import PendingChangesModal from 'Settings/PendingChangesModal';
 import useUnsavedNavigation from 'Settings/useUnsavedNavigation';

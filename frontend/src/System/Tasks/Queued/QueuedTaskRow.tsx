@@ -1,5 +1,5 @@
 import moment from 'moment';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { CommandBody } from 'Commands/Command';
 import Icon, { type IconProps } from 'Components/Icon';

@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import { icons, kinds } from 'Helpers/Props';
 import LegendIconItem from './LegendIconItem';
 import LegendItem from './LegendItem';

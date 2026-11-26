@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import AuthorIndexFilterModalConnector from 'Author/Index/AuthorIndexFilterModalConnector';
 import FilterMenu from 'Components/Menu/FilterMenu';
 import { align } from 'Helpers/Props';

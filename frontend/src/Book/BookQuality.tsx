@@ -1,4 +1,3 @@
-import React from 'react';
 import type { QualityModel } from 'Book/LibraryModels';
 import Label from 'Components/Label';
 import { kinds } from 'Helpers/Props';

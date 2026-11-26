@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { BookFileId } from 'Book/BookIdentity';
 import Button from 'Components/Link/Button';
 import Modal from 'Components/Modal/Modal';

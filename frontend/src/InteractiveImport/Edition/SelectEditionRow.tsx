@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import type { BookId } from 'Book/BookIdentity';
 import type { LibraryEdition } from 'Book/LibraryModels';
 import type { LibraryColumn } from 'Book/LibraryPresentation';

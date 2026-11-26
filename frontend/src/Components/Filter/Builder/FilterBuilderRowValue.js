@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import TagInput from 'Components/Form/TagInput';
 import { filterBuilderTypes, filterBuilderValueTypes, kinds } from 'Helpers/Props';
 import tagShape from 'Helpers/Props/Shapes/tagShape';

@@ -1,6 +1,6 @@
 import moment from 'moment';
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import BookCover from 'Book/BookCover';
 import HeartRating from 'Components/HeartRating';
 import Icon from 'Components/Icon';

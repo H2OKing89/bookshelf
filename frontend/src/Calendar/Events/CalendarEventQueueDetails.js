@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import QueueDetails from 'Activity/Queue/QueueDetails';
 import CircularProgressBar from 'Components/CircularProgressBar';
 import translate from 'Utilities/String/translate';

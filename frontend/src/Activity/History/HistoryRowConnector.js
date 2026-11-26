@@ -1,6 +1,5 @@
 import { useIsMutating, useMutation, useQueryClient } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
-import React from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import createAuthorSelector from 'Store/Selectors/createAuthorSelector';

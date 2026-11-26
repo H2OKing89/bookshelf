@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import Icon from 'Components/Icon';
 import styles from './LegendIconItem.css';
 

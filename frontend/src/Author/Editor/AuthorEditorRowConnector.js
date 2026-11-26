@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import createMetadataProfileSelector from 'Store/Selectors/createMetadataProfileSelector';

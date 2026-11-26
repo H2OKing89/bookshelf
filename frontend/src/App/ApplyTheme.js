@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Fragment, useCallback, useEffect } from 'react';
+import { Fragment, useCallback, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import themes from 'Styles/Themes';

@@ -1,4 +1,3 @@
-import React from 'react';
 import type { BookFileId } from 'Book/BookIdentity';
 import BookQuality from 'Book/BookQuality';
 import type { MediaInfoModel,QualityModel } from 'Book/LibraryModels';

@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import ProtocolLabel from 'Activity/Queue/ProtocolLabel';
 import BookFormats from 'Book/BookFormats';
 import BookQuality from 'Book/BookQuality';

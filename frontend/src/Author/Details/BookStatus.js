@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import BookQuality from 'Book/BookQuality';
 import Label from 'Components/Label';
 import { kinds } from 'Helpers/Props';

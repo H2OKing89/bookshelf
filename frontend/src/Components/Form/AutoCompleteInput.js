@@ -1,6 +1,6 @@
 import jdu from 'jdu';
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import AutoSuggestInput from './AutoSuggestInput';
 
 class AutoCompleteInput extends Component {

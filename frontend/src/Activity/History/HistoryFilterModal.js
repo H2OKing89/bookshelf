@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useId, useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import FieldSet from 'Components/FieldSet';
 import CheckInput from 'Components/Form/CheckInput';
 import FormGroup from 'Components/Form/FormGroup';

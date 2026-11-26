@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { connect } from 'react-redux';
 import { clearPendingChanges } from 'Store/Actions/baseActions';
 import EditAuthorModal, { type EditAuthorModalProps } from './EditAuthorModal';

@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-import React from 'react';
 import AuthorPoster from 'Author/AuthorPoster';
 import Label from 'Components/Label';
 import { kinds } from 'Helpers/Props';

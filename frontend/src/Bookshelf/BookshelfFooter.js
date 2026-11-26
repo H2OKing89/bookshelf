@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import MonitorBooksSelectInput from 'Components/Form/MonitorBooksSelectInput';
 import MonitorNewItemsSelectInput from 'Components/Form/MonitorNewItemsSelectInput';
 import SelectInput from 'Components/Form/SelectInput';

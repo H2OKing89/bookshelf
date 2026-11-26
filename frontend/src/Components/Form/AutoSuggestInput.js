@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import Autosuggest from 'react-autosuggest';
 import Portal from 'Components/Portal';
 import AnchoredPopup, { popupMaxHeight } from 'Components/Positioning/AnchoredPopup';

@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import React, { Component, type RefCallback } from 'react';
+import { Component, type RefCallback } from 'react';
 import Icon from 'Components/Icon';
 import Link from 'Components/Link/Link';
 import ConfirmModal from 'Components/Modal/ConfirmModal';

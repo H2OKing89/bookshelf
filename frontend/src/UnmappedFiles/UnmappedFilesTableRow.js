@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import BookQuality from 'Book/BookQuality';
 import FileDetailsModal from 'BookFile/FileDetailsModal';
 import RecordingReviewModal from 'BookFile/RecordingReviewModal';

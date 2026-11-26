@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import Icon from 'Components/Icon';
 import { icons } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';

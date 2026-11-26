@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import { cloneMetadataProfile, deleteMetadataProfile, fetchMetadataProfiles } from 'Store/Actions/settingsActions';

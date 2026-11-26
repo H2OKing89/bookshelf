@@ -1,5 +1,4 @@
 import classNames from 'classnames';
-import React from 'react';
 import Icon, { type IconProps } from 'Components/Icon';
 import Link, { type LinkProps } from './Link';
 import styles from './IconButton.css';

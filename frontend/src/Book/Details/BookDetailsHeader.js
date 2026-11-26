@@ -1,6 +1,6 @@
 import moment from 'moment';
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import AuthorNameLink from 'Author/AuthorNameLink';
 import BookCover from 'Book/BookCover';
 import Alert from 'Components/Alert';

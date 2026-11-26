@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { Component } from 'react';
+import { Component } from 'react';
 import AppUpdatedModalConnector from 'App/AppUpdatedModalConnector';
 import ColorImpairedContext from 'App/ColorImpairedContext';
 import ConnectionLostModalConnector from 'App/ConnectionLostModalConnector';
