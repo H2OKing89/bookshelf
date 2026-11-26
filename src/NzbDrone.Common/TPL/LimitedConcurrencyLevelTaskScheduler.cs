@@ -58,7 +58,8 @@ namespace NzbDrone.Common.TPL
         /// </summary>
         private void NotifyThreadPoolOfPendingWork()
         {
-            ThreadPool.UnsafeQueueUserWorkItem(_ =>
+            ThreadPool.UnsafeQueueUserWorkItem(
+                _ =>
                 {
                     // Note that the current thread is now processing work items.
                     // This is necessary to enable inlining of tasks into this thread.
@@ -94,7 +95,8 @@ namespace NzbDrone.Common.TPL
                     {
                         _currentThreadIsProcessingItems = false;
                     }
-                }, null);
+                },
+                null);
         }
 
         /// <summary>Attempts to execute the specified task on the current thread.</summary>

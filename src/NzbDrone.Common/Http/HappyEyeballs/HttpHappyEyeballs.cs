@@ -45,8 +45,9 @@ namespace NzbDrone.Common.Http.HappyEyeballs
 
         protected virtual bool IsAddressFamilySupported(AddressFamily addressFamily)
         {
-            return addressFamily == AddressFamily.InterNetwork ? Socket.OSSupportsIPv4 :
-                addressFamily == AddressFamily.InterNetworkV6 && Socket.OSSupportsIPv6;
+            return addressFamily == AddressFamily.InterNetwork
+                ? Socket.OSSupportsIPv4
+                : addressFamily == AddressFamily.InterNetworkV6 && Socket.OSSupportsIPv6;
         }
 
         protected virtual Task TaskDelay(CancellationToken cancellationToken)

@@ -71,8 +71,9 @@ namespace NzbDrone.Common.Network
 
         public static string NormalizeList(string value)
         {
-            return string.IsNullOrWhiteSpace(value) ? string.Empty :
-                string.Join(", ", value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
+            return string.IsNullOrWhiteSpace(value)
+                ? string.Empty
+                : string.Join(", ", value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
         }
 
         private static bool IsDottedDecimal(string value)

@@ -10,7 +10,8 @@ namespace NzbDrone.Common.TPL
 
         public static Task LogExceptions(this Task task)
         {
-            task.ContinueWith(t =>
+            task.ContinueWith(
+                t =>
                 {
                     if (t.Exception != null)
                     {
@@ -20,7 +21,8 @@ namespace NzbDrone.Common.TPL
                             Logger.Error(exception, "Task Error");
                         }
                     }
-                }, TaskContinuationOptions.OnlyOnFaulted);
+                },
+                TaskContinuationOptions.OnlyOnFaulted);
 
             return task;
         }
