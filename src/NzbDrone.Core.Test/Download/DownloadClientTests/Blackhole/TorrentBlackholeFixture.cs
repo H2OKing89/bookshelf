@@ -57,8 +57,8 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.Blackhole
                 .Returns(() => new FileStream(GetTempFilePath(), FileMode.Create));
 
             Mocker.GetMock<ITorrentFileInfoReader>()
-                .Setup(c => c.GetHashFromTorrentFile(It.IsAny<byte[]>()))
-                .Returns("myhash");
+                .Setup(c => c.GetTorrentIdentity(It.IsAny<byte[]>()))
+                .Returns(new TorrentIdentity("CBC2F069FE8BB2F544EAE707D75BCD3DE9DCF951", null));
 
             Mocker.GetMock<IDiskScanService>().Setup(c => c.FilterPaths(It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
                   .Returns<string, IEnumerable<string>>((b, s) => s.ToList());

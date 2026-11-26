@@ -46,11 +46,9 @@ namespace NzbDrone.Core.Blocklisting
                     return false;
                 }
 
-                if (torrentInfo.InfoHash.IsNotNullOrWhiteSpace())
+                if (torrentInfo.KnownHashes().Any())
                 {
-                    var blocklistedByTorrentInfohash = _blocklistRepository.BlocklistedByTorrentInfoHash(authorId, torrentInfo.InfoHash);
-
-                    return blocklistedByTorrentInfohash.Any(b => SameTorrent(b, torrentInfo));
+                    return torrentInfo.KnownHashes().Any(hash => BlocklistedTorrentHash(authorId, hash));
                 }
 
                 return _blocklistRepository.BlocklistedByTitle(authorId, release.Title)
@@ -66,7 +64,7 @@ namespace NzbDrone.Core.Blocklisting
         public bool BlocklistedTorrentHash(int authorId, string hash)
         {
             return _blocklistRepository.BlocklistedByTorrentInfoHash(authorId, hash).Any(b =>
-                b.TorrentInfoHash.Equals(hash, StringComparison.InvariantCultureIgnoreCase));
+                string.Equals(b.TorrentInfoHash, hash, StringComparison.OrdinalIgnoreCase));
         }
 
         public PagingSpec<Blocklist> Paged(PagingSpec<Blocklist> pagingSpec)

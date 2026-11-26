@@ -4,7 +4,7 @@ namespace NzbDrone.Core.MediaFiles.TorrentInfo
 {
     public interface ITorrentFileInfoReader
     {
-        string GetHashFromTorrentFile(byte[] fileContents);
+        TorrentIdentity GetTorrentIdentity(byte[] fileContents);
     }
 
     public class TorrentFileInfoReader : ITorrentFileInfoReader
@@ -16,11 +16,11 @@ namespace NzbDrone.Core.MediaFiles.TorrentInfo
             _logger = logger;
         }
 
-        public string GetHashFromTorrentFile(byte[] fileContents)
+        public TorrentIdentity GetTorrentIdentity(byte[] fileContents)
         {
             try
             {
-                return TorrentIdentity.FromTorrent(fileContents);
+                return TorrentIdentity.ReadTorrent(fileContents);
             }
             catch
             {

@@ -61,7 +61,7 @@ namespace NzbDrone.Core.Test.MediaFiles.TorrentInfo
             var hashes = Torrent.Load(bytes).InfoHashes;
             hashes.V1.Should().BeNull();
             hashes.V2.ToHex().Length.Should().Be(64);
-            Assert.Throws<TorrentIdentityNotSupportedException>(() => TorrentIdentity.FromTorrent(bytes));
+            TorrentIdentity.FromTorrent(bytes).Should().Be(hashes.V2.ToHex());
         }
 
         [TestCase("magnet:?xt=urn:btih:ZPBPA2P6ROZPKRHK44D5OW6NHXU5Z6KR&tr=udp")]
@@ -78,8 +78,8 @@ namespace NzbDrone.Core.Test.MediaFiles.TorrentInfo
         public void should_not_advertise_a_v2_only_hash_as_v1_in_rss()
         {
             var uri = "magnet:?xt=" + V2Topic;
-            Assert.Throws<TorrentIdentityNotSupportedException>(() => TorrentIdentity.FromMagnet(uri));
-            new Parser().Hash(uri).Should().BeNull();
+            TorrentIdentity.FromMagnet(uri).Should().Be(V2Hash);
+            new Parser().Hash(uri).Should().Be(V2Hash);
         }
 
         private class Parser : TorrentRssParser

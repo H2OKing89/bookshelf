@@ -7,11 +7,13 @@ namespace NzbDrone.Core.Download.Clients
     public class DownloadClientSubmissionUncertainException : DownloadClientException
     {
         public string ExpectedDownloadId { get; }
+        public string ExpectedTorrentInfoHash { get; }
 
-        public DownloadClientSubmissionUncertainException(string message, Exception innerException = null, string expectedDownloadId = null)
+        public DownloadClientSubmissionUncertainException(string message, Exception innerException = null, string expectedDownloadId = null, string expectedTorrentInfoHash = null)
             : base(message, innerException)
         {
             ExpectedDownloadId = expectedDownloadId;
+            ExpectedTorrentInfoHash = expectedTorrentInfoHash;
         }
     }
 }

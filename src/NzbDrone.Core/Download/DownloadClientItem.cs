@@ -11,6 +11,10 @@ namespace NzbDrone.Core.Download
     {
         public DownloadClientItemClientInfo DownloadClientInfo { get; set; }
         public string DownloadId { get; set; }
+
+        // Optional full content hashes reported by a capable torrent client.
+        public string TorrentInfoHashV1 { get; set; }
+        public string TorrentInfoHashV2 { get; set; }
         public string Category { get; set; }
         public string Title { get; set; }
 

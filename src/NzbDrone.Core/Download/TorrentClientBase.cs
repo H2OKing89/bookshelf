@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using NLog;
@@ -183,115 +184,111 @@ namespace NzbDrone.Core.Download
             }
 
             var filename = string.Format("{0}.torrent", FileNameBuilder.CleanFileName(remoteBook.Release.Title));
-            string hash;
+            TorrentIdentity identity;
             try
             {
-                hash = _torrentFileInfoReader.GetHashFromTorrentFile(torrentFile);
+                identity = _torrentFileInfoReader.GetTorrentIdentity(torrentFile);
             }
-            catch (TorrentIdentityNotSupportedException ex)
+            catch (Exception ex)
             {
-                throw new ReleaseDownloadException(remoteBook.Release, ex.Message, ex);
+                throw new ReleaseDownloadException(remoteBook.Release, "Unable to read a valid torrent identity", ex);
             }
 
-            EnsureReleaseIsNotBlocklisted(remoteBook, indexer, hash);
-
-            var actualHash = SubmitTorrent(() => AddFromTorrentFile(remoteBook, hash, filename, torrentFile), hash);
-
-            if (actualHash.IsNotNullOrWhiteSpace() && hash != actualHash)
-            {
-                _logger.Debug(
-                    "{0} did not return the expected InfoHash for '{1}', Readarr could potentially lose track of the download in progress.",
-                    Definition.Implementation,
-                    remoteBook.Release.DownloadUrl);
-            }
-
-            return actualHash;
+            ValidateTorrentIdentity(remoteBook, identity);
+            PrepareIdentityAndCheckBlocklist(remoteBook, indexer, identity);
+            return SubmitTorrent(() => AddFromTorrentFile(remoteBook, identity, filename, torrentFile), identity);
         }
 
         private string DownloadFromMagnetUrl(RemoteBook remoteBook, IIndexer indexer, string magnetUrl)
         {
-            string hash = null;
-            string actualHash = null;
-
+            TorrentIdentity identity;
             try
             {
-                hash = TorrentIdentity.FromMagnet(magnetUrl);
-            }
-            catch (TorrentIdentityNotSupportedException ex)
-            {
-                throw new ReleaseDownloadException(remoteBook.Release, ex.Message, ex);
+                identity = TorrentIdentity.ReadMagnet(magnetUrl);
             }
             catch (FormatException ex)
             {
                 _logger.Error(ex, "Failed to parse magnetlink for release '{0}'", remoteBook.Release.Title);
-
                 throw new ReleaseDownloadException(remoteBook.Release, "Release contains an invalid magnet download URL", ex);
             }
 
-            if (hash != null)
-            {
-                EnsureReleaseIsNotBlocklisted(remoteBook, indexer, hash);
-
-                actualHash = SubmitTorrent(() => AddFromMagnetLink(remoteBook, hash, magnetUrl), hash);
-            }
-
-            if (actualHash.IsNotNullOrWhiteSpace() && hash != actualHash)
-            {
-                _logger.Debug(
-                    "{0} did not return the expected InfoHash for '{1}', Readarr could potentially lose track of the download in progress.",
-                    Definition.Implementation,
-                    remoteBook.Release.DownloadUrl);
-            }
-
-            return actualHash;
+            ValidateTorrentIdentity(remoteBook, identity);
+            PrepareIdentityAndCheckBlocklist(remoteBook, indexer, identity);
+            return SubmitTorrent(() => AddFromMagnetLink(remoteBook, identity, magnetUrl), identity);
         }
 
-        private static string SubmitTorrent(Func<string> submit, string hash)
+        // Existing download clients use v1 hashes. Each client that supports
+        // v2 must opt in with a verified identity/receipt implementation.
+        protected virtual void ValidateTorrentIdentity(RemoteBook remoteBook, TorrentIdentity identity)
         {
+            if (identity.IsV2Only)
+            {
+                throw new DownloadClientRejectedReleaseException(remoteBook.Release, "This download client does not have verified BitTorrent v2-only tracking support.");
+            }
+        }
+
+        protected virtual bool RequiresFullIdentityProof(TorrentIdentity identity) => false;
+
+        protected virtual string AddFromMagnetLink(RemoteBook remoteBook, TorrentIdentity identity, string magnetLink) => AddFromMagnetLink(remoteBook, identity.V1, magnetLink);
+        protected virtual string AddFromTorrentFile(RemoteBook remoteBook, TorrentIdentity identity, string filename, byte[] fileContent) => AddFromTorrentFile(remoteBook, identity.V1, filename, fileContent);
+
+        private string SubmitTorrent(Func<string> submit, TorrentIdentity identity)
+        {
+            var fullProof = RequiresFullIdentityProof(identity);
             try
             {
-                return submit();
+                var actual = submit();
+                if (!fullProof && actual.IsNotNullOrWhiteSpace() && !TorrentIdentity.EqualsHash(identity.ContentHash, actual))
+                {
+                    _logger.Debug("{0} returned a download ID distinct from the content hash.", Definition.Implementation);
+                }
+
+                return actual;
             }
             catch (ReleaseDownloadException)
             {
-                // Explicit release-unavailable/blocked/duplicate responses stop
-                // the grab. They must not turn into a fallback candidate.
+                // Explicit pre-submission refusals must not be interpreted as
+                // an accepted or ambiguous add.
                 throw;
             }
             catch (DownloadClientMagnetNotSupportedException)
             {
-                // Existing magnet-to-torrent-file capability fallback occurs
-                // before an add on clients that do not support magnets.
                 throw;
             }
             catch (Exception ex)
             {
                 throw new DownloadClientSubmissionUncertainException(
-                    "The torrent add did not finish normally; its submission outcome must be checked on this client.", ex, hash);
+                    "The torrent add did not finish normally; its submission outcome must be checked on this client.",
+                    ex,
+                    identity.ContentHash,
+                    fullProof ? identity.V2 : null);
             }
         }
 
-        private void EnsureReleaseIsNotBlocklisted(RemoteBook remoteBook, IIndexer indexer, string hash)
+        private void PrepareIdentityAndCheckBlocklist(RemoteBook remoteBook, IIndexer indexer, TorrentIdentity identity)
         {
             var indexerSettings = indexer?.Definition?.Settings as ITorrentIndexerSettings;
-            var torrentInfo = remoteBook.Release as TorrentInfo;
-            var torrentInfoHash = torrentInfo?.InfoHash;
-
-            // If the release didn't come from an interactive search,
-            // the hash wasn't known during processing and the
-            // indexer is configured to reject blocklisted releases
-            // during grab check if it's already been blocklisted.
-            if (torrentInfo != null && torrentInfoHash.IsNullOrWhiteSpace())
+            if (remoteBook.Release is not TorrentInfo torrentInfo)
             {
-                // If the hash isn't known from parsing we set it here so it can be used for blocklisting.
-                torrentInfo.InfoHash = hash;
+                return;
+            }
 
-                if (remoteBook.ReleaseSource != ReleaseSourceType.InteractiveSearch &&
-                    indexerSettings?.RejectBlocklistedTorrentHashesWhileGrabbing == true &&
-                    _blocklistService.BlocklistedTorrentHash(remoteBook.Author.Id, hash))
-                {
-                    throw new ReleaseBlockedException(remoteBook.Release, "Release previously added to blocklist");
-                }
+            var advertised = TorrentIdentity.Normalize(torrentInfo.InfoHash, 40) ?? TorrentIdentity.Normalize(torrentInfo.InfoHash, 64);
+            if (advertised != null && !identity.IsNativeHandle(advertised))
+            {
+                throw new ReleaseDownloadException(remoteBook.Release, "The downloaded torrent does not match the advertised hash.");
+            }
+
+            // Even if an indexer provided a truncated client handle, the
+            // parsed full content hash is authoritative for history/blocklists.
+            torrentInfo.InfoHash = identity.ContentHash;
+            torrentInfo.InfoHashV1 = identity.V1;
+            torrentInfo.InfoHashV2 = identity.V2;
+            if (remoteBook.ReleaseSource != ReleaseSourceType.InteractiveSearch &&
+                indexerSettings?.RejectBlocklistedTorrentHashesWhileGrabbing == true &&
+                identity.Hashes.Any(hash => _blocklistService.BlocklistedTorrentHash(remoteBook.Author.Id, hash)))
+            {
+                throw new ReleaseBlockedException(remoteBook.Release, "Release previously added to blocklist");
             }
         }
     }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
@@ -39,6 +40,20 @@ namespace NzbDrone.Core.Indexers
 
             result.InfoHash = GetInfoHash(item);
             result.MagnetUrl = GetMagnetUrl(item);
+            if (result.MagnetUrl.IsNotNullOrWhiteSpace())
+            {
+                try
+                {
+                    var identity = TorrentIdentity.ReadMagnet(result.MagnetUrl);
+                    result.InfoHashV1 = identity.V1;
+                    result.InfoHashV2 = identity.V2;
+                }
+                catch (FormatException)
+                {
+                    // Keep the indexer's other release information.
+                }
+            }
+
             result.Seeders = GetSeeders(item);
             result.Peers = GetPeers(item);
 

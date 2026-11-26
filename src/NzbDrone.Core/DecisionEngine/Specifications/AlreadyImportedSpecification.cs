@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using NLog;
 using NzbDrone.Core.Configuration;
@@ -83,7 +84,12 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                 {
                     var torrentInfo = release as TorrentInfo;
 
-                    if (torrentInfo?.InfoHash != null && torrentInfo.InfoHash.ToUpper() == lastGrabbed.DownloadId)
+                    var storedHash = lastGrabbed.Data?.GetValueOrDefault("torrentInfoHash") ?? lastGrabbed.Data?.GetValueOrDefault("TorrentInfoHash");
+                    var storedV2 = lastGrabbed.Data?.GetValueOrDefault("torrentInfoHashV2") ?? lastGrabbed.Data?.GetValueOrDefault("TorrentInfoHashV2");
+                    if (torrentInfo != null && torrentInfo.KnownHashes().Any(hash =>
+                        string.Equals(hash, storedHash, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(hash, storedV2, StringComparison.OrdinalIgnoreCase) ||
+                        (string.IsNullOrWhiteSpace(storedHash) && string.Equals(hash, lastGrabbed.DownloadId, StringComparison.OrdinalIgnoreCase))))
                     {
                         _logger.Debug("Has same torrent hash as a grabbed and imported release");
                         return Decision.RejectCode(RejectionCode.AlreadyImportedSameHash, "Has same torrent hash as a grabbed and imported release");

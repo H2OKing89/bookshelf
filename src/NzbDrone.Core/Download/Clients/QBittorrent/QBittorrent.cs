@@ -75,8 +75,59 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
             }
         }
 
-        protected override string AddFromMagnetLink(RemoteBook remoteBook, string hash, string magnetLink)
+        protected override void ValidateTorrentIdentity(RemoteBook remoteBook, TorrentIdentity identity)
         {
+            if (identity.V2 == null)
+            {
+                return;
+            }
+
+            bool supported;
+            try
+            {
+                supported = RequiresFullIdentityProof(identity);
+            }
+            catch (Exception ex)
+            {
+                throw new DownloadClientRejectedReleaseException(remoteBook.Release, "Unable to verify qBittorrent's API capability before submitting the torrent.", ex);
+            }
+
+            if (!supported)
+            {
+                base.ValidateTorrentIdentity(remoteBook, identity);
+            }
+        }
+
+        protected override bool RequiresFullIdentityProof(TorrentIdentity identity) =>
+            identity.V2 != null && ProxyApiVersion >= new Version(2, 15, 1);
+
+        private string ResolveNativeDownloadId(TorrentIdentity identity)
+        {
+            for (var attempt = 0; attempt < 10; attempt++)
+            {
+                var matches = Proxy.GetTorrents(Settings)
+                    .Where(torrent => identity.MatchesReportedHashes(torrent.InfoHashV1, torrent.InfoHashV2))
+                    .Take(2).ToList();
+                if (matches.Count == 1 && identity.IsNativeHandle(matches[0].Hash))
+                {
+                    return matches[0].Hash.ToUpperInvariant();
+                }
+
+                if (attempt < 9)
+                {
+                    System.Threading.Thread.Sleep(100);
+                }
+            }
+
+            throw new DownloadClientSubmissionUncertainException("qBittorrent did not report a unique native handle with the complete torrent identity.");
+        }
+
+        protected override string AddFromMagnetLink(RemoteBook remoteBook, string hash, string magnetLink) =>
+            AddFromMagnetLink(remoteBook, new TorrentIdentity(hash, null), magnetLink);
+
+        protected override string AddFromMagnetLink(RemoteBook remoteBook, TorrentIdentity identity, string magnetLink)
+        {
+            var hash = identity.ContentHash;
             EnsureSeedTimeTypeSupported(remoteBook);
             if (!Proxy.GetConfig(Settings).DhtEnabled && !magnetLink.Contains("&tr="))
             {
@@ -90,6 +141,11 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
             var forceStart = (QBittorrentState)Settings.InitialState == QBittorrentState.ForceStart;
 
             Proxy.AddTorrentFromUrl(magnetLink, addHasSetShareLimits && setShareLimits ? remoteBook.SeedConfiguration : null, Settings);
+
+            if (RequiresFullIdentityProof(identity))
+            {
+                hash = ResolveNativeDownloadId(identity);
+            }
 
             if ((!addHasSetShareLimits && setShareLimits) || moveToTop || forceStart)
             {
@@ -138,8 +194,12 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
             return hash;
         }
 
-        protected override string AddFromTorrentFile(RemoteBook remoteBook, string hash, string filename, byte[] fileContent)
+        protected override string AddFromTorrentFile(RemoteBook remoteBook, string hash, string filename, byte[] fileContent) =>
+            AddFromTorrentFile(remoteBook, new TorrentIdentity(hash, null), filename, fileContent);
+
+        protected override string AddFromTorrentFile(RemoteBook remoteBook, TorrentIdentity identity, string filename, byte[] fileContent)
         {
+            var hash = identity.ContentHash;
             EnsureSeedTimeTypeSupported(remoteBook);
             var setShareLimits = remoteBook.SeedConfiguration != null && (remoteBook.SeedConfiguration.Ratio.HasValue || remoteBook.SeedConfiguration.SeedTime.HasValue);
             var addHasSetShareLimits = setShareLimits && ProxyApiVersion >= new Version(2, 8, 1);
@@ -148,6 +208,11 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
             var forceStart = (QBittorrentState)Settings.InitialState == QBittorrentState.ForceStart;
 
             Proxy.AddTorrentFromFile(filename, fileContent, addHasSetShareLimits ? remoteBook.SeedConfiguration : null, Settings);
+
+            if (RequiresFullIdentityProof(identity))
+            {
+                hash = ResolveNativeDownloadId(identity);
+            }
 
             if ((!addHasSetShareLimits && setShareLimits) || moveToTop || forceStart)
             {
@@ -236,7 +301,9 @@ namespace NzbDrone.Core.Download.Clients.QBittorrent
             {
                 var item = new DownloadClientItem
                 {
-                    DownloadId = torrent.Hash.ToUpper(),
+                    DownloadId = torrent.Hash.ToUpperInvariant(),
+                    TorrentInfoHashV1 = TorrentIdentity.Normalize(torrent.InfoHashV1, 40),
+                    TorrentInfoHashV2 = TorrentIdentity.Normalize(torrent.InfoHashV2, 64),
                     Category = torrent.Category.IsNotNullOrWhiteSpace() ? torrent.Category : torrent.Label,
                     Title = torrent.Name,
                     TotalSize = torrent.Size,

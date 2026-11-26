@@ -205,6 +205,10 @@ namespace NzbDrone.Core.History
                 if (message.Book.Release is TorrentInfo torrentRelease)
                 {
                     history.Data.Add("TorrentInfoHash", torrentRelease.InfoHash);
+                    if (torrentRelease.InfoHashV2 != null && !string.Equals(torrentRelease.InfoHash, torrentRelease.InfoHashV2, StringComparison.OrdinalIgnoreCase))
+                    {
+                        history.Data.Add("TorrentInfoHashV2", torrentRelease.InfoHashV2);
+                    }
                 }
 
                 AddHistory(history);

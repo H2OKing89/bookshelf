@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -76,6 +77,52 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests
             (await Subject.Download(book, CreateIndexer())).Should().Be(TorrentIdentityFixture.V1Hash);
             ((TorrentInfo)book.Release).InfoHash.Should().Be(TorrentIdentityFixture.V1Hash);
             Mocker.GetMock<IQBittorrentProxy>().Verify(s => s.AddTorrentFromUrl(uri, It.IsAny<TorrentSeedConfiguration>(), It.IsAny<QBittorrentSettings>()), Times.Once());
+        }
+
+        private void GivenModernClient(string v1, string v2, string nativeHandle)
+        {
+            Mocker.GetMock<IQBittorrentProxySelector>().Setup(s => s.GetApiVersion(It.IsAny<QBittorrentSettings>(), It.IsAny<bool>()))
+                .Returns(new Version(2, 15, 1));
+            Mocker.GetMock<IQBittorrentProxy>().Setup(s => s.GetTorrents(It.IsAny<QBittorrentSettings>()))
+                .Returns(new List<QBittorrentTorrent> { new QBittorrentTorrent { Hash = nativeHandle, InfoHashV1 = v1, InfoHashV2 = v2 } });
+        }
+
+        [TestCase(TorrentType.V2Only)]
+        [TestCase(TorrentType.V1V2Hybrid)]
+        public async Task should_track_native_handle_and_keep_complete_content_identity(TorrentType type)
+        {
+            var bytes = await GivenTorrent(type);
+            var identity = TorrentIdentity.ReadTorrent(bytes);
+            var handle = identity.V2[..40];
+            GivenModernClient(identity.V1, identity.V2, handle.ToLowerInvariant());
+            var book = GivenRelease("http://127.0.0.1/owned.torrent");
+            (await Subject.Download(book, CreateIndexer())).Should().Be(handle);
+            ((TorrentInfo)book.Release).InfoHash.Should().Be(identity.ContentHash);
+            ((TorrentInfo)book.Release).InfoHashV2.Should().Be(identity.V2);
+            ((TorrentInfo)book.Release).InfoHashV1.Should().Be(identity.V1);
+            Mocker.GetMock<IQBittorrentProxy>().Verify(s => s.AddTorrentFromFile(It.IsAny<string>(), bytes, It.IsAny<TorrentSeedConfiguration>(), It.IsAny<QBittorrentSettings>()), Times.Once());
+        }
+
+        [Test]
+        public async Task should_accept_v2_magnet_with_complete_reported_hash()
+        {
+            var v2 = TorrentIdentityFixture.V2Hash;
+            GivenModernClient(null, v2.ToLowerInvariant(), v2[..40]);
+            var book = GivenRelease("magnet:?xt=" + TorrentIdentityFixture.V2Topic);
+            (await Subject.Download(book, CreateIndexer())).Should().Be(v2[..40]);
+            ((TorrentInfo)book.Release).InfoHash.Should().Be(v2);
+        }
+
+        [Test]
+        public async Task should_not_confirm_a_v2_handle_without_complete_reported_hash()
+        {
+            var v2 = TorrentIdentityFixture.V2Hash;
+            GivenModernClient(null, v2[..40] + new string('F', 24), v2[..40]);
+            var book = GivenRelease("magnet:?xt=" + TorrentIdentityFixture.V2Topic);
+            Func<Task> download = () => Subject.Download(book, CreateIndexer());
+            var outcome = await download.Should().ThrowAsync<DownloadClientSubmissionUncertainException>();
+            outcome.Which.ExpectedTorrentInfoHash.Should().Be(v2);
+            Mocker.GetMock<IQBittorrentProxy>().Verify(s => s.AddTorrentFromUrl(It.IsAny<string>(), It.IsAny<TorrentSeedConfiguration>(), It.IsAny<QBittorrentSettings>()), Times.Once());
         }
 
         [Test]

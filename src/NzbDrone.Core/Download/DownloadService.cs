@@ -18,6 +18,7 @@ using NzbDrone.Core.Download.Clients;
 using NzbDrone.Core.Download.Pending;
 using NzbDrone.Core.Exceptions;
 using NzbDrone.Core.Indexers;
+using NzbDrone.Core.MediaFiles.TorrentInfo;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser.Model;
 
@@ -218,8 +219,10 @@ namespace NzbDrone.Core.Download
             }
             catch (Exception ex)
             {
-                var expectedId = (ex as DownloadClientSubmissionUncertainException)?.ExpectedDownloadId;
-                downloadClientId = ReconcileSubmission(downloadClient, expectedId);
+                var uncertainty = ex as DownloadClientSubmissionUncertainException;
+                var expectedId = uncertainty?.ExpectedDownloadId;
+                var expectedV2 = uncertainty?.ExpectedTorrentInfoHash;
+                downloadClientId = ReconcileSubmission(downloadClient, expectedId, expectedV2);
                 if (downloadClientId == null)
                 {
                     budget?.RecordSubmission(space);
@@ -229,7 +232,8 @@ namespace NzbDrone.Core.Download
                         $"Submission outcome for {downloadClient.Definition.Name} is unknown. " +
                         $"No fallback add was attempted. Review submission attempt {attemptId} on that client before retrying.",
                         ex,
-                        expectedId);
+                        expectedId,
+                        expectedV2);
                 }
 
                 _logger.Debug("Confirmed accepted download {0} on client {1} after the add response failed", downloadClientId, downloadClient.Definition.Name);
@@ -269,21 +273,29 @@ namespace NzbDrone.Core.Download
             _submissionGuard.Complete(attemptId);
         }
 
-        private string ReconcileSubmission(IDownloadClient client, string expectedId)
+        private string ReconcileSubmission(IDownloadClient client, string expectedId, string expectedV2)
         {
-            // An indexer title, URL, NZB name or guessed response text cannot
-            // establish identity. TorrentClientBase captures the actual hash at
-            // the add boundary. NZB client IDs are generally unknown on timeout.
-            if (client.Protocol != DownloadProtocol.Torrent || expectedId?.Length != 40 || !expectedId.All(Uri.IsHexDigit))
+            // A native client handle is not proof of a complete v2 hash.
+            if (client.Protocol != DownloadProtocol.Torrent)
+            {
+                return null;
+            }
+
+            var v1 = TorrentIdentity.Normalize(expectedId, 40);
+            var v2 = TorrentIdentity.Normalize(expectedV2, 64);
+            if (expectedV2 != null ? v2 == null || (v1 == null && !TorrentIdentity.EqualsHash(expectedId, v2)) : v1 == null)
             {
                 return null;
             }
 
             try
             {
+                var identity = new TorrentIdentity(v1, v2);
                 var matches = client.GetItems().Where(item => item != null &&
                     (item.DownloadClientInfo == null || item.DownloadClientInfo.Id == client.Definition.Id) &&
-                    string.Equals(item.DownloadId, expectedId, StringComparison.OrdinalIgnoreCase)).Take(2).ToList();
+                    (v2 == null
+                        ? TorrentIdentity.EqualsHash(item.DownloadId, v1)
+                        : identity.MatchesReportedHashes(item.TorrentInfoHashV1, item.TorrentInfoHashV2) && identity.IsNativeHandle(item.DownloadId))).Take(2).ToList();
                 return matches.Count == 1 ? matches[0].DownloadId : null;
             }
             catch (Exception ex)

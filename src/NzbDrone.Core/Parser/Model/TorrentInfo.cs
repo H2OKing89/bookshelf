@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace NzbDrone.Core.Parser.Model
@@ -6,6 +9,11 @@ namespace NzbDrone.Core.Parser.Model
     {
         public string MagnetUrl { get; set; }
         public string InfoHash { get; set; }
+        public string InfoHashV1 { get; set; }
+        public string InfoHashV2 { get; set; }
+
+        public IEnumerable<string> KnownHashes() => new[] { InfoHash, InfoHashV1, InfoHashV2 }
+            .Where(hash => !string.IsNullOrWhiteSpace(hash)).Distinct(StringComparer.OrdinalIgnoreCase);
         public int? Seeders { get; set; }
         public int? Peers { get; set; }
 

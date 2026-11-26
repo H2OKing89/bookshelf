@@ -50,8 +50,8 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.RTorrentTests
             };
 
             Mocker.GetMock<ITorrentFileInfoReader>()
-                  .Setup(s => s.GetHashFromTorrentFile(It.IsAny<byte[]>()))
-                  .Returns("CBC2F069FE8BB2F544EAE707D75BCD3DE9DCF951");
+                  .Setup(s => s.GetTorrentIdentity(It.IsAny<byte[]>()))
+                  .Returns(new TorrentIdentity("CBC2F069FE8BB2F544EAE707D75BCD3DE9DCF951", null));
         }
 
         protected void GivenSuccessfulDownload()

@@ -151,6 +151,25 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Subject.IsSatisfiedBy(_remoteBook, null).Accepted.Should().BeFalse();
         }
 
+        [TestCase(true)]
+        [TestCase(false)]
+        public void should_compare_stored_full_v2_hash_not_the_client_handle(bool matching)
+        {
+            var handle = new string('A', 40);
+            var fullHash = handle + new string('B', 24);
+            GivenHistoryItem(handle, TITLE, _mp3, EntityHistoryEventType.Grabbed);
+            GivenHistoryItem(handle, TITLE, _flac, EntityHistoryEventType.BookFileImported);
+            _history[0].Data["torrentInfoHash"] = fullHash;
+            _remoteBook.Release = new TorrentInfo
+            {
+                DownloadProtocol = DownloadProtocol.Torrent,
+                Title = "Different release title",
+                InfoHash = matching ? fullHash.ToLowerInvariant() : handle + new string('C', 24)
+            };
+
+            Subject.IsSatisfiedBy(_remoteBook, null).Accepted.Should().Be(!matching);
+        }
+
         [Test]
         public void should_be_accepted_if_release_torrent_hash_is_null()
         {

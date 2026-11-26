@@ -460,6 +460,44 @@ namespace NzbDrone.Core.Test.Download
             VerifyEventPublished<BookGrabbedEvent>();
         }
 
+        [TestCase(true, true)]
+        [TestCase(false, true)]
+        [TestCase(true, false)]
+        public async Task should_require_full_v2_proof_for_uncertain_submissions(bool matching, bool hybrid)
+        {
+            var v2 = new string('A', 40) + new string('B', 24);
+            var nativeHandle = v2[..40];
+            var first = GivenUncertainTorrent();
+            var second = WithTorrentClient();
+            var expected = hybrid ? ExpectedHash : v2;
+            first.Setup(client => client.Download(It.IsAny<RemoteBook>(), It.IsAny<IIndexer>()))
+                .Throws(new DownloadClientSubmissionUncertainException("lost response", new TimeoutException(), expected, v2));
+            first.Setup(client => client.GetItems()).Returns(new[]
+            {
+                new DownloadClientItem
+                {
+                    DownloadId = v2[..40],
+                    TorrentInfoHashV2 = matching ? v2 : v2[..40] + new string('C', 24),
+                    TorrentInfoHashV1 = hybrid ? ExpectedHash : null
+                }
+            });
+
+            if (matching)
+            {
+                await Subject.DownloadReport(_parseResult, null);
+                Mocker.GetMock<NzbDrone.Core.Messaging.Events.IEventAggregator>().Verify(events => events.PublishEvent(
+                    It.Is<BookGrabbedEvent>(grab => grab.DownloadId == nativeHandle)), Times.Once());
+            }
+            else
+            {
+                await Assert.ThrowsAsync<DownloadClientSubmissionUncertainException>(() => Subject.DownloadReport(_parseResult, null));
+                Mocker.GetMock<IDownloadSubmissionGuard>().Verify(guard => guard.MarkUncertain(It.IsAny<string>(), expected), Times.Once());
+                VerifyEventNotPublished<BookGrabbedEvent>();
+            }
+
+            second.Verify(client => client.Download(It.IsAny<RemoteBook>(), It.IsAny<IIndexer>()), Times.Never());
+        }
+
         [TestCase("empty")]
         [TestCase("duplicate")]
         [TestCase("other-client")]
