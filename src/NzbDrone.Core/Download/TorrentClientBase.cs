@@ -1,7 +1,6 @@
 using System;
 using System.Net;
 using System.Threading.Tasks;
-using MonoTorrent;
 using NLog;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.Extensions;
@@ -184,7 +183,15 @@ namespace NzbDrone.Core.Download
             }
 
             var filename = string.Format("{0}.torrent", FileNameBuilder.CleanFileName(remoteBook.Release.Title));
-            var hash = _torrentFileInfoReader.GetHashFromTorrentFile(torrentFile);
+            string hash;
+            try
+            {
+                hash = _torrentFileInfoReader.GetHashFromTorrentFile(torrentFile);
+            }
+            catch (TorrentIdentityNotSupportedException ex)
+            {
+                throw new ReleaseDownloadException(remoteBook.Release, ex.Message, ex);
+            }
 
             EnsureReleaseIsNotBlocklisted(remoteBook, indexer, hash);
 
@@ -208,11 +215,15 @@ namespace NzbDrone.Core.Download
 
             try
             {
-                hash = MagnetLink.Parse(magnetUrl).InfoHash.ToHex();
+                hash = TorrentIdentity.FromMagnet(magnetUrl);
+            }
+            catch (TorrentIdentityNotSupportedException ex)
+            {
+                throw new ReleaseDownloadException(remoteBook.Release, ex.Message, ex);
             }
             catch (FormatException ex)
             {
-                _logger.Error(ex, "Failed to parse magnetlink for release '{0}': '{1}'", remoteBook.Release.Title, magnetUrl);
+                _logger.Error(ex, "Failed to parse magnetlink for release '{0}'", remoteBook.Release.Title);
 
                 throw new ReleaseDownloadException(remoteBook.Release, "Release contains an invalid magnet download URL", ex);
             }

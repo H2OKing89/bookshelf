@@ -331,5 +331,44 @@
       "commit": "d3884a84ef98fa203d7ffd29f0c90ce16ec7e713"
     },
     "packageSha512Base64": "ME9DEOGAgHH6z2QJNcSmMWFaZc2EAgoCWSpxWdc+0KJUd+QxzEYZwg94PMC30kxRkLG+iYqFNtcfyn6eC4Q+/A=="
+  },
+  "MonoTorrent/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/alanmcgovern/monotorrent/e78faebd0aec117146cffccaaea987ab0629eec0/LICENSE",
+    "package": "MonoTorrent",
+    "version": "3.0.2",
+    "bytes": 1086,
+    "sha256": "08870f050563eb2350835669315a26e906368030dadca23339344fd123403f65",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/alanmcgovern/monotorrent",
+      "commit": "e78faebd0aec117146cffccaaea987ab0629eec0"
+    },
+    "packageSha512Base64": "vXogOTokXF2rXq+oMuWTFDRNPoM6mnRt/k257tRGw4Aqm1T3nIT5XqY1KbVDlS42U4DFXHHgvLGFRjP1ZmbK4w=="
+  },
+  "Mono.Nat/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/mono/Mono.Nat/04754b1e5f139559736c41bf23c1752564d178d9/LICENSE.md",
+    "package": "Mono.Nat",
+    "version": "3.0.0",
+    "bytes": 1141,
+    "sha256": "b02c6471cfd0a93e99061f02d95162b95bacf504f67e46a31ede8af9fe851f8f",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/mono/Mono.Nat",
+      "commit": "04754b1e5f139559736c41bf23c1752564d178d9"
+    },
+    "packageSha512Base64": "Zlic2ubHJ3hRaYVPlwoV1LAD9D4MkvIgnUPfvwFumeqRCNFHuLH/KwpuxLFjM0SfDjUpc/ks1bakgZS0lq0aDg=="
+  },
+  "ReusableTasks/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/alanmcgovern/ReusableTasks/3c0c1929375b3b3ddc97ff84fe6c59b024f2e85b/LICENSE.md",
+    "package": "ReusableTasks",
+    "version": "4.0.0",
+    "bytes": 1199,
+    "sha256": "f21d538d6240e49b6a38fa2982fa1defb1697f5a4abb66baaa915a1c5b0cc01d",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/alanmcgovern/ReusableTasks",
+      "commit": "3c0c1929375b3b3ddc97ff84fe6c59b024f2e85b"
+    },
+    "packageSha512Base64": "Bq7xL0auhykQpdxORRYmSwLAMDdy8TmdSW3wviSNqHtHQ+kv+vtxVyUGxQ+fNa/aZnRXLz9uIMyFXpG3Dwgdfw=="
   }
 }

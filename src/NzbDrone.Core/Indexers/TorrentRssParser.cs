@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using MonoTorrent;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Core.MediaFiles.TorrentInfo;
 using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.Indexers
@@ -52,7 +52,7 @@ namespace NzbDrone.Core.Indexers
             {
                 try
                 {
-                    return MagnetLink.Parse(magnetUrl).InfoHash.ToHex();
+                    return TorrentIdentity.FromMagnet(magnetUrl);
                 }
                 catch
                 {

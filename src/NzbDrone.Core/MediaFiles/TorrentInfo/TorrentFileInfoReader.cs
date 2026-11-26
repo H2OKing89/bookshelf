@@ -1,5 +1,3 @@
-﻿using System.Text;
-using MonoTorrent;
 using NLog;
 
 namespace NzbDrone.Core.MediaFiles.TorrentInfo
@@ -22,11 +20,11 @@ namespace NzbDrone.Core.MediaFiles.TorrentInfo
         {
             try
             {
-                return Torrent.Load(fileContents).InfoHash.ToHex();
+                return TorrentIdentity.FromTorrent(fileContents);
             }
             catch
             {
-                _logger.Trace("Invalid torrent file contents: {0}", Encoding.ASCII.GetString(fileContents));
+                _logger.Trace("Unable to read a supported torrent identity from the file.");
                 throw;
             }
         }
