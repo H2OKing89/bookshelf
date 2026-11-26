@@ -1,8 +1,9 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
+import type { AuthorId, BookId } from 'Book/BookIdentity';
 import BookSearchCellConnector from 'Book/BookSearchCellConnector';
 import BookTitleLink from 'Book/BookTitleLink';
 import IndexerFlags from 'Book/IndexerFlags';
+import type { LibraryBookFile } from 'Book/LibraryModels';
 import Icon from 'Components/Icon';
 import MonitorToggleButton from 'Components/MonitorToggleButton';
 import StarRating from 'Components/StarRating';
@@ -10,6 +11,7 @@ import RelativeDateCellConnector from 'Components/Table/Cells/RelativeDateCellCo
 import TableRowCell from 'Components/Table/Cells/TableRowCell';
 import TableSelectCell from 'Components/Table/Cells/TableSelectCell';
 import TableRow from 'Components/Table/TableRow';
+import type { TableSelectionChange } from 'Components/Table/tableSelection';
 import Popover from 'Components/Tooltip/Popover';
 import { icons, kinds, tooltipPositions } from 'Helpers/Props';
 import { getRecordingIdentity } from 'Utilities/Book/recordingIdentity';
@@ -18,13 +20,41 @@ import BookStatus from './BookStatus';
 import RecordingCatalogLabel from './RecordingCatalogLabel';
 import styles from './BookRow.css';
 
-class BookRow extends Component {
+export interface BookRowProps {
+  id: BookId;
+  authorId: AuthorId;
+  monitored: boolean;
+  releaseDate?: string | null;
+  title: string;
+  displayTitle?: string | null;
+  foreignBookId?: string | null;
+  foreignEditionId?: string | null;
+  seriesTitle?: string | null;
+  authorName: string;
+  position?: string | number | null;
+  pageCount?: number | null;
+  runtimeLengthMinutes?: number | null;
+  narrators?: readonly string[] | null;
+  ratings?: { value?: number; votes?: number } | null;
+  isSaving?: boolean;
+  authorMonitored: boolean;
+  titleSlug: string;
+  bookFiles: readonly LibraryBookFile[];
+  indexerFlags?: number;
+  isEditorActive?: boolean;
+  isSelected?: boolean;
+  onSelectedChange: (change: TableSelectionChange<BookId>) => void;
+  columns: readonly { name: string; isVisible?: boolean }[];
+  onMonitorBookPress: (id: BookId, monitored: boolean, options: { shiftKey?: boolean }) => void;
+}
+
+class BookRow extends Component<BookRowProps, { isDetailsModalOpen: boolean; isEditBookModalOpen: boolean }> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: BookRowProps) {
+    super(props);
 
     this.state = {
       isDetailsModalOpen: false,
@@ -51,7 +81,7 @@ class BookRow extends Component {
     this.setState({ isEditBookModalOpen: false });
   };
 
-  onMonitorBookPress = (monitored, options) => {
+  onMonitorBookPress = (monitored: boolean, options: { shiftKey?: boolean }) => {
     this.props.onMonitorBookPress(this.props.id, monitored, options);
   };
 
@@ -79,7 +109,7 @@ class BookRow extends Component {
       authorMonitored,
       titleSlug,
       bookFiles,
-      indexerFlags,
+      indexerFlags = 0,
       isEditorActive,
       isSelected,
       onSelectedChange,
@@ -88,7 +118,7 @@ class BookRow extends Component {
 
     const bookFile = bookFiles[0];
     const recording = getRecordingIdentity(foreignEditionId || foreignBookId);
-    const isAvailable = Date.parse(releaseDate) < new Date();
+    const isAvailable = releaseDate != null && Date.parse(releaseDate) < Date.now();
 
     return (
       <TableRow>
@@ -178,8 +208,8 @@ class BookRow extends Component {
                 >
                   {
                     <StarRating
-                      rating={ratings.value}
-                      votes={ratings.votes}
+                      rating={ratings?.value ?? 0}
+                      votes={ratings?.votes ?? 0}
                     />
                   }
                 </TableRowCell>
@@ -199,13 +229,13 @@ class BookRow extends Component {
             if (name === 'runtimeLengthMinutes') {
               return (
                 <TableRowCell key={name} className={styles.runtimeLengthMinutes}>
-                  {runtimeLengthMinutes > 0 ? translate('RuntimeMinutes', [runtimeLengthMinutes]) : ''}
+                  {runtimeLengthMinutes != null && runtimeLengthMinutes > 0 ? translate('RuntimeMinutes', { 0: runtimeLengthMinutes }) : ''}
                 </TableRowCell>
               );
             }
 
             if (name === 'narrators') {
-              const narratorNames = narrators.join(', ');
+              const narratorNames = (narrators ?? []).join(', ');
 
               return (
                 <TableRowCell key={name} className={styles.narrators}>
@@ -277,37 +307,5 @@ class BookRow extends Component {
     );
   }
 }
-
-BookRow.propTypes = {
-  id: PropTypes.number.isRequired,
-  authorId: PropTypes.number.isRequired,
-  monitored: PropTypes.bool.isRequired,
-  releaseDate: PropTypes.string,
-  title: PropTypes.string.isRequired,
-  displayTitle: PropTypes.string,
-  foreignBookId: PropTypes.string,
-  foreignEditionId: PropTypes.string,
-  seriesTitle: PropTypes.string.isRequired,
-  authorName: PropTypes.string.isRequired,
-  position: PropTypes.string,
-  pageCount: PropTypes.number,
-  runtimeLengthMinutes: PropTypes.number,
-  narrators: PropTypes.arrayOf(PropTypes.string),
-  ratings: PropTypes.object.isRequired,
-  indexerFlags: PropTypes.number.isRequired,
-  titleSlug: PropTypes.string.isRequired,
-  isSaving: PropTypes.bool,
-  authorMonitored: PropTypes.bool.isRequired,
-  bookFiles: PropTypes.arrayOf(PropTypes.object).isRequired,
-  isEditorActive: PropTypes.bool.isRequired,
-  isSelected: PropTypes.bool,
-  onSelectedChange: PropTypes.func.isRequired,
-  columns: PropTypes.arrayOf(PropTypes.object).isRequired,
-  onMonitorBookPress: PropTypes.func.isRequired
-};
-
-BookRow.defaultProps = {
-  indexerFlags: 0
-};
 
 export default BookRow;

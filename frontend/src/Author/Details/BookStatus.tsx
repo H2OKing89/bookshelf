@@ -1,11 +1,18 @@
-import PropTypes from 'prop-types';
 import BookQuality from 'Book/BookQuality';
+import type { LibraryBookFile } from 'Book/LibraryModels';
 import Label from 'Components/Label';
 import { kinds } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
 import styles from './BookStatus.css';
 
-function BookStatus(props) {
+interface Props {
+  isAvailable?: boolean;
+  monitored: boolean;
+  bookFile?: LibraryBookFile | null;
+  recordingAsin?: string | null;
+}
+
+function BookStatus(props: Props) {
   const {
     isAvailable,
     monitored,
@@ -21,11 +28,11 @@ function BookStatus(props) {
     return (
       <div className={styles.center}>
         <BookQuality
-          title={quality.quality.name}
+          title={quality?.quality.name}
           size={bookFile.size}
           quality={quality}
           isMonitored={monitored}
-          isCutoffNotMet={bookFile.qualityCutoffNotMet}
+          isCutoffNotMet={bookFile.qualityCutoffNotMet === true}
         />
       </div>
     );
@@ -68,12 +75,5 @@ function BookStatus(props) {
     </div>
   );
 }
-
-BookStatus.propTypes = {
-  isAvailable: PropTypes.bool,
-  monitored: PropTypes.bool.isRequired,
-  bookFile: PropTypes.object,
-  recordingAsin: PropTypes.string
-};
 
 export default BookStatus;

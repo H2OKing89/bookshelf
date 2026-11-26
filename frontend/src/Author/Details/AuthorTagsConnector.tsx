@@ -8,17 +8,12 @@ function createMapStateToProps() {
   return createSelector(
     createAuthorSelector(),
     createTagsSelector(),
-    (author, tagList) => {
-      const tags = author.tags
-        .map((tagId) => tagList.find((tag) => tag.id === tagId))
-        .filter((tag) => !!tag)
-        .map((tag) => tag.label)
-        .sort((a, b) => a.localeCompare(b));
-
-      return {
-        tags
-      };
-    }
+    (author, tagList) => ({
+      tags: (author?.tags ?? []).flatMap((tagId) => {
+        const tag = tagList.find((item) => item.id === tagId);
+        return tag ? [tag.label] : [];
+      }).sort((a, b) => a.localeCompare(b))
+    })
   );
 }
 
