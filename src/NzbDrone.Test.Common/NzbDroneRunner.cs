@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Threading;
 using System.Xml.Linq;
 using NLog;
@@ -20,7 +21,7 @@ namespace NzbDrone.Test.Common
     public class NzbDroneRunner
     {
         private readonly IProcessProvider _processProvider;
-        private readonly IRestClient _restClient;
+        private readonly RestClient _restClient;
         private Process _nzbDroneProcess;
         private List<string> _startupLog;
 
@@ -32,7 +33,7 @@ namespace NzbDrone.Test.Common
         public NzbDroneRunner(Logger logger, PostgresOptions postgresOptions, int port = 8787)
         {
             _processProvider = new ProcessProvider(logger);
-            _restClient = new RestClient($"http://localhost:{port}/api/v1");
+            _restClient = TestRestClient.Create($"http://localhost:{port}/api/v1");
 
             PostgresOptions = postgresOptions;
             Port = port;
@@ -81,16 +82,16 @@ namespace NzbDrone.Test.Common
                 request.AddHeader("Authorization", ApiKey);
                 request.AddHeader("X-Api-Key", ApiKey);
 
-                var statusCall = _restClient.Get(request);
+                var statusCall = _restClient.Execute(request);
 
-                if (statusCall.ResponseStatus == ResponseStatus.Completed)
+                if (statusCall.ResponseStatus == ResponseStatus.Completed && statusCall.StatusCode == HttpStatusCode.OK)
                 {
                     _startupLog = null;
                     TestContext.Progress.WriteLine($"Readarr {Port} is started. Running Tests");
                     return;
                 }
 
-                TestContext.Progress.WriteLine("Waiting for Readarr to start. Response Status : {0}  [{1}] {2}", statusCall.ResponseStatus, statusCall.StatusDescription, statusCall.ErrorException.Message);
+                TestContext.Progress.WriteLine("Waiting for Readarr to start. Response Status : {0}  [{1}] {2}", statusCall.ResponseStatus, statusCall.StatusDescription, statusCall.ErrorException?.Message ?? statusCall.ErrorMessage);
 
                 Thread.Sleep(500);
             }

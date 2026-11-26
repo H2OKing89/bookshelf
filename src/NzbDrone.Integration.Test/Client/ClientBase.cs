@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using FluentAssertions;
@@ -28,18 +30,27 @@ namespace NzbDrone.Integration.Test.Client
 
         public RestRequest BuildRequest(string command = "")
         {
-            var request = new RestRequest(_resource + "/" + command.Trim('/'))
-            {
-                RequestFormat = DataFormat.Json,
-            };
+            var request = new RestRequest(_resource + "/" + command.Trim('/'));
 
             request.AddHeader("Authorization", _apiKey);
-            request.AddHeader("X-Api-Key", _apiKey);
+
+            // RestSharp 114 combines default and request headers instead of overriding.
+            // Send a single API key and refuse mismatched defaults in the test client.
+            var defaultKeys = _restClient.DefaultParameters.Where(parameter =>
+                parameter.Type == ParameterType.HttpHeader && string.Equals(parameter.Name, "X-Api-Key", StringComparison.OrdinalIgnoreCase)).ToList();
+            if (defaultKeys.Count == 0)
+            {
+                request.AddHeader("X-Api-Key", _apiKey);
+            }
+            else if (defaultKeys.Count != 1 || !string.Equals(defaultKeys[0].Value?.ToString(), _apiKey, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("The test client has a different default API key.");
+            }
 
             return request;
         }
 
-        public string Execute(IRestRequest request, HttpStatusCode statusCode)
+        public string Execute(RestRequest request, HttpStatusCode statusCode)
         {
             _logger.Info("{0}: {1}", request.Method, _restClient.BuildUri(request));
 
@@ -60,7 +71,7 @@ namespace NzbDrone.Integration.Test.Client
             return response.Content;
         }
 
-        public T Execute<T>(IRestRequest request, HttpStatusCode statusCode)
+        public T Execute<T>(RestRequest request, HttpStatusCode statusCode)
             where T : class, new()
         {
             var content = Execute(request, statusCode);
@@ -68,14 +79,19 @@ namespace NzbDrone.Integration.Test.Client
             return Json.Deserialize<T>(content);
         }
 
-        private static void AssertDisableCache(IRestResponse response)
+        private static void AssertDisableCache(RestResponse response)
         {
-            // cache control header gets reordered on net core
-            var headers = response.Headers;
-            ((string)headers.SingleOrDefault(c => c.Name == "Cache-Control")?.Value ?? string.Empty).Split(',').Select(x => x.Trim())
-                .Should().BeEquivalentTo("no-store, no-cache".Split(',').Select(x => x.Trim()));
-            headers.Single(c => c.Name == "Pragma").Value.Should().Be("no-cache");
-            headers.Single(c => c.Name == "Expires").Value.Should().Be("-1");
+            // RestSharp 114 separates response and content headers; Expires is a content header.
+            // Header names are case-insensitive, and cache-control directive order can vary.
+            var headers = (response.Headers ?? Array.Empty<HeaderParameter>())
+                .Concat(response.ContentHeaders ?? Array.Empty<HeaderParameter>())
+                .ToList();
+            var cache = headers.Where(x => string.Equals(x.Name, "Cache-Control", StringComparison.OrdinalIgnoreCase))
+                .SelectMany(x => x.Value.ToString().Split(','))
+                .Select(x => x.Trim());
+            cache.Should().BeEquivalentTo("no-store", "no-cache");
+            headers.Single(c => string.Equals(c.Name, "Pragma", StringComparison.OrdinalIgnoreCase)).Value.Should().Be("no-cache");
+            headers.Single(c => string.Equals(c.Name, "Expires", StringComparison.OrdinalIgnoreCase)).Value.Should().Be("-1");
         }
     }
 
@@ -96,14 +112,14 @@ namespace NzbDrone.Integration.Test.Client
         public PagingResource<TResource> GetPaged(int pageNumber, int pageSize, string sortKey, string sortDir, string filterKey = null, object filterValue = null)
         {
             var request = BuildRequest();
-            request.AddParameter("page", pageNumber);
-            request.AddParameter("pageSize", pageSize);
-            request.AddParameter("sortKey", sortKey);
-            request.AddParameter("sortDir", sortDir);
+            request.AddQueryParameter("page", pageNumber);
+            request.AddQueryParameter("pageSize", pageSize);
+            request.AddQueryParameter("sortKey", sortKey);
+            request.AddQueryParameter("sortDir", sortDir);
 
             if (filterKey != null && filterValue != null)
             {
-                request.AddParameter(filterKey, filterValue);
+                request.AddQueryParameter(filterKey, Convert.ToString(filterValue, CultureInfo.InvariantCulture));
             }
 
             return Get<PagingResource<TResource>>(request);
@@ -161,30 +177,30 @@ namespace NzbDrone.Integration.Test.Client
             return Put<object>(request, statusCode);
         }
 
-        public T Get<T>(IRestRequest request, HttpStatusCode statusCode = HttpStatusCode.OK)
+        public T Get<T>(RestRequest request, HttpStatusCode statusCode = HttpStatusCode.OK)
             where T : class, new()
         {
-            request.Method = Method.GET;
+            request.Method = Method.Get;
             return Execute<T>(request, statusCode);
         }
 
-        public T Post<T>(IRestRequest request, HttpStatusCode statusCode = HttpStatusCode.Created)
+        public T Post<T>(RestRequest request, HttpStatusCode statusCode = HttpStatusCode.Created)
             where T : class, new()
         {
-            request.Method = Method.POST;
+            request.Method = Method.Post;
             return Execute<T>(request, statusCode);
         }
 
-        public T Put<T>(IRestRequest request, HttpStatusCode statusCode = HttpStatusCode.Accepted)
+        public T Put<T>(RestRequest request, HttpStatusCode statusCode = HttpStatusCode.Accepted)
             where T : class, new()
         {
-            request.Method = Method.PUT;
+            request.Method = Method.Put;
             return Execute<T>(request, statusCode);
         }
 
-        public void Delete(IRestRequest request, HttpStatusCode statusCode = HttpStatusCode.OK)
+        public void Delete(RestRequest request, HttpStatusCode statusCode = HttpStatusCode.OK)
         {
-            request.Method = Method.DELETE;
+            request.Method = Method.Delete;
             Execute<object>(request, statusCode);
         }
     }
