@@ -239,6 +239,18 @@
     "./src/Components/Form/TagInputConnector.tsx",
     "./src/Components/Form/TagSelectInputConnector.tsx",
     "./src/Components/Form/TextTagInputConnector.tsx",
-    "./src/Components/Form/tagInputState.ts"
+    "./src/Components/Form/tagInputState.ts",
+    "./src/Settings/CustomFormats/**/*.tsx",
+    "./src/Settings/CustomFormats/**/*.ts",
+    "./src/Settings/providerCardState.ts",
+    "./src/Settings/Indexers/Indexers/Indexer.tsx",
+    "./src/Settings/Indexers/Indexers/Indexers.tsx",
+    "./src/Settings/Indexers/Indexers/IndexersConnector.tsx",
+    "./src/Settings/DownloadClients/DownloadClients/DownloadClient.tsx",
+    "./src/Settings/DownloadClients/DownloadClients/DownloadClients.tsx",
+    "./src/Settings/DownloadClients/DownloadClients/DownloadClientsConnector.tsx",
+    "./src/Settings/ImportLists/ImportLists/ImportList.tsx",
+    "./src/Settings/ImportLists/ImportLists/ImportLists.tsx",
+    "./src/Settings/ImportLists/ImportLists/ImportListsConnector.tsx"
   ]
 }

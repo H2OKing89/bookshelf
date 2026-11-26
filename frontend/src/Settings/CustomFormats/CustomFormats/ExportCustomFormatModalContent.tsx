@@ -1,0 +1,84 @@
+import { Component } from 'react';
+import Button from 'Components/Link/Button';
+import ClipboardButton from 'Components/Link/ClipboardButton';
+import LoadingIndicator from 'Components/Loading/LoadingIndicator';
+import ModalBody from 'Components/Modal/ModalBody';
+import ModalContent from 'Components/Modal/ModalContent';
+import ModalFooter from 'Components/Modal/ModalFooter';
+import ModalHeader from 'Components/Modal/ModalHeader';
+import { kinds } from 'Helpers/Props';
+import translate from 'Utilities/String/translate';
+import styles from './ExportCustomFormatModalContent.css';
+
+export interface ExportFormatContentProps {
+  isFetching: boolean;
+  error?: unknown;
+  json: string;
+  specificationsPopulated: boolean;
+  onModalClose: () => void;
+}
+
+class ExportCustomFormatModalContent extends Component<ExportFormatContentProps> {
+
+  //
+  // Render
+
+  render() {
+    const {
+      isFetching,
+      error,
+      json,
+      specificationsPopulated,
+      onModalClose
+    } = this.props;
+
+    return (
+      <ModalContent onModalClose={onModalClose}>
+
+        <ModalHeader>
+          Export Custom Format
+        </ModalHeader>
+
+        <ModalBody>
+          <div>
+            {
+              isFetching &&
+                <LoadingIndicator />
+            }
+
+            {
+              !isFetching && !!error &&
+                <div>
+                  Unable to load custom formats
+                </div>
+            }
+
+            {
+              !isFetching && !error && specificationsPopulated &&
+                <div>
+                  <pre>
+                    {json}
+                  </pre>
+                </div>
+            }
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <ClipboardButton
+            className={styles.button}
+            value={json}
+            title={translate('CopyToClipboard')}
+            kind={kinds.DEFAULT}
+          />
+          <Button
+            onPress={onModalClose}
+          >
+            Close
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    );
+  }
+}
+
+export default ExportCustomFormatModalContent;
