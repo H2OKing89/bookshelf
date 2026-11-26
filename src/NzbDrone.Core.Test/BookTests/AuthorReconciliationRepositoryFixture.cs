@@ -13,6 +13,7 @@ using NzbDrone.Core.Download;
 using NzbDrone.Core.Download.History;
 using NzbDrone.Core.Download.TrackedDownloads;
 using NzbDrone.Core.Exceptions;
+using NzbDrone.Core.Extras.Metadata.Files;
 using NzbDrone.Core.History;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MetadataSource.Audiobook;
@@ -235,6 +236,140 @@ namespace NzbDrone.Core.Test.BookTests
             preview.CanApply.Should().BeFalse();
             preview.Blockers.Should().Contain(message => message.Contains("author folders differ"));
             preview.Blockers.Should().Contain(message => message.Contains("pending download submissions"));
+        }
+
+        private void GivenStaleSiblingFolder()
+        {
+            Directory.CreateDirectory(_target.Path);
+            File.WriteAllBytes(_file.Path, new byte[] { 1, 2, 3 });
+            _source.Path = Path.Combine(TempFolder, "Absent Author Folder");
+            Db.Update(_source);
+        }
+
+        [Test]
+        public void should_reconcile_an_absent_sibling_folder_without_moving_recordings()
+        {
+            GivenStaleSiblingFolder();
+            var preview = Subject.Preview(_confirmation);
+            preview.CanApply.Should().BeTrue();
+            _confirmation.PreviewToken = preview.PreviewToken;
+            _confirmation.KeepCanonicalSettings = true;
+
+            Subject.Apply(_confirmation);
+
+            Db.Single<Author>().Path.Should().Be(_target.Path);
+            Db.Single<BookFile>().Path.Should().Be(_file.Path);
+            File.ReadAllBytes(_file.Path).Should().Equal(new byte[] { 1, 2, 3 });
+            Directory.Exists(_source.Path).Should().BeFalse();
+            Db.Single<Book>().AuthorMetadataId.Should().Be(_target.AuthorMetadataId);
+        }
+
+        [TestCase("source-exists")]
+        [TestCase("missing-file")]
+        [TestCase("outside-canonical")]
+        [TestCase("different-parent")]
+        [TestCase("sidecar")]
+        public void should_keep_unsafe_different_folder_reconciliation_blocked(string scenario)
+        {
+            GivenStaleSiblingFolder();
+            switch (scenario)
+            {
+                case "source-exists":
+                    Directory.CreateDirectory(_source.Path);
+                    break;
+                case "missing-file":
+                    File.Delete(_file.Path);
+                    break;
+                case "outside-canonical":
+                    _file.Path = Path.Combine(TempFolder, "Outside.m4b");
+                    File.WriteAllBytes(_file.Path, new byte[] { 1 });
+                    Db.Update(_file);
+                    break;
+                case "different-parent":
+                    _source.Path = Path.Combine(TempFolder, "Another Parent", "Absent");
+                    Db.Update(_source);
+                    break;
+                case "sidecar":
+                    Db.Insert(new MetadataFile
+                    {
+                        AuthorId = _source.Id,
+                        BookId = _book.Id,
+                        BookFileId = _file.Id,
+                        Consumer = "OwnedFixture",
+                        RelativePath = "Synthetic.nfo",
+                        Extension = ".nfo"
+                    });
+                    break;
+            }
+
+            var preview = Subject.Preview(_confirmation);
+            preview.CanApply.Should().BeFalse();
+            preview.Blockers.Should().Contain(message => message.Contains("author folders differ"));
+        }
+
+        [Test]
+        public void should_block_a_file_symlink_outside_the_canonical_folder()
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                Assert.Ignore("Creating symbolic links requires an explicit Windows privilege.");
+            }
+
+            GivenStaleSiblingFolder();
+            var outside = Path.Combine(TempFolder, "Outside.m4b");
+            File.WriteAllBytes(outside, new byte[] { 1 });
+            File.Delete(_file.Path);
+            File.CreateSymbolicLink(_file.Path, outside);
+
+            Subject.Preview(_confirmation).CanApply.Should().BeFalse();
+        }
+
+        [Test]
+        public void should_block_a_missing_folder_without_mapped_recordings()
+        {
+            GivenStaleSiblingFolder();
+            Db.Delete(_file);
+
+            Subject.Preview(_confirmation).CanApply.Should().BeFalse();
+        }
+
+        [TestCase("tag")]
+        [TestCase("recording")]
+        public void should_block_reconciliation_when_import_list_claims_would_be_lost(string claim)
+        {
+            using var connection = Db.OpenConnection();
+            if (claim == "tag")
+            {
+                connection.Execute("""
+                    INSERT INTO "ImportListTagOwners" ("AuthorId", "TagId", "ImportListId")
+                    VALUES (@AuthorId, 10, 20)
+                    """,
+                    new { AuthorId = _source.Id });
+            }
+            else
+            {
+                connection.Execute("""
+                    INSERT INTO "ImportListManagedRecordings" ("BookId", "ForeignBookId", "AuthorMetadataId", "ImportListId")
+                    VALUES (@BookId, @ForeignBookId, @AuthorMetadataId, 20)
+                    """,
+                    new { BookId = _book.Id, _book.ForeignBookId, _source.AuthorMetadataId });
+            }
+
+            var preview = Subject.Preview(_confirmation);
+            preview.CanApply.Should().BeFalse();
+            preview.Blockers.Should().Contain(message => message.Contains("import-list ownership"));
+        }
+
+        [Test]
+        public void should_invalidate_the_stale_folder_preview_if_the_source_folder_appears()
+        {
+            GivenStaleSiblingFolder();
+            _confirmation.PreviewToken = Subject.Preview(_confirmation).PreviewToken;
+            _confirmation.KeepCanonicalSettings = true;
+            Directory.CreateDirectory(_source.Path);
+
+            Assert.That(() => Subject.Apply(_confirmation), Throws.TypeOf<NzbDroneClientException>());
+            Db.All<Author>().Should().HaveCount(2);
         }
 
         private Author AddAuthor(string foreignId, string name, string slug, string path, bool monitored, params string[] aliases)

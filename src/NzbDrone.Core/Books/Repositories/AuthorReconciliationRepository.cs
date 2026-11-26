@@ -89,7 +89,8 @@ namespace NzbDrone.Core.Books
                 // to a disappearing author between the snapshot and deletion.
                 connection.Execute("""
                     LOCK TABLE "AuthorMetadata", "Authors", "AudiobookMetadataOverrides", "Blocklist", "BookFiles", "Books",
-                        "DownloadHistory", "Editions", "ExtraFiles", "History", "MetadataFiles", "PendingReleases"
+                        "DownloadHistory", "Editions", "ExtraFiles", "History", "ImportListManagedRecordings",
+                        "ImportListMembershipItems", "ImportListTagOwners", "MetadataFiles", "PendingReleases"
                     IN SHARE ROW EXCLUSIVE MODE
                     """, transaction: transaction);
             }
@@ -162,11 +163,6 @@ namespace NzbDrone.Core.Books
                 blockers.Add("The name credit does not resolve uniquely to the selected canonical author.");
             }
 
-            if (!MatchingPath(source.Path, target.Path))
-            {
-                blockers.Add("The author folders differ. Reconciliation requires the same folder to preserve relative sidecar paths.");
-            }
-
             var namesToClaim = new[] { NormalName(sourceIdentity.Value), targetOverride?.Name ?? NormalName(target.Name) }.ToHashSet(StringComparer.OrdinalIgnoreCase);
             if (targetOverride?.Enabled == false || string.IsNullOrWhiteSpace(target.Name) ||
                 mappings.Any(mapping => mapping.Enabled && mapping.Id != targetOverride?.Id &&
@@ -193,6 +189,32 @@ namespace NzbDrone.Core.Books
                 transaction).AsList();
             var referenceIds = AuthorReferenceTables.ToDictionary(table => table,
                 table => connection.Query<int>($"SELECT \"Id\" FROM \"{table}\" WHERE \"AuthorId\" = @Id ORDER BY \"Id\"", new { source.Id }, transaction).AsList());
+            if (!MatchingPath(source.Path, target.Path) &&
+                !CanReconcileStaleFolder(source.Path, target.Path, files, referenceIds["ExtraFiles"].Count, referenceIds["MetadataFiles"].Count))
+            {
+                blockers.Add("The author folders differ. A stale folder can only be reconciled when it is absent, all mapped files already exist in the canonical sibling folder, and there are no source sidecar references.");
+            }
+
+            // Import-list ownership was introduced after reviewed author
+            // reconciliation. Rebinding a book would release its managed
+            // recording claim, and deleting an author would release tag owners.
+            var managedClaims = connection.ExecuteScalar<int>(
+                """SELECT COUNT(*) FROM "ImportListManagedRecordings" WHERE "AuthorMetadataId" = @AuthorMetadataId""",
+                new { source.AuthorMetadataId },
+                transaction);
+            var tagClaims = connection.ExecuteScalar<int>(
+                """SELECT COUNT(*) FROM "ImportListTagOwners" WHERE "AuthorId" = @Id""",
+                new { source.Id },
+                transaction);
+            var memberships = connection.ExecuteScalar<int>(
+                """SELECT COUNT(*) FROM "ImportListMembershipItems" WHERE "AuthorId" = @ForeignAuthorId""",
+                new { source.ForeignAuthorId },
+                transaction);
+            if (managedClaims != 0 || tagClaims != 0 || memberships != 0)
+            {
+                blockers.Add("Review and release the source author's import-list ownership or membership before reconciliation.");
+            }
+
             var holds = connection.Query<DownloadHistory>(
                 """SELECT "Id", "AuthorId", "Data" FROM "DownloadHistory" WHERE "EventType" = @Pending""",
                 new { Pending = DownloadHistoryEventType.DownloadSubmissionPending },
@@ -447,6 +469,79 @@ namespace NzbDrone.Core.Books
             }
             catch (Exception error) when (error is ArgumentException or IOException or NotSupportedException)
             {
+                return false;
+            }
+        }
+
+        // A historical duplicate may have been assigned a placeholder folder
+        // even though its recordings were already imported beneath the canonical
+        // author. Do not move any files or reinterpret relative sidecar paths.
+        private static bool CanReconcileStaleFolder(string source, string target, List<AuthorReconciliationFile> files, int extraFiles, int metadataFiles)
+        {
+            if (extraFiles != 0 || metadataFiles != 0 || files.Count == 0)
+            {
+                return false;
+            }
+
+            try
+            {
+                if (!Path.IsPathFullyQualified(source) || !Path.IsPathFullyQualified(target))
+                {
+                    return false;
+                }
+
+                var sourcePath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(source));
+                var targetPath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(target));
+                var parent = Path.GetDirectoryName(sourcePath);
+                if (parent == null || !MatchingPath(parent, Path.GetDirectoryName(targetPath)) || !Directory.Exists(targetPath))
+                {
+                    return false;
+                }
+
+                // Enumerating the shared parent distinguishes an absent directory
+                // from an unavailable or broken symlink entry. The parent itself
+                // can be an intentional library-root mount/symlink.
+                if (Directory.EnumerateFileSystemEntries(parent).Any(entry => MatchingPath(entry, sourcePath)) ||
+                    File.GetAttributes(targetPath).HasFlag(FileAttributes.ReparsePoint))
+                {
+                    return false;
+                }
+
+                foreach (var file in files)
+                {
+                    if (!Path.IsPathFullyQualified(file.Path))
+                    {
+                        return false;
+                    }
+
+                    var path = Path.GetFullPath(file.Path);
+                    if (!targetPath.IsParentPath(path) || !File.Exists(path))
+                    {
+                        return false;
+                    }
+
+                    // A file or intermediate directory symlink might actually
+                    // point outside the canonical author folder.
+                    while (!MatchingPath(path, targetPath))
+                    {
+                        if (File.GetAttributes(path).HasFlag(FileAttributes.ReparsePoint))
+                        {
+                            return false;
+                        }
+
+                        path = Path.GetDirectoryName(path);
+                        if (path == null)
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception error) when (error is ArgumentException or IOException or NotSupportedException or UnauthorizedAccessException)
+            {
+                // Inaccessible or malformed storage is not evidence for a merge.
                 return false;
             }
         }
