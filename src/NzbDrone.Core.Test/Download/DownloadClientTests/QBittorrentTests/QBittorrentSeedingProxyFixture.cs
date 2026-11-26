@@ -44,6 +44,14 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.QBittorrentTests
 
         private string Form => Encoding.UTF8.GetString(_requests.Single(request => request.Method == HttpMethod.Post).ContentData);
 
+        [TestCase(false, "false")]
+        [TestCase(true, "true")]
+        public void removal_always_sends_explicit_delete_files_choice(bool deleteFiles, string expected)
+        {
+            Subject.RemoveTorrent("owned-native-handle", deleteFiles, _settings);
+            Form.Split('&').Should().Contain("hashes=owned-native-handle").And.Contain($"deleteFiles={expected}");
+        }
+
         [TestCase(QBittorrentSeedTimeType.Total, "seedingTimeLimit")]
         [TestCase(QBittorrentSeedTimeType.Inactive, "inactiveSeedingTimeLimit")]
         public void magnet_add_uses_only_selected_time_parameter(QBittorrentSeedTimeType mode, string parameter)
