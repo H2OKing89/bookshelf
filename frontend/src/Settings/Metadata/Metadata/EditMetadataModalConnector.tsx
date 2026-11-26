@@ -1,10 +1,10 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
-import { connect } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { clearPendingChanges } from 'Store/Actions/baseActions';
-import EditMetadataModal from './EditMetadataModal';
+import type { LegacyDispatch } from 'Store/StateTypes';
+import EditMetadataModal, { type MetadataModalProps } from './EditMetadataModal';
 
-function createMapDispatchToProps(dispatch, props) {
+function createMapDispatchToProps(dispatch: LegacyDispatch) {
   const section = 'settings.metadata';
 
   return {
@@ -14,7 +14,10 @@ function createMapDispatchToProps(dispatch, props) {
   };
 }
 
-class EditMetadataModalConnector extends Component {
+const connector = connect(null, createMapDispatchToProps);
+type Props = MetadataModalProps & ConnectedProps<typeof connector>;
+
+class EditMetadataModalConnector extends Component<Props> {
 
   //
   // Listeners
@@ -37,9 +40,4 @@ class EditMetadataModalConnector extends Component {
   }
 }
 
-EditMetadataModalConnector.propTypes = {
-  onModalClose: PropTypes.func.isRequired,
-  dispatchClearPendingChanges: PropTypes.func.isRequired
-};
-
-export default connect(null, createMapDispatchToProps)(EditMetadataModalConnector);
+export default connector(EditMetadataModalConnector);

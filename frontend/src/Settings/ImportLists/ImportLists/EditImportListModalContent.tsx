@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import AuthorMonitorNewItemsOptionsPopoverContent from 'AddAuthor/AuthorMonitorNewItemsOptionsPopoverContent';
 import Alert from 'Components/Alert';
@@ -21,9 +20,11 @@ import ModalHeader from 'Components/Modal/ModalHeader';
 import Popover from 'Components/Tooltip/Popover';
 import { icons, inputTypes, kinds, tooltipPositions } from 'Helpers/Props';
 import AdvancedSettingsButton from 'Settings/AdvancedSettingsButton';
+import { asStateRecord } from 'Store/StateTypes';
 import formatShortTimeSpan from 'Utilities/Date/formatShortTimeSpan';
 import requestAction from 'Utilities/requestAction';
 import translate from 'Utilities/String/translate';
+import { checkDraft, numberDraft, providerEditDrafts, type ProviderEditProps,textDraft } from '../../providerSettingsState';
 import ImportListMembership from './ImportListMembership';
 import styles from './EditImportListModalContent.css';
 
@@ -48,7 +49,13 @@ function ImportListMonitoringOptionsPopoverContent() {
   );
 }
 
-function EditImportListModalContent(props) {
+interface Props extends ProviderEditProps {
+  onDeleteImportListPress?: () => void;
+  id?: number;
+  showMetadataProfile: boolean;
+}
+
+function EditImportListModalContent(props: Props) {
 
   const monitorOptions = [
     { key: 'none', value: 'None' },
@@ -76,31 +83,26 @@ function EditImportListModalContent(props) {
     ...otherProps
   } = props;
 
-  const {
-    name,
-    enableAutomaticAdd,
-    minRefreshInterval,
-    shouldMonitor,
-    shouldMonitorExisting,
-    shouldSearch,
-    rootFolderPath,
-    monitorNewItems,
-    qualityProfileId,
-    metadataProfileId,
-    tags,
-    tagExisting,
-    fields,
-    message
-  } = item;
+  const { name, tags, fields, message } = providerEditDrafts(item);
+  const enableAutomaticAdd = checkDraft(item, 'enableAutomaticAdd');
+  const shouldMonitorExisting = checkDraft(item, 'shouldMonitorExisting');
+  const shouldSearch = checkDraft(item, 'shouldSearch');
+  const minRefreshInterval = textDraft(item, 'minRefreshInterval');
+  const shouldMonitor = textDraft(item, 'shouldMonitor');
+  const rootFolderPath = textDraft(item, 'rootFolderPath');
+  const monitorNewItems = textDraft(item, 'monitorNewItems');
+  const tagExisting = textDraft(item, 'tagExisting');
+  const qualityProfileId = numberDraft(item, 'qualityProfileId');
+  const metadataProfileId = numberDraft(item, 'metadataProfileId');
 
-  const [authState, setAuthState] = React.useState({
+  const [authState, setAuthState] = React.useState<{ isAuthenticating: boolean; authError: string | null; listOptions: unknown; authedOnce: boolean }>({
     isAuthenticating: false,
     authError: null,
     listOptions: null,
     authedOnce: false
   });
 
-  const isHardcover = item?.implementation === 'HardcoverImport';
+  const isHardcover = textDraft(item, 'implementation').value === 'HardcoverImport';
 
   const onAuthenticatePress = () => {
     if (authState.isAuthenticating) {
@@ -117,10 +119,10 @@ function EditImportListModalContent(props) {
       provider: 'importlist',
       action: 'auth',
       providerData: item
-    }).then((response) => {
-      const { success, options, error: responseError } = response;
+    }).then((response: unknown) => {
+      const { success, options, error: responseError } = asStateRecord(response);
 
-      if (success) {
+      if (success === true) {
         setAuthState({
           isAuthenticating: false,
           authError: null,
@@ -130,15 +132,15 @@ function EditImportListModalContent(props) {
       } else {
         setAuthState({
           isAuthenticating: false,
-          authError: responseError || translate('UnableToAuthenticate'),
+          authError: typeof responseError === 'string' && responseError ? responseError : translate('UnableToAuthenticate'),
           listOptions: null,
           authedOnce: false
         });
       }
-    }).catch((err) => {
+    }).catch(() => {
       setAuthState({
         isAuthenticating: false,
-        authError: err?.message || translate('UnableToAuthenticate'),
+        authError: translate('UnableToAuthenticate'),
         listOptions: null,
         authedOnce: false
       });
@@ -171,9 +173,9 @@ function EditImportListModalContent(props) {
                 !!message &&
                   <Alert
                     className={styles.message}
-                    kind={message.value.type}
+                    kind={message.type}
                   >
-                    {message.value.message}
+                    {message.message}
                   </Alert>
               }
 
@@ -181,7 +183,7 @@ function EditImportListModalContent(props) {
                 kind={kinds.INFO}
                 className={styles.message}
               >
-                {translate('ListWillRefreshEveryInterp', [formatShortTimeSpan(minRefreshInterval.value)])}
+                {translate('ListWillRefreshEveryInterp', { 0: formatShortTimeSpan(minRefreshInterval.value) })}
               </Alert>
 
               <FieldSet legend={translate('ImportListSettings')} >
@@ -398,23 +400,18 @@ function EditImportListModalContent(props) {
                     }
                     {
                       fields.map((field) => {
-                        const isListField = field.name === 'listIds';
-                      const safeField = {
-                        ...field,
-                        value: field.value ?? ''
-                      };
+                        const isListField = isHardcover && field.name === 'listIds';
 
                         return (
                           <ProviderFieldFormGroup
-                          key={safeField.name}
+                            key={field.name}
                             advancedSettings={advancedSettings}
                             provider="importList"
                             providerData={item}
                             section="settings.importLists"
-                          selectOptions={isListField && authState.listOptions ? authState.listOptions : safeField.selectOptions}
-                          pending={isListField ? (authState.isAuthenticating || safeField.pending) : safeField.pending}
-                            disabled={isListField && !authState.authedOnce}
-                          {...safeField}
+                            {...field}
+                            selectOptions={isListField && authState.listOptions ? authState.listOptions : field.selectOptions}
+                            pending={isListField ? authState.isAuthenticating || field.pending : field.pending}
                             onChange={onFieldChange}
                           />
                         );
@@ -429,7 +426,7 @@ function EditImportListModalContent(props) {
       </ModalBody>
       <ModalFooter>
         {
-          id &&
+          !!id &&
             <Button
               className={styles.deleteButton}
               kind={kinds.DANGER}
@@ -473,25 +470,4 @@ function EditImportListModalContent(props) {
   );
 }
 
-EditImportListModalContent.propTypes = {
-  id: PropTypes.number,
-  advancedSettings: PropTypes.bool.isRequired,
-  isFetching: PropTypes.bool.isRequired,
-  error: PropTypes.object,
-  isSaving: PropTypes.bool.isRequired,
-  isTesting: PropTypes.bool.isRequired,
-  saveError: PropTypes.object,
-  item: PropTypes.object.isRequired,
-  showMetadataProfile: PropTypes.bool.isRequired,
-  onInputChange: PropTypes.func.isRequired,
-  onFieldChange: PropTypes.func.isRequired,
-  onModalClose: PropTypes.func.isRequired,
-  onSavePress: PropTypes.func.isRequired,
-  onTestPress: PropTypes.func.isRequired,
-  onAdvancedSettingsPress: PropTypes.func.isRequired,
-  onDeleteImportListPress: PropTypes.func
-};
-
 export default EditImportListModalContent;
-
-

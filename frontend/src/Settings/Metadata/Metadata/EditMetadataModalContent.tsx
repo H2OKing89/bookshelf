@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import Form from 'Components/Form/Form';
 import FormGroup from 'Components/Form/FormGroup';
 import FormInputGroup from 'Components/Form/FormInputGroup';
@@ -12,8 +11,11 @@ import ModalFooter from 'Components/Modal/ModalFooter';
 import ModalHeader from 'Components/Modal/ModalHeader';
 import { inputTypes } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
+import { type ProviderEditBaseProps,providerEditDrafts } from '../../providerSettingsState';
 
-function EditMetadataModalContent(props) {
+type Props = ProviderEditBaseProps;
+
+function EditMetadataModalContent(props: Props) {
   const {
     isSaving,
     saveError,
@@ -25,11 +27,7 @@ function EditMetadataModalContent(props) {
     ...otherProps
   } = props;
 
-  const {
-    name,
-    enable,
-    fields
-  } = item;
+  const { name, enable, fields } = providerEditDrafts(item);
 
   return (
     <ModalContent onModalClose={onModalClose}>
@@ -89,16 +87,5 @@ function EditMetadataModalContent(props) {
     </ModalContent>
   );
 }
-
-EditMetadataModalContent.propTypes = {
-  isSaving: PropTypes.bool.isRequired,
-  saveError: PropTypes.object,
-  item: PropTypes.object.isRequired,
-  onInputChange: PropTypes.func.isRequired,
-  onFieldChange: PropTypes.func.isRequired,
-  onModalClose: PropTypes.func.isRequired,
-  onSavePress: PropTypes.func.isRequired,
-  onDeleteMetadataPress: PropTypes.func
-};
 
 export default EditMetadataModalContent;

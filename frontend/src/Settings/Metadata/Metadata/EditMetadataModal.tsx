@@ -1,9 +1,10 @@
-import PropTypes from 'prop-types';
 import Modal from 'Components/Modal/Modal';
 import { sizes } from 'Helpers/Props';
-import EditMetadataModalContentConnector from './EditMetadataModalContentConnector';
+import EditMetadataModalContentConnector, { type MetadataEditOwnProps } from './EditMetadataModalContentConnector';
 
-function EditMetadataModal({ isOpen, onModalClose, ...otherProps }) {
+export type MetadataModalProps = MetadataEditOwnProps & { isOpen: boolean };
+
+function EditMetadataModal({ isOpen, onModalClose, ...otherProps }: MetadataModalProps) {
   return (
     <Modal
       size={sizes.MEDIUM}
@@ -17,10 +18,5 @@ function EditMetadataModal({ isOpen, onModalClose, ...otherProps }) {
     </Modal>
   );
 }
-
-EditMetadataModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onModalClose: PropTypes.func.isRequired
-};
 
 export default EditMetadataModal;

@@ -1,9 +1,10 @@
-import PropTypes from 'prop-types';
 import Modal from 'Components/Modal/Modal';
 import { sizes } from 'Helpers/Props';
-import EditNotificationModalContentConnector from './EditNotificationModalContentConnector';
+import EditNotificationModalContentConnector, { type NotificationEditOwnProps } from './EditNotificationModalContentConnector';
 
-function EditNotificationModal({ isOpen, onModalClose, ...otherProps }) {
+export type NotificationModalProps = NotificationEditOwnProps & { isOpen: boolean };
+
+function EditNotificationModal({ isOpen, onModalClose, ...otherProps }: NotificationModalProps) {
   return (
     <Modal
       size={sizes.MEDIUM}
@@ -17,10 +18,5 @@ function EditNotificationModal({ isOpen, onModalClose, ...otherProps }) {
     </Modal>
   );
 }
-
-EditNotificationModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onModalClose: PropTypes.func.isRequired
-};
 
 export default EditNotificationModal;

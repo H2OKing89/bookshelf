@@ -1,7 +1,7 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
-import { connect } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { createSelector } from 'reselect';
+import type { ValueChange } from 'Components/Form/formTypes';
 import {
   saveDownloadClient,
   setDownloadClientFieldValue,
@@ -10,11 +10,19 @@ import {
   toggleAdvancedSettings
 } from 'Store/Actions/settingsActions';
 import createProviderSettingsSelector from 'Store/Selectors/createProviderSettingsSelector';
+import { type LegacyRootState } from 'Store/StateTypes';
 import EditDownloadClientModalContent from './EditDownloadClientModalContent';
+
+export interface DownloadClientEditOwnProps {
+  id?: number;
+  onModalClose: () => void;
+  onDeleteDownloadClientPress?: () => void;
+  onSaveSuccess: () => void;
+}
 
 function createMapStateToProps() {
   return createSelector(
-    (state) => state.settings.advancedSettings,
+    (state: LegacyRootState) => state.settings.advancedSettings === true,
     createProviderSettingsSelector('downloadClients'),
     (advancedSettings, downloadClient) => {
       return {
@@ -26,19 +34,22 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  setDownloadClientValue,
-  setDownloadClientFieldValue,
+  setDownloadClientValue: setDownloadClientValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
+  setDownloadClientFieldValue: setDownloadClientFieldValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
   saveDownloadClient,
   testDownloadClient,
   toggleAdvancedSettings
 };
 
-class EditDownloadClientModalContentConnector extends Component {
+const connector = connect(createMapStateToProps, mapDispatchToProps);
+type Props = DownloadClientEditOwnProps & ConnectedProps<typeof connector>;
+
+export class EditDownloadClientModalContentConnector extends Component<Props> {
 
   //
   // Lifecycle
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps: Props) {
     if (prevProps.isSaving && !this.props.isSaving && !this.props.saveError) {
       this.props.onSaveSuccess();
     }
@@ -47,11 +58,11 @@ class EditDownloadClientModalContentConnector extends Component {
   //
   // Listeners
 
-  onInputChange = ({ name, value }) => {
+  onInputChange = ({ name, value }: ValueChange<unknown>) => {
     this.props.setDownloadClientValue({ name, value });
   };
 
-  onFieldChange = ({ name, value }) => {
+  onFieldChange = ({ name, value }: ValueChange<unknown>) => {
     this.props.setDownloadClientFieldValue({ name, value });
   };
 
@@ -71,11 +82,9 @@ class EditDownloadClientModalContentConnector extends Component {
   // Render
 
   render() {
-    const { onSaveSuccess, ...props } = this.props;
-
     return (
       <EditDownloadClientModalContent
-        {...props}
+        {...this.props}
         onSavePress={this.onSavePress}
         onTestPress={this.onTestPress}
         onAdvancedSettingsPress={this.onAdvancedSettingsPress}
@@ -86,18 +95,4 @@ class EditDownloadClientModalContentConnector extends Component {
   }
 }
 
-EditDownloadClientModalContentConnector.propTypes = {
-  id: PropTypes.number,
-  isFetching: PropTypes.bool.isRequired,
-  isSaving: PropTypes.bool.isRequired,
-  saveError: PropTypes.object,
-  item: PropTypes.object.isRequired,
-  setDownloadClientValue: PropTypes.func.isRequired,
-  setDownloadClientFieldValue: PropTypes.func.isRequired,
-  saveDownloadClient: PropTypes.func.isRequired,
-  testDownloadClient: PropTypes.func.isRequired,
-  toggleAdvancedSettings: PropTypes.func.isRequired,
-  onSaveSuccess: PropTypes.func.isRequired
-};
-
-export default connect(createMapStateToProps, mapDispatchToProps)(EditDownloadClientModalContentConnector);
+export default connector(EditDownloadClientModalContentConnector);

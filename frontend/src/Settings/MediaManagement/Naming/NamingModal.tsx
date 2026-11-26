@@ -1,6 +1,6 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import FieldSet from 'Components/FieldSet';
+import type { ValueChange } from 'Components/Form/formTypes';
 import SelectInput from 'Components/Form/SelectInput';
 import TextInput from 'Components/Form/TextInput';
 import Button from 'Components/Link/Button';
@@ -11,7 +11,8 @@ import ModalFooter from 'Components/Modal/ModalFooter';
 import ModalHeader from 'Components/Modal/ModalHeader';
 import { sizes } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
-import NamingOption from './NamingOption';
+import NamingOption, { type NamingOptionChange } from './NamingOption';
+import { insertNamingToken, type NamingField, type TokenCase } from './namingSettingsState';
 import styles from './NamingModal.css';
 
 const separatorOptions = [
@@ -150,16 +151,28 @@ const originalTokens = [
   { token: '{Original Filename}', example: '01 - book name' }
 ];
 
-class NamingModal extends Component {
+interface Props {
+  name: NamingField;
+  value?: string | null;
+  isOpen: boolean;
+  book?: boolean;
+  additional?: boolean;
+  onInputChange: (change: ValueChange<string>) => void;
+  onModalClose: () => void;
+}
+
+interface State {
+  separator: string;
+  case: TokenCase;
+}
+
+class NamingModal extends Component<Props, State> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
-
-    this._selectionStart = null;
-    this._selectionEnd = null;
+  constructor(props: Props) {
+    super(props);
 
     this.state = {
       separator: ' ',
@@ -167,48 +180,40 @@ class NamingModal extends Component {
     };
   }
 
+  private _selectionStart: number | null = null;
+  private _selectionEnd: number | null = null;
+
   //
   // Listeners
 
-  onTokenSeparatorChange = (event) => {
-    this.setState({ separator: event.value });
+  onTokenSeparatorChange = (event: ValueChange<string>) => {
+    if (separatorOptions.some((option) => option.key === event.value)) {
+      this.setState({ separator: event.value });
+    }
   };
 
-  onTokenCaseChange = (event) => {
-    this.setState({ case: event.value });
+  onTokenCaseChange = (event: ValueChange<string>) => {
+    if (event.value === 'title' || event.value === 'lower' || event.value === 'upper') {
+      this.setState({ case: event.value });
+    }
   };
 
-  onInputSelectionChange = (selectionStart, selectionEnd) => {
+  onInputSelectionChange = (selectionStart: number | null, selectionEnd: number | null) => {
     this._selectionStart = selectionStart;
     this._selectionEnd = selectionEnd;
   };
 
-  onOptionPress = ({ isFullFilename, tokenValue }) => {
+  onOptionPress = ({ isFullFilename, tokenValue }: NamingOptionChange) => {
     const {
       name,
       value,
       onInputChange
     } = this.props;
 
-    const selectionStart = this._selectionStart;
-    const selectionEnd = this._selectionEnd;
-
-    if (isFullFilename) {
-      onInputChange({ name, value: tokenValue });
-    } else if (selectionStart == null) {
-      onInputChange({
-        name,
-        value: `${value}${tokenValue}`
-      });
-    } else {
-      const start = value.substring(0, selectionStart);
-      const end = value.substring(selectionEnd);
-      const newValue = `${start}${tokenValue}${end}`;
-
-      onInputChange({ name, value: newValue });
-      this._selectionStart = newValue.length - 1;
-      this._selectionEnd = newValue.length - 1;
-    }
+    const insertion = insertNamingToken(value, tokenValue, this._selectionStart, this._selectionEnd, isFullFilename);
+    onInputChange({ name, value: insertion.value });
+    this._selectionStart = insertion.cursor;
+    this._selectionEnd = insertion.cursor;
   };
 
   //
@@ -245,6 +250,7 @@ class NamingModal extends Component {
               <SelectInput
                 className={styles.namingSelect}
                 name="separator"
+                aria-label="Token separator"
                 value={tokenSeparator}
                 values={separatorOptions}
                 onChange={this.onTokenSeparatorChange}
@@ -253,6 +259,7 @@ class NamingModal extends Component {
               <SelectInput
                 className={styles.namingSelect}
                 name="case"
+                aria-label="Token case"
                 value={tokenCase}
                 values={caseOptions}
                 onChange={this.onTokenCaseChange}
@@ -268,8 +275,6 @@ class NamingModal extends Component {
                         return (
                           <NamingOption
                             key={token}
-                            name={name}
-                            value={value}
                             token={token}
                             example={example}
                             isFullFilename={true}
@@ -293,8 +298,6 @@ class NamingModal extends Component {
                     return (
                       <NamingOption
                         key={token}
-                        name={name}
-                        value={value}
                         token={token}
                         example={example}
                         tokenSeparator={tokenSeparator}
@@ -318,8 +321,6 @@ class NamingModal extends Component {
                           return (
                             <NamingOption
                               key={token}
-                              name={name}
-                              value={value}
                               token={token}
                               example={example}
                               tokenSeparator={tokenSeparator}
@@ -340,8 +341,6 @@ class NamingModal extends Component {
                           return (
                             <NamingOption
                               key={token}
-                              name={name}
-                              value={value}
                               token={token}
                               example={example}
                               tokenSeparator={tokenSeparator}
@@ -367,8 +366,6 @@ class NamingModal extends Component {
                           return (
                             <NamingOption
                               key={token}
-                              name={name}
-                              value={value}
                               token={token}
                               example={example}
                               tokenSeparator={tokenSeparator}
@@ -389,8 +386,6 @@ class NamingModal extends Component {
                           return (
                             <NamingOption
                               key={token}
-                              name={name}
-                              value={value}
                               token={token}
                               example={example}
                               tokenSeparator={tokenSeparator}
@@ -411,8 +406,6 @@ class NamingModal extends Component {
                           return (
                             <NamingOption
                               key={token}
-                              name={name}
-                              value={value}
                               token={token}
                               example={example}
                               tokenSeparator={tokenSeparator}
@@ -433,8 +426,6 @@ class NamingModal extends Component {
                           return (
                             <NamingOption
                               key={token}
-                              name={name}
-                              value={value}
                               token={token}
                               example={example}
                               tokenSeparator={tokenSeparator}
@@ -455,6 +446,7 @@ class NamingModal extends Component {
           <ModalFooter>
             <TextInput
               name={name}
+              aria-label={translate(name === 'standardBookFormat' ? 'StandardBookFormat' : 'AuthorFolderFormat')}
               value={value}
               onChange={onInputChange}
               onSelectionChange={this.onInputSelectionChange}
@@ -468,20 +460,5 @@ class NamingModal extends Component {
     );
   }
 }
-
-NamingModal.propTypes = {
-  name: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
-  isOpen: PropTypes.bool.isRequired,
-  book: PropTypes.bool.isRequired,
-  additional: PropTypes.bool.isRequired,
-  onInputChange: PropTypes.func.isRequired,
-  onModalClose: PropTypes.func.isRequired
-};
-
-NamingModal.defaultProps = {
-  book: false,
-  additional: false
-};
 
 export default NamingModal;

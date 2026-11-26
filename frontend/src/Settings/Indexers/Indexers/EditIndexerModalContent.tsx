@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import Form from 'Components/Form/Form';
 import FormGroup from 'Components/Form/FormGroup';
 import FormInputGroup from 'Components/Form/FormInputGroup';
@@ -14,6 +13,7 @@ import ModalHeader from 'Components/Modal/ModalHeader';
 import { inputTypes, kinds } from 'Helpers/Props';
 import AdvancedSettingsButton from 'Settings/AdvancedSettingsButton';
 import translate from 'Utilities/String/translate';
+import { checkDraft, numberDraft, providerEditDrafts, type ProviderEditProps,textDraft } from '../../providerSettingsState';
 import styles from './EditIndexerModalContent.css';
 
 const rejectionActions = [
@@ -28,7 +28,12 @@ const rejectionFields = [
   { name: 'userRejectedExtensionAction', label: 'User-rejected file extensions' }
 ];
 
-function EditIndexerModalContent(props) {
+interface Props extends ProviderEditProps {
+  onDeleteIndexerPress?: () => void;
+
+}
+
+function EditIndexerModalContent(props: Props) {
   const {
     advancedSettings,
     isFetching,
@@ -47,21 +52,13 @@ function EditIndexerModalContent(props) {
     ...otherProps
   } = props;
 
-  const {
-    id,
-    implementationName,
-    name,
-    enableRss,
-    enableAutomaticSearch,
-    enableInteractiveSearch,
-    supportsRss,
-    supportsSearch,
-    tags,
-    fields,
-    priority,
-    protocol,
-    downloadClientId
-  } = item;
+  const { id, implementationName, name, tags, fields, priority, protocol } = providerEditDrafts(item);
+  const enableRss = checkDraft(item, 'enableRss');
+  const enableAutomaticSearch = checkDraft(item, 'enableAutomaticSearch');
+  const enableInteractiveSearch = checkDraft(item, 'enableInteractiveSearch');
+  const supportsRss = checkDraft(item, 'supportsRss');
+  const supportsSearch = checkDraft(item, 'supportsSearch');
+  const downloadClientId = numberDraft(item, 'downloadClientId');
 
   return (
     <ModalContent onModalClose={onModalClose}>
@@ -210,7 +207,7 @@ function EditIndexerModalContent(props) {
                       name={fieldName}
                       values={rejectionActions}
                       helpText="Applies only to completed downloads from this indexer with an unambiguous rejected-file inventory and no imported parts. Keeps the download and files in the client; search again also requires Failed Download Handling to allow automatic redownload."
-                      {...item[fieldName]}
+                      {...textDraft(item, fieldName)}
                       onChange={onInputChange}
                     />
                   </FormGroup>
@@ -235,7 +232,7 @@ function EditIndexerModalContent(props) {
       </ModalBody>
       <ModalFooter>
         {
-          id &&
+          !!id &&
             <Button
               className={styles.deleteButton}
               kind={kinds.DANGER}
@@ -278,22 +275,5 @@ function EditIndexerModalContent(props) {
     </ModalContent>
   );
 }
-
-EditIndexerModalContent.propTypes = {
-  advancedSettings: PropTypes.bool.isRequired,
-  isFetching: PropTypes.bool.isRequired,
-  error: PropTypes.object,
-  isSaving: PropTypes.bool.isRequired,
-  isTesting: PropTypes.bool.isRequired,
-  saveError: PropTypes.object,
-  item: PropTypes.object.isRequired,
-  onInputChange: PropTypes.func.isRequired,
-  onFieldChange: PropTypes.func.isRequired,
-  onModalClose: PropTypes.func.isRequired,
-  onSavePress: PropTypes.func.isRequired,
-  onTestPress: PropTypes.func.isRequired,
-  onAdvancedSettingsPress: PropTypes.func.isRequired,
-  onDeleteIndexerPress: PropTypes.func
-};
 
 export default EditIndexerModalContent;

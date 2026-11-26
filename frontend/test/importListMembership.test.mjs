@@ -18,7 +18,7 @@ const boundaries = Object.fromEntries([
 ].map((name) => [name, () => null]));
 
 const [{ default: renderModal }, { default: selectSettings }] = loadFrontendModule([
-  'Settings/ImportLists/ImportLists/EditImportListModalContent.js', 'Store/Selectors/selectSettings.ts'
+  'Settings/ImportLists/ImportLists/EditImportListModalContent.tsx', 'Store/Selectors/selectSettings.ts'
 ], {
   ...boundaries,
   react: { ...React, useState: (value) => [value, () => {}] },

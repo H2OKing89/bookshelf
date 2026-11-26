@@ -1,9 +1,10 @@
-import PropTypes from 'prop-types';
 import Modal from 'Components/Modal/Modal';
 import { sizes } from 'Helpers/Props';
-import EditDownloadClientModalContentConnector from './EditDownloadClientModalContentConnector';
+import EditDownloadClientModalContentConnector, { type DownloadClientEditOwnProps } from './EditDownloadClientModalContentConnector';
 
-function EditDownloadClientModal({ isOpen, onModalClose, ...otherProps }) {
+export type DownloadClientModalProps = DownloadClientEditOwnProps & { isOpen: boolean };
+
+function EditDownloadClientModal({ isOpen, onModalClose, ...otherProps }: DownloadClientModalProps) {
   return (
     <Modal
       size={sizes.MEDIUM}
@@ -17,10 +18,5 @@ function EditDownloadClientModal({ isOpen, onModalClose, ...otherProps }) {
     </Modal>
   );
 }
-
-EditDownloadClientModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onModalClose: PropTypes.func.isRequired
-};
 
 export default EditDownloadClientModal;

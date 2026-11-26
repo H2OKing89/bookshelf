@@ -1,11 +1,11 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
-import { connect } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { clearPendingChanges } from 'Store/Actions/baseActions';
 import { cancelSaveImportList, cancelTestImportList } from 'Store/Actions/settingsActions';
-import EditImportListModal from './EditImportListModal';
+import type { LegacyDispatch } from 'Store/StateTypes';
+import EditImportListModal, { type ImportListModalProps } from './EditImportListModal';
 
-function createMapDispatchToProps(dispatch, props) {
+function createMapDispatchToProps(dispatch: LegacyDispatch) {
   const section = 'settings.importLists';
 
   return {
@@ -23,7 +23,10 @@ function createMapDispatchToProps(dispatch, props) {
   };
 }
 
-class EditImportListModalConnector extends Component {
+const connector = connect(null, createMapDispatchToProps);
+type Props = ImportListModalProps & ConnectedProps<typeof connector>;
+
+class EditImportListModalConnector extends Component<Props> {
 
   //
   // Listeners
@@ -39,27 +42,15 @@ class EditImportListModalConnector extends Component {
   // Render
 
   render() {
-    const {
-      dispatchClearPendingChanges,
-      dispatchCancelTestImportList,
-      dispatchCancelSaveImportList,
-      ...otherProps
-    } = this.props;
-
     return (
       <EditImportListModal
-        {...otherProps}
+        id={this.props.id}
+        isOpen={this.props.isOpen}
+        onDeleteImportListPress={this.props.onDeleteImportListPress}
         onModalClose={this.onModalClose}
       />
     );
   }
 }
 
-EditImportListModalConnector.propTypes = {
-  onModalClose: PropTypes.func.isRequired,
-  dispatchClearPendingChanges: PropTypes.func.isRequired,
-  dispatchCancelTestImportList: PropTypes.func.isRequired,
-  dispatchCancelSaveImportList: PropTypes.func.isRequired
-};
-
-export default connect(null, createMapDispatchToProps)(EditImportListModalConnector);
+export default connector(EditImportListModalConnector);

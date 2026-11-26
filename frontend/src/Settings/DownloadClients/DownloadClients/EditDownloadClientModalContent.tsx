@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import Alert from 'Components/Alert';
 import FieldSet from 'Components/FieldSet';
@@ -17,9 +16,15 @@ import ModalHeader from 'Components/Modal/ModalHeader';
 import { inputTypes, kinds, sizes } from 'Helpers/Props';
 import AdvancedSettingsButton from 'Settings/AdvancedSettingsButton';
 import translate from 'Utilities/String/translate';
+import { checkDraft, providerEditDrafts, type ProviderEditProps } from '../../providerSettingsState';
 import styles from './EditDownloadClientModalContent.css';
 
-class EditDownloadClientModalContent extends Component {
+interface Props extends ProviderEditProps {
+  onDeleteDownloadClientPress?: () => void;
+
+}
+
+class EditDownloadClientModalContent extends Component<Props> {
 
   //
   // Render
@@ -43,19 +48,9 @@ class EditDownloadClientModalContent extends Component {
       ...otherProps
     } = this.props;
 
-    const {
-      id,
-      implementationName,
-      name,
-      enable,
-      protocol,
-      priority,
-      removeCompletedDownloads,
-      removeFailedDownloads,
-      fields,
-      tags,
-      message
-    } = item;
+    const { id, implementationName, name, enable, protocol, priority, fields, tags, message } = providerEditDrafts(item);
+    const removeCompletedDownloads = checkDraft(item, 'removeCompletedDownloads');
+    const removeFailedDownloads = checkDraft(item, 'removeFailedDownloads');
 
     return (
       <ModalContent onModalClose={onModalClose}>
@@ -83,9 +78,9 @@ class EditDownloadClientModalContent extends Component {
                   !!message &&
                     <Alert
                       className={styles.message}
-                      kind={message.value.type}
+                      kind={message.type}
                     >
-                      {message.value.message}
+                      {message.message}
                     </Alert>
                 }
 
@@ -197,7 +192,7 @@ class EditDownloadClientModalContent extends Component {
         </ModalBody>
         <ModalFooter>
           {
-            id &&
+            !!id &&
               <Button
                 className={styles.deleteButton}
                 kind={kinds.DANGER}
@@ -241,22 +236,5 @@ class EditDownloadClientModalContent extends Component {
     );
   }
 }
-
-EditDownloadClientModalContent.propTypes = {
-  advancedSettings: PropTypes.bool.isRequired,
-  isFetching: PropTypes.bool.isRequired,
-  error: PropTypes.object,
-  isSaving: PropTypes.bool.isRequired,
-  saveError: PropTypes.object,
-  isTesting: PropTypes.bool.isRequired,
-  item: PropTypes.object.isRequired,
-  onInputChange: PropTypes.func.isRequired,
-  onFieldChange: PropTypes.func.isRequired,
-  onModalClose: PropTypes.func.isRequired,
-  onSavePress: PropTypes.func.isRequired,
-  onTestPress: PropTypes.func.isRequired,
-  onAdvancedSettingsPress: PropTypes.func.isRequired,
-  onDeleteDownloadClientPress: PropTypes.func
-};
 
 export default EditDownloadClientModalContent;

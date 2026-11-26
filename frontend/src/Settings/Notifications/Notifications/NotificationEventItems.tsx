@@ -1,15 +1,22 @@
-import PropTypes from 'prop-types';
 import { useState } from 'react';
 import FormGroup from 'Components/Form/FormGroup';
 import FormInputGroup from 'Components/Form/FormInputGroup';
 import FormInputHelpText from 'Components/Form/FormInputHelpText';
 import FormLabel from 'Components/Form/FormLabel';
+import type { ValueChange } from 'Components/Form/formTypes';
 import { inputTypes } from 'Helpers/Props';
+import type { SettingsProjection } from 'Store/Selectors/selectSettings';
 import getUniqueElementId from 'Utilities/getUniqueElementId';
 import translate from 'Utilities/String/translate';
+import { checkDraft } from '../../providerSettingsState';
 import styles from './NotificationEventItems.css';
 
-function NotificationEventItems(props) {
+interface Props {
+  item: SettingsProjection;
+  onInputChange: (change: ValueChange<unknown>) => void;
+}
+
+function NotificationEventItems(props: Props) {
   const [id] = useState(getUniqueElementId);
   const labelId = `${id}-label`;
   const helpId = `${id}-help`;
@@ -18,38 +25,36 @@ function NotificationEventItems(props) {
     onInputChange
   } = props;
 
-  const {
-    onGrab,
-    onReleaseImport,
-    onUpgrade,
-    onRename,
-    onAuthorAdded,
-    onAuthorDelete,
-    onBookDelete,
-    onBookFileDelete,
-    onBookFileDeleteForUpgrade,
-    onHealthIssue,
-    onHealthRestored,
-    onDownloadFailure,
-    onImportFailure,
-    onBookRetag,
-    onApplicationUpdate,
-    supportsOnGrab,
-    supportsOnReleaseImport,
-    supportsOnUpgrade,
-    supportsOnRename,
-    supportsOnAuthorAdded,
-    supportsOnAuthorDelete,
-    supportsOnBookDelete,
-    supportsOnBookFileDelete,
-    supportsOnHealthIssue,
-    supportsOnHealthRestored,
-    includeHealthWarnings,
-    supportsOnDownloadFailure,
-    supportsOnImportFailure,
-    supportsOnBookRetag,
-    supportsOnApplicationUpdate
-  } = item;
+  const onGrab = checkDraft(item, 'onGrab');
+  const onReleaseImport = checkDraft(item, 'onReleaseImport');
+  const onUpgrade = checkDraft(item, 'onUpgrade');
+  const onRename = checkDraft(item, 'onRename');
+  const onAuthorAdded = checkDraft(item, 'onAuthorAdded');
+  const onAuthorDelete = checkDraft(item, 'onAuthorDelete');
+  const onBookDelete = checkDraft(item, 'onBookDelete');
+  const onBookFileDelete = checkDraft(item, 'onBookFileDelete');
+  const onBookFileDeleteForUpgrade = checkDraft(item, 'onBookFileDeleteForUpgrade');
+  const onHealthIssue = checkDraft(item, 'onHealthIssue');
+  const onHealthRestored = checkDraft(item, 'onHealthRestored');
+  const onDownloadFailure = checkDraft(item, 'onDownloadFailure');
+  const onImportFailure = checkDraft(item, 'onImportFailure');
+  const onBookRetag = checkDraft(item, 'onBookRetag');
+  const onApplicationUpdate = checkDraft(item, 'onApplicationUpdate');
+  const supportsOnGrab = checkDraft(item, 'supportsOnGrab');
+  const supportsOnReleaseImport = checkDraft(item, 'supportsOnReleaseImport');
+  const supportsOnUpgrade = checkDraft(item, 'supportsOnUpgrade');
+  const supportsOnRename = checkDraft(item, 'supportsOnRename');
+  const supportsOnAuthorAdded = checkDraft(item, 'supportsOnAuthorAdded');
+  const supportsOnAuthorDelete = checkDraft(item, 'supportsOnAuthorDelete');
+  const supportsOnBookDelete = checkDraft(item, 'supportsOnBookDelete');
+  const supportsOnBookFileDelete = checkDraft(item, 'supportsOnBookFileDelete');
+  const supportsOnHealthIssue = checkDraft(item, 'supportsOnHealthIssue');
+  const supportsOnHealthRestored = checkDraft(item, 'supportsOnHealthRestored');
+  const includeHealthWarnings = checkDraft(item, 'includeHealthWarnings');
+  const supportsOnDownloadFailure = checkDraft(item, 'supportsOnDownloadFailure');
+  const supportsOnImportFailure = checkDraft(item, 'supportsOnImportFailure');
+  const supportsOnBookRetag = checkDraft(item, 'supportsOnBookRetag');
+  const supportsOnApplicationUpdate = checkDraft(item, 'supportsOnApplicationUpdate');
 
   return (
     <FormGroup role="group" aria-labelledby={labelId} aria-describedby={helpId}>
@@ -250,10 +255,5 @@ function NotificationEventItems(props) {
     </FormGroup>
   );
 }
-
-NotificationEventItems.propTypes = {
-  item: PropTypes.object.isRequired,
-  onInputChange: PropTypes.func.isRequired
-};
 
 export default NotificationEventItems;

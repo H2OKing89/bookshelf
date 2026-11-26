@@ -1,14 +1,21 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
-import { connect } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { createSelector } from 'reselect';
+import type { ValueChange } from 'Components/Form/formTypes';
 import { saveIndexer, setIndexerFieldValue, setIndexerValue, testIndexer, toggleAdvancedSettings } from 'Store/Actions/settingsActions';
 import createProviderSettingsSelector from 'Store/Selectors/createProviderSettingsSelector';
+import { type LegacyRootState } from 'Store/StateTypes';
 import EditIndexerModalContent from './EditIndexerModalContent';
+
+export interface IndexerEditOwnProps {
+  id?: number;
+  onModalClose: () => void;
+  onDeleteIndexerPress?: () => void;
+}
 
 function createMapStateToProps() {
   return createSelector(
-    (state) => state.settings.advancedSettings,
+    (state: LegacyRootState) => state.settings.advancedSettings === true,
     createProviderSettingsSelector('indexers'),
     (advancedSettings, indexer) => {
       return {
@@ -20,19 +27,22 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  setIndexerValue,
-  setIndexerFieldValue,
+  setIndexerValue: setIndexerValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
+  setIndexerFieldValue: setIndexerFieldValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
   saveIndexer,
   testIndexer,
   toggleAdvancedSettings
 };
 
-class EditIndexerModalContentConnector extends Component {
+const connector = connect(createMapStateToProps, mapDispatchToProps);
+type Props = IndexerEditOwnProps & ConnectedProps<typeof connector>;
+
+export class EditIndexerModalContentConnector extends Component<Props> {
 
   //
   // Lifecycle
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps: Props) {
     if (prevProps.isSaving && !this.props.isSaving && !this.props.saveError) {
       this.props.onModalClose();
     }
@@ -41,11 +51,11 @@ class EditIndexerModalContentConnector extends Component {
   //
   // Listeners
 
-  onInputChange = ({ name, value }) => {
+  onInputChange = ({ name, value }: ValueChange<unknown>) => {
     this.props.setIndexerValue({ name, value });
   };
 
-  onFieldChange = ({ name, value }) => {
+  onFieldChange = ({ name, value }: ValueChange<unknown>) => {
     this.props.setIndexerFieldValue({ name, value });
   };
 
@@ -78,18 +88,4 @@ class EditIndexerModalContentConnector extends Component {
   }
 }
 
-EditIndexerModalContentConnector.propTypes = {
-  id: PropTypes.number,
-  isFetching: PropTypes.bool.isRequired,
-  isSaving: PropTypes.bool.isRequired,
-  saveError: PropTypes.object,
-  item: PropTypes.object.isRequired,
-  setIndexerValue: PropTypes.func.isRequired,
-  setIndexerFieldValue: PropTypes.func.isRequired,
-  toggleAdvancedSettings: PropTypes.func.isRequired,
-  saveIndexer: PropTypes.func.isRequired,
-  testIndexer: PropTypes.func.isRequired,
-  onModalClose: PropTypes.func.isRequired
-};
-
-export default connect(createMapStateToProps, mapDispatchToProps)(EditIndexerModalContentConnector);
+export default connector(EditIndexerModalContentConnector);

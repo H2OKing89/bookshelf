@@ -1,11 +1,11 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
-import { connect } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { clearPendingChanges } from 'Store/Actions/baseActions';
 import { cancelSaveIndexer, cancelTestIndexer } from 'Store/Actions/settingsActions';
-import EditIndexerModal from './EditIndexerModal';
+import type { LegacyDispatch } from 'Store/StateTypes';
+import EditIndexerModal, { type IndexerModalProps } from './EditIndexerModal';
 
-function createMapDispatchToProps(dispatch, props) {
+function createMapDispatchToProps(dispatch: LegacyDispatch) {
   const section = 'settings.indexers';
 
   return {
@@ -23,7 +23,10 @@ function createMapDispatchToProps(dispatch, props) {
   };
 }
 
-class EditIndexerModalConnector extends Component {
+const connector = connect(null, createMapDispatchToProps);
+type Props = IndexerModalProps & ConnectedProps<typeof connector>;
+
+class EditIndexerModalConnector extends Component<Props> {
 
   //
   // Listeners
@@ -39,27 +42,15 @@ class EditIndexerModalConnector extends Component {
   // Render
 
   render() {
-    const {
-      dispatchClearPendingChanges,
-      dispatchCancelTestIndexer,
-      dispatchCancelSaveIndexer,
-      ...otherProps
-    } = this.props;
-
     return (
       <EditIndexerModal
-        {...otherProps}
+        id={this.props.id}
+        isOpen={this.props.isOpen}
+        onDeleteIndexerPress={this.props.onDeleteIndexerPress}
         onModalClose={this.onModalClose}
       />
     );
   }
 }
 
-EditIndexerModalConnector.propTypes = {
-  onModalClose: PropTypes.func.isRequired,
-  dispatchClearPendingChanges: PropTypes.func.isRequired,
-  dispatchCancelTestIndexer: PropTypes.func.isRequired,
-  dispatchCancelSaveIndexer: PropTypes.func.isRequired
-};
-
-export default connect(null, createMapDispatchToProps)(EditIndexerModalConnector);
+export default connector(EditIndexerModalConnector);

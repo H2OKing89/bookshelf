@@ -209,7 +209,7 @@ test('collection pagination and scroll restore from router navigation state', ()
 });
 
 test('download client modal marks changed schema fields dirty without treating reversions as edits', () => {
-  const { default: selectState } = loadFrontendModule('Settings/DownloadClients/DownloadClients/EditDownloadClientModalConnector.js', {
+  const { default: selectState } = loadFrontendModule('Settings/DownloadClients/DownloadClients/EditDownloadClientModalConnector.tsx', {
     'react-redux': { connect: (mapState) => () => mapState },
     'Settings/PendingChangesModal': () => null,
     'Settings/useUnsavedNavigation': () => null,

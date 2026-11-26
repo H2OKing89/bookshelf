@@ -20,7 +20,7 @@ export function getDraft(settings: SettingsProjection, key: string): SettingDraf
 
 // These projections only narrow values for presentation; the store retains
 // the original pending/saved values and validation messages for submission.
-function readDraft<T>(settings: SettingsProjection, key: string, decode: (value: unknown) => T) {
+export function readDraft<T>(settings: SettingsProjection, key: string, decode: (value: unknown) => T) {
   const draft = getDraft(settings, key);
 
   return {

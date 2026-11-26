@@ -1,9 +1,10 @@
-import PropTypes from 'prop-types';
 import Modal from 'Components/Modal/Modal';
 import { sizes } from 'Helpers/Props';
-import EditIndexerModalContentConnector from './EditIndexerModalContentConnector';
+import EditIndexerModalContentConnector, { type IndexerEditOwnProps } from './EditIndexerModalContentConnector';
 
-function EditIndexerModal({ isOpen, onModalClose, ...otherProps }) {
+export type IndexerModalProps = IndexerEditOwnProps & { isOpen: boolean };
+
+function EditIndexerModal({ isOpen, onModalClose, ...otherProps }: IndexerModalProps) {
   return (
     <Modal
       size={sizes.MEDIUM}
@@ -17,10 +18,5 @@ function EditIndexerModal({ isOpen, onModalClose, ...otherProps }) {
     </Modal>
   );
 }
-
-EditIndexerModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onModalClose: PropTypes.func.isRequired
-};
 
 export default EditIndexerModal;

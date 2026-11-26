@@ -1,36 +1,20 @@
-import { isEqual } from 'lodash';
-import PropTypes from 'prop-types';
 import { useState } from 'react';
-import { connect } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import PendingChangesModal from 'Settings/PendingChangesModal';
 import useUnsavedNavigation from 'Settings/useUnsavedNavigation';
 import { clearPendingChanges } from 'Store/Actions/baseActions';
 import { cancelSaveDownloadClient, cancelTestDownloadClient } from 'Store/Actions/settingsActions';
-import EditDownloadClientModal from './EditDownloadClientModal';
+import type { LegacyDispatch, LegacyRootState } from 'Store/StateTypes';
+import { providerHasChanges } from '../../providerSettingsState';
+import EditDownloadClientModal, { type DownloadClientModalProps } from './EditDownloadClientModal';
 
-function mapStateToProps(state, { id, isOpen }) {
-  if (!isOpen) {
-    return { isDirty: false };
-  }
+type OwnProps = Omit<DownloadClientModalProps, 'onSaveSuccess'>;
 
-  const { items, selectedSchema, pendingChanges } = state.settings.downloadClients;
-  const saved = id ? items.find((item) => item.id === id) : { name: '', ...selectedSchema };
-  const isDirty = Object.entries(pendingChanges).some(([key, value]) => {
-    if (key !== 'fields') {
-      return !isEqual(saved?.[key], value);
-    }
-
-    return Object.entries(value).some(([name, fieldValue]) => {
-      const field = saved?.fields?.find((item) => item.name === name);
-
-      return !isEqual(field?.value, fieldValue);
-    });
-  });
-
-  return { isDirty };
+function mapStateToProps(state: LegacyRootState, { id, isOpen }: OwnProps) {
+  return { isDirty: isOpen && providerHasChanges(state.settings.downloadClients, id) };
 }
 
-function mapDispatchToProps(dispatch) {
+function mapDispatchToProps(dispatch: LegacyDispatch) {
   const section = 'settings.downloadClients';
 
   return {
@@ -48,6 +32,9 @@ function mapDispatchToProps(dispatch) {
   };
 }
 
+const connector = connect(mapStateToProps, mapDispatchToProps);
+type Props = OwnProps & ConnectedProps<typeof connector>;
+
 function EditDownloadClientModalConnector({
   isOpen,
   isDirty,
@@ -56,7 +43,7 @@ function EditDownloadClientModalConnector({
   dispatchCancelTestDownloadClient,
   dispatchCancelSaveDownloadClient,
   ...otherProps
-}) {
+}: Props) {
   const [isConfirmingClose, setIsConfirmingClose] = useState(false);
 
   const onCloseEditor = () => {
@@ -95,13 +82,4 @@ function EditDownloadClientModalConnector({
   );
 }
 
-EditDownloadClientModalConnector.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  isDirty: PropTypes.bool.isRequired,
-  onModalClose: PropTypes.func.isRequired,
-  dispatchClearPendingChanges: PropTypes.func.isRequired,
-  dispatchCancelTestDownloadClient: PropTypes.func.isRequired,
-  dispatchCancelSaveDownloadClient: PropTypes.func.isRequired
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(EditDownloadClientModalConnector);
+export default connector(EditDownloadClientModalConnector);

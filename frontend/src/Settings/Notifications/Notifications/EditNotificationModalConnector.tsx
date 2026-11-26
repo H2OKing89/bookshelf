@@ -1,11 +1,11 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
-import { connect } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { clearPendingChanges } from 'Store/Actions/baseActions';
 import { cancelSaveNotification, cancelTestNotification } from 'Store/Actions/settingsActions';
-import EditNotificationModal from './EditNotificationModal';
+import type { LegacyDispatch } from 'Store/StateTypes';
+import EditNotificationModal, { type NotificationModalProps } from './EditNotificationModal';
 
-function createMapDispatchToProps(dispatch, props) {
+function createMapDispatchToProps(dispatch: LegacyDispatch) {
   const section = 'settings.notifications';
 
   return {
@@ -23,7 +23,10 @@ function createMapDispatchToProps(dispatch, props) {
   };
 }
 
-class EditNotificationModalConnector extends Component {
+const connector = connect(null, createMapDispatchToProps);
+type Props = NotificationModalProps & ConnectedProps<typeof connector>;
+
+class EditNotificationModalConnector extends Component<Props> {
 
   //
   // Listeners
@@ -39,27 +42,15 @@ class EditNotificationModalConnector extends Component {
   // Render
 
   render() {
-    const {
-      dispatchClearPendingChanges,
-      dispatchCancelTestNotification,
-      dispatchCancelSaveNotification,
-      ...otherProps
-    } = this.props;
-
     return (
       <EditNotificationModal
-        {...otherProps}
+        id={this.props.id}
+        isOpen={this.props.isOpen}
+        onDeleteNotificationPress={this.props.onDeleteNotificationPress}
         onModalClose={this.onModalClose}
       />
     );
   }
 }
 
-EditNotificationModalConnector.propTypes = {
-  onModalClose: PropTypes.func.isRequired,
-  dispatchClearPendingChanges: PropTypes.func.isRequired,
-  dispatchCancelTestNotification: PropTypes.func.isRequired,
-  dispatchCancelSaveNotification: PropTypes.func.isRequired
-};
-
-export default connect(null, createMapDispatchToProps)(EditNotificationModalConnector);
+export default connector(EditNotificationModalConnector);

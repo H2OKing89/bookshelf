@@ -1,11 +1,26 @@
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import Link from 'Components/Link/Link';
 import { sizes } from 'Helpers/Props';
+import { formatToken, type TokenCase } from './namingSettingsState';
 import styles from './NamingOption.css';
 
-class NamingOption extends Component {
+export interface NamingOptionChange {
+  isFullFilename: boolean;
+  tokenValue: string;
+}
+
+interface Props {
+  token: string;
+  example: string;
+  tokenSeparator: string;
+  tokenCase: TokenCase;
+  isFullFilename?: boolean;
+  size?: typeof sizes.SMALL | typeof sizes.LARGE;
+  onPress: (change: NamingOptionChange) => void;
+}
+
+class NamingOption extends Component<Props> {
 
   //
   // Listeners
@@ -15,20 +30,11 @@ class NamingOption extends Component {
       token,
       tokenSeparator,
       tokenCase,
-      isFullFilename,
+      isFullFilename = false,
       onPress
     } = this.props;
 
-    let tokenValue = token;
-
-    tokenValue = tokenValue.replace(/ /g, tokenSeparator);
-
-    if (tokenCase === 'lower') {
-      tokenValue = token.toLowerCase();
-    } else if (tokenCase === 'upper') {
-      tokenValue = token.toUpperCase();
-    }
-
+    const tokenValue = formatToken(token, tokenSeparator, tokenCase);
     onPress({ isFullFilename, tokenValue });
   };
 
@@ -41,7 +47,7 @@ class NamingOption extends Component {
       example,
       tokenCase,
       isFullFilename,
-      size
+      size = sizes.SMALL
     } = this.props;
 
     return (
@@ -49,36 +55,21 @@ class NamingOption extends Component {
         className={classNames(
           styles.option,
           styles[size],
-          styles[tokenCase],
+          tokenCase !== 'title' && styles[tokenCase],
           isFullFilename && styles.isFullFilename
         )}
         onPress={this.onPress}
       >
         <div className={styles.token}>
-          {token.replace(/ /g, tokenSeparator)}
+          {formatToken(token, tokenSeparator, tokenCase)}
         </div>
 
         <div className={styles.example}>
-          {example.replace(/ /g, tokenSeparator)}
+          {formatToken(example, tokenSeparator, tokenCase)}
         </div>
       </Link>
     );
   }
 }
-
-NamingOption.propTypes = {
-  token: PropTypes.string.isRequired,
-  example: PropTypes.string.isRequired,
-  tokenSeparator: PropTypes.string.isRequired,
-  tokenCase: PropTypes.string.isRequired,
-  isFullFilename: PropTypes.bool.isRequired,
-  size: PropTypes.oneOf([sizes.SMALL, sizes.LARGE]),
-  onPress: PropTypes.func.isRequired
-};
-
-NamingOption.defaultProps = {
-  size: sizes.SMALL,
-  isFullFilename: false
-};
 
 export default NamingOption;

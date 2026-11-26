@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import Alert from 'Components/Alert';
 import FieldSet from 'Components/FieldSet';
@@ -10,16 +9,32 @@ import FormLabel from 'Components/Form/FormLabel';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import { inputTypes, kinds, sizes } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
+import type { SettingsFieldsProps } from '../../settingDrafts';
 import NamingModal from './NamingModal';
+import { namingDrafts, type NamingExamples, type NamingField } from './namingSettingsState';
 import styles from './Naming.css';
 
-class Naming extends Component {
+interface Props extends SettingsFieldsProps {
+  advancedSettings: boolean;
+  isFetching: boolean;
+  error?: unknown;
+  hasSettings: boolean;
+  examples: NamingExamples;
+  examplesPopulated: boolean;
+}
+
+interface State {
+  isNamingModalOpen: boolean;
+  namingModalOptions: { name: NamingField; book?: boolean; additional?: boolean } | null;
+}
+
+class Naming extends Component<Props, State> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: Props) {
+    super(props);
 
     this.state = {
       isNamingModalOpen: false,
@@ -62,7 +77,7 @@ class Naming extends Component {
       advancedSettings,
       isFetching,
       error,
-      settings,
+      settings: projectedSettings,
       hasSettings,
       examples,
       examplesPopulated,
@@ -74,6 +89,7 @@ class Naming extends Component {
       namingModalOptions
     } = this.state;
 
+    const settings = namingDrafts(projectedSettings);
     const renameBooks = hasSettings && settings.renameBooks.value;
     const replaceIllegalCharacters = hasSettings && settings.replaceIllegalCharacters.value;
 
@@ -118,7 +134,7 @@ class Naming extends Component {
         }
 
         {
-          !isFetching && error &&
+          !isFetching && !!error &&
             <Alert kind={kinds.DANGER}>
               {translate('UnableToLoadNamingSettings')}
             </Alert>
@@ -174,7 +190,7 @@ class Naming extends Component {
               }
 
               {
-                renameBooks &&
+                !!renameBooks &&
                   <div>
                     <FormGroup size={sizes.LARGE}>
                       <FormLabel>
@@ -185,7 +201,7 @@ class Naming extends Component {
                         inputClassName={styles.namingInput}
                         type={inputTypes.TEXT}
                         name="standardBookFormat"
-                        buttons={<FormInputButton onPress={this.onStandardNamingModalOpenClick}>?</FormInputButton>}
+                        buttons={<FormInputButton aria-label={translate('StandardBookFormat')} onPress={this.onStandardNamingModalOpenClick}>?</FormInputButton>}
                         onChange={onInputChange}
                         {...settings.standardBookFormat}
                         helpTexts={standardBookFormatHelpTexts}
@@ -207,7 +223,7 @@ class Naming extends Component {
                   inputClassName={styles.namingInput}
                   type={inputTypes.TEXT}
                   name="authorFolderFormat"
-                  buttons={<FormInputButton onPress={this.onAuthorFolderNamingModalOpenClick}>?</FormInputButton>}
+                  buttons={<FormInputButton aria-label={translate('AuthorFolderFormat')} onPress={this.onAuthorFolderNamingModalOpenClick}>?</FormInputButton>}
                   onChange={onInputChange}
                   {...settings.authorFolderFormat}
                   helpTexts={['Used when adding a new author or moving an author via the author editor', ...authorFolderFormatHelpTexts]}
@@ -219,7 +235,6 @@ class Naming extends Component {
                 namingModalOptions &&
                   <NamingModal
                     isOpen={isNamingModalOpen}
-                    advancedSettings={advancedSettings}
                     {...namingModalOptions}
                     value={settings[namingModalOptions.name].value}
                     onInputChange={onInputChange}
@@ -233,16 +248,5 @@ class Naming extends Component {
   }
 
 }
-
-Naming.propTypes = {
-  advancedSettings: PropTypes.bool.isRequired,
-  isFetching: PropTypes.bool.isRequired,
-  error: PropTypes.object,
-  settings: PropTypes.object.isRequired,
-  hasSettings: PropTypes.bool.isRequired,
-  examples: PropTypes.object.isRequired,
-  examplesPopulated: PropTypes.bool.isRequired,
-  onInputChange: PropTypes.func.isRequired
-};
 
 export default Naming;

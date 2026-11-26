@@ -1,7 +1,7 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
-import { connect } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { createSelector } from 'reselect';
+import type { ValueChange } from 'Components/Form/formTypes';
 import {
   saveImportList,
   setImportListFieldValue,
@@ -10,17 +10,24 @@ import {
   toggleAdvancedSettings
 } from 'Store/Actions/settingsActions';
 import createProviderSettingsSelector from 'Store/Selectors/createProviderSettingsSelector';
+import { asStateRecord,type LegacyRootState } from 'Store/StateTypes';
 import EditImportListModalContent from './EditImportListModalContent';
+
+export interface ImportListEditOwnProps {
+  id?: number;
+  onModalClose: () => void;
+  onDeleteImportListPress?: () => void;
+}
 
 function createMapStateToProps() {
   return createSelector(
-    (state) => state.settings.advancedSettings,
-    (state) => state.settings.metadataProfiles,
+    (state: LegacyRootState) => state.settings.advancedSettings === true,
+    (state: LegacyRootState) => asStateRecord(state.settings.metadataProfiles),
     createProviderSettingsSelector('importLists'),
     (advancedSettings, metadataProfiles, importList) => {
       return {
         advancedSettings,
-        showMetadataProfile: metadataProfiles.items.length > 1,
+        showMetadataProfile: Array.isArray(metadataProfiles.items) && metadataProfiles.items.length > 1,
         ...importList
       };
     }
@@ -28,19 +35,22 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  setImportListValue,
-  setImportListFieldValue,
+  setImportListValue: setImportListValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
+  setImportListFieldValue: setImportListFieldValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
   saveImportList,
   testImportList,
   toggleAdvancedSettings
 };
 
-class EditImportListModalContentConnector extends Component {
+const connector = connect(createMapStateToProps, mapDispatchToProps);
+type Props = ImportListEditOwnProps & ConnectedProps<typeof connector>;
+
+export class EditImportListModalContentConnector extends Component<Props> {
 
   //
   // Lifecycle
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps: Props) {
     if (prevProps.isSaving && !this.props.isSaving && !this.props.saveError) {
       this.props.onModalClose();
     }
@@ -49,11 +59,11 @@ class EditImportListModalContentConnector extends Component {
   //
   // Listeners
 
-  onInputChange = ({ name, value }) => {
+  onInputChange = ({ name, value }: ValueChange<unknown>) => {
     this.props.setImportListValue({ name, value });
   };
 
-  onFieldChange = ({ name, value }) => {
+  onFieldChange = ({ name, value }: ValueChange<unknown>) => {
     this.props.setImportListFieldValue({ name, value });
   };
 
@@ -86,18 +96,4 @@ class EditImportListModalContentConnector extends Component {
   }
 }
 
-EditImportListModalContentConnector.propTypes = {
-  id: PropTypes.number,
-  isFetching: PropTypes.bool.isRequired,
-  isSaving: PropTypes.bool.isRequired,
-  saveError: PropTypes.object,
-  item: PropTypes.object.isRequired,
-  setImportListValue: PropTypes.func.isRequired,
-  setImportListFieldValue: PropTypes.func.isRequired,
-  saveImportList: PropTypes.func.isRequired,
-  testImportList: PropTypes.func.isRequired,
-  toggleAdvancedSettings: PropTypes.func.isRequired,
-  onModalClose: PropTypes.func.isRequired
-};
-
-export default connect(createMapStateToProps, mapDispatchToProps)(EditImportListModalContentConnector);
+export default connector(EditImportListModalContentConnector);

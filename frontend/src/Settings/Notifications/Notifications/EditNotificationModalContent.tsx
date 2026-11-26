@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import Alert from 'Components/Alert';
 import Form from 'Components/Form/Form';
 import FormGroup from 'Components/Form/FormGroup';
@@ -15,10 +14,16 @@ import ModalHeader from 'Components/Modal/ModalHeader';
 import { inputTypes, kinds } from 'Helpers/Props';
 import AdvancedSettingsButton from 'Settings/AdvancedSettingsButton';
 import translate from 'Utilities/String/translate';
+import { providerEditDrafts, type ProviderEditProps } from '../../providerSettingsState';
 import NotificationEventItems from './NotificationEventItems';
 import styles from './EditNotificationModalContent.css';
 
-function EditNotificationModalContent(props) {
+interface Props extends ProviderEditProps {
+  onDeleteNotificationPress?: () => void;
+
+}
+
+function EditNotificationModalContent(props: Props) {
   const {
     advancedSettings,
     isFetching,
@@ -37,14 +42,7 @@ function EditNotificationModalContent(props) {
     ...otherProps
   } = props;
 
-  const {
-    id,
-    implementationName,
-    name,
-    tags,
-    fields,
-    message
-  } = item;
+  const { id, implementationName, name, tags, fields, message } = providerEditDrafts(item);
 
   return (
     <ModalContent onModalClose={onModalClose}>
@@ -72,9 +70,9 @@ function EditNotificationModalContent(props) {
                 !!message &&
                   <Alert
                     className={styles.message}
-                    kind={message.value.type}
+                    kind={message.type}
                   >
-                    {message.value.message}
+                    {message.message}
                   </Alert>
               }
 
@@ -131,7 +129,7 @@ function EditNotificationModalContent(props) {
       </ModalBody>
       <ModalFooter>
         {
-          id &&
+          !!id &&
             <Button
               className={styles.deleteButton}
               kind={kinds.DANGER}
@@ -174,22 +172,5 @@ function EditNotificationModalContent(props) {
     </ModalContent>
   );
 }
-
-EditNotificationModalContent.propTypes = {
-  advancedSettings: PropTypes.bool.isRequired,
-  isFetching: PropTypes.bool.isRequired,
-  error: PropTypes.object,
-  isSaving: PropTypes.bool.isRequired,
-  isTesting: PropTypes.bool.isRequired,
-  saveError: PropTypes.object,
-  item: PropTypes.object.isRequired,
-  onInputChange: PropTypes.func.isRequired,
-  onFieldChange: PropTypes.func.isRequired,
-  onModalClose: PropTypes.func.isRequired,
-  onSavePress: PropTypes.func.isRequired,
-  onTestPress: PropTypes.func.isRequired,
-  onAdvancedSettingsPress: PropTypes.func.isRequired,
-  onDeleteNotificationPress: PropTypes.func
-};
 
 export default EditNotificationModalContent;
