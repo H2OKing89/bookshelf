@@ -193,56 +193,64 @@ namespace NzbDrone.Core.Backup
                     }
                 }
 
-                // Every payload is valid before any destination can be replaced. Keep
-                // preimages until the entire publication succeeds, including an existing
-                // pending restore. MoveFile(overwrite) can delete before a failing move.
-                foreach (var payload in payloads)
+                // ConfigFileProvider can rewrite defaults asynchronously after the
+                // host becomes ready. Serialize the entire publication/rollback
+                // against its read-modify-write transactions, not just restores.
+                // The outer restore lock is sufficient for database-only restores.
+                var publicationLock = payloads.Any(payload => payload.IsConfig) ? ConfigFileProvider.FileLock : RestoreLock;
+                lock (publicationLock)
                 {
-                    payload.HadOriginal = _diskProvider.FileExists(payload.Destination);
-                    if (payload.HadOriginal)
+                    // Every payload is valid before any destination can be replaced. Keep
+                    // preimages until the entire publication succeeds, including an existing
+                    // pending restore. MoveFile(overwrite) can delete before a failing move.
+                    foreach (var payload in payloads)
                     {
-                        payload.Previous = Path.Combine(workspace, "previous-" + Path.GetFileName(payload.Destination));
-                        _diskProvider.CopyFile(payload.Destination, payload.Previous);
-                    }
-                }
-
-                try
-                {
-                    foreach (var payload in payloads.OrderBy(payload => payload.IsConfig))
-                    {
-                        payload.Attempted = true;
-                        _diskProvider.MoveFile(payload.Source, payload.Destination, true);
-                    }
-                }
-                catch
-                {
-                    foreach (var payload in payloads.Where(payload => payload.Attempted).Reverse())
-                    {
-                        try
+                        payload.HadOriginal = _diskProvider.FileExists(payload.Destination);
+                        if (payload.HadOriginal)
                         {
-                            if (payload.HadOriginal)
-                            {
-                                _diskProvider.CopyFile(payload.Previous, payload.Destination, true);
-                            }
-                            else
-                            {
-                                _diskProvider.DeleteFile(payload.Destination);
-                            }
-                        }
-                        catch (Exception rollbackError)
-                        {
-                            retainWorkspace = true;
-                            _logger.Error(rollbackError, "Unable to roll back restore file; recovery files retained in {0}", workspace);
+                            payload.Previous = Path.Combine(workspace, "previous-" + Path.GetFileName(payload.Destination));
+                            _diskProvider.CopyFile(payload.Destination, payload.Previous);
                         }
                     }
 
-                    if (retainWorkspace)
+                    try
                     {
-                        throw new RestoreBackupFailedException(HttpStatusCode.InternalServerError,
-                            "Restore failed and could not be fully rolled back; recovery files were retained in a private restore directory");
+                        foreach (var payload in payloads.OrderBy(payload => payload.IsConfig))
+                        {
+                            payload.Attempted = true;
+                            _diskProvider.MoveFile(payload.Source, payload.Destination, true);
+                        }
                     }
+                    catch
+                    {
+                        foreach (var payload in payloads.Where(payload => payload.Attempted).Reverse())
+                        {
+                            try
+                            {
+                                if (payload.HadOriginal)
+                                {
+                                    _diskProvider.CopyFile(payload.Previous, payload.Destination, true);
+                                }
+                                else
+                                {
+                                    _diskProvider.DeleteFile(payload.Destination);
+                                }
+                            }
+                            catch (Exception rollbackError)
+                            {
+                                retainWorkspace = true;
+                                _logger.Error(rollbackError, "Unable to roll back restore file; recovery files retained in {0}", workspace);
+                            }
+                        }
 
-                    throw;
+                        if (retainWorkspace)
+                        {
+                            throw new RestoreBackupFailedException(HttpStatusCode.InternalServerError,
+                                "Restore failed and could not be fully rolled back; recovery files were retained in a private restore directory");
+                        }
+
+                        throw;
+                    }
                 }
             }
             finally
@@ -404,7 +412,10 @@ namespace NzbDrone.Core.Backup
             var configFile = _appFolderInfo.GetConfigPath();
             var tempConfigFile = Path.Combine(_backupTempFolder, Path.GetFileName(configFile));
 
-            _diskTransferService.TransferFile(configFile, tempConfigFile, TransferMode.Copy);
+            lock (ConfigFileProvider.FileLock)
+            {
+                _diskTransferService.TransferFile(configFile, tempConfigFile, TransferMode.Copy);
+            }
         }
 
         private void CreateVersionInfo(DateTime dateNow)

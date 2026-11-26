@@ -87,7 +87,10 @@ namespace NzbDrone.Core.Configuration
 
         private readonly string _configFile;
 
-        private static readonly object Mutex = new object();
+        // Config restores and ordinary read/modify/write operations must use the
+        // same lock; otherwise a startup write can replace a restored file or
+        // recreate it between an overwrite's delete and move.
+        internal static readonly object FileLock = new object();
 
         public ConfigFileProvider(IAppFolderInfo appFolderInfo,
                                   ICacheManager cacheManager,
@@ -124,22 +127,35 @@ namespace NzbDrone.Core.Configuration
 
         public Dictionary<string, object> GetConfigDictionary()
         {
-            var dict = new Dictionary<string, object>(StringComparer.InvariantCultureIgnoreCase);
-
-            var type = GetType();
-            var properties = type.GetProperties();
-
-            foreach (var propertyInfo in properties)
+            lock (FileLock)
             {
-                var value = propertyInfo.GetValue(this, null);
+                var dict = new Dictionary<string, object>(StringComparer.InvariantCultureIgnoreCase);
 
-                dict.Add(propertyInfo.Name, value);
+                var type = GetType();
+                var properties = type.GetProperties();
+
+                foreach (var propertyInfo in properties)
+                {
+                    var value = propertyInfo.GetValue(this, null);
+
+                    dict.Add(propertyInfo.Name, value);
+                }
+
+                return dict;
             }
-
-            return dict;
         }
 
         public void SaveConfigDictionary(Dictionary<string, object> configValues)
+        {
+            lock (FileLock)
+            {
+                SaveConfigDictionaryLocked(configValues);
+            }
+
+            _eventAggregator.PublishEvent(new ConfigFileSavedEvent());
+        }
+
+        private void SaveConfigDictionaryLocked(Dictionary<string, object> configValues)
         {
             _cache.Clear();
 
@@ -165,8 +181,6 @@ namespace NzbDrone.Core.Configuration
                     SetValue(configValue.Key.FirstCharToUpper(), configValue.Value.ToString());
                 }
             }
-
-            _eventAggregator.PublishEvent(new ConfigFileSavedEvent());
         }
 
         public string BindAddress
@@ -200,15 +214,18 @@ namespace NzbDrone.Core.Configuration
         {
             get
             {
-                var apiKey = _authOptions.ApiKey ?? GetValue("ApiKey", GenerateApiKey());
-
-                if (apiKey.IsNullOrWhiteSpace())
+                lock (FileLock)
                 {
-                    apiKey = GenerateApiKey();
-                    SetValue("ApiKey", apiKey);
-                }
+                    var apiKey = _authOptions.ApiKey ?? GetValue("ApiKey", GenerateApiKey());
 
-                return apiKey;
+                    if (apiKey.IsNullOrWhiteSpace())
+                    {
+                        apiKey = GenerateApiKey();
+                        SetValue("ApiKey", apiKey);
+                    }
+
+                    return apiKey;
+                }
             }
         }
 
@@ -216,17 +233,20 @@ namespace NzbDrone.Core.Configuration
         {
             get
             {
-                var enabled = _authOptions.Enabled ?? GetValueBoolean("AuthenticationEnabled", false, false);
-
-                if (enabled)
+                lock (FileLock)
                 {
-                    SetValue("AuthenticationMethod", AuthenticationType.Basic);
-                    return AuthenticationType.Basic;
-                }
+                    var enabled = _authOptions.Enabled ?? GetValueBoolean("AuthenticationEnabled", false, false);
 
-                return Enum.TryParse<AuthenticationType>(_authOptions.Method, out var enumValue)
-                    ? enumValue
-                    : GetValueEnum("AuthenticationMethod", AuthenticationType.None);
+                    if (enabled)
+                    {
+                        SetValue("AuthenticationMethod", AuthenticationType.Basic);
+                        return AuthenticationType.Basic;
+                    }
+
+                    return Enum.TryParse<AuthenticationType>(_authOptions.Method, out var enumValue)
+                        ? enumValue
+                        : GetValueEnum("AuthenticationMethod", AuthenticationType.None);
+                }
             }
         }
 
@@ -348,63 +368,69 @@ namespace NzbDrone.Core.Configuration
 
         public string GetValue(string key, object defaultValue, bool persist = true)
         {
-            return _cache.Get(key, () =>
-                {
-                    var xDoc = LoadConfigFile();
-                    var config = xDoc.Descendants(CONFIG_ELEMENT_NAME).Single();
-
-                    var parentContainer = config;
-
-                    var valueHolder = parentContainer.Descendants(key).ToList();
-
-                    if (valueHolder.Count() == 1)
+            lock (FileLock)
+            {
+                return _cache.Get(key, () =>
                     {
-                        var value = valueHolder.First().Value;
-                        return PreserveSslValue(key) ? value : value.Trim();
-                    }
+                        var xDoc = LoadConfigFile();
+                        var config = xDoc.Descendants(CONFIG_ELEMENT_NAME).Single();
 
-                    //Save the value
-                    if (persist)
-                    {
-                        SetValue(key, defaultValue);
-                    }
+                        var parentContainer = config;
 
-                    //return the default value
-                    return defaultValue.ToString();
-                });
+                        var valueHolder = parentContainer.Descendants(key).ToList();
+
+                        if (valueHolder.Count() == 1)
+                        {
+                            var value = valueHolder.First().Value;
+                            return PreserveSslValue(key) ? value : value.Trim();
+                        }
+
+                        //Save the value
+                        if (persist)
+                        {
+                            SetValue(key, defaultValue);
+                        }
+
+                        //return the default value
+                        return defaultValue.ToString();
+                    });
+            }
         }
 
         public void SetValue(string key, object value)
         {
-            var untrimmedValue = value.ToString();
-            var preserveValue = PreserveSslValue(key);
-            var valueString = preserveValue ? untrimmedValue : untrimmedValue.Trim();
-            var xDoc = LoadConfigFile();
-            var config = xDoc.Descendants(CONFIG_ELEMENT_NAME).Single();
-
-            var parentContainer = config;
-
-            var keyHolder = parentContainer.Descendants(key).ToList();
-            var element = keyHolder.Count == 1 ? keyHolder[0] : new XElement(key);
-            if (element.Parent == null)
+            lock (FileLock)
             {
-                parentContainer.Add(element);
-            }
+                var untrimmedValue = value.ToString();
+                var preserveValue = PreserveSslValue(key);
+                var valueString = preserveValue ? untrimmedValue : untrimmedValue.Trim();
+                var xDoc = LoadConfigFile();
+                var config = xDoc.Descendants(CONFIG_ELEMENT_NAME).Single();
 
-            if (preserveValue && valueString.Length > 0 && string.IsNullOrWhiteSpace(valueString))
-            {
-                // Both XML readers ignore whitespace-only text unless it is
-                // CDATA. An exact password must survive config reload/startup.
-                element.ReplaceNodes(new XCData(valueString));
-            }
-            else
-            {
-                element.Value = valueString;
-            }
+                var parentContainer = config;
 
-            _cache.Set(key, valueString);
+                var keyHolder = parentContainer.Descendants(key).ToList();
+                var element = keyHolder.Count == 1 ? keyHolder[0] : new XElement(key);
+                if (element.Parent == null)
+                {
+                    parentContainer.Add(element);
+                }
 
-            SaveConfigFile(xDoc);
+                if (preserveValue && valueString.Length > 0 && string.IsNullOrWhiteSpace(valueString))
+                {
+                    // Both XML readers ignore whitespace-only text unless it is
+                    // CDATA. An exact password must survive config reload/startup.
+                    element.ReplaceNodes(new XCData(valueString));
+                }
+                else
+                {
+                    element.Value = valueString;
+                }
+
+                _cache.Set(key, valueString);
+
+                SaveConfigFile(xDoc);
+            }
         }
 
         private static bool PreserveSslValue(string key)
@@ -421,52 +447,65 @@ namespace NzbDrone.Core.Configuration
 
         public void EnsureDefaultConfigFile()
         {
-            if (!File.Exists(_configFile))
+            lock (FileLock)
             {
-                SaveConfigDictionary(GetConfigDictionary());
+                if (File.Exists(_configFile))
+                {
+                    return;
+                }
+
+                SaveConfigDictionaryLocked(GetConfigDictionary());
             }
+
+            _eventAggregator.PublishEvent(new ConfigFileSavedEvent());
         }
 
         public void MigrateConfigFile()
         {
-            if (!File.Exists(_configFile))
+            lock (FileLock)
             {
-                return;
-            }
+                if (!File.Exists(_configFile))
+                {
+                    return;
+                }
 
-            // If SSL is enabled and a cert hash is still in the config file or cert path is empty disable SSL
-            if (EnableSsl && (GetValue("SslCertHash", string.Empty, false).IsNotNullOrWhiteSpace() || SslCertPath.IsNullOrWhiteSpace()))
-            {
-                SetValue("EnableSsl", false);
+                // If SSL is enabled and a cert hash is still in the config file or cert path is empty disable SSL
+                if (EnableSsl && (GetValue("SslCertHash", string.Empty, false).IsNotNullOrWhiteSpace() || SslCertPath.IsNullOrWhiteSpace()))
+                {
+                    SetValue("EnableSsl", false);
+                }
             }
         }
 
         private void DeleteOldValues()
         {
-            var xDoc = LoadConfigFile();
-            var config = xDoc.Descendants(CONFIG_ELEMENT_NAME).Single();
-
-            var type = GetType();
-            var properties = type.GetProperties();
-
-            foreach (var configValue in config.Descendants().ToList())
+            lock (FileLock)
             {
-                var name = configValue.Name.LocalName;
+                var xDoc = LoadConfigFile();
+                var config = xDoc.Descendants(CONFIG_ELEMENT_NAME).Single();
 
-                if (!properties.Any(p => p.Name == name))
+                var type = GetType();
+                var properties = type.GetProperties();
+
+                foreach (var configValue in config.Descendants().ToList())
                 {
-                    config.Descendants(name).Remove();
-                }
-            }
+                    var name = configValue.Name.LocalName;
 
-            SaveConfigFile(xDoc);
+                    if (!properties.Any(p => p.Name == name))
+                    {
+                        config.Descendants(name).Remove();
+                    }
+                }
+
+                SaveConfigFile(xDoc);
+            }
         }
 
         private XDocument LoadConfigFile()
         {
             try
             {
-                lock (Mutex)
+                lock (FileLock)
                 {
                     if (_diskProvider.FileExists(_configFile))
                     {
@@ -514,7 +553,7 @@ namespace NzbDrone.Core.Configuration
         {
             try
             {
-                lock (Mutex)
+                lock (FileLock)
                 {
                     _diskProvider.WriteAllText(_configFile, xDoc.ToString());
                 }

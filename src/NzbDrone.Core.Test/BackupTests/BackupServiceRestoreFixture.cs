@@ -9,18 +9,24 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Dapper;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework;
+using NzbDrone.Common.Cache;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Instrumentation;
+using NzbDrone.Common.Options;
 using NzbDrone.Core.Backup;
+using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Datastore.Migration.Framework;
+using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.BackupTests
@@ -585,6 +591,134 @@ namespace NzbDrone.Core.Test.BackupTests
             File.ReadAllBytes(_restorePath).Should().Equal(_originalRestore);
             AssertLiveDatabaseUnchanged();
             AssertWorkCleaned();
+        }
+
+        [Test]
+        public async Task restore_should_wait_for_config_writer_then_publish_restored_document()
+        {
+            var upload = WriteUpload("concurrent-config.xml", Encoding.UTF8.GetBytes(RestoredConfig));
+            var config = CreateConfigFileProvider();
+            using var writerEntered = new ManualResetEventSlim();
+            using var releaseWriter = new ManualResetEventSlim();
+            using var restoreStarted = new ManualResetEventSlim();
+            var disk = Mocker.GetMock<IDiskProvider>();
+            disk.Setup(provider => provider.WriteAllText(_configPath, It.IsAny<string>()))
+                .Callback<string, string>((path, text) =>
+                {
+                    writerEntered.Set();
+                    if (!releaseWriter.Wait(TimeSpan.FromSeconds(5)))
+                    {
+                        throw new TimeoutException("Config writer was not released by the fixture");
+                    }
+
+                    File.WriteAllText(path, text);
+                });
+
+            var writer = Task.Run(() => config.SetValue(nameof(config.InstanceName), "Bookshelf synthetic writer"));
+            var restore = Task.CompletedTask;
+            try
+            {
+                writerEntered.Wait(TimeSpan.FromSeconds(5)).Should().BeTrue();
+                restore = Task.Run(() =>
+                {
+                    restoreStarted.Set();
+                    Subject.Restore(upload);
+                });
+                restoreStarted.Wait(TimeSpan.FromSeconds(5)).Should().BeTrue();
+                restore.Wait(TimeSpan.FromMilliseconds(200)).Should().BeFalse();
+            }
+            finally
+            {
+                releaseWriter.Set();
+                await Task.WhenAll(writer, restore).WaitAsync(TimeSpan.FromSeconds(5));
+            }
+
+            File.ReadAllText(_configPath).Should().Be(RestoredConfig);
+            File.ReadAllBytes(_restorePath).Should().Equal(_originalRestore);
+            AssertLiveDatabaseUnchanged();
+            AssertWorkCleaned();
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task config_writer_should_wait_until_restore_publication_or_rollback_is_complete(bool failPublication)
+        {
+            var upload = WriteUpload("concurrent-restore.xml", Encoding.UTF8.GetBytes(RestoredConfig));
+            var config = CreateConfigFileProvider();
+            using var restoreEntered = new ManualResetEventSlim();
+            using var releaseRestore = new ManualResetEventSlim();
+            using var writerStarted = new ManualResetEventSlim();
+            var failure = new IOException("synthetic restore publication failure");
+            _beforeWrite = (source, destination) =>
+            {
+                if (destination == _configPath && Path.GetFileName(source) == "config.xml")
+                {
+                    // Model the disk provider's delete-before-move interval.
+                    File.Delete(destination);
+                    restoreEntered.Set();
+                    if (!releaseRestore.Wait(TimeSpan.FromSeconds(5)))
+                    {
+                        throw new TimeoutException("Restore was not released by the fixture");
+                    }
+
+                    if (failPublication)
+                    {
+                        throw failure;
+                    }
+                }
+            };
+
+            var restore = Task.Run(() =>
+            {
+                if (failPublication)
+                {
+                    Assert.Throws<IOException>(() => Subject.Restore(upload)).Should().BeSameAs(failure);
+                }
+                else
+                {
+                    Subject.Restore(upload);
+                }
+            });
+            var writer = Task.CompletedTask;
+            try
+            {
+                restoreEntered.Wait(TimeSpan.FromSeconds(5)).Should().BeTrue();
+                writer = Task.Run(() =>
+                {
+                    writerStarted.Set();
+                    config.SetValue(nameof(config.SslCertPassword), "  synthetic exact password  ");
+                });
+                writerStarted.Wait(TimeSpan.FromSeconds(5)).Should().BeTrue();
+                writer.Wait(TimeSpan.FromMilliseconds(200)).Should().BeFalse();
+            }
+            finally
+            {
+                releaseRestore.Set();
+                await Task.WhenAll(restore, writer).WaitAsync(TimeSpan.FromSeconds(5));
+            }
+
+            var actual = XDocument.Load(_configPath).Root;
+            var expected = XDocument.Parse(failPublication ? OriginalConfig : RestoredConfig).Root;
+            actual.Element("Port").Value.Should().Be(expected.Element("Port").Value);
+            actual.Element("ApiKey").Value.Should().Be(expected.Element("ApiKey").Value);
+            actual.Element(nameof(config.SslCertPassword)).Value.Should().Be("  synthetic exact password  ");
+            File.ReadAllBytes(_restorePath).Should().Equal(_originalRestore);
+            AssertLiveDatabaseUnchanged();
+            AssertWorkCleaned();
+        }
+
+        private ConfigFileProvider CreateConfigFileProvider()
+        {
+            return new ConfigFileProvider(Mocker.GetMock<IAppFolderInfo>().Object,
+                new CacheManager(),
+                Mocker.GetMock<IEventAggregator>().Object,
+                Mocker.GetMock<IDiskProvider>().Object,
+                Options.Create(new PostgresOptions()),
+                Options.Create(new AuthOptions()),
+                Options.Create(new AppOptions()),
+                Options.Create(new ServerOptions()),
+                Options.Create(new UpdateOptions()),
+                Options.Create(new LogOptions()));
         }
 
         [Test]
