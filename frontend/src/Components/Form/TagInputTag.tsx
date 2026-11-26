@@ -1,14 +1,25 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import Label from 'Components/Label';
 import IconButton from 'Components/Link/IconButton';
 import Link from 'Components/Link/Link';
-import { icons, kinds } from 'Helpers/Props';
-import tagShape from 'Helpers/Props/Shapes/tagShape';
+import { icons } from 'Helpers/Props';
+import type { Kind } from 'Helpers/Props/kinds';
 import translate from 'Utilities/String/translate';
+import type { RenderedTag, TagEdit, TagIdentity, TagSelection } from './tagRenderTypes';
 import styles from './TagInputTag.css';
 
-class TagInputTag extends Component {
+export interface TagInputTagProps<Id extends TagIdentity> {
+  index: number;
+  tag: RenderedTag<Id>;
+  kind: Kind;
+  canEdit: boolean;
+  isLastTag?: boolean;
+  isDisabled?: boolean;
+  onDelete: (tag: TagSelection<Id>) => void;
+  onEdit: (tag: TagEdit<Id>) => void;
+}
+
+class TagInputTag<Id extends TagIdentity> extends Component<TagInputTagProps<Id>> {
 
   //
   // Listeners
@@ -47,7 +58,8 @@ class TagInputTag extends Component {
     const {
       tag,
       kind,
-      canEdit
+      canEdit,
+      isDisabled
     } = this.props;
 
     return (
@@ -62,6 +74,8 @@ class TagInputTag extends Component {
           <Link
             className={canEdit ? styles.linkWithEdit : styles.link}
             tabIndex={-1}
+            isDisabled={isDisabled}
+            aria-label={`${translate('Delete')}: ${tag.name}`}
             onPress={this.onDelete}
           >
             {tag.name}
@@ -75,6 +89,7 @@ class TagInputTag extends Component {
                   name={icons.EDIT}
                   size={9}
                   aria-label={translate('EditTag')}
+                  isDisabled={isDisabled}
                   onPress={this.onEdit}
                 />
               </div> :
@@ -85,14 +100,5 @@ class TagInputTag extends Component {
     );
   }
 }
-
-TagInputTag.propTypes = {
-  index: PropTypes.number.isRequired,
-  tag: PropTypes.shape(tagShape),
-  kind: PropTypes.oneOf(kinds.all).isRequired,
-  canEdit: PropTypes.bool.isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onEdit: PropTypes.func.isRequired
-};
 
 export default TagInputTag;

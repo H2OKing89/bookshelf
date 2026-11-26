@@ -1,8 +1,8 @@
 /* eslint-disable no-bitwise */
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import EnhancedSelectInput from './EnhancedSelectInput';
-import formControlProps from './formControlProps';
+import formControlProps, { type FormControlProps } from './formControlProps';
+import type { ValueChange } from './formTypes';
 import styles from './UMaskInput.css';
 
 const umaskOptions = [
@@ -33,7 +33,7 @@ const umaskOptions = [
   }
 ];
 
-function formatPermissions(permissions) {
+function formatPermissions(permissions: number) {
 
   const hasSticky = permissions & 0o1000;
   const hasSetGID = permissions & 0o2000;
@@ -57,7 +57,16 @@ function formatPermissions(permissions) {
   return result;
 }
 
-class UMaskInput extends Component {
+interface Props extends FormControlProps {
+  name: string;
+  value?: string | null;
+  isDisabled?: boolean;
+  hasError?: boolean;
+  hasWarning?: boolean;
+  onChange: (change: ValueChange<string>) => void;
+}
+
+class UMaskInput extends Component<Props> {
 
   //
   // Render
@@ -66,10 +75,13 @@ class UMaskInput extends Component {
     const {
       name,
       value,
+      isDisabled,
+      hasError,
+      hasWarning,
       onChange
     } = this.props;
 
-    const valueNum = parseInt(value, 8);
+    const valueNum = parseInt(value ?? '', 8);
     const umaskNum = 0o777 & ~valueNum;
     const umask = umaskNum.toString(8).padStart(4, '0');
     const folderNum = 0o777 & ~umaskNum;
@@ -93,7 +105,11 @@ class UMaskInput extends Component {
               value={value}
               values={values}
               isEditable={true}
+              isDisabled={isDisabled}
+              hasError={hasError}
+              hasWarning={hasWarning}
               onChange={onChange}
+              onEditableChange={onChange}
             />
 
             <div className={styles.inputUnit}>
@@ -121,15 +137,5 @@ class UMaskInput extends Component {
     );
   }
 }
-
-UMaskInput.propTypes = {
-  name: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
-  hasError: PropTypes.bool,
-  hasWarning: PropTypes.bool,
-  onChange: PropTypes.func.isRequired,
-  onFocus: PropTypes.func,
-  onBlur: PropTypes.func
-};
 
 export default UMaskInput;

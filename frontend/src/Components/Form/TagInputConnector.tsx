@@ -10,6 +10,7 @@ import { numericTagProjection, removeTag, type TagOption, type TagRemoval } from
 
 interface OwnProps extends FormControlProps {
   name: string;
+  isDisabled?: boolean;
   value: number[];
   values?: readonly unknown[];
   onChange: (change: ValueChange<number[]>) => void;

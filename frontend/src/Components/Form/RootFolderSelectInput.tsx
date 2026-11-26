@@ -23,6 +23,8 @@ export interface RootFolderSelectInputProps extends FormControlProps {
   isSaving: boolean;
   saveError?: unknown;
   includeNoChange?: boolean;
+  valueOptions?: Record<string, unknown>;
+  selectedValueOptions?: Record<string, unknown>;
   className?: string;
   hasError?: boolean;
   hasWarning?: boolean;

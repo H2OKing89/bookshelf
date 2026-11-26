@@ -2,6 +2,7 @@ import _ from 'lodash';
 import React, { useContext, useState } from 'react';
 import Link from 'Components/Link/Link';
 import { inputTypes } from 'Helpers/Props';
+import { asStateRecord } from 'Store/StateTypes';
 import getUniqueElementId from 'Utilities/getUniqueElementId';
 import translate from 'Utilities/String/translate';
 import AutoCompleteInput from './AutoCompleteInput';
@@ -13,11 +14,12 @@ import DeviceInputConnector from './DeviceInputConnector';
 import DownloadClientSelectInputConnector from './DownloadClientSelectInputConnector';
 import EnhancedSelectInput from './EnhancedSelectInput';
 import EnhancedSelectInputConnector from './EnhancedSelectInputConnector';
+import type { EnhancedOption, SelectKey } from './enhancedSelectTypes';
 import type { FormControlProps } from './formControlProps';
 import FormGroupContext from './FormGroupContext';
 import type { FormInputButtonProps } from './FormInputButton';
 import FormInputHelpText from './FormInputHelpText';
-import type { FormMessage, SelectOption, ValueChange } from './formTypes';
+import type { FormMessage, ValueChange } from './formTypes';
 import IndexerFlagsSelectInput from './IndexerFlagsSelectInput';
 import IndexerSelectInputConnector from './IndexerSelectInputConnector';
 import KeyValueListInput, { type KeyValueListInputProps } from './KeyValueListInput';
@@ -28,6 +30,7 @@ import NumberInput, { type NumberInputProps } from './NumberInput';
 import OAuthInputConnector from './OAuthInputConnector';
 import PasswordInput from './PasswordInput';
 import PathInputConnector from './PathInputConnector';
+import { isProviderKey, providerKeys } from './providerControlTypes';
 import QualityProfileSelectInputConnector from './QualityProfileSelectInputConnector';
 import RootFolderSelectInputConnector from './RootFolderSelectInputConnector';
 import TagInputConnector from './TagInputConnector';
@@ -51,13 +54,6 @@ interface FieldLayoutProps extends FormControlProps {
   pending?: boolean;
   errors?: readonly FormMessage[];
   warnings?: readonly FormMessage[];
-}
-
-type SelectKey = string | number;
-interface EnhancedOption extends SelectOption {
-  hint?: React.ReactNode;
-  parentKey?: SelectKey;
-  depth?: number;
 }
 
 interface ScalarSelectField {
@@ -101,10 +97,8 @@ type NativeField =
 
 type LegacyInputType = Exclude<typeof inputTypes.all[number], NonNullable<NativeField['type']> | typeof inputTypes.SELECT | typeof inputTypes.TAG | typeof inputTypes.TAG_SELECT | typeof inputTypes.INDEXER_FLAGS_SELECT>;
 
-// Provider-backed controls still consume server-defined schemas. Until those
-// connectors are migrated, their dynamic values and metadata stay unknown,
-// rather than assuming a text/number shape. Native controls have the more
-// precise discriminated contracts above.
+// Provider-backed fields retain unknown schema values and metadata at the
+// store boundary. Each typed renderer narrows only the values it displays.
 interface LegacyField {
   type: LegacyInputType;
   name: string;
@@ -142,56 +136,149 @@ function controlInputProps<Props extends FormInputGroupProps>(props: Props) {
   ]);
 }
 
-function getLegacyComponent(type: LegacyInputType) {
-  switch (type) {
+function optionalText(value: unknown): string | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  return typeof value === 'string' ? value : undefined;
+}
+
+function optionalBoolean(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined;
+}
+
+function optionalKey(value: unknown): SelectKey | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  return isProviderKey(value) ? value : undefined;
+}
+
+function renderProviderControl(props: FieldLayoutProps & LegacyField, presentation: ControlPresentation) {
+  // These controls consume server-defined field schemas. Keep the raw metadata
+  // on the provider request, and narrow only the values presented to controls.
+  const input = controlInputProps(props);
+  const { value, onChange } = props;
+  const provider = typeof props.provider === 'string' ? props.provider : '';
+  const providerProps = { provider, providerData: props.providerData };
+  const isDisabled = optionalBoolean(props.isDisabled);
+
+  switch (props.type) {
     case inputTypes.AUTO_COMPLETE:
-      return AutoCompleteInput;
+      return <AutoCompleteInput
+        {...presentation}
+        {...input}
+        onChange={onChange}
+        value={optionalText(value)}
+        values={Array.isArray(props.values) ? props.values.filter((item: unknown): item is string => typeof item === 'string') : []}
+        isDisabled={isDisabled}
+      />;
 
     case inputTypes.CAPTCHA:
-      return CaptchaInputConnector;
+      return <CaptchaInputConnector {...presentation} {...input} onChange={onChange} {...providerProps} />;
 
     case inputTypes.DEVICE:
-      return DeviceInputConnector;
+      return <DeviceInputConnector {...presentation} {...input} onChange={onChange} {...providerProps} />;
 
     case inputTypes.BOOKSHELF:
-      return BookshelfInputConnector;
+      return <BookshelfInputConnector {...presentation} {...input} onChange={onChange} {...providerProps} />;
 
     case inputTypes.OAUTH:
-      return OAuthInputConnector;
+      return <OAuthInputConnector
+        {...presentation}
+        {...input}
+        onChange={onChange}
+        {...providerProps}
+        label={typeof props.label === 'string' ? props.label : undefined}
+        section={typeof props.section === 'string' ? props.section : ''}
+      />;
 
     case inputTypes.PATH:
-      return PathInputConnector;
+      return <PathInputConnector
+        {...presentation}
+        {...input}
+        onChange={onChange}
+        value={optionalText(value)}
+        includeFiles={optionalBoolean(props.includeFiles)}
+        hasFileBrowser={optionalBoolean(props.hasFileBrowser)}
+      />;
 
     case inputTypes.QUALITY_PROFILE_SELECT:
-      return QualityProfileSelectInputConnector;
+      return <QualityProfileSelectInputConnector
+        {...presentation}
+        {...input}
+        onChange={onChange}
+        value={optionalKey(value)}
+        isDisabled={isDisabled}
+        includeNoChange={optionalBoolean(props.includeNoChange)}
+        includeNoChangeDisabled={optionalBoolean(props.includeNoChangeDisabled)}
+        includeMixed={optionalBoolean(props.includeMixed)}
+      />;
 
     case inputTypes.METADATA_PROFILE_SELECT:
-      return MetadataProfileSelectInputConnector;
+      return <MetadataProfileSelectInputConnector
+        {...presentation}
+        {...input}
+        onChange={onChange}
+        value={optionalKey(value)}
+        isDisabled={isDisabled}
+        includeNone={optionalBoolean(props.includeNone)}
+        includeNoChange={optionalBoolean(props.includeNoChange)}
+        includeNoChangeDisabled={optionalBoolean(props.includeNoChangeDisabled)}
+        includeMixed={optionalBoolean(props.includeMixed)}
+      />;
 
     case inputTypes.BOOK_EDITION_SELECT:
-      return BookEditionSelectInputConnector;
+      return <BookEditionSelectInputConnector {...presentation} {...input} onChange={onChange} bookEditions={props.bookEditions} />;
 
     case inputTypes.INDEXER_SELECT:
-      return IndexerSelectInputConnector;
+      return <IndexerSelectInputConnector {...presentation} {...input} onChange={onChange} value={optionalKey(value)} includeAny={optionalBoolean(props.includeAny)} isDisabled={isDisabled} />;
 
     case inputTypes.DOWNLOAD_CLIENT_SELECT:
-      return DownloadClientSelectInputConnector;
+      return <DownloadClientSelectInputConnector {...presentation} {...input} onChange={onChange} value={optionalKey(value)} includeAny={optionalBoolean(props.includeAny)} isDisabled={isDisabled} protocol={typeof props.protocol === 'string' ? props.protocol : undefined} />;
 
     case inputTypes.ROOT_FOLDER_SELECT:
-      return RootFolderSelectInputConnector;
+      return <RootFolderSelectInputConnector
+        {...presentation}
+        {...input}
+        onChange={onChange}
+        value={optionalText(value)}
+        isDisabled={isDisabled}
+        includeMissingValue={optionalBoolean(props.includeMissingValue)}
+        includeNoChange={optionalBoolean(props.includeNoChange)}
+        includeNoChangeDisabled={optionalBoolean(props.includeNoChangeDisabled)}
+        valueOptions={asStateRecord(props.valueOptions)}
+        selectedValueOptions={asStateRecord(props.selectedValueOptions)}
+      />;
 
     case inputTypes.DYNAMIC_SELECT:
-      return EnhancedSelectInputConnector;
+      return <EnhancedSelectInputConnector
+        {...presentation}
+        {...input}
+        onChange={onChange}
+        {...providerProps}
+        value={Array.isArray(value) ? providerKeys(value) : optionalKey(value)}
+        isDisabled={isDisabled}
+        selectOptionsProviderAction={typeof props.selectOptionsProviderAction === 'string' ? props.selectOptionsProviderAction : undefined}
+      />;
 
     case inputTypes.TEXT_TAG:
-      return TextTagInputConnector;
+      return <TextTagInputConnector {...presentation} {...input} onChange={onChange} isDisabled={isDisabled} />;
 
     case inputTypes.UMASK:
-      return UMaskInput;
+      return <UMaskInput {...presentation} {...input} onChange={onChange} value={optionalText(value)} isDisabled={isDisabled} />;
 
     default:
-      return null;
+      return <TextInput
+        {...presentation}
+        value={typeof value === 'string' || typeof value === 'number' ? value : ''}
+        onChange={onChange}
+      />;
   }
+}
+
+function isMultipleSelectField(props: ScalarSelectField | MultipleSelectField): props is MultipleSelectField {
+  return Array.isArray(props.value);
 }
 
 function renderControl(props: FormInputGroupProps, presentation: ControlPresentation, helpIds: { helpTextId?: string; helpTextWarningId?: string }) {
@@ -218,7 +305,16 @@ function renderControl(props: FormInputGroupProps, presentation: ControlPresenta
       return <TextArea {...presentation} {...controlInputProps(props)} />;
 
     case inputTypes.SELECT:
-      return <EnhancedSelectInput {...presentation} {...controlInputProps(props)} />;
+      if (isMultipleSelectField(props)) {
+        return <EnhancedSelectInput {...presentation} {...controlInputProps(props)} value={props.value} onChange={props.onChange} />;
+      }
+      return <EnhancedSelectInput
+        {...presentation}
+        {...controlInputProps(props)}
+        value={props.value}
+        onChange={props.onChange}
+        onEditableChange={props.onChange}
+      />;
 
     case inputTypes.TAG:
       return <TagInputConnector {...presentation} {...controlInputProps(props)} />;
@@ -234,20 +330,8 @@ function renderControl(props: FormInputGroupProps, presentation: ControlPresenta
     case undefined:
       return <TextInput {...presentation} {...controlInputProps(props)} />;
 
-    default: {
-      const InputComponent = getLegacyComponent(props.type);
-      if (!InputComponent) {
-        const value = props.value;
-        return <TextInput
-          {...presentation}
-          {...controlInputProps(props)}
-          value={typeof value === 'string' || typeof value === 'number' ? value : ''}
-          onChange={props.onChange}
-        />;
-      }
-
-      return <InputComponent {...presentation} {...controlInputProps(props)} onChange={props.onChange} />;
-    }
+    default:
+      return renderProviderControl(props, presentation);
   }
 }
 

@@ -1,11 +1,12 @@
 import classNames from 'classnames';
+import type { ReactNode } from 'react';
 import formatBytes from 'Utilities/Number/formatBytes';
 import EnhancedSelectInputOption, { type EnhancedSelectInputOptionProps } from './EnhancedSelectInputOption';
 import styles from './RootFolderSelectInputOption.css';
 
 export interface RootFolderSelectInputOptionProps extends Omit<EnhancedSelectInputOptionProps, 'children'> {
   name?: string;
-  value?: string;
+  value?: ReactNode;
   freeSpace?: number | null;
   authorFolder?: string;
   isWindows?: boolean;
@@ -27,7 +28,7 @@ function RootFolderSelectInputOption(props: RootFolderSelectInputOptionProps) {
 
   const slashCharacter = isWindows ? '\\' : '/';
 
-  const text = name === '' ? value : `[${name}] ${value}`;
+  const text = name === '' ? value : <>[{name}] {value}</>;
 
   return (
     <EnhancedSelectInputOption

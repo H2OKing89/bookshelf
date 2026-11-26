@@ -10,6 +10,7 @@ import { isProviderKey, type ProviderControlProps, providerFields, type Provider
 interface OwnProps extends ProviderControlProps {
   value?: ProviderKey | ProviderKey[] | null;
   selectOptionsProviderAction?: string;
+  isDisabled?: boolean;
 }
 
 const importantFieldNames = [
@@ -143,12 +144,10 @@ class EnhancedSelectInputConnector extends Component<Props, { refetchRequired: b
   // Render
 
   render() {
-    return (
-      <EnhancedSelectInput
-        {...this.props}
-        onOpen={this.onOpen}
-      />
-    );
+    const { value, onChange } = this.props;
+    return Array.isArray(value) ?
+      <EnhancedSelectInput {...this.props} value={value} onChange={onChange} onOpen={this.onOpen} /> :
+      <EnhancedSelectInput {...this.props} value={value} onChange={onChange} onOpen={this.onOpen} />;
   }
 }
 

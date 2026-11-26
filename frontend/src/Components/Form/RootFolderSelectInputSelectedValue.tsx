@@ -1,10 +1,11 @@
+import type { ReactNode } from 'react';
 import formatBytes from 'Utilities/Number/formatBytes';
 import EnhancedSelectInputSelectedValue, { type EnhancedSelectInputSelectedValueProps } from './EnhancedSelectInputSelectedValue';
 import styles from './RootFolderSelectInputSelectedValue.css';
 
 export interface RootFolderSelectInputSelectedValueProps extends Omit<EnhancedSelectInputSelectedValueProps, 'children'> {
   name?: string;
-  value?: string;
+  value?: ReactNode;
   freeSpace?: number | null;
   authorFolder?: string;
   isWindows?: boolean;
@@ -24,7 +25,7 @@ function RootFolderSelectInputSelectedValue(props: RootFolderSelectInputSelected
 
   const slashCharacter = isWindows ? '\\' : '/';
 
-  const text = name === '' ? value : `[${name}] ${value}`;
+  const text = name === '' ? value : <>[{name}] {value}</>;
 
   return (
     <EnhancedSelectInputSelectedValue

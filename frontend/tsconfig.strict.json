@@ -251,6 +251,20 @@
     "./src/Settings/DownloadClients/DownloadClients/DownloadClientsConnector.tsx",
     "./src/Settings/ImportLists/ImportLists/ImportList.tsx",
     "./src/Settings/ImportLists/ImportLists/ImportLists.tsx",
-    "./src/Settings/ImportLists/ImportLists/ImportListsConnector.tsx"
+    "./src/Settings/ImportLists/ImportLists/ImportListsConnector.tsx",
+    "./src/Components/Form/AutoSuggestInput.tsx",
+    "./src/Components/Form/AutoCompleteInput.tsx",
+    "./src/Components/Form/TagInput.tsx",
+    "./src/Components/Form/TagInputInput.tsx",
+    "./src/Components/Form/TagInputTag.tsx",
+    "./src/Components/Form/tagRenderTypes.ts",
+    "./src/Components/Form/EnhancedSelectInput.tsx",
+    "./src/Components/Form/enhancedSelectTypes.ts",
+    "./src/Components/Form/UMaskInput.tsx",
+    "./src/Components/Form/BookEditionSelectInputConnector.tsx",
+    "./src/Components/Form/IndexerSelectInputConnector.tsx",
+    "./src/Components/Form/DownloadClientSelectInputConnector.tsx",
+    "./src/Components/Form/providerSelectOptions.ts",
+    "./src/Components/Form/IndexerFlagsSelectInput.tsx"
   ]
 }

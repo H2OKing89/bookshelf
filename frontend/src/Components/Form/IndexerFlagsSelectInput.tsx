@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { type AriaAttributes,useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { createSelector } from 'reselect';
 import AppState from 'App/State/AppState';
@@ -30,7 +30,17 @@ const selectIndexerFlagsValues = (selectedFlags: number) =>
     }
   );
 
-interface IndexerFlagsSelectInputProps {
+// Only alter bits that the server's current flag catalog exposes.
+export function updateIndexerFlags(previous: number, known: readonly number[], selected: readonly number[]): number {
+  /* eslint-disable no-bitwise */
+  const mask = known.reduce((flags, id) => flags | id, 0);
+  const enabled = selected.reduce((flags, id) => flags | id, 0) & mask;
+  return (previous & ~mask) | enabled;
+  /* eslint-enable no-bitwise */
+}
+
+interface IndexerFlagsSelectInputProps extends AriaAttributes {
+  id?: string;
   name: string;
   indexerFlags: number;
   onChange(payload: ValueChange<number>): void;
@@ -39,19 +49,18 @@ interface IndexerFlagsSelectInputProps {
 function IndexerFlagsSelectInput(props: IndexerFlagsSelectInputProps) {
   const { indexerFlags, onChange } = props;
 
-  const { value, values } = useSelector(selectIndexerFlagsValues(indexerFlags));
+  const selector = useMemo(() => selectIndexerFlagsValues(indexerFlags), [indexerFlags]);
+  const { value, values } = useSelector(selector);
 
   const onChangeWrapper = useCallback(
     ({ name, value }: { name: string; value: number[] }) => {
-      const indexerFlags = value.reduce((acc, flagId) => acc + flagId, 0);
-
-      onChange({ name, value: indexerFlags });
+      onChange({ name, value: updateIndexerFlags(indexerFlags, values.map((option) => option.key), value) });
     },
-    [onChange]
+    [indexerFlags, onChange, values]
   );
 
   return (
-    <EnhancedSelectInput
+    <EnhancedSelectInput<number>
       {...props}
       value={value}
       values={values}

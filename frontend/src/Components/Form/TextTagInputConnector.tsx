@@ -10,6 +10,7 @@ import { removeTag, type TagOption, type TagRemoval,textTags } from './tagInputS
 
 interface OwnProps extends FormControlProps {
   name: string;
+  isDisabled?: boolean;
   value?: unknown;
   onChange: (change: ValueChange<string[]>) => void;
 }

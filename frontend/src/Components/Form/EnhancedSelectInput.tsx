@@ -1,7 +1,5 @@
 import classNames from 'classnames';
-import _ from 'lodash';
-import PropTypes from 'prop-types';
-import { Component } from 'react';
+import { Component, type KeyboardEvent } from 'react';
 import Icon from 'Components/Icon';
 import Link from 'Components/Link/Link';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
@@ -15,6 +13,7 @@ import { isMobile as isMobileUtil } from 'Utilities/browser';
 import * as keyCodes from 'Utilities/Constants/keyCodes';
 import getUniqueElementId from 'Utilities/getUniqueElementId';
 import translate from 'Utilities/String/translate';
+import { type EnhancedOption, type EnhancedSelectInputProps, isMultiSelect, isOptionDisabled, optionLabel, type SelectKey,toggleSelectedKey } from './enhancedSelectTypes';
 import formControlProps from './formControlProps';
 import HintedSelectInputOption from './HintedSelectInputOption';
 import HintedSelectInputSelectedValue from './HintedSelectInputSelectedValue';
@@ -22,54 +21,23 @@ import { nextEnabledOptionIndex, selectedOptionIndex } from './selectInputSelect
 import TextInput from './TextInput';
 import styles from './EnhancedSelectInput.css';
 
-function isArrowKey(keyCode) {
-  return keyCode === keyCodes.UP_ARROW || keyCode === keyCodes.DOWN_ARROW;
+interface State {
+  isOpen: boolean;
+  selectedIndex: number;
+  isMobile: boolean;
 }
 
-function getSelectedOption(selectedIndex, values) {
-  return values[selectedIndex];
-}
-
-function previousIndex(selectedIndex, values) {
-  return nextEnabledOptionIndex(selectedIndex, -1, values);
-}
-
-function nextIndex(selectedIndex, values) {
-  return nextEnabledOptionIndex(selectedIndex, 1, values);
-}
-
-function getSelectedIndex({ value, values }) {
+function getSelectedIndex<Key extends SelectKey>({ value, values }: EnhancedSelectInputProps<Key>): number {
   return selectedOptionIndex(value, values);
 }
 
-function isSelectedItem(index, props) {
-  const {
-    value,
-    values
-  } = props;
-
-  if (Array.isArray(value)) {
-    return value.includes(values[index].key);
-  }
-
-  return values[index].key === value;
-}
-
-function getKey(selectedIndex, values) {
-  return values[selectedIndex].key;
-}
-
-class EnhancedSelectInput extends Component {
+class EnhancedSelectInput<Key extends SelectKey> extends Component<EnhancedSelectInputProps<Key>, State> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
-
-    this._buttonId = getUniqueElementId();
-    this._optionsId = getUniqueElementId();
-    this._valueId = getUniqueElementId();
+  constructor(props: EnhancedSelectInputProps<Key>) {
+    super(props);
 
     this.state = {
       isOpen: false,
@@ -78,7 +46,7 @@ class EnhancedSelectInput extends Component {
     };
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps: EnhancedSelectInputProps<Key>, prevState: State) {
     if (!prevState.isOpen && this.state.isOpen && !this.state.isMobile) {
       this._addListener();
     } else if (prevState.isOpen && !this.state.isOpen) {
@@ -99,10 +67,15 @@ class EnhancedSelectInput extends Component {
     this._removeListener();
   }
 
+  private readonly _buttonId = getUniqueElementId();
+  private readonly _optionsId = getUniqueElementId();
+  private readonly _valueId = getUniqueElementId();
+  private _reference: HTMLElement | null = null;
+
   //
   // Control
 
-  setReference = (reference) => {
+  setReference = (reference: HTMLElement | null) => {
     this._reference = reference;
   };
 
@@ -117,11 +90,11 @@ class EnhancedSelectInput extends Component {
   //
   // Listeners
 
-  onWindowClick = (event) => {
+  onWindowClick = (event: MouseEvent) => {
     const button = document.getElementById(this._buttonId);
     const options = document.getElementById(this._optionsId);
 
-    if (!button || !event.target.isConnected || this.state.isMobile) {
+    if (!button || !(event.target instanceof Node) || !event.target.isConnected || this.state.isMobile) {
       return;
     }
 
@@ -152,108 +125,74 @@ class EnhancedSelectInput extends Component {
     }
   };
 
-  onKeyDown = (event) => {
-    const {
-      values
-    } = this.props;
-
-    const {
-      isOpen,
-      selectedIndex
-    } = this.state;
-
-    const keyCode = event.keyCode;
-    const newState = {};
-
-    if (!isOpen) {
-      if (isArrowKey(keyCode)) {
-        event.preventDefault();
-        newState.isOpen = true;
-        this.props.onOpen?.();
-      }
-
-      if (
-        selectedIndex == null || selectedIndex === -1 ||
-        !getSelectedOption(selectedIndex, values) ||
-        getSelectedOption(selectedIndex, values).isDisabled
-      ) {
-        if (keyCode === keyCodes.UP_ARROW) {
-          newState.selectedIndex = previousIndex(0, values);
-        } else if (keyCode === keyCodes.DOWN_ARROW) {
-          newState.selectedIndex = nextIndex(values.length - 1, values);
-        }
-      }
-
-      this.setState(newState);
+  onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    const { values, value, isDisabled } = this.props;
+    const { isOpen, selectedIndex } = this.state;
+    if (isDisabled) {
       return;
     }
 
-    if (keyCode === keyCodes.UP_ARROW) {
-      event.preventDefault();
-      newState.selectedIndex = previousIndex(selectedIndex, values);
-    }
+    const keyCode = event.keyCode;
+    const options = values.map((option) => ({ ...option, isDisabled: isOptionDisabled(option, value) }));
+    const selected = options[selectedIndex];
+    const arrow = keyCode === keyCodes.UP_ARROW || keyCode === keyCodes.DOWN_ARROW;
 
-    if (keyCode === keyCodes.DOWN_ARROW) {
-      event.preventDefault();
-      newState.selectedIndex = nextIndex(selectedIndex, values);
-    }
-
-    if (keyCode === keyCodes.ENTER) {
-      event.preventDefault();
-      newState.isOpen = false;
-      if (getSelectedOption(selectedIndex, values) && !getSelectedOption(selectedIndex, values).isDisabled) {
-        this.onSelect(getKey(selectedIndex, values));
+    if (!isOpen) {
+      if (arrow) {
+        event.preventDefault();
+        this.props.onOpen?.();
+        this.setState({
+          isOpen: true,
+          selectedIndex: !selected || selected.isDisabled ?
+            nextEnabledOptionIndex(-1, keyCode === keyCodes.UP_ARROW ? -1 : 1, options) : selectedIndex
+        });
       }
+      return;
     }
 
-    if (keyCode === keyCodes.TAB) {
-      newState.isOpen = false;
-      if (getSelectedOption(selectedIndex, values) && !getSelectedOption(selectedIndex, values).isDisabled) {
-        this.onSelect(getKey(selectedIndex, values));
+    if (arrow) {
+      event.preventDefault();
+      this.setState({ selectedIndex: nextEnabledOptionIndex(selectedIndex, keyCode === keyCodes.UP_ARROW ? -1 : 1, options) });
+    } else if (keyCode === keyCodes.ENTER || keyCode === keyCodes.TAB) {
+      if (keyCode === keyCodes.ENTER) {
+        event.preventDefault();
       }
-    }
 
-    if (keyCode === keyCodes.ESCAPE) {
+      this.setState({ isOpen: false });
+      if (selected && !selected.isDisabled && !(keyCode === keyCodes.TAB && event.shiftKey)) {
+        this.onSelect(selected.key);
+      }
+    } else if (keyCode === keyCodes.ESCAPE) {
       event.preventDefault();
       event.stopPropagation();
-      newState.isOpen = false;
-      newState.selectedIndex = getSelectedIndex(this.props);
-    }
-
-    if (!_.isEmpty(newState)) {
-      this.setState(newState);
+      this.setState({ isOpen: false, selectedIndex: getSelectedIndex(this.props) });
     }
   };
 
   onPress = () => {
-    if (!this.state.isOpen && this.props.onOpen) {
-      this.props.onOpen();
+    if (this.props.isDisabled) {
+      return;
     }
 
-    this.setState({ isOpen: !this.state.isOpen });
+    if (!this.state.isOpen) {
+      this.props.onOpen?.();
+    }
+
+    this.setState((state) => ({ isOpen: !state.isOpen }));
   };
 
-  onSelect = (value) => {
-    if (Array.isArray(this.props.value)) {
-      let newValue = null;
-      const index = this.props.value.indexOf(value);
-      if (index === -1) {
-        newValue = this.props.values.map((v) => v.key).filter((v) => (v === value) || this.props.value.includes(v));
-      } else {
-        newValue = [...this.props.value];
-        newValue.splice(index, 1);
-      }
-      this.props.onChange({
-        name: this.props.name,
-        value: newValue
-      });
+  onSelect = (key: SelectKey) => {
+    const option = this.props.values.find((candidate) => candidate.key === key);
+    if (this.props.isDisabled || !option || isOptionDisabled(option, this.props.value)) {
+      return;
+    }
+
+    const props = this.props;
+    if (isMultiSelect<Key>(props)) {
+      props.onChange({ name: props.name, value: toggleSelectedKey(props.value, props.values, option.key) });
     } else {
       this.setState({ isOpen: false });
-
-      this.props.onChange({
-        name: this.props.name,
-        value
-      });
+      props.onChange({ name: props.name, value: option.key });
     }
   };
 
@@ -266,21 +205,21 @@ class EnhancedSelectInput extends Component {
 
   render() {
     const {
-      className,
-      disabledClassName,
+      className = styles.enhancedSelect,
+      disabledClassName = styles.isDisabled,
       name,
       value,
       values,
-      isDisabled,
-      isEditable,
-      isFetching,
+      isDisabled = false,
+      isEditable = false,
+      isFetching = false,
       hasError,
       hasWarning,
-      valueOptions,
-      selectedValueOptions,
-      selectedValueComponent: SelectedValueComponent,
-      optionComponent: OptionComponent,
-      onChange
+      valueOptions = {},
+      selectedValueOptions = {},
+      selectedValueComponent: SelectedValueComponent = HintedSelectInputSelectedValue,
+      optionComponent: OptionComponent = HintedSelectInputOption,
+      onEditableChange
     } = this.props;
 
     const {
@@ -289,13 +228,31 @@ class EnhancedSelectInput extends Component {
       isMobile
     } = this.state;
 
-    const isMultiSelect = Array.isArray(value);
-    const selectedOption = getSelectedOption(selectedIndex, values);
-    let selectedValue = value;
-
-    if (!values.length) {
-      selectedValue = isMultiSelect ? [] : '';
-    }
+    const multiple = isMultiSelect<Key>(this.props);
+    const selectedOption = values[selectedIndex];
+    const selectedValue = !multiple && selectedOption ? optionLabel(selectedOption.value) : value;
+    const renderOption = (option: EnhancedOption<Key>, mobile: boolean) => {
+      const selected = multiple && Array.isArray(value) ? value.includes(option.key) : value === option.key;
+      const { key: optionKey, ...optionProps } = option;
+      const label = optionLabel(option.value);
+      return (
+        <OptionComponent
+          key={`${typeof optionKey}:${optionKey}`}
+          {...valueOptions}
+          {...optionProps}
+          id={optionKey}
+          value={label}
+          depth={option.depth ?? (option.parentKey === undefined ? 0 : 1)}
+          isSelected={selected}
+          isDisabled={isOptionDisabled(option, value)}
+          isMultiSelect={multiple}
+          isMobile={mobile}
+          onSelect={this.onSelect}
+        >
+          {label}
+        </OptionComponent>
+      );
+    };
 
     const controlProps = formControlProps(this.props);
     const labelledBy = controlProps['aria-labelledby'];
@@ -308,7 +265,7 @@ class EnhancedSelectInput extends Component {
         >
           <div>
             {
-              isEditable ?
+              isEditable && !multiple ?
                 <div
                   className={styles.editableContainer}
                 >
@@ -316,13 +273,13 @@ class EnhancedSelectInput extends Component {
                     {...controlProps}
                     className={className}
                     name={name}
-                    value={value}
+                    value={typeof value === 'string' || typeof value === 'number' ? value : null}
                     readOnly={isDisabled}
                     hasError={hasError}
                     hasWarning={hasWarning}
                     onFocus={this.onFocus}
                     onBlur={this.onBlur}
-                    onChange={onChange}
+                    onChange={(change) => onEditableChange?.(change)}
                   />
                   <Link
                     aria-label={translate('Options')}
@@ -372,16 +329,14 @@ class EnhancedSelectInput extends Component {
                   onPress={this.onPress}
                 >
                   <SelectedValueComponent
+                    {...selectedValueOptions}
+                    {...(multiple ? {} : selectedOption)}
                     value={selectedValue}
                     values={values}
-                    {...selectedValueOptions}
-                    {...(isMultiSelect ? {} : selectedOption)}
                     id={this._valueId}
                     isDisabled={isDisabled}
-                    isMultiSelect={isMultiSelect}
-                  >
-                    {selectedOption ? selectedOption.value : null}
-                  </SelectedValueComponent>
+                    isMultiSelect={multiple}
+                  />
 
                   <div
                     className={isDisabled ?
@@ -432,28 +387,7 @@ class EnhancedSelectInput extends Component {
                     style={{ maxHeight: popupMaxHeight }}
                   >
                     {
-                      values.map((v, index) => {
-                        const hasParent = v.parentKey !== undefined;
-                        const depth = hasParent ? 1 : 0;
-                        const parentSelected = hasParent && Array.isArray(value) && value.includes(v.parentKey);
-
-                        return (
-                          <OptionComponent
-                            key={v.key}
-                            id={v.key}
-                            depth={depth}
-                            isSelected={isSelectedItem(index, this.props)}
-                            isDisabled={parentSelected}
-                            isMultiSelect={isMultiSelect}
-                            {...valueOptions}
-                            {...v}
-                            isMobile={false}
-                            onSelect={this.onSelect}
-                          >
-                            {v.value}
-                          </OptionComponent>
-                        );
-                      })
+                      values.map((option) => renderOption(option, false))
                     }
                   </Scroller>
                 </div>
@@ -472,7 +406,6 @@ class EnhancedSelectInput extends Component {
             >
               <ModalBody
                 className={styles.optionsModalBody}
-                innerClassName={styles.optionsInnerModalBody}
                 scrollDirection={scrollDirections.NONE}
               >
                 <Scroller className={styles.optionsModalScroller}>
@@ -491,27 +424,7 @@ class EnhancedSelectInput extends Component {
                   </div>
 
                   {
-                    values.map((v, index) => {
-                      const hasParent = v.parentKey !== undefined;
-                      const depth = hasParent ? 1 : 0;
-                      const parentSelected = hasParent && Array.isArray(value) && value.includes(v.parentKey);
-                      return (
-                        <OptionComponent
-                          key={v.key}
-                          id={v.key}
-                          depth={depth}
-                          isSelected={isSelectedItem(index, this.props)}
-                          isMultiSelect={isMultiSelect}
-                          isDisabled={parentSelected}
-                          {...valueOptions}
-                          {...v}
-                          isMobile={true}
-                          onSelect={this.onSelect}
-                        >
-                          {v.value}
-                        </OptionComponent>
-                      );
-                    })
+                    values.map((option) => renderOption(option, true))
                   }
                 </Scroller>
               </ModalBody>
@@ -522,36 +435,5 @@ class EnhancedSelectInput extends Component {
     );
   }
 }
-
-EnhancedSelectInput.propTypes = {
-  className: PropTypes.string,
-  disabledClassName: PropTypes.string,
-  name: PropTypes.string.isRequired,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.arrayOf(PropTypes.string), PropTypes.arrayOf(PropTypes.number)]).isRequired,
-  values: PropTypes.arrayOf(PropTypes.object).isRequired,
-  isDisabled: PropTypes.bool.isRequired,
-  isFetching: PropTypes.bool.isRequired,
-  isEditable: PropTypes.bool.isRequired,
-  hasError: PropTypes.bool,
-  hasWarning: PropTypes.bool,
-  valueOptions: PropTypes.object.isRequired,
-  selectedValueOptions: PropTypes.object.isRequired,
-  selectedValueComponent: PropTypes.oneOfType([PropTypes.string, PropTypes.func]).isRequired,
-  optionComponent: PropTypes.elementType,
-  onOpen: PropTypes.func,
-  onChange: PropTypes.func.isRequired
-};
-
-EnhancedSelectInput.defaultProps = {
-  className: styles.enhancedSelect,
-  disabledClassName: styles.isDisabled,
-  isDisabled: false,
-  isFetching: false,
-  isEditable: false,
-  valueOptions: {},
-  selectedValueOptions: {},
-  selectedValueComponent: HintedSelectInputSelectedValue,
-  optionComponent: HintedSelectInputOption
-};
 
 export default EnhancedSelectInput;
