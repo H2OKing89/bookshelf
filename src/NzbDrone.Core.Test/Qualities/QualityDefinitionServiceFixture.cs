@@ -11,6 +11,33 @@ namespace NzbDrone.Core.Test.Qualities
     public class QualityDefinitionServiceFixture : CoreTest<QualityDefinitionService>
     {
         [Test]
+        public void bulk_update_should_invalidate_cached_definitions_immediately()
+        {
+            IList<QualityDefinition> stored = new List<QualityDefinition>
+            {
+                new QualityDefinition(Quality.MP3) { MinSize = 0, MaxSize = 350, Id = 20 },
+                new QualityDefinition(Quality.FLAC) { MinSize = 0, MaxSize = null, Id = 21 }
+            };
+
+            var repository = Mocker.GetMock<IQualityDefinitionRepository>();
+            repository.Setup(r => r.All()).Returns(() => new List<QualityDefinition>(stored));
+            repository.Setup(r => r.UpdateMany(It.IsAny<IList<QualityDefinition>>()))
+                      .Callback<IList<QualityDefinition>>(definitions => stored = definitions);
+
+            Assert.That(Subject.GetById(20).MaxSize, Is.EqualTo(350));
+
+            Subject.UpdateMany(new List<QualityDefinition>
+            {
+                new QualityDefinition(Quality.MP3) { MinSize = 0, MaxSize = 349.8, Id = 20 },
+                new QualityDefinition(Quality.FLAC) { MinSize = 0, MaxSize = null, Id = 21 }
+            });
+
+            Assert.That(Subject.GetById(20).MaxSize, Is.EqualTo(349.8));
+            Assert.That(Subject.Get(Quality.MP3).MaxSize, Is.EqualTo(349.8));
+            Assert.That(Subject.Get(Quality.FLAC).MaxSize, Is.Null);
+        }
+
+        [Test]
         public void init_should_add_all_definitions()
         {
             Subject.Handle(new ApplicationStartedEvent());

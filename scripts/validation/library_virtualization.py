@@ -11,6 +11,7 @@ from . import app, common, identity, restore, upgrade
 BROWSER = Path(__file__).with_name("library-virtualization-browser.cjs")
 AUTHORS_PER_LETTER = 20
 BOOKS_PER_AUTHOR = 8
+LONG_OVERVIEW = "A synthetic overview with repeated text and Unicode — café 日本語. " * 90 + "Owned overview end."
 
 
 def seed_catalog(fixture):
@@ -27,7 +28,8 @@ def seed_catalog(fixture):
             name = f"{letter} Author {author_offset:04d}"
             records["AuthorMetadata"].append(dict(templates["AuthorMetadata"], Id=author_id,
                 ForeignAuthorId=f"local:author:{author_id:032x}", TitleSlug=f"owned-author-{author_id}",
-                Name=name, SortName=name.lower(), NameLastFirst=name, SortNameLastFirst=name.lower()))
+                Name=name, SortName=name.lower(), NameLastFirst=name, SortNameLastFirst=name.lower(),
+                Overview=LONG_OVERVIEW if author_offset == 0 else templates["AuthorMetadata"]["Overview"]))
             records["Authors"].append(dict(templates["Authors"], Id=author_id, AuthorMetadataId=author_id,
                 CleanName=name.lower().replace(" ", ""), SortName=name.lower(),
                 Path=str(fixture.home / "owned-media" / f"author-{author_id}")))
@@ -45,7 +47,8 @@ def seed_catalog(fixture):
                 editions = dict(templates["Editions"], Id=book_id, BookId=book_id,
                     ForeignEditionId=foreign_id, Title=title, TitleSlug=f"owned-edition-{book_id}",
                     Format="EPUB" if ebook else "M4B", IsEbook=int(ebook),
-                    RuntimeLengthMinutes=0 if ebook else 1)
+                    RuntimeLengthMinutes=0 if ebook else 1,
+                    Overview=LONG_OVERVIEW if author_offset == 0 else templates["Editions"]["Overview"])
                 if "AudibleRegion" in editions:
                     editions["AudibleRegion"] = foreign_id.split(":")[1] if foreign_id.startswith("audible:") else None
                     editions["Asin"] = "B000000001" if foreign_id.startswith("audible:") else None

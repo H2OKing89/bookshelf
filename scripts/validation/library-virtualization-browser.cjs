@@ -95,6 +95,22 @@ async function verifyAdditionalView(page, config, layout, section, route, view, 
   await page.goto(config.url + '/' + section);
   await grid.locator(`a[href*="/${route}/"]`).first().waitFor();
   await scrollToFraction(page, 0);
+  if (layout === 'desktop' && view === 'overview') {
+    stage('native_text_clamp');
+    const description = grid.locator('[style*="-webkit-line-clamp"]').filter({ hasText: 'Owned overview end.' }).first();
+    await description.waitFor();
+    const clamped = () => description.evaluate(element => {
+      const style = getComputedStyle(element);
+      return Number(style.webkitLineClamp) > 0 && style.overflow === 'hidden' &&
+        element.scrollHeight > element.clientHeight && element.textContent.includes('Owned overview end.');
+    });
+    check(section + '_overview_is_visually_clamped_with_complete_text', await clamped());
+    const viewport = page.viewportSize();
+    await page.setViewportSize({ ...viewport, width: viewport.width - 150 });
+    await page.waitForTimeout(150);
+    check(section + '_overview_clamp_adapts_to_resize', await clamped());
+    await page.setViewportSize(viewport);
+  }
   if (section === 'books' && view === 'overview') {
     stage('overview_author_editor');
     const overview = grid.locator('[class*="BookIndexOverview-container-"]').filter({

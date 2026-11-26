@@ -259,13 +259,113 @@ async function verifyDialogGuard(page, config, { check, step, output }) {
   await setCheckbox(options(page), false);
 }
 
+async function verifyQualitySlider(page, base, { check, step, output }, touch = false) {
+  step('quality_slider_load');
+  const fetched = responseFor(page, base, 'qualitydefinition');
+  await page.goto(base.origin + base.pathname.replace(/\/$/, '') + '/settings/quality');
+  const original = (await (await fetched).json())[0];
+  const minimum = page.getByRole('slider', { name: original.quality.name + ' Minimum', exact: true });
+  const maximum = page.getByRole('slider', { name: original.quality.name + ' Maximum', exact: true });
+  const saved = page.getByRole('button', { name: 'No Changes', exact: true });
+  const save = page.getByRole('button', { name: 'Save Changes', exact: true });
+  const value = async thumb => Number(await thumb.getAttribute('aria-valuenow'));
+  await maximum.waitFor();
+  const initialMin = await value(minimum);
+  const initialMax = await value(maximum);
+  check('quality_has_named_independent_thumbs', initialMin < initialMax &&
+    (await minimum.getAttribute('aria-valuetext')).endsWith('/s') &&
+    !!await maximum.getAttribute('aria-valuetext'));
+
+  if (!touch) {
+    step('native_sidebar_scroll');
+    const viewport = page.viewportSize();
+    await page.setViewportSize({ width: viewport.width, height: 360 });
+    const sidebar = page.locator('[class*="OverlayScroller-scroller-"]');
+    await sidebar.waitFor();
+    await sidebar.hover();
+    await page.mouse.wheel(0, 1200);
+    await page.waitForFunction(() => {
+      const element = document.querySelector('[class*="OverlayScroller-scroller-"]');
+      return element && element.scrollTop > 0 && element.scrollTop + element.clientHeight >= element.scrollHeight - 2;
+    });
+    check('desktop_sidebar_scrolls_to_bottom', await sidebar.evaluate(element =>
+      ['auto', 'scroll'].includes(getComputedStyle(element).overflowY) && element.scrollTop > 0));
+    await page.setViewportSize(viewport);
+
+    step('quality_slider_keyboard');
+    await maximum.focus();
+    await page.keyboard.press('ArrowLeft');
+    check('keyboard_adjusts_only_focused_maximum', await value(maximum) < initialMax &&
+      await value(minimum) === initialMin);
+    const adjustedMaximum = await value(maximum);
+    await minimum.focus();
+    await page.keyboard.press('End');
+    check('keyboard_does_not_move_minimum_past_maximum', await value(minimum) > initialMin &&
+      await value(minimum) === Number(await minimum.getAttribute('aria-valuemax')) &&
+      await value(minimum) < adjustedMaximum && await value(maximum) === adjustedMaximum);
+    await page.keyboard.press('Home');
+    check('keyboard_home_moves_only_focused_minimum', await value(minimum) === initialMin &&
+      await value(maximum) === adjustedMaximum);
+  } else {
+    step('quality_slider_touch');
+    await maximum.scrollIntoViewIfNeeded();
+    const from = await maximum.boundingBox();
+    const other = await minimum.boundingBox();
+    const x = from.x + from.width / 2;
+    const y = from.y + from.height / 2;
+    const destination = (x + other.x + other.width / 2) / 2;
+    const cdp = await page.context().newCDPSession(page);
+    const send = (type, points) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points });
+    await send('touchStart', [{ x, y }]);
+    await send('touchMove', [{ x: destination, y }]);
+    await send('touchEnd', []);
+    await cdp.detach();
+    check('touch_adjusts_only_dragged_maximum', await value(maximum) < initialMax &&
+      await value(minimum) === initialMin && await value(maximum) > initialMin);
+  }
+
+  await save.waitFor();
+  const expected = await maximum.getAttribute('aria-valuetext');
+  let write;
+  await page.route(api(base, 'qualityDefinition/update'), async route => {
+    if (route.request().method() !== 'PUT') return route.fallback();
+    write = route.request().postDataJSON();
+    await route.continue();
+  });
+  step('quality_slider_save');
+  const response = page.waitForResponse(result => requestArgs(base, result.request(), 'qualityDefinition/update', 'PUT') !== null);
+  await save.click();
+  const result = await response;
+  await saved.waitFor();
+  check('quality_save_preserves_untouched_minimum_and_submits_finite_maximum',
+    result.status() === 202 && write.length === 1 && write[0].id === original.id &&
+      write[0].minSize === original.minSize && Number.isFinite(write[0].maxSize) &&
+      write[0].maxSize !== original.maxSize);
+
+  step('quality_slider_reload');
+  const reloaded = responseFor(page, base, 'qualitydefinition');
+  await page.reload();
+  await maximum.waitFor();
+  await saved.waitFor();
+  const canonical = (await result.json()).find(item => item.id === original.id);
+  const refreshed = (await (await reloaded).json()).find(item => item.id === original.id);
+  check('bulk_quality_save_returns_fresh_canonical_limits',
+    canonical.maxSize === write[0].maxSize && canonical.minSize === original.minSize);
+  check('quality_size_survives_reload', refreshed.maxSize === write[0].maxSize &&
+    refreshed.minSize === original.minSize && await maximum.getAttribute('aria-valuetext') === expected &&
+    await value(minimum) === initialMin && await saved.isDisabled());
+  await page.screenshot({ path: path.join(output, touch ? 'phone-quality-slider.png' : 'desktop-quality-slider.png') });
+}
+
 async function verifyDesktop(page, base, config, result) {
   await verifyDraft(page, base, config, result);
   await verifyPageGuard(page, result);
   await verifyDialogGuard(page, config, result);
+  await verifyQualitySlider(page, base, result);
 }
 
-async function verifyPhone(page, _base, config, { check, step }) {
+async function verifyPhone(page, base, config, result) {
+  const { check, step } = result;
   step('phone_draft_and_dialog');
   await signIn(page, config, settingsPath);
   await showOptions(page);
@@ -281,6 +381,7 @@ async function verifyPhone(page, _base, config, { check, step }) {
   await editor.waitFor({ state: 'hidden' });
   check('child_discard_preserves_the_phone_page_draft', await checkbox.isChecked());
   await setCheckbox(checkbox, false);
+  await verifyQualitySlider(page, base, result, true);
 }
 
 report(config => runBrowser(config, verifyDesktop, verifyPhone));
