@@ -25,7 +25,7 @@ function find(element, type) {
 
 test('the book overview edits and deletes the owning author, and selects the book independently', () => {
   const { default: Overview } = loadFrontendModule('Book/Index/Overview/BookIndexOverview', {
-    'react-text-truncate': stub,
+    'Components/TextTruncate': stub,
     'Author/AuthorPoster': stub,
     'Author/Delete/DeleteAuthorModal': DeleteAuthor,
     'Author/Edit/EditAuthorModalConnector': EditAuthor,

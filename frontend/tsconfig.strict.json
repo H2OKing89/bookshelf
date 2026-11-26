@@ -184,6 +184,10 @@
     "./src/Settings/Profiles/Quality/QualityProfileItem*.tsx",
     "./src/Settings/Profiles/Quality/qualityProfileDragTypes.ts",
     "./src/Settings/Profiles/Delay/DelayProfile*.tsx",
-    "./src/Settings/Profiles/Delay/EditDelayProfileModal*.tsx"
+    "./src/Settings/Profiles/Delay/EditDelayProfileModal*.tsx",
+    "./src/Components/Scroller/OverlayScroller.tsx",
+    "./src/Components/TextTruncate.tsx",
+    "./src/Settings/Quality/Definition/QualityDefinition.tsx",
+    "./src/Settings/Quality/Definition/qualitySizeSlider.ts"
   ]
 }

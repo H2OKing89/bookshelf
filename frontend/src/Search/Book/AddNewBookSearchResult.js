@@ -1,12 +1,12 @@
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import TextTruncate from 'react-text-truncate';
 import BookCover from 'Book/BookCover';
 import HeartRating from 'Components/HeartRating';
 import Icon from 'Components/Icon';
 import Label from 'Components/Label';
 import Link from 'Components/Link/Link';
+import TextTruncate from 'Components/TextTruncate';
 import { icons, sizes } from 'Helpers/Props';
 import dimensions from 'Styles/Variables/dimensions';
 import fonts from 'Styles/Variables/fonts';
@@ -187,7 +187,6 @@ class AddNewBookSearchResult extends Component {
               }}
             >
               <TextTruncate
-                truncateText="…"
                 line={Math.floor(height / (defaultFontSize * lineHeight))}
                 text={stripHtml(overview)}
               />

@@ -6,6 +6,7 @@ interface CssExports {
   'kilobitsPerSecond': string;
   'quality': string;
   'qualityDefinition': string;
+  'range': string;
   'sizeInput': string;
   'sizeLimit': string;
   'sizes': string;

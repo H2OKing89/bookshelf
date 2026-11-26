@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import TextTruncate from 'react-text-truncate';
 import AuthorPoster from 'Author/AuthorPoster';
 import CheckInput from 'Components/Form/CheckInput';
 import SpinnerButton from 'Components/Link/SpinnerButton';
@@ -8,6 +7,7 @@ import ModalBody from 'Components/Modal/ModalBody';
 import ModalContent from 'Components/Modal/ModalContent';
 import ModalFooter from 'Components/Modal/ModalFooter';
 import ModalHeader from 'Components/Modal/ModalHeader';
+import TextTruncate from 'Components/TextTruncate';
 import { kinds } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
 import AddAuthorOptionsForm from '../Common/AddAuthorOptionsForm.js';
@@ -86,7 +86,6 @@ class AddNewAuthorModalContent extends Component {
                 overview ?
                   <div className={styles.overview}>
                     <TextTruncate
-                      truncateText="…"
                       line={8}
                       text={overview}
                     />

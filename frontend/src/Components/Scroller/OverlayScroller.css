@@ -1,19 +1,39 @@
 .scroller {
-  /* Placeholder */
+  @add-mixin scrollbar;
+  @add-mixin scrollbarTrack;
+  @add-mixin scrollbarThumb;
+
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
-.track {
-  /* Placeholder */
+.none {
+  overflow: hidden;
 }
 
-.thumb {
-  min-height: 100px;
-  border: 1px solid transparent;
-  border-radius: 5px;
-  background-color: var(--scrollbarBackgroundColor);
-  background-clip: padding-box;
+.vertical {
+  overflow: hidden scroll;
 
-  &:hover {
-    background-color: var(--scrollbarHoverBackgroundColor);
+  &.autoScroll {
+    overflow-y: auto;
+  }
+}
+
+.horizontal {
+  overflow: scroll hidden;
+
+  &.autoScroll {
+    overflow-x: auto;
+  }
+}
+
+.both {
+  overflow: scroll;
+
+  &.autoScroll {
+    overflow: auto;
   }
 }

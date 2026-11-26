@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import TextTruncate from 'react-text-truncate';
 import type { AuthorStatus } from 'Author/Author';
 import AuthorPoster from 'Author/AuthorPoster';
 import DeleteAuthorModal from 'Author/Delete/DeleteAuthorModal';
@@ -11,6 +10,7 @@ import CheckInput from 'Components/Form/CheckInput';
 import IconButton from 'Components/Link/IconButton';
 import Link from 'Components/Link/Link';
 import SpinnerIconButton from 'Components/Link/SpinnerIconButton';
+import TextTruncate from 'Components/TextTruncate';
 import { icons } from 'Helpers/Props';
 import dimensions from 'Styles/Variables/dimensions';
 import fonts from 'Styles/Variables/fonts';

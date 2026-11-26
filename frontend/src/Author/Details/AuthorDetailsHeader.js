@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import TextTruncate from 'react-text-truncate';
 import AuthorPoster from 'Author/AuthorPoster';
 import { getAuthorStatusDetails } from 'Author/AuthorStatus';
 import HeartRating from 'Components/HeartRating';
@@ -9,6 +8,7 @@ import Label from 'Components/Label';
 import Marquee from 'Components/Marquee';
 import Measure from 'Components/Measure';
 import MonitorToggleButton from 'Components/MonitorToggleButton';
+import TextTruncate from 'Components/TextTruncate';
 import Popover from 'Components/Tooltip/Popover';
 import Tooltip from 'Components/Tooltip/Tooltip';
 import { icons, kinds, sizes, tooltipPositions } from 'Helpers/Props';

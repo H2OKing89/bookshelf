@@ -1,7 +1,6 @@
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import TextTruncate from 'react-text-truncate';
 import AuthorNameLink from 'Author/AuthorNameLink';
 import BookCover from 'Book/BookCover';
 import Alert from 'Components/Alert';
@@ -11,6 +10,7 @@ import Label from 'Components/Label';
 import Marquee from 'Components/Marquee';
 import Measure from 'Components/Measure';
 import MonitorToggleButton from 'Components/MonitorToggleButton';
+import TextTruncate from 'Components/TextTruncate';
 import Tooltip from 'Components/Tooltip/Tooltip';
 import { icons, kinds, sizes, tooltipPositions } from 'Helpers/Props';
 import fonts from 'Styles/Variables/fonts';
