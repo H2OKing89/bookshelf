@@ -39,7 +39,7 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  setGeneralSettingsValue: setGeneralSettingsValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
+  setGeneralSettingsValue,
   saveGeneralSettings,
   fetchGeneralSettings,
   executeCommand,

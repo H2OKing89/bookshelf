@@ -33,7 +33,7 @@ function createMapStateToProps() {
 
 const mapDispatchToProps = {
   fetchMediaManagementSettings,
-  setMediaManagementSettingsValue: setMediaManagementSettingsValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
+  setMediaManagementSettingsValue,
   saveMediaManagementSettings,
   saveNamingSettings,
   clearPendingChanges

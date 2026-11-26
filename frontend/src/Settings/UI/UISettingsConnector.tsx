@@ -46,7 +46,7 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  setUISettingsValue: setUISettingsValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
+  setUISettingsValue,
   saveUISettings,
   fetchUISettings,
   clearPendingChanges
