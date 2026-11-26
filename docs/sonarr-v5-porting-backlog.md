@@ -1046,6 +1046,23 @@ workflow is currently needed; existing verified qBittorrent behavior
 and the other adapters' pre-submission guards are retained.
 P09 remains **In progress**.
 
+**2026-11-25 StyleCop atomic upgrade:** adopt StyleCop.Analyzers 1.3.180
+from 1.1.118 and regenerate the 25 locks. The previously blocked
+target-typed creation spacing, inherited parameter names, conditional
+and argument formatting, accessor consistency and native aliases are
+resolved in one reviewed change. Of 200 changed C# files, 124 retain
+identical lexical tokens; the other 76 have reviewed source changes,
+and no runtime literal content or diagnostic severity changed. The
+actual hosted v1/v2 OpenAPI documents remain identical, including all
+published request/response schemas. Both clean Release builds
+(solution and Windows GUI), locked restores, 6,294 managed compatibility
+cases, and 2,467 hosted checks pass. Non-StyleCop lock entries are
+unchanged. See [atomic migration](dependencies/2026-11-25-stylecop-redux/stylecop-migration.json)
+and [exact receipt](dependencies/2026-11-25-stylecop-redux/summary.json).
+The StyleCop gate is closed; P09 remains **In progress** for coupled
+runtime/native updates and release/CI gates. Additional v2/hybrid
+adapters remain deprioritized.
+
 ### P10
 
 **Carry cancellation through the HTTP client stack**
@@ -3147,6 +3164,24 @@ JavaScript action modules are 27 (previously 44). Both TS projects, lint,
 Vite and 256 unit tests passed, along with the exact settings, library,
 interactive-search, history and paging checks. U07 remains **In progress**.
 See [final evidence](dependencies/2026-11-25-author-u07/summary.json).
+
+**2026-11-25 complete Redux actions and author/book detail directories:**
+all 27 remaining JS Store/Actions modules and all 15 remaining JS
+Author/Details and Book/Details modules are migrated to strict TypeScript,
+plus two search-add helpers. Mixed collection/request inputs are parsed
+at the boundary, stale filesystem/provider/calendar/detail fetches cannot
+overwrite the current request, command creation returns the verified
+server identity, empty restore requests stop before the network, and
+clearing logs preserves other system sections. Existing monitoring,
+recording identities, reconciliation previews, provider UI and route
+behavior are retained. Ordinary JS/TS/strict counts are **514/633/604**
+(previous 558/584/555); JS action and direct-detail counts are both
+**zero**. Both TS projects, lint, Vite and 271 frontend tests pass; hosted
+library, acquisition, search, queue, wanted, history and other UI checks
+pass. A direct synthetic monitor toggle/revert preserves media bytes
+and associations. U07 remains **In progress** for other legacy frontend
+components, not the completed action/detail directories. See
+[exact receipt](dependencies/2026-11-25-stylecop-redux/summary.json).
 
 ### U08
 

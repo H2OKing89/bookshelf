@@ -1,0 +1,63 @@
+{
+  "baseCommit": "1ca477688ad45bfc4c51532bb87a140d9e7a72ad",
+  "sourceCommit": "4bbfbcde9f020d3afe1a0fe9cc139458b80ba494",
+  "sourceTree": "8bf257f1d763bc43a390154915a1f10a0f90d9d1",
+  "analyzer": {
+    "name": "StyleCop.Analyzers",
+    "from": "1.1.118",
+    "to": "1.3.180",
+    "officialPackage": "https://www.nuget.org/packages/StyleCop.Analyzers/1.3.180",
+    "runtimeDependency": false
+  },
+  "sourceChanges": {
+    "changedCSharpFiles": 200,
+    "lexicalTokenIdenticalFiles": 124,
+    "reviewedNontriviaFiles": 76,
+    "literalContentChangedFiles": 0,
+    "targetTypedNewSpacingExpressions": 130,
+    "targetTypedNewFiles": 47,
+    "lockfiles": 25,
+    "nonStyleCopLockEntriesIdentical": true,
+    "rulesetOrSeverityChanged": false,
+    "httpContractDocumentsChanged": false,
+    "nativeAlias": "nint equals System.IntPtr in C# and CLR",
+    "nativeTypeReference": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/integral-numeric-types"
+  },
+  "validation": {
+    "solutionRelease": {
+      "warnings": 0,
+      "errors": 0
+    },
+    "windowsGuiRelease": {
+      "warnings": 0,
+      "errors": 0
+    },
+    "lockedSolutionRestore": true,
+    "lockedGuiRestore": true,
+    "nugetAuditedProjects": 25,
+    "nugetKnownFindings": 0,
+    "managedComponents": 122,
+    "managedNotices": 29,
+    "verifiedNoticePackageArchives": 25,
+    "hostedApiOverlay": {
+      "releaseAssemblies": 8,
+      "passed": 24,
+      "failed": 0,
+      "completed": true,
+      "description": "Actual StyleCop source Release app assemblies on previous validated .NET 10.0.15 native package, not final combined package."
+    },
+    "managedSourceRegression": {
+      "sourceCommit": "4bbfbcde9f020d3afe1a0fe9cc139458b80ba494",
+      "completed": true,
+      "reports": 10,
+      "selected": 6394,
+      "passed": 6294,
+      "failed": 0,
+      "skipped": 100,
+      "postgresStopped": true,
+      "sourceStillMatches": true
+    }
+  },
+  "combinedSourceCommit": "ec1103a2807d57754151f57ca72ca3aa96e62417",
+  "combinedManagedSourceTree": "05c8e9a5578f1b1c4f73326eabfd8857256ef895"
+}

@@ -1,0 +1,95 @@
+{
+  "sourceProvenance": {
+    "productId": "bookshelf-audiobooks",
+    "sourceCommit": "ec1103a2807d57754151f57ca72ca3aa96e62417",
+    "sourceTree": "7ccd0ddcf75eca3d29239bdc47d453163e61844c",
+    "sourceBranch": "fix/sonarr-v5-foundation",
+    "buildDirty": false
+  },
+  "frontendSourceModules": {
+    "before": {
+      "javascript": 558,
+      "typescript": 584,
+      "strict": 555
+    },
+    "after": {
+      "javascript": 514,
+      "typescript": 633,
+      "strict": 604
+    }
+  },
+  "remainingJsStoreActions": {
+    "before": 27,
+    "after": 0
+  },
+  "remainingJsAuthorAndBookDetailModules": {
+    "before": 15,
+    "after": 0
+  },
+  "styleCop": {
+    "from": "1.1.118",
+    "to": "1.3.180",
+    "lockedProjects": 25,
+    "otherLockEntriesIdentical": true,
+    "ruleSeveritiesChanged": false,
+    "actualApiDocumentsUnchanged": true,
+    "changedCSharpFiles": 200
+  },
+  "managedTestsPassed": 6294,
+  "managedTestsNotExecuted": 100,
+  "frontendUnitPassed": 271,
+  "toolingTestsPassed": 174,
+  "hostedChecksPassed": 2467,
+  "completedHostedReceipts": 15,
+  "frontendAudit": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "dependencies": 1242,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 1242
+  },
+  "nugetAuditedProjects": 25,
+  "nugetReportedVulnerablePackages": 0,
+  "packageNotices": {
+    "linux-x64": {
+      "noticeFilesVerified": 29,
+      "manifestMatchesSource": true
+    },
+    "linux-musl-x64": {
+      "noticeFilesVerified": 29,
+      "manifestMatchesSource": true
+    },
+    "linux-musl-arm64": {
+      "noticeFilesVerified": 29,
+      "manifestMatchesSource": true
+    }
+  },
+  "developmentUpdated": true,
+  "developmentVersion": "10.0.0.40112",
+  "developmentLibraryCounts": {
+    "Authors": 306,
+    "Books": 4639,
+    "Editions": 4639,
+    "BookFiles": 2305,
+    "RootFolders": 1,
+    "Users": 1
+  },
+  "developmentLiveApiChecksPassed": 77,
+  "developmentLiveBrowserChecksPassed": 10,
+  "developmentLibraryIdentitiesAndMediaPreserved": true,
+  "productionTouched": false,
+  "nativeArm64ExecutionVerified": false,
+  "githubWorkflowsUsed": false,
+  "remaining": [
+    "other legacy frontend components and edit/dialog/table trees",
+    "coordinated DI/runtime/native dependencies, CI/release gates",
+    "additional v2/hybrid clients deprioritized",
+    "P17 deferred"
+  ]
+}

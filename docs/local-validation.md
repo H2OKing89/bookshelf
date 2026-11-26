@@ -2293,3 +2293,31 @@ backup and detailed review receipt remain private, and production was not
 touched. See [combined summary](dependencies/2026-11-25-author-u07/summary.json),
 [managed source tests](dependencies/2026-11-25-author-u07/managed-source-tests.json),
 and [hosted receipt](dependencies/2026-11-25-author-u07/hosted-validation.json).
+
+### Complete Redux/direct details and analyzer update — 2026-11-25
+
+Exact clean functional source `ec1103a2807d57754151f57ca72ca3aa96e62417`
+passed 6,294 managed/owned compatibility cases (100 pre-existing skips),
+23 PostgreSQL migration and 84 PostgreSQL repository cases included.
+Both locked restores and Release solution/Windows GUI builds are clean
+with StyleCop 1.3.180. Both TypeScript projects, ESLint, Stylelint, Vite
+and 271 unit tests, plus 174 tooling tests, pass. Hosted checks across
+15 isolated receipt groups total 2,467 with zero failures; an additional
+four-case direct monitor toggle/revert browser probe verified the
+recording identity and unchanged file/edition associations and media
+bytes. Both actual API documents retain their published contracts.
+
+The verified native Linux x64 package was deployed only to the
+development server, version 10.0.0.40112. A private offline appdata
+and old runtime backup is retained. The 306 authors, 4,639 books and
+editions, and 2,305 files all retain their IDs and existing author links,
+settings, credentials, history, file mappings and size/mtime. The
+database integrity check is OK; 77 live API/read-only checks and ten
+desktop/phone login-page checks pass. Authenticated UI regression runs
+on isolated synthetic homes, not the live user library. Native ARM64
+package verification remains static, production is untouched, no
+unmapped-file investigation or GitHub workflows were performed.
+See [combined summary](dependencies/2026-11-25-stylecop-redux/summary.json),
+[managed source tests](dependencies/2026-11-25-stylecop-redux/managed-source-tests.json),
+[hosted receipt](dependencies/2026-11-25-stylecop-redux/hosted-validation.json),
+and [StyleCop migration receipt](dependencies/2026-11-25-stylecop-redux/stylecop-migration.json).

@@ -1,0 +1,42 @@
+{
+  "sourceCommit": "ec1103a2807d57754151f57ca72ca3aa96e62417",
+  "sourceTree": "7ccd0ddcf75eca3d29239bdc47d453163e61844c",
+  "projectCount": 25,
+  "knownVulnerablePackages": 0,
+  "projects": [
+    "src/NzbDrone.Api.Test/Readarr.Api.Test.csproj",
+    "src/NzbDrone.Automation.Test/Readarr.Automation.Test.csproj",
+    "src/NzbDrone.Common.Test/Readarr.Common.Test.csproj",
+    "src/NzbDrone.Common/Readarr.Common.csproj",
+    "src/NzbDrone.Console/Readarr.Console.csproj",
+    "src/NzbDrone.Core.Test/Readarr.Core.Test.csproj",
+    "src/NzbDrone.Core/Readarr.Core.csproj",
+    "src/NzbDrone.Host.Test/Readarr.Host.Test.csproj",
+    "src/NzbDrone.Host/Readarr.Host.csproj",
+    "src/NzbDrone.Integration.Test/Readarr.Integration.Test.csproj",
+    "src/NzbDrone.Libraries.Test/Readarr.Libraries.Test.csproj",
+    "src/NzbDrone.Mono.Test/Readarr.Mono.Test.csproj",
+    "src/NzbDrone.Mono/Readarr.Mono.csproj",
+    "src/NzbDrone.SignalR/Readarr.SignalR.csproj",
+    "src/NzbDrone.Test.Common/Readarr.Test.Common.csproj",
+    "src/NzbDrone.Test.Dummy/Readarr.Test.Dummy.csproj",
+    "src/NzbDrone.Update.Test/Readarr.Update.Test.csproj",
+    "src/NzbDrone.Update/Readarr.Update.csproj",
+    "src/NzbDrone.Windows.Test/Readarr.Windows.Test.csproj",
+    "src/NzbDrone.Windows/Readarr.Windows.csproj",
+    "src/NzbDrone/Readarr.csproj",
+    "src/Readarr.Api.V1/Readarr.Api.V1.csproj",
+    "src/Readarr.Http/Readarr.Http.csproj",
+    "src/ServiceHelpers/ServiceInstall/ServiceInstall.csproj",
+    "src/ServiceHelpers/ServiceUninstall/ServiceUninstall.csproj"
+  ],
+  "sources": [
+    "https://api.nuget.org/v3/index.json",
+    "https://pkgs.dev.azure.com/Servarr/Servarr/_packaging/Mono.Posix.NETStandard/nuget/v3/index.json",
+    "https://pkgs.dev.azure.com/Servarr/Servarr/_packaging/dotnet-bsd-crossbuild/nuget/v3/index.json"
+  ],
+  "lockedSolutionRestore": true,
+  "lockedWindowsTargetedGuiRestore": true,
+  "guiAuditedIndependently": true,
+  "unresolvedProblems": []
+}

@@ -924,3 +924,22 @@ and [exact audit](dependencies/2026-11-25-author-u07/summary.json).
 The 25-project NuGet and 1,242-entry Yarn audits report zero known
 findings; 29 managed notices match the three Linux packages. P09 remains
 in progress, with additional v2-only/hybrid adapters deprioritized.
+
+### StyleCop analyzer atomic upgrade — 2026-11-25
+
+[StyleCop.Analyzers 1.3.180](https://www.nuget.org/packages/StyleCop.Analyzers/1.3.180)
+replaces 1.1.118 in all 25 locked project graphs. No other lock entry or
+diagnostic severity changed. The atomic migration incorporates 130
+target-typed creation spacing corrections, canonical inherited parameter
+names, native integer aliases preserving CLR type, and syntax-aware
+formatting. Across 200 changed C# files, 124 are lexical-token-identical;
+76 reviewed nontrivia changes retain all literal contents. The solution
+and Windows GUI Release builds pass with no warnings/errors, and actual
+hosted v1/v2 OpenAPI documents equal the existing tracked contracts.
+All 6,294 managed/owned tests and 2,467 hosted checks passed; the
+25-project NuGet and 1,242-entry Yarn audits report zero known findings.
+29 managed notice files match in all three delivered Linux packages.
+See [migration evidence](dependencies/2026-11-25-stylecop-redux/stylecop-migration.json)
+and [final validation](dependencies/2026-11-25-stylecop-redux/summary.json).
+The remaining DI/runtime-coupled major lines are still staged, as
+documented in [the compatibility plan](dependencies/remaining-managed-compatibility-plan.md).

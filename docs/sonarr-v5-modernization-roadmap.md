@@ -1640,3 +1640,37 @@ execution remain untouched. See
 The roadmap remains **83 of 92 Verified**, eight In progress and one Deferred.
 U07/P09 and remaining runtime/native/release gates are open; P17 remains
 deferred.
+
+### All Redux/direct detail actions typed and StyleCop adopted — 2026-11-25
+
+U07 completes the remaining 27 JavaScript Redux action modules and all 15
+direct author/book detail modules (plus two supporting search utilities).
+There are no JS files in Store/Actions, Author/Details or Book/Details.
+Ordinary JS 558 → 514, TypeScript 584 → 633, and strict source 555 → 604.
+The integrated behavioral work guards stale requests, recording/file
+identity, draft changes, command responses, and route lifecycle. Direct
+synthetic monitoring toggles false and true with the same recording
+identity and untouched file associations/media bytes.
+
+P09 completes the atomic StyleCop 1.3.180 migration; 25 lockfiles change
+analyzer entries only, diagnostics remain enabled, and the actual
+published API documents remain unchanged. All 200 changed C# files are
+reviewed, including 124 lexical-token-identical files. The clean solution
+and Windows GUI Release builds pass. Exact functional source
+`ec1103a28` passes 6,294 managed and owned compatibility cases (100
+existing skips), 271 frontend tests, 174 tooling tests and 2,467 hosted
+checks. Both dependency audits report zero known findings and all three
+Linux packages contain the 29 exact managed notices.
+
+The exact native package was backed up and deployed to local dev
+10.0.0.40112; 77 live API and ten desktop/phone login checks passed.
+The 306 authors, 4,639 books/editions and 2,305 files, including the
+previously reviewed author reconciliations, retain all identities,
+settings, credentials, file mappings, history and media statistics.
+Production is untouched; additional v2/hybrid adapters and the unmapped
+audit remain deprioritized. See [combined validation](dependencies/2026-11-25-stylecop-redux/summary.json).
+
+The roadmap remains **83 of 92 Verified**, eight In progress and one
+Deferred. U07 remains open for other legacy frontend modules, P09 for
+coupled runtime/native dependencies and release/CI prerequisites; P17
+remains deferred.

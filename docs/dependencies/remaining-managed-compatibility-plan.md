@@ -3,12 +3,24 @@
 Registry and compatibility review: 2026-11-25. This is a staged follow-up for
 P09, not a recommendation to switch the application to .NET 11.
 
-## StyleCop 1.3.180
+## StyleCop 1.3.180 — implemented 2026-11-25
+
+The atomic upgrade is now accepted. The final combined functional source
+`ec1103a28` pins 1.3.180, regenerates all 25 locked graphs without changing
+any non-StyleCop package entry, and preserves the enabled diagnostic
+severities. The Release solution and Windows GUI build with zero warnings
+or errors; the full 6,294-case managed/owned regression, actual v1/v2 API
+document equality, and hosted package validation pass. The native x64 dev
+service has been updated. See the
+[atomic migration receipt](2026-11-25-stylecop-redux/stylecop-migration.json)
+and [exact combined validation](2026-11-25-stylecop-redux/summary.json).
+The following records the historical trial and sequence that were used
+to implement the upgrade.
 
 The official [package history](https://www.nuget.org/packages/StyleCop.Analyzers)
 has no stable 1.2 release between 1.1.118 and 1.3.180. The 1.2 versions are
-prereleases. Keep the currently verified 1.1.118 until the following migration
-can land atomically without reducing diagnostics.
+prereleases. The verified 1.1.118 was retained until the following migration
+could land atomically without reducing diagnostics.
 
 A fresh isolated trial against the current .NET 10 source found a rule
 compatibility boundary: 1.1.118 requires a space after a target-typed `new`,
@@ -31,7 +43,7 @@ Common surfaced another 149 direct Core/platform diagnostics, including
 84 inherited-parameter-name mismatches. These counts describe actual build
 stages, rather than every diagnostic in the solution at once.
 
-Recommended migration sequence:
+Completed migration sequence:
 
 1. Inventory inherited parameter names at the Common, Core, platform, API
    and test boundaries. Resolve internal domain terminology at its owning
