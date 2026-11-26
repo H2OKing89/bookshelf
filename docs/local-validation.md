@@ -2080,3 +2080,63 @@ existing development homes/media remain unchanged. The roadmap remains
 **83 of 92 Verified**, eight In progress and one Deferred; both U07
 and P09 remain open for the staged remaining migrations, and the
 native ARM64/release/CI gates are unchanged.
+
+
+## U07 and P09 React 19 and managed major verification — 2026-11-25
+
+The clean package source `50b5e561152f295682f0e695e94b24cd357ec271` (tree
+`e97a664baf500eb8e95ec1f5403313163306bab9`) is the exact verified input.
+An independent physical checkout resolved the pinned graph with no external
+ancestor node_modules. Both main/strict tsc projects, ESLint, Stylelint and
+Vite CSS/build verification passed. The final frontend suite passes **215**
+unit tests and the tooling suite passes **174** cases. The locked
+React 19 graph reports no peer warnings, and both audits report zero known
+findings (1,242 Yarn dependencies; 25 NuGet projects). No ignored peer
+contracts or blanket type-check suppression were introduced. The source has
+703 JS, 422 TS/TSX and 392 strict source modules. The
+[dated summary](dependencies/2026-11-25-react19/summary.json) binds the graph and package hashes.
+
+**Managed source:** independently cloned exactly the same clean commit and
+ran eight owned suites with no integration/external metadata access:
+**6,180 passed, 100 existing skipped, zero failed**. The seven new Core
+quality/SMTP tests and the 26 new API FluentValidation cases ran successfully.
+The owned PostgreSQL instance stopped; source remained clean. Both managed
+restores use locked resolution, including the separate Windows-targeted GUI.
+See [managed source receipt](dependencies/2026-11-25-react19/managed-source-tests.json).
+
+**Hosted exact-package regression:** all **2,453** checks passed across
+**15** completed receipts. The groups include candidate input-unchanged
+checks, e.g. the 53 settings assertions and 70 library virtualization
+assertions in the UI group. The new tests exercise desktop sidebar wheel
+scrolling in a short viewport, independently accessible quality range thumbs,
+keyboard and real touch adjustment, successful save/fresh response/reload,
+full Unicode overview content under native clamp after resize, and virtual
+row/scroll restoration.
+
+- auth: 112 passed.
+- datastore: 43 passed.
+- delivery: 616 passed.
+- dragreorder: 26 passed.
+- host-and-notifications: 72 passed.
+- identity-and-policies: 584 passed.
+- library: 207 passed.
+- logstorage: 63 passed.
+- new-features: 87 passed.
+- paging: 129 passed.
+- postgresconnections: 119 passed.
+- sqlite: 100 passed.
+- static-arm64: 20 passed.
+- static-musl: 20 passed.
+- ui: 255 passed.
+
+Candidate glibc x64 input fingerprint across all hosted x64 receipts:
+`ce37490943a081d74697bd4dd71bec6921bc12ea52b408a71872a23fa0120850`. All static Linux musl and ARM64 package checks passed;
+musl x64 was also exercised in Docker; **native ARM64 execution is not verified**.
+All three packages deliver the same 26 pinned license/notice files and
+manifest. See [hosted receipt](dependencies/2026-11-25-react19/hosted-validation.json).
+
+The prior independent React 19 overlay smoke loaded the older fixture seed
+before a new browser clamp probe was merged; the resulting clamp timeout was
+not treated as acceptance. The exact-source rerun includes matching seed and
+browser probe and passes all checks. Existing development service, appdata,
+media, production, GitHub Actions and release publishing were untouched.

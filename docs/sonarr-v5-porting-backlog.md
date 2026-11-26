@@ -965,6 +965,26 @@ and [dependency review](dependency-audit.md).
 P09 remains **In progress** for broader managed compatibility, remaining
 React integration prerequisites, and native ARM64/release acceptance.
 
+**2026-11-25 React 19 and managed validation/SMTP follow-up:** the supported
+package graph now uses React/DOM 19.3.1, React types 19.3.3 / DOM types 19.3.0,
+and the automatic JSX transform. Native desktop/phone sidebar scrolling and
+CSS line clamping replace the obsolete scrollbar/text packages; Radix Slider
+1.6.1 replaces the old slider, preserving size limits, zero and null. All 21
+function defaultProps assignments are gone. Real desktop keyboard and phone
+touch, save/reload, and virtualized Unicode overview checks pass. Bulk quality
+updates invalidate the cached definitions immediately. FluentValidation
+12.2.0 preserves existing rule/cascade/failure payloads in 30 comparison
+scenarios and 26 new regression cases. MailKit 5.0.0/MimeKit.Core 5.0.0 pass
+owned SMTP, STARTTLS, certificate, recipient, privacy and MIME attachment
+regressions. Exact clean source `50b5e5611` passes 6,180 managed source
+cases and 2,453 hosted checks, and both locked dependency audits report
+zero known findings. See the [receipt](dependencies/2026-11-25-react19/summary.json) and
+[dependency review](dependency-audit.md#react-19-fluentvalidation-12-and-mailkit-5-adopted).
+P09 remains **In progress** for further coupled major/runtime migrations,
+arm64 native execution, CI and release validation. The earlier React 19
+peer prerequisite is closed; no production or running development home
+was updated by these source changes.
+
 ### P10
 
 **Carry cancellation through the HTTP client stack**
@@ -3006,6 +3026,21 @@ in the strict TypeScript program (excluding declarations).
 The remaining provider/schema form controls, General/UI/MediaManagement
 settings, other selectors and action/reducer families are coherent next
 slices. U07 remains **In progress**, not a completely strict frontend.
+
+**2026-11-25 strict settings and store follow-up:** 28 General/UI/Media
+Management, provider-field/authentication and selection components move
+to strict TSX; the remaining 21 legacy Store selectors, six command
+helpers and six shared CRUD/schema/test-all request handlers are typed.
+Drafts keep explicit false/zero/null; malformed save/schema/bulk responses
+are rejected without clearing drafts or applying partial resource changes.
+Typed command constraints preserve subset matches and immutable sorting
+while absent author slugs no longer match incomplete resources. The source
+now contains **703 JS, 422 ordinary TS/TSX and 392 strict source modules**
+(previously 765 / 351 / 321). The automatic JSX transform removes unused
+React imports in two passes (650, then 12 during integration). Both TS projects, ESLint, Stylelint, Vite verification and
+215 frontend unit cases pass on React 19. Remaining legacy components,
+provider edit forms, naming settings and action/reducer families are next;
+U07 remains **In progress**. See [exact results](dependencies/2026-11-25-react19/summary.json).
 
 ### U08
 

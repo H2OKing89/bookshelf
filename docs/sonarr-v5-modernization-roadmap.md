@@ -1510,3 +1510,31 @@ The roadmap remains **83 of 92 Verified**, eight In progress and one
 Deferred. U07/P09 remain in progress; prior release, native ARM64 and
 CI gates and deferred P17 are unchanged. No release publishing or
 production deployment is part of this work.
+
+
+### React 19, strict settings/store and managed validation — 2026-11-25
+
+All six follow-up slices are integrated. U07 reduces JS from 765 to 703,
+ordinary TS/TSX rises from 351 to 422, and strict source modules rise from
+321 to 392. General/UI/Media Management and provider selection/auth/form
+boundaries are typed; all former JS selectors, command comparisons and
+shared CRUD request boundaries have explicit contracts. Function-component
+parameter defaults and the automatic JSX transform preserve the existing
+behavior and remove the blockers for React 19.
+
+P09 adopts React/DOM 19.3.1, Radix Slider 1.6.1, FluentValidation 12.2.0
+and MailKit/MimeKit.Core 5.0.0 on the .NET 10 line. Legacy scrollbar, slider
+and text-clamp dependencies are removed. The exact release source `50b5e5611`
+passes 215 frontend tests, 174 tooling cases, 6,180 managed source
+tests (100 existing skips), 2,453 hosted checks across 15 complete
+receipts, and both dependency audits with zero known findings. Linux x64,
+musl x64 and musl arm64 package manifests each include 26 matching managed
+notices; Docker exercises musl x64, and arm64 package validation remains
+static. See [source and package evidence](dependencies/2026-11-25-react19/summary.json) and
+[local validation](local-validation.md#u07-and-p09-react-19-and-managed-major-verification-2026-11-25).
+
+The roadmap remains **83 of 92 Verified**, eight In progress and one Deferred.
+U07 and P09 are still staged: remaining legacy JavaScript and coupled managed
+major/runtime and native ARM64 acceptance are open. The release and CI gates,
+and deferred P17, are unchanged. No GitHub workflow, push, production or
+running development deployment was performed.

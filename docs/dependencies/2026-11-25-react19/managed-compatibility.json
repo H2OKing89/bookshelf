@@ -1,0 +1,58 @@
+{
+  "fluentValidation": {
+    "previous": "9.5.4",
+    "selected": "12.2.0",
+    "privateTrialCommit": "ef9388233d5377eff425a1520fa8cb9b7f6d878a",
+    "releaseBuildSucceeded": true,
+    "regressionCases": 26,
+    "baselineProductionRuleScenarios": 30,
+    "allBaselinePayloadsMatch": true,
+    "payloadFields": [
+      "PropertyName",
+      "ErrorCode",
+      "ErrorMessage",
+      "AttemptedValue",
+      "Severity",
+      "CustomState"
+    ],
+    "comparedPayloadsSha256": "a1d913d31e7ed34a213a17defa7e673999d60d105076bab435028fae6fd008f2",
+    "retiredUnusedRuleForField": true,
+    "whyRetired": "No source call sites; obsolete internal RuleBuilder untyped API. Generic casts changed missing/incorrectly typed field semantics, so it was not silently replaced with a different behavior.",
+    "sources": [
+      "https://docs.fluentvalidation.net/en/latest/upgrading-to-10.html",
+      "https://docs.fluentvalidation.net/en/latest/upgrading-to-11.html",
+      "https://docs.fluentvalidation.net/en/latest/upgrading-to-12.html",
+      "https://www.nuget.org/packages/FluentValidation/12.2.0"
+    ]
+  },
+  "mailKit": {
+    "previous": "4.18.2",
+    "selected": "5.0.0",
+    "privateTrialCommit": "62fb4aaa4aaf71dbf1bc32c04ab28e68e9b38b01",
+    "releaseBuildSucceeded": true,
+    "targetedCasesPassed": 17,
+    "addedTransportCases": [
+      "certificate_policy_rejection_prevents_credentials_and_message_delivery",
+      "import_notification_attaches_ebook_but_not_audiobook",
+      "rejected_recipient_retains_failure_instead_of_reporting_partial_delivery_success",
+      "required_encryption_does_not_send_credentials_or_message_without_starttls",
+      "required_encryption_negotiates_starttls_before_authentication_and_delivery",
+      "unencrypted_notification_delivers_envelope_and_body_without_bcc_header"
+    ],
+    "loopbackOnly": true,
+    "actualEnvelopeMimeAndTlsChecks": true,
+    "removed": [
+      "MimeKit@4.18.2",
+      "BouncyCastle.Cryptography@2.7.0",
+      "System.Security.Cryptography.Pkcs@10.0.15"
+    ],
+    "added": [
+      "MimeKit.Core@5.0.0"
+    ],
+    "sources": [
+      "https://www.nuget.org/packages/MailKit/5.0.0",
+      "https://www.nuget.org/packages/MimeKit.Core/5.0.0",
+      "https://github.com/jstedfast/MailKit/blob/5.0.0/PortingGuide.md"
+    ]
+  }
+}

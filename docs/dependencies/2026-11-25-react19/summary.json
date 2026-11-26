@@ -1,0 +1,149 @@
+{
+  "sourceProvenance": {
+    "productId": "bookshelf-audiobooks",
+    "sourceCommit": "50b5e561152f295682f0e695e94b24cd357ec271",
+    "sourceTree": "e97a664baf500eb8e95ec1f5403313163306bab9",
+    "sourceBranch": "fix/sonarr-v5-foundation",
+    "buildDirty": false
+  },
+  "react19Adopted": true,
+  "peerWarnings": 0,
+  "automaticJsx": true,
+  "remainingFunctionDefaultProps": 0,
+  "frontendSourceModules": {
+    "before": {
+      "javascript": 765,
+      "typescript": 351,
+      "strict": 321
+    },
+    "after": {
+      "javascript": 703,
+      "typescript": 422,
+      "strict": 392
+    }
+  },
+  "directDependencyChanges": [
+    {
+      "name": "@radix-ui/react-slider",
+      "kind": "dependencies",
+      "before": null,
+      "selected": "1.6.1"
+    },
+    {
+      "name": "@types/react",
+      "kind": "dependencies",
+      "before": "18.3.32",
+      "selected": "19.3.3"
+    },
+    {
+      "name": "@types/react-dom",
+      "kind": "dependencies",
+      "before": "18.3.7",
+      "selected": "19.3.0"
+    },
+    {
+      "name": "react",
+      "kind": "dependencies",
+      "before": "18.3.1",
+      "selected": "19.3.1"
+    },
+    {
+      "name": "react-custom-scrollbars-2",
+      "kind": "dependencies",
+      "before": "4.5.0",
+      "selected": null
+    },
+    {
+      "name": "react-dom",
+      "kind": "dependencies",
+      "before": "18.3.1",
+      "selected": "19.3.1"
+    },
+    {
+      "name": "react-slider",
+      "kind": "dependencies",
+      "before": "1.3.3",
+      "selected": null
+    },
+    {
+      "name": "react-text-truncate",
+      "kind": "dependencies",
+      "before": "0.19.0",
+      "selected": null
+    },
+    {
+      "name": "@types/react",
+      "kind": "resolutions",
+      "before": "18.3.32",
+      "selected": "19.3.3"
+    },
+    {
+      "name": "@types/react-dom",
+      "kind": "resolutions",
+      "before": "18.3.7",
+      "selected": "19.3.0"
+    }
+  ],
+  "managedSelected": {
+    "FluentValidation": "12.2.0",
+    "MailKit": "5.0.0",
+    "MimeKit.Core": "5.0.0"
+  },
+  "frontendAudit": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "dependencies": 1242,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 1242
+  },
+  "nugetAuditedProjects": 25,
+  "nugetReportedVulnerablePackages": 0,
+  "managedLockfiles": 25,
+  "managedComponents": 123,
+  "verifiedManagedNoticeFiles": 26,
+  "managedSourceTestsPassed": 6180,
+  "managedSourceTestsNotExecuted": 100,
+  "frontendUnitPassed": 215,
+  "toolingTestsPassed": 174,
+  "exactIntegratedPackageValidation": true,
+  "hostedChecksPassed": 2453,
+  "successfulHostedReceipts": 15,
+  "nativeArm64ExecutionVerified": false,
+  "packagedManagedNotices": {
+    "linux-x64": {
+      "noticeFilesVerified": 26,
+      "manifestMatchesSource": true
+    },
+    "linux-musl-x64": {
+      "noticeFilesVerified": 26,
+      "manifestMatchesSource": true
+    },
+    "linux-musl-arm64": {
+      "noticeFilesVerified": 26,
+      "manifestMatchesSource": true
+    }
+  },
+  "inputSha256": {
+    "package.json": "eea9d6dd54698ac255e34514f8e6f09bedb405771888a567409bd61c5029a6ee",
+    "yarn.lock": "e2d3b5b317ec9f32cd9be3ec6c5ae5cf7b13b1922b2f774dc289a4c91baf8f20",
+    "src/Directory.Packages.props": "770d5355954b00bddfc008973298dc53b26362bc533cccfdfa4e428b486f7d43",
+    "global.json": "5d9f7839d9ec35739ede461f8ab097a24129d3d454d3d04815ac10bf67d83b88"
+  },
+  "liveDevelopmentAndProductionUnchanged": true,
+  "githubWorkflowsUsed": false,
+  "remainingGates": [
+    "remaining legacy JavaScript modules and settings/provider/edit modal and store action families",
+    "remaining coupled managed/runtime majors and native ARM64 execution",
+    "CI/release acceptance and deferred P17"
+  ],
+  "unusedReactImportCleanupPasses": [
+    650,
+    12
+  ]
+}

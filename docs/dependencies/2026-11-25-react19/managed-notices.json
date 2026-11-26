@@ -1,0 +1,269 @@
+{
+  "sourceCommit": "50b5e561152f295682f0e695e94b24cd357ec271",
+  "uniquePackageArchivesVerified": 22,
+  "filesVerified": 26,
+  "manifestSha256": "52f562b1ec97afb93a19be18c2377efbb3940e7df887c168d1ffe98deb8c1356",
+  "files": [
+    {
+      "file": "Magick.NET/LICENSE.txt",
+      "sourceBytes": 11560,
+      "sourceSha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+      "package": "Magick.NET-Q8-AnyCPU",
+      "version": "15.1.0",
+      "packageSha512Base64": "eBN5RobAi01ChlRu0LwolnjK1ZFSUh7mUeosjdQTCRrMPUzUyIUSm5me7f7//9sS4zwr4aU9shl1aOErIEcE/A==",
+      "nugetContentHash": "nHJpUfEkhiDu5XJAymHWQBCinVQJABTK2j6haHqs650UPUP9iEMqN73VNu8m+YyoyEp5gGwO65hqivhgzzpfnQ==",
+      "matches": true
+    },
+    {
+      "file": "Magick.NET/NOTICE.txt",
+      "sourceBytes": 431274,
+      "sourceSha256": "d66c427812efbf0fccb98957e47dde3fc47b41b991cb79e7b5f11d5a76185efe",
+      "package": "Magick.NET-Q8-AnyCPU",
+      "version": "15.1.0",
+      "packageSha512Base64": "eBN5RobAi01ChlRu0LwolnjK1ZFSUh7mUeosjdQTCRrMPUzUyIUSm5me7f7//9sS4zwr4aU9shl1aOErIEcE/A==",
+      "nugetContentHash": "nHJpUfEkhiDu5XJAymHWQBCinVQJABTK2j6haHqs650UPUP9iEMqN73VNu8m+YyoyEp5gGwO65hqivhgzzpfnQ==",
+      "matches": true
+    },
+    {
+      "file": "PdfPig/LICENSE.txt",
+      "sourceBytes": 14227,
+      "sourceSha256": "4c510e162f896ea43b4b1cf1b743641d7c756f1004d0e5eaf0615b28b7ded409",
+      "package": "PdfPig",
+      "version": "0.1.16",
+      "packageSha512Base64": "clPAR660u7oGMGO0+I4JAq3olrsbIcKO2m3JtAuOow+IbS62Pyfh00GFnG10Ngl2nizTS5+DsCSlndW6sLvNBQ==",
+      "nugetContentHash": "qQcbsNMYVY+K5ELptax2S8thNMk0+rSQq3H/KdYj3LLcko8yTCz8y5KIvsKxIyAuTN0ZYNnfsZkM+0EvxTwHVA==",
+      "matches": true
+    },
+    {
+      "file": "FluentMigrator/LICENSE.txt",
+      "sourceBytes": 11357,
+      "sourceSha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+      "package": "FluentMigrator",
+      "version": "8.0.1",
+      "packageSha512Base64": "GcToFZg8MjT+VG7GhA1NRhRbg6XwZipL8Pt0ytAakkqoKrZka2y+F/PkApRNhgI7Pl5IJn/S9miebd7grWXp5w==",
+      "nugetContentHash": "vQqkf3gvNhofqKtsy0G9muWdleojsGpze180u/Z9kd2UPwR66lS5xGj8VV0SPlGeCpOYx1zYgaURvpamVzHQ3g==",
+      "matches": true
+    },
+    {
+      "file": "Npgsql/LICENSE.txt",
+      "sourceBytes": 903,
+      "sourceSha256": "2e1d9cc6ed4eb7fe6fa82091846c06b4f58571a2c3b54777db6baeca10dd2d74",
+      "package": "Npgsql",
+      "version": "10.0.4",
+      "packageSha512Base64": "XnFM94iudYzR9C+qhk2Eb+fb7ShzZ5mCVfZmDcfoWexge0CdNOX/KAE7KZwJfvRhbCN66FMeHBJbSgrzB31oFw==",
+      "nugetContentHash": "m2VCpcU9MKD8lLxTn+YaNIRWd+Gz3y/9wIaM+2ifDF24xZ2Kvvjx4CDB2BIgobr1Gj6a/gsdmfz1sQ+kmd7liw==",
+      "matches": true
+    },
+    {
+      "file": "System.Data.SQLite/NOTICE.nuspec",
+      "sourceBytes": 1046,
+      "sourceSha256": "4f9f8fae5dec592f019be187544e271bd8d7f0c0a9463608146201fef4e6cf37",
+      "package": "System.Data.SQLite",
+      "version": "2.0.4",
+      "packageSha512Base64": "WoICQI0/987/vdYu9d9KStUJNxqMmjIRkz2BPtOv3HtrCJh3ROJdbgyIR8P+JdD2nkbYG3vl3Ys2uAkXkUwpaw==",
+      "nugetContentHash": "iiawN8l6QBzLZTK2BQRyq/1XmvDONghjvXoDhkkQgPTG8bRIsmIxJV1+Lc75fviNgMnjAE3wxReVJAF7P1hkoQ==",
+      "matches": true
+    },
+    {
+      "file": "System.Data.SQLite/COPYRIGHT.wiki",
+      "sourceBytes": 4024,
+      "sourceSha256": "2c77fbd856a302e1a70174b171083c597b32ba293ae26decf143d98a2ebd4e0f",
+      "package": "System.Data.SQLite",
+      "version": "2.0.4",
+      "packageSha512Base64": "WoICQI0/987/vdYu9d9KStUJNxqMmjIRkz2BPtOv3HtrCJh3ROJdbgyIR8P+JdD2nkbYG3vl3Ys2uAkXkUwpaw==",
+      "nugetContentHash": "iiawN8l6QBzLZTK2BQRyq/1XmvDONghjvXoDhkkQgPTG8bRIsmIxJV1+Lc75fviNgMnjAE3wxReVJAF7P1hkoQ==",
+      "matches": true
+    },
+    {
+      "file": "SourceGear.sqlite3/LICENSE.txt",
+      "sourceBytes": 61,
+      "sourceSha256": "99464c3a88df7b708ce59e462cdcb85f72dfc9b1335b4fcc68be56131b634b95",
+      "package": "SourceGear.sqlite3",
+      "version": "3.53.4",
+      "packageSha512Base64": "W2mME6FU2IfIF3Agdr9loSiLTWRndIgFsLTim6pRxSV9WsrzkxV+ikjm32a2jiHGWW920qXT4R+cVHpgb2BTdA==",
+      "nugetContentHash": "aXPX39R0Vgivhi95Z82TRenG56bSOs+Hnt8h1GV0nmfuRaANObd3LC44eoZwszmQqALjaV3ZnBQRej8m5E0L4Q==",
+      "matches": true
+    },
+    {
+      "file": "SourceGear.sqlite3/NOTICE.nuspec",
+      "sourceBytes": 1048,
+      "sourceSha256": "6e87a17b8230b7a3a7e6ec8681ddf13bf3bf9ddc3679d461cd700d6ef0460821",
+      "package": "SourceGear.sqlite3",
+      "version": "3.53.4",
+      "packageSha512Base64": "W2mME6FU2IfIF3Agdr9loSiLTWRndIgFsLTim6pRxSV9WsrzkxV+ikjm32a2jiHGWW920qXT4R+cVHpgb2BTdA==",
+      "nugetContentHash": "aXPX39R0Vgivhi95Z82TRenG56bSOs+Hnt8h1GV0nmfuRaANObd3LC44eoZwszmQqALjaV3ZnBQRej8m5E0L4Q==",
+      "matches": true
+    },
+    {
+      "file": "Ical.Net/LICENSE.md",
+      "sourceBytes": 1442,
+      "sourceSha256": "fe4667af79d01506cfda6062136861426248a216bb84b39b76324afab70ea670",
+      "package": "Ical.Net",
+      "version": "5.2.4",
+      "packageSha512Base64": "4coBSVBWP8ZqVnPSy+I7Yrcf0nnx8SGq7I6DXu6GULyt6SbAswHCeP2cwu9A1Sminb66yECWG/gN05h78eb1xA==",
+      "nugetContentHash": "KpXaIEqe4TntybCRoa0TSwkXJu7kgnFsLRj3lKSaYLYRQuos1ujyzaS0Opk7g5QZKM1Igi/2h84+FBhbmGgNeg==",
+      "matches": true
+    },
+    {
+      "file": "NodaTime/LICENSE.txt",
+      "sourceBytes": 11358,
+      "sourceSha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "package": "NodaTime",
+      "version": "3.2.2",
+      "packageSha512Base64": "hEWuDyT8VW5qaFTURZD/QxtAex3bZibkXM308qtEmkdyIFq3+P6PYK7cUCbUQqsrahKBl+6tKpgIiA+Lw+sp2w==",
+      "nugetContentHash": "dmju5W0UYC3QP/UJM0juKAZkH0HSDMp0gH91A0+mT9M0kgyM2Jm67hUZPl/WRQLq8Lijjqmdk8kyAViWFWM7dA==",
+      "matches": true
+    },
+    {
+      "file": "NodaTime/NOTICE.txt",
+      "sourceBytes": 439,
+      "sourceSha256": "b20873f8469e39d5d09bfbafa9ceb101d555cf8de61f8c2a31394161d3b4c6dd",
+      "package": "NodaTime",
+      "version": "3.2.2",
+      "packageSha512Base64": "hEWuDyT8VW5qaFTURZD/QxtAex3bZibkXM308qtEmkdyIFq3+P6PYK7cUCbUQqsrahKBl+6tKpgIiA+Lw+sp2w==",
+      "nugetContentHash": "dmju5W0UYC3QP/UJM0juKAZkH0HSDMp0gH91A0+mT9M0kgyM2Jm67hUZPl/WRQLq8Lijjqmdk8kyAViWFWM7dA==",
+      "matches": true
+    },
+    {
+      "file": "System.IO.Abstractions/LICENSE.txt",
+      "sourceBytes": 1113,
+      "sourceSha256": "9b4f46dc8e65bb14714479eb4de76b7a1e2e7f9eff7ab1eb0e9dea712f19b1ed",
+      "package": "System.IO.Abstractions",
+      "version": "23.1.0",
+      "packageSha512Base64": "nCkVz+jYjaFzOOSjlH2uwsGjFqe+xBxgMYUD21n99e5Fqlnnto7pxMKp/zfV5NNOIb6gSxKcWfm5fHqr241onA==",
+      "nugetContentHash": "QsO1BbLR5TLX6TaNj9PaazubbgcxKEQCjGNGQJmH078wdJZJTlhCQ4ymDVaCcuy+emjq/1HK44PM54Bcw+GgFg==",
+      "matches": true
+    },
+    {
+      "file": "System.IO.Abstractions/TestableIO.System.IO.Abstractions.NOTICE.nuspec",
+      "sourceBytes": 2295,
+      "sourceSha256": "eb5e268e09fdc7baa77a728df835db61b5d401da82e978028ab5319b794cc686",
+      "package": "TestableIO.System.IO.Abstractions",
+      "version": "23.1.0",
+      "packageSha512Base64": "7ytSNzkNNiKsh+m6XlptUBX4pj9vTob5PkXzurQkl5xbrBvMMbeX2/cul2Yw6JrNJksOVl/lqivBAOsnn7XzdA==",
+      "nugetContentHash": "qjFP81HmvWUknpayYKNrwssB9OOaFjZlURL3pXuuAkRJ7ppmlGMX3M4Gj/MOcfHivi+LYoGk83dchqTecyK8Nw==",
+      "matches": true
+    },
+    {
+      "file": "System.IO.Abstractions/TestableIO.System.IO.Abstractions.Wrappers.NOTICE.nuspec",
+      "sourceBytes": 2514,
+      "sourceSha256": "9d181e4232fc82c61912520b531470d82dbb934a61efccedc4cb35c01ba2d0da",
+      "package": "TestableIO.System.IO.Abstractions.Wrappers",
+      "version": "23.1.0",
+      "packageSha512Base64": "Khs7DP2vLHXWpTcIv1oovm2ipcGQbt1TpiDCGHEbHtrv7h5LHnOBBAQOr+k+KmEs9/JsFZ0Pakd7BYaRwCsjGg==",
+      "nugetContentHash": "GQLGGQQ11UPcP2dKmmNqRtynom5i7TLI+gJosfxAazuH4KObUQv19DxCugO9YFxvTCRk6QCm02Tb/EYYg8oJkw==",
+      "matches": true
+    },
+    {
+      "file": "Testably.Abstractions/LICENSE.txt",
+      "sourceBytes": 1072,
+      "sourceSha256": "024f2e034ea52d1b47be884bda1bd9b776ceddbfb2a7cc4d49f79255c8ed483c",
+      "package": "Testably.Abstractions.FileSystem.Interface",
+      "version": "11.1.0",
+      "packageSha512Base64": "N1XAJDRjRBbqhxDHN9T8PZF2tchmThRsuZ0W7cjqGiusInHFQiO8im7YMO6wPT2nnJDdukqcHdw3lpjItv5HEg==",
+      "nugetContentHash": "ijeocqwxQWPlcneMvPrPvKbVMTVtqwp3lAOZXuAtMGJFKmzFnFc7W02QsIi8bEZDkpK8ubTz7tLAoSaYVIo7Ng==",
+      "matches": true
+    },
+    {
+      "file": "NLog/LICENSE.txt",
+      "sourceBytes": 1553,
+      "sourceSha256": "0bf6ba2a9fc4e8b4b2fccbd712a9bf118989a60b8a1767551c23150f4154b08c",
+      "package": "NLog",
+      "version": "6.2.2",
+      "packageSha512Base64": "EIBddjZZJ5AgrbkkxI0v+e6pKj/8aRNp24Itv1tMw26Om2I/vkQZ/UrkqKiwlAbGBmDUV3M3B53zJCKd6nmcSQ==",
+      "nugetContentHash": "Hoxigm/d7wY/+y4y2ILF2ERSojhxgLd8ASBZQbrnm52jB5NHkF4AWW5tZzMxJ/HTOp0bLwClGOokrA31iSXuMA==",
+      "matches": true
+    },
+    {
+      "file": "NLog/Extensions.Logging-LICENSE.txt",
+      "sourceBytes": 1287,
+      "sourceSha256": "c25be2e28dcb98f726ecb89d86093897a16451405d975559f89692585398959f",
+      "package": "NLog.Extensions.Logging",
+      "version": "6.3.0",
+      "packageSha512Base64": "a7NYebpP2w2FSzDMT8pubu9D8i7KMxLE3tyJrYDSSzqax6YVvVIqSqTXai3gH0zlME/cnVU0sf78Uo94rpTNpA==",
+      "nugetContentHash": "ZTgiFC5LrNp32CrgqfOf2CIQmfIVEh2/E2IknNu1c/AofW/Gi7J+rEpIa7yAJoH+BTb1RX13D3XZ4HB0LKzT5A==",
+      "matches": true
+    },
+    {
+      "file": "NLog/ConcurrentFile-LICENSE.txt",
+      "sourceBytes": 1512,
+      "sourceSha256": "f11851f3667939926a0cc800ccddf724dd24173e428bcddcf13d04b3a54c1038",
+      "package": "NLog.Targets.ConcurrentFile",
+      "version": "6.2.2",
+      "packageSha512Base64": "ZmMayc90exuC3bM4tpPEr1hvF4jGQOm8r2oK8sdGSJY3WxWHTWsYaM2TGXipLz01YxWEHq9pc6eRjWOg9uduEQ==",
+      "nugetContentHash": "iIoQF/Br63RYP0/cdy3eJGr+pha7KRIE3fNNSe9xhIiPtiP0lv5VgYeOckF3ZkYVUxrBiTjybnzcG0mqXQCWWw==",
+      "matches": true
+    },
+    {
+      "file": "Swashbuckle/Annotations-LICENSE.txt",
+      "sourceBytes": 1081,
+      "sourceSha256": "c87a9ab2520595bc7c31343b5250e8f3779a65c6051612118b0accd200f24d07",
+      "package": "Swashbuckle.AspNetCore.Annotations",
+      "version": "9.0.6",
+      "packageSha512Base64": "3fUoLbjOmbUlpHIbihy0Gpex+o/oIQSY23A0rXSXc2HZRx+FB2GKavJc/+GedABlGZTPc804vu5M0S41ffUCSQ==",
+      "nugetContentHash": "NGrxo6pkPgzKGD0t6FalY57aWrwR6S2xNq1MJEK+R7rX5asZlEfFJLps8VapRjBKcYgTvyguAV1lDrgabF6Krg==",
+      "matches": true
+    },
+    {
+      "file": "Swashbuckle/SwaggerGen-LICENSE.txt",
+      "sourceBytes": 1081,
+      "sourceSha256": "c87a9ab2520595bc7c31343b5250e8f3779a65c6051612118b0accd200f24d07",
+      "package": "Swashbuckle.AspNetCore.SwaggerGen",
+      "version": "9.0.6",
+      "packageSha512Base64": "Rg6NwYO7w7FveS7b+uPaoNWv02H3PThgIz7JGBlWo5f+s9plL71gTTSBq9GI7f7eu+pPQMeaVy/KDR+tXp67ag==",
+      "nugetContentHash": "yYrDs5qpIa4UXP+a02X0ZLQs6HSd1C8t6hF6J1fnxoawi3PslJg1yUpLBS89HCbrDACzmwEGG25il+8aa0zdnw==",
+      "matches": true
+    },
+    {
+      "file": "Swashbuckle/Swagger-LICENSE.txt",
+      "sourceBytes": 1081,
+      "sourceSha256": "c87a9ab2520595bc7c31343b5250e8f3779a65c6051612118b0accd200f24d07",
+      "package": "Swashbuckle.AspNetCore.Swagger",
+      "version": "9.0.6",
+      "packageSha512Base64": "T0qjym6PfE94xoB9qGuFtrIkbutOU181DKG50bstL6U3+rhNQwcBYGVcdGYTnQN+9Kqg9KA6FdzmOnzpESVW6Q==",
+      "nugetContentHash": "Bgyc8rWRAYwDrzjVHGbavvNE38G1Dfgf1McHYm+WUr4TxkvEAXv8F8B1z3Kmz4BkDCKv9A/1COa2t7+Ri5+pLg==",
+      "matches": true
+    },
+    {
+      "file": "Microsoft.OpenApi/LICENSE.txt",
+      "sourceBytes": 1116,
+      "sourceSha256": "5d177f23ecfeb0ea8e050b6a5a16355e1ae9a0b286436ca8f83ed08b3795be6b",
+      "package": "Microsoft.OpenApi",
+      "version": "1.6.25",
+      "packageSha512Base64": "CEkFDMa391Rhahe5nALwVJINLlZwXkvr45h2k9sfwPJRfE4J1UTYKfFW4k5ScKaiY56Dsm9z7mrIgs1eNtjZ7Q==",
+      "nugetContentHash": "ZahSqNGtNV7N0JBYS/IYXPkLVexL/AZFxo6pqxv6A7Uli7Q7zfitNjkaqIcsV73Ukzxi4IlJdyDgcQiMXiH8cw==",
+      "matches": true
+    },
+    {
+      "file": "FluentValidation/LICENSE.txt",
+      "sourceBytes": 10349,
+      "sourceSha256": "6d1d968fb225eca367cb7f0b8831ab012a35d92b547e945e17ef8e7b05c3e5cc",
+      "package": "FluentValidation",
+      "version": "12.2.0",
+      "packageSha512Base64": "8BuYN/gyG/XY7VSXKEoZx8dIirkcPIRa6fr+NFEWqr+reAzWjIDzxw5RvizLkRM3nWJoFY/ouLf91fXebHtxJQ==",
+      "nugetContentHash": "DR3lFbdnKucaaj1/8zMNOACMz/64igzox1yVZSFVsLxYB5mxAB+wFP1WZ8fjwrZnbU1KA1DoMzHKYKxUfuZ4wQ==",
+      "matches": true
+    },
+    {
+      "file": "MailKit/LICENSE.txt",
+      "sourceBytes": 1093,
+      "sourceSha256": "35b9fc9bfb7a201a6e0b9e3ce71b639a830a2347d4aea55a2b1affbc487a1fb3",
+      "package": "MailKit",
+      "version": "5.0.0",
+      "packageSha512Base64": "nvtve6Jpm96O67YzJRmagHSWUdTUNzVxysnflxdJIAx7A5SNCyKCbVrlaJoQnQyUJPkkf7e2hRAoiJBCo6Frgw==",
+      "nugetContentHash": "PG6hnsklTzd/iK9A6j03OxDOas9mh8zOBkbPzcsLmFOODE8Hw3HTy7HAKiJvVHXNpKc3/KMVG/4QvOAKCBbGhA==",
+      "matches": true
+    },
+    {
+      "file": "MimeKit.Core/LICENSE.txt",
+      "sourceBytes": 1094,
+      "sourceSha256": "c613af70a219d1cafd732f2cefd4fca9f1462ac5696f8461108a7d643513f3bf",
+      "package": "MimeKit.Core",
+      "version": "5.0.0",
+      "packageSha512Base64": "ME9DEOGAgHH6z2QJNcSmMWFaZc2EAgoCWSpxWdc+0KJUd+QxzEYZwg94PMC30kxRkLG+iYqFNtcfyn6eC4Q+/A==",
+      "nugetContentHash": "0RLaVyex/BjUGqiw9xtGwzyCMaBcsu33Rth61bDCeVeQaaQK7tjcy4TA+nHKTqwUdp4OGd+gnhuq2fuR+c20qA==",
+      "matches": true
+    }
+  ],
+  "allMatch": true
+}

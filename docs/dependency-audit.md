@@ -750,7 +750,7 @@ inventory contains all 125 exact resolved package identities and hashes across
 match; seven pinned notices were added for the upgraded logging/OpenAPI
 libraries. Both .NET solution and Windows-targeted GUI restores are locked.
 
-### React 19 evaluated, not adopted
+### Earlier React 19 readiness trial (superseded)
 
 The [isolated readiness receipt](dependencies/2026-11-25-ui-integrations/react19-readiness.json)
 records an actual React/DOM 19.3.1 install and corresponding type packages.
@@ -780,3 +780,52 @@ all existing library and API document checks, x64 musl Docker and
 acquisition tests. All 23 managed notice hashes match in each of the
 three Linux packages. See [local validation](local-validation.md#u07-and-p09-interactionmanaged-integration-verification-2026-11-25)
 and the [exact hosted receipt](dependencies/2026-11-25-ui-integrations/hosted-validation.json).
+
+
+### React 19, FluentValidation 12 and MailKit 5 adopted
+
+The subsequent exact graph (`50b5e561152f295682f0e695e94b24cd357ec271`) closes the prior React peer
+prerequisites. Replaced the three peer-excluding legacy packages with native
+scrolling, native CSS text truncation and `@radix-ui/react-slider@1.6.1`.
+React and React DOM 19.3.1, React declarations 19.3.3 and DOM declarations
+19.3.0 install without peer warnings; the code uses function parameter
+defaults and the automatic Babel/TypeScript/Vite JSX transform. Real keyboard
+and touch quality sliders, scroll behavior, Unicode overview truncation,
+virtualized views, menus, routes, settings drafts and drag/drop pass on the
+exact packaged graph. Two UI build actions also found/fixed a genuine bulk
+quality cache invalidation issue, now covered by a source regression.
+
+[FluentValidation 12.2.0](https://www.nuget.org/packages/FluentValidation/12.2.0)
+replaces 9.5.4 using supported typed reusable/injected validators and explicit
+cascade behavior. Thirty actual old/new rule scenarios match their complete
+failure payloads (property, code, message, attempted value, severity and
+custom state); 26 targeted committed cases verify this contract. The obsolete
+unused untyped RuleForField helper is retired rather than reimplemented with
+changed missing/incorrectly typed field semantics.
+[MailKit 5.0.0](https://www.nuget.org/packages/MailKit/5.0.0) adopts
+MimeKit.Core 5.0.0 rather than full MimeKit 4; its exact graph no longer
+includes BouncyCastle.Cryptography 2.7.0 or System.Security.Cryptography.Pkcs
+10.0.15. Seventeen targeted email settings/transport checks pass, including
+six new loopback-only regressions for TLS-before-auth/delivery, missing TLS,
+certificate rejection, partial recipient failure, BCC privacy and ebook-only
+attachment policy. See [compatibility evidence](dependencies/2026-11-25-react19/managed-compatibility.json).
+
+The independently locked final Yarn graph audits 1,242 dependencies with
+zero known findings; the locked NuGet graph audits all 25 projects (including
+separately targeted Windows GUI) with zero known findings. There are 123 exact
+managed components, 26 pinned notices and 22 validated package archives.
+All three Linux packages contain the same notice bytes and manifest. See the
+[summary](dependencies/2026-11-25-react19/summary.json), [NuGet audit](dependencies/2026-11-25-react19/nuget-audit.json),
+[component inventory](dependencies/2026-11-25-react19/managed-components.json), and
+[notice evidence](dependencies/2026-11-25-react19/managed-notices.json). These advisory results are not
+a complete native/library security audit.
+
+Remaining managed major-line migrations are separate gates: DryIoc 6/adapter
+8 and Npgsql/Microsoft 11 are coupled to newer .NET/DI contracts; MonoTorrent 3
+requires identity/acquisition fidelity for v2/hybrid torrents; NUnit 5 needs
+assertion and runner compatibility; RestSharp 114 and Selenium 4 require old
+test-client/automation migrations; StyleCop 1.3 introduces semantic diagnostics
+that must be addressed without broad suppression; Swashbuckle 11 needs an
+OpenAPI 2.x object model/contract migration. Native ARM64 execution and release
+acceptance remain open. P09 remains **In progress**; React 19's prior peer and
+JSX gates are no longer blockers.
