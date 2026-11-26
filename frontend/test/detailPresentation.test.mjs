@@ -44,3 +44,49 @@ test('author reconciliation parses reviewed identities and preserves false and z
   assert.throws(() => parseReconciliationPreview({...preview, target: source}), /identity/);
   assert.throws(() => parseReconciliationPreview({...preview, files: null}), /files/);
 });
+
+test('book detail connector handles missing route snapshots and keeps actions scoped to its displayed recording', () => {
+  const calls = [];
+  const action = (name) => (...args) => { calls.push([name, ...args]); };
+  const { default: connected } = loadFrontendModule('Book/Details/BookDetailsConnector.tsx', {
+    'react-redux': { connect: (selector, actions) => (Component) => ({ selector: selector(), actions, Component }) },
+    'Commands/commandNames': {
+      REFRESH_BOOK: 'RefreshBook', REFRESH_MEDIA_INFO: 'RefreshMediaInfo',
+      BOOK_SEARCH: 'BookSearch', RENAME_FILES: 'RenameFiles', RENAME_AUTHOR: 'RenameAuthor'
+    },
+    'InteractiveSearch/releaseSearchQuery': { invalidateReleaseSearches: action('invalidate') },
+    'Store/Actions/baseActions': { updateItem: action('updateItem') },
+    'Store/Actions/bookFileActions': { fetchBookFiles: action('fetchBookFiles'), clearBookFiles: action('clearBookFiles') },
+    'Store/Actions/commandActions': { executeCommand: action('executeCommand') },
+    'Store/Actions/editionActions': { fetchEditions: action('fetchEditions'), clearEditions: action('clearEditions') },
+    'Utilities/Command': loadFrontendModule('Utilities/Command/index.ts'),
+    'Utilities/pagePopulator': { registerPagePopulator() {}, unregisterPagePopulator() {} },
+    './BookDetails': () => null
+  });
+  const state = {
+    authors: { items: [{ id: 3, titleSlug: 'author', authorName: 'Author' }] },
+    books: { items: [
+      { id: 1, authorId: 3, title: 'First', titleSlug: 'first', releaseDate: '2020-01-01' },
+      { id: 2, authorId: 3, title: 'Second', titleSlug: 'second', releaseDate: '2021-01-01' },
+      { id: 9, authorId: 4, title: 'Other', titleSlug: 'other', releaseDate: '2022-01-01' }
+    ] },
+    bookFiles: { items: [], isPopulated: true },
+    editions: { items: [], isPopulated: true },
+    commands: { items: [] }
+  };
+  assert.deepEqual(connected.selector(state, { titleSlug: 'missing' }), { detail: null });
+  assert.deepEqual(connected.selector(state, { titleSlug: 'other' }), { detail: null });
+  const detail = connected.selector(state, { titleSlug: 'first' }).detail;
+  assert.equal(detail.id, 1);
+  assert.equal(detail.previousBook.id, 2);
+  assert.equal(detail.nextBook.id, 2);
+  const component = new connected.Component({ detail, ...connected.actions });
+  component.populate();
+  component.onLocalMetadataSaved({ id: 2, title: 'Stale update' });
+  assert.deepEqual(calls, [['fetchBookFiles', { bookId: 1 }], ['fetchEditions', { bookId: 1 }]]);
+  component.onLocalMetadataSaved({ id: 1, title: 'Updated title' });
+  assert.deepEqual(calls.slice(2), [
+    ['updateItem', { id: 1, title: 'Updated title', section: 'books' }],
+    ['fetchEditions', { bookId: 1 }], ['invalidate', { bookId: 1 }]
+  ]);
+});

@@ -1,10 +1,11 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import AuthorHistoryTable from 'Author/History/AuthorHistoryTable';
+import type { AuthorId, BookId } from 'Book/BookIdentity';
 import DeleteBookModal from 'Book/Delete/DeleteBookModal';
 import EditBookModalConnector from 'Book/Edit/EditBookModalConnector';
 import LocalRecordingModal from 'Book/Edit/LocalRecordingModal';
+import type { LibraryStatistics } from 'Book/LibraryPresentation';
 import RecordingWorkCoverage from 'Book/WorkCoverage/RecordingWorkCoverage';
 import BookFileEditorTable from 'BookFile/Editor/BookFileEditorTable';
 import IconButton from 'Components/Link/IconButton';
@@ -25,13 +26,44 @@ import BookDetailsHeaderConnector from './BookDetailsHeaderConnector';
 import BookRecordingMetadataConnector from './BookRecordingMetadataConnector';
 import styles from './BookDetails.css';
 
-class BookDetails extends Component {
+export interface BookNavigationEntry { id: BookId; title: string; titleSlug: string }
+
+export interface BookDetailsProps {
+  id: BookId;
+  title: string;
+  foreignBookId?: string | null;
+  isRefreshing: boolean;
+  isRefreshingMediaInfo: boolean;
+  isFetching: boolean;
+  isPopulated: boolean;
+  bookFilesError?: unknown;
+  hasBookFiles: boolean;
+  author: { id: AuthorId; authorName: string; titleSlug: string };
+  previousBook: BookNavigationEntry;
+  nextBook: BookNavigationEntry;
+  isSearching: boolean;
+  onRefreshPress: () => void;
+  onRefreshMediaInfoPress: () => void;
+  onSearchPress: () => void;
+  statistics?: LibraryStatistics;
+  onLocalMetadataSaved: (book: unknown) => void;
+}
+
+interface State {
+  isOrganizeModalOpen: boolean;
+  isRetagModalOpen: boolean;
+  isEditBookModalOpen: boolean;
+  isLocalMetadataModalOpen: boolean;
+  isDeleteBookModalOpen: boolean;
+}
+
+class BookDetails extends Component<BookDetailsProps, State> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: BookDetailsProps) {
+    super(props);
 
     this.state = {
       isOrganizeModalOpen: false,
@@ -42,7 +74,7 @@ class BookDetails extends Component {
     };
   }
 
-  componentDidUpdate(previousProps) {
+  componentDidUpdate(previousProps: BookDetailsProps) {
     if (previousProps.id !== this.props.id && this.state.isLocalMetadataModalOpen) {
       this.onLocalMetadataClose();
     }
@@ -83,7 +115,7 @@ class BookDetails extends Component {
     this.setState({ isLocalMetadataModalOpen: false });
   };
 
-  onLocalMetadataSaved = (book) => {
+  onLocalMetadataSaved = (book: unknown) => {
     this.onLocalMetadataClose();
     this.props.onLocalMetadataSaved(book);
   };
@@ -208,9 +240,8 @@ class BookDetails extends Component {
 
         <PageContentBody innerClassName={styles.innerContentBody}>
           <SwipeHeaderConnector
-            className={styles.header}
             nextLink={`/book/${nextBook.titleSlug}`}
-            nextComponent={(width) => (
+            nextComponent={(width: number) => (
               <BookDetailsHeaderConnector
                 bookId={nextBook.id}
                 author={author}
@@ -218,14 +249,14 @@ class BookDetails extends Component {
               />
             )}
             prevLink={`/book/${previousBook.titleSlug}`}
-            prevComponent={(width) => (
+            prevComponent={(width: number) => (
               <BookDetailsHeaderConnector
                 bookId={previousBook.id}
                 author={author}
                 width={width}
               />
             )}
-            currentComponent={(width) => (
+            currentComponent={(width: number) => (
               <BookDetailsHeaderConnector
                 bookId={id}
                 author={author}
@@ -238,7 +269,7 @@ class BookDetails extends Component {
                 className={styles.bookNavigationButton}
                 name={icons.ARROW_LEFT}
                 size={30}
-                title={translate('GoToInterp', [previousBook.title])}
+                title={translate('GoToInterp', { 0: previousBook.title })}
                 to={`/book/${previousBook.titleSlug}`}
               />
 
@@ -246,7 +277,7 @@ class BookDetails extends Component {
                 className={styles.bookUpButton}
                 name={icons.ARROW_UP}
                 size={30}
-                title={translate('GoToInterp', [author.authorName])}
+                title={translate('GoToInterp', { 0: author.authorName })}
                 to={`/author/${author.titleSlug}`}
               />
 
@@ -254,7 +285,7 @@ class BookDetails extends Component {
                 className={styles.bookNavigationButton}
                 name={icons.ARROW_RIGHT}
                 size={30}
-                title={translate('GoToInterp', [nextBook.title])}
+                title={translate('GoToInterp', { 0: nextBook.title })}
                 to={`/book/${nextBook.titleSlug}`}
               />
             </div>
@@ -268,7 +299,7 @@ class BookDetails extends Component {
             }
 
             {
-              !isFetching && bookFilesError &&
+              !isFetching && !!bookFilesError &&
                 <div>
                   {translate('LoadingBookFilesFailed')}
                 </div>
@@ -296,7 +327,7 @@ class BookDetails extends Component {
                   className={styles.tab}
                   selectedClassName={styles.selectedTab}
                 >
-                  {translate('FilesTotal', [bookFileCount])}
+                  {translate('FilesTotal', { 0: bookFileCount })}
                 </Tab>
 
                 <Tab className={styles.tab} selectedClassName={styles.selectedTab}>
@@ -376,43 +407,5 @@ class BookDetails extends Component {
     );
   }
 }
-
-BookDetails.propTypes = {
-  id: PropTypes.number.isRequired,
-  titleSlug: PropTypes.string.isRequired,
-  title: PropTypes.string.isRequired,
-  foreignBookId: PropTypes.string,
-  seriesTitle: PropTypes.string.isRequired,
-  pageCount: PropTypes.number,
-  overview: PropTypes.string,
-  releaseDate: PropTypes.string,
-  ratings: PropTypes.object.isRequired,
-  images: PropTypes.arrayOf(PropTypes.object).isRequired,
-  links: PropTypes.arrayOf(PropTypes.object).isRequired,
-  statistics: PropTypes.object.isRequired,
-  monitored: PropTypes.bool.isRequired,
-  shortDateFormat: PropTypes.string.isRequired,
-  isSaving: PropTypes.bool.isRequired,
-  isRefreshing: PropTypes.bool,
-  isRefreshingMediaInfo: PropTypes.bool,
-  isSearching: PropTypes.bool,
-  isFetching: PropTypes.bool,
-  isPopulated: PropTypes.bool,
-  bookFilesError: PropTypes.object,
-  hasBookFiles: PropTypes.bool.isRequired,
-  author: PropTypes.object,
-  previousBook: PropTypes.object,
-  nextBook: PropTypes.object,
-  isSmallScreen: PropTypes.bool.isRequired,
-  onMonitorTogglePress: PropTypes.func.isRequired,
-  onRefreshPress: PropTypes.func,
-  onRefreshMediaInfoPress: PropTypes.func,
-  onSearchPress: PropTypes.func.isRequired,
-  onLocalMetadataSaved: PropTypes.func.isRequired
-};
-
-BookDetails.defaultProps = {
-  isSaving: false
-};
 
 export default BookDetails;

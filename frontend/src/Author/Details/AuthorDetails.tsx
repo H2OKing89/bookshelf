@@ -1,11 +1,12 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import DeleteAuthorModal from 'Author/Delete/DeleteAuthorModal';
 import EditAuthorModalConnector from 'Author/Edit/EditAuthorModalConnector';
 import AuthorHistoryTable from 'Author/History/AuthorHistoryTable';
 import MonitoringOptionsModal from 'Author/MonitoringOptions/MonitoringOptionsModal';
+import { type AuthorId, type BookId, parseResourceId } from 'Book/BookIdentity';
 import BookEditorFooter from 'Book/Editor/BookEditorFooter';
+import type { LibraryStatistics } from 'Book/LibraryPresentation';
 import BookFileEditorTable from 'BookFile/Editor/BookFileEditorTable';
 import Alert from 'Components/Alert';
 import IconButton from 'Components/Link/IconButton';
@@ -22,17 +23,20 @@ import { align, icons, kinds } from 'Helpers/Props';
 import InteractiveSearchTable from 'InteractiveSearch/InteractiveSearchTable';
 import OrganizePreviewModalConnector from 'Organize/OrganizePreviewModalConnector';
 import RetagPreviewModalConnector from 'Retag/RetagPreviewModalConnector';
+import type { StateRecord } from 'Store/StateTypes';
 import translate from 'Utilities/String/translate';
 import getSelectedIds from 'Utilities/Table/getSelectedIds';
 import selectAll from 'Utilities/Table/selectAll';
+import type { SelectedState, SelectionFlags, SelectionState } from 'Utilities/Table/selectionTypes';
 import toggleSelected from 'Utilities/Table/toggleSelected';
 import InteractiveImportModal from '../../InteractiveImport/InteractiveImportModal';
 import AuthorDetailsHeaderConnector from './AuthorDetailsHeaderConnector';
 import AuthorDetailsSeasonConnector from './AuthorDetailsSeasonConnector';
 import AuthorDetailsSeriesConnector from './AuthorDetailsSeriesConnector';
+import type { DetailBookRow, SeriesItem } from './detailRowsState';
 import styles from './AuthorDetails.css';
 
-function getExpandedState(newState) {
+function getExpandedState(newState: SelectionState & SelectionFlags) {
   return {
     allExpanded: newState.allSelected,
     allCollapsed: newState.allUnselected,
@@ -40,13 +44,55 @@ function getExpandedState(newState) {
   };
 }
 
-class AuthorDetails extends Component {
+export interface AuthorNavigationEntry { id: AuthorId; authorName: string; titleSlug: string }
+export interface AuthorDetailsProps {
+  id: AuthorId;
+  authorName: string;
+  path: string;
+  monitored: boolean;
+  isRefreshing: boolean;
+  isSearching: boolean;
+  isFetching: boolean;
+  isPopulated: boolean;
+  booksError?: unknown;
+  bookFilesError?: unknown;
+  hasBooks: boolean;
+  hasMonitoredBooks: boolean;
+  hasSeries: boolean;
+  series: SeriesItem[];
+  hasBookFiles: boolean;
+  previousAuthor: AuthorNavigationEntry;
+  nextAuthor: AuthorNavigationEntry;
+  onRefreshPress: () => void;
+  onSearchPress: () => void;
+  onReconcileAuthorPress?: () => void;
+  isSaving: boolean;
+  saveError?: unknown;
+  isDeleting: boolean;
+  deleteError?: unknown;
+  statistics?: LibraryStatistics;
+  onSaveSelected: (payload: StateRecord & { bookIds: BookId[] }) => void;
+}
+interface State extends SelectionState<BookId>, SelectionFlags {
+  isOrganizeModalOpen: boolean;
+  isRetagModalOpen: boolean;
+  isEditAuthorModalOpen: boolean;
+  isDeleteAuthorModalOpen: boolean;
+  isInteractiveImportModalOpen: boolean;
+  isMonitorOptionsModalOpen: boolean;
+  isEditorActive: boolean;
+  allExpanded: boolean;
+  allCollapsed: boolean;
+  expandedState: SelectedState;
+}
+
+class AuthorDetails extends Component<AuthorDetailsProps, State> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: AuthorDetailsProps) {
+    super(props);
 
     this.state = {
       isOrganizeModalOpen: false,
@@ -69,12 +115,12 @@ class AuthorDetails extends Component {
   //
   // Control
 
-  setSelectedState = (items) => {
+  setSelectedState = (items: readonly DetailBookRow[]) => {
     const {
       selectedState
     } = this.state;
 
-    const newSelectedState = {};
+    const newSelectedState: Record<number, boolean> = {};
 
     items.forEach((item) => {
       const isItemSelected = selectedState[item.id];
@@ -101,7 +147,7 @@ class AuthorDetails extends Component {
   };
 
   getSelectedIds = () => {
-    return getSelectedIds(this.state.selectedState);
+    return getSelectedIds(this.state.selectedState).map((id) => parseResourceId(id, 'book'));
   };
 
   //
@@ -171,7 +217,7 @@ class AuthorDetails extends Component {
     this.setState(getExpandedState(selectAll(expandedState, !allExpanded)));
   };
 
-  onExpandPress = (bookId, isExpanded) => {
+  onExpandPress = (bookId: number, isExpanded: boolean) => {
     this.setState((state) => {
       const convertedState = {
         allSelected: state.allExpanded,
@@ -185,7 +231,7 @@ class AuthorDetails extends Component {
     });
   };
 
-  onSelectAllChange = ({ value }) => {
+  onSelectAllChange = ({ value }: { value: boolean }) => {
     this.setState(selectAll(this.state.selectedState, value));
   };
 
@@ -193,16 +239,16 @@ class AuthorDetails extends Component {
     this.onSelectAllChange({ value: !this.state.allSelected });
   };
 
-  onSelectedChange = (items, id, value, shiftKey = false) => {
+  onSelectedChange = (items: readonly DetailBookRow[], id: BookId, value: boolean | null, shiftKey = false) => {
     this.setState((state) => {
       return toggleSelected(state, items, id, value, shiftKey);
     });
   };
 
-  onSaveSelected = (changes) => {
+  onSaveSelected = (changes: StateRecord) => {
     this.props.onSaveSelected({
-      bookIds: this.getSelectedIds(),
-      ...changes
+      ...changes,
+      bookIds: this.getSelectedIds()
     });
   };
 
@@ -380,19 +426,18 @@ class AuthorDetails extends Component {
 
         <PageContentBody innerClassName={styles.innerContentBody}>
           <SwipeHeaderConnector
-            className={styles.header}
             nextLink={`/author/${nextAuthor.titleSlug}`}
-            nextComponent={(width) => <AuthorDetailsHeaderConnector authorId={nextAuthor.id} width={width} />}
+            nextComponent={(width: number) => <AuthorDetailsHeaderConnector authorId={nextAuthor.id} width={width} />}
             prevLink={`/author/${previousAuthor.titleSlug}`}
-            prevComponent={(width) => <AuthorDetailsHeaderConnector authorId={previousAuthor.id} width={width} />}
-            currentComponent={(width) => <AuthorDetailsHeaderConnector authorId={id} width={width} />}
+            prevComponent={(width: number) => <AuthorDetailsHeaderConnector authorId={previousAuthor.id} width={width} />}
+            currentComponent={(width: number) => <AuthorDetailsHeaderConnector authorId={id} width={width} />}
           >
             <div className={styles.authorNavigationButtons}>
               <IconButton
                 className={styles.authorNavigationButton}
                 name={icons.ARROW_LEFT}
                 size={30}
-                title={translate('GoToInterp', [previousAuthor.authorName])}
+                title={translate('GoToInterp', { 0: previousAuthor.authorName })}
                 to={`/author/${previousAuthor.titleSlug}`}
               />
 
@@ -408,7 +453,7 @@ class AuthorDetails extends Component {
                 className={styles.authorNavigationButton}
                 name={icons.ARROW_RIGHT}
                 size={30}
-                title={translate('GoToInterp', [nextAuthor.authorName])}
+                title={translate('GoToInterp', { 0: nextAuthor.authorName })}
                 to={`/author/${nextAuthor.titleSlug}`}
               />
             </div>
@@ -447,14 +492,14 @@ class AuthorDetails extends Component {
                       className={styles.tab}
                       selectedClassName={styles.selectedTab}
                     >
-                      {translate('BooksTotal', [totalBookCount])}
+                      {translate('BooksTotal', { 0: totalBookCount })}
                     </Tab>
 
                     <Tab
                       className={styles.tab}
                       selectedClassName={styles.selectedTab}
                     >
-                      {translate('SeriesTotal', [series.length])}
+                      {translate('SeriesTotal', { 0: series.length })}
                     </Tab>
 
                     <Tab
@@ -475,7 +520,7 @@ class AuthorDetails extends Component {
                       className={styles.tab}
                       selectedClassName={styles.selectedTab}
                     >
-                      {translate('FilesTotal', [bookFileCount])}
+                      {translate('FilesTotal', { 0: bookFileCount })}
                     </Tab>
 
                   </TabList>
@@ -483,9 +528,7 @@ class AuthorDetails extends Component {
                   <TabPanel>
                     <AuthorDetailsSeasonConnector
                       authorId={id}
-                      isExpanded={true}
                       selectedState={selectedState}
-                      onExpandPress={this.onExpandPress}
                       setSelectedState={this.setSelectedState}
                       onSelectedChange={this.onSelectedChange}
                       isEditorActive={isEditorActive}
@@ -503,7 +546,7 @@ class AuthorDetails extends Component {
                                   key={item.id}
                                   seriesId={item.id}
                                   authorId={id}
-                                  isExpanded={expandedState[item.id]}
+                                  isExpanded={expandedState[item.id] === true}
                                   onExpandPress={this.onExpandPress}
                                 />
                               );
@@ -601,49 +644,5 @@ class AuthorDetails extends Component {
     );
   }
 }
-
-AuthorDetails.propTypes = {
-  id: PropTypes.number.isRequired,
-  authorName: PropTypes.string.isRequired,
-  ratings: PropTypes.object.isRequired,
-  path: PropTypes.string.isRequired,
-  statistics: PropTypes.object.isRequired,
-  qualityProfileId: PropTypes.number.isRequired,
-  monitored: PropTypes.bool.isRequired,
-  status: PropTypes.string.isRequired,
-  overview: PropTypes.string,
-  links: PropTypes.arrayOf(PropTypes.object).isRequired,
-  images: PropTypes.arrayOf(PropTypes.object).isRequired,
-  alternateTitles: PropTypes.arrayOf(PropTypes.string).isRequired,
-  tags: PropTypes.arrayOf(PropTypes.number).isRequired,
-  isRefreshing: PropTypes.bool.isRequired,
-  isSearching: PropTypes.bool.isRequired,
-  isFetching: PropTypes.bool.isRequired,
-  isPopulated: PropTypes.bool.isRequired,
-  booksError: PropTypes.object,
-  bookFilesError: PropTypes.object,
-  hasBooks: PropTypes.bool.isRequired,
-  hasMonitoredBooks: PropTypes.bool.isRequired,
-  hasSeries: PropTypes.bool.isRequired,
-  series: PropTypes.arrayOf(PropTypes.object).isRequired,
-  hasBookFiles: PropTypes.bool.isRequired,
-  previousAuthor: PropTypes.object.isRequired,
-  nextAuthor: PropTypes.object.isRequired,
-  isSmallScreen: PropTypes.bool.isRequired,
-  onMonitorTogglePress: PropTypes.func.isRequired,
-  onRefreshPress: PropTypes.func.isRequired,
-  onSearchPress: PropTypes.func.isRequired,
-  onReconcileAuthorPress: PropTypes.func,
-  isSaving: PropTypes.bool.isRequired,
-  saveError: PropTypes.object,
-  isDeleting: PropTypes.bool.isRequired,
-  deleteError: PropTypes.object,
-  onSaveSelected: PropTypes.func.isRequired
-};
-
-AuthorDetails.defaultProps = {
-  statistics: {},
-  tags: []
-};
 
 export default AuthorDetails;

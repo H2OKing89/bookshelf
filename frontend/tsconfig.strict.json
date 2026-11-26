@@ -303,6 +303,8 @@
     "./src/Author/Details/reconciliationState.ts",
     "./src/Author/Details/AuthorDetailsSeason*.tsx",
     "./src/Author/Details/AuthorDetailsSeries*.tsx",
-    "./src/Author/Details/detailRowsState.ts"
+    "./src/Author/Details/detailRowsState.ts",
+    "./src/Author/Details/AuthorDetails*.tsx",
+    "./src/Book/Details/BookDetails*.tsx"
   ]
 }

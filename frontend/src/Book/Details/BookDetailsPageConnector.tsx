@@ -1,31 +1,33 @@
-import _ from 'lodash';
-import PropTypes from 'prop-types';
 import { Component } from 'react';
-import { connect } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { createSelector } from 'reselect';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import NotFound from 'Components/NotFound';
 import PageContent from 'Components/Page/PageContent';
 import PageContentBody from 'Components/Page/PageContentBody';
+import { asStateRecord, type LegacyRootState } from 'Store/StateTypes';
 import translate from 'Utilities/String/translate';
 import BookDetailsConnector from './BookDetailsConnector';
 
+interface RouteProps { requestedSlug?: string }
+
 function createMapStateToProps() {
   return createSelector(
-    (state, { requestedSlug }) => requestedSlug,
-    (state) => state.books,
-    (state) => state.authors,
+    (_state: LegacyRootState, { requestedSlug }: RouteProps) => requestedSlug,
+    (state: LegacyRootState) => state.books,
+    (state: LegacyRootState) => state.authors,
     (titleSlug, books, author) => {
-      const isFetching = books.isFetching || author.isFetching;
-      const isPopulated = books.isPopulated && author.isPopulated;
+      const isFetching = books.isFetching === true || author.isFetching === true;
+      const isPopulated = books.isPopulated === true && author.isPopulated === true;
 
       // if books have been fetched, make sure requested one exists
       // otherwise don't map titleSlug to trigger not found page
       if (!isFetching && isPopulated) {
-        const bookIndex = _.findIndex(books.items, { titleSlug });
+        const bookIndex = Array.isArray(books.items) ? books.items.findIndex((item: unknown) => asStateRecord(item).titleSlug === titleSlug) : -1;
         if (bookIndex === -1) {
           return {
+            titleSlug: undefined,
             isFetching,
             isPopulated
           };
@@ -41,9 +43,12 @@ function createMapStateToProps() {
   );
 }
 
-class BookDetailsPage extends Component {
+const connector = connect(createMapStateToProps);
+type Props = RouteProps & ConnectedProps<typeof connector>;
 
-  constructor(props) {
+class BookDetailsPage extends Component<Props, { hasMounted: boolean }> {
+
+  constructor(props: Props) {
     super(props);
     this.state = { hasMounted: false };
   }
@@ -97,16 +102,12 @@ class BookDetailsPage extends Component {
         />
       );
     }
+
+    return null;
   }
 }
 
-BookDetailsPage.propTypes = {
-  titleSlug: PropTypes.string,
-  isFetching: PropTypes.bool.isRequired,
-  isPopulated: PropTypes.bool.isRequired
-};
-
-const ConnectedBookDetailsPage = connect(createMapStateToProps)(BookDetailsPage);
+const ConnectedBookDetailsPage = connector(BookDetailsPage);
 
 export default function BookDetailsPageConnector() {
   const { titleSlug } = useParams();
