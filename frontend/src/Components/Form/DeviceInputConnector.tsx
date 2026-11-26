@@ -1,23 +1,27 @@
-import PropTypes from 'prop-types';
-import { Component } from 'react';
-import { connect } from 'react-redux';
+import React, { Component } from 'react';
+import { connect, type ConnectedProps } from 'react-redux';
 import { createSelector } from 'reselect';
 import { clearOptions, defaultState, fetchOptions } from 'Store/Actions/providerOptionActions';
+import { asStateRecord, type LegacyRootState } from 'Store/StateTypes';
 import DeviceInput from './DeviceInput';
+import { type ProviderControlProps,providerItems, providerKeys } from './providerControlTypes';
+
+type OwnProps = ProviderControlProps;
 
 function createMapStateToProps() {
   return createSelector(
-    (state, { value }) => value,
-    (state) => state.providerOptions.devices || defaultState,
+    (_state: LegacyRootState, { value }: OwnProps) => value,
+    (state: LegacyRootState) => asStateRecord(state.providerOptions.devices ?? defaultState),
     (value, devices) => {
 
+      const items = providerItems(devices.items);
+
       return {
-        ...devices,
-        selectedDevices: value.map((valueDevice) => {
-          // Disable equality ESLint rule so we don't need to worry about
-          // a type mismatch between the value items and the device ID.
-          // eslint-disable-next-line eqeqeq
-          const device = devices.items.find((d) => d.id == valueDevice);
+        items,
+        isFetching: devices.isFetching === true,
+        isPopulated: devices.isPopulated === true,
+        selectedDevices: providerKeys(value).map((valueDevice) => {
+          const device = items.find((item) => String(item.id) === String(valueDevice));
 
           if (device) {
             return {
@@ -38,10 +42,13 @@ function createMapStateToProps() {
 
 const mapDispatchToProps = {
   dispatchFetchOptions: fetchOptions,
-  dispatchClearOptions: clearOptions
+  dispatchClearOptions: clearOptions as unknown as (payload: { section: string }) => { type: string; payload?: unknown }
 };
 
-class DeviceInputConnector extends Component {
+const connector = connect(createMapStateToProps, mapDispatchToProps);
+type Props = OwnProps & ConnectedProps<typeof connector>;
+
+class DeviceInputConnector extends Component<Props> {
 
   //
   // Lifecycle
@@ -86,19 +93,11 @@ class DeviceInputConnector extends Component {
     return (
       <DeviceInput
         {...this.props}
+        value={providerKeys(this.props.value)}
         onRefreshPress={this.onRefreshPress}
       />
     );
   }
 }
 
-DeviceInputConnector.propTypes = {
-  provider: PropTypes.string.isRequired,
-  providerData: PropTypes.object.isRequired,
-  name: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-  dispatchFetchOptions: PropTypes.func.isRequired,
-  dispatchClearOptions: PropTypes.func.isRequired
-};
-
-export default connect(createMapStateToProps, mapDispatchToProps)(DeviceInputConnector);
+export default connector(DeviceInputConnector);

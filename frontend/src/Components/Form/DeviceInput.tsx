@@ -1,16 +1,31 @@
-import PropTypes from 'prop-types';
-import { Component } from 'react';
+import React, { Component } from 'react';
 import Icon from 'Components/Icon';
 import { icons } from 'Helpers/Props';
-import tagShape from 'Helpers/Props/Shapes/tagShape';
-import formControlProps from './formControlProps';
+import formControlProps, { type FormControlProps } from './formControlProps';
 import FormInputButton from './FormInputButton';
+import type { ValueChange } from './formTypes';
+import type { ProviderItem, ProviderKey } from './providerControlTypes';
 import TagInput from './TagInput';
 import styles from './DeviceInput.css';
 
-class DeviceInput extends Component {
+interface Props extends FormControlProps {
+  className?: string;
+  name: string;
+  value: readonly ProviderKey[];
+  items: readonly ProviderItem[];
+  hasError?: boolean;
+  hasWarning?: boolean;
+  isFetching: boolean;
+  isPopulated: boolean;
+  onChange: (change: ValueChange<ProviderKey[]>) => void;
+  selectedDevices: readonly ProviderItem[];
+  onRefreshPress: () => void;
+}
 
-  onTagAdd = (device) => {
+class DeviceInput extends Component<Props> {
+  static defaultProps = { className: styles.deviceInputWrapper };
+
+  onTagAdd = (device: { id?: ProviderKey; name: string }) => {
     const {
       name,
       value,
@@ -18,7 +33,7 @@ class DeviceInput extends Component {
     } = this.props;
 
     // New tags won't have an ID, only a name.
-    const deviceId = device.id || device.name;
+    const deviceId = device.id ?? device.name;
 
     onChange({
       name,
@@ -26,7 +41,7 @@ class DeviceInput extends Component {
     });
   };
 
-  onTagDelete = ({ index }) => {
+  onTagDelete = ({ index }: { index: number }) => {
     const {
       name,
       value,
@@ -85,24 +100,5 @@ class DeviceInput extends Component {
     );
   }
 }
-
-DeviceInput.propTypes = {
-  className: PropTypes.string.isRequired,
-  name: PropTypes.string.isRequired,
-  value: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.number, PropTypes.string])).isRequired,
-  items: PropTypes.arrayOf(PropTypes.shape(tagShape)).isRequired,
-  selectedDevices: PropTypes.arrayOf(PropTypes.shape(tagShape)).isRequired,
-  hasError: PropTypes.bool,
-  hasWarning: PropTypes.bool,
-  isFetching: PropTypes.bool.isRequired,
-  isPopulated: PropTypes.bool.isRequired,
-  onChange: PropTypes.func.isRequired,
-  onRefreshPress: PropTypes.func.isRequired
-};
-
-DeviceInput.defaultProps = {
-  className: styles.deviceInputWrapper,
-  inputClassName: styles.input
-};
 
 export default DeviceInput;

@@ -103,3 +103,70 @@ test('provider options preserve zero and string keys and ignore malformed entrie
     { key: '0', value: 'String', hint: undefined }
   ]);
 });
+
+const noop = () => {};
+const translate = (key) => key;
+const { providerFields, providerItems, providerKeys } = loadFrontendModule('Components/Form/providerControlTypes.ts');
+const { getProfileDefault, parseProfileValue, profileOptions, profiles } = loadFrontendModule('Components/Form/profileSelectOptions.ts', {
+  'Utilities/String/translate': translate
+});
+const { getSelectOptions } = loadFrontendModule('Components/Form/EnhancedSelectInputConnector.tsx', {
+  './EnhancedSelectInput': noop,
+  'Store/Actions/providerOptionActions': { clearOptions: noop, defaultState: {}, fetchOptions: noop }
+});
+const { filterPaths } = loadFrontendModule('Components/Form/PathInputConnector.tsx', {
+  './PathInput': noop,
+  'Store/Actions/pathActions': { clearPaths: noop, fetchPaths: noop }
+});
+const { getRootFolderOptions } = loadFrontendModule('Components/Form/RootFolderSelectInputConnector.tsx', {
+  './RootFolderSelectInput': noop,
+  'Utilities/String/translate': translate
+});
+
+test('provider API boundaries retain key types, zero and hierarchical options', () => {
+  assert.deepEqual(providerKeys([0, '0', false, null, {}]), [0, '0']);
+  assert.deepEqual(providerItems([{ id: 0, name: 'Device' }, { id: false, name: 'Invalid' }, null]), [{ id: 0, name: 'Device' }]);
+  assert.deepEqual(providerFields(undefined), []);
+  assert.deepEqual(providerFields({ fields: [null, { name: 'test', value: false }] }), [{ name: 'test', value: false }]);
+  assert.deepEqual(getSelectOptions([
+    { value: 0, name: 'Root' },
+    { value: 'child', name: 'Child', parentValue: 0 },
+    { value: {}, name: 'Invalid' }
+  ]), [
+    { key: 0, value: 'Root', hint: undefined, parentKey: undefined },
+    { key: 'child', value: 'Child', hint: undefined, parentKey: 0 }
+  ]);
+});
+
+test('profile selectors distinguish mixed and noChange from numeric profile IDs', () => {
+  const values = profileOptions(profiles({ items: [{ id: 1, name: 'Z' }, { id: 0, name: 'A' }, null] }), true, false, true);
+  assert.deepEqual(values.map(({ key }) => key), ['mixed', 'noChange', 0, 1]);
+  assert.equal(values[1].isDisabled, false);
+  assert.equal(getProfileDefault(0, values), undefined);
+  assert.equal(getProfileDefault('mixed', values), undefined);
+  assert.equal(getProfileDefault('noChange', values), undefined);
+  assert.equal(getProfileDefault(null, values), 0);
+  assert.equal(getProfileDefault(null, []), undefined);
+  assert.equal(parseProfileValue('0'), 0);
+  assert.equal(parseProfileValue('noChange'), 'noChange');
+  assert.equal(parseProfileValue('mixed'), undefined);
+  assert.equal(parseProfileValue(''), undefined);
+});
+
+test('path suggestions and root folders ignore missing rows without losing a selected path or zero space', () => {
+  assert.deepEqual(filterPaths({
+    currentPath: '/root/books',
+    directories: [{ path: '/root/books/a', type: 'directory' }, { path: '/other' }, null],
+    files: [{ path: '/root/books/f.m4b', type: 'file' }]
+  }), [
+    { path: '/root/books/a', type: 'directory' },
+    { path: '/root/books/f.m4b', type: 'file' }
+  ]);
+  const options = getRootFolderOptions({ items: [{ path: '/root/books', freeSpace: 0 }] }, '/missing', true, true, false);
+  assert.equal(options[0].key, 'noChange');
+  assert.equal(options[0].isDisabled, false);
+  assert.equal(options[1].freeSpace, 0);
+  assert.deepEqual(options[2], { key: '/missing', value: '/missing', isMissing: true, isDisabled: true });
+  assert.equal(options.at(-1).key, 'addNew');
+  assert.deepEqual(getRootFolderOptions({ items: [] }, null, true).map(({ key }) => key), ['', 'addNew']);
+});

@@ -1,15 +1,23 @@
-import PropTypes from 'prop-types';
-import { Component } from 'react';
-import { connect } from 'react-redux';
+import React, { Component } from 'react';
+import { connect, type ConnectedProps } from 'react-redux';
 import { createSelector } from 'reselect';
 import { getCaptchaCookie, refreshCaptcha, resetCaptcha } from 'Store/Actions/captchaActions';
+import type { LegacyRootState } from 'Store/StateTypes';
 import CaptchaInput from './CaptchaInput';
+import { type ProviderControlProps } from './providerControlTypes';
+
+type OwnProps = ProviderControlProps;
 
 function createMapStateToProps() {
   return createSelector(
-    (state) => state.captcha,
+    (state: LegacyRootState) => state.captcha,
     (captcha) => {
-      return captcha;
+      return {
+        refreshing: captcha.refreshing === true,
+        token: typeof captcha.token === 'string' ? captcha.token : null,
+        siteKey: typeof captcha.siteKey === 'string' ? captcha.siteKey : null,
+        secretToken: typeof captcha.secretToken === 'string' ? captcha.secretToken : null
+      };
     }
   );
 }
@@ -20,12 +28,15 @@ const mapDispatchToProps = {
   resetCaptcha
 };
 
-class CaptchaInputConnector extends Component {
+const connector = connect(createMapStateToProps, mapDispatchToProps);
+type Props = OwnProps & ConnectedProps<typeof connector>;
+
+class CaptchaInputConnector extends Component<Props> {
 
   //
   // Lifecycle
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: Props) {
     const {
       name,
       token,
@@ -53,7 +64,7 @@ class CaptchaInputConnector extends Component {
     this.props.refreshCaptcha({ provider, providerData });
   };
 
-  onCaptchaChange = (captchaResponse) => {
+  onCaptchaChange = (captchaResponse: string | null) => {
     // If the captcha has expired `captchaResponse` will be null.
     // In the event it's null don't try to get the captchaCookie.
     // TODO: Should we clear the cookie? or reset the captcha?
@@ -74,9 +85,19 @@ class CaptchaInputConnector extends Component {
   // Render
 
   render() {
+    const { value } = this.props;
+    let captchaValue: string | null | undefined = undefined;
+
+    if (typeof value === 'string') {
+      captchaValue = value;
+    } else if (value === null) {
+      captchaValue = null;
+    }
+
     return (
       <CaptchaInput
         {...this.props}
+        value={captchaValue}
         onRefreshPress={this.onRefreshPress}
         onCaptchaChange={this.onCaptchaChange}
       />
@@ -84,15 +105,4 @@ class CaptchaInputConnector extends Component {
   }
 }
 
-CaptchaInputConnector.propTypes = {
-  provider: PropTypes.string.isRequired,
-  providerData: PropTypes.object.isRequired,
-  name: PropTypes.string.isRequired,
-  token: PropTypes.string,
-  onChange: PropTypes.func.isRequired,
-  refreshCaptcha: PropTypes.func.isRequired,
-  getCaptchaCookie: PropTypes.func.isRequired,
-  resetCaptcha: PropTypes.func.isRequired
-};
-
-export default connect(createMapStateToProps, mapDispatchToProps)(CaptchaInputConnector);
+export default connector(CaptchaInputConnector);

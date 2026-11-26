@@ -1,15 +1,25 @@
-import PropTypes from 'prop-types';
-import { Component } from 'react';
-import { connect } from 'react-redux';
+import React, { Component } from 'react';
+import { connect, type ConnectedProps } from 'react-redux';
 import { createSelector } from 'reselect';
 import { resetOAuth, startOAuth } from 'Store/Actions/oAuthActions';
+import { isStateRecord, type LegacyRootState } from 'Store/StateTypes';
 import OAuthInput from './OAuthInput';
+import { type ProviderControlProps } from './providerControlTypes';
+
+interface OwnProps extends ProviderControlProps {
+  label?: string;
+  section: string;
+}
 
 function createMapStateToProps() {
   return createSelector(
-    (state) => state.oAuth,
+    (state: LegacyRootState) => state.oAuth,
     (oAuth) => {
-      return oAuth;
+      return {
+        result: isStateRecord(oAuth.result) ? oAuth.result : null,
+        authorizing: oAuth.authorizing === true,
+        error: oAuth.error
+      };
     }
   );
 }
@@ -19,12 +29,15 @@ const mapDispatchToProps = {
   resetOAuth
 };
 
-class OAuthInputConnector extends Component {
+const connector = connect(createMapStateToProps, mapDispatchToProps);
+type Props = OwnProps & ConnectedProps<typeof connector>;
+
+class OAuthInputConnector extends Component<Props> {
 
   //
   // Lifecycle
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: Props) {
     const {
       result,
       onChange
@@ -75,15 +88,4 @@ class OAuthInputConnector extends Component {
   }
 }
 
-OAuthInputConnector.propTypes = {
-  name: PropTypes.string.isRequired,
-  result: PropTypes.object,
-  provider: PropTypes.string.isRequired,
-  providerData: PropTypes.object.isRequired,
-  section: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-  startOAuth: PropTypes.func.isRequired,
-  resetOAuth: PropTypes.func.isRequired
-};
-
-export default connect(createMapStateToProps, mapDispatchToProps)(OAuthInputConnector);
+export default connector(OAuthInputConnector);

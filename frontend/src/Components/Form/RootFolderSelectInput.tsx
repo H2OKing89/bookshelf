@@ -1,24 +1,54 @@
-import PropTypes from 'prop-types';
-import { Component } from 'react';
+import React, { Component } from 'react';
 import EditRootFolderModalConnector from 'Settings/MediaManagement/RootFolder/EditRootFolderModalConnector';
 import EnhancedSelectInput from './EnhancedSelectInput';
+import type { FormControlProps } from './formControlProps';
+import type { ValueChange } from './formTypes';
 import RootFolderSelectInputOption from './RootFolderSelectInputOption';
 import RootFolderSelectInputSelectedValue from './RootFolderSelectInputSelectedValue';
 
-class RootFolderSelectInput extends Component {
+export interface RootFolderOption {
+  key: string;
+  value: string;
+  name?: string;
+  freeSpace?: number | null;
+  isMissing?: boolean;
+  isDisabled?: boolean;
+  isHidden?: boolean;
+}
+
+export interface RootFolderSelectInputProps extends FormControlProps {
+  name: string;
+  value?: string | null;
+  values: readonly RootFolderOption[];
+  isSaving: boolean;
+  saveError?: unknown;
+  includeNoChange?: boolean;
+  className?: string;
+  hasError?: boolean;
+  hasWarning?: boolean;
+  isDisabled?: boolean;
+  onChange: (change: ValueChange<string>) => void;
+}
+
+interface State {
+  isAddNewRootFolderModalOpen: boolean;
+  newRootFolderPath?: string;
+}
+
+class RootFolderSelectInput extends Component<RootFolderSelectInputProps, State> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: RootFolderSelectInputProps) {
+    super(props);
 
     this.state = {
       isAddNewRootFolderModalOpen: false
     };
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: RootFolderSelectInputProps) {
     const {
       name,
       isSaving,
@@ -42,7 +72,7 @@ class RootFolderSelectInput extends Component {
   //
   // Listeners
 
-  onChange = ({ name, value }) => {
+  onChange = ({ name, value }: ValueChange<string>) => {
     if (value === 'addNew') {
       this.setState({ isAddNewRootFolderModalOpen: true });
     } else {
@@ -50,7 +80,7 @@ class RootFolderSelectInput extends Component {
     }
   };
 
-  onNewRootFolderSelect = ({ value }) => {
+  onNewRootFolderSelect = ({ value }: ValueChange<string>) => {
     this.setState({ newRootFolderPath: value });
   };
 
@@ -62,15 +92,10 @@ class RootFolderSelectInput extends Component {
   // Render
 
   render() {
-    const {
-      includeNoChange,
-      ...otherProps
-    } = this.props;
-
     return (
       <div>
         <EnhancedSelectInput
-          {...otherProps}
+          {...this.props}
           selectedValueComponent={RootFolderSelectInputSelectedValue}
           optionComponent={RootFolderSelectInputOption}
           onChange={this.onChange}
@@ -85,19 +110,5 @@ class RootFolderSelectInput extends Component {
     );
   }
 }
-
-RootFolderSelectInput.propTypes = {
-  name: PropTypes.string.isRequired,
-  value: PropTypes.string,
-  values: PropTypes.arrayOf(PropTypes.object).isRequired,
-  isSaving: PropTypes.bool.isRequired,
-  saveError: PropTypes.object,
-  includeNoChange: PropTypes.bool.isRequired,
-  onChange: PropTypes.func.isRequired
-};
-
-RootFolderSelectInput.defaultProps = {
-  includeNoChange: false
-};
 
 export default RootFolderSelectInput;

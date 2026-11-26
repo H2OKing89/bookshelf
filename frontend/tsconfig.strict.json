@@ -195,6 +195,20 @@
     "./src/Settings/MediaManagement/MediaManagement*.tsx",
     "./src/Components/Form/ProviderFieldFormGroup.tsx",
     "./src/Components/Form/CaptchaInput.tsx",
-    "./src/Components/Form/OAuthInput.tsx"
+    "./src/Components/Form/OAuthInput.tsx",
+    "./src/Components/Form/providerControlTypes.ts",
+    "./src/Components/Form/CaptchaInputConnector.tsx",
+    "./src/Components/Form/OAuthInputConnector.tsx",
+    "./src/Components/Form/EnhancedSelectInputConnector.tsx",
+    "./src/Components/Form/DeviceInputConnector.tsx",
+    "./src/Components/Form/BookshelfInputConnector.tsx",
+    "./src/Components/Form/PathInput*.tsx",
+    "./src/Components/Form/profileSelectOptions.ts",
+    "./src/Components/Form/QualityProfileSelectInputConnector.tsx",
+    "./src/Components/Form/MetadataProfileSelectInputConnector.tsx",
+    "./src/Components/Form/RootFolderSelectInput.tsx",
+    "./src/Components/Form/RootFolderSelectInputConnector.tsx",
+    "./src/Components/Form/DeviceInput.tsx",
+    "./src/Components/Form/BookshelfInput.tsx"
   ]
 }

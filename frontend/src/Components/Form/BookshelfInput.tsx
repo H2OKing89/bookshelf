@@ -1,18 +1,34 @@
 import _ from 'lodash';
-import PropTypes from 'prop-types';
-import { Component } from 'react';
+import React, { Component } from 'react';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import TableRowCell from 'Components/Table/Cells/TableRowCell';
 import TableSelectCell from 'Components/Table/Cells/TableSelectCell';
 import Table from 'Components/Table/Table';
 import TableBody from 'Components/Table/TableBody';
 import TableRow from 'Components/Table/TableRow';
-import tagShape from 'Helpers/Props/Shapes/tagShape';
+import type { CheckboxSelectionChange,TableSelectionChange } from 'Components/Table/tableSelection';
 import getSelectedIds from 'Utilities/Table/getSelectedIds';
 import selectAll from 'Utilities/Table/selectAll';
+import type { SelectionFlags, SelectionState } from 'Utilities/Table/selectionTypes';
 import toggleSelected from 'Utilities/Table/toggleSelected';
-import formControlProps from './formControlProps';
+import formControlProps, { type FormControlProps } from './formControlProps';
+import type { ValueChange } from './formTypes';
+import type { ProviderItem, ProviderKey } from './providerControlTypes';
 import styles from './BookshelfInput.css';
+
+interface Props extends FormControlProps {
+  className?: string;
+  name: string;
+  value: readonly ProviderKey[];
+  items: readonly ProviderItem[];
+  hasError?: boolean;
+  hasWarning?: boolean;
+  isFetching: boolean;
+  isPopulated: boolean;
+  onChange: (change: ValueChange<ProviderKey[]>) => void;
+  helptext: string;
+  user: string;
+}
 
 const columns = [
   {
@@ -23,13 +39,14 @@ const columns = [
   }
 ];
 
-class BookshelfInput extends Component {
+class BookshelfInput extends Component<Props, SelectionState<ProviderKey> & SelectionFlags> {
+  static defaultProps = { className: styles.bookshelfInputWrapper, isPopulated: false };
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: Props) {
+    super(props);
 
     const initialSelection = _.mapValues(_.keyBy(props.value), () => true);
 
@@ -40,7 +57,7 @@ class BookshelfInput extends Component {
     };
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(_prevProps: Props, prevState: SelectionState<ProviderKey> & SelectionFlags) {
     const {
       name,
       onChange
@@ -67,11 +84,11 @@ class BookshelfInput extends Component {
   //
   // Listeners
 
-  onSelectAllChange = ({ value }) => {
+  onSelectAllChange = ({ value }: CheckboxSelectionChange) => {
     this.setState(selectAll(this.state.selectedState, value));
   };
 
-  onSelectedChange = ({ id, value, shiftKey = false }) => {
+  onSelectedChange = ({ id, value, shiftKey = false }: TableSelectionChange<ProviderKey>) => {
     this.setState((state, props) => {
       return toggleSelected(state, props.items, id, value, shiftKey);
     });
@@ -148,12 +165,11 @@ class BookshelfInput extends Component {
                         >
                           <TableSelectCell
                             id={item.id}
-                            isSelected={selectedState[item.id]}
+                            isSelected={selectedState[item.id] ?? false}
                             onSelectedChange={this.onSelectedChange}
                           />
 
                           <TableRowCell
-                            className={styles.relativePath}
                             title={item.name}
                           >
                             {item.name}
@@ -170,25 +186,5 @@ class BookshelfInput extends Component {
     );
   }
 }
-
-BookshelfInput.propTypes = {
-  className: PropTypes.string.isRequired,
-  name: PropTypes.string.isRequired,
-  value: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.number, PropTypes.string])).isRequired,
-  helptext: PropTypes.string.isRequired,
-  user: PropTypes.string.isRequired,
-  items: PropTypes.arrayOf(PropTypes.shape(tagShape)).isRequired,
-  hasError: PropTypes.bool,
-  hasWarning: PropTypes.bool,
-  isFetching: PropTypes.bool.isRequired,
-  isPopulated: PropTypes.bool.isRequired,
-  onChange: PropTypes.func.isRequired
-};
-
-BookshelfInput.defaultProps = {
-  className: styles.bookshelfInputWrapper,
-  inputClassName: styles.input,
-  isPopulated: false
-};
 
 export default BookshelfInput;

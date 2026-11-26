@@ -1,22 +1,48 @@
-import PropTypes from 'prop-types';
-import { Component } from 'react';
+import React, { Component } from 'react';
 import FileBrowserModal from 'Components/FileBrowser/FileBrowserModal';
 import Icon from 'Components/Icon';
 import { icons } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
 import AutoSuggestInput from './AutoSuggestInput';
+import type { FormControlProps } from './formControlProps';
 import FormInputButton from './FormInputButton';
+import type { ValueChange } from './formTypes';
 import styles from './PathInput.css';
 
-class PathInput extends Component {
+export interface PathSuggestion {
+  path: string;
+  type?: string;
+}
+
+export interface PathInputProps extends FormControlProps {
+  className?: string;
+  name: string;
+  value?: string | null;
+  paths: readonly PathSuggestion[];
+  includeFiles: boolean;
+  hasFileBrowser?: boolean;
+  onChange: (change: ValueChange<string | null | undefined>) => void;
+  onFetchPaths: (path: string) => void;
+  onClearPaths: () => void;
+}
+
+interface State {
+  value?: string | null;
+  isFileBrowserModalOpen: boolean;
+}
+
+class PathInput extends Component<PathInputProps, State> {
+  static defaultProps = {
+    className: styles.inputWrapper,
+    value: '',
+    hasFileBrowser: true
+  };
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
-
-    this._node = document.getElementById('portal-root');
+  constructor(props: PathInputProps) {
+    super(props);
 
     this.state = {
       value: props.value,
@@ -24,7 +50,7 @@ class PathInput extends Component {
     };
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: PathInputProps) {
     const { value } = this.props;
 
     if (prevProps.value !== value) {
@@ -35,12 +61,12 @@ class PathInput extends Component {
   //
   // Control
 
-  getSuggestionValue({ path }) {
+  getSuggestionValue({ path }: PathSuggestion) {
     return path;
   }
 
-  renderSuggestion({ path }, { query }) {
-    const lastSeparatorIndex = query.lastIndexOf('\\') || query.lastIndexOf('/');
+  renderSuggestion({ path }: PathSuggestion, { query }: { query: string }) {
+    const lastSeparatorIndex = Math.max(query.lastIndexOf('\\'), query.lastIndexOf('/'));
 
     if (lastSeparatorIndex === -1) {
       return (
@@ -51,9 +77,9 @@ class PathInput extends Component {
     return (
       <span>
         <span className={styles.pathMatch}>
-          {path.substr(0, lastSeparatorIndex)}
+          {path.slice(0, lastSeparatorIndex)}
         </span>
-        {path.substr(lastSeparatorIndex)}
+        {path.slice(lastSeparatorIndex)}
       </span>
     );
   }
@@ -61,11 +87,11 @@ class PathInput extends Component {
   //
   // Listeners
 
-  onInputChange = ({ value }) => {
+  onInputChange = ({ value }: ValueChange<string>) => {
     this.setState({ value });
   };
 
-  onInputKeyDown = (event) => {
+  onInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     const path = this.props.paths[0];
     if (event.key !== 'Tab' || event.shiftKey || !path || path.path === this.state.value) {
       return;
@@ -91,7 +117,7 @@ class PathInput extends Component {
     this.props.onClearPaths();
   };
 
-  onSuggestionsFetchRequested = ({ value }) => {
+  onSuggestionsFetchRequested = ({ value }: { value: string }) => {
     this.props.onFetchPaths(value);
   };
 
@@ -100,7 +126,7 @@ class PathInput extends Component {
     // because we don't want to reset the paths after a path is selected.
   };
 
-  onSuggestionSelected = (event, { suggestionValue }) => {
+  onSuggestionSelected = (_event: React.SyntheticEvent, { suggestionValue }: { suggestionValue: string }) => {
     this.props.onFetchPaths(suggestionValue);
   };
 
@@ -137,7 +163,7 @@ class PathInput extends Component {
           {...otherProps}
           className={hasFileBrowser ? styles.hasFileBrowser : undefined}
           name={name}
-          value={value}
+          value={value ?? ''}
           suggestions={paths}
           getSuggestionValue={this.getSuggestionValue}
           renderSuggestion={this.renderSuggestion}
@@ -163,7 +189,7 @@ class PathInput extends Component {
               <FileBrowserModal
                 isOpen={isFileBrowserModalOpen}
                 name={name}
-                value={value}
+                value={value ?? ''}
                 includeFiles={includeFiles}
                 onChange={onChange}
                 onModalClose={this.onFileBrowserModalClose}
@@ -174,23 +200,5 @@ class PathInput extends Component {
     );
   }
 }
-
-PathInput.propTypes = {
-  className: PropTypes.string.isRequired,
-  name: PropTypes.string.isRequired,
-  value: PropTypes.string,
-  paths: PropTypes.array.isRequired,
-  includeFiles: PropTypes.bool.isRequired,
-  hasFileBrowser: PropTypes.bool,
-  onChange: PropTypes.func.isRequired,
-  onFetchPaths: PropTypes.func.isRequired,
-  onClearPaths: PropTypes.func.isRequired
-};
-
-PathInput.defaultProps = {
-  className: styles.inputWrapper,
-  value: '',
-  hasFileBrowser: true
-};
 
 export default PathInput;

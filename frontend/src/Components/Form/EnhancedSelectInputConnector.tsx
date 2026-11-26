@@ -1,10 +1,16 @@
 import _ from 'lodash';
-import PropTypes from 'prop-types';
-import { Component } from 'react';
-import { connect } from 'react-redux';
+import React, { Component } from 'react';
+import { connect, type ConnectedProps } from 'react-redux';
 import { createSelector } from 'reselect';
 import { clearOptions, defaultState, fetchOptions } from 'Store/Actions/providerOptionActions';
+import { asStateRecord, type LegacyRootState } from 'Store/StateTypes';
 import EnhancedSelectInput from './EnhancedSelectInput';
+import { isProviderKey, type ProviderControlProps, providerFields, type ProviderKey } from './providerControlTypes';
+
+interface OwnProps extends ProviderControlProps {
+  value?: ProviderKey | ProviderKey[] | null;
+  selectOptionsProviderAction?: string;
+}
 
 const importantFieldNames = [
   'baseUrl',
@@ -12,59 +18,62 @@ const importantFieldNames = [
   'apiKey'
 ];
 
-function getProviderDataKey(providerData) {
-  if (!providerData || !providerData.fields) {
-    return null;
-  }
-
-  const fields = providerData.fields
-    .filter((f) => importantFieldNames.includes(f.name))
+function getProviderDataKey(providerData: unknown) {
+  const fields = providerFields(providerData)
+    .filter((f) => typeof f.name === 'string' && importantFieldNames.includes(f.name))
     .map((f) => f.value);
 
   return fields;
 }
 
-function getSelectOptions(items) {
-  if (!items) {
+export function getSelectOptions(items: unknown) {
+  if (!Array.isArray(items)) {
     return [];
   }
 
-  return items.map((option) => {
-    return {
+  return items.flatMap((item: unknown) => {
+    const option = asStateRecord(item);
+    if (!isProviderKey(option.value) || typeof option.name !== 'string') {
+      return [];
+    }
+
+    return [{
       key: option.value,
       value: option.name,
-      hint: option.hint,
-      parentKey: option.parentValue
-    };
+      hint: typeof option.hint === 'string' ? option.hint : undefined,
+      parentKey: isProviderKey(option.parentValue) ? option.parentValue : undefined
+    }];
   });
 }
 
 function createMapStateToProps() {
   return createSelector(
-    (state, { selectOptionsProviderAction }) => state.providerOptions[selectOptionsProviderAction] || defaultState,
+    (state: LegacyRootState, { selectOptionsProviderAction }: OwnProps) =>
+      asStateRecord(state.providerOptions[selectOptionsProviderAction ?? ''] ?? defaultState),
     (options) => {
-      if (options) {
-        return {
-          isFetching: options.isFetching,
-          values: getSelectOptions(options.items)
-        };
-      }
+      return {
+        isFetching: options.isFetching === true,
+        values: getSelectOptions(options.items)
+      };
     }
   );
 }
 
 const mapDispatchToProps = {
   dispatchFetchOptions: fetchOptions,
-  dispatchClearOptions: clearOptions
+  dispatchClearOptions: clearOptions as unknown as (payload: { section: string }) => { type: string; payload?: unknown }
 };
 
-class EnhancedSelectInputConnector extends Component {
+const connector = connect(createMapStateToProps, mapDispatchToProps);
+type Props = OwnProps & ConnectedProps<typeof connector>;
+
+class EnhancedSelectInputConnector extends Component<Props, { refetchRequired: boolean }> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: Props) {
+    super(props);
 
     this.state = {
       refetchRequired: false
@@ -75,7 +84,7 @@ class EnhancedSelectInputConnector extends Component {
     this._populate();
   };
 
-  componentDidUpdate = (prevProps) => {
+  componentDidUpdate = (prevProps: Props) => {
     const prevKey = getProviderDataKey(prevProps.providerData);
     const nextKey = getProviderDataKey(this.props.providerData);
 
@@ -143,17 +152,4 @@ class EnhancedSelectInputConnector extends Component {
   }
 }
 
-EnhancedSelectInputConnector.propTypes = {
-  provider: PropTypes.string.isRequired,
-  providerData: PropTypes.object.isRequired,
-  name: PropTypes.string.isRequired,
-  value: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.number, PropTypes.string])).isRequired,
-  values: PropTypes.arrayOf(PropTypes.object).isRequired,
-  selectOptionsProviderAction: PropTypes.string,
-  onChange: PropTypes.func.isRequired,
-  isFetching: PropTypes.bool.isRequired,
-  dispatchFetchOptions: PropTypes.func.isRequired,
-  dispatchClearOptions: PropTypes.func.isRequired
-};
-
-export default connect(createMapStateToProps, mapDispatchToProps)(EnhancedSelectInputConnector);
+export default connector(EnhancedSelectInputConnector);
