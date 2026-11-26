@@ -136,7 +136,7 @@ export const actionHandlers = handleThunks({
     const bookSection = _.last(bookEntity.split('.'));
     const deletePromise = deleteBookFileHelper(getState, payload, dispatch);
 
-    deletePromise.done(() => {
+    deletePromise?.done(() => {
       const books = getState().books.items;
       const booksWithRemovedFiles = _.filter(books, { bookFileId });
 
