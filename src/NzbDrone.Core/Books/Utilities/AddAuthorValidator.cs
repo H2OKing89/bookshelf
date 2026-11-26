@@ -23,7 +23,7 @@ namespace NzbDrone.Core.Books
                                 .IsValidPath()
                                 .SetValidator(rootFolderValidator)
                                 .SetValidator(recycleBinValidator)
-                                .SetValidator(authorPathValidator)
+                                .SetValidator(authorPathValidator.For<Author>(resource => resource.Id))
                                 .SetValidator(authorAncestorValidator);
 
             RuleFor(c => c.QualityProfileId).SetValidator(qualityProfileExistsValidator);

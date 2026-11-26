@@ -1,11 +1,13 @@
+using System;
 using System.Linq;
+using FluentValidation;
 using FluentValidation.Validators;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Books;
 
 namespace NzbDrone.Core.Validation.Paths
 {
-    public class AuthorPathValidator : PropertyValidator
+    public class AuthorPathValidator
     {
         private readonly IAuthorService _authorService;
 
@@ -14,21 +16,38 @@ namespace NzbDrone.Core.Validation.Paths
             _authorService = authorService;
         }
 
-        protected override string GetDefaultMessageTemplate() => "Path '{path}' is already configured for another author";
-
-        protected override bool IsValid(PropertyValidatorContext context)
+        public IPropertyValidator<T, string> For<T>(Func<T, int> getId)
         {
-            if (context.PropertyValue == null)
+            return new Validator<T>(_authorService, getId);
+        }
+
+        private sealed class Validator<T> : PropertyValidator<T, string>
+        {
+            private readonly IAuthorService _authorService;
+            private readonly Func<T, int> _getId;
+
+            public Validator(IAuthorService authorService, Func<T, int> getId)
             {
-                return true;
+                _authorService = authorService;
+                _getId = getId;
             }
 
-            context.MessageFormatter.AppendArgument("path", context.PropertyValue.ToString());
+            public override string Name => nameof(AuthorPathValidator);
 
-            dynamic instance = context.ParentContext.InstanceToValidate;
-            var instanceId = (int)instance.Id;
+            protected override string GetDefaultMessageTemplate(string errorCode) => "Path '{path}' is already configured for another author";
 
-            return !_authorService.AllAuthorPaths().Any(s => s.Value.PathEquals(context.PropertyValue.ToString()) && s.Key != instanceId);
+            public override bool IsValid(ValidationContext<T> context, string value)
+            {
+                if (value == null)
+                {
+                    return true;
+                }
+
+                context.MessageFormatter.AppendArgument("path", value);
+                var instanceId = _getId(context.InstanceToValidate);
+
+                return !_authorService.AllAuthorPaths().Any(s => s.Value.PathEquals(value) && s.Key != instanceId);
+            }
         }
     }
 }

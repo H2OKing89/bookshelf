@@ -6,6 +6,7 @@ using NzbDrone.Core.Books;
 using NzbDrone.Core.ImportLists.Exclusions;
 using NzbDrone.Core.MetadataSource.Audiobook;
 using NzbDrone.Core.MetadataSource.BookInfo;
+using NzbDrone.Core.Validation;
 using NzbDrone.Http.REST.Attributes;
 using Readarr.Http;
 using Readarr.Http.REST;

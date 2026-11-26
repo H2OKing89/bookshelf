@@ -1,12 +1,12 @@
 ﻿using System.IO;
 using System.Text.RegularExpressions;
-using FluentValidation.Validators;
+using FluentValidation.Internal;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.EnvironmentInfo;
 
 namespace NzbDrone.Core.Validation.Paths
 {
-    public class MappedNetworkDriveValidator : PropertyValidator
+    public class MappedNetworkDriveValidator : ReusablePropertyValidator<string>
     {
         private readonly IRuntimeInfo _runtimeInfo;
         private readonly IDiskProvider _diskProvider;
@@ -21,9 +21,9 @@ namespace NzbDrone.Core.Validation.Paths
 
         protected override string GetDefaultMessageTemplate() => "Mapped Network Drive and Windows Service";
 
-        protected override bool IsValid(PropertyValidatorContext context)
+        protected override bool IsValid(string value, MessageFormatter formatter)
         {
-            if (context.PropertyValue == null)
+            if (value == null)
             {
                 return false;
             }
@@ -38,7 +38,7 @@ namespace NzbDrone.Core.Validation.Paths
                 return true;
             }
 
-            var path = context.PropertyValue.ToString();
+            var path = value;
 
             if (!DriveRegex.IsMatch(path))
             {

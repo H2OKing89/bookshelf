@@ -1,20 +1,14 @@
-﻿using FluentValidation.Validators;
+﻿using FluentValidation.Internal;
+using NzbDrone.Core.Validation;
 
 namespace Readarr.Http.Validation
 {
-    public class RssSyncIntervalValidator : PropertyValidator
+    public class RssSyncIntervalValidator : ReusablePropertyValidator<int>
     {
         protected override string GetDefaultMessageTemplate() => "Must be between 10 and 120 or 0 to disable";
 
-        protected override bool IsValid(PropertyValidatorContext context)
+        protected override bool IsValid(int value, MessageFormatter formatter)
         {
-            if (context.PropertyValue == null)
-            {
-                return true;
-            }
-
-            var value = (int)context.PropertyValue;
-
             if (value == 0)
             {
                 return true;

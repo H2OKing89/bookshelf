@@ -26,7 +26,7 @@ namespace Readarr.Api.V1.Config
                                                       .SetValidator(folderWritableValidator)
                                                       .SetValidator(rootFolderValidator)
                                                       .SetValidator(pathExistsValidator)
-                                                      .SetValidator(authorPathValidator)
+                                                      .SetValidator(authorPathValidator.For<MediaManagementConfigResource>(resource => resource.Id))
                                                       .SetValidator(rootFolderAncestorValidator)
                                                       .SetValidator(startupFolderValidator)
                                                       .SetValidator(systemFolderValidator)

@@ -131,7 +131,7 @@
           "FluentMigrator.Runner.Core": "[8.0.1, )",
           "FluentMigrator.Runner.Postgres": "[8.0.1, )",
           "FluentMigrator.Runner.SQLite": "[8.0.1, )",
-          "FluentValidation": "[9.5.4, )",
+          "FluentValidation": "[12.2.0, )",
           "LazyCache": "[2.4.0, )",
           "Magick.NET-Q8-AnyCPU": "[15.1.0, )",
           "MailKit": "[4.18.2, )",
@@ -204,9 +204,9 @@
       },
       "FluentValidation": {
         "type": "CentralTransitive",
-        "requested": "[9.5.4, )",
-        "resolved": "9.5.4",
-        "contentHash": "dnAz4PUtSSa+8EGWDUmEZujOa9rvzxln4BgokZZfO2Gbcj0612TMISU4vkvL60qIy5DI/sDF9Oy1iMXr7sJW3A=="
+        "requested": "[12.2.0, )",
+        "resolved": "12.2.0",
+        "contentHash": "DR3lFbdnKucaaj1/8zMNOACMz/64igzox1yVZSFVsLxYB5mxAB+wFP1WZ8fjwrZnbU1KA1DoMzHKYKxUfuZ4wQ=="
       },
       "IPAddressRange": {
         "type": "CentralTransitive",

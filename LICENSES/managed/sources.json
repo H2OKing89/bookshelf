@@ -284,5 +284,18 @@
       "commit": "0ba1965e28e950efcf657b61f01bd96707ce63fd"
     },
     "packageSha512Base64": "CEkFDMa391Rhahe5nALwVJINLlZwXkvr45h2k9sfwPJRfE4J1UTYKfFW4k5ScKaiY56Dsm9z7mrIgs1eNtjZ7Q=="
+  },
+  "FluentValidation/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/FluentValidation/FluentValidation/299ef377bde844af7d28b7aa21786a6853f930e3/License.txt",
+    "package": "FluentValidation",
+    "version": "12.2.0",
+    "bytes": 10349,
+    "sha256": "6d1d968fb225eca367cb7f0b8831ab012a35d92b547e945e17ef8e7b05c3e5cc",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/JeremySkinner/fluentvalidation",
+      "commit": "299ef377bde844af7d28b7aa21786a6853f930e3"
+    },
+    "packageSha512Base64": "8BuYN/gyG/XY7VSXKEoZx8dIirkcPIRa6fr+NFEWqr+reAzWjIDzxw5RvizLkRM3nWJoFY/ouLf91fXebHtxJQ=="
   }
 }

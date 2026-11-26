@@ -85,7 +85,7 @@ namespace Readarr.Api.V1.Author
                            .IsValidPath()
                            .SetValidator(rootFolderValidator)
                            .SetValidator(mappedNetworkDriveValidator)
-                           .SetValidator(authorPathValidator)
+                           .SetValidator(authorPathValidator.For<AuthorResource>(resource => resource.Id))
                            .SetValidator(authorAncestorValidator)
                            .SetValidator(recycleBinValidator)
                            .SetValidator(systemFolderValidator)

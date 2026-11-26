@@ -1,9 +1,9 @@
-using FluentValidation.Validators;
+using FluentValidation.Internal;
 using NzbDrone.Common.Disk;
 
 namespace NzbDrone.Core.Validation.Paths
 {
-    public class FileExistsValidator : PropertyValidator
+    public class FileExistsValidator : ReusablePropertyValidator<string>
     {
         private readonly IDiskProvider _diskProvider;
 
@@ -14,16 +14,16 @@ namespace NzbDrone.Core.Validation.Paths
 
         protected override string GetDefaultMessageTemplate() => "File '{file}' does not exist";
 
-        protected override bool IsValid(PropertyValidatorContext context)
+        protected override bool IsValid(string value, MessageFormatter formatter)
         {
-            if (context.PropertyValue == null)
+            if (value == null)
             {
                 return false;
             }
 
-            context.MessageFormatter.AppendArgument("file", context.PropertyValue.ToString());
+            formatter.AppendArgument("file", value);
 
-            return _diskProvider.FileExists(context.PropertyValue.ToString());
+            return _diskProvider.FileExists(value);
         }
     }
 }

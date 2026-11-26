@@ -2,8 +2,9 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using FluentValidation;
-using FluentValidation.Validators;
+using FluentValidation.Internal;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Core.Validation;
 
 namespace NzbDrone.Core.Organizer
 {
@@ -14,7 +15,7 @@ namespace NzbDrone.Core.Organizer
 
         public static IRuleBuilderOptions<T, string> ValidBookFormat<T>(this IRuleBuilder<T, string> ruleBuilder)
         {
-            ruleBuilder.SetValidator(new NotEmptyValidator(null));
+            ruleBuilder.NotEmpty();
             ruleBuilder.SetValidator(new IllegalCharactersValidator());
 
             return ruleBuilder.SetValidator(new ValidStandardTrackFormatValidator());
@@ -22,20 +23,20 @@ namespace NzbDrone.Core.Organizer
 
         public static IRuleBuilderOptions<T, string> ValidAuthorFolderFormat<T>(this IRuleBuilder<T, string> ruleBuilder)
         {
-            ruleBuilder.SetValidator(new NotEmptyValidator(null));
+            ruleBuilder.NotEmpty();
             ruleBuilder.SetValidator(new IllegalCharactersValidator());
 
-            return ruleBuilder.SetValidator(new RegularExpressionValidator(FileNameBuilder.AuthorNameRegex)).WithMessage("Must contain Author name");
+            return ruleBuilder.Matches(FileNameBuilder.AuthorNameRegex).WithMessage("Must contain Author name");
         }
     }
 
-    public class ValidStandardTrackFormatValidator : PropertyValidator
+    public class ValidStandardTrackFormatValidator : ReusablePropertyValidator<string>
     {
         protected override string GetDefaultMessageTemplate() => "Must contain Book Title AND PartNumber, OR Original Title";
 
-        protected override bool IsValid(PropertyValidatorContext context)
+        protected override bool IsValid(string value, MessageFormatter formatter)
         {
-            if (context.PropertyValue is not string value)
+            if (value == null)
             {
                 return false;
             }
@@ -45,16 +46,14 @@ namespace NzbDrone.Core.Organizer
         }
     }
 
-    public class IllegalCharactersValidator : PropertyValidator
+    public class IllegalCharactersValidator : ReusablePropertyValidator<string>
     {
         private readonly char[] _invalidPathChars = Path.GetInvalidPathChars();
 
         protected override string GetDefaultMessageTemplate() => "Contains illegal characters: {InvalidCharacters}";
 
-        protected override bool IsValid(PropertyValidatorContext context)
+        protected override bool IsValid(string value, MessageFormatter formatter)
         {
-            var value = context.PropertyValue as string;
-
             if (value.IsNullOrWhiteSpace())
             {
                 return true;
@@ -63,7 +62,7 @@ namespace NzbDrone.Core.Organizer
             var invalidCharacters = _invalidPathChars.Where(i => value!.IndexOf(i) >= 0).ToList();
             if (invalidCharacters.Any())
             {
-                context.MessageFormatter.AppendArgument("InvalidCharacters", string.Join("", invalidCharacters));
+                formatter.AppendArgument("InvalidCharacters", string.Join("", invalidCharacters));
                 return false;
             }
 
