@@ -279,6 +279,22 @@
     "./src/BookFile/FileDetailsConnector.tsx",
     "./src/BookFile/MediaInfoConnector.tsx",
     "./src/BookFile/Editor/BookFileEditorTable*.tsx",
-    "./src/BookFile/Editor/bookFileEditorState.ts"
+    "./src/BookFile/Editor/bookFileEditorState.ts",
+    "./src/Store/Actions/actionTypes.ts",
+    "./src/Store/Actions/appActions.ts",
+    "./src/Store/Actions/bookshelfActions.ts",
+    "./src/Store/Actions/calendarActions.ts",
+    "./src/Store/Actions/captchaActions.ts",
+    "./src/Store/Actions/commandActions.ts",
+    "./src/Store/Actions/customFilterActions.ts",
+    "./src/Store/Actions/index.ts",
+    "./src/Store/Actions/oAuthActions.ts",
+    "./src/Store/Actions/organizePreviewActions.ts",
+    "./src/Store/Actions/pathActions.ts",
+    "./src/Store/Actions/providerOptionActions.ts",
+    "./src/Store/Actions/retagPreviewActions.ts",
+    "./src/Store/Actions/systemActions.ts",
+    "./src/Store/Actions/tagActions.ts",
+    "./src/Store/Actions/Creators/operationalRequests.ts"
   ]
 }

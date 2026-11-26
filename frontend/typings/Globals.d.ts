@@ -1,6 +1,7 @@
 declare module '*.module.css';
 
 interface Window {
+  onCompleteOauth?: (query: string, onComplete: () => void) => void;
   Readarr: {
     apiKey: string;
     apiRoot: string;

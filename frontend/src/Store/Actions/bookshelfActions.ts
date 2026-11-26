@@ -1,10 +1,12 @@
 import { createAction } from 'redux-actions';
 import { filterBuilderTypes, filterBuilderValueTypes, sortDirections } from 'Helpers/Props';
 import { createThunk, handleThunks } from 'Store/thunks';
-import createAjaxRequest from 'Utilities/createAjaxRequest';
+import { ApiError } from 'Utilities/Fetch/fetchJson';
 import { filterPredicates, filters } from './authorActions';
 import { set } from './baseActions';
 import createHandleActions from './Creators/createHandleActions';
+import { requestLegacy } from './Creators/legacyRequest';
+import { positiveInteger } from './Creators/pagedCollection';
 import createSetClientSideCollectionFilterReducer from './Creators/Reducers/createSetClientSideCollectionFilterReducer';
 import createSetClientSideCollectionSortReducer from './Creators/Reducers/createSetClientSideCollectionSortReducer';
 
@@ -83,8 +85,8 @@ export const SAVE_BOOKSHELF = 'bookshelf/saveBookshelf';
 //
 // Action Creators
 
-export const setBookshelfSort = createAction(SET_BOOKSHELF_SORT);
-export const setBookshelfFilter = createAction(SET_BOOKSHELF_FILTER);
+export const setBookshelfSort = createAction<{ sortKey?: string; sortDirection?: 'ascending' | 'descending' }>(SET_BOOKSHELF_SORT);
+export const setBookshelfFilter = createAction<{ selectedFilterKey: string }>(SET_BOOKSHELF_FILTER);
 export const saveBookshelf = createThunk(SAVE_BOOKSHELF);
 
 //
@@ -92,7 +94,7 @@ export const saveBookshelf = createThunk(SAVE_BOOKSHELF);
 
 export const actionHandlers = handleThunks({
 
-  [SAVE_BOOKSHELF]: function(getState, payload, dispatch) {
+  [SAVE_BOOKSHELF]: function(_getState, payload, dispatch) {
     const {
       authorIds,
       monitored,
@@ -100,24 +102,23 @@ export const actionHandlers = handleThunks({
       monitorNewItems
     } = payload;
 
-    const authors = [];
+    if (!Array.isArray(authorIds) || !authorIds.every(positiveInteger) ||
+        (Object.hasOwn(payload, 'monitored') && typeof monitored !== 'boolean')) {
+      dispatch(set({ section, isSaving: false, saveError: new ApiError({ kind: 'invalid-request' }) }));
+      return;
+    }
 
-    authorIds.forEach((id) => {
-      const authorToUpdate = { id };
-
-      if (payload.hasOwnProperty('monitored')) {
-        authorToUpdate.monitored = monitored;
-      }
-
-      authors.push(authorToUpdate);
-    });
+    const authors = [...new Set(authorIds)].map((id: number) => ({
+      id,
+      ...(typeof monitored === 'boolean' && { monitored })
+    }));
 
     dispatch(set({
       section,
       isSaving: true
     }));
 
-    const promise = createAjaxRequest({
+    const promise = requestLegacy({
       url: '/bookshelf',
       method: 'POST',
       data: JSON.stringify({
@@ -128,7 +129,7 @@ export const actionHandlers = handleThunks({
       dataType: 'json'
     }).request;
 
-    promise.done((data) => {
+    promise.done(() => {
       dispatch(set({
         section,
         isSaving: false,

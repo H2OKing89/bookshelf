@@ -5,23 +5,31 @@ import { batchActions } from 'redux-batched-actions';
 import * as calendarViews from 'Calendar/calendarViews';
 import * as commandNames from 'Commands/commandNames';
 import { filterTypes } from 'Helpers/Props';
+import { asStateRecord, isStateRecord, type LegacyRootState, type StateRecord } from 'Store/StateTypes';
 import { createThunk, handleThunks } from 'Store/thunks';
-import createAjaxRequest from 'Utilities/createAjaxRequest';
+import { ApiError } from 'Utilities/Fetch/fetchJson';
 import { set, update } from './baseActions';
 import { executeCommandHelper } from './commandActions';
 import createHandleActions from './Creators/createHandleActions';
+import { requestLegacy } from './Creators/legacyRequest';
+import { positiveInteger } from './Creators/pagedCollection';
 import createClearReducer from './Creators/Reducers/createClearReducer';
+import { createSectionRequests } from './Creators/sectionRequests';
 
 //
 // Variables
 
 export const section = 'calendar';
 
-const viewRanges = {
+type CalendarView = typeof calendarViews.DAY | typeof calendarViews.WEEK | typeof calendarViews.MONTH |
+  typeof calendarViews.FORECAST | typeof calendarViews.AGENDA;
+const requests = createSectionRequests();
+const viewRanges: Record<CalendarView, moment.unitOfTime.DurationConstructor> = {
   [calendarViews.DAY]: 'day',
   [calendarViews.WEEK]: 'week',
   [calendarViews.MONTH]: 'month',
-  [calendarViews.FORECAST]: 'day'
+  [calendarViews.FORECAST]: 'day',
+  [calendarViews.AGENDA]: 'month'
 };
 
 //
@@ -96,7 +104,7 @@ export const GOTO_CALENDAR_PREVIOUS_RANGE = 'calendar/gotoCalendarPreviousRange'
 //
 // Helpers
 
-function getDays(start, end) {
+function getDays(start: moment.Moment, end: moment.Moment) {
   const startTime = moment(start);
   const endTime = moment(end);
   const difference = endTime.diff(startTime, 'days');
@@ -107,7 +115,7 @@ function getDays(start, end) {
   });
 }
 
-function getDates(time, view, firstDayOfWeek, dayCount) {
+function getDates(time: moment.Moment, view: CalendarView, firstDayOfWeek: number, dayCount: number) {
   const weekName = firstDayOfWeek === 0 ? 'week' : 'isoWeek';
 
   let start = time.clone().startOf('day');
@@ -141,7 +149,7 @@ function getDates(time, view, firstDayOfWeek, dayCount) {
   };
 }
 
-function getPopulatableRange(startDate, endDate, view) {
+function getPopulatableRange(startDate: string, endDate: string, view: CalendarView) {
   switch (view) {
     case calendarViews.DAY:
       return {
@@ -162,14 +170,18 @@ function getPopulatableRange(startDate, endDate, view) {
   }
 }
 
-function isRangePopulated(start, end, state) {
+export function isCalendarView(value: unknown): value is CalendarView {
+  return typeof value === 'string' && Object.hasOwn(viewRanges, value);
+}
+
+function isRangePopulated(start: string, end: string, state: StateRecord) {
   const {
     start: currentStart,
     end: currentEnd,
     view: currentView
   } = state;
 
-  if (!currentStart || !currentEnd) {
+  if (typeof currentStart !== 'string' || typeof currentEnd !== 'string' || !isCalendarView(currentView)) {
     return false;
   }
 
@@ -179,13 +191,36 @@ function isRangePopulated(start, end, state) {
   } = getPopulatableRange(currentStart, currentEnd, currentView);
 
   if (
-    moment(start).isAfter(currentPopulatedStart) &&
-    moment(start).isBefore(currentPopulatedEnd)
+    moment(start).isSameOrAfter(currentPopulatedStart) &&
+    moment(end).isSameOrBefore(currentPopulatedEnd)
   ) {
     return true;
   }
 
   return false;
+}
+
+function calendarView(value: unknown): CalendarView {
+  return isCalendarView(value) ? value : 'week';
+}
+
+function calendarTime(value: unknown) {
+  let time = moment();
+  if (moment.isMoment(value)) {
+    time = value.clone();
+  } else if (typeof value === 'string' || value instanceof Date || typeof value === 'number') {
+    time = moment(value);
+  }
+  return time.isValid() ? time : moment();
+}
+
+function calendarDayCount(state: StateRecord) {
+  return positiveInteger(state.dayCount) ?? defaultState.dayCount;
+}
+
+function firstDay(state: LegacyRootState) {
+  const ui = asStateRecord(asStateRecord(state.settings.ui).item);
+  return ui.firstDayOfWeek === 0 ? 0 : 1;
 }
 
 //
@@ -198,8 +233,10 @@ export const setCalendarView = createThunk(SET_CALENDAR_VIEW);
 export const gotoCalendarToday = createThunk(GOTO_CALENDAR_TODAY);
 export const gotoCalendarPreviousRange = createThunk(GOTO_CALENDAR_PREVIOUS_RANGE);
 export const gotoCalendarNextRange = createThunk(GOTO_CALENDAR_NEXT_RANGE);
-export const clearCalendar = createAction(CLEAR_CALENDAR);
-export const setCalendarOption = createAction(SET_CALENDAR_OPTION);
+export const clearCalendar = createThunk(CLEAR_CALENDAR);
+const RESET_CALENDAR = 'calendar/resetCalendar';
+const resetCalendar = createAction<void>(RESET_CALENDAR);
+export const setCalendarOption = createAction<StateRecord>(SET_CALENDAR_OPTION);
 export const searchMissing = createThunk(SEARCH_MISSING);
 
 //
@@ -210,155 +247,101 @@ export const actionHandlers = handleThunks({
     const state = getState();
     const calendar = state.calendar;
     const unmonitored = calendar.selectedFilterKey === 'all';
-
-    const {
-      time = calendar.time,
-      view = calendar.view
-    } = payload;
-
-    const dayCount = state.calendar.dayCount;
-    const dates = getDates(moment(time), view, state.settings.ui.item.firstDayOfWeek, dayCount);
+    const view = calendarView(payload.view ?? calendar.view);
+    const time = calendarTime(payload.time ?? calendar.time);
+    const dates = getDates(time, view, firstDay(state), calendarDayCount(calendar));
     const { start, end } = getPopulatableRange(dates.start, dates.end, view);
-    const isPrePopulated = isRangePopulated(start, end, state.calendar);
+    const isPrePopulated = isRangePopulated(start, end, calendar);
 
-    const basesAttrs = {
-      section,
-      isFetching: true
-    };
-
-    const attrs = isPrePopulated ?
-      {
-        view,
-        ...basesAttrs,
-        ...dates
-      } :
-      basesAttrs;
-
-    dispatch(set(attrs));
-
-    const promise = createAjaxRequest({
+    const attempt = requests.begin(getState, section);
+    dispatch(set({ section, isFetching: true, ...(isPrePopulated && { view, ...dates }) }));
+    const { request, abortRequest } = requestLegacy({
       url: '/calendar',
-      data: {
-        unmonitored,
-        start: moment(start).format('YYYY-MM-DD'),
-        end: moment(end).format('YYYY-MM-DD')
-      }
-    }).request;
+      data: { unmonitored, start: moment(start).format('YYYY-MM-DD'), end: moment(end).format('YYYY-MM-DD') }
+    });
+    attempt.attachAbort(abortRequest);
 
-    promise.done((data) => {
+    request.done((data) => {
+      if (!attempt.finish()) {
+        return;
+      }
+      if (!Array.isArray(data) || !data.every((item: unknown) => isStateRecord(item) && positiveInteger(item.id))) {
+        dispatch(set({ section, isFetching: false, isPopulated: false, error: new ApiError({ kind: 'invalid-response' }) }));
+        return;
+      }
       dispatch(batchActions([
         update({ section, data }),
-
-        set({
-          section,
-          view,
-          ...dates,
-          isFetching: false,
-          isPopulated: true,
-          error: null
-        })
+        set({ section, view, ...dates, isFetching: false, isPopulated: true, error: null })
       ]));
     });
 
-    promise.fail((xhr) => {
-      dispatch(set({
-        section,
-        isFetching: false,
-        isPopulated: false,
-        error: xhr
-      }));
+    request.fail((xhr) => {
+      if (attempt.finish()) {
+        dispatch(set({ section, isFetching: false, isPopulated: false, error: isStateRecord(xhr) && xhr.aborted === true ? null : xhr }));
+      }
     });
   },
 
   [SET_CALENDAR_DAYS_COUNT]: function(getState, payload, dispatch) {
-    if (payload.dayCount === getState().calendar.dayCount) {
+    if (!positiveInteger(payload.dayCount) || payload.dayCount === getState().calendar.dayCount) {
       return;
     }
-
-    dispatch(set({
-      section,
-      dayCount: payload.dayCount
-    }));
-
-    const state = getState();
-    const { time, view } = state.calendar;
-
+    dispatch(set({ section, dayCount: payload.dayCount }));
+    const { time, view } = getState().calendar;
     dispatch(fetchCalendar({ time, view }));
   },
 
   [SET_CALENDAR_FILTER]: function(getState, payload, dispatch) {
-    dispatch(set({
-      section,
-      selectedFilterKey: payload.selectedFilterKey
-    }));
-
-    const state = getState();
-    const { time, view } = state.calendar;
-
+    if (payload.selectedFilterKey !== 'all' && payload.selectedFilterKey !== 'monitored') {
+      return;
+    }
+    dispatch(set({ section, selectedFilterKey: payload.selectedFilterKey }));
+    const { time, view } = getState().calendar;
     dispatch(fetchCalendar({ time, view }));
   },
 
   [SET_CALENDAR_VIEW]: function(getState, payload, dispatch) {
-    const state = getState();
+    if (!isCalendarView(payload.view)) {
+      return;
+    }
     const view = payload.view;
-    const time = view === calendarViews.FORECAST || calendarViews.AGENDA ?
-      moment() :
-      state.calendar.time;
-
+    const time = view === calendarViews.FORECAST || view === calendarViews.AGENDA ? moment() : getState().calendar.time;
     dispatch(fetchCalendar({ time, view }));
   },
 
-  [GOTO_CALENDAR_TODAY]: function(getState, payload, dispatch) {
-    const state = getState();
-    const view = state.calendar.view;
-    const time = moment();
-
-    dispatch(fetchCalendar({ time, view }));
+  [GOTO_CALENDAR_TODAY]: function(getState, _payload, dispatch) {
+    dispatch(fetchCalendar({ time: moment(), view: getState().calendar.view }));
   },
 
-  [GOTO_CALENDAR_PREVIOUS_RANGE]: function(getState, payload, dispatch) {
-    const state = getState();
-
-    const {
-      view,
-      dayCount
-    } = state.calendar;
-
-    const amount = view === calendarViews.FORECAST ? dayCount : 1;
-    const time = moment(state.calendar.time).subtract(amount, viewRanges[view]);
-
-    dispatch(fetchCalendar({ time, view }));
+  [GOTO_CALENDAR_PREVIOUS_RANGE]: function(getState, _payload, dispatch) {
+    const calendar = getState().calendar;
+    const view = calendarView(calendar.view);
+    const amount = view === calendarViews.FORECAST ? calendarDayCount(calendar) : 1;
+    dispatch(fetchCalendar({ time: calendarTime(calendar.time).subtract(amount, viewRanges[view]), view }));
   },
 
-  [GOTO_CALENDAR_NEXT_RANGE]: function(getState, payload, dispatch) {
-    const state = getState();
-
-    const {
-      view,
-      dayCount
-    } = state.calendar;
-
-    const amount = view === calendarViews.FORECAST ? dayCount : 1;
-    const time = moment(state.calendar.time).add(amount, viewRanges[view]);
-
-    dispatch(fetchCalendar({ time, view }));
+  [GOTO_CALENDAR_NEXT_RANGE]: function(getState, _payload, dispatch) {
+    const calendar = getState().calendar;
+    const view = calendarView(calendar.view);
+    const amount = view === calendarViews.FORECAST ? calendarDayCount(calendar) : 1;
+    dispatch(fetchCalendar({ time: calendarTime(calendar.time).add(amount, viewRanges[view]), view }));
   },
 
-  [SEARCH_MISSING]: function(getState, payload, dispatch) {
+  [SEARCH_MISSING]: function(_getState, payload, dispatch) {
     const { bookIds } = payload;
+    if (!Array.isArray(bookIds) || !bookIds.every(positiveInteger)) {
+      return;
+    }
+    return executeCommandHelper({ name: commandNames.BOOK_SEARCH, bookIds }, dispatch)
+      .then((data) => dispatch(set({ section, searchMissingCommandId: data.id })))
+      .catch((error: unknown) => dispatch(set({ section, error })));
+  },
 
-    const commandPayload = {
-      name: commandNames.BOOK_SEARCH,
-      bookIds
-    };
-
-    executeCommandHelper(commandPayload, dispatch).then((data) => {
-      dispatch(set({
-        section,
-        searchMissingCommandId: data.id
-      }));
-    });
+  [CLEAR_CALENDAR]: function(getState, _payload, dispatch) {
+    requests.cancel(getState, section);
+    dispatch(resetCalendar());
   }
+
 });
 
 //
@@ -366,7 +349,7 @@ export const actionHandlers = handleThunks({
 
 export const reducers = createHandleActions({
 
-  [CLEAR_CALENDAR]: createClearReducer(section, {
+  [RESET_CALENDAR]: createClearReducer(section, {
     isFetching: false,
     isPopulated: false,
     error: null,
@@ -374,13 +357,13 @@ export const reducers = createHandleActions({
   }),
 
   [SET_CALENDAR_OPTION]: function(state, { payload }) {
-    const options = state.options;
+    const options = asStateRecord(state.options);
 
     return {
       ...state,
       options: {
         ...options,
-        ...payload
+        ...asStateRecord(payload)
       }
     };
   }

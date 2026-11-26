@@ -6,7 +6,7 @@ interface RequestOptions extends StateRecord {
   method?: string;
   data?: unknown;
   dataType?: string;
-  contentType?: string;
+  contentType?: string | false;
   traditional?: boolean;
 }
 

@@ -6,7 +6,7 @@ import createHandleActions from './Creators/createHandleActions';
 //
 // Variables
 
-export const section = 'retagPreview';
+export const section = 'organizePreview';
 
 //
 // State
@@ -21,21 +21,21 @@ export const defaultState = {
 //
 // Actions Types
 
-export const FETCH_RETAG_PREVIEW = 'retagPreview/fetchRetagPreview';
-export const CLEAR_RETAG_PREVIEW = 'retagPreview/clearRetagPreview';
+export const FETCH_ORGANIZE_PREVIEW = 'organizePreview/fetchOrganizePreview';
+export const CLEAR_ORGANIZE_PREVIEW = 'organizePreview/clearOrganizePreview';
 
 //
 // Action Creators
 
-export const fetchRetagPreview = createThunk(FETCH_RETAG_PREVIEW);
-export const clearRetagPreview = createAction(CLEAR_RETAG_PREVIEW);
+export const fetchOrganizePreview = createThunk(FETCH_ORGANIZE_PREVIEW);
+export const clearOrganizePreview = createAction<void>(CLEAR_ORGANIZE_PREVIEW);
 
 //
 // Action Handlers
 
 export const actionHandlers = handleThunks({
 
-  [FETCH_RETAG_PREVIEW]: createFetchHandler('retagPreview', '/retag')
+  [FETCH_ORGANIZE_PREVIEW]: createFetchHandler('organizePreview', '/rename')
 
 });
 
@@ -44,7 +44,7 @@ export const actionHandlers = handleThunks({
 
 export const reducers = createHandleActions({
 
-  [CLEAR_RETAG_PREVIEW]: (state) => {
+  [CLEAR_ORGANIZE_PREVIEW]: (state) => {
     return Object.assign({}, state, defaultState);
   }
 

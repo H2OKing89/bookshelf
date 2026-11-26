@@ -29,7 +29,7 @@ function createMapStateToProps() {
 
 const mapDispatchToProps = {
   dispatchFetchOptions: fetchOptions,
-  dispatchClearOptions: clearOptions as unknown as (payload: { section: string }) => { type: string; payload?: unknown }
+  dispatchClearOptions: clearOptions
 };
 
 const connector = connect(createMapStateToProps, mapDispatchToProps);

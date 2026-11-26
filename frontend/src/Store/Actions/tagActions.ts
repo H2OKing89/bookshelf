@@ -1,9 +1,11 @@
+import { asStateRecord, isStateRecord } from 'Store/StateTypes';
 import { createThunk, handleThunks } from 'Store/thunks';
-import createAjaxRequest from 'Utilities/createAjaxRequest';
-import { update } from './baseActions';
+import { ApiError } from 'Utilities/Fetch/fetchJson';
+import { set, update } from './baseActions';
 import createFetchHandler from './Creators/createFetchHandler';
 import createHandleActions from './Creators/createHandleActions';
 import createRemoveItemHandler from './Creators/createRemoveItemHandler';
+import { requestLegacy } from './Creators/legacyRequest';
 
 //
 // Variables
@@ -50,20 +52,34 @@ export const actionHandlers = handleThunks({
   [FETCH_TAGS]: createFetchHandler(section, '/tag'),
 
   [ADD_TAG]: function(getState, payload, dispatch) {
-    const promise = createAjaxRequest({
+    const tag = asStateRecord(payload.tag);
+    if (typeof tag.label !== 'string' || !tag.label.trim()) {
+      dispatch(set({ section, error: new ApiError({ kind: 'invalid-request' }) }));
+      return;
+    }
+
+    const promise = requestLegacy({
       url: '/tag',
       method: 'POST',
-      data: JSON.stringify(payload.tag),
+      data: JSON.stringify(tag),
       dataType: 'json'
     }).request;
 
     promise.done((data) => {
-      const tags = getState().tags.items.slice();
-      tags.push(data);
+      if (!isStateRecord(data) || typeof data.id !== 'number' || !Number.isSafeInteger(data.id) || data.id <= 0 || typeof data.label !== 'string') {
+        dispatch(set({ section, error: new ApiError({ kind: 'invalid-response' }) }));
+        return;
+      }
 
-      dispatch(update({ section, data: tags }));
-      payload.onTagCreated(data);
+      const items = getState().tags.items;
+      const tags = Array.isArray(items) ? items.filter((item: unknown) => asStateRecord(item).id !== data.id) : [];
+      dispatch(update({ section, data: [...tags, data] }));
+      if (typeof payload.onTagCreated === 'function') {
+        payload.onTagCreated(data);
+      }
     });
+    promise.fail((error) => dispatch(set({ section, error })));
+
   },
 
   [DELETE_TAG]: createRemoveItemHandler(section, '/tag'),

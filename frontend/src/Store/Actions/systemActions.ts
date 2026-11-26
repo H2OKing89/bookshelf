@@ -1,8 +1,8 @@
 import { createAction } from 'redux-actions';
 import { filterTypes, sortDirections } from 'Helpers/Props';
 import { setAppValue } from 'Store/Actions/appActions';
+import { asStateRecord } from 'Store/StateTypes';
 import { createThunk, handleThunks } from 'Store/thunks';
-import createAjaxRequest from 'Utilities/createAjaxRequest';
 import serverSideCollectionHandlers from 'Utilities/serverSideCollectionHandlers';
 import translate from 'Utilities/String/translate';
 import { pingServer } from './appActions';
@@ -11,6 +11,8 @@ import createFetchHandler from './Creators/createFetchHandler';
 import createHandleActions from './Creators/createHandleActions';
 import createRemoveItemHandler from './Creators/createRemoveItemHandler';
 import createServerSideCollectionHandlers from './Creators/createServerSideCollectionHandlers';
+import { requestLegacy } from './Creators/legacyRequest';
+import { positiveInteger } from './Creators/pagedCollection';
 import createClearReducer from './Creators/Reducers/createClearReducer';
 import createSetTableOptionReducer from './Creators/Reducers/createSetTableOptionReducer';
 
@@ -262,7 +264,7 @@ export const actionHandlers = handleThunks({
 
   [FETCH_BACKUPS]: createFetchHandler(backupsSection, '/system/backup'),
 
-  [RESTORE_BACKUP]: function(getState, payload, dispatch) {
+  [RESTORE_BACKUP]: function(_getState, payload, dispatch) {
     const {
       id,
       file
@@ -273,9 +275,9 @@ export const actionHandlers = handleThunks({
       isRestoring: true
     }));
 
-    let ajaxOptions = null;
+    let ajaxOptions: Parameters<typeof requestLegacy>[0] | null = null;
 
-    if (id) {
+    if (positiveInteger(id)) {
       ajaxOptions = {
         url: `/system/backup/restore/${id}`,
         method: 'POST',
@@ -285,7 +287,7 @@ export const actionHandlers = handleThunks({
           id
         })
       };
-    } else if (file) {
+    } else if (file instanceof Blob) {
       const formData = new FormData();
       formData.append('restore', file);
 
@@ -302,11 +304,12 @@ export const actionHandlers = handleThunks({
         isRestoring: false,
         restoreError: 'Error restoring backup'
       }));
+      return;
     }
 
-    const promise = createAjaxRequest(ajaxOptions).request;
+    const promise = requestLegacy(ajaxOptions).request;
 
-    promise.done((data) => {
+    promise.done(() => {
       dispatch(set({
         section: backupsSection,
         isRestoring: false,
@@ -345,8 +348,8 @@ export const actionHandlers = handleThunks({
     }
   ),
 
-  [RESTART]: function(getState, payload, dispatch) {
-    const promise = createAjaxRequest({
+  [RESTART]: function(_getState, _payload, dispatch) {
+    const promise = requestLegacy({
       url: '/system/restart',
       method: 'POST'
     }).request;
@@ -358,7 +361,7 @@ export const actionHandlers = handleThunks({
   },
 
   [SHUTDOWN]: function() {
-    createAjaxRequest({
+    requestLegacy({
       url: '/system/shutdown',
       method: 'POST'
     });
@@ -370,11 +373,11 @@ export const actionHandlers = handleThunks({
 
 export const reducers = createHandleActions({
 
-  [CLEAR_RESTORE_BACKUP]: function(state, { payload }) {
+  [CLEAR_RESTORE_BACKUP]: function(state) {
     return {
       ...state,
       backups: {
-        ...state.backups,
+        ...asStateRecord(state.backups),
         isRestoring: false,
         restoreError: null
       }
@@ -383,7 +386,7 @@ export const reducers = createHandleActions({
 
   [SET_LOGS_TABLE_OPTION]: createSetTableOptionReducer('logs'),
 
-  [CLEAR_LOGS_TABLE]: createClearReducer(section, {
+  [CLEAR_LOGS_TABLE]: createClearReducer('system.logs', {
     isFetching: false,
     isPopulated: false,
     error: null,
