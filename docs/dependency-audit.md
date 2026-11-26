@@ -829,3 +829,45 @@ that must be addressed without broad suppression; Swashbuckle 11 needs an
 OpenAPI 2.x object model/contract migration. Native ARM64 execution and release
 acceptance remain open. P09 remains **In progress**; React 19's prior peer and
 JSX gates are no longer blockers.
+
+
+### Test tooling and MonoTorrent identity follow-up — 2026-11-25
+
+The exact supported graph `da2ba6eb6df1746fad2551e8e9a892ebd92a8a8e` adopts [NUnit 5.0.0](https://www.nuget.org/packages/NUnit/5.0.0),
+[RestSharp 114.1.0](https://www.nuget.org/packages/RestSharp/114.1.0),
+[Selenium 4.54.0](https://www.nuget.org/packages/Selenium.Support/4.54.0) and
+matching ChromeDriver 158.0.8127.88 for tests only. NUnit's async assertions
+are awaited rather than discarded; obsolete ordering attributes on legacy
+fixtures that independently establish their state were removed. The entire
+legacy application integration/automation suite was not launched; ten real
+owned HTTP tests preserve JSON naming/null/zero/false, single API-key headers,
+query filters and response/transport error behavior. A fresh official matching
+Chrome for Testing and restored ChromeDriver performed actual Selenium
+navigation, click, wait and screenshot on an owned loopback page. The host
+requires an explicit no-sandbox opt-in in this synthetic fixture only; the
+application automation factory retains its normal browser sandbox behavior.
+The legacy harness no longer globally kills application processes.
+
+[MonoTorrent 3.0.2](https://www.nuget.org/packages/MonoTorrent/3.0.2) replaces
+2.0.7. Its parser exposes independent v1/v2 hashes; the application uses the
+entire v1 hash for v1 and hybrid torrents, never `V1OrV2` as a substitute
+for the existing download tracking contract. Pure v2-only files, magnets and
+redirects are rejected before any client add; RSS does not advertise their
+v2 hash as v1. Fourteen focused tests generate owned v1/hybrid/v2 metainfo,
+verify exact hash equality and both magnet encodings, prove the hybrid
+client/receipt/blocklist boundary and verify no submission on unsupported
+v2-only inputs. Full v2-only acquisition requires independent end-to-end
+client and receipt support. The upstream 3.0.2 graph selects Mono.Nat 3.0.0
+(previous 3.0.1) and ReusableTasks 4.0.0 (previous 2.0.0); no artificial direct
+references were added to force a different transitive selection. The three
+upstream license notices and exact package hashes are included in the 29-file
+managed notice set. See [focused tests](dependencies/2026-11-25-test-acquisition/monotorrent-focused.json) and
+[test tooling package evidence](dependencies/2026-11-25-test-acquisition/test-tooling-packages.json).
+
+Both locked restores cover all platforms in the lock graph and the separately
+targeted Windows GUI. The 25-project NuGet audit and 1,242-entry Yarn audit
+report zero known findings; these are advisory snapshots, not complete security
+audits. See the [summary](dependencies/2026-11-25-test-acquisition/summary.json), [component inventory](dependencies/2026-11-25-test-acquisition/managed-components.json),
+and [managed notice evidence](dependencies/2026-11-25-test-acquisition/managed-notices.json). P09 remains **In
+progress** for the remaining coupled runtime/managed major lines, v2-only
+client tracking, native ARM64 execution, release and CI acceptance.

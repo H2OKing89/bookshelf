@@ -2174,3 +2174,53 @@ passed **632 hosted checks** over the new focused promotion, identity,
 recording lifecycle, collection diagnostics, metadata accessibility and library
 review groups (including unchanged-input verification). Both TS checks, lint,
 Vite build verification, 215 frontend tests and 174 tooling tests passed.
+
+
+## U07 and P09 provider forms, test tooling and torrent identity — 2026-11-25
+
+The exact integrated clean source is `da2ba6eb6df1746fad2551e8e9a892ebd92a8a8e` (tree
+`7cfd3bd1a71a184915500921cad41feb06957ba5`). The independent physical Linux
+package checkout restored the frozen Yarn graph and locked managed graph and
+passed both TypeScript projects, ESLint, Stylelint and Vite verification; 237
+frontend tests and 174 Python tooling cases passed. Both package audits
+report zero known findings (1,242 Yarn dependencies, 25 NuGet projects).
+
+An independent physical managed checkout of the exact same source passed
+**6,239 source regressions (100 existing skips), 10 owned RestSharp HTTP
+checks and one actual Selenium/Chrome loopback check**: 6,250 passed,
+zero failed. The 14 MonoTorrent cases and nine PostgreSQL author-promotion
+cases are present and passed individually. The private PostgreSQL instance
+stopped and the clean source remained identical. No legacy external
+automation or integration suite was run. See [managed source receipt](dependencies/2026-11-25-test-acquisition/managed-source-tests.json).
+
+**Hosted exact-package checks:** all **2,467** across 15 completed
+receipts, including the prior 14 behavioral author-promotion assertions,
+passed. All x64 checks verified the same candidate fingerprint `c752fab3a2cae564fb96a43db54806607c19d6aa273eb9c8f7bf7e1c1d8aab43`.
+The delivered package tests for musl x64 also include Docker; ARM64 package
+verification remains static, not execution. Each of the Linux x64, musl x64
+and musl ARM64 packages contains 29 matching managed license notices and the
+same notice manifest. Neither GitHub workflows nor externally exposed fixture
+ports were used.
+
+- auth: 112 passed.
+- datastore: 43 passed.
+- delivery: 616 passed.
+- dragreorder: 26 passed.
+- host-and-notifications: 72 passed.
+- identity-and-policies: 598 passed.
+- library: 207 passed.
+- logstorage: 63 passed.
+- new-features: 87 passed.
+- paging: 129 passed.
+- postgresconnections: 119 passed.
+- sqlite: 100 passed.
+- static-arm64: 20 passed.
+- static-musl: 20 passed.
+- ui: 255 passed.
+
+See the [hosted receipt](dependencies/2026-11-25-test-acquisition/hosted-validation.json) and
+[combined summary](dependencies/2026-11-25-test-acquisition/summary.json). The development-library author audit
+is reported separately in aggregate ([audit summary](dependencies/2026-11-25-test-acquisition/author-audit-summary.json));
+its provider and database queries were read-only and no user-library identities,
+records or files changed. The existing dev service/authentication and production
+were not redeployed or altered; unmapped-file investigation was skipped.

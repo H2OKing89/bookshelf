@@ -1,0 +1,16 @@
+{
+  "authorCount": 50,
+  "catalogPagesRead": 48,
+  "categories": {
+    "provider_still_name_only": 41,
+    "canonical_identity_already_exists": 1,
+    "no_exact_native_recording": 6,
+    "exact_evidence_candidate": 1,
+    "explicit_override_needs_review": 1
+  },
+  "applicationVerifiedCandidates": 1,
+  "readOnly": true,
+  "originalAuthorIdentitiesUnchanged": true,
+  "countsUnchanged": true,
+  "unmappedAuditSkipped": true
+}

@@ -1,0 +1,63 @@
+{
+  "sourceCommit": "da2ba6eb6df1746fad2551e8e9a892ebd92a8a8e",
+  "testOnly": true,
+  "managedRuntimeDeliveryUnaffected": true,
+  "packages": [
+    {
+      "name": "NUnit",
+      "version": "5.0.0",
+      "license": "MIT",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/nunit/nunit"
+      },
+      "packageSha512Base64": "TcsHylD9sD3MKVndGS0k4sa0+U9Syx0U4EYak+r9joBL7l923SBO1AaTQyZXFY2Rk+chEPfj/iVRq8KUfhFU6Q==",
+      "nugetContentHash": "tW5Juazgh4CI4pXo5c9c2J9J4i9vwZMm/FJ+gRRe0plJHLCz7Ck/raPuE5q1xWmLAUwpao4Ht1Uy1uRN3Wo5sw=="
+    },
+    {
+      "name": "RestSharp",
+      "version": "114.1.0",
+      "license": "Apache-2.0",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/restsharp/RestSharp.git",
+        "commit": "e24f076f217c1397844a2b87e0ba6027804988bb"
+      },
+      "packageSha512Base64": "k2BJ3IVKQFBYYHwAp/9G30Llz2WMDvczeuY2tGjYKLmGVKMjcRnxT4/yFN5VwmSHG4rwwYG4v/+5YqAY7otzOA==",
+      "nugetContentHash": "QXpO6o0lKmbzBPhLZ1nBiZj9Vdb/3qRTyo0s0Vllm9HRLzpD2X+I9tkhGE4WWno6WyUkRsVP1jnyvDyQ5SakGg=="
+    },
+    {
+      "name": "Selenium.Support",
+      "version": "4.54.0",
+      "license": "Apache-2.0",
+      "repository": {
+        "type": "GitHub",
+        "url": "https://github.com/SeleniumHQ/selenium"
+      },
+      "packageSha512Base64": "EPB1r6Y7LPWvMRjjwIzrc2knlMxpD16k48ElqyaogqwE3g2E8k2Kfom9VbSc9cPfp+W7+FM6QnrUGt0iZh4+Pw==",
+      "nugetContentHash": "HRBNg/aD8YNqj9AHtdRoukGWSEHAj4AlUgYr31ZH/lMIZv19GVCcQNpegWnEFoXbgJcWBt4P+VDf/QZN9lnxTA=="
+    },
+    {
+      "name": "Selenium.WebDriver",
+      "version": "4.54.0",
+      "license": "Apache-2.0",
+      "repository": {
+        "type": "GitHub",
+        "url": "https://github.com/SeleniumHQ/selenium"
+      },
+      "packageSha512Base64": "xQV7rlgrZslqbvFHzfj+ig8U472Zniui7pr2IPZS0lQhMOJUPyTsYN4PnjeRpS4Af17UN7Wh6GJzgQNMrMYICQ==",
+      "nugetContentHash": "djqoNPLtvMpb3LFrOnD5bVJqHOP971psa93QmGPnSN0J9+imzvrvJBbsQNSM3DF7niSKq1YfNpw1Zxsd5UsQDA=="
+    },
+    {
+      "name": "Selenium.WebDriver.ChromeDriver",
+      "version": "158.0.8127.8800",
+      "license": "Unlicense",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/jsakamoto/nupkg-selenium-webdriver-chromedriver/"
+      },
+      "packageSha512Base64": "ErDgx1yIwPfzkWeSJPqKLHOrT3hDzigQmO5M4UavAAx/uPRUN1ilqvnhlnma7RMfYJjGGIzJFUyo93uNk0abbA==",
+      "nugetContentHash": "tuWcrCWgtD5wrlAeta5S4wHLSzjw0H3j7MDaHP81t4VorcsQDrboJXv2TPkQ192wKD9DlFcnvhk42AJIKZKcwQ=="
+    }
+  ]
+}

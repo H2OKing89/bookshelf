@@ -1,0 +1,111 @@
+{
+  "sourceProvenance": {
+    "productId": "bookshelf-audiobooks",
+    "sourceCommit": "da2ba6eb6df1746fad2551e8e9a892ebd92a8a8e",
+    "sourceTree": "7cfd3bd1a71a184915500921cad41feb06957ba5",
+    "sourceBranch": "fix/sonarr-v5-foundation",
+    "buildDirty": false
+  },
+  "authorAudit": {
+    "authorCount": 50,
+    "catalogPagesRead": 48,
+    "categories": {
+      "provider_still_name_only": 41,
+      "canonical_identity_already_exists": 1,
+      "no_exact_native_recording": 6,
+      "exact_evidence_candidate": 1,
+      "explicit_override_needs_review": 1
+    },
+    "applicationVerifiedCandidates": 1,
+    "readOnly": true,
+    "originalAuthorIdentitiesUnchanged": true,
+    "countsUnchanged": true,
+    "unmappedAuditSkipped": true
+  },
+  "frontendSourceModules": {
+    "before": {
+      "javascript": 703,
+      "typescript": 422,
+      "strict": 392
+    },
+    "after": {
+      "javascript": 642,
+      "typescript": 491,
+      "strict": 462
+    }
+  },
+  "remainingJsCreatorModules": 0,
+  "migratedSettingsAndControls": 39,
+  "migratedStoreAndHelpers": 22,
+  "managedSelected": {
+    "MonoTorrent": "3.0.2",
+    "NUnit": "5.0.0",
+    "RestSharp": "114.1.0",
+    "Selenium.Support": "4.54.0",
+    "Selenium.WebDriver": "4.54.0",
+    "Selenium.WebDriver.ChromeDriver": "158.0.8127.8800"
+  },
+  "torrentTracking": {
+    "v1": true,
+    "hybridUsesV1": true,
+    "v2OnlySubmissionSupported": false,
+    "v2OnlyRejectedBeforeAdd": true,
+    "focusedCasesPassed": 14,
+    "sourceAcquisitionCasesPassed": 601
+  },
+  "frontendAudit": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "dependencies": 1242,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 1242
+  },
+  "nugetAuditedProjects": 25,
+  "nugetReportedVulnerablePackages": 0,
+  "managedLockfiles": 25,
+  "managedComponents": 122,
+  "verifiedManagedNoticeFiles": 29,
+  "managedTestsPassed": 6250,
+  "managedTestsNotExecuted": 100,
+  "frontendUnitPassed": 237,
+  "toolingTestsPassed": 174,
+  "exactIntegratedPackageValidation": true,
+  "hostedChecksPassed": 2467,
+  "successfulHostedReceipts": 15,
+  "nativeArm64ExecutionVerified": false,
+  "packagedManagedNotices": {
+    "linux-x64": {
+      "noticeFilesVerified": 29,
+      "manifestMatchesSource": true
+    },
+    "linux-musl-x64": {
+      "noticeFilesVerified": 29,
+      "manifestMatchesSource": true
+    },
+    "linux-musl-arm64": {
+      "noticeFilesVerified": 29,
+      "manifestMatchesSource": true
+    }
+  },
+  "inputSha256": {
+    "package.json": "eea9d6dd54698ac255e34514f8e6f09bedb405771888a567409bd61c5029a6ee",
+    "yarn.lock": "e2d3b5b317ec9f32cd9be3ec6c5ae5cf7b13b1922b2f774dc289a4c91baf8f20",
+    "src/Directory.Packages.props": "2e67cc609d941c6689b53f2029d8452bf32a04f176a6f382c443b1b73a6c0db3",
+    "global.json": "5d9f7839d9ec35739ede461f8ab097a24129d3d454d3d04815ac10bf67d83b88"
+  },
+  "runningDevelopmentAndProductionUnchanged": true,
+  "githubWorkflowsUsed": false,
+  "remainingGates": [
+    "remaining legacy JS and dynamic form/other action families",
+    "v2-only cross-client submission and receipt tracking",
+    "remaining coupled runtime/managed major upgrades",
+    "native ARM64 execution and CI/release acceptance",
+    "P17 deferred"
+  ]
+}

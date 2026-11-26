@@ -985,6 +985,23 @@ arm64 native execution, CI and release validation. The earlier React 19
 peer prerequisite is closed; no production or running development home
 was updated by these source changes.
 
+**2026-11-25 test tooling and torrent identity follow-up:** adopt NUnit 5.0.0,
+RestSharp 114.1.0, Selenium 4.54.0 and ChromeDriver 158.0.8127.88 in test-only
+graphs. Async assertions are genuinely awaited, owned HTTP serializer/header
+contracts are exercised, and the browser fixture uses matching Chrome/driver
+bytes on an owned loopback page. Legacy external application integration
+suites were not run and global process termination was removed. MonoTorrent
+3.0.2 now loads real v1 and hybrid metainfo/magnets; the existing v1 tracking
+hash remains authoritative for receipts and blocklist checks. Pure v2-only
+metainfo, magnets and redirects fail before client submission rather than
+silently converting a SHA-256 identity into a v1 tracking key. Fourteen new
+identity/acquisition cases prove the boundary. Both audits report zero known
+findings; all 29 managed notices match in three Linux packages. Exact source
+`da2ba6eb6` passed 6,250 managed/owned compatibility tests and 2,467
+hosted checks. See [validation evidence](dependencies/2026-11-25-test-acquisition/summary.json). P09 remains
+**In progress** for cross-client v2-only tracking, remaining coupled managed
+major/runtime migrations, native ARM64 execution and release/CI gates.
+
 ### P10
 
 **Carry cancellation through the HTTP client stack**
@@ -3041,6 +3058,22 @@ React imports in two passes (650, then 12 during integration). Both TS projects,
 215 frontend unit cases pass on React 19. Remaining legacy components,
 provider edit forms, naming settings and action/reducer families are next;
 U07 remains **In progress**. See [exact results](dependencies/2026-11-25-react19/summary.json).
+
+**2026-11-25 provider settings and Redux follow-up:** another 61 JS modules
+are converted: 39 naming/provider edit modal, quality profile and shared tag
+controls; all eight remaining shared Store action creators, 12 actual settings
+action families and two state/request helpers. Provider saves and tests retain
+drafts, isolate retries by store and section, ignore stale completions, and
+validate payloads; paginator/sort/filter and batch monitoring boundaries are
+typed. Quality profile rearrangement guards invalid/stale drops and cutoffs;
+unknown tag IDs and zero values survive initialization. Thirteen temporary
+provider/quality/naming action casts and three core-setting connector casts are
+removed once the underlying actions are typed. Ordinary source JS/TS/strict
+module counts are **642/491/462** (previous 703/422/392); no JS action
+creator modules remain. Both TS projects, ESLint, Stylelint, Vite verification
+and 237 frontend tests pass. Remaining dynamic AutoComplete/EnhancedSelect,
+generic tag rendering and other legacy action/reducer/UI families are staged.
+U07 remains **In progress**. See [exact results](dependencies/2026-11-25-test-acquisition/summary.json).
 
 ### U08
 

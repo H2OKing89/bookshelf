@@ -1538,3 +1538,33 @@ U07 and P09 are still staged: remaining legacy JavaScript and coupled managed
 major/runtime and native ARM64 acceptance are open. The release and CI gates,
 and deferred P17, are unchanged. No GitHub workflow, push, production or
 running development deployment was performed.
+
+
+### Typed provider editors, requests and acquisition compatibility — 2026-11-25
+
+The read-only developer-library audit inspected the 50 remaining name-based
+Audible author records against their saved recording ASINs and current provider
+catalogs. One existing recording confirms a safe author-promotion proposal;
+41 still lack an explicit author ID, six lack an exact native recording anchor,
+and two need reviewed handling for an existing canonical identity or explicit
+metadata override. The application confirmed the one proposal without changing
+any stored library IDs or counts. Unmapped-file review is intentionally skipped
+for this batch. Only aggregate audit counts are committed; the user's library
+report remains private.
+
+U07 advances the remaining shared action creators and settings/modal/control
+slices (61 conversions). JS 703 → 642; TS/TSX 422 → 491; strict source
+modules 392 → 462. P09 adopts MonoTorrent 3.0.2 with exact v1/hybrid
+identity semantics and safe pre-submission rejection for pure v2-only releases,
+plus NUnit 5, modern RestSharp and matching Selenium 4/ChromeDriver for owned
+tests. The exact clean source `da2ba6eb6` passes 6,250 managed/owned
+compatibility cases (100 existing skips), 237 frontend and 174 tooling
+cases and 2,467 hosted checks. Both dependency audits report zero known
+findings. Three Linux packages possess the 29 identical pinned notices; native
+ARM64 execution has not been verified. See [validation summary](dependencies/2026-11-25-test-acquisition/summary.json)
+and [local validation](local-validation.md).
+
+The roadmap remains **83 of 92 Verified**, eight In progress and one Deferred.
+U07/P09, coupled runtime/native changes and release/CI gates remain open; P17
+remains deferred. No live development deployment, production changes, release
+publication or GitHub workflow invocation was part of this batch.

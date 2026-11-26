@@ -1,0 +1,77 @@
+{
+  "sourceCommit": "da2ba6eb6df1746fad2551e8e9a892ebd92a8a8e",
+  "selected": 14,
+  "passed": 14,
+  "cases": [
+    {
+      "fixture": "TorrentIdentityFixture",
+      "name": "should_keep_v1_tracking_for_both_magnet_encodings_and_hybrid_topic_order(\"magnet:?xt=urn:btih:CBC2F069FE8BB2F544EAE707D75BCD3DE9DCF951&xt=urn:btmh:12200123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF\")",
+      "outcome": "Passed"
+    },
+    {
+      "fixture": "TorrentIdentityAcquisitionFixture",
+      "name": "should_reject_v2_only_magnet_before_client_submission",
+      "outcome": "Passed"
+    },
+    {
+      "fixture": "TorrentIdentityAcquisitionFixture",
+      "name": "should_submit_hybrid_magnet_and_track_same_v1_identity",
+      "outcome": "Passed"
+    },
+    {
+      "fixture": "TorrentIdentityFixture",
+      "name": "should_not_substitute_a_v2_only_torrent_hash",
+      "outcome": "Passed"
+    },
+    {
+      "fixture": "TorrentIdentityFixture",
+      "name": "should_keep_v1_tracking_for_both_magnet_encodings_and_hybrid_topic_order(\"magnet:?xt=urn:btih:ZPBPA2P6ROZPKRHK44D5OW6NHXU5Z6KR&tr=udp\")",
+      "outcome": "Passed"
+    },
+    {
+      "fixture": "TorrentIdentityFixture",
+      "name": "should_use_exact_v1_hash_from_owned_metainfo(V1V2Hybrid)",
+      "outcome": "Passed"
+    },
+    {
+      "fixture": "TorrentIdentityFixture",
+      "name": "should_not_advertise_a_v2_only_hash_as_v1_in_rss",
+      "outcome": "Passed"
+    },
+    {
+      "fixture": "TorrentIdentityFixture",
+      "name": "should_keep_v1_tracking_for_both_magnet_encodings_and_hybrid_topic_order(\"magnet:?xt=urn:btmh:12200123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF&xt=urn:btih:CBC2F069FE8BB2F544EAE707D75BCD3DE9DCF951\")",
+      "outcome": "Passed"
+    },
+    {
+      "fixture": "TorrentIdentityAcquisitionFixture",
+      "name": "should_submit_hybrid_file_and_track_original_v1_hash",
+      "outcome": "Passed"
+    },
+    {
+      "fixture": "TorrentIdentityFixture",
+      "name": "should_use_exact_v1_hash_from_owned_metainfo(V1Only)",
+      "outcome": "Passed"
+    },
+    {
+      "fixture": "TorrentIdentityFixture",
+      "name": "should_keep_v1_tracking_for_both_magnet_encodings_and_hybrid_topic_order(\"magnet:?xt=urn:btih:CBC2F069FE8BB2F544EAE707D75BCD3DE9DCF951\")",
+      "outcome": "Passed"
+    },
+    {
+      "fixture": "TorrentIdentityAcquisitionFixture",
+      "name": "should_apply_grab_blocklist_to_hybrid_v1_hash_before_submission",
+      "outcome": "Passed"
+    },
+    {
+      "fixture": "TorrentIdentityAcquisitionFixture",
+      "name": "should_reject_v2_only_file_before_client_submission",
+      "outcome": "Passed"
+    },
+    {
+      "fixture": "TorrentIdentityAcquisitionFixture",
+      "name": "should_reject_v2_only_redirect_without_adding_anything",
+      "outcome": "Passed"
+    }
+  ]
+}
