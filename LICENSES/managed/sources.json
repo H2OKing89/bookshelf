@@ -297,5 +297,39 @@
       "commit": "299ef377bde844af7d28b7aa21786a6853f930e3"
     },
     "packageSha512Base64": "8BuYN/gyG/XY7VSXKEoZx8dIirkcPIRa6fr+NFEWqr+reAzWjIDzxw5RvizLkRM3nWJoFY/ouLf91fXebHtxJQ=="
+  },
+  "MailKit/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/jstedfast/MailKit/003eca6349aad5bdca54904d8cba764eb4f37c42/LICENSE",
+    "package": "MailKit",
+    "version": "5.0.0",
+    "bytes": 1093,
+    "sha256": "35b9fc9bfb7a201a6e0b9e3ce71b639a830a2347d4aea55a2b1affbc487a1fb3",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/jstedfast/MailKit"
+    },
+    "upstreamReleaseTag": {
+      "name": "5.0.0",
+      "tagObject": "a71d673f64f6118c12183eb8e1022c7c83664378",
+      "commit": "003eca6349aad5bdca54904d8cba764eb4f37c42"
+    },
+    "packageSha512Base64": "nvtve6Jpm96O67YzJRmagHSWUdTUNzVxysnflxdJIAx7A5SNCyKCbVrlaJoQnQyUJPkkf7e2hRAoiJBCo6Frgw=="
+  },
+  "MimeKit.Core/LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/jstedfast/MimeKit/d3884a84ef98fa203d7ffd29f0c90ce16ec7e713/LICENSE",
+    "package": "MimeKit.Core",
+    "version": "5.0.0",
+    "bytes": 1094,
+    "sha256": "c613af70a219d1cafd732f2cefd4fca9f1462ac5696f8461108a7d643513f3bf",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/jstedfast/MimeKit"
+    },
+    "upstreamReleaseTag": {
+      "name": "5.0.0",
+      "tagObject": "8bba4a87d0e12f74790eb5ede0db62072320525c",
+      "commit": "d3884a84ef98fa203d7ffd29f0c90ce16ec7e713"
+    },
+    "packageSha512Base64": "ME9DEOGAgHH6z2QJNcSmMWFaZc2EAgoCWSpxWdc+0KJUd+QxzEYZwg94PMC30kxRkLG+iYqFNtcfyn6eC4Q+/A=="
   }
 }
