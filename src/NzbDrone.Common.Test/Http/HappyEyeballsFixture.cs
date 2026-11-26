@@ -20,22 +20,22 @@ namespace NzbDrone.Common.Test.Http
         private static readonly IPAddress V6Third = IPAddress.Parse("2001:db8::3");
 
         [Test]
-        public void no_addresses_should_be_rejected()
+        public async Task no_addresses_should_be_rejected()
         {
             var connector = Connector((address, token) => throw new InvalidOperationException());
 
-            Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
+            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
                 await connector.Connect(Array.Empty<IPAddress>(), CancellationToken.None));
         }
 
         [Test]
-        public void precancellation_should_not_start_a_connection_or_timer()
+        public async Task precancellation_should_not_start_a_connection_or_timer()
         {
             using var cancellation = new CancellationTokenSource();
             cancellation.Cancel();
             var connector = Connector((address, token) => throw new InvalidOperationException());
 
-            var error = Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            var error = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
                 await connector.Connect(new[] { V4First }, cancellation.Token));
 
             error.CancellationToken.Should().Be(cancellation.Token);
@@ -45,7 +45,7 @@ namespace NzbDrone.Common.Test.Http
         [TestCase("v6")]
         [TestCase("mixed")]
         [TestCase("uneven")]
-        public void failures_should_try_every_address_in_stable_family_order(string family)
+        public async Task failures_should_try_every_address_in_stable_family_order(string family)
         {
             var input = family switch
             {
@@ -68,7 +68,7 @@ namespace NzbDrone.Common.Test.Http
                 return Task.FromException<Connection>(new InvalidOperationException(address.ToString()));
             });
 
-            var error = Assert.ThrowsAsync<AggregateException>(async () =>
+            var error = await Assert.ThrowsAsync<AggregateException>(async () =>
                 await connector.Connect(input, CancellationToken.None));
 
             attempted.Should().Equal(expected);
@@ -185,7 +185,7 @@ namespace NzbDrone.Common.Test.Http
 
             cancellation.Cancel();
 
-            var error = Assert.ThrowsAsync<OperationCanceledException>(async () => await pending.WaitAsync(Deadline));
+            var error = await Assert.ThrowsAsync<OperationCanceledException>(async () => await pending.WaitAsync(Deadline));
             error.CancellationToken.Should().Be(cancellation.Token);
             connection.DisposeCount.Should().Be(1);
         }
@@ -207,7 +207,7 @@ namespace NzbDrone.Common.Test.Http
             cancellation.Cancel();
             releaseCleanup.TrySetResult(true);
 
-            var error = Assert.ThrowsAsync<OperationCanceledException>(async () => await pending.WaitAsync(Deadline));
+            var error = await Assert.ThrowsAsync<OperationCanceledException>(async () => await pending.WaitAsync(Deadline));
             error.CancellationToken.Should().Be(cancellation.Token);
             loser.DisposeCount.Should().Be(1);
             winner.DisposeCount.Should().Be(1);
@@ -215,13 +215,13 @@ namespace NzbDrone.Common.Test.Http
 
         [TestCase(false)]
         [TestCase(true)]
-        public void a_failed_stagger_should_cancel_and_dispose_the_outstanding_attempt(bool synchronous)
+        public async Task a_failed_stagger_should_cancel_and_dispose_the_outstanding_attempt(bool synchronous)
         {
             var connection = new Connection();
             var connector = new HappyEyeballs<Connection>((address, token) => AfterCancellation(token, connection),
                 token => synchronous ? throw new InvalidOperationException("stagger failed") : Task.FromException(new InvalidOperationException("stagger failed")));
 
-            Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
                 await connector.Connect(new[] { V6First, V4First }, CancellationToken.None).AsTask().WaitAsync(Deadline));
 
             connection.DisposeCount.Should().Be(1);
@@ -230,7 +230,7 @@ namespace NzbDrone.Common.Test.Http
         [TestCase("throw")]
         [TestCase("fault")]
         [TestCase("cancel")]
-        public void caller_cancellation_should_win_a_simultaneous_attempt_failure(string outcome)
+        public async Task caller_cancellation_should_win_a_simultaneous_attempt_failure(string outcome)
         {
             using var cancellation = new CancellationTokenSource();
             var connector = Connector((address, token) =>
@@ -244,18 +244,18 @@ namespace NzbDrone.Common.Test.Http
                 };
             });
 
-            var error = Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            var error = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
                 await connector.Connect(new[] { V6First }, cancellation.Token));
 
             error.CancellationToken.Should().Be(cancellation.Token);
         }
 
         [Test]
-        public void independent_attempt_cancellation_should_remain_an_aggregate_failure()
+        public async Task independent_attempt_cancellation_should_remain_an_aggregate_failure()
         {
             var connector = Connector((address, token) => Task.FromCanceled<Connection>(new CancellationToken(true)));
 
-            var error = Assert.ThrowsAsync<AggregateException>(async () =>
+            var error = await Assert.ThrowsAsync<AggregateException>(async () =>
                 await connector.Connect(new[] { V6First }, CancellationToken.None));
 
             error.InnerExceptions.Should().ContainSingle().Which.Should().BeOfType<TaskCanceledException>();

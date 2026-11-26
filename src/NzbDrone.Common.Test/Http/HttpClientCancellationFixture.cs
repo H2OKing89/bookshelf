@@ -33,7 +33,7 @@ namespace NzbDrone.Common.Test.Http
         }
 
         [Test]
-        public void pre_cancelled_request_should_not_invoke_interceptors_rate_limit_or_dispatcher()
+        public async Task pre_cancelled_request_should_not_invoke_interceptors_rate_limit_or_dispatcher()
         {
             using var cancellation = new CancellationTokenSource();
             cancellation.Cancel();
@@ -42,7 +42,7 @@ namespace NzbDrone.Common.Test.Http
             var request = Request();
             request.RateLimit = TimeSpan.FromMinutes(1);
 
-            Assert.CatchAsync<OperationCanceledException>(async () => await Subject.ExecuteAsync(request, cancellation.Token));
+            await Assert.CatchAsync<OperationCanceledException>(async () => await Subject.ExecuteAsync(request, cancellation.Token));
 
             interceptor.VerifyNoOtherCalls();
             _dispatcher.VerifyNoOtherCalls();
@@ -76,7 +76,7 @@ namespace NzbDrone.Common.Test.Http
         }
 
         [Test]
-        public void cancellation_after_redirect_response_should_not_issue_the_next_request()
+        public async Task cancellation_after_redirect_response_should_not_issue_the_next_request()
         {
             using var cancellation = new CancellationTokenSource();
             _dispatcher.Setup(dispatcher => dispatcher.GetResponseAsync(It.IsAny<HttpRequest>(), It.IsAny<CookieContainer>(), cancellation.Token))
@@ -88,7 +88,7 @@ namespace NzbDrone.Common.Test.Http
             var request = Request();
             request.AllowAutoRedirect = true;
 
-            Assert.CatchAsync<OperationCanceledException>(async () => await Subject.GetAsync(request, cancellation.Token));
+            await Assert.CatchAsync<OperationCanceledException>(async () => await Subject.GetAsync(request, cancellation.Token));
 
             _dispatcher.Verify(dispatcher => dispatcher.GetResponseAsync(It.IsAny<HttpRequest>(), It.IsAny<CookieContainer>(), cancellation.Token), Times.Once());
             request.Url.FullUri.Should().NotContain("must-not-run");
@@ -113,7 +113,7 @@ namespace NzbDrone.Common.Test.Http
 
             cancellation.Cancel();
 
-            Assert.CatchAsync<OperationCanceledException>(async () => await operation.WaitAsync(TimeSpan.FromSeconds(5)));
+            await Assert.CatchAsync<OperationCanceledException>(async () => await operation.WaitAsync(TimeSpan.FromSeconds(5)));
             _dispatcher.VerifyNoOtherCalls();
         }
 
@@ -140,7 +140,7 @@ namespace NzbDrone.Common.Test.Http
 
             first.Cancel();
 
-            Assert.CatchAsync<OperationCanceledException>(async () => await cancelled.WaitAsync(TimeSpan.FromSeconds(5)));
+            await Assert.CatchAsync<OperationCanceledException>(async () => await cancelled.WaitAsync(TimeSpan.FromSeconds(5)));
             (await surviving.WaitAsync(TimeSpan.FromSeconds(5))).StatusCode.Should().Be(HttpStatusCode.OK);
             second.IsCancellationRequested.Should().BeFalse();
         }
@@ -182,26 +182,26 @@ namespace NzbDrone.Common.Test.Http
         }
 
         [Test]
-        public void timeout_should_remain_a_timeout_when_the_caller_did_not_cancel()
+        public async Task timeout_should_remain_a_timeout_when_the_caller_did_not_cancel()
         {
             using var cancellation = new CancellationTokenSource();
             _dispatcher.Setup(dispatcher => dispatcher.GetResponseAsync(It.IsAny<HttpRequest>(), It.IsAny<CookieContainer>(), cancellation.Token))
                 .ThrowsAsync(new WebException("Synthetic timeout", WebExceptionStatus.Timeout));
 
-            var error = Assert.ThrowsAsync<WebException>(async () => await Subject.GetAsync(Request(), cancellation.Token));
+            var error = await Assert.ThrowsAsync<WebException>(async () => await Subject.GetAsync(Request(), cancellation.Token));
 
             error.Status.Should().Be(WebExceptionStatus.Timeout);
             cancellation.IsCancellationRequested.Should().BeFalse();
         }
 
         [Test]
-        public void pre_cancelled_download_should_not_create_a_directory_or_partial_file()
+        public async Task pre_cancelled_download_should_not_create_a_directory_or_partial_file()
         {
             using var cancellation = new CancellationTokenSource();
             cancellation.Cancel();
             var directory = Path.Combine(TempFolder, "must-not-be-created");
 
-            Assert.CatchAsync<OperationCanceledException>(async () => await Subject.DownloadFileAsync("https://synthetic.invalid/file", Path.Combine(directory, "file.bin"), null, cancellation.Token));
+            await Assert.CatchAsync<OperationCanceledException>(async () => await Subject.DownloadFileAsync("https://synthetic.invalid/file", Path.Combine(directory, "file.bin"), null, cancellation.Token));
 
             Directory.Exists(directory).Should().BeFalse();
             _dispatcher.VerifyNoOtherCalls();
@@ -228,7 +228,7 @@ namespace NzbDrone.Common.Test.Http
 
             cancellation.Cancel();
 
-            Assert.CatchAsync<OperationCanceledException>(async () => await operation.WaitAsync(TimeSpan.FromSeconds(5)));
+            await Assert.CatchAsync<OperationCanceledException>(async () => await operation.WaitAsync(TimeSpan.FromSeconds(5)));
             stream.CanWrite.Should().BeFalse();
             File.Exists(stream.Name).Should().BeFalse();
             File.ReadAllText(destination).Should().Be("complete original");
@@ -237,7 +237,7 @@ namespace NzbDrone.Common.Test.Http
         }
 
         [Test]
-        public void failed_download_should_preserve_destination_and_unrelated_partial_file()
+        public async Task failed_download_should_preserve_destination_and_unrelated_partial_file()
         {
             using var cancellation = new CancellationTokenSource();
             var destination = Path.Combine(TempFolder, "existing.bin");
@@ -250,7 +250,7 @@ namespace NzbDrone.Common.Test.Http
                     throw new IOException("Synthetic body failure");
                 });
 
-            Assert.ThrowsAsync<IOException>(async () => await Subject.DownloadFileAsync("https://synthetic.invalid/file", destination, null, cancellation.Token));
+            await Assert.ThrowsAsync<IOException>(async () => await Subject.DownloadFileAsync("https://synthetic.invalid/file", destination, null, cancellation.Token));
 
             File.ReadAllText(destination).Should().Be("complete original");
             File.ReadAllText(destination + ".part").Should().Be("unrelated partial");
@@ -278,7 +278,7 @@ namespace NzbDrone.Common.Test.Http
         }
 
         [Test]
-        public void publish_failure_should_preserve_destination_contents_and_clean_only_the_owned_partial()
+        public async Task publish_failure_should_preserve_destination_contents_and_clean_only_the_owned_partial()
         {
             var destination = Path.Combine(TempFolder, "existing-directory");
             Directory.CreateDirectory(destination);
@@ -292,7 +292,7 @@ namespace NzbDrone.Common.Test.Http
                     return Response(request);
                 });
 
-            Assert.ThrowsAsync<IOException>(async () => await Subject.DownloadFileAsync("https://synthetic.invalid/file", destination));
+            await Assert.ThrowsAsync<IOException>(async () => await Subject.DownloadFileAsync("https://synthetic.invalid/file", destination));
 
             Directory.Exists(destination).Should().BeTrue();
             File.ReadAllText(sentinel).Should().Be("preserve existing contents");
@@ -326,7 +326,7 @@ namespace NzbDrone.Common.Test.Http
 
             cancellation.Cancel();
 
-            Assert.CatchAsync<OperationCanceledException>(async () => await cancelled.WaitAsync(TimeSpan.FromSeconds(5)));
+            await Assert.CatchAsync<OperationCanceledException>(async () => await cancelled.WaitAsync(TimeSpan.FromSeconds(5)));
             File.ReadAllText(destination).Should().Be("completed sibling");
             File.Exists(firstPart).Should().BeFalse();
             Directory.GetFiles(TempFolder, "*.part").Should().BeEmpty();

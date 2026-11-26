@@ -42,12 +42,12 @@ namespace NzbDrone.Common.Test.Http
         }
 
         [Test]
-        public void already_cancelled_request_should_not_create_a_client()
+        public async Task already_cancelled_request_should_not_create_a_client()
         {
             using var cancellation = new CancellationTokenSource();
             cancellation.Cancel();
 
-            var error = Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            var error = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
                 await _dispatcher.GetResponseAsync(new HttpRequest("http://127.0.0.1:1/"), new CookieContainer(), cancellation.Token));
 
             error.CancellationToken.Should().Be(cancellation.Token);
@@ -70,7 +70,7 @@ namespace NzbDrone.Common.Test.Http
 
             cancellation.Cancel();
 
-            var error = Assert.ThrowsAsync<OperationCanceledException>(async () => await pending.WaitAsync(Deadline));
+            var error = await Assert.ThrowsAsync<OperationCanceledException>(async () => await pending.WaitAsync(Deadline));
             error.CancellationToken.Should().Be(cancellation.Token);
             await closed.Task.WaitAsync(Deadline);
         }
@@ -97,7 +97,7 @@ namespace NzbDrone.Common.Test.Http
 
             cancellation.Cancel();
 
-            var error = Assert.ThrowsAsync<OperationCanceledException>(async () => await pending.WaitAsync(Deadline));
+            var error = await Assert.ThrowsAsync<OperationCanceledException>(async () => await pending.WaitAsync(Deadline));
             error.CancellationToken.Should().Be(cancellation.Token);
         }
 
@@ -125,7 +125,7 @@ namespace NzbDrone.Common.Test.Http
             var pending = dispatcher.GetResponseAsync(request, new CookieContainer(), cancellation.Token);
             await entered.Task.WaitAsync(Deadline);
 
-            var error = Assert.ThrowsAsync<OperationCanceledException>(async () => await pending.WaitAsync(Deadline));
+            var error = await Assert.ThrowsAsync<OperationCanceledException>(async () => await pending.WaitAsync(Deadline));
 
             cancellation.IsCancellationRequested.Should().BeTrue();
             error.CancellationToken.Should().Be(cancellation.Token);
@@ -156,7 +156,7 @@ namespace NzbDrone.Common.Test.Http
 
             cancellation.Cancel();
 
-            var error = Assert.ThrowsAsync<OperationCanceledException>(async () => await pending.WaitAsync(Deadline));
+            var error = await Assert.ThrowsAsync<OperationCanceledException>(async () => await pending.WaitAsync(Deadline));
             error.CancellationToken.Should().Be(cancellation.Token);
             destination.CanWrite.Should().BeTrue("the caller owns its response stream");
             await closed.Task.WaitAsync(Deadline);
@@ -179,7 +179,7 @@ namespace NzbDrone.Common.Test.Http
                 request.ResponseStream = destination;
             }
 
-            var error = Assert.ThrowsAsync<WebException>(async () =>
+            var error = await Assert.ThrowsAsync<WebException>(async () =>
                 await _dispatcher.GetResponseAsync(request, new CookieContainer(), CancellationToken.None).WaitAsync(Deadline));
 
             error.Status.Should().Be(WebExceptionStatus.Timeout);
@@ -211,7 +211,7 @@ namespace NzbDrone.Common.Test.Http
 
             cancellation.Cancel();
 
-            Assert.ThrowsAsync<OperationCanceledException>(async () => await held.WaitAsync(Deadline));
+            await Assert.ThrowsAsync<OperationCanceledException>(async () => await held.WaitAsync(Deadline));
             (await other.WaitAsync(Deadline)).Content.Should().Be("ok");
             _dispatcher.Clients.Should().ContainSingle("both requests share the cached client");
         }
@@ -222,7 +222,7 @@ namespace NzbDrone.Common.Test.Http
             await using var server = new LoopbackServer((stream, path, stop) =>
                 Write(stream, "HTTP/1.1 200 OK\r\nContent-Length: 12\r\nConnection: close\r\n\r\nabc", stop));
 
-            var error = Assert.ThrowsAsync<WebException>(async () =>
+            var error = await Assert.ThrowsAsync<WebException>(async () =>
                 await _dispatcher.GetResponseAsync(new HttpRequest(server.Url), new CookieContainer()).WaitAsync(Deadline));
 
             error.Status.Should().Be(WebExceptionStatus.ReceiveFailure);
@@ -235,7 +235,7 @@ namespace NzbDrone.Common.Test.Http
             await using var server = new LoopbackServer((stream, path, stop) =>
                 Write(stream, $"HTTP/1.1 200 OK\r\n{framing}Connection: close\r\n\r\n{body}", stop));
 
-            Assert.ThrowsAsync<HttpResponseSizeLimitException>(async () =>
+            await Assert.ThrowsAsync<HttpResponseSizeLimitException>(async () =>
                 await _dispatcher.GetResponseAsync(new HttpRequest(server.Url) { MaxBufferedResponseBytes = 10 }, new CookieContainer()).WaitAsync(Deadline));
         }
 
@@ -266,7 +266,7 @@ namespace NzbDrone.Common.Test.Http
                 await stream.WriteAsync(payload, stop);
             });
 
-            Assert.ThrowsAsync<HttpResponseSizeLimitException>(async () =>
+            await Assert.ThrowsAsync<HttpResponseSizeLimitException>(async () =>
                 await _dispatcher.GetResponseAsync(new HttpRequest(server.Url) { MaxBufferedResponseBytes = 128 }, new CookieContainer()).WaitAsync(Deadline));
         }
 

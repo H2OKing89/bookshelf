@@ -8,7 +8,6 @@ namespace NzbDrone.Integration.Test.ApiTests
     public class DownloadClientFixture : IntegrationTest
     {
         [Test]
-        [Order(0)]
         public void add_downloadclient_without_name_should_return_badrequest()
         {
             EnsureNoDownloadClient();
@@ -23,7 +22,6 @@ namespace NzbDrone.Integration.Test.ApiTests
         }
 
         [Test]
-        [Order(0)]
         public void add_downloadclient_without_nzbfolder_should_return_badrequest()
         {
             EnsureNoDownloadClient();
@@ -38,7 +36,6 @@ namespace NzbDrone.Integration.Test.ApiTests
         }
 
         [Test]
-        [Order(0)]
         public void add_downloadclient_without_watchfolder_should_return_badrequest()
         {
             EnsureNoDownloadClient();
@@ -53,7 +50,6 @@ namespace NzbDrone.Integration.Test.ApiTests
         }
 
         [Test]
-        [Order(1)]
         public void add_downloadclient()
         {
             EnsureNoDownloadClient();
@@ -71,7 +67,6 @@ namespace NzbDrone.Integration.Test.ApiTests
         }
 
         [Test]
-        [Order(2)]
         public void get_all_downloadclients()
         {
             EnsureDownloadClient();
@@ -82,7 +77,6 @@ namespace NzbDrone.Integration.Test.ApiTests
         }
 
         [Test]
-        [Order(2)]
         public void get_downloadclient_by_id()
         {
             var client = EnsureDownloadClient();
@@ -99,7 +93,6 @@ namespace NzbDrone.Integration.Test.ApiTests
         }
 
         [Test]
-        [Order(3)]
         public void update_downloadclient()
         {
             EnsureNoDownloadClient();
@@ -112,7 +105,6 @@ namespace NzbDrone.Integration.Test.ApiTests
         }
 
         [Test]
-        [Order(4)]
         public void delete_downloadclient()
         {
             var client = EnsureDownloadClient();

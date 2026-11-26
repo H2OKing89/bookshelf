@@ -187,7 +187,7 @@ namespace NzbDrone.Common.Test.Http
             }
             else
             {
-                Assert.ThrowsAsync<HttpRequestException>(async () => await dispatcher.GetResponseAsync(request, new CookieContainer()).WaitAsync(Deadline));
+                await Assert.ThrowsAsync<HttpRequestException>(async () => await dispatcher.GetResponseAsync(request, new CookieContainer()).WaitAsync(Deadline));
             }
 
             observedErrors.Should().NotBeNull();

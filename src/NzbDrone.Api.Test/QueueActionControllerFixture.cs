@@ -15,7 +15,7 @@ namespace NzbDrone.Api.Test
     public class QueueActionControllerFixture
     {
         [Test]
-        public void should_reject_a_stale_bulk_grab_before_sending_any_downloads()
+        public async Task should_reject_a_stale_bulk_grab_before_sending_any_downloads()
         {
             var pending = new Mock<IPendingReleaseService>();
             var downloads = new Mock<IDownloadService>();
@@ -23,7 +23,7 @@ namespace NzbDrone.Api.Test
             pending.Setup(service => service.FindPendingQueueItem(13))
                 .Returns(new NzbDrone.Core.Queue.Queue { Id = 13, RemoteBook = new RemoteBook() });
 
-            Assert.ThrowsAsync<NotFoundException>(async () =>
+            await Assert.ThrowsAsync<NotFoundException>(async () =>
                 await controller.Grab(new QueueBulkResource { Ids = new List<int> { 13, 29 } }));
 
             downloads.VerifyNoOtherCalls();

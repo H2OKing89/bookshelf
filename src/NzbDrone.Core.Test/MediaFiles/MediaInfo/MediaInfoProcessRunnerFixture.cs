@@ -39,7 +39,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaInfo
                 Assert.That(File.Exists(input + ".pid"), Is.True);
                 var pid = int.Parse(File.ReadAllText(input + ".pid"));
                 cancellation.Cancel();
-                Assert.CatchAsync<OperationCanceledException>(async () => await reading.WaitAsync(TimeSpan.FromSeconds(5)));
+                await Assert.CatchAsync<OperationCanceledException>(async () => await reading.WaitAsync(TimeSpan.FromSeconds(5)));
                 Assert.Throws<ArgumentException>(() => Process.GetProcessById(pid));
             }
             finally

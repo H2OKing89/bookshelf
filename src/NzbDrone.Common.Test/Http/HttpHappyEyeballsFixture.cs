@@ -25,20 +25,20 @@ namespace NzbDrone.Common.Test.Http
         }
 
         [Test]
-        public void null_endpoint_should_be_rejected_without_dns()
+        public async Task null_endpoint_should_be_rejected_without_dns()
         {
-            Assert.ThrowsAsync<ArgumentNullException>(async () => await _connector.Connect(null));
+            await Assert.ThrowsAsync<ArgumentNullException>(async () => await _connector.Connect(null));
 
             _connector.Resolutions.Should().BeEmpty();
         }
 
         [Test]
-        public void precancellation_should_stop_before_dns()
+        public async Task precancellation_should_stop_before_dns()
         {
             using var cancellation = new CancellationTokenSource();
             cancellation.Cancel();
 
-            var error = Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            var error = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
                 await _connector.Connect(EndPoint(), cancellation.Token));
 
             error.CancellationToken.Should().Be(cancellation.Token);
@@ -62,14 +62,14 @@ namespace NzbDrone.Common.Test.Http
 
             cancellation.Cancel();
 
-            var error = Assert.ThrowsAsync<OperationCanceledException>(async () => await pending.WaitAsync(Deadline));
+            var error = await Assert.ThrowsAsync<OperationCanceledException>(async () => await pending.WaitAsync(Deadline));
             error.CancellationToken.Should().Be(cancellation.Token);
             _connector.Attempts.Should().BeEmpty();
         }
 
         [TestCase(false)]
         [TestCase(true)]
-        public void cancellation_at_dns_completion_should_prevent_dialing_and_win_a_dns_failure(bool failure)
+        public async Task cancellation_at_dns_completion_should_prevent_dialing_and_win_a_dns_failure(bool failure)
         {
             using var cancellation = new CancellationTokenSource();
             _connector.Resolve = (endPoint, token) =>
@@ -80,7 +80,7 @@ namespace NzbDrone.Common.Test.Http
                     : Task.FromResult(new[] { IPAddress.Loopback });
             };
 
-            var error = Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            var error = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
                 await _connector.Connect(EndPoint(), cancellation.Token));
 
             error.CancellationToken.Should().Be(cancellation.Token);
@@ -88,98 +88,98 @@ namespace NzbDrone.Common.Test.Http
         }
 
         [Test]
-        public void a_dns_failure_should_not_start_a_socket_attempt()
+        public async Task a_dns_failure_should_not_start_a_socket_attempt()
         {
             var failure = new SocketException((int)SocketError.HostNotFound);
             _connector.Resolve = (endPoint, token) => Task.FromException<IPAddress[]>(failure);
 
-            var error = Assert.ThrowsAsync<SocketException>(async () => await _connector.Connect(EndPoint()));
+            var error = await Assert.ThrowsAsync<SocketException>(async () => await _connector.Connect(EndPoint()));
 
             error.Should().BeSameAs(failure);
             _connector.Attempts.Should().BeEmpty();
         }
 
         [Test]
-        public void an_empty_dns_answer_should_be_a_name_resolution_failure()
+        public async Task an_empty_dns_answer_should_be_a_name_resolution_failure()
         {
             _connector.Resolve = (endPoint, token) => Task.FromResult(Array.Empty<IPAddress>());
 
-            var error = Assert.ThrowsAsync<WebException>(async () => await _connector.Connect(EndPoint()));
+            var error = await Assert.ThrowsAsync<WebException>(async () => await _connector.Connect(EndPoint()));
 
             error.Status.Should().Be(WebExceptionStatus.NameResolutionFailure);
             _connector.Attempts.Should().BeEmpty();
         }
 
         [Test]
-        public void an_ipv4_only_platform_should_not_dial_ipv6_addresses()
+        public async Task an_ipv4_only_platform_should_not_dial_ipv6_addresses()
         {
             _connector.Supported.Remove(AddressFamily.InterNetworkV6);
             _connector.Resolve = (endPoint, token) => Task.FromResult(new[] { IPAddress.IPv6Loopback, IPAddress.Loopback });
 
-            Assert.ThrowsAsync<AggregateException>(async () => await _connector.Connect(EndPoint()));
+            await Assert.ThrowsAsync<AggregateException>(async () => await _connector.Connect(EndPoint()));
 
             _connector.Attempts.Should().Equal(IPAddress.Loopback);
         }
 
         [Test]
-        public void an_ipv6_only_platform_should_not_dial_ipv4_addresses()
+        public async Task an_ipv6_only_platform_should_not_dial_ipv4_addresses()
         {
             _connector.Supported.Remove(AddressFamily.InterNetwork);
             _connector.Resolve = (endPoint, token) => Task.FromResult(new[] { IPAddress.Loopback, IPAddress.IPv6Loopback });
 
-            Assert.ThrowsAsync<AggregateException>(async () => await _connector.Connect(EndPoint()));
+            await Assert.ThrowsAsync<AggregateException>(async () => await _connector.Connect(EndPoint()));
 
             _connector.Attempts.Should().Equal(IPAddress.IPv6Loopback);
         }
 
         [TestCase(AddressFamily.InterNetwork)]
         [TestCase(AddressFamily.InterNetworkV6)]
-        public void an_explicit_endpoint_family_should_filter_the_dns_answer(AddressFamily family)
+        public async Task an_explicit_endpoint_family_should_filter_the_dns_answer(AddressFamily family)
         {
             var endPoint = new DnsEndPoint("synthetic.invalid", 80, family);
             _connector.Resolve = (target, token) => Task.FromResult(new[] { IPAddress.Loopback, IPAddress.IPv6Loopback });
 
-            Assert.ThrowsAsync<AggregateException>(async () => await _connector.Connect(endPoint));
+            await Assert.ThrowsAsync<AggregateException>(async () => await _connector.Connect(endPoint));
 
             _connector.Resolutions.Should().ContainSingle().Which.Should().BeSameAs(endPoint);
             _connector.Attempts.Should().Equal(family == AddressFamily.InterNetwork ? IPAddress.Loopback : IPAddress.IPv6Loopback);
         }
 
         [Test]
-        public void unsupported_dns_answers_should_fail_without_allocating_a_socket()
+        public async Task unsupported_dns_answers_should_fail_without_allocating_a_socket()
         {
             _connector.Supported.Clear();
 
-            var error = Assert.ThrowsAsync<SocketException>(async () => await _connector.Connect(EndPoint()));
+            var error = await Assert.ThrowsAsync<SocketException>(async () => await _connector.Connect(EndPoint()));
 
             error.SocketErrorCode.Should().Be(SocketError.AddressFamilyNotSupported);
             _connector.Attempts.Should().BeEmpty();
         }
 
         [Test]
-        public void duplicate_dns_answers_should_not_repeat_failed_connections()
+        public async Task duplicate_dns_answers_should_not_repeat_failed_connections()
         {
             _connector.Resolve = (endPoint, token) => Task.FromResult(new[] { IPAddress.Loopback, IPAddress.Loopback });
 
-            var error = Assert.ThrowsAsync<AggregateException>(async () => await _connector.Connect(EndPoint()));
+            var error = await Assert.ThrowsAsync<AggregateException>(async () => await _connector.Connect(EndPoint()));
 
             _connector.Attempts.Should().Equal(IPAddress.Loopback);
             error.InnerExceptions.Should().ContainSingle();
         }
 
         [Test]
-        public void stream_construction_failure_should_close_the_selected_socket()
+        public async Task stream_construction_failure_should_close_the_selected_socket()
         {
             using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _connector.Dial = (address, endPoint, token) => Task.FromResult(socket);
 
-            Assert.ThrowsAsync<IOException>(async () => await _connector.Connect(EndPoint()));
+            await Assert.ThrowsAsync<IOException>(async () => await _connector.Connect(EndPoint()));
 
             socket.SafeHandle.IsClosed.Should().BeTrue();
         }
 
         [Test]
-        public void cancellation_at_socket_completion_should_dispose_the_late_socket()
+        public async Task cancellation_at_socket_completion_should_dispose_the_late_socket()
         {
             using var cancellation = new CancellationTokenSource();
             using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -189,7 +189,7 @@ namespace NzbDrone.Common.Test.Http
                 return Task.FromResult(socket);
             };
 
-            var error = Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            var error = await Assert.ThrowsAsync<OperationCanceledException>(async () =>
                 await _connector.Connect(EndPoint(), cancellation.Token));
 
             error.CancellationToken.Should().Be(cancellation.Token);

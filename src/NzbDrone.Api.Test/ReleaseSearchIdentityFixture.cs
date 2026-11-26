@@ -89,11 +89,11 @@ namespace NzbDrone.Api.Test
             BookSearch(11, Remote(author, Book(11, author)));
             var result = (await Controller().GetReleases(11, null)).Single();
 
-            AssertRejected(Grab(result, bookId: 12), HttpStatusCode.Conflict);
-            AssertRejected(Grab(result, authorId: 7), HttpStatusCode.Conflict);
+            await AssertRejected(Grab(result, bookId: 12), HttpStatusCode.Conflict);
+            await AssertRejected(Grab(result, authorId: 7), HttpStatusCode.Conflict);
             var wrongIndexer = Grab(result, bookId: 11);
             wrongIndexer.IndexerId = 2;
-            AssertRejected(wrongIndexer, HttpStatusCode.NotFound);
+            await AssertRejected(wrongIndexer, HttpStatusCode.NotFound);
             _grabbed.Should().BeEmpty();
         }
 
@@ -107,8 +107,8 @@ namespace NzbDrone.Api.Test
             var result = (await Controller().GetReleases(null, 7)).Single();
             await Controller().GetReleases(null, 8);
 
-            AssertRejected(Grab(result, useIdentity: false), HttpStatusCode.Conflict);
-            AssertRejected(Grab(result, authorId: 9, useIdentity: false), HttpStatusCode.Conflict);
+            await AssertRejected(Grab(result, useIdentity: false), HttpStatusCode.Conflict);
+            await AssertRejected(Grab(result, authorId: 9, useIdentity: false), HttpStatusCode.Conflict);
             await Controller().DownloadRelease(Grab(result, authorId: 7, useIdentity: false));
             await Controller().DownloadRelease(Grab(result, authorId: 8, useIdentity: false));
 
@@ -124,7 +124,7 @@ namespace NzbDrone.Api.Test
             AuthorSearch(7, Remote(author, Book(12, author)));
             var second = (await Controller().GetReleases(null, 7)).Single();
 
-            AssertRejected(Grab(first, authorId: 7, useIdentity: false), HttpStatusCode.Conflict);
+            await AssertRejected(Grab(first, authorId: 7, useIdentity: false), HttpStatusCode.Conflict);
             await Controller().DownloadRelease(Grab(first, authorId: 7));
             await Controller().DownloadRelease(Grab(second, authorId: 7));
             _grabbed.Select(book => book.Books.Single().Id).Should().Equal(11, 12);
@@ -152,7 +152,7 @@ namespace NzbDrone.Api.Test
             _cache.Caches.Single().Clear();
             await Controller().GetReleases(11, null);
 
-            AssertRejected(Grab(result, bookId: 11), HttpStatusCode.NotFound);
+            await AssertRejected(Grab(result, bookId: 11), HttpStatusCode.NotFound);
             _grabbed.Should().BeEmpty();
         }
 
@@ -218,7 +218,7 @@ namespace NzbDrone.Api.Test
             BookSearch(11, Remote(author, Book(12, author)));
             var result = (await Controller().GetReleases(11, null)).Single();
 
-            AssertRejected(Grab(result), HttpStatusCode.Conflict);
+            await AssertRejected(Grab(result), HttpStatusCode.Conflict);
             _grabbed.Should().BeEmpty();
         }
 
@@ -294,9 +294,9 @@ namespace NzbDrone.Api.Test
             };
         }
 
-        private void AssertRejected(ReleaseResource request, HttpStatusCode status)
+        private async Task AssertRejected(ReleaseResource request, HttpStatusCode status)
         {
-            var error = Assert.ThrowsAsync<NzbDroneClientException>(async () => await Controller().DownloadRelease(request));
+            var error = await Assert.ThrowsAsync<NzbDroneClientException>(async () => await Controller().DownloadRelease(request));
             error.StatusCode.Should().Be(status);
         }
     }

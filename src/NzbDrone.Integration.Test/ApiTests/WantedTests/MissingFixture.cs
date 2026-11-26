@@ -24,7 +24,6 @@ namespace NzbDrone.Integration.Test.ApiTests.WantedTests
         }
 
         [Test]
-        [Order(0)]
         public void missing_should_be_empty()
         {
             EnsureNoAuthor("14586394", "Andrew Hunter Murray");
@@ -35,7 +34,6 @@ namespace NzbDrone.Integration.Test.ApiTests.WantedTests
         }
 
         [Test]
-        [Order(1)]
         public void missing_should_have_monitored_items()
         {
             EnsureAuthor("14586394", "43765115", "Andrew Hunter Murray", true);
@@ -46,7 +44,6 @@ namespace NzbDrone.Integration.Test.ApiTests.WantedTests
         }
 
         [Test]
-        [Order(1)]
         public void missing_should_have_author()
         {
             EnsureAuthor("14586394", "43765115", "Andrew Hunter Murray", true);
@@ -58,7 +55,6 @@ namespace NzbDrone.Integration.Test.ApiTests.WantedTests
         }
 
         [Test]
-        [Order(1)]
         public void missing_should_not_have_author()
         {
             EnsureAuthor("14586394", "43765115", "Andrew Hunter Murray", true);
@@ -69,7 +65,6 @@ namespace NzbDrone.Integration.Test.ApiTests.WantedTests
         }
 
         [Test]
-        [Order(1)]
         public void missing_should_not_have_unmonitored_items()
         {
             EnsureAuthor("14586394", "43765115", "Andrew Hunter Murray", false);
@@ -80,7 +75,6 @@ namespace NzbDrone.Integration.Test.ApiTests.WantedTests
         }
 
         [Test]
-        [Order(2)]
         public void missing_should_have_unmonitored_items()
         {
             EnsureAuthor("14586394", "43765115", "Andrew Hunter Murray", false);

@@ -15,13 +15,13 @@ namespace NzbDrone.Common.Test.TPLTests
     {
         [TestCase(null)]
         [TestCase("sub")]
-        public void pre_cancelled_wait_should_not_reserve_a_rate_limit_slot(string subKey)
+        public async Task pre_cancelled_wait_should_not_reserve_a_rate_limit_slot(string subKey)
         {
             using var cancellation = new CancellationTokenSource();
             cancellation.Cancel();
             var store = Store();
 
-            Assert.CatchAsync<OperationCanceledException>(async () => await Subject.WaitAndPulseAsync("unused", subKey, TimeSpan.FromMinutes(1), cancellation.Token));
+            await Assert.CatchAsync<OperationCanceledException>(async () => await Subject.WaitAndPulseAsync("unused", subKey, TimeSpan.FromMinutes(1), cancellation.Token));
 
             store.Should().BeEmpty();
         }
@@ -37,13 +37,13 @@ namespace NzbDrone.Common.Test.TPLTests
 
             cancellation.Cancel();
 
-            var error = Assert.CatchAsync<OperationCanceledException>(async () => await operation.WaitAsync(TimeSpan.FromSeconds(5)));
+            var error = await Assert.CatchAsync<OperationCanceledException>(async () => await operation.WaitAsync(TimeSpan.FromSeconds(5)));
             error.CancellationToken.Should().Be(cancellation.Token);
             await Subject.WaitAndPulseAsync("unrelated", TimeSpan.FromMinutes(1)).WaitAsync(TimeSpan.FromSeconds(5));
         }
 
         [Test]
-        public void synchronous_rate_limit_wait_should_remain_cancellable_while_waiting()
+        public async Task synchronous_rate_limit_wait_should_remain_cancellable_while_waiting()
         {
             using var cancellation = new CancellationTokenSource();
             var seed = DateTime.UtcNow.AddMinutes(1);
@@ -54,7 +54,7 @@ namespace NzbDrone.Common.Test.TPLTests
 
             cancellation.Cancel();
 
-            Assert.CatchAsync<OperationCanceledException>(async () => await operation.WaitAsync(TimeSpan.FromSeconds(5)));
+            await Assert.CatchAsync<OperationCanceledException>(async () => await operation.WaitAsync(TimeSpan.FromSeconds(5)));
         }
 
         private ConcurrentDictionary<string, DateTime> Store()
