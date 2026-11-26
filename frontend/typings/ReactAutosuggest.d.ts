@@ -1,7 +1,7 @@
 // The locked react-autosuggest library has no declarations. Model the single
 // section API and instance methods that our wrapper actually uses.
 declare module 'react-autosuggest' {
-  import type { ComponentPropsWithRef, Component, FocusEventHandler, InputHTMLAttributes, KeyboardEventHandler, ReactNode, SyntheticEvent } from 'react';
+  import type { Component, ComponentPropsWithRef, FocusEventHandler, InputHTMLAttributes, KeyboardEventHandler, ReactNode, SyntheticEvent } from 'react';
 
   export interface ChangeEvent {
     newValue: string;
