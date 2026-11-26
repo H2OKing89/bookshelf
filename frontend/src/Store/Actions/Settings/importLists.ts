@@ -9,8 +9,10 @@ import createTestAllProvidersHandler from 'Store/Actions/Creators/createTestAllP
 import createTestProviderHandler, { createCancelTestProviderHandler } from 'Store/Actions/Creators/createTestProviderHandler';
 import createSetProviderFieldValueReducer from 'Store/Actions/Creators/Reducers/createSetProviderFieldValueReducer';
 import createSetSettingValueReducer from 'Store/Actions/Creators/Reducers/createSetSettingValueReducer';
+import type { StateRecord } from 'Store/StateTypes';
 import { createThunk } from 'Store/thunks';
 import selectProviderSchema from 'Utilities/State/selectProviderSchema';
+import { createSettingValueAction, type ProviderSchemaSelection } from './settingActions';
 
 //
 // Variables
@@ -39,7 +41,7 @@ export const BULK_DELETE_IMPORT_LISTS = 'settings/importlists/bulkDeleteImportLi
 
 export const fetchImportLists = createThunk(FETCH_IMPORT_LISTS);
 export const fetchImportListSchema = createThunk(FETCH_IMPORT_LIST_SCHEMA);
-export const selectImportListSchema = createAction(SELECT_IMPORT_LIST_SCHEMA);
+export const selectImportListSchema = createAction<ProviderSchemaSelection>(SELECT_IMPORT_LIST_SCHEMA);
 
 export const saveImportList = createThunk(SAVE_IMPORT_LIST);
 export const cancelSaveImportList = createThunk(CANCEL_SAVE_IMPORT_LIST);
@@ -50,19 +52,9 @@ export const testAllImportLists = createThunk(TEST_ALL_IMPORT_LISTS);
 export const bulkEditImportLists = createThunk(BULK_EDIT_IMPORT_LISTS);
 export const bulkDeleteImportLists = createThunk(BULK_DELETE_IMPORT_LISTS);
 
-export const setImportListValue = createAction(SET_IMPORT_LIST_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setImportListValue = createSettingValueAction(SET_IMPORT_LIST_VALUE, section);
 
-export const setImportListFieldValue = createAction(SET_IMPORT_LIST_FIELD_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setImportListFieldValue = createSettingValueAction(SET_IMPORT_LIST_FIELD_VALUE, section);
 
 //
 // Details
@@ -115,7 +107,7 @@ export default {
     [SET_IMPORT_LIST_VALUE]: createSetSettingValueReducer(section),
     [SET_IMPORT_LIST_FIELD_VALUE]: createSetProviderFieldValueReducer(section),
 
-    [SELECT_IMPORT_LIST_SCHEMA]: (state, { payload }) => {
+    [SELECT_IMPORT_LIST_SCHEMA]: (state: StateRecord, { payload }: { payload: unknown }) => {
       return selectProviderSchema(state, section, payload, (selectedSchema) => {
         selectedSchema.enableAutomaticAdd = true;
         selectedSchema.shouldMonitor = 'entireAuthor';

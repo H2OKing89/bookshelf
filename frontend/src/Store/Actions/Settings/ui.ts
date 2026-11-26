@@ -1,8 +1,8 @@
-import { createAction } from 'redux-actions';
 import createFetchHandler from 'Store/Actions/Creators/createFetchHandler';
 import createSaveHandler from 'Store/Actions/Creators/createSaveHandler';
 import createSetSettingValueReducer from 'Store/Actions/Creators/Reducers/createSetSettingValueReducer';
 import { createThunk } from 'Store/thunks';
+import { createSettingValueAction } from './settingActions';
 
 //
 // Variables
@@ -21,12 +21,7 @@ export const SAVE_UI_SETTINGS = 'SAVE_UI_SETTINGS';
 
 export const fetchUISettings = createThunk(FETCH_UI_SETTINGS);
 export const saveUISettings = createThunk(SAVE_UI_SETTINGS);
-export const setUISettingsValue = createAction(SET_UI_SETTINGS_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setUISettingsValue = createSettingValueAction(SET_UI_SETTINGS_VALUE, section);
 
 //
 // Details

@@ -11,10 +11,10 @@ import createTestProviderHandler, { createCancelTestProviderHandler } from 'Stor
 import createSetClientSideCollectionSortReducer from 'Store/Actions/Creators/Reducers/createSetClientSideCollectionSortReducer';
 import createSetProviderFieldValueReducer from 'Store/Actions/Creators/Reducers/createSetProviderFieldValueReducer';
 import createSetSettingValueReducer from 'Store/Actions/Creators/Reducers/createSetSettingValueReducer';
+import type { StateRecord } from 'Store/StateTypes';
 import { createThunk } from 'Store/thunks';
-import getSectionState from 'Utilities/State/getSectionState';
 import selectProviderSchema from 'Utilities/State/selectProviderSchema';
-import updateSectionState from 'Utilities/State/updateSectionState';
+import { type CloneSettingItem, cloneSettingsItem,createSettingValueAction, providerName, type ProviderSchemaSelection, type ProviderSortOptions } from './settingActions';
 
 //
 // Variables
@@ -45,8 +45,8 @@ export const SET_MANAGE_INDEXERS_SORT = 'settings/indexers/setManageIndexersSort
 
 export const fetchIndexers = createThunk(FETCH_INDEXERS);
 export const fetchIndexerSchema = createThunk(FETCH_INDEXER_SCHEMA);
-export const selectIndexerSchema = createAction(SELECT_INDEXER_SCHEMA);
-export const cloneIndexer = createAction(CLONE_INDEXER);
+export const selectIndexerSchema = createAction<ProviderSchemaSelection>(SELECT_INDEXER_SCHEMA);
+export const cloneIndexer = createAction<CloneSettingItem>(CLONE_INDEXER);
 
 export const saveIndexer = createThunk(SAVE_INDEXER);
 export const cancelSaveIndexer = createThunk(CANCEL_SAVE_INDEXER);
@@ -56,21 +56,11 @@ export const cancelTestIndexer = createThunk(CANCEL_TEST_INDEXER);
 export const testAllIndexers = createThunk(TEST_ALL_INDEXERS);
 export const bulkEditIndexers = createThunk(BULK_EDIT_INDEXERS);
 export const bulkDeleteIndexers = createThunk(BULK_DELETE_INDEXERS);
-export const setManageIndexersSort = createAction(SET_MANAGE_INDEXERS_SORT);
+export const setManageIndexersSort = createAction<ProviderSortOptions>(SET_MANAGE_INDEXERS_SORT);
 
-export const setIndexerValue = createAction(SET_INDEXER_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setIndexerValue = createSettingValueAction(SET_INDEXER_VALUE, section);
 
-export const setIndexerFieldValue = createAction(SET_INDEXER_FIELD_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setIndexerFieldValue = createSettingValueAction(SET_INDEXER_FIELD_VALUE, section);
 
 //
 // Details
@@ -100,9 +90,7 @@ export default {
     sortKey: 'name',
     sortDirection: sortDirections.ASCENDING,
     sortPredicates: {
-      name: function(item) {
-        return item.name.toLowerCase();
-      }
+      name: providerName
     }
   },
 
@@ -130,7 +118,7 @@ export default {
     [SET_INDEXER_VALUE]: createSetSettingValueReducer(section),
     [SET_INDEXER_FIELD_VALUE]: createSetProviderFieldValueReducer(section),
 
-    [SELECT_INDEXER_SCHEMA]: (state, { payload }) => {
+    [SELECT_INDEXER_SCHEMA]: (state: StateRecord, { payload }: { payload: unknown }) => {
       return selectProviderSchema(state, section, payload, (selectedSchema) => {
         selectedSchema.enableRss = selectedSchema.supportsRss;
         selectedSchema.enableAutomaticSearch = selectedSchema.supportsSearch;
@@ -140,35 +128,7 @@ export default {
       });
     },
 
-    [CLONE_INDEXER]: function(state, { payload }) {
-      const id = payload.id;
-      const newState = getSectionState(state, section);
-      const item = newState.items.find((i) => i.id === id);
-
-      // Use selectedSchema so `createProviderSettingsSelector` works properly
-      const selectedSchema = { ...item };
-      delete selectedSchema.id;
-      delete selectedSchema.name;
-
-      selectedSchema.fields = selectedSchema.fields.map((field) => {
-        const newField = { ...field };
-
-        if (newField.privacy === 'apiKey' || newField.privacy === 'password') {
-          newField.value = '';
-        }
-
-        return newField;
-      });
-
-      newState.selectedSchema = selectedSchema;
-
-      // Set the name in pendingChanges
-      newState.pendingChanges = {
-        name: `${item.name} - Copy`
-      };
-
-      return updateSectionState(state, section, newState);
-    },
+    [CLONE_INDEXER]: (state: StateRecord, { payload }: { payload: unknown }) => cloneSettingsItem(state, section, payload, true),
 
     [SET_MANAGE_INDEXERS_SORT]: createSetClientSideCollectionSortReducer(section)
 

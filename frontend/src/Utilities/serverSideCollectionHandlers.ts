@@ -7,6 +7,6 @@ const serverSideCollectionHandlers = {
   EXACT_PAGE: 'exactPage',
   SORT: 'sort',
   FILTER: 'filter'
-};
+} as const;
 
 export default serverSideCollectionHandlers;

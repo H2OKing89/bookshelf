@@ -4,9 +4,9 @@ import createFetchSchemaHandler from 'Store/Actions/Creators/createFetchSchemaHa
 import createRemoveItemHandler from 'Store/Actions/Creators/createRemoveItemHandler';
 import createSaveProviderHandler from 'Store/Actions/Creators/createSaveProviderHandler';
 import createSetSettingValueReducer from 'Store/Actions/Creators/Reducers/createSetSettingValueReducer';
+import type { StateRecord } from 'Store/StateTypes';
 import { createThunk } from 'Store/thunks';
-import getSectionState from 'Utilities/State/getSectionState';
-import updateSectionState from 'Utilities/State/updateSectionState';
+import { type CloneSettingItem, cloneSettingsItem,createSettingValueAction } from './settingActions';
 
 //
 // Variables
@@ -31,14 +31,9 @@ export const fetchQualityProfileSchema = createThunk(FETCH_QUALITY_PROFILE_SCHEM
 export const saveQualityProfile = createThunk(SAVE_QUALITY_PROFILE);
 export const deleteQualityProfile = createThunk(DELETE_QUALITY_PROFILE);
 
-export const setQualityProfileValue = createAction(SET_QUALITY_PROFILE_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setQualityProfileValue = createSettingValueAction(SET_QUALITY_PROFILE_VALUE, section);
 
-export const cloneQualityProfile = createAction(CLONE_QUALITY_PROFILE);
+export const cloneQualityProfile = createAction<CloneSettingItem>(CLONE_QUALITY_PROFILE);
 
 //
 // Details
@@ -80,18 +75,7 @@ export default {
   reducers: {
     [SET_QUALITY_PROFILE_VALUE]: createSetSettingValueReducer(section),
 
-    [CLONE_QUALITY_PROFILE]: function(state, { payload }) {
-      const id = payload.id;
-      const newState = getSectionState(state, section);
-      const item = newState.items.find((i) => i.id === id);
-      const pendingChanges = { ...item, id: 0 };
-      delete pendingChanges.id;
-
-      pendingChanges.name = `${pendingChanges.name} - Copy`;
-      newState.pendingChanges = pendingChanges;
-
-      return updateSectionState(state, section, newState);
-    }
+    [CLONE_QUALITY_PROFILE]: (state: StateRecord, { payload }: { payload: unknown }) => cloneSettingsItem(state, section, payload)
   }
 
 };

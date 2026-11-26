@@ -6,8 +6,10 @@ import createSaveProviderHandler, { createCancelSaveProviderHandler } from 'Stor
 import createTestProviderHandler, { createCancelTestProviderHandler } from 'Store/Actions/Creators/createTestProviderHandler';
 import createSetProviderFieldValueReducer from 'Store/Actions/Creators/Reducers/createSetProviderFieldValueReducer';
 import createSetSettingValueReducer from 'Store/Actions/Creators/Reducers/createSetSettingValueReducer';
+import type { StateRecord } from 'Store/StateTypes';
 import { createThunk } from 'Store/thunks';
 import selectProviderSchema from 'Utilities/State/selectProviderSchema';
+import { createSettingValueAction, type ProviderSchemaSelection } from './settingActions';
 
 //
 // Variables
@@ -33,7 +35,7 @@ export const CANCEL_TEST_NOTIFICATION = 'settings/notifications/cancelTestNotifi
 
 export const fetchNotifications = createThunk(FETCH_NOTIFICATIONS);
 export const fetchNotificationSchema = createThunk(FETCH_NOTIFICATION_SCHEMA);
-export const selectNotificationSchema = createAction(SELECT_NOTIFICATION_SCHEMA);
+export const selectNotificationSchema = createAction<ProviderSchemaSelection>(SELECT_NOTIFICATION_SCHEMA);
 
 export const saveNotification = createThunk(SAVE_NOTIFICATION);
 export const cancelSaveNotification = createThunk(CANCEL_SAVE_NOTIFICATION);
@@ -41,19 +43,9 @@ export const deleteNotification = createThunk(DELETE_NOTIFICATION);
 export const testNotification = createThunk(TEST_NOTIFICATION);
 export const cancelTestNotification = createThunk(CANCEL_TEST_NOTIFICATION);
 
-export const setNotificationValue = createAction(SET_NOTIFICATION_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setNotificationValue = createSettingValueAction(SET_NOTIFICATION_VALUE, section);
 
-export const setNotificationFieldValue = createAction(SET_NOTIFICATION_FIELD_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setNotificationFieldValue = createSettingValueAction(SET_NOTIFICATION_FIELD_VALUE, section);
 
 //
 // Details
@@ -100,7 +92,7 @@ export default {
     [SET_NOTIFICATION_VALUE]: createSetSettingValueReducer(section),
     [SET_NOTIFICATION_FIELD_VALUE]: createSetProviderFieldValueReducer(section),
 
-    [SELECT_NOTIFICATION_SCHEMA]: (state, { payload }) => {
+    [SELECT_NOTIFICATION_SCHEMA]: (state: StateRecord, { payload }: { payload: unknown }) => {
       return selectProviderSchema(state, section, payload, (selectedSchema) => {
         selectedSchema.onGrab = selectedSchema.supportsOnGrab;
         selectedSchema.onReleaseImport = selectedSchema.supportsOnReleaseImport;

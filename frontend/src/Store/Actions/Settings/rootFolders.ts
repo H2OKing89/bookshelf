@@ -1,4 +1,3 @@
-import { createAction } from 'redux-actions';
 import createFetchHandler from 'Store/Actions/Creators/createFetchHandler';
 import createRemoveItemHandler from 'Store/Actions/Creators/createRemoveItemHandler';
 import createSaveProviderHandler, { createCancelSaveProviderHandler } from 'Store/Actions/Creators/createSaveProviderHandler';
@@ -6,6 +5,7 @@ import createSetSettingValueReducer from 'Store/Actions/Creators/Reducers/create
 import { createThunk } from 'Store/thunks';
 import monitorNewItemsOptions from 'Utilities/Author/monitorNewItemsOptions';
 import monitorOptions from 'Utilities/Author/monitorOptions';
+import { createSettingValueAction } from './settingActions';
 
 //
 // Variables
@@ -29,12 +29,7 @@ export const saveRootFolder = createThunk(SAVE_ROOT_FOLDER);
 export const cancelSaveRootFolder = createThunk(CANCEL_SAVE_ROOT_FOLDER);
 export const deleteRootFolder = createThunk(DELETE_ROOT_FOLDER);
 
-export const setRootFolderValue = createAction(SET_ROOT_FOLDER_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setRootFolderValue = createSettingValueAction(SET_ROOT_FOLDER_VALUE, section);
 
 //
 // Details

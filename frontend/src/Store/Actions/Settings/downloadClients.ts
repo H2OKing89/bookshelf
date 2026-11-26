@@ -11,8 +11,10 @@ import createTestProviderHandler, { createCancelTestProviderHandler } from 'Stor
 import createSetClientSideCollectionSortReducer from 'Store/Actions/Creators/Reducers/createSetClientSideCollectionSortReducer';
 import createSetProviderFieldValueReducer from 'Store/Actions/Creators/Reducers/createSetProviderFieldValueReducer';
 import createSetSettingValueReducer from 'Store/Actions/Creators/Reducers/createSetSettingValueReducer';
+import type { StateRecord } from 'Store/StateTypes';
 import { createThunk } from 'Store/thunks';
 import selectProviderSchema from 'Utilities/State/selectProviderSchema';
+import { createSettingValueAction, providerName,type ProviderSchemaSelection, type ProviderSortOptions } from './settingActions';
 
 //
 // Variables
@@ -42,7 +44,7 @@ export const SET_MANAGE_DOWNLOAD_CLIENTS_SORT = 'settings/downloadClients/setMan
 
 export const fetchDownloadClients = createThunk(FETCH_DOWNLOAD_CLIENTS);
 export const fetchDownloadClientSchema = createThunk(FETCH_DOWNLOAD_CLIENT_SCHEMA);
-export const selectDownloadClientSchema = createAction(SELECT_DOWNLOAD_CLIENT_SCHEMA);
+export const selectDownloadClientSchema = createAction<ProviderSchemaSelection>(SELECT_DOWNLOAD_CLIENT_SCHEMA);
 
 export const saveDownloadClient = createThunk(SAVE_DOWNLOAD_CLIENT);
 export const cancelSaveDownloadClient = createThunk(CANCEL_SAVE_DOWNLOAD_CLIENT);
@@ -52,21 +54,11 @@ export const cancelTestDownloadClient = createThunk(CANCEL_TEST_DOWNLOAD_CLIENT)
 export const testAllDownloadClients = createThunk(TEST_ALL_DOWNLOAD_CLIENTS);
 export const bulkEditDownloadClients = createThunk(BULK_EDIT_DOWNLOAD_CLIENTS);
 export const bulkDeleteDownloadClients = createThunk(BULK_DELETE_DOWNLOAD_CLIENTS);
-export const setManageDownloadClientsSort = createAction(SET_MANAGE_DOWNLOAD_CLIENTS_SORT);
+export const setManageDownloadClientsSort = createAction<ProviderSortOptions>(SET_MANAGE_DOWNLOAD_CLIENTS_SORT);
 
-export const setDownloadClientValue = createAction(SET_DOWNLOAD_CLIENT_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setDownloadClientValue = createSettingValueAction(SET_DOWNLOAD_CLIENT_VALUE, section);
 
-export const setDownloadClientFieldValue = createAction(SET_DOWNLOAD_CLIENT_FIELD_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setDownloadClientFieldValue = createSettingValueAction(SET_DOWNLOAD_CLIENT_FIELD_VALUE, section);
 
 //
 // Details
@@ -96,9 +88,7 @@ export default {
     sortKey: 'name',
     sortDirection: sortDirections.ASCENDING,
     sortPredicates: {
-      name: function(item) {
-        return item.name.toLowerCase();
-      }
+      name: providerName
     }
   },
 
@@ -126,7 +116,7 @@ export default {
     [SET_DOWNLOAD_CLIENT_VALUE]: createSetSettingValueReducer(section),
     [SET_DOWNLOAD_CLIENT_FIELD_VALUE]: createSetProviderFieldValueReducer(section),
 
-    [SELECT_DOWNLOAD_CLIENT_SCHEMA]: (state, { payload }) => {
+    [SELECT_DOWNLOAD_CLIENT_SCHEMA]: (state: StateRecord, { payload }: { payload: unknown }) => {
       return selectProviderSchema(state, section, payload, (selectedSchema) => {
         selectedSchema.enable = true;
 

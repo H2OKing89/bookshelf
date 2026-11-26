@@ -1,9 +1,9 @@
-import { createAction } from 'redux-actions';
 import createFetchHandler from 'Store/Actions/Creators/createFetchHandler';
 import createSaveProviderHandler from 'Store/Actions/Creators/createSaveProviderHandler';
 import createSetProviderFieldValueReducer from 'Store/Actions/Creators/Reducers/createSetProviderFieldValueReducer';
 import createSetSettingValueReducer from 'Store/Actions/Creators/Reducers/createSetSettingValueReducer';
 import { createThunk } from 'Store/thunks';
+import { createSettingValueAction } from './settingActions';
 
 //
 // Variables
@@ -24,19 +24,9 @@ export const SAVE_METADATA = 'settings/metadata/saveMetadata';
 export const fetchMetadata = createThunk(FETCH_METADATA);
 export const saveMetadata = createThunk(SAVE_METADATA);
 
-export const setMetadataValue = createAction(SET_METADATA_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setMetadataValue = createSettingValueAction(SET_METADATA_VALUE, section);
 
-export const setMetadataFieldValue = createAction(SET_METADATA_FIELD_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setMetadataFieldValue = createSettingValueAction(SET_METADATA_FIELD_VALUE, section);
 
 //
 // Details

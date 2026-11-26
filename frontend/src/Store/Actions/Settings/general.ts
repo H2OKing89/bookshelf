@@ -1,8 +1,8 @@
-import { createAction } from 'redux-actions';
 import createFetchHandler from 'Store/Actions/Creators/createFetchHandler';
 import createSaveHandler from 'Store/Actions/Creators/createSaveHandler';
 import createSetSettingValueReducer from 'Store/Actions/Creators/Reducers/createSetSettingValueReducer';
 import { createThunk } from 'Store/thunks';
+import { createSettingValueAction } from './settingActions';
 
 //
 // Variables
@@ -21,12 +21,7 @@ export const SAVE_GENERAL_SETTINGS = 'settings/general/saveGeneralSettings';
 
 export const fetchGeneralSettings = createThunk(FETCH_GENERAL_SETTINGS);
 export const saveGeneralSettings = createThunk(SAVE_GENERAL_SETTINGS);
-export const setGeneralSettingsValue = createAction(SET_GENERAL_SETTINGS_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setGeneralSettingsValue = createSettingValueAction(SET_GENERAL_SETTINGS_VALUE, section);
 
 //
 // Details

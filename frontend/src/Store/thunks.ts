@@ -1,6 +1,6 @@
 import { LegacyDispatch, LegacyRootState, LegacyThunk, StateRecord } from './StateTypes';
 
-type ThunkHandler = (
+export type ThunkHandler = (
   getState: () => LegacyRootState,
   payload: StateRecord,
   dispatch: LegacyDispatch

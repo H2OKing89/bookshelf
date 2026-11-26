@@ -215,23 +215,12 @@ export const setAuthorValue = createAction(SET_AUTHOR_VALUE, (payload) => {
 });
 
 //
-// Helpers
-
-function getSaveAjaxOptions({ ajaxOptions, payload }) {
-  if (payload.moveFolder) {
-    ajaxOptions.url = `${ajaxOptions.url}?moveFolder=true`;
-  }
-
-  return ajaxOptions;
-}
-
-//
 // Action Handlers
 
 export const actionHandlers = handleThunks({
 
   [FETCH_AUTHOR]: createFetchHandler(section, '/author', libraryResponseParser(parseLibraryAuthor)),
-  [SAVE_AUTHOR]: createSaveProviderHandler(section, '/author', { getAjaxOptions: getSaveAjaxOptions }),
+  [SAVE_AUTHOR]: createSaveProviderHandler(section, '/author'),
   [DELETE_AUTHOR]: createRemoveItemHandler(section, '/author'),
 
   [TOGGLE_AUTHOR_MONITORED]: (getState, payload, dispatch) => {
