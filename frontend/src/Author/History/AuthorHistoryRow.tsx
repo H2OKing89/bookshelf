@@ -1,9 +1,10 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import HistoryDetailsConnector from 'Activity/History/Details/HistoryDetailsConnector';
 import HistoryEventTypeCell from 'Activity/History/HistoryEventTypeCell';
+import type Author from 'Author/Author';
 import BookFormats from 'Book/BookFormats';
 import BookQuality from 'Book/BookQuality';
+import type { LibraryBook } from 'Book/LibraryModels';
 import Icon from 'Components/Icon';
 import IconButton from 'Components/Link/IconButton';
 import ConfirmModal from 'Components/Modal/ConfirmModal';
@@ -14,9 +15,10 @@ import Popover from 'Components/Tooltip/Popover';
 import { icons, kinds, tooltipPositions } from 'Helpers/Props';
 import formatCustomFormatScore from 'Utilities/Number/formatCustomFormatScore';
 import translate from 'Utilities/String/translate';
+import type { AuthorHistoryItem } from './authorHistoryState';
 import styles from './AuthorHistoryRow.css';
 
-function getTitle(eventType) {
+function getTitle(eventType: string) {
   switch (eventType) {
     case 'grabbed':
       return 'Grabbed';
@@ -39,13 +41,20 @@ function getTitle(eventType) {
   }
 }
 
-class AuthorHistoryRow extends Component {
+interface Props extends AuthorHistoryItem {
+  fullAuthor: boolean;
+  author?: Author;
+  book?: LibraryBook;
+  onMarkAsFailedPress: (id: number) => void;
+}
+
+class AuthorHistoryRow extends Component<Props, { isMarkAsFailedModalOpen: boolean }> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: Props) {
+    super(props);
 
     this.state = {
       isMarkAsFailedModalOpen: false
@@ -95,8 +104,8 @@ class AuthorHistoryRow extends Component {
           data={data}
         />
 
-        <TableRowCell key={name}>
-          {book.title}
+        <TableRowCell>
+          {book?.title ?? translate('Unknown')}
         </TableRowCell>
 
         <TableRowCell className={styles.sourceTitle}>
@@ -155,7 +164,7 @@ class AuthorHistoryRow extends Component {
           isOpen={isMarkAsFailedModalOpen}
           kind={kinds.DANGER}
           title={translate('MarkAsFailed')}
-          message={translate('MarkAsFailedMessageText', [sourceTitle])}
+          message={translate('MarkAsFailedMessageText', { 0: sourceTitle })}
           confirmLabel={translate('MarkAsFailed')}
           onConfirm={this.onConfirmMarkAsFailed}
           onCancel={this.onMarkAsFailedModalClose}
@@ -164,21 +173,5 @@ class AuthorHistoryRow extends Component {
     );
   }
 }
-
-AuthorHistoryRow.propTypes = {
-  id: PropTypes.number.isRequired,
-  eventType: PropTypes.string.isRequired,
-  sourceTitle: PropTypes.string.isRequired,
-  quality: PropTypes.object.isRequired,
-  qualityCutoffNotMet: PropTypes.bool.isRequired,
-  customFormats: PropTypes.arrayOf(PropTypes.object),
-  customFormatScore: PropTypes.number.isRequired,
-  date: PropTypes.string.isRequired,
-  data: PropTypes.object.isRequired,
-  fullAuthor: PropTypes.bool.isRequired,
-  author: PropTypes.object.isRequired,
-  book: PropTypes.object.isRequired,
-  onMarkAsFailedPress: PropTypes.func.isRequired
-};
 
 export default AuthorHistoryRow;

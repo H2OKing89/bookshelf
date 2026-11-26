@@ -5,7 +5,7 @@ import { loadFrontendModule } from './helpers/loadFrontendModule.mjs';
 function LoadingIndicator() {}
 function FileDetails() {}
 
-const { default: FileDetailsConnector } = loadFrontendModule('BookFile/FileDetailsConnector.js', {
+const { default: FileDetailsConnector } = loadFrontendModule('BookFile/FileDetailsConnector.tsx', {
   'react-redux': { connect: () => (component) => component },
   'Components/Loading/LoadingIndicator': LoadingIndicator,
   'Store/Actions/bookFileActions': { fetchBookFiles() {} },
@@ -44,7 +44,7 @@ const tableBoundaries = Object.fromEntries([
   'Components/Loading/LoadingIndicator', 'Components/Modal/ConfirmModal',
   'Components/Table/Table', 'Components/Table/TableBody', './BookFileEditorRow'
 ].map((name) => [name, () => null]));
-const { default: BookFileEditorTableContent } = loadFrontendModule('BookFile/Editor/BookFileEditorTableContent.js', {
+const { default: BookFileEditorTableContent } = loadFrontendModule('BookFile/Editor/BookFileEditorTableContent.tsx', {
   ...tableBoundaries,
   'Helpers/Props': { kinds: {} },
   'Utilities/String/translate': (key) => key

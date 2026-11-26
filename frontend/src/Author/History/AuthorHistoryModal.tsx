@@ -1,10 +1,13 @@
-import PropTypes from 'prop-types';
 import Modal from 'Components/Modal/Modal';
 import { sizes } from 'Helpers/Props';
-import AuthorHistoryContentConnector from './AuthorHistoryContentConnector';
-import AuthorHistoryModalContent from './AuthorHistoryModalContent';
+import AuthorHistoryContentConnector, { type AuthorHistoryScope } from './AuthorHistoryContentConnector';
 
-function AuthorHistoryModal(props) {
+interface Props extends AuthorHistoryScope {
+  isOpen: boolean;
+  onModalClose: () => void;
+}
+
+function AuthorHistoryModal(props: Props) {
   const {
     isOpen,
     onModalClose,
@@ -18,17 +21,12 @@ function AuthorHistoryModal(props) {
       onModalClose={onModalClose}
     >
       <AuthorHistoryContentConnector
-        component={AuthorHistoryModalContent}
+        mode="modal"
         {...otherProps}
         onModalClose={onModalClose}
       />
     </Modal>
   );
 }
-
-AuthorHistoryModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onModalClose: PropTypes.func.isRequired
-};
 
 export default AuthorHistoryModal;

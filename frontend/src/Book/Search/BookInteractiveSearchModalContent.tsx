@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+import type { BookId } from 'Book/BookIdentity';
 import Button from 'Components/Link/Button';
 import ModalBody from 'Components/Modal/ModalBody';
 import ModalContent from 'Components/Modal/ModalContent';
@@ -8,7 +8,14 @@ import { scrollDirections } from 'Helpers/Props';
 import InteractiveSearchConnector from 'InteractiveSearch/InteractiveSearchConnector';
 import translate from 'Utilities/String/translate';
 
-function BookInteractiveSearchModalContent(props) {
+interface Props {
+  bookId: BookId | null;
+  bookTitle: string;
+  authorName: string;
+  onModalClose: () => void;
+}
+
+function BookInteractiveSearchModalContent(props: Props) {
   const {
     bookId,
     bookTitle,
@@ -42,12 +49,5 @@ function BookInteractiveSearchModalContent(props) {
     </ModalContent>
   );
 }
-
-BookInteractiveSearchModalContent.propTypes = {
-  bookId: PropTypes.number.isRequired,
-  bookTitle: PropTypes.string.isRequired,
-  authorName: PropTypes.string.isRequired,
-  onModalClose: PropTypes.func.isRequired
-};
 
 export default BookInteractiveSearchModalContent;

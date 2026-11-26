@@ -1,15 +1,12 @@
-import BookFileEditorTableContentConnector from './BookFileEditorTableContentConnector';
+import BookFileEditorTableContentConnector, { type FileEditorScope } from './BookFileEditorTableContentConnector';
 import styles from './BookFileEditorTable.css';
 
-function BookFileEditorTable(props) {
-  const {
-    ...otherProps
-  } = props;
+function BookFileEditorTable(props: FileEditorScope) {
 
   return (
     <div className={styles.container}>
       <BookFileEditorTableContentConnector
-        {...otherProps}
+        {...props}
       />
     </div>
   );

@@ -270,6 +270,15 @@
     "./src/Author/Details/BookRow.tsx",
     "./src/Author/Details/BookRowConnector.tsx",
     "./src/Author/Details/AuthorTagsConnector.tsx",
-    "./src/Book/Details/BookRecordingMetadataConnector.tsx"
+    "./src/Book/Details/BookRecordingMetadataConnector.tsx",
+    "./src/Author/History/*.tsx",
+    "./src/Author/History/authorHistoryState.ts",
+    "./src/Book/BookSearchCell.tsx",
+    "./src/Book/BookSearchCellConnector.tsx",
+    "./src/Book/Search/*.tsx",
+    "./src/BookFile/FileDetailsConnector.tsx",
+    "./src/BookFile/MediaInfoConnector.tsx",
+    "./src/BookFile/Editor/BookFileEditorTable*.tsx",
+    "./src/BookFile/Editor/bookFileEditorState.ts"
   ]
 }

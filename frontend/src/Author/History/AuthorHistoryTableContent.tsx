@@ -1,16 +1,17 @@
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Alert from 'Components/Alert';
 import Icon from 'Components/Icon';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
+import type Column from 'Components/Table/Column';
 import Table from 'Components/Table/Table';
 import TableBody from 'Components/Table/TableBody';
 import { icons, kinds } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
 import AuthorHistoryRowConnector from './AuthorHistoryRowConnector';
+import type { AuthorHistoryViewProps } from './authorHistoryState';
 import styles from './AuthorHistoryTableContent.css';
 
-const columns = [
+const columns: Column[] = [
   {
     name: 'eventType',
     isVisible: true
@@ -56,7 +57,7 @@ const columns = [
   }
 ];
 
-class AuthorHistoryTableContent extends Component {
+class AuthorHistoryTableContent extends Component<AuthorHistoryViewProps> {
 
   //
   // Render
@@ -118,14 +119,5 @@ class AuthorHistoryTableContent extends Component {
     );
   }
 }
-
-AuthorHistoryTableContent.propTypes = {
-  bookId: PropTypes.number,
-  isFetching: PropTypes.bool.isRequired,
-  isPopulated: PropTypes.bool.isRequired,
-  error: PropTypes.object,
-  items: PropTypes.arrayOf(PropTypes.object).isRequired,
-  onMarkAsFailedPress: PropTypes.func.isRequired
-};
 
 export default AuthorHistoryTableContent;

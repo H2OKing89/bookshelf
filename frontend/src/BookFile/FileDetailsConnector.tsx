@@ -1,19 +1,22 @@
-import _ from 'lodash';
-import PropTypes from 'prop-types';
 import { Component } from 'react';
-import { connect } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { createSelector } from 'reselect';
+import type { BookFileId } from 'Book/BookIdentity';
+import type { LibraryBookFile } from 'Book/LibraryModels';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import { fetchBookFiles } from 'Store/Actions/bookFileActions';
+import type { ResourceCollection } from 'Store/Selectors/selectById';
 import getErrorMessage from 'Utilities/Object/getErrorMessage';
 import FileDetails from './FileDetails';
 
 function createMapStateToProps() {
   return createSelector(
-    (state) => state.bookFiles,
+    (state: { bookFiles: ResourceCollection<LibraryBookFile> & { isFetching?: boolean; error?: unknown } }) => state.bookFiles,
     (bookFiles) => {
       return {
-        ...bookFiles
+        items: bookFiles.items,
+        isFetching: bookFiles.isFetching === true,
+        error: bookFiles.error
       };
     }
   );
@@ -23,7 +26,10 @@ const mapDispatchToProps = {
   fetchBookFiles
 };
 
-class FileDetailsConnector extends Component {
+const connector = connect(createMapStateToProps, mapDispatchToProps);
+type Props = { id: BookFileId } & ConnectedProps<typeof connector>;
+
+class FileDetailsConnector extends Component<Props> {
 
   //
   // Lifecycle
@@ -43,7 +49,7 @@ class FileDetailsConnector extends Component {
       error
     } = this.props;
 
-    const item = _.find(items, { id });
+    const item = items.find((file) => file.id === id);
     const errorMessage = getErrorMessage(error, 'Unable to load file details');
 
     if (isFetching) {
@@ -76,12 +82,4 @@ class FileDetailsConnector extends Component {
   }
 }
 
-FileDetailsConnector.propTypes = {
-  fetchBookFiles: PropTypes.func.isRequired,
-  items: PropTypes.arrayOf(PropTypes.object).isRequired,
-  id: PropTypes.number.isRequired,
-  isFetching: PropTypes.bool.isRequired,
-  error: PropTypes.object
-};
-
-export default connect(createMapStateToProps, mapDispatchToProps)(FileDetailsConnector);
+export default connector(FileDetailsConnector);

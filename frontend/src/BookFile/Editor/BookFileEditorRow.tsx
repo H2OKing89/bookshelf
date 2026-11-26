@@ -14,12 +14,12 @@ import styles from './BookFileEditorRow.css';
 
 interface BookFileEditorRowProps {
   id: BookFileId;
-  path: string;
-  size: number;
-  dateAdded: string;
-  quality: QualityModel;
+  path?: string | null;
+  size?: number | null;
+  dateAdded?: string | null;
+  quality?: QualityModel | null;
   releaseGroup?: string | null;
-  qualityCutoffNotMet: boolean;
+  qualityCutoffNotMet?: boolean | null;
   mediaInfo?: MediaInfoModel | null;
   isSelected?: boolean;
   onSelectedChange: (change: SelectionChange<BookFileId>) => void;
@@ -71,7 +71,7 @@ function BookFileEditorRow(props: BookFileEditorRowProps) {
       >
         <BookQuality
           quality={quality}
-          isCutoffNotMet={qualityCutoffNotMet}
+          isCutoffNotMet={qualityCutoffNotMet === true}
         />
       </TableRowCell>
 

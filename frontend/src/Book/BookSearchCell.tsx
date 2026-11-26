@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
+import type { AuthorId, BookId } from 'Book/BookIdentity';
 import IconButton from 'Components/Link/IconButton';
 import SpinnerIconButton from 'Components/Link/SpinnerIconButton';
 import TableRowCell from 'Components/Table/Cells/TableRowCell';
@@ -8,13 +8,23 @@ import translate from 'Utilities/String/translate';
 import BookInteractiveSearchModal from './Search/BookInteractiveSearchModal';
 import styles from './BookSearchCell.css';
 
-class BookSearchCell extends Component {
+export interface BookSearchCellProps {
+  bookId: BookId;
+  authorId: AuthorId;
+  bookTitle: string;
+  authorName: string;
+  isSearching: boolean;
+  isDisabled?: boolean;
+  onSearchPress: () => void;
+}
+
+class BookSearchCell extends Component<BookSearchCellProps, { isDetailsModalOpen: boolean }> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: BookSearchCellProps) {
+    super(props);
 
     this.state = {
       isDetailsModalOpen: false
@@ -84,15 +94,5 @@ class BookSearchCell extends Component {
     );
   }
 }
-
-BookSearchCell.propTypes = {
-  bookId: PropTypes.number.isRequired,
-  authorId: PropTypes.number.isRequired,
-  bookTitle: PropTypes.string.isRequired,
-  authorName: PropTypes.string.isRequired,
-  isSearching: PropTypes.bool.isRequired,
-  isDisabled: PropTypes.bool,
-  onSearchPress: PropTypes.func.isRequired
-};
 
 export default BookSearchCell;

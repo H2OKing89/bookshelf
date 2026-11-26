@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import Button from 'Components/Link/Button';
 import ModalBody from 'Components/Modal/ModalBody';
@@ -6,9 +5,10 @@ import ModalContent from 'Components/Modal/ModalContent';
 import ModalFooter from 'Components/Modal/ModalFooter';
 import ModalHeader from 'Components/Modal/ModalHeader';
 import translate from 'Utilities/String/translate';
+import type { AuthorHistoryViewProps } from './authorHistoryState';
 import AuthorHistoryTableContent from './AuthorHistoryTableContent';
 
-class AuthorHistoryModalContent extends Component {
+class AuthorHistoryModalContent extends Component<AuthorHistoryViewProps & { onModalClose: () => void }> {
 
   //
   // Render
@@ -39,9 +39,5 @@ class AuthorHistoryModalContent extends Component {
     );
   }
 }
-
-AuthorHistoryModalContent.propTypes = {
-  onModalClose: PropTypes.func.isRequired
-};
 
 export default AuthorHistoryModalContent;

@@ -1,9 +1,17 @@
-import PropTypes from 'prop-types';
+import type { BookId } from 'Book/BookIdentity';
 import Modal from 'Components/Modal/Modal';
 import { sizes } from 'Helpers/Props';
 import BookInteractiveSearchModalContent from './BookInteractiveSearchModalContent';
 
-function BookInteractiveSearchModal(props) {
+interface Props {
+  bookId: BookId | null;
+  bookTitle: string;
+  authorName: string;
+  onModalClose: () => void;
+  isOpen: boolean;
+}
+
+function BookInteractiveSearchModal(props: Props) {
   const {
     isOpen,
     bookId,
@@ -28,13 +36,5 @@ function BookInteractiveSearchModal(props) {
     </Modal>
   );
 }
-
-BookInteractiveSearchModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  bookId: PropTypes.number.isRequired,
-  bookTitle: PropTypes.string.isRequired,
-  authorName: PropTypes.string.isRequired,
-  onModalClose: PropTypes.func.isRequired
-};
 
 export default BookInteractiveSearchModal;

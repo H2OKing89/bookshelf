@@ -1,33 +1,62 @@
-import _ from 'lodash';
-import PropTypes from 'prop-types';
 import { Component } from 'react';
+import type { BookFileId } from 'Book/BookIdentity';
+import type { LibraryBookFile } from 'Book/LibraryModels';
 import Alert from 'Components/Alert';
+import type { SelectOption, ValueChange } from 'Components/Form/formTypes';
 import SelectInput from 'Components/Form/SelectInput';
 import TextInput from 'Components/Form/TextInput';
 import SpinnerButton from 'Components/Link/SpinnerButton';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import ConfirmModal from 'Components/Modal/ConfirmModal';
+import type Column from 'Components/Table/Column';
 import Table from 'Components/Table/Table';
 import TableBody from 'Components/Table/TableBody';
+import type { CheckboxSelectionChange, TableSelectionChange } from 'Components/Table/tableSelection';
 import { kinds } from 'Helpers/Props';
+import type { SortDirection } from 'Helpers/Props/sortDirections';
 import getErrorMessage from 'Utilities/Object/getErrorMessage';
 import getRemovedItems from 'Utilities/Object/getRemovedItems';
 import hasDifferentItems from 'Utilities/Object/hasDifferentItems';
 import translate from 'Utilities/String/translate';
-import getSelectedIds from 'Utilities/Table/getSelectedIds';
 import removeOldSelectedState from 'Utilities/Table/removeOldSelectedState';
 import selectAll from 'Utilities/Table/selectAll';
+import type { SelectedState, SelectionFlags, SelectionState } from 'Utilities/Table/selectionTypes';
 import toggleSelected from 'Utilities/Table/toggleSelected';
 import BookFileEditorRow from './BookFileEditorRow';
+import { type QualityChoice,selectedFileIds } from './bookFileEditorState';
 import styles from './BookFileEditorTableContent.css';
 
-class BookFileEditorTableContent extends Component {
+export interface FileEditorProps {
+  items: readonly LibraryBookFile[];
+  columns: readonly Column[];
+  qualities: readonly QualityChoice[];
+  sortKey?: string;
+  sortDirection?: SortDirection;
+  isDeleting: boolean;
+  isSaving: boolean;
+  saveError?: unknown;
+  isFetching: boolean;
+  isPopulated: boolean;
+  error?: unknown;
+  onSortPress: (key: string) => void;
+  onDeletePress: (ids: BookFileId[]) => void;
+  onQualityChange: (ids: BookFileId[], qualityId: number) => void;
+  onReleaseGroupChange: (ids: BookFileId[], releaseGroup: string) => void;
+  dispatchDeleteBookFile: (options: { id: BookFileId }) => void;
+}
+
+interface State extends SelectionState<BookFileId>, SelectionFlags {
+  releaseGroup: string;
+  isConfirmDeleteModalOpen: boolean;
+}
+
+class BookFileEditorTableContent extends Component<FileEditorProps, State> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: FileEditorProps) {
+    super(props);
 
     this.state = {
       allSelected: false,
@@ -39,7 +68,7 @@ class BookFileEditorTableContent extends Component {
     };
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: FileEditorProps) {
     if (hasDifferentItems(prevProps.items, this.props.items)) {
       this.setState((state) => {
         return {
@@ -54,11 +83,10 @@ class BookFileEditorTableContent extends Component {
   // Control
 
   getSelectedIds = () => {
-    const ids = getSelectedIds(this.state.selectedState);
-    return ids;
+    return selectedFileIds(this.props.items, this.state.selectedState);
   };
 
-  getSelectedReleaseGroup = (selectedState) => {
+  getSelectedReleaseGroup = (selectedState: SelectedState) => {
     const selectedGroups = this.props.items
       .filter((item) => selectedState[item.id])
       .map((item) => item.releaseGroup || '');
@@ -70,8 +98,8 @@ class BookFileEditorTableContent extends Component {
   //
   // Listeners
 
-  onSelectAllChange = ({ value }) => {
-    const selectedState = {};
+  onSelectAllChange = ({ value }: CheckboxSelectionChange) => {
+    const selectedState: Record<string, boolean> = {};
     this.props.items.forEach((item) => {
       selectedState[item.id] = false;
     });
@@ -79,7 +107,7 @@ class BookFileEditorTableContent extends Component {
     this.setState({ ...selection, releaseGroup: this.getSelectedReleaseGroup(selection.selectedState) });
   };
 
-  onSelectedChange = ({ id, value, shiftKey = false }) => {
+  onSelectedChange = ({ id, value, shiftKey = false }: TableSelectionChange<BookFileId>) => {
     this.setState((state) => {
       const selection = toggleSelected(state, this.props.items, id, value, shiftKey);
       return { ...selection, releaseGroup: this.getSelectedReleaseGroup(selection.selectedState) };
@@ -99,17 +127,20 @@ class BookFileEditorTableContent extends Component {
     this.setState({ isConfirmDeleteModalOpen: false });
   };
 
-  onQualityChange = ({ value }) => {
+  onQualityChange = ({ value }: ValueChange<string>) => {
     const selectedIds = this.getSelectedIds();
 
     if (!selectedIds.length) {
       return;
     }
 
-    this.props.onQualityChange(selectedIds, parseInt(value));
+    const qualityId = Number(value);
+    if (Number.isSafeInteger(qualityId) && this.props.qualities?.some((quality) => quality.id === qualityId)) {
+      this.props.onQualityChange(selectedIds, qualityId);
+    }
   };
 
-  onReleaseGroupChange = ({ value }) => {
+  onReleaseGroupChange = ({ value }: ValueChange<string>) => {
     this.setState({ releaseGroup: value });
   };
 
@@ -145,14 +176,10 @@ class BookFileEditorTableContent extends Component {
       isConfirmDeleteModalOpen
     } = this.state;
 
-    const qualityOptions = _.reduceRight(qualities, (acc, quality) => {
-      acc.push({
-        key: quality.id,
-        value: quality.name
-      });
-
-      return acc;
-    }, [{ key: 'selectQuality', value: translate('SelectQuality'), isDisabled: true }]);
+    const qualityOptions: SelectOption[] = [
+      { key: 'selectQuality', value: translate('SelectQuality'), isDisabled: true },
+      ...[...qualities].reverse().map((quality) => ({ key: quality.id, value: quality.name }))
+    ];
 
     const hasSelectedFiles = this.getSelectedIds().length > 0;
 
@@ -166,7 +193,7 @@ class BookFileEditorTableContent extends Component {
 
         {
           !isFetching && error ?
-            <Alert kind={kinds.DANGER}>{error}</Alert> :
+            <Alert kind={kinds.DANGER}>{typeof error === 'string' ? error : getErrorMessage(error, 'Unable to load file properties.')}</Alert> :
             null
         }
 
@@ -203,7 +230,7 @@ class BookFileEditorTableContent extends Component {
                       return (
                         <BookFileEditorRow
                           key={item.id}
-                          isSelected={selectedState[item.id]}
+                          isSelected={selectedState[item.id] === true}
                           {...item}
                           onSelectedChange={this.onSelectedChange}
                           deleteBookFile={dispatchDeleteBookFile}
@@ -279,20 +306,5 @@ class BookFileEditorTableContent extends Component {
     );
   }
 }
-
-BookFileEditorTableContent.propTypes = {
-  isDeleting: PropTypes.bool.isRequired,
-  isSaving: PropTypes.bool.isRequired,
-  saveError: PropTypes.object,
-  isFetching: PropTypes.bool.isRequired,
-  isPopulated: PropTypes.bool.isRequired,
-  error: PropTypes.object,
-  items: PropTypes.arrayOf(PropTypes.object).isRequired,
-  qualities: PropTypes.arrayOf(PropTypes.object).isRequired,
-  onDeletePress: PropTypes.func.isRequired,
-  onQualityChange: PropTypes.func.isRequired,
-  onReleaseGroupChange: PropTypes.func.isRequired,
-  dispatchDeleteBookFile: PropTypes.func.isRequired
-};
 
 export default BookFileEditorTableContent;
