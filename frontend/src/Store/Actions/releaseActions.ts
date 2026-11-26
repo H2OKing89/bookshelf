@@ -1,7 +1,9 @@
 import { createAction } from 'redux-actions';
 import { filterBuilderTypes, filterBuilderValueTypes, filterTypes, sortDirections } from 'Helpers/Props';
+import { asStateRecord, type StateRecord } from 'Store/StateTypes';
 import translate from 'Utilities/String/translate';
 import createHandleActions from './Creators/createHandleActions';
+import { matchesFilter, numberValue } from './Creators/libraryActionsState';
 import createSetClientSideCollectionFilterReducer from './Creators/Reducers/createSetClientSideCollectionFilterReducer';
 import createSetClientSideCollectionSortReducer from './Creators/Reducers/createSetClientSideCollectionSortReducer';
 
@@ -19,25 +21,9 @@ export const defaultState = {
   sortKey: 'releaseWeight',
   sortDirection: sortDirections.ASCENDING,
   sortPredicates: {
-    age: function(item, direction) {
-      return item.ageMinutes;
-    },
-    peers: function(item, direction) {
-      const seeders = item.seeders || 0;
-      const leechers = item.leechers || 0;
-
-      return seeders * 1000000 + leechers;
-    },
-    rejections: function(item, direction) {
-      const rejections = item.rejections;
-      const releaseWeight = item.releaseWeight;
-
-      if (rejections.length !== 0) {
-        return releaseWeight + 1000000;
-      }
-
-      return releaseWeight;
-    }
+    age: (item: StateRecord) => numberValue(item.ageMinutes),
+    peers: (item: StateRecord) => numberValue(item.seeders) * 1000000 + numberValue(item.leechers),
+    rejections: (item: StateRecord) => numberValue(item.releaseWeight) + (Array.isArray(item.rejections) && item.rejections.length ? 1000000 : 0)
   },
 
   filters: [
@@ -71,75 +57,15 @@ export const defaultState = {
   ],
 
   filterPredicates: {
-    quality: function(item, value, type) {
-      const qualityId = item.quality.quality.id;
-
-      if (type === filterTypes.EQUAL) {
-        return qualityId === value;
-      }
-
-      if (type === filterTypes.NOT_EQUAL) {
-        return qualityId !== value;
-      }
-
-      // Default to false
-      return false;
+    quality(item: StateRecord, value: unknown, type: string) {
+      const id = asStateRecord(asStateRecord(item.quality).quality).id;
+      return typeof id === 'number' && (type === filterTypes.EQUAL || type === filterTypes.NOT_EQUAL) && matchesFilter(type, id, value);
     },
-
-    rejectionCount: function(item, value, type) {
-      const rejectionCount = item.rejections.length;
-
-      switch (type) {
-        case filterTypes.EQUAL:
-          return rejectionCount === value;
-
-        case filterTypes.GREATER_THAN:
-          return rejectionCount > value;
-
-        case filterTypes.GREATER_THAN_OR_EQUAL:
-          return rejectionCount >= value;
-
-        case filterTypes.LESS_THAN:
-          return rejectionCount < value;
-
-        case filterTypes.LESS_THAN_OR_EQUAL:
-          return rejectionCount <= value;
-
-        case filterTypes.NOT_EQUAL:
-          return rejectionCount !== value;
-
-        default:
-          return false;
-      }
+    rejectionCount(item: StateRecord, value: unknown, type: string) {
+      return matchesFilter(type, Array.isArray(item.rejections) ? item.rejections.length : 0, value);
     },
-
-    peers: function(item, value, type) {
-      const seeders = item.seeders || 0;
-      const leechers = item.leechers || 0;
-      const peers = seeders + leechers;
-
-      switch (type) {
-        case filterTypes.EQUAL:
-          return peers === value;
-
-        case filterTypes.GREATER_THAN:
-          return peers > value;
-
-        case filterTypes.GREATER_THAN_OR_EQUAL:
-          return peers >= value;
-
-        case filterTypes.LESS_THAN:
-          return peers < value;
-
-        case filterTypes.LESS_THAN_OR_EQUAL:
-          return peers <= value;
-
-        case filterTypes.NOT_EQUAL:
-          return peers !== value;
-
-        default:
-          return false;
-      }
+    peers(item: StateRecord, value: unknown, type: string) {
+      return matchesFilter(type, numberValue(item.seeders) + numberValue(item.leechers), value);
     }
   },
 
@@ -227,9 +153,9 @@ export const SET_AUTHOR_RELEASES_FILTER = 'releases/setAuthorReleasesFilter';
 //
 // Action Creators
 
-export const setReleasesSort = createAction(SET_RELEASES_SORT);
-export const setBookReleasesFilter = createAction(SET_BOOK_RELEASES_FILTER);
-export const setAuthorReleasesFilter = createAction(SET_AUTHOR_RELEASES_FILTER);
+export const setReleasesSort = createAction<StateRecord>(SET_RELEASES_SORT);
+export const setBookReleasesFilter = createAction<StateRecord>(SET_BOOK_RELEASES_FILTER);
+export const setAuthorReleasesFilter = createAction<StateRecord>(SET_AUTHOR_RELEASES_FILTER);
 
 //
 // Reducers

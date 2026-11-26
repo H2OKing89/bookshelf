@@ -1,16 +1,17 @@
-import _ from 'lodash';
 import { createAction } from 'redux-actions';
 import { batchActions } from 'redux-batched-actions';
-import bookEntities from 'Book/bookEntities';
 import { libraryResponseParser, parseLibraryBookFile } from 'Book/LibraryModels';
 import { sortDirections } from 'Helpers/Props';
+import { type StateRecord } from 'Store/StateTypes';
 import { createThunk, handleThunks } from 'Store/thunks';
-import createAjaxRequest from 'Utilities/createAjaxRequest';
+import { ApiError } from 'Utilities/Fetch/fetchJson';
 import { bookFileQualityRank } from 'Utilities/Quality/qualityRank';
 import { removeItem, set, updateItem } from './baseActions';
 import createFetchHandler from './Creators/createFetchHandler';
 import createHandleActions from './Creators/createHandleActions';
 import createRemoveItemHandler from './Creators/createRemoveItemHandler';
+import { requestLegacy } from './Creators/legacyRequest';
+import { bookSection, isLibraryId, libraryIds, parseExactRows, sectionRows } from './Creators/libraryActionsState';
 import createClearReducer from './Creators/Reducers/createClearReducer';
 import createSetClientSideCollectionSortReducer from './Creators/Reducers/createSetClientSideCollectionSortReducer';
 import createSetTableOptionReducer from './Creators/Reducers/createSetTableOptionReducer';
@@ -112,8 +113,8 @@ export const fetchBookFiles = createThunk(FETCH_BOOK_FILES);
 export const deleteBookFile = createThunk(DELETE_BOOK_FILE);
 export const deleteBookFiles = createThunk(DELETE_BOOK_FILES);
 export const updateBookFiles = createThunk(UPDATE_BOOK_FILES);
-export const setBookFilesSort = createAction(SET_BOOK_FILES_SORT);
-export const setBookFilesTableOption = createAction(SET_BOOK_FILES_TABLE_OPTION);
+export const setBookFilesSort = createAction<{ sortKey?: string; sortDirection?: 'ascending' | 'descending' }>(SET_BOOK_FILES_SORT);
+export const setBookFilesTableOption = createAction<StateRecord>(SET_BOOK_FILES_TABLE_OPTION);
 export const clearBookFiles = createAction(CLEAR_BOOK_FILES);
 
 //
@@ -127,146 +128,62 @@ const deleteBookFileHelper = createRemoveItemHandler(section, '/bookFile');
 export const actionHandlers = handleThunks({
   [FETCH_BOOK_FILES]: createFetchHandler(section, '/bookFile', libraryResponseParser(parseLibraryBookFile)),
 
-  [DELETE_BOOK_FILE]: function(getState, payload, dispatch) {
-    const {
-      id: bookFileId,
-      bookEntity: bookEntity = bookEntities.BOOKS
-    } = payload;
-
-    const bookSection = _.last(bookEntity.split('.'));
-    const deletePromise = deleteBookFileHelper(getState, payload, dispatch);
-
-    deletePromise?.done(() => {
-      const books = getState().books.items;
-      const booksWithRemovedFiles = _.filter(books, { bookFileId });
-
-      dispatch(batchActions([
-        ...booksWithRemovedFiles.map((book) => {
-          return updateItem({
-            section: bookSection,
-            ...book,
-            bookFileId: 0,
-            hasFile: false
-          });
-        })
-      ]));
+  [DELETE_BOOK_FILE]: (getState, payload, dispatch) => {
+    const { id, bookEntity, ...parameters } = payload;
+    const target = bookSection(bookEntity);
+    if (!isLibraryId(id) || target === null) {
+      dispatch(set({ section, isDeleting: false, deleteError: new ApiError({ kind: 'invalid-request' }) }));
+      return;
+    }
+    const promise = deleteBookFileHelper(getState, { id, ...parameters }, dispatch);
+    promise?.done(() => {
+      const books = sectionRows(getState, 'books').filter((book) => book.bookFileId === id);
+      dispatch(batchActions(books.map((book) => updateItem({ section: target, id: book.id, bookFileId: 0, hasFile: false, updateOnly: true }))));
     });
   },
 
-  [DELETE_BOOK_FILES]: function(getState, payload, dispatch) {
-    const {
-      bookFileIds: bookFileIds
-    } = payload;
-
+  [DELETE_BOOK_FILES]: (getState, payload, dispatch) => {
+    const ids = libraryIds(payload.bookFileIds);
+    if (!ids) {
+      dispatch(set({ section, isDeleting: false, deleteError: new ApiError({ kind: 'invalid-request' }) }));
+      return;
+    }
     dispatch(set({ section, isDeleting: true }));
-
-    const promise = createAjaxRequest({
-      url: '/bookFile/bulk',
-      method: 'DELETE',
-      dataType: 'json',
-      data: JSON.stringify({ bookFileIds })
-    }).request;
-
-    promise.done(() => {
-      const books = getState().books.items;
-      const booksWithRemovedFiles = bookFileIds.reduce((acc, bookFileId) => {
-        acc.push(..._.filter(books, { bookFileId }));
-
-        return acc;
-      }, []);
-
+    const { request } = requestLegacy({ url: '/bookFile/bulk', method: 'DELETE', dataType: 'json', data: JSON.stringify({ bookFileIds: ids }) });
+    request.done(() => {
+      const books = sectionRows(getState, 'books').filter((book) => isLibraryId(book.bookFileId) && ids.includes(book.bookFileId));
       dispatch(batchActions([
-        ...bookFileIds.map((id) => {
-          return removeItem({ section, id });
-        }),
-
-        ...booksWithRemovedFiles.map((book) => {
-          return updateItem({
-            section: 'books',
-            ...book,
-            bookFileId: 0,
-            hasFile: false
-          });
-        }),
-
-        set({
-          section,
-          isDeleting: false,
-          deleteError: null
-        })
+        ...ids.map((id) => removeItem({ section, id })),
+        ...books.map((book) => updateItem({ section: 'books', id: book.id, bookFileId: 0, hasFile: false, updateOnly: true })),
+        set({ section, isDeleting: false, deleteError: null })
       ]));
     });
-
-    promise.fail((xhr) => {
-      dispatch(set({
-        section,
-        isDeleting: false,
-        deleteError: xhr
-      }));
-    });
+    request.fail((xhr) => dispatch(set({ section, isDeleting: false, deleteError: xhr })));
   },
 
-  [UPDATE_BOOK_FILES]: function(getState, payload, dispatch) {
-    const {
-      bookFileIds,
-      quality,
-      releaseGroup
-    } = payload;
-
+  [UPDATE_BOOK_FILES]: (_getState, payload, dispatch) => {
+    const ids = libraryIds(payload.bookFileIds);
+    const { quality, releaseGroup } = payload;
+    const fail = (error: unknown) => dispatch(set({ section, isSaving: false, saveError: error }));
+    if (!ids || (releaseGroup != null && typeof releaseGroup !== 'string')) {
+      fail(new ApiError({ kind: 'invalid-request' }));
+      return;
+    }
+    const data = { bookFileIds: ids, ...(quality != null && { quality }), ...(releaseGroup != null && { releaseGroup }) };
     dispatch(set({ section, isSaving: true }));
-
-    const requestData = {
-      bookFileIds
-    };
-
-    if (quality) {
-      requestData.quality = quality;
-    }
-
-    if (releaseGroup != null) {
-      requestData.releaseGroup = releaseGroup;
-    }
-
-    const promise = createAjaxRequest({
-      url: '/bookFile/editor',
-      method: 'PUT',
-      dataType: 'json',
-      data: JSON.stringify(requestData)
-    }).request;
-
-    promise.done((data) => {
-      dispatch(batchActions([
-        ...bookFileIds.map((id) => {
-          const props = {};
-
-          const bookFile = data.find((file) => file.id === id);
-
-          props.qualityCutoffNotMet = bookFile.qualityCutoffNotMet;
-          props.qualityRank = bookFile.qualityRank;
-          props.releaseGroup = bookFile.releaseGroup;
-
-          if (quality) {
-            props.quality = quality;
-          }
-
-          return updateItem({ section, id, ...props });
-        }),
-
-        set({
-          section,
-          isSaving: false,
-          saveError: null
-        })
-      ]));
+    const { request } = requestLegacy({ url: '/bookFile/editor', method: 'PUT', dataType: 'json', data: JSON.stringify(data) });
+    request.done((response) => {
+      try {
+        const files = parseExactRows(response, ids, parseLibraryBookFile);
+        dispatch(batchActions([
+          ...files.map((file) => updateItem({ ...file, section, updateOnly: true })),
+          set({ section, isSaving: false, saveError: null })
+        ]));
+      } catch {
+        fail(new ApiError({ kind: 'invalid-response' }));
+      }
     });
-
-    promise.fail((xhr) => {
-      dispatch(set({
-        section,
-        isSaving: false,
-        saveError: xhr
-      }));
-    });
+    request.fail(fail);
   }
 });
 
@@ -281,7 +198,8 @@ export const reducers = createHandleActions({
     isFetching: false,
     isPopulated: false,
     error: null,
-    items: []
+    items: [],
+    itemMap: {}
   })
 
 }, defaultState, section);

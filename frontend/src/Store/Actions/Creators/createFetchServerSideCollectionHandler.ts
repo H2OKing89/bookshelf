@@ -12,6 +12,10 @@ import { createSectionRequests } from './sectionRequests';
 export type FetchDataAugmenter = (getState: () => LegacyRootState, payload: StateRecord, data: StateRecord) => void;
 const requests = createSectionRequests();
 
+export function cancelServerSideCollection(getState: () => LegacyRootState, section: string) {
+  requests.cancel(getState, section);
+}
+
 function createFetchServerSideCollectionHandler(section: string, url: string, fetchDataAugmenter?: FetchDataAugmenter) {
   return function(getState: () => LegacyRootState, payload: StateRecord, dispatch: LegacyDispatch) {
     const sectionState = asStateRecord(getSectionState(getState(), section, true));

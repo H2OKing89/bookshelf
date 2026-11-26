@@ -1,13 +1,16 @@
 import { createAction } from 'redux-actions';
 import { batchActions } from 'redux-batched-actions';
 import { sortDirections } from 'Helpers/Props';
+import { asStateRecord, type StateRecord } from 'Store/StateTypes';
 import { createThunk, handleThunks } from 'Store/thunks';
-import createAjaxRequest from 'Utilities/createAjaxRequest';
 import serverSideCollectionHandlers from 'Utilities/serverSideCollectionHandlers';
 import { set, updateItem } from './baseActions';
+import { cancelServerSideCollection } from './Creators/createFetchServerSideCollectionHandler';
 import createHandleActions from './Creators/createHandleActions';
 import createRemoveItemHandler from './Creators/createRemoveItemHandler';
 import createServerSideCollectionHandlers from './Creators/createServerSideCollectionHandlers';
+import { requestLegacy } from './Creators/legacyRequest';
+import { libraryIds } from './Creators/libraryActionsState';
 import createClearReducer from './Creators/Reducers/createClearReducer';
 import createSetTableOptionReducer from './Creators/Reducers/createSetTableOptionReducer';
 
@@ -107,10 +110,11 @@ export const gotoBlocklistNextPage = createThunk(GOTO_NEXT_BLOCKLIST_PAGE);
 export const gotoBlocklistLastPage = createThunk(GOTO_LAST_BLOCKLIST_PAGE);
 export const gotoBlocklistPage = createThunk(GOTO_BLOCKLIST_PAGE);
 export const setBlocklistSort = createThunk(SET_BLOCKLIST_SORT);
-export const setBlocklistTableOption = createAction(SET_BLOCKLIST_TABLE_OPTION);
+export const setBlocklistTableOption = createAction<StateRecord>(SET_BLOCKLIST_TABLE_OPTION);
 export const removeBlocklistItem = createThunk(REMOVE_BLOCKLIST_ITEM);
 export const removeBlocklistItems = createThunk(REMOVE_BLOCKLIST_ITEMS);
-export const clearBlocklist = createAction(CLEAR_BLOCKLIST);
+export const clearBlocklist = createThunk(CLEAR_BLOCKLIST);
+const clearBlocklistAction = createAction(CLEAR_BLOCKLIST);
 
 //
 // Action Handlers
@@ -132,51 +136,34 @@ export const actionHandlers = handleThunks({
 
   [REMOVE_BLOCKLIST_ITEM]: createRemoveItemHandler(section, '/blocklist'),
 
-  [REMOVE_BLOCKLIST_ITEMS]: function(getState, payload, dispatch) {
-    const {
-      ids
-    } = payload;
-
+  [REMOVE_BLOCKLIST_ITEMS]: (getState, payload, dispatch) => {
+    const ids = libraryIds(payload.ids);
+    if (!ids) {
+      return;
+    }
     dispatch(batchActions([
-      ...ids.map((id) => {
-        return updateItem({
-          section,
-          id,
-          isRemoving: true
-        });
-      }),
-
+      ...ids.map((id) => updateItem({ section, id, isRemoving: true, updateOnly: true })),
       set({ section, isRemoving: true })
     ]));
-
-    const promise = createAjaxRequest({
-      url: '/blocklist/bulk',
-      method: 'DELETE',
-      dataType: 'json',
-      contentType: 'application/json',
-      data: JSON.stringify({ ids })
-    }).request;
-
-    promise.done((data) => {
-      // Don't use batchActions with thunks
-      dispatch(fetchBlocklist());
-
+    const { request } = requestLegacy({
+      url: '/blocklist/bulk', method: 'DELETE', dataType: 'json', contentType: 'application/json', data: JSON.stringify({ ids })
+    });
+    request.done(() => {
+      if (asStateRecord(getState()[section]).isPopulated === true) {
+        dispatch(fetchBlocklist());
+      }
       dispatch(set({ section, isRemoving: false }));
     });
-
-    promise.fail((xhr) => {
+    request.fail(() => {
       dispatch(batchActions([
-        ...ids.map((id) => {
-          return updateItem({
-            section,
-            id,
-            isRemoving: false
-          });
-        }),
-
+        ...ids.map((id) => updateItem({ section, id, isRemoving: false, updateOnly: true })),
         set({ section, isRemoving: false })
       ]));
     });
+  },
+  [CLEAR_BLOCKLIST]: (getState, _payload, dispatch) => {
+    cancelServerSideCollection(getState, section);
+    dispatch(clearBlocklistAction());
   }
 });
 
@@ -192,6 +179,7 @@ export const reducers = createHandleActions({
     isPopulated: false,
     error: null,
     items: [],
+    itemMap: {},
     totalPages: 0,
     totalRecords: 0
   })

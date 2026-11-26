@@ -3,6 +3,7 @@ import { createAction } from 'redux-actions';
 import { historyEventFilters } from 'Activity/History/historyFilters';
 import Icon from 'Components/Icon';
 import { filterTypes, icons, sortDirections } from 'Helpers/Props';
+import type { StateRecord } from 'Store/StateTypes';
 import { set } from './baseActions';
 import createHandleActions from './Creators/createHandleActions';
 import createSetClientSideCollectionSortReducer from './Creators/Reducers/createSetClientSideCollectionSortReducer';
@@ -135,10 +136,10 @@ const SET_HISTORY_TABLE_OPTION = 'history/setHistoryTableOption';
 //
 // Action Creators
 
-export const setHistoryPage = (page) => set({ section, page });
-export const setHistorySort = createAction(SET_HISTORY_SORT);
-export const setHistoryFilter = (selectedFilterKey) => set({ section, selectedFilterKey, page: 1 });
-export const setHistoryTableOption = createAction(SET_HISTORY_TABLE_OPTION);
+export const setHistoryPage = (page: number) => set({ section, page });
+export const setHistorySort = createAction<StateRecord>(SET_HISTORY_SORT);
+export const setHistoryFilter = (selectedFilterKey: string | number) => set({ section, selectedFilterKey, page: 1 });
+export const setHistoryTableOption = createAction<StateRecord>(SET_HISTORY_TABLE_OPTION);
 
 //
 // Reducers

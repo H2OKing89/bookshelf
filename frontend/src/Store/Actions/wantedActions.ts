@@ -1,5 +1,7 @@
 import { createAction } from 'redux-actions';
 import { filterTypes, sortDirections } from 'Helpers/Props';
+import { asStateRecord, isStateRecord, type StateRecord } from 'Store/StateTypes';
+import type { WantedKind } from 'Wanted/wantedPageQuery';
 import { set } from './baseActions';
 import createHandleActions from './Creators/createHandleActions';
 import createSetClientSideCollectionSortReducer from './Creators/Reducers/createSetClientSideCollectionSortReducer';
@@ -165,10 +167,10 @@ export const persistState = [
 const SET_WANTED_SORT = 'wanted/setSort';
 const SET_WANTED_TABLE_OPTION = 'wanted/setTableOption';
 
-export const setWantedPage = (kind, page) => set({ section: `wanted.${kind}`, page });
-export const setWantedFilter = (kind, selectedFilterKey) => set({ section: `wanted.${kind}`, selectedFilterKey, page: 1 });
-export const setWantedSort = createAction(SET_WANTED_SORT);
-export const setWantedTableOption = createAction(SET_WANTED_TABLE_OPTION);
+export const setWantedPage = (kind: WantedKind, page: number) => set({ section: `wanted.${kind}`, page });
+export const setWantedFilter = (kind: WantedKind, selectedFilterKey: string | number) => set({ section: `wanted.${kind}`, selectedFilterKey, page: 1 });
+export const setWantedSort = createAction<StateRecord & { kind: WantedKind }>(SET_WANTED_SORT);
+export const setWantedTableOption = createAction<StateRecord & { kind: WantedKind }>(SET_WANTED_TABLE_OPTION);
 
 const sortReducers = {
   missing: createSetClientSideCollectionSortReducer('wanted.missing'),
@@ -180,14 +182,23 @@ const tableOptionReducers = {
   cutoffUnmet: createSetTableOptionReducer('wanted.cutoffUnmet')
 };
 
-export const reducers = createHandleActions({
-  [SET_WANTED_SORT]: (state, action) => sortReducers[action.payload.kind](state, action),
-  [SET_WANTED_TABLE_OPTION]: (state, action) => {
-    const { kind } = action.payload;
-    const next = tableOptionReducers[kind](state, action);
+function wantedKind(value: unknown): WantedKind | undefined {
+  return isStateRecord(value) && (value.kind === 'missing' || value.kind === 'cutoffUnmet') ? value.kind : undefined;
+}
 
-    return next[kind].pageSize === state[kind].pageSize ?
-      next :
-      { ...next, [kind]: { ...next[kind], page: 1 } };
+export const reducers = createHandleActions({
+  [SET_WANTED_SORT]: (state, action) => {
+    const kind = wantedKind(action.payload);
+    return kind ? sortReducers[kind](state, action) : state;
+  },
+  [SET_WANTED_TABLE_OPTION]: (state, action) => {
+    const kind = wantedKind(action.payload);
+    if (!kind) {
+      return state;
+    }
+    const next = tableOptionReducers[kind](state, action);
+    const previous = asStateRecord(state[kind]);
+    const updated = asStateRecord(next[kind]);
+    return updated.pageSize === previous.pageSize ? next : { ...next, [kind]: { ...updated, page: 1 } };
   }
 }, defaultState, section);

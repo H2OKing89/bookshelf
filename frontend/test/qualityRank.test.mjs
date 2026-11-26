@@ -22,7 +22,7 @@ test('successful file editor response immediately updates the local sort rank wi
   const actions = [];
   const noopFactory = () => () => {};
   const storeAction = (payload) => ({ payload });
-  const actionsModule = loadFrontendModule('Store/Actions/bookFileActions.js', {
+  const actionsModule = loadFrontendModule('Store/Actions/bookFileActions', {
     'Book/bookEntities': {},
     'Helpers/Props': { sortDirections: { ASCENDING: 'ascending' } },
     'Store/thunks': { createThunk: (name) => name, handleThunks: (handlers) => handlers },

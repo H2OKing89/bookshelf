@@ -1,12 +1,12 @@
 import { createAction } from 'redux-actions';
-import { batchActions } from 'redux-batched-actions';
-import { filterBuilderTypes, filterBuilderValueTypes, filterTypePredicates, sortDirections } from 'Helpers/Props';
+import { parseLibraryBook } from 'Book/LibraryModels';
+import { filterBuilderTypes, filterBuilderValueTypes, sortDirections } from 'Helpers/Props';
+import { asStateRecord, isStateRecord, type StateRecord } from 'Store/StateTypes';
 import { createThunk, handleThunks } from 'Store/thunks';
 import sortByName from 'Utilities/Array/sortByName';
-import createAjaxRequest from 'Utilities/createAjaxRequest';
-import { set, updateItem } from './baseActions';
 import { filterPredicates, filters, sortPredicates } from './bookActions';
 import createHandleActions from './Creators/createHandleActions';
+import { createLibraryBulkEditor, matchesFilter, namedOptions, numberValue } from './Creators/libraryActionsState';
 import createSetClientSideCollectionFilterReducer from './Creators/Reducers/createSetClientSideCollectionFilterReducer';
 import createSetClientSideCollectionSortReducer from './Creators/Reducers/createSetClientSideCollectionSortReducer';
 import createSetTableOptionReducer from './Creators/Reducers/createSetTableOptionReducer';
@@ -174,41 +174,25 @@ export const defaultState = {
 
   sortPredicates: {
     ...sortPredicates,
-
-    authorName: function(item) {
-      return item.author?.sortName;
+    authorName(item: StateRecord) {
+      return asStateRecord(item.author).sortName;
     },
-
-    bookFileCount: function(item) {
-      const { statistics = {} } = item;
-
-      return statistics.bookFileCount || 0;
+    bookFileCount(item: StateRecord) {
+      return numberValue(asStateRecord(item.statistics).bookFileCount);
     },
-
-    ratings: function(item) {
-      const { ratings = {} } = item;
-
-      return ratings.value;
+    ratings(item: StateRecord) {
+      return numberValue(asStateRecord(item.ratings).value);
     }
   },
-
   selectedFilterKey: 'all',
-
   filters,
-
   filterPredicates: {
     ...filterPredicates,
-
-    author: function(item, filterValue, type) {
-      const predicate = filterTypePredicates[type];
-
-      return !!item.author && predicate(item.author.authorName, filterValue);
+    author(item: StateRecord, value: unknown, type: string) {
+      return isStateRecord(item.author) && matchesFilter(type, item.author.authorName, value);
     },
-
-    anyEditionOk: function(item, filterValue, type) {
-      const predicate = filterTypePredicates[type];
-
-      return predicate(item.anyEditionOk, filterValue);
+    anyEditionOk(item: StateRecord, value: unknown, type: string) {
+      return matchesFilter(type, item.anyEditionOk, value);
     }
   },
 
@@ -273,31 +257,13 @@ export const defaultState = {
       name: 'genres',
       label: 'Genres',
       type: filterBuilderTypes.ARRAY,
-      optionsSelector: function(items) {
-        const tagList = items.reduce((acc, Book) => {
-          Book.genres.forEach((genre) => {
-            acc.push({
-              id: genre,
-              name: genre
-            });
-          });
-
-          return acc;
-        }, []);
-
-        return tagList.sort(sortByName);
-      }
+      optionsSelector: (items: unknown) => namedOptions(items, 'genres').sort(sortByName)
     },
     {
       name: 'metadataLabels',
       label: 'Metadata Labels',
       type: filterBuilderTypes.ARRAY,
-      optionsSelector: function(items) {
-        const labels = new Set();
-        items.forEach((book) => (book.metadataLabels || []).forEach((label) => labels.add(label)));
-
-        return Array.from(labels).map((label) => ({ id: label, name: label })).sort(sortByName);
-      }
+      optionsSelector: (items: unknown) => namedOptions(items, 'metadataLabels', true).sort(sortByName)
     },
     {
       name: 'ratings',
@@ -342,91 +308,30 @@ export const BULK_DELETE_BOOK = 'bookEditor/bulkDeleteBook';
 //
 // Action Creators
 
-export const setBookSort = createAction(SET_BOOK_SORT);
-export const setBookFilter = createAction(SET_BOOK_FILTER);
-export const setBookView = createAction(SET_BOOK_VIEW);
-export const setBookTableOption = createAction(SET_BOOK_TABLE_OPTION);
-export const setBookPosterOption = createAction(SET_BOOK_POSTER_OPTION);
-export const setBookBannerOption = createAction(SET_BOOK_BANNER_OPTION);
-export const setBookOverviewOption = createAction(SET_BOOK_OVERVIEW_OPTION);
+export const setBookSort = createAction<StateRecord>(SET_BOOK_SORT);
+export const setBookFilter = createAction<StateRecord>(SET_BOOK_FILTER);
+export const setBookView = createAction<StateRecord>(SET_BOOK_VIEW);
+export const setBookTableOption = createAction<StateRecord>(SET_BOOK_TABLE_OPTION);
+export const setBookPosterOption = createAction<StateRecord>(SET_BOOK_POSTER_OPTION);
+export const setBookBannerOption = createAction<StateRecord>(SET_BOOK_BANNER_OPTION);
+export const setBookOverviewOption = createAction<StateRecord>(SET_BOOK_OVERVIEW_OPTION);
 export const saveBookEditor = createThunk(SAVE_BOOK_EDITOR);
 export const bulkDeleteBook = createThunk(BULK_DELETE_BOOK);
 
 //
 // Action Handlers
 
+const editor = createLibraryBulkEditor({
+  section,
+  target: 'books',
+  url: '/book/editor',
+  idKey: 'bookIds',
+  parse: parseLibraryBook
+});
+
 export const actionHandlers = handleThunks({
-  [SAVE_BOOK_EDITOR]: function(getState, payload, dispatch) {
-    dispatch(set({
-      section,
-      isSaving: true
-    }));
-
-    const promise = createAjaxRequest({
-      url: '/book/editor',
-      method: 'PUT',
-      data: JSON.stringify(payload),
-      dataType: 'json'
-    }).request;
-
-    promise.done((data) => {
-      dispatch(batchActions([
-        ...data.map((book) => {
-          return updateItem({
-            id: book.id,
-            section: 'books',
-            ...book
-          });
-        }),
-
-        set({
-          section,
-          isSaving: false,
-          saveError: null
-        })
-      ]));
-    });
-
-    promise.fail((xhr) => {
-      dispatch(set({
-        section,
-        isSaving: false,
-        saveError: xhr
-      }));
-    });
-  },
-
-  [BULK_DELETE_BOOK]: function(getState, payload, dispatch) {
-    dispatch(set({
-      section,
-      isDeleting: true
-    }));
-
-    const promise = createAjaxRequest({
-      url: '/book/editor',
-      method: 'DELETE',
-      data: JSON.stringify(payload),
-      dataType: 'json'
-    }).request;
-
-    promise.done(() => {
-      // SignalR will take care of removing the book from the collection
-
-      dispatch(set({
-        section,
-        isDeleting: false,
-        deleteError: null
-      }));
-    });
-
-    promise.fail((xhr) => {
-      dispatch(set({
-        section,
-        isDeleting: false,
-        deleteError: xhr
-      }));
-    });
-  }
+  [SAVE_BOOK_EDITOR]: editor.save,
+  [BULK_DELETE_BOOK]: editor.remove
 });
 
 //
@@ -438,43 +343,43 @@ export const reducers = createHandleActions({
   [SET_BOOK_FILTER]: createSetClientSideCollectionFilterReducer(section),
 
   [SET_BOOK_VIEW]: function(state, { payload }) {
-    return Object.assign({}, state, { view: payload.view });
+    return isStateRecord(payload) && typeof payload.view === 'string' ? { ...state, view: payload.view } : state;
   },
 
   [SET_BOOK_TABLE_OPTION]: createSetTableOptionReducer(section),
 
   [SET_BOOK_POSTER_OPTION]: function(state, { payload }) {
-    const posterOptions = state.posterOptions;
+    const posterOptions = asStateRecord(state.posterOptions);
 
     return {
       ...state,
       posterOptions: {
         ...posterOptions,
-        ...payload
+        ...asStateRecord(payload)
       }
     };
   },
 
   [SET_BOOK_BANNER_OPTION]: function(state, { payload }) {
-    const bannerOptions = state.bannerOptions;
+    const bannerOptions = asStateRecord(state.bannerOptions);
 
     return {
       ...state,
       bannerOptions: {
         ...bannerOptions,
-        ...payload
+        ...asStateRecord(payload)
       }
     };
   },
 
   [SET_BOOK_OVERVIEW_OPTION]: function(state, { payload }) {
-    const overviewOptions = state.overviewOptions;
+    const overviewOptions = asStateRecord(state.overviewOptions);
 
     return {
       ...state,
       overviewOptions: {
         ...overviewOptions,
-        ...payload
+        ...asStateRecord(payload)
       }
     };
   }
