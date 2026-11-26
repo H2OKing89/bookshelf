@@ -22,7 +22,7 @@ export const defaultState = {
 
 interface FilesystemEntry extends StateRecord {
   path: string;
-  name: string;
+  name: string | null;
 }
 
 interface FilesystemResult extends StateRecord {
@@ -34,7 +34,7 @@ interface FilesystemResult extends StateRecord {
 
 function entries(value: unknown): value is FilesystemEntry[] {
   return Array.isArray(value) && value.every((item: unknown) =>
-    isStateRecord(item) && typeof item.path === 'string' && typeof item.name === 'string');
+    isStateRecord(item) && typeof item.path === 'string' && (item.name == null || typeof item.name === 'string'));
 }
 
 export function parsePaths(path: string, data: unknown): FilesystemResult {
@@ -58,7 +58,8 @@ const resetPaths = createAction<void>(RESET_PATHS);
 
 export const actionHandlers = handleThunks({
   [FETCH_PATHS]: function(getState, payload, dispatch) {
-    const { path, allowFoldersWithoutTrailingSlashes = false, includeFiles = false } = payload;
+    const { path: requestedPath, allowFoldersWithoutTrailingSlashes = false, includeFiles = false } = payload;
+    const path = requestedPath ?? '';
     if (typeof path !== 'string' || typeof allowFoldersWithoutTrailingSlashes !== 'boolean' || typeof includeFiles !== 'boolean') {
       requests.cancel(getState, section);
       dispatch(set({ section, isFetching: false, isPopulated: false, error: new ApiError({ kind: 'invalid-request' }) }));

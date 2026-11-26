@@ -170,7 +170,7 @@ function getPopulatableRange(startDate: string, endDate: string, view: CalendarV
   }
 }
 
-export function isCalendarView(value: unknown): value is CalendarView {
+function isCalendarView(value: unknown): value is CalendarView {
   return typeof value === 'string' && Object.hasOwn(viewRanges, value);
 }
 

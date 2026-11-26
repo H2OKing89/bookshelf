@@ -75,6 +75,9 @@ test('filesystem navigation validates response and discards stale or cleared req
   assert.equal(cleared.currentPath, '');
   assert.equal(cleared.isFetching, false);
   assert.deepEqual(cleared.directories, []);
+  mod.fetchPaths({})(dispatch, getState);
+  assert.equal(io.entries[3].options.data.path, '');
+  assert.doesNotThrow(() => mod.parsePaths('', { directories: [{ path: '/', name: null }], files: [] }));
 });
 
 test('provider options never replace a newer response or a cleared field', () => {
