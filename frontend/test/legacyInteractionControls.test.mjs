@@ -25,6 +25,9 @@ test('slider rejects malformed values and preserves smaller legal numeric input 
   const previous = { minSize: 20, maxSize: 21 };
   const values = size.sliderValues(previous);
   assert.ok(size.sliderStepsBetween(values) < 50);
+  const [[minLow, minHigh], [maxLow, maxHigh]] = size.sliderThumbBounds([20, 40]);
+  assert.deepEqual([minLow, minHigh, maxLow, maxHigh], [0, 35, 25, size.SLIDER_MAX]);
+  assert.deepEqual(size.sliderThumbBounds(values), [[0, values[0]], [values[1], size.SLIDER_MAX]]);
   assert.equal(size.sliderStepsBetween([0, size.SLIDER_MAX]), 50);
   for (const malformed of [[1], [1, NaN], [5, 3], [0, size.SLIDER_MAX + 1]]) {
     assert.equal(size.sizesFromSlider(malformed, previous), null);

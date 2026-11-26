@@ -125,7 +125,7 @@ test('book details renders the local-recording source badge supplied by the API'
   const boundaries = Object.fromEntries([
     'Author/AuthorNameLink', 'Book/BookCover', 'Components/Alert', 'Components/HeartRating',
     'Components/Icon', 'Components/Marquee', 'Components/Measure', 'Components/MonitorToggleButton',
-    'Components/Tooltip/Tooltip', './BookDetailsLinks'
+    'Components/Tooltip/Tooltip', 'Components/TextTruncate', './BookDetailsLinks'
   ].map((name) => [name, () => null]));
   const { default: Header } = loadFrontendModule('Book/Details/BookDetailsHeader.js', {
     ...boundaries,

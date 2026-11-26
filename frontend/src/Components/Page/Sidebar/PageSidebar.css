@@ -1,4 +1,5 @@
 .sidebarContainer {
+  position: relative;
   flex: 0 0 $sidebarWidth;
   overflow: hidden;
   width: $sidebarWidth;
@@ -8,6 +9,8 @@
 }
 
 .sidebar {
+  /* Keep navigation content from increasing the height of the desktop page. */
+  position: absolute;
   display: flex;
   flex-direction: column;
   overflow: hidden;
