@@ -44,18 +44,18 @@
       },
       "Selenium.Support": {
         "type": "Direct",
-        "requested": "[3.141.0, )",
-        "resolved": "3.141.0",
-        "contentHash": "F4sxMCXGyqWtbw5qsniJRgza2UsBnslHwFgNA2p7hPxvJhqg73lyXu/ZscJ7FSfRvq3eJrosysv92+4sZ3vWsg==",
+        "requested": "[4.54.0, )",
+        "resolved": "4.54.0",
+        "contentHash": "HRBNg/aD8YNqj9AHtdRoukGWSEHAj4AlUgYr31ZH/lMIZv19GVCcQNpegWnEFoXbgJcWBt4P+VDf/QZN9lnxTA==",
         "dependencies": {
-          "Selenium.WebDriver": "3.141.0"
+          "Selenium.WebDriver": "4.54.0"
         }
       },
       "Selenium.WebDriver.ChromeDriver": {
         "type": "Direct",
-        "requested": "[134.0.6998.16500, )",
-        "resolved": "134.0.6998.16500",
-        "contentHash": "Mb1ajy5zmY+yXDhpUtl90spvY/OWkDcPmnFqextFEudLPbp7sFcRoQFrhNSiPa5VmTFMh1rFTpx90aIpDXrSTw=="
+        "requested": "[158.0.8127.8800, )",
+        "resolved": "158.0.8127.8800",
+        "contentHash": "tuWcrCWgtD5wrlAeta5S4wHLSzjw0H3j7MDaHP81t4VorcsQDrboJXv2TPkQ192wKD9DlFcnvhk42AJIKZKcwQ=="
       },
       "StyleCop.Analyzers": {
         "type": "Direct",
@@ -464,11 +464,8 @@
       },
       "Selenium.WebDriver": {
         "type": "Transitive",
-        "resolved": "3.141.0",
-        "contentHash": "wPqzXO3f79DzqauTZSzLMKiaBCN0Z2Mv7KvWP+hnV6EL88zh/pJJnFtdIR1X5wa3hsTOpF/bBJs45rz7kArsiA==",
-        "dependencies": {
-          "Newtonsoft.Json": "10.0.3"
-        }
+        "resolved": "4.54.0",
+        "contentHash": "djqoNPLtvMpb3LFrOnD5bVJqHOP971psa93QmGPnSN0J9+imzvrvJBbsQNSM3DF7niSKq1YfNpw1Zxsd5UsQDA=="
       },
       "System.ComponentModel.Annotations": {
         "type": "Transitive",
@@ -904,6 +901,11 @@
       }
     },
     "net10.0/linux-musl-arm64": {
+      "Selenium.WebDriver": {
+        "type": "Transitive",
+        "resolved": "4.54.0",
+        "contentHash": "djqoNPLtvMpb3LFrOnD5bVJqHOP971psa93QmGPnSN0J9+imzvrvJBbsQNSM3DF7niSKq1YfNpw1Zxsd5UsQDA=="
+      },
       "System.Diagnostics.EventLog": {
         "type": "Transitive",
         "resolved": "10.0.15",
@@ -935,6 +937,11 @@
       }
     },
     "net10.0/linux-musl-x64": {
+      "Selenium.WebDriver": {
+        "type": "Transitive",
+        "resolved": "4.54.0",
+        "contentHash": "djqoNPLtvMpb3LFrOnD5bVJqHOP971psa93QmGPnSN0J9+imzvrvJBbsQNSM3DF7niSKq1YfNpw1Zxsd5UsQDA=="
+      },
       "System.Diagnostics.EventLog": {
         "type": "Transitive",
         "resolved": "10.0.15",
@@ -966,6 +973,11 @@
       }
     },
     "net10.0/linux-x64": {
+      "Selenium.WebDriver": {
+        "type": "Transitive",
+        "resolved": "4.54.0",
+        "contentHash": "djqoNPLtvMpb3LFrOnD5bVJqHOP971psa93QmGPnSN0J9+imzvrvJBbsQNSM3DF7niSKq1YfNpw1Zxsd5UsQDA=="
+      },
       "System.Diagnostics.EventLog": {
         "type": "Transitive",
         "resolved": "10.0.15",

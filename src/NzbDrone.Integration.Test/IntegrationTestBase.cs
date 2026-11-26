@@ -177,7 +177,7 @@ namespace NzbDrone.Integration.Test
         {
             _signalRReceived = new List<SignalRMessage>();
             _signalrConnection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:8787/signalr/messages", options =>
+                .WithUrl(RootUrl + "signalr/messages", options =>
                     {
                         options.AccessTokenProvider = () => Task.FromResult(ApiKey);
                     })

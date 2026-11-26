@@ -3,6 +3,7 @@
     <TargetFrameworks>net10.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Selenium.Support" />
     <PackageReference Include="Selenium.WebDriver.ChromeDriver" />
   </ItemGroup>

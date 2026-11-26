@@ -10,8 +10,6 @@ using NzbDrone.Automation.Test.PageModel;
 using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Test.Common;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.Remote;
 
 namespace NzbDrone.Automation.Test
 {
@@ -20,7 +18,7 @@ namespace NzbDrone.Automation.Test
     public abstract class AutomationTest
     {
         private NzbDroneRunner _runner;
-        protected RemoteWebDriver driver;
+        protected WebDriver driver;
 
         public AutomationTest()
         {
@@ -35,26 +33,18 @@ namespace NzbDrone.Automation.Test
         [OneTimeSetUp]
         public void SmokeTestSetup()
         {
-            var options = new ChromeOptions();
-            options.AddArguments("--headless");
-            var service = ChromeDriverService.CreateDefaultService();
-
-            // Timeout as windows automation tests seem to take alot longer to get going
-            driver = new ChromeDriver(service, options, TimeSpan.FromMinutes(3));
+            driver = AutomationChrome.Create();
 
             driver.Manage().Window.Size = new System.Drawing.Size(1920, 1080);
             driver.Manage().Window.FullScreen();
 
             _runner = new NzbDroneRunner(LogManager.GetCurrentClassLogger(), null);
-            _runner.KillAll();
             _runner.Start(true);
 
-            driver.Navigate().GoToUrl("http://localhost:8787");
+            driver.Navigate().GoToUrl($"http://127.0.0.1:{_runner.Port}");
 
             var page = new PageBase(driver);
             page.WaitForNoSpinner();
-
-            driver.ExecuteScript("window.Readarr.NameViews = true;");
 
             GetPageErrors().Should().BeEmpty();
         }
@@ -70,7 +60,7 @@ namespace NzbDrone.Automation.Test
             try
             {
                 var image = (driver as ITakesScreenshot).GetScreenshot();
-                image.SaveAsFile($"./{name}_test_screenshot.png", ScreenshotImageFormat.Png);
+                image.SaveAsFile($"./{name}_test_screenshot.png");
             }
             catch (Exception ex)
             {
@@ -81,8 +71,14 @@ namespace NzbDrone.Automation.Test
         [OneTimeTearDown]
         public void SmokeTestTearDown()
         {
-            _runner.KillAll();
-            driver.Quit();
+            try
+            {
+                driver?.Dispose();
+            }
+            finally
+            {
+                _runner?.Kill();
+            }
         }
 
         [TearDown]

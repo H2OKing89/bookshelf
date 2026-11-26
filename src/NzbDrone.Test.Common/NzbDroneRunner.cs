@@ -4,6 +4,8 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Net.Sockets;
+using System.Text.Json;
 using System.Threading;
 using System.Xml.Linq;
 using NLog;
@@ -11,7 +13,6 @@ using NUnit.Framework;
 using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Processes;
-using NzbDrone.Common.Serializer;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Datastore;
 using RestSharp;
@@ -30,13 +31,20 @@ namespace NzbDrone.Test.Common
         public PostgresOptions PostgresOptions { get; private set; }
         public int Port { get; private set; }
 
-        public NzbDroneRunner(Logger logger, PostgresOptions postgresOptions, int port = 8787)
+        public NzbDroneRunner(Logger logger, PostgresOptions postgresOptions, int port = 0)
         {
             _processProvider = new ProcessProvider(logger);
-            _restClient = TestRestClient.Create($"http://localhost:{port}/api/v1");
+            Port = port == 0 ? GetAvailablePort() : port;
+            _restClient = TestRestClient.Create($"http://127.0.0.1:{Port}/api/v1");
 
             PostgresOptions = postgresOptions;
-            Port = port;
+        }
+
+        private static int GetAvailablePort()
+        {
+            using var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            return ((IPEndPoint)listener.LocalEndpoint).Port;
         }
 
         public void Start(bool enableAuth = false)
@@ -66,7 +74,8 @@ namespace NzbDrone.Test.Common
                 Start(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "bin", readarrConsoleExe));
             }
 
-            while (true)
+            var startupTimeout = Stopwatch.StartNew();
+            while (startupTimeout.Elapsed < TimeSpan.FromMinutes(2))
             {
                 _nzbDroneProcess.Refresh();
 
@@ -86,6 +95,15 @@ namespace NzbDrone.Test.Common
 
                 if (statusCall.ResponseStatus == ResponseStatus.Completed && statusCall.StatusCode == HttpStatusCode.OK)
                 {
+                    // Refuse to send any subsequent test mutations to an unrelated listener.
+                    using var status = JsonDocument.Parse(statusCall.Content);
+                    var actualHome = status.RootElement.GetProperty("appData").GetString();
+                    var comparison = OsInfo.IsWindows ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+                    if (!string.Equals(Path.GetFullPath(actualHome), Path.GetFullPath(AppData), comparison))
+                    {
+                        throw new InvalidOperationException("The status response belongs to a different application home.");
+                    }
+
                     _startupLog = null;
                     TestContext.Progress.WriteLine($"Readarr {Port} is started. Running Tests");
                     return;
@@ -95,51 +113,33 @@ namespace NzbDrone.Test.Common
 
                 Thread.Sleep(500);
             }
+
+            Assert.Fail("Timed out waiting for the owned Readarr test process to start.");
         }
 
         public void Kill()
         {
             try
             {
-                if (_nzbDroneProcess != null)
+                if (_nzbDroneProcess != null && !_nzbDroneProcess.HasExited)
                 {
-                    _nzbDroneProcess.Refresh();
-                    if (_nzbDroneProcess.HasExited)
+                    _nzbDroneProcess.Kill(entireProcessTree: true);
+                    if (!_nzbDroneProcess.WaitForExit(10000))
                     {
-                        var log = File.ReadAllLines(Path.Combine(AppData, "logs", "readarr.trace.txt"));
-                        var output = log.Join(Environment.NewLine);
-                        TestContext.Progress.WriteLine("Process has exited prematurely: ExitCode={0} Output:\n{1}", _nzbDroneProcess.ExitCode, output);
+                        throw new InvalidOperationException("The owned test process did not exit.");
                     }
-
-                    _processProvider.Kill(_nzbDroneProcess.Id);
                 }
-            }
-            catch (InvalidOperationException)
-            {
-                // May happen if the process closes while being closed
-            }
 
-            TestBase.DeleteTempFolder(AppData);
-        }
-
-        public void KillAll()
-        {
-            try
-            {
-                if (_nzbDroneProcess != null)
+                if (AppData != null)
                 {
-                    _processProvider.Kill(_nzbDroneProcess.Id);
+                    TestBase.DeleteTempFolder(AppData);
                 }
-
-                _processProvider.KillAll(ProcessProvider.READARR_CONSOLE_PROCESS_NAME);
-                _processProvider.KillAll(ProcessProvider.READARR_PROCESS_NAME);
             }
-            catch (InvalidOperationException)
+            finally
             {
-                // May happen if the process closes while being closed
+                _nzbDroneProcess?.Dispose();
+                _restClient.Dispose();
             }
-
-            TestBase.DeleteTempFolder(AppData);
         }
 
         private void Start(string outputNzbdroneConsoleExe)
@@ -155,7 +155,7 @@ namespace NzbDrone.Test.Common
                 envVars.Add("Readarr__Postgres__LogDb", PostgresOptions.LogDb);
                 envVars.Add("Readarr__Postgres__CacheDb", PostgresOptions.CacheDb);
 
-                TestContext.Progress.WriteLine("Using env vars:\n{0}", envVars.ToJson());
+                TestContext.Progress.WriteLine("Using configured test PostgreSQL options.");
             }
 
             TestContext.Progress.WriteLine("Starting instance from {0} on port {1}", outputNzbdroneConsoleExe, Port);
@@ -193,6 +193,7 @@ namespace NzbDrone.Test.Common
                              new XElement(nameof(ConfigFileProvider.LogLevel), "trace"),
                              new XElement(nameof(ConfigFileProvider.AuthenticationMethod), enableAuth ? "Forms" : "None"),
                              new XElement(nameof(ConfigFileProvider.AuthenticationRequired), "DisabledForLocalAddresses"),
+                             new XElement(nameof(ConfigFileProvider.BindAddress), "127.0.0.1"),
                              new XElement(nameof(ConfigFileProvider.Port), Port)));
 
             var data = xDoc.ToString();
