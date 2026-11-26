@@ -57,17 +57,18 @@ export const SET_AUTHOR_DETAILS_ID = 'authorIndex/setAuthorDetailsId';
 //
 // Action Creators
 
-export const setAuthorDetailsSort = createAction(SET_AUTHOR_DETAILS_SORT);
+export const setAuthorDetailsSort = createAction<{ sortKey?: string; sortDirection?: 'ascending' | 'descending' }>(SET_AUTHOR_DETAILS_SORT);
 export const setAuthorDetailsId = createThunk(SET_AUTHOR_DETAILS_ID);
 
 //
 // Action Handlers
 
 export const actionHandlers = handleThunks({
-  [SET_AUTHOR_DETAILS_ID]: function(getState, payload, dispatch) {
-    const {
-      authorId
-    } = payload;
+  [SET_AUTHOR_DETAILS_ID]: function(_getState, payload, dispatch) {
+    const { authorId } = payload;
+    if (typeof authorId !== 'number' || !Number.isSafeInteger(authorId) || authorId <= 0) {
+      return;
+    }
 
     dispatch(set({
       section,

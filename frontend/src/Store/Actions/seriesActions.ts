@@ -1,11 +1,13 @@
 import { createAction } from 'redux-actions';
 import { sortDirections } from 'Helpers/Props';
+import { type StateRecord } from 'Store/StateTypes';
 import { createThunk, handleThunks } from 'Store/thunks';
 import createFetchHandler from './Creators/createFetchHandler';
 import createHandleActions from './Creators/createHandleActions';
 import createSetClientSideCollectionSortReducer from './Creators/Reducers/createSetClientSideCollectionSortReducer';
 import createSetSettingValueReducer from './Creators/Reducers/createSetSettingValueReducer';
 import createSetTableOptionReducer from './Creators/Reducers/createSetTableOptionReducer';
+import { parseSettingsList } from './Settings/settingsResponses';
 
 //
 // Variables
@@ -95,15 +97,15 @@ export const SET_SERIES_VALUE = 'books/setBookValue';
 // Action Creators
 
 export const fetchSeries = createThunk(FETCH_SERIES);
-export const setSeriesSort = createAction(SET_SERIES_SORT);
-export const setSeriesTableOption = createAction(SET_SERIES_TABLE_OPTION);
+export const setSeriesSort = createAction<{ sortKey?: string; sortDirection?: 'ascending' | 'descending' }>(SET_SERIES_SORT);
+export const setSeriesTableOption = createAction<StateRecord>(SET_SERIES_TABLE_OPTION);
 export const clearSeries = createAction(CLEAR_SERIES);
 
 //
 // Action Handlers
 
 export const actionHandlers = handleThunks({
-  [FETCH_SERIES]: createFetchHandler(section, '/series')
+  [FETCH_SERIES]: createFetchHandler(section, '/series', (data) => parseSettingsList(data))
 });
 
 //
@@ -122,7 +124,8 @@ export const reducers = createHandleActions({
       isFetching: false,
       isPopulated: false,
       error: null,
-      items: []
+      items: [],
+      itemMap: {}
     });
   }
 

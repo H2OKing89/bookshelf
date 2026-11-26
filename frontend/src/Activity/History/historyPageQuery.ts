@@ -84,7 +84,7 @@ function parseEventData(value: unknown) {
   return data;
 }
 
-function parseHistoryRecord(value: unknown) {
+export function parseHistoryRecord(value: unknown) {
   if (!isRecord(value)) {
     throw new TypeError('Invalid history record');
   }

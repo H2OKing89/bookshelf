@@ -1,8 +1,9 @@
-import { createAction } from 'redux-actions';
 import createFetchHandler from 'Store/Actions/Creators/createFetchHandler';
 import createSaveHandler from 'Store/Actions/Creators/createSaveHandler';
 import createSetSettingValueReducer from 'Store/Actions/Creators/Reducers/createSetSettingValueReducer';
 import { createThunk } from 'Store/thunks';
+import { createSettingValueAction } from './settingActions';
+import { parseSettingsObject } from './settingsResponses';
 
 //
 // Variables
@@ -21,12 +22,7 @@ export const SAVE_DEVELOPMENT_SETTINGS = 'settings/development/saveDevelopmentSe
 
 export const fetchDevelopmentSettings = createThunk(FETCH_DEVELOPMENT_SETTINGS);
 export const saveDevelopmentSettings = createThunk(SAVE_DEVELOPMENT_SETTINGS);
-export const setDevelopmentSettingsValue = createAction(SET_DEVELOPMENT_SETTINGS_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setDevelopmentSettingsValue = createSettingValueAction(SET_DEVELOPMENT_SETTINGS_VALUE, section);
 
 //
 // Details
@@ -50,7 +46,7 @@ export default {
   // Action Handlers
 
   actionHandlers: {
-    [FETCH_DEVELOPMENT_SETTINGS]: createFetchHandler(section, '/config/development'),
+    [FETCH_DEVELOPMENT_SETTINGS]: createFetchHandler(section, '/config/development', parseSettingsObject),
     [SAVE_DEVELOPMENT_SETTINGS]: createSaveHandler(section, '/config/development')
   },
 

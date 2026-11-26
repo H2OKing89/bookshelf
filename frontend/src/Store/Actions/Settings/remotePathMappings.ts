@@ -1,9 +1,10 @@
-import { createAction } from 'redux-actions';
 import createFetchHandler from 'Store/Actions/Creators/createFetchHandler';
 import createRemoveItemHandler from 'Store/Actions/Creators/createRemoveItemHandler';
 import createSaveProviderHandler from 'Store/Actions/Creators/createSaveProviderHandler';
 import createSetSettingValueReducer from 'Store/Actions/Creators/Reducers/createSetSettingValueReducer';
 import { createThunk } from 'Store/thunks';
+import { createSettingValueAction } from './settingActions';
+import { parseSettingsList } from './settingsResponses';
 
 //
 // Variables
@@ -25,12 +26,7 @@ export const fetchRemotePathMappings = createThunk(FETCH_REMOTE_PATH_MAPPINGS);
 export const saveRemotePathMapping = createThunk(SAVE_REMOTE_PATH_MAPPING);
 export const deleteRemotePathMapping = createThunk(DELETE_REMOTE_PATH_MAPPING);
 
-export const setRemotePathMappingValue = createAction(SET_REMOTE_PATH_MAPPING_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setRemotePathMappingValue = createSettingValueAction(SET_REMOTE_PATH_MAPPING_VALUE, section);
 
 //
 // Details
@@ -54,7 +50,7 @@ export default {
   // Action Handlers
 
   actionHandlers: {
-    [FETCH_REMOTE_PATH_MAPPINGS]: createFetchHandler(section, '/remotepathmapping'),
+    [FETCH_REMOTE_PATH_MAPPINGS]: createFetchHandler(section, '/remotepathmapping', (data) => parseSettingsList(data)),
     [SAVE_REMOTE_PATH_MAPPING]: createSaveProviderHandler(section, '/remotepathmapping'),
     [DELETE_REMOTE_PATH_MAPPING]: createRemoveItemHandler(section, '/remotepathmapping')
   },

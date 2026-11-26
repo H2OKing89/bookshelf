@@ -1,4 +1,5 @@
 import { createAction } from 'redux-actions';
+import type { StateRecord } from 'Store/StateTypes';
 import { handleThunks } from 'Store/thunks';
 import createHandleActions from './Creators/createHandleActions';
 import customFormats from './Settings/customFormats';
@@ -27,7 +28,7 @@ import remotePathMappings from './Settings/remotePathMappings';
 import rootFolders from './Settings/rootFolders';
 import ui from './Settings/ui';
 
-export * from './Settings/customFormatSpecifications.js';
+export * from './Settings/customFormatSpecifications';
 export * from './Settings/customFormats';
 export * from './Settings/delayProfiles';
 export * from './Settings/downloadClients';
@@ -141,7 +142,7 @@ export const actionHandlers = handleThunks({
 
 export const reducers = createHandleActions({
 
-  [TOGGLE_ADVANCED_SETTINGS]: (state, { payload }) => {
+  [TOGGLE_ADVANCED_SETTINGS]: (state: StateRecord) => {
     return Object.assign({}, state, { advancedSettings: !state.advancedSettings });
   },
 

@@ -21,7 +21,7 @@ import getSectionState from 'Utilities/State/getSectionState';
 import updateSectionState from 'Utilities/State/updateSectionState';
 
 type BaseHandler = (state: StateRecord, payload: StateRecord) => StateRecord;
-type SectionHandler = (state: StateRecord | undefined, action: { type: string; payload: unknown }) => StateRecord;
+type SectionHandler = (state: StateRecord, action: { type: string; payload: unknown }) => StateRecord;
 
 const baseHandlers: Record<string, BaseHandler> = {
   [SET]: (state, payload) => ({ ...state, ..._.omit(payload, ['section', 'id']) }),
@@ -135,5 +135,9 @@ export default function createHandleActions(
     }
   ]));
 
-  return handleActions<StateRecord, unknown>({ ...scopedHandlers, ...handlers }, defaultState);
+  const registeredHandlers = Object.fromEntries(Object.entries(handlers).map(([type, handler]) => [
+    type,
+    (state: StateRecord = defaultState, action: { type: string; payload: unknown }) => handler(state, action)
+  ]));
+  return handleActions<StateRecord, unknown>({ ...scopedHandlers, ...registeredHandlers }, defaultState);
 }

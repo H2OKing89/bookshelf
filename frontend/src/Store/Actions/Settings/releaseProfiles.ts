@@ -1,9 +1,10 @@
-import { createAction } from 'redux-actions';
 import createFetchHandler from 'Store/Actions/Creators/createFetchHandler';
 import createRemoveItemHandler from 'Store/Actions/Creators/createRemoveItemHandler';
 import createSaveProviderHandler from 'Store/Actions/Creators/createSaveProviderHandler';
 import createSetSettingValueReducer from 'Store/Actions/Creators/Reducers/createSetSettingValueReducer';
 import { createThunk } from 'Store/thunks';
+import { createSettingValueAction } from './settingActions';
+import { parseSettingsList } from './settingsResponses';
 
 //
 // Variables
@@ -25,12 +26,7 @@ export const fetchReleaseProfiles = createThunk(FETCH_RELEASE_PROFILES);
 export const saveReleaseProfile = createThunk(SAVE_RELEASE_PROFILE);
 export const deleteReleaseProfile = createThunk(DELETE_RELEASE_PROFILE);
 
-export const setReleaseProfileValue = createAction(SET_RELEASE_PROFILE_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setReleaseProfileValue = createSettingValueAction(SET_RELEASE_PROFILE_VALUE, section);
 
 //
 // Details
@@ -54,7 +50,7 @@ export default {
   // Action Handlers
 
   actionHandlers: {
-    [FETCH_RELEASE_PROFILES]: createFetchHandler(section, '/releaseprofile'),
+    [FETCH_RELEASE_PROFILES]: createFetchHandler(section, '/releaseprofile', (data) => parseSettingsList(data)),
 
     [SAVE_RELEASE_PROFILE]: createSaveProviderHandler(section, '/releaseprofile'),
 

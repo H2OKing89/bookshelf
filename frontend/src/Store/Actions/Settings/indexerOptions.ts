@@ -1,8 +1,9 @@
-import { createAction } from 'redux-actions';
 import createFetchHandler from 'Store/Actions/Creators/createFetchHandler';
 import createSaveHandler from 'Store/Actions/Creators/createSaveHandler';
 import createSetSettingValueReducer from 'Store/Actions/Creators/Reducers/createSetSettingValueReducer';
 import { createThunk } from 'Store/thunks';
+import { createSettingValueAction } from './settingActions';
+import { parseSettingsObject } from './settingsResponses';
 
 //
 // Variables
@@ -21,12 +22,7 @@ export const SET_INDEXER_OPTIONS_VALUE = 'settings/indexerOptions/setIndexerOpti
 
 export const fetchIndexerOptions = createThunk(FETCH_INDEXER_OPTIONS);
 export const saveIndexerOptions = createThunk(SAVE_INDEXER_OPTIONS);
-export const setIndexerOptionsValue = createAction(SET_INDEXER_OPTIONS_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setIndexerOptionsValue = createSettingValueAction(SET_INDEXER_OPTIONS_VALUE, section);
 
 //
 // Details
@@ -50,7 +46,7 @@ export default {
   // Action Handlers
 
   actionHandlers: {
-    [FETCH_INDEXER_OPTIONS]: createFetchHandler(section, '/config/indexer'),
+    [FETCH_INDEXER_OPTIONS]: createFetchHandler(section, '/config/indexer', parseSettingsObject),
     [SAVE_INDEXER_OPTIONS]: createSaveHandler(section, '/config/indexer')
   },
 

@@ -1,20 +1,21 @@
 import createFetchHandler from 'Store/Actions/Creators/createFetchHandler';
 import { createThunk } from 'Store/thunks';
+import { parseNamedOptions } from './settingsResponses';
 
 //
 // Variables
 
-const section = 'settings.indexerFlags';
+const section = 'settings.languages';
 
 //
 // Actions Types
 
-export const FETCH_INDEXER_FLAGS = 'settings/indexerFlags/fetchIndexerFlags';
+export const FETCH_LANGUAGES = 'settings/languages/fetchLanguages';
 
 //
 // Action Creators
 
-export const fetchIndexerFlags = createThunk(FETCH_INDEXER_FLAGS);
+export const fetchLanguages = createThunk(FETCH_LANGUAGES);
 
 //
 // Details
@@ -35,7 +36,7 @@ export default {
   // Action Handlers
 
   actionHandlers: {
-    [FETCH_INDEXER_FLAGS]: createFetchHandler(section, '/indexerFlag')
+    [FETCH_LANGUAGES]: createFetchHandler(section, '/language', parseNamedOptions)
   },
 
   //

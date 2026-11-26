@@ -1,9 +1,10 @@
-import { createAction } from 'redux-actions';
 import createFetchHandler from 'Store/Actions/Creators/createFetchHandler';
 import createRemoveItemHandler from 'Store/Actions/Creators/createRemoveItemHandler';
 import createSaveProviderHandler from 'Store/Actions/Creators/createSaveProviderHandler';
 import createSetSettingValueReducer from 'Store/Actions/Creators/Reducers/createSetSettingValueReducer';
 import { createThunk } from 'Store/thunks';
+import { createSettingValueAction } from './settingActions';
+import { parseSettingsList } from './settingsResponses';
 
 //
 // Variables
@@ -25,12 +26,7 @@ export const fetchImportListExclusions = createThunk(FETCH_IMPORT_LIST_EXCLUSION
 export const saveImportListExclusion = createThunk(SAVE_IMPORT_LIST_EXCLUSION);
 export const deleteImportListExclusion = createThunk(DELETE_IMPORT_LIST_EXCLUSION);
 
-export const setImportListExclusionValue = createAction(SET_IMPORT_LIST_EXCLUSION_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setImportListExclusionValue = createSettingValueAction(SET_IMPORT_LIST_EXCLUSION_VALUE, section);
 
 //
 // Details
@@ -54,7 +50,7 @@ export default {
   // Action Handlers
 
   actionHandlers: {
-    [FETCH_IMPORT_LIST_EXCLUSIONS]: createFetchHandler(section, '/importlistexclusion'),
+    [FETCH_IMPORT_LIST_EXCLUSIONS]: createFetchHandler(section, '/importlistexclusion', (data) => parseSettingsList(data)),
     [SAVE_IMPORT_LIST_EXCLUSION]: createSaveProviderHandler(section, '/importlistexclusion'),
     [DELETE_IMPORT_LIST_EXCLUSION]: createRemoveItemHandler(section, '/importlistexclusion')
   },

@@ -1,8 +1,9 @@
-import { createAction } from 'redux-actions';
 import createFetchHandler from 'Store/Actions/Creators/createFetchHandler';
 import createSaveHandler from 'Store/Actions/Creators/createSaveHandler';
 import createSetSettingValueReducer from 'Store/Actions/Creators/Reducers/createSetSettingValueReducer';
 import { createThunk } from 'Store/thunks';
+import { createSettingValueAction } from './settingActions';
+import { parseSettingsObject } from './settingsResponses';
 
 //
 // Variables
@@ -21,12 +22,7 @@ export const SAVE_METADATA_PROVIDER = 'settings/metadataProvider/saveMetadataPro
 
 export const fetchMetadataProvider = createThunk(FETCH_METADATA_PROVIDER);
 export const saveMetadataProvider = createThunk(SAVE_METADATA_PROVIDER);
-export const setMetadataProviderValue = createAction(SET_METADATA_PROVIDER_VALUE, (payload) => {
-  return {
-    section,
-    ...payload
-  };
-});
+export const setMetadataProviderValue = createSettingValueAction(SET_METADATA_PROVIDER_VALUE, section);
 
 //
 // Details
@@ -50,7 +46,7 @@ export default {
   // Action Handlers
 
   actionHandlers: {
-    [FETCH_METADATA_PROVIDER]: createFetchHandler(section, '/config/metadataProvider'),
+    [FETCH_METADATA_PROVIDER]: createFetchHandler(section, '/config/metadataProvider', parseSettingsObject),
     [SAVE_METADATA_PROVIDER]: createSaveHandler(section, '/config/metadataProvider')
   },
 

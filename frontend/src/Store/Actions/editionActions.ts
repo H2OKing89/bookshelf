@@ -1,6 +1,7 @@
 import { createAction } from 'redux-actions';
 import { batchActions } from 'redux-batched-actions';
-import { libraryResponseParser, parseLibraryEdition } from 'Book/LibraryModels';
+import { libraryResponseParser, parseLibraryCollection, parseLibraryEdition } from 'Book/LibraryModels';
+import { isItemId } from 'Store/StateTypes';
 import { createThunk, handleThunks } from 'Store/thunks';
 import getProviderState from 'Utilities/State/getProviderState';
 import { updateItem } from './baseActions';
@@ -45,22 +46,23 @@ export const actionHandlers = handleThunks({
   [FETCH_EDITIONS]: createFetchHandler(section, '/edition', libraryResponseParser(parseLibraryEdition)),
 
   [SAVE_EDITIONS]: function(getState, payload, dispatch) {
-    const {
-      id,
-      ...otherPayload
-    } = payload;
-
+    const { id, ...otherPayload } = payload;
+    if (!isItemId(id)) {
+      return;
+    }
     const saveData = getProviderState({ id, ...otherPayload }, getState, 'books');
-
-    dispatch(batchActions([
-      ...saveData.editions.map((edition) => {
-        return updateItem({
-          id: edition.id,
-          section: 'editions',
-          ...edition
-        });
-      })
-    ]));
+    if (saveData.id !== id) {
+      return;
+    }
+    try {
+      const editions = parseLibraryCollection(saveData.editions, parseLibraryEdition);
+      if (editions.some((edition) => edition.bookId != null && edition.bookId !== 0 && edition.bookId !== id)) {
+        return;
+      }
+      dispatch(batchActions(editions.map((edition) => updateItem({ ...edition, section }))));
+    } catch {
+      // Do not apply a partial or unrelated edition draft.
+    }
   }
 });
 
