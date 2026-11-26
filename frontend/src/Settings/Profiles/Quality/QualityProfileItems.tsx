@@ -1,23 +1,50 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import FormGroup from 'Components/Form/FormGroup';
 import FormInputHelpText from 'Components/Form/FormInputHelpText';
 import FormLabel from 'Components/Form/FormLabel';
+import type { FormMessage } from 'Components/Form/formTypes';
 import Icon from 'Components/Icon';
 import Button from 'Components/Link/Button';
 import Measure from 'Components/Measure';
 import { icons, kinds, sizes } from 'Helpers/Props';
+import type { QualityDragEnd, QualityDragMove } from './qualityProfileDragTypes';
 import QualityProfileItemDragPreview from './QualityProfileItemDragPreview';
 import QualityProfileItemDragSource from './QualityProfileItemDragSource';
+import { isQualityLeaf, qualityItemId, qualityItemName, type QualityProfileItem } from './qualityProfileSettingsState';
 import styles from './QualityProfileItems.css';
 
-class QualityProfileItems extends Component {
+export interface QualityItemEditorProps {
+  dragQualityIndex: string | null;
+  dropQualityIndex: string | null;
+  dropPosition: 'above' | 'below' | null;
+  onCreateGroupPress: (id: number) => void;
+  onDeleteGroupPress: (id: number) => void;
+  onQualityProfileItemAllowedChange: (id: number, allowed: boolean) => void;
+  onItemGroupAllowedChange: (id: number, allowed: boolean) => void;
+  onItemGroupNameChange: (id: number, name: string) => void;
+  onQualityProfileItemDragMove: QualityDragMove;
+  onQualityProfileItemDragEnd: QualityDragEnd;
+  onToggleEditGroupsMode: () => void;
+}
+
+interface Props extends QualityItemEditorProps {
+  editGroups: boolean;
+  qualityProfileItems: readonly QualityProfileItem[];
+  errors?: readonly FormMessage[];
+  warnings?: readonly FormMessage[];
+}
+interface State {
+  qualitiesHeight: number;
+  qualitiesHeightEditGroups: number;
+}
+
+class QualityProfileItems extends Component<Props, State> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: Props) {
+    super(props);
 
     this.state = {
       qualitiesHeight: 0,
@@ -28,7 +55,7 @@ class QualityProfileItems extends Component {
   //
   // Listeners
 
-  onMeasure = ({ height }) => {
+  onMeasure = ({ height }: { height: number }) => {
     if (this.props.editGroups) {
       this.setState({
         qualitiesHeightEditGroups: height
@@ -51,8 +78,8 @@ class QualityProfileItems extends Component {
       dropQualityIndex,
       dropPosition,
       qualityProfileItems,
-      errors,
-      warnings,
+      errors = [],
+      warnings = [],
       ...otherProps
     } = this.props;
 
@@ -127,20 +154,19 @@ class QualityProfileItems extends Component {
             style={{ minHeight: `${minHeight}px` }}
           >
             {
-              qualityProfileItems.map(({ id, name, allowed, quality, items }, index) => {
-                const identifier = quality ? quality.id : id;
+              qualityProfileItems.map((item, index) => {
+                const leaf = isQualityLeaf(item);
 
                 return (
                   <QualityProfileItemDragSource
-                    key={identifier}
+                    key={qualityItemId(item)}
                     editGroups={editGroups}
-                    groupId={id}
-                    qualityId={quality && quality.id}
-                    name={quality ? quality.name : name}
-                    allowed={allowed}
-                    items={items}
+                    groupId={leaf ? undefined : item.id}
+                    qualityId={leaf ? item.quality.id : undefined}
+                    name={qualityItemName(item)}
+                    allowed={item.allowed}
+                    items={leaf ? undefined : item.items}
                     qualityIndex={`${index + 1}`}
-                    isInGroup={false}
                     isDragging={isDragging}
                     isDraggingUp={isDraggingUp}
                     isDraggingDown={isDraggingDown}
@@ -157,21 +183,5 @@ class QualityProfileItems extends Component {
     );
   }
 }
-
-QualityProfileItems.propTypes = {
-  editGroups: PropTypes.bool.isRequired,
-  dragQualityIndex: PropTypes.string,
-  dropQualityIndex: PropTypes.string,
-  dropPosition: PropTypes.string,
-  qualityProfileItems: PropTypes.arrayOf(PropTypes.object).isRequired,
-  errors: PropTypes.arrayOf(PropTypes.object),
-  warnings: PropTypes.arrayOf(PropTypes.object),
-  onToggleEditGroupsMode: PropTypes.func.isRequired
-};
-
-QualityProfileItems.defaultProps = {
-  errors: [],
-  warnings: []
-};
 
 export default QualityProfileItems;

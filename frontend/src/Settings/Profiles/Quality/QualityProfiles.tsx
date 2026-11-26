@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import Card from 'Components/Card';
 import FieldSet from 'Components/FieldSet';
@@ -8,15 +7,26 @@ import { icons } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
 import EditQualityProfileModalConnector from './EditQualityProfileModalConnector';
 import QualityProfile from './QualityProfile';
+import type { QualityProfileSummary } from './qualityProfileSettingsState';
 import styles from './QualityProfiles.css';
 
-class QualityProfiles extends Component {
+interface Props {
+  isFetching: boolean;
+  isPopulated: boolean;
+  error?: unknown;
+  isDeleting: boolean;
+  items: readonly QualityProfileSummary[];
+  onConfirmDeleteQualityProfile: (id: number) => void;
+  onCloneQualityProfilePress: (id: number) => void;
+}
+
+class QualityProfiles extends Component<Props, { isQualityProfileModalOpen: boolean }> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: Props) {
+    super(props);
 
     this.state = {
       isQualityProfileModalOpen: false
@@ -26,7 +36,7 @@ class QualityProfiles extends Component {
   //
   // Listeners
 
-  onCloneQualityProfilePress = (id) => {
+  onCloneQualityProfilePress = (id: number) => {
     this.props.onCloneQualityProfilePress(id);
     this.setState({ isQualityProfileModalOpen: true });
   };
@@ -54,7 +64,7 @@ class QualityProfiles extends Component {
       <FieldSet legend={translate('QualityProfiles')}>
         <PageSectionContent
           errorMessage={translate('UnableToLoadQualityProfiles')}
-          {...otherProps}c={true}
+          {...otherProps}
         >
           <div className={styles.qualityProfiles}>
             {
@@ -95,14 +105,5 @@ class QualityProfiles extends Component {
     );
   }
 }
-
-QualityProfiles.propTypes = {
-  isFetching: PropTypes.bool.isRequired,
-  error: PropTypes.object,
-  isDeleting: PropTypes.bool.isRequired,
-  items: PropTypes.arrayOf(PropTypes.object).isRequired,
-  onConfirmDeleteQualityProfile: PropTypes.func.isRequired,
-  onCloneQualityProfilePress: PropTypes.func.isRequired
-};
 
 export default QualityProfiles;

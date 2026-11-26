@@ -1,31 +1,27 @@
-import PropTypes from 'prop-types';
 import { useState } from 'react';
 import FormInputGroup from 'Components/Form/FormInputGroup';
 import FormLabel from 'Components/Form/FormLabel';
+import type { ValueChange } from 'Components/Form/formTypes';
 import SelectInput from 'Components/Form/SelectInput';
 import { inputTypes, sizes } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
+import { isQualityLeaf, type QualityProfileItem,type SizeRuleKey, updateSizeRule } from './qualityProfileSettingsState';
 import styles from './EditQualityProfileModalContent.css';
 
-const fields = [
+const fields: readonly [SizeRuleKey, string][] = [
   ['minSize', 'ReleaseSizeMinimum'],
   ['preferredSize', 'ReleaseSizePreferred'],
   ['maxSize', 'ReleaseSizeMaximum']
 ];
 
-function updateSizeRule(items, qualityId, field, value) {
-  return items.map((item) => {
-    if (item.quality) {
-      return item.quality.id === qualityId ? { ...item, [field]: value } : item;
-    }
-
-    return { ...item, items: updateSizeRule(item.items, qualityId, field, value) };
-  });
+interface Props {
+  items: readonly QualityProfileItem[];
+  onInputChange: (change: ValueChange<unknown>) => void;
 }
 
-function QualityProfileSizeRules({ items, onInputChange }) {
-  const [qualityId, setQualityId] = useState(null);
-  const qualities = items.flatMap((item) => (item.quality ? [item] : item.items))
+function QualityProfileSizeRules({ items, onInputChange }: Props) {
+  const [qualityId, setQualityId] = useState<number | null>(null);
+  const qualities = items.flatMap((item) => (isQualityLeaf(item) ? [item] : item.items))
     .filter((item) => item.sizeUnit);
   const selected = qualities.find((item) => item.quality.id === qualityId) ||
     qualities.find((item) => item.allowed) || qualities[0];
@@ -63,8 +59,8 @@ function QualityProfileSizeRules({ items, onInputChange }) {
                 max={1000000}
                 step={0.1}
                 isFloat={true}
-                value={selected[field] || null}
-                unit={selected.sizeUnit}
+                value={selected[field] ?? null}
+                unit={selected.sizeUnit ?? undefined}
                 onChange={({ value }) => onInputChange({
                   name: 'items',
                   value: updateSizeRule(items, selected.quality.id, field, value ?? 0)
@@ -77,10 +73,5 @@ function QualityProfileSizeRules({ items, onInputChange }) {
     </details>
   );
 }
-
-QualityProfileSizeRules.propTypes = {
-  items: PropTypes.arrayOf(PropTypes.object).isRequired,
-  onInputChange: PropTypes.func.isRequired
-};
 
 export default QualityProfileSizeRules;

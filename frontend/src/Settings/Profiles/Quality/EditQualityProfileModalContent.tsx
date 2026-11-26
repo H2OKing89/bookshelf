@@ -1,9 +1,9 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
-import Form from 'Components/Form/Form';
+import Form, { type FormProps } from 'Components/Form/Form';
 import FormGroup from 'Components/Form/FormGroup';
 import FormInputGroup from 'Components/Form/FormInputGroup';
 import FormLabel from 'Components/Form/FormLabel';
+import type { SelectOption, ValueChange } from 'Components/Form/formTypes';
 import Button from 'Components/Link/Button';
 import SpinnerErrorButton from 'Components/Link/SpinnerErrorButton';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
@@ -15,14 +15,15 @@ import ModalHeader from 'Components/Modal/ModalHeader';
 import { inputTypes, kinds, sizes } from 'Helpers/Props';
 import dimensions from 'Styles/Variables/dimensions';
 import translate from 'Utilities/String/translate';
-import QualityProfileFormatItems from './QualityProfileFormatItems';
-import QualityProfileItems from './QualityProfileItems';
+import QualityProfileFormatItems, { type QualityFormatScoreProps } from './QualityProfileFormatItems';
+import QualityProfileItems, { type QualityItemEditorProps } from './QualityProfileItems';
+import type { ProfileDraft, ProfileFormatItem,qualityProfileDrafts } from './qualityProfileSettingsState';
 import QualityProfileSizeRules from './QualityProfileSizeRules';
 import styles from './EditQualityProfileModalContent.css';
 
 const MODAL_BODY_PADDING = parseInt(dimensions.modalBodyPadding);
 
-function getCustomFormatRender(formatItems, otherProps) {
+function getCustomFormatRender(formatItems: ProfileDraft<ProfileFormatItem[]>, otherProps: QualityFormatScoreProps) {
   return (
     <QualityProfileFormatItems
       profileFormatItems={formatItems.value}
@@ -33,13 +34,35 @@ function getCustomFormatRender(formatItems, otherProps) {
   );
 }
 
-class EditQualityProfileModalContent extends Component {
+interface Props extends FormProps, QualityFormatScoreProps, QualityItemEditorProps {
+  editGroups: boolean;
+  isFetching: boolean;
+  error?: unknown;
+  isSaving: boolean;
+  saveError?: unknown;
+  qualities: SelectOption[];
+  profile: ReturnType<typeof qualityProfileDrafts>;
+  isInUse: boolean;
+  onInputChange: (change: ValueChange<unknown>) => void;
+  onCutoffChange: (change: ValueChange<string | number>) => void;
+  onSavePress: () => void;
+  onModalClose: () => void;
+  onDeleteQualityProfilePress?: () => void;
+  onContentHeightChange: (height: number) => void;
+}
+interface State {
+  headerHeight: number;
+  bodyHeight: number;
+  footerHeight: number;
+}
+
+class EditQualityProfileModalContent extends Component<Props, State> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: Props) {
+    super(props);
 
     this.state = {
       headerHeight: 0,
@@ -48,7 +71,7 @@ class EditQualityProfileModalContent extends Component {
     };
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(_prevProps: Props, prevState: State) {
     const {
       headerHeight,
       bodyHeight,
@@ -76,20 +99,20 @@ class EditQualityProfileModalContent extends Component {
   //
   // Listeners
 
-  onHeaderMeasure = ({ height }) => {
+  onHeaderMeasure = ({ height }: { height: number }) => {
     if (height > this.state.headerHeight) {
       this.setState({ headerHeight: height });
     }
   };
 
-  onBodyMeasure = ({ height }) => {
+  onBodyMeasure = ({ height }: { height: number }) => {
 
     if (height > this.state.bodyHeight) {
       this.setState({ bodyHeight: height });
     }
   };
 
-  onFooterMeasure = ({ height }) => {
+  onFooterMeasure = ({ height }: { height: number }) => {
     if (height > this.state.footerHeight) {
       this.setState({ footerHeight: height });
     }
@@ -106,8 +129,7 @@ class EditQualityProfileModalContent extends Component {
       isSaving,
       saveError,
       qualities,
-      customFormats,
-      item,
+      profile,
       isInUse,
       onInputChange,
       onCutoffChange,
@@ -127,7 +149,7 @@ class EditQualityProfileModalContent extends Component {
       minUpgradeFormatScore,
       items,
       formatItems
-    } = item;
+    } = profile;
 
     return (
       <ModalContent onModalClose={onModalClose}>
@@ -149,14 +171,14 @@ class EditQualityProfileModalContent extends Component {
             }
 
             {
-              !isFetching && !!error &&
+              !isFetching && (!!error || !profile.valid) &&
                 <div>
                   {translate('UnableToAddANewQualityProfilePleaseTryAgain')}
                 </div>
             }
 
             {
-              !isFetching && !error &&
+              !isFetching && !error && profile.valid &&
                 <Form {...otherProps}>
                   <div className={styles.formGroupsContainer}>
                     <div className={styles.formGroupWrapper}>
@@ -270,7 +292,7 @@ class EditQualityProfileModalContent extends Component {
                         warnings={items.warnings}
                         {...otherProps}
                       />
-                        <QualityProfileSizeRules items={items.value} onInputChange={onInputChange} />
+                      <QualityProfileSizeRules items={items.value} onInputChange={onInputChange} />
                     </div>
 
                     <div className={styles.formatItemSmall}>
@@ -312,6 +334,7 @@ class EditQualityProfileModalContent extends Component {
             <SpinnerErrorButton
               action="save"
               isSpinning={isSaving}
+              isDisabled={!profile.valid}
               error={saveError}
               onPress={onSavePress}
             >
@@ -323,23 +346,5 @@ class EditQualityProfileModalContent extends Component {
     );
   }
 }
-
-EditQualityProfileModalContent.propTypes = {
-  editGroups: PropTypes.bool.isRequired,
-  isFetching: PropTypes.bool.isRequired,
-  error: PropTypes.object,
-  isSaving: PropTypes.bool.isRequired,
-  saveError: PropTypes.object,
-  qualities: PropTypes.arrayOf(PropTypes.object).isRequired,
-  customFormats: PropTypes.arrayOf(PropTypes.object).isRequired,
-  item: PropTypes.object.isRequired,
-  isInUse: PropTypes.bool.isRequired,
-  onInputChange: PropTypes.func.isRequired,
-  onCutoffChange: PropTypes.func.isRequired,
-  onSavePress: PropTypes.func.isRequired,
-  onContentHeightChange: PropTypes.func.isRequired,
-  onModalClose: PropTypes.func.isRequired,
-  onDeleteQualityProfilePress: PropTypes.func
-};
 
 export default EditQualityProfileModalContent;

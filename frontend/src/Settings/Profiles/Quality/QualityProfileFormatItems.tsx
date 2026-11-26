@@ -1,45 +1,70 @@
 import _ from 'lodash';
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import FormGroup from 'Components/Form/FormGroup';
 import FormInputHelpText from 'Components/Form/FormInputHelpText';
 import FormLabel from 'Components/Form/FormLabel';
+import type { FormMessage } from 'Components/Form/formTypes';
 import Link from 'Components/Link/Link';
 import { sizes } from 'Helpers/Props';
 import QualityProfileFormatItem from './QualityProfileFormatItem';
+import type { ProfileFormatItem } from './qualityProfileSettingsState';
 import styles from './QualityProfileFormatItems.css';
 
-function calcOrder(profileFormatItems) {
-  const items = profileFormatItems.reduce((acc, cur, index) => {
+function calcOrder(profileFormatItems: readonly ProfileFormatItem[]) {
+  const items = profileFormatItems.reduce<Record<number, number>>((acc, cur, index) => {
     acc[cur.format] = index;
     return acc;
   }, {});
 
   return [...profileFormatItems].sort((a, b) => {
     if (b.score !== a.score) {
-      return b.score - a.score;
+      return (b.score ?? 0) - (a.score ?? 0);
     }
     return a.name > b.name ? 1 : -1;
   }).map((x) => items[x.format]);
 }
 
-class QualityProfileFormatItems extends Component {
+export interface QualityFormatScoreProps {
+  onQualityProfileFormatItemScoreChange: (id: number, score: number | null) => void;
+}
+
+interface Props extends QualityFormatScoreProps {
+  profileFormatItems: readonly ProfileFormatItem[];
+  errors?: readonly FormMessage[];
+  warnings?: readonly FormMessage[];
+}
+
+class QualityProfileFormatItems extends Component<Props, { order: number[] }> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: Props) {
+    super(props);
 
     this.state = {
       order: calcOrder(this.props.profileFormatItems)
     };
   }
 
+  componentDidUpdate(prevProps: Props) {
+    const previous = prevProps.profileFormatItems.map((item) => item.format);
+    const current = this.props.profileFormatItems.map((item) => item.format);
+
+    if (!_.isEqual(previous, current)) {
+      this.reorderItems.cancel();
+      this.setState({ order: calcOrder(this.props.profileFormatItems) });
+    }
+  }
+
+  componentWillUnmount() {
+    this.reorderItems.cancel();
+  }
+
   //
   // Listeners
 
-  onScoreChange = (formatId, value) => {
+  onScoreChange = (formatId: number, value: number | null) => {
     const {
       onQualityProfileFormatItemScoreChange
     } = this.props;
@@ -56,8 +81,8 @@ class QualityProfileFormatItems extends Component {
   render() {
     const {
       profileFormatItems,
-      errors,
-      warnings
+      errors = [],
+      warnings = []
     } = this.props;
 
     const {
@@ -121,11 +146,11 @@ class QualityProfileFormatItems extends Component {
             </div>
             {
               order.map((index) => {
-                const {
-                  format,
-                  name,
-                  score
-                } = profileFormatItems[index];
+                const item = profileFormatItems[index];
+                if (!item) {
+                  return null;
+                }
+                const { format, name, score } = item;
                 return (
                   <QualityProfileFormatItem
                     key={format}
@@ -143,17 +168,5 @@ class QualityProfileFormatItems extends Component {
     );
   }
 }
-
-QualityProfileFormatItems.propTypes = {
-  profileFormatItems: PropTypes.arrayOf(PropTypes.object).isRequired,
-  errors: PropTypes.arrayOf(PropTypes.object),
-  warnings: PropTypes.arrayOf(PropTypes.object),
-  onQualityProfileFormatItemScoreChange: PropTypes.func
-};
-
-QualityProfileFormatItems.defaultProps = {
-  errors: [],
-  warnings: []
-};
 
 export default QualityProfileFormatItems;

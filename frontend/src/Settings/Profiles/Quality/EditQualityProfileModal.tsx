@@ -1,16 +1,17 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import Modal from 'Components/Modal/Modal';
 import { sizes } from 'Helpers/Props';
-import EditQualityProfileModalContentConnector from './EditQualityProfileModalContentConnector';
+import EditQualityProfileModalContentConnector, { type QualityProfileEditorProps } from './EditQualityProfileModalContentConnector';
 
-class EditQualityProfileModal extends Component {
+export type QualityProfileModalProps = Omit<QualityProfileEditorProps, 'onContentHeightChange'> & { isOpen: boolean };
+
+class EditQualityProfileModal extends Component<QualityProfileModalProps, { height: 'auto' | number }> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: QualityProfileModalProps) {
+    super(props);
 
     this.state = {
       height: 'auto'
@@ -20,7 +21,7 @@ class EditQualityProfileModal extends Component {
   //
   // Listeners
 
-  onContentHeightChange = (height) => {
+  onContentHeightChange = (height: number) => {
     if (this.state.height === 'auto' || height > this.state.height) {
       this.setState({ height });
     }
@@ -38,13 +39,14 @@ class EditQualityProfileModal extends Component {
 
     return (
       <Modal
-        style={{ height: `${this.state.height}px` }}
+        style={{ height: this.state.height === 'auto' ? 'auto' : `${this.state.height}px` }}
         isOpen={isOpen}
         size={sizes.EXTRA_LARGE}
         onModalClose={onModalClose}
       >
         <EditQualityProfileModalContentConnector
           {...otherProps}
+          id={this.props.id}
           onContentHeightChange={this.onContentHeightChange}
           onModalClose={onModalClose}
         />
@@ -52,10 +54,5 @@ class EditQualityProfileModal extends Component {
     );
   }
 }
-
-EditQualityProfileModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onModalClose: PropTypes.func.isRequired
-};
 
 export default EditQualityProfileModal;

@@ -1,8 +1,7 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
-import { connect } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { clearPendingChanges } from 'Store/Actions/baseActions';
-import EditQualityProfileModal from './EditQualityProfileModal';
+import EditQualityProfileModal, { type QualityProfileModalProps } from './EditQualityProfileModal';
 
 function mapStateToProps() {
   return {};
@@ -12,7 +11,10 @@ const mapDispatchToProps = {
   clearPendingChanges
 };
 
-class EditQualityProfileModalConnector extends Component {
+const connector = connect(mapStateToProps, mapDispatchToProps);
+type Props = QualityProfileModalProps & ConnectedProps<typeof connector>;
+
+class EditQualityProfileModalConnector extends Component<Props> {
 
   //
   // Listeners
@@ -35,9 +37,4 @@ class EditQualityProfileModalConnector extends Component {
   }
 }
 
-EditQualityProfileModalConnector.propTypes = {
-  onModalClose: PropTypes.func.isRequired,
-  clearPendingChanges: PropTypes.func.isRequired
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(EditQualityProfileModalConnector);
+export default connector(EditQualityProfileModalConnector);

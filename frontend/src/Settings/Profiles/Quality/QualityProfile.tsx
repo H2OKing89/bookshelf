@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
 import Card from 'Components/Card';
 import Label from 'Components/Label';
@@ -8,15 +7,25 @@ import Tooltip from 'Components/Tooltip/Tooltip';
 import { icons, kinds, tooltipPositions } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
 import EditQualityProfileModalConnector from './EditQualityProfileModalConnector';
+import { isQualityLeaf, type QualityProfileSummary } from './qualityProfileSettingsState';
 import styles from './QualityProfile.css';
 
-class QualityProfile extends Component {
+interface Props extends QualityProfileSummary {
+  isDeleting: boolean;
+  onConfirmDeleteQualityProfile: (id: number) => void;
+  onCloneQualityProfilePress: (id: number) => void;
+}
+interface State {
+  isEditQualityProfileModalOpen: boolean;
+  isDeleteQualityProfileModalOpen: boolean;
+}
+class QualityProfile extends Component<Props, State> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: Props) {
+    super(props);
 
     this.state = {
       isEditQualityProfileModalOpen: false,
@@ -98,14 +107,14 @@ class QualityProfile extends Component {
                 return null;
               }
 
-              if (item.quality) {
+              if (isQualityLeaf(item)) {
                 const isCutoff = upgradeAllowed && item.quality.id === cutoff;
 
                 return (
                   <Label
                     key={item.quality.id}
                     kind={isCutoff ? kinds.INFO : kinds.DEFAULT}
-                    title={isCutoff ? translate('IsCutoffUpgradeUntilThisQualityIsMetOrExceeded') : null}
+                    title={isCutoff ? translate('IsCutoffUpgradeUntilThisQualityIsMetOrExceeded') : undefined}
                   >
                     {item.quality.name}
                   </Label>
@@ -121,7 +130,7 @@ class QualityProfile extends Component {
                   anchor={
                     <Label
                       kind={isCutoff ? kinds.INFO : kinds.DEFAULT}
-                      title={isCutoff ? translate('IsCutoffCutoff') : null}
+                      title={isCutoff ? translate('IsCutoffCutoff') : undefined}
                     >
                       {item.name}
                     </Label>
@@ -134,7 +143,7 @@ class QualityProfile extends Component {
                             <Label
                               key={groupItem.quality.id}
                               kind={isCutoff ? kinds.INFO : kinds.DEFAULT}
-                              title={isCutoff ? translate('IsCutoffCutoff') : null}
+                              title={isCutoff ? translate('IsCutoffCutoff') : undefined}
                             >
                               {groupItem.quality.name}
                             </Label>
@@ -172,16 +181,5 @@ class QualityProfile extends Component {
     );
   }
 }
-
-QualityProfile.propTypes = {
-  id: PropTypes.number.isRequired,
-  name: PropTypes.string.isRequired,
-  upgradeAllowed: PropTypes.bool.isRequired,
-  cutoff: PropTypes.number.isRequired,
-  items: PropTypes.arrayOf(PropTypes.object).isRequired,
-  isDeleting: PropTypes.bool.isRequired,
-  onConfirmDeleteQualityProfile: PropTypes.func.isRequired,
-  onCloneQualityProfilePress: PropTypes.func.isRequired
-};
 
 export default QualityProfile;

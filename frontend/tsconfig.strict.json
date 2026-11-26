@@ -233,6 +233,8 @@
     "./src/Settings/Notifications/Notifications/EditNotificationModalContentConnector.tsx",
     "./src/Settings/Metadata/Metadata/EditMetadataModal.tsx",
     "./src/Settings/Metadata/Metadata/EditMetadataModalConnector.tsx",
-    "./src/Settings/Metadata/Metadata/EditMetadataModalContentConnector.tsx"
+    "./src/Settings/Metadata/Metadata/EditMetadataModalContentConnector.tsx",
+    "./src/Settings/Profiles/Quality/*.tsx",
+    "./src/Settings/Profiles/Quality/qualityProfileSettingsState.ts"
   ]
 }

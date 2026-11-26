@@ -1,14 +1,21 @@
-import PropTypes from 'prop-types';
 import { Component } from 'react';
+import type { ValueChange } from 'Components/Form/formTypes';
 import NumberInput from 'Components/Form/NumberInput';
 import styles from './QualityProfileFormatItem.css';
 
-class QualityProfileFormatItem extends Component {
+interface Props {
+  formatId: number;
+  name: string;
+  score?: number | null;
+  onScoreChange: (id: number, score: number | null) => void;
+}
+
+class QualityProfileFormatItem extends Component<Props> {
 
   //
   // Listeners
 
-  onScoreChange = ({ value }) => {
+  onScoreChange = ({ value }: ValueChange<number | null>) => {
     const {
       formatId
     } = this.props;
@@ -22,7 +29,7 @@ class QualityProfileFormatItem extends Component {
   render() {
     const {
       name,
-      score
+      score = 0
     } = this.props;
 
     return (
@@ -39,7 +46,6 @@ class QualityProfileFormatItem extends Component {
               {name}
             </div>
             <NumberInput
-              containerClassName={styles.scoreContainer}
               className={styles.scoreInput}
               name={name}
               value={score}
@@ -52,17 +58,5 @@ class QualityProfileFormatItem extends Component {
     );
   }
 }
-
-QualityProfileFormatItem.propTypes = {
-  formatId: PropTypes.number.isRequired,
-  name: PropTypes.string.isRequired,
-  score: PropTypes.number.isRequired,
-  onScoreChange: PropTypes.func
-};
-
-QualityProfileFormatItem.defaultProps = {
-  // To handle the case score is deleted during edit
-  score: 0
-};
 
 export default QualityProfileFormatItem;
