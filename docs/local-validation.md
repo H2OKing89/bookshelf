@@ -2263,3 +2263,33 @@ performed. See [combined receipt](dependencies/2026-11-25-v2-identity/summary.js
 [managed source tests](dependencies/2026-11-25-v2-identity/managed-source-tests.json),
 [hosted evidence](dependencies/2026-11-25-v2-identity/hosted-validation.json),
 and [owned qBittorrent verification](dependencies/2026-11-25-v2-identity/owned-qbittorrent.json).
+
+### Reviewed author reconciliation and development update — 2026-11-25
+
+The exact clean source `c33b253d3ef03d46a9cbff384acf25e8ed0e95d7` passed
+6,294 managed and owned compatibility cases (100 existing skips), including
+all 16 reconciliation cases against **both SQLite and PostgreSQL**, and
+two real DI factory/lifetime cases. Both TypeScript projects, ESLint,
+Stylelint, Vite and 256 unit tests passed, plus 174 tooling tests.
+The 15 isolated hosted groups passed all 2,467 checks; an additional
+author/book detail history browser probe passed four cases. Native ARM64
+remains static-only; no GitHub workflows were used.
+
+The developer-service runtime was backed up and replaced, then the two
+reviewed author reconciliations completed through the application's
+preview/command API. The source folders were stale/nonexistent, and all
+five mapped files were already in their canonical sibling folders. Six
+recordings now reference the two retained canonical authors; their
+original book, edition, file identities, monitoring flags, all media
+size/mtime and history are unchanged. The verified alias correction is
+retained. No files were moved or retagged. The same canonical settings and
+all unrelated authors, credentials, configuration, and library data were
+preserved. Database integrity is OK and authors decreased intentionally
+308 → 306; books/editions 4,639 each and files 2,305 remain unchanged.
+The exact development version 10.0.0.39068 passed 77 live read-only/API
+and ten desktop/phone login-page checks. The authenticated UI checks use
+isolated synthetic homes, not the user's live library. The user-data
+backup and detailed review receipt remain private, and production was not
+touched. See [combined summary](dependencies/2026-11-25-author-u07/summary.json),
+[managed source tests](dependencies/2026-11-25-author-u07/managed-source-tests.json),
+and [hosted receipt](dependencies/2026-11-25-author-u07/hosted-validation.json).

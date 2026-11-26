@@ -908,3 +908,19 @@ are recorded in [the exact final receipt](dependencies/2026-11-25-v2-identity/su
 Both audits report zero known advisory findings; they are snapshots rather
 than exhaustive security or native-runtime assurance. P09 remains in
 progress.
+
+### Managed compatibility preparation — 2026-11-25
+
+The current stable registry review retains the existing pinned graph. A
+real runtime factory/lifetime probe proves DryIoc 6 with adapter 6.2 is
+incompatible despite clean compilation and the old Host tests; both new
+regression cases pass the maintained pair. The remaining adapter/runtime
+generations are coupled to Microsoft DI/logging 11. StyleCop 1.3.180
+requires an atomic syntax and inherited-parameter-name migration; safe
+cross-version syntax prep is adopted without changing diagnostics or
+runtime behavior. No package pins were changed. See the
+[compatibility plan](dependencies/remaining-managed-compatibility-plan.md)
+and [exact audit](dependencies/2026-11-25-author-u07/summary.json).
+The 25-project NuGet and 1,242-entry Yarn audits report zero known
+findings; 29 managed notices match the three Linux packages. P09 remains
+in progress, with additional v2-only/hybrid adapters deprioritized.

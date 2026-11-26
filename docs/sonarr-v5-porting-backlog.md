@@ -1029,6 +1029,23 @@ compatibility tests and 2,467 hosted checks. See
 P09 remains **In progress** for the remaining adapters and coupled
 managed/runtime, ARM64 native execution and CI/release gates.
 
+**2026-11-25 compatibility follow-up:** the full current-major registry
+review found no safe newer stable maintained dependency beyond the
+StyleCop migration. The newer mixed DryIoc core/old adapter can compile
+and pass the previous Host suite but fails actual runtime DI factory
+invocation; two new lifetime/registration tests distinguish that failure
+from the maintained combination. Cross-version-safe conditional,
+argument and precedence formatting prepares the StyleCop migration.
+The incompatible target-typed creation spacing rules must change
+atomically with the analyzer pin, and inherited domain parameter names
+need a scoped compatibility review. See the
+[managed compatibility plan](dependencies/remaining-managed-compatibility-plan.md).
+No runtime package version or diagnostic severity was changed. Additional
+v2-only/hybrid adapter investment is deprioritized because no such
+workflow is currently needed; existing verified qBittorrent behavior
+and the other adapters' pre-submission guards are retained.
+P09 remains **In progress**.
+
 ### P10
 
 **Carry cancellation through the HTTP client stack**
@@ -3117,6 +3134,19 @@ projects, ESLint, Stylelint, Vite verification and 250 frontend tests passed.
 U07 stays **In progress** for the remaining legacy author/book detail,
 settings/modal/table and store action/reducer families (44 JS actions).
 See [exact results](dependencies/2026-11-25-v2-identity/summary.json).
+
+**2026-11-25 settings actions and recording detail follow-up:** convert
+another 33 legacy modules: all remaining settings Redux actions and
+registration, author/series/edition and history actions, author history
+modal and table, book search cells/dialogs, and file detail/media/editor
+components. Validate canonical settings responses and preserve later
+drafts (including explicit zero/null), cancel stale naming/history reads,
+and retain correct recording selection and file grouping. Ordinary
+JS/TS/strict counts are **558/584/555**, down from 591 JS; remaining
+JavaScript action modules are 27 (previously 44). Both TS projects, lint,
+Vite and 256 unit tests passed, along with the exact settings, library,
+interactive-search, history and paging checks. U07 remains **In progress**.
+See [final evidence](dependencies/2026-11-25-author-u07/summary.json).
 
 ### U08
 

@@ -1,0 +1,93 @@
+{
+  "sourceProvenance": {
+    "productId": "bookshelf-audiobooks",
+    "sourceCommit": "c33b253d3ef03d46a9cbff384acf25e8ed0e95d7",
+    "sourceTree": "73afdd035ab007248ad13a2cbe28fcb8e872f199",
+    "sourceBranch": "fix/sonarr-v5-foundation",
+    "buildDirty": false
+  },
+  "frontendSourceModules": {
+    "before": {
+      "javascript": 591,
+      "typescript": 547,
+      "strict": 518
+    },
+    "after": {
+      "javascript": 558,
+      "typescript": 584,
+      "strict": 555
+    }
+  },
+  "remainingJsStoreActions": {
+    "before": 44,
+    "after": 27
+  },
+  "authorReconciliation": {
+    "reviewedDuplicatePairsReconciled": 2,
+    "recordingsRebound": 6,
+    "filesMoved": 0,
+    "allOriginalRecordingEditionAndFileIdsPreserved": true,
+    "allBookMonitoringFlagsPreserved": true,
+    "canonicalAuthorSettingsPreserved": true,
+    "allOtherAuthorIdentitiesPreserved": true,
+    "allMediaStatsPreserved": true,
+    "credentialsConfigHistoryPreserved": true,
+    "unmappedAuditSkipped": true
+  },
+  "v2OnlyOtherClients": "deprioritized; existing proven qBittorrent support and unsupported-client guards unchanged",
+  "managedDependencies": {
+    "pinChanges": 0,
+    "compatibilityPlan": "docs/dependencies/remaining-managed-compatibility-plan.md",
+    "reason": "Latest compatible pins retained; actual mixed DryIoc major runtime factory is incompatible; analyzer migration requires atomic cross-version syntax and naming work."
+  },
+  "managedTestsPassed": 6294,
+  "managedTestsNotExecuted": 100,
+  "frontendUnitPassed": 256,
+  "toolingTestsPassed": 174,
+  "hostedChecksPassed": 2467,
+  "completedHostedReceipts": 15,
+  "frontendAudit": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "dependencies": 1242,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 1242
+  },
+  "nugetAuditedProjects": 25,
+  "nugetReportedVulnerablePackages": 0,
+  "packageNotices": {
+    "linux-x64": {
+      "noticeFilesVerified": 29,
+      "manifestMatchesSource": true
+    },
+    "linux-musl-x64": {
+      "noticeFilesVerified": 29,
+      "manifestMatchesSource": true
+    },
+    "linux-musl-arm64": {
+      "noticeFilesVerified": 29,
+      "manifestMatchesSource": true
+    }
+  },
+  "developmentUpdated": true,
+  "developmentVersion": "10.0.0.39068",
+  "developmentLibraryCounts": {
+    "Authors": 306,
+    "Books": 4639,
+    "Editions": 4639,
+    "BookFiles": 2305,
+    "RootFolders": 1,
+    "Users": 1
+  },
+  "developmentLiveApiChecksPassed": 77,
+  "developmentLiveBrowserChecksPassed": 10,
+  "productionTouched": false,
+  "nativeArm64ExecutionVerified": false,
+  "githubWorkflowsUsed": false
+}

@@ -1602,3 +1602,41 @@ The roadmap remains **83 of 92 Verified**, eight In progress and one Deferred.
 U07/P09, the remaining download-client adapters, StyleCop/coupled major
 updates, native ARM64 execution and CI/release gates remain open; P17 remains
 deferred.
+
+### Reviewed stale-folder author reconciliation and further U07 — 2026-11-25
+
+The author reconciliation path now permits an absent stale sibling folder
+only when all existing mapped files are already inside the canonical
+folder, no source sidecars would be reinterpreted, and the original
+identity/evidence/queue confirmation conditions hold. It rejects links
+outside the canonical folder, missing files, occupied source folders,
+unavailable storage, and import-list ownership/membership that would
+otherwise be released. The preview is revalidated at apply. Six recordings
+from two verified duplicate author profiles were reconciled in the user’s
+dev library without moving or retagging any file. All original book,
+edition, file identities and per-book monitoring flags remain unchanged;
+the canonical author settings and other author identities are retained.
+Only aggregate library evidence is committed.
+
+U07 removes another 33 legacy JS modules (591 → 558), with TS/TSX
+547 → 584 and strict modules 518 → 555. Remaining JavaScript action
+modules fall from 44 to 27; shared forms and settings actions are entirely
+typed. P09 adds a real DI runtime compatibility gate and analyzer
+preparation without forcing incompatible versions. Additional v2/hybrid
+adapter work is deprioritized; previous qBittorrent support and its safety
+guards remain unchanged.
+
+Exact functional source `c33b253d3` passes 6,294 managed/owned
+compatibility cases (100 existing skips), 256 frontend tests, 174 tooling
+tests and 2,467 hosted checks. Both dependency audits are clean; all
+three Linux packages contain the 29 matching notices. The dev server was
+backed up and deployed to 10.0.0.39068. The two live reconciliations reduce
+authors from 308 to 306; books/editions (4,639 each) and files (2,305) are
+unchanged. All 77 live API and ten desktop/phone login checks pass.
+Unmapped-file review, production, GitHub workflows and native ARM64
+execution remain untouched. See
+[exact evidence](dependencies/2026-11-25-author-u07/summary.json).
+
+The roadmap remains **83 of 92 Verified**, eight In progress and one Deferred.
+U07/P09 and remaining runtime/native/release gates are open; P17 remains
+deferred.

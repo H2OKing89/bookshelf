@@ -1,0 +1,157 @@
+{
+  "sourceProvenance": {
+    "productId": "bookshelf-audiobooks",
+    "sourceCommit": "c33b253d3ef03d46a9cbff384acf25e8ed0e95d7",
+    "sourceTree": "73afdd035ab007248ad13a2cbe28fcb8e872f199",
+    "sourceBranch": "fix/sonarr-v5-foundation",
+    "buildDirty": false
+  },
+  "passed": 2467,
+  "failed": 0,
+  "completed": true,
+  "groups": {
+    "auth": {
+      "passed": 112,
+      "failed": 0,
+      "completed": true,
+      "inputFingerprints": {
+        "candidate": "a928f54bdb503ce7cffd3dc0df10c47096145e6adf45f659652d093567faff68",
+        "baseline": "3e56331647592bec0a8ca0b4f955de7e70aa5e7d307d97057211979cebffe5b2"
+      },
+      "summarySha256": "cf6af322301047e621ca77e5e104d95481c314d3357f325b802c8a08089f5f83"
+    },
+    "datastore": {
+      "passed": 43,
+      "failed": 0,
+      "completed": true,
+      "inputFingerprints": {
+        "candidate": "a928f54bdb503ce7cffd3dc0df10c47096145e6adf45f659652d093567faff68",
+        "baseline": "cb10e3f9d5f65ee0edc7c4309f931ad84360ccf3a7d5c284e45e03ff1a31d57c"
+      },
+      "summarySha256": "fd0d86ae901787a6b879e1af2b0174dc4b6e07d2b0fb5285466e80e80675be48"
+    },
+    "delivery": {
+      "passed": 616,
+      "failed": 0,
+      "completed": true,
+      "inputFingerprints": {
+        "candidate": "a928f54bdb503ce7cffd3dc0df10c47096145e6adf45f659652d093567faff68",
+        "baseline": "675836dd961c5b93c412677034bbe99b94b1fc0d46cbd0bfa6cab4c69adcab6e",
+        "docker": "bca2fdfdac483141c9b68c8400d0fb4c42c74c372dc696975b044ac4ee43fee9"
+      },
+      "summarySha256": "af34e8b6bd01d35561d091f4370c1bc266e01fbda1e5fd1286f7dca2f3a4866f"
+    },
+    "dragreorder": {
+      "passed": 26,
+      "failed": 0,
+      "completed": true,
+      "inputFingerprints": {
+        "candidate": "a928f54bdb503ce7cffd3dc0df10c47096145e6adf45f659652d093567faff68"
+      },
+      "summarySha256": "37d9d937b2af4a8aa44c1d1a21ec85f4dadeb46a15a9bb35c5f7a401de892617"
+    },
+    "host-and-notifications": {
+      "passed": 72,
+      "failed": 0,
+      "completed": true,
+      "inputFingerprints": {
+        "candidate": "a928f54bdb503ce7cffd3dc0df10c47096145e6adf45f659652d093567faff68",
+        "baseline": "ab11dd7f2588f41af4e54ebcd68dbfc9943e68c41723ff9225cc64e41cc2d0d4"
+      },
+      "summarySha256": "024676b0497b8a09b5e9c570ccfffa04e992b503f7845d43e15994d63b6920c7"
+    },
+    "identity-and-policies": {
+      "passed": 598,
+      "failed": 0,
+      "completed": true,
+      "inputFingerprints": {
+        "candidate": "a928f54bdb503ce7cffd3dc0df10c47096145e6adf45f659652d093567faff68",
+        "baseline": "148341eca05b9f96a65206ef5db22ab77128ca69ba00aeeb4c4ba5a37a18aa0b"
+      },
+      "summarySha256": "12412ebe781d49a1f13f26f1164bc457ae7d2143ac3ed5710ffb02fcd4927528"
+    },
+    "library": {
+      "passed": 207,
+      "failed": 0,
+      "completed": true,
+      "inputFingerprints": {
+        "candidate": "a928f54bdb503ce7cffd3dc0df10c47096145e6adf45f659652d093567faff68"
+      },
+      "summarySha256": "d5f9ca8d9bc35a26e438e202a6cf9c78a73444e2a74834d2ae41685ae53cd774"
+    },
+    "logstorage": {
+      "passed": 63,
+      "failed": 0,
+      "completed": true,
+      "inputFingerprints": {
+        "candidate": "a928f54bdb503ce7cffd3dc0df10c47096145e6adf45f659652d093567faff68"
+      },
+      "summarySha256": "66506252129926d0b6ba085f601ed35547688863e9276d8f86db5e4f19335bce"
+    },
+    "new-features": {
+      "passed": 87,
+      "failed": 0,
+      "completed": true,
+      "inputFingerprints": {
+        "candidate": "a928f54bdb503ce7cffd3dc0df10c47096145e6adf45f659652d093567faff68"
+      },
+      "summarySha256": "8e728d37be704d5d3b4efb031736b6ead8998cd9fde1e8472cba6ad0eab789b5"
+    },
+    "paging": {
+      "passed": 129,
+      "failed": 0,
+      "completed": true,
+      "inputFingerprints": {
+        "candidate": "a928f54bdb503ce7cffd3dc0df10c47096145e6adf45f659652d093567faff68"
+      },
+      "summarySha256": "5544750a743961c696062ecd148eb6a4489d98caffe1a8f61c559e6504dfc5a6"
+    },
+    "postgresconnections": {
+      "passed": 119,
+      "failed": 0,
+      "completed": true,
+      "inputFingerprints": {
+        "candidate": "a928f54bdb503ce7cffd3dc0df10c47096145e6adf45f659652d093567faff68",
+        "baseline": "aeae84b3a7165432cb465fd27bbfce47f03267946d02379f2b7caf006f1775e6"
+      },
+      "summarySha256": "3dd4830f56fb1bba44ec7025e410de4a3acb10149dfd9e17eed38918c2782ab4"
+    },
+    "sqlite": {
+      "passed": 100,
+      "failed": 0,
+      "completed": true,
+      "inputFingerprints": {
+        "candidate": "a928f54bdb503ce7cffd3dc0df10c47096145e6adf45f659652d093567faff68",
+        "baseline": "019171f08e7ed9dd3d3952b866d32fa9fdefde9731b04bd8ce1ac2cc8298c172"
+      },
+      "summarySha256": "9d868c8c915b458c620e5334ce2069e7180de5c477bf13535451e7bd21f86399"
+    },
+    "static-arm64": {
+      "passed": 20,
+      "failed": 0,
+      "completed": true,
+      "inputFingerprints": {
+        "candidate": "b1780e991d093b9905261bbed5bd798b00a1c1dfc399be4fbbee6adce4ee2e2e"
+      },
+      "summarySha256": "39fb313b4b903ca033d5d80c2269ecc4116453d20401b67f18595f2f66320ff7"
+    },
+    "static-musl": {
+      "passed": 20,
+      "failed": 0,
+      "completed": true,
+      "inputFingerprints": {
+        "candidate": "bca2fdfdac483141c9b68c8400d0fb4c42c74c372dc696975b044ac4ee43fee9"
+      },
+      "summarySha256": "865b369356c165ba57b5f0be09f9dbff60cc4370da580169083bc2bf7e6e2008"
+    },
+    "ui": {
+      "passed": 255,
+      "failed": 0,
+      "completed": true,
+      "inputFingerprints": {
+        "candidate": "a928f54bdb503ce7cffd3dc0df10c47096145e6adf45f659652d093567faff68"
+      },
+      "summarySha256": "165c6d60abb7c31d2202cdcf2423f51b90262b199530f6ed625d7593c4543a13"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "reviewedDuplicatePairsReconciled": 2,
+  "recordingsRebound": 6,
+  "filesMoved": 0,
+  "allOriginalRecordingEditionAndFileIdsPreserved": true,
+  "allBookMonitoringFlagsPreserved": true,
+  "canonicalAuthorSettingsPreserved": true,
+  "allOtherAuthorIdentitiesPreserved": true,
+  "allMediaStatsPreserved": true,
+  "credentialsConfigHistoryPreserved": true,
+  "unmappedAuditSkipped": true
+}

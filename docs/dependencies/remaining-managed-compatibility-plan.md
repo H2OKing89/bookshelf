@@ -1,6 +1,6 @@
 # Remaining managed compatibility gates
 
-Registry and compatibility review: 2026-11-26. This is a staged follow-up for
+Registry and compatibility review: 2026-11-25. This is a staged follow-up for
 P09, not a recommendation to switch the application to .NET 11.
 
 ## StyleCop 1.3.180
