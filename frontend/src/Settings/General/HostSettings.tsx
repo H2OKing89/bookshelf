@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import FieldSet from 'Components/FieldSet';
 import FormGroup from 'Components/Form/FormGroup';
@@ -6,8 +5,15 @@ import FormInputGroup from 'Components/Form/FormInputGroup';
 import FormLabel from 'Components/Form/FormLabel';
 import { inputTypes, sizes } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
+import { generalDrafts, type SettingsFieldsProps } from '../settingDrafts';
 
-function HostSettings(props) {
+interface HostSettingsProps extends SettingsFieldsProps {
+  advancedSettings: boolean;
+  isWindows: boolean;
+  mode: string;
+}
+
+function HostSettings(props: HostSettingsProps) {
   const {
     advancedSettings,
     settings,
@@ -31,7 +37,7 @@ function HostSettings(props) {
     sslCertPassword,
     performanceProfilingEnabled,
     launchBrowser
-  } = settings;
+  } = generalDrafts(settings);
 
   return (
     <FieldSet legend={translate('Host')}>
@@ -63,7 +69,6 @@ function HostSettings(props) {
           name="port"
           min={1}
           max={65535}
-          autocomplete="off"
           helpTextWarning={translate('PortHelpTextWarning')}
           onChange={onInputChange}
           {...port}
@@ -294,13 +299,5 @@ function HostSettings(props) {
     </FieldSet>
   );
 }
-
-HostSettings.propTypes = {
-  advancedSettings: PropTypes.bool.isRequired,
-  settings: PropTypes.object.isRequired,
-  isWindows: PropTypes.bool.isRequired,
-  mode: PropTypes.string.isRequired,
-  onInputChange: PropTypes.func.isRequired
-};
 
 export default HostSettings;

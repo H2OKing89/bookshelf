@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Alert from 'Components/Alert';
 import FieldSet from 'Components/FieldSet';
@@ -13,8 +12,14 @@ import { inputTypes, kinds, sizes } from 'Helpers/Props';
 import RemotePathMappingsConnector from 'Settings/DownloadClients/RemotePathMappings/RemotePathMappingsConnector';
 import SettingsToolbarConnector from 'Settings/SettingsToolbarConnector';
 import translate from 'Utilities/String/translate';
+import { mediaManagementDrafts, type SettingsViewProps } from '../settingDrafts';
 import NamingConnector from './Naming/NamingConnector';
 import RootFoldersConnector from './RootFolder/RootFoldersConnector';
+
+interface MediaManagementProps extends SettingsViewProps {
+  advancedSettings: boolean;
+  isWindows: boolean;
+}
 
 const rescanAfterRefreshOptions = [
   { key: 'always', value: 'Always' },
@@ -39,7 +44,7 @@ const fileDateOptions = [
   { key: 'bookReleaseDate', value: 'Book Release Date' }
 ];
 
-class MediaManagement extends Component {
+class MediaManagement extends Component<MediaManagementProps> {
 
   //
   // Render
@@ -49,13 +54,15 @@ class MediaManagement extends Component {
       advancedSettings,
       isFetching,
       error,
-      settings,
+      settings: rawSettings,
       hasSettings,
       isWindows,
       onInputChange,
       onSavePress,
       ...otherProps
     } = this.props;
+
+    const settings = mediaManagementDrafts(rawSettings);
 
     return (
       <PageContent title={translate('MediaManagementSettings')}>
@@ -78,7 +85,7 @@ class MediaManagement extends Component {
           }
 
           {
-            !isFetching && error &&
+            !isFetching && !!error &&
               <FieldSet legend={translate('NamingSettings')}>
                 <Alert kind={kinds.DANGER}>
                   {translate('UnableToLoadMediaManagementSettings')}
@@ -89,7 +96,6 @@ class MediaManagement extends Component {
           {
             hasSettings && !isFetching && !error &&
               <Form
-                id="mediaManagementSettings"
                 {...otherProps}
               >
                 {
@@ -478,7 +484,6 @@ class MediaManagement extends Component {
                           name="chownGroup"
                           helpText={translate('ChownGroupHelpText')}
                           helpTextWarning={translate('ChownGroupHelpTextWarning')}
-                          values={fileDateOptions}
                           onChange={onInputChange}
                           {...settings.chownGroup}
                         />
@@ -494,15 +499,5 @@ class MediaManagement extends Component {
 
 }
 
-MediaManagement.propTypes = {
-  advancedSettings: PropTypes.bool.isRequired,
-  isFetching: PropTypes.bool.isRequired,
-  error: PropTypes.object,
-  settings: PropTypes.object.isRequired,
-  hasSettings: PropTypes.bool.isRequired,
-  isWindows: PropTypes.bool.isRequired,
-  onSavePress: PropTypes.func.isRequired,
-  onInputChange: PropTypes.func.isRequired
-};
 
 export default MediaManagement;

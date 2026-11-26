@@ -1,28 +1,31 @@
 import _ from 'lodash';
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { createSelector } from 'reselect';
+import type { ValueChange } from 'Components/Form/formTypes';
 import { clearPendingChanges } from 'Store/Actions/baseActions';
 import { fetchMediaManagementSettings, saveMediaManagementSettings, saveNamingSettings, setMediaManagementSettingsValue } from 'Store/Actions/settingsActions';
 import createSettingsSectionSelector from 'Store/Selectors/createSettingsSectionSelector';
 import createSystemStatusSelector from 'Store/Selectors/createSystemStatusSelector';
+import { asStateRecord, type LegacyRootState } from 'Store/StateTypes';
 import MediaManagement from './MediaManagement';
 
 const SECTION = 'mediaManagement';
 
 function createMapStateToProps() {
   return createSelector(
-    (state) => state.settings.advancedSettings,
-    (state) => state.settings.naming,
+    (state: LegacyRootState) => state.settings.advancedSettings === true,
+    (state: LegacyRootState) => asStateRecord(state.settings.naming),
     createSettingsSectionSelector(SECTION),
     createSystemStatusSelector(),
-    (advancedSettings, namingSettings, sectionSettings, systemStatus) => {
+    (advancedSettings, namingSettings, sectionSettings, status: unknown) => {
+      const systemStatus = asStateRecord(status);
+
       return {
         advancedSettings,
         ...sectionSettings,
         hasPendingChanges: !_.isEmpty(namingSettings.pendingChanges) || sectionSettings.hasPendingChanges,
-        isWindows: systemStatus.isWindows
+        isWindows: systemStatus.isWindows === true
       };
     }
   );
@@ -30,13 +33,16 @@ function createMapStateToProps() {
 
 const mapDispatchToProps = {
   fetchMediaManagementSettings,
-  setMediaManagementSettingsValue,
+  setMediaManagementSettingsValue: setMediaManagementSettingsValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
   saveMediaManagementSettings,
   saveNamingSettings,
   clearPendingChanges
 };
 
-class MediaManagementConnector extends Component {
+const connector = connect(createMapStateToProps, mapDispatchToProps);
+type Props = ConnectedProps<typeof connector>;
+
+class MediaManagementConnector extends Component<Props> {
 
   //
   // Lifecycle
@@ -52,7 +58,7 @@ class MediaManagementConnector extends Component {
   //
   // Listeners
 
-  onInputChange = ({ name, value }) => {
+  onInputChange = ({ name, value }: ValueChange<unknown>) => {
     this.props.setMediaManagementSettingsValue({ name, value });
   };
 
@@ -75,12 +81,4 @@ class MediaManagementConnector extends Component {
   }
 }
 
-MediaManagementConnector.propTypes = {
-  fetchMediaManagementSettings: PropTypes.func.isRequired,
-  setMediaManagementSettingsValue: PropTypes.func.isRequired,
-  saveMediaManagementSettings: PropTypes.func.isRequired,
-  saveNamingSettings: PropTypes.func.isRequired,
-  clearPendingChanges: PropTypes.func.isRequired
-};
-
-export default connect(createMapStateToProps, mapDispatchToProps)(MediaManagementConnector);
+export default connector(MediaManagementConnector);

@@ -1,8 +1,8 @@
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { createSelector } from 'reselect';
 import * as commandNames from 'Commands/commandNames';
+import type { ValueChange } from 'Components/Form/formTypes';
 import { clearPendingChanges } from 'Store/Actions/baseActions';
 import { executeCommand } from 'Store/Actions/commandActions';
 import { fetchGeneralSettings, saveGeneralSettings, setGeneralSettingsValue } from 'Store/Actions/settingsActions';
@@ -10,24 +10,28 @@ import { restart } from 'Store/Actions/systemActions';
 import createCommandExecutingSelector from 'Store/Selectors/createCommandExecutingSelector';
 import createSettingsSectionSelector from 'Store/Selectors/createSettingsSectionSelector';
 import createSystemStatusSelector from 'Store/Selectors/createSystemStatusSelector';
+import { asStateRecord, type LegacyRootState } from 'Store/StateTypes';
+import { generalDrafts } from '../settingDrafts';
 import GeneralSettings from './GeneralSettings';
 
 const SECTION = 'general';
 
 function createMapStateToProps() {
   return createSelector(
-    (state) => state.settings.advancedSettings,
+    (state: LegacyRootState) => state.settings.advancedSettings === true,
     createSettingsSectionSelector(SECTION),
     createCommandExecutingSelector(commandNames.RESET_API_KEY),
     createSystemStatusSelector(),
-    (advancedSettings, sectionSettings, isResettingApiKey, systemStatus) => {
+    (advancedSettings, sectionSettings, isResettingApiKey, status: unknown) => {
+      const systemStatus = asStateRecord(status);
+
       return {
         advancedSettings,
-        isResettingApiKey,
-        isWindows: systemStatus.isWindows,
-        isWindowsService: systemStatus.isWindows && systemStatus.mode === 'service',
-        mode: systemStatus.mode,
-        packageUpdateMechanism: systemStatus.packageUpdateMechanism,
+        isResettingApiKey: isResettingApiKey === true,
+        isWindows: systemStatus.isWindows === true,
+        isWindowsService: systemStatus.isWindows === true && systemStatus.mode === 'service',
+        mode: typeof systemStatus.mode === 'string' ? systemStatus.mode : '',
+        packageUpdateMechanism: typeof systemStatus.packageUpdateMechanism === 'string' ? systemStatus.packageUpdateMechanism : '',
         ...sectionSettings
       };
     }
@@ -35,7 +39,7 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  setGeneralSettingsValue,
+  setGeneralSettingsValue: setGeneralSettingsValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
   saveGeneralSettings,
   fetchGeneralSettings,
   executeCommand,
@@ -43,7 +47,10 @@ const mapDispatchToProps = {
   clearPendingChanges
 };
 
-class GeneralSettingsConnector extends Component {
+const connector = connect(createMapStateToProps, mapDispatchToProps);
+type Props = ConnectedProps<typeof connector>;
+
+class GeneralSettingsConnector extends Component<Props> {
 
   //
   // Lifecycle
@@ -52,7 +59,7 @@ class GeneralSettingsConnector extends Component {
     this.props.fetchGeneralSettings();
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: Props) {
     if (!this.props.isResettingApiKey && prevProps.isResettingApiKey) {
       this.props.fetchGeneralSettings();
     }
@@ -65,9 +72,9 @@ class GeneralSettingsConnector extends Component {
   //
   // Listeners
 
-  onInputChange = ({ name, value }) => {
+  onInputChange = ({ name, value }: ValueChange<unknown>) => {
     if (name === 'userIdentifier') {
-      const account = this.props.settings.accounts.value.find((item) => item.identifier === value);
+      const account = generalDrafts(this.props.settings).accounts.value.find((item) => item.identifier === value);
       this.props.setGeneralSettingsValue({ name, value: account ? account.identifier : null });
       this.props.setGeneralSettingsValue({ name: 'username', value: account ? account.username : '' });
       this.props.setGeneralSettingsValue({ name: 'password', value: account && account.hasPassword ? '********' : '' });
@@ -106,15 +113,4 @@ class GeneralSettingsConnector extends Component {
   }
 }
 
-GeneralSettingsConnector.propTypes = {
-  settings: PropTypes.object.isRequired,
-  isResettingApiKey: PropTypes.bool.isRequired,
-  setGeneralSettingsValue: PropTypes.func.isRequired,
-  saveGeneralSettings: PropTypes.func.isRequired,
-  fetchGeneralSettings: PropTypes.func.isRequired,
-  executeCommand: PropTypes.func.isRequired,
-  restart: PropTypes.func.isRequired,
-  clearPendingChanges: PropTypes.func.isRequired
-};
-
-export default connect(createMapStateToProps, mapDispatchToProps)(GeneralSettingsConnector);
+export default connector(GeneralSettingsConnector);

@@ -1,12 +1,18 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import SpinnerErrorButton from 'Components/Link/SpinnerErrorButton';
 import { kinds } from 'Helpers/Props';
-import formControlProps from './formControlProps';
+import formControlProps, { type FormControlProps } from './formControlProps';
 
-function OAuthInput(props) {
+interface OAuthInputProps extends FormControlProps {
+  label?: string;
+  authorizing: boolean;
+  error?: unknown;
+  onPress: () => void;
+}
+
+function OAuthInput(props: OAuthInputProps) {
   const {
-    label,
+    label = 'Start OAuth',
     authorizing,
     error,
     onPress
@@ -28,16 +34,5 @@ function OAuthInput(props) {
     </div>
   );
 }
-
-OAuthInput.propTypes = {
-  label: PropTypes.string.isRequired,
-  authorizing: PropTypes.bool.isRequired,
-  error: PropTypes.object,
-  onPress: PropTypes.func.isRequired
-};
-
-OAuthInput.defaultProps = {
-  label: 'Start OAuth'
-};
 
 export default OAuthInput;

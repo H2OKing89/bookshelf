@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import FieldSet from 'Components/FieldSet';
 import FormGroup from 'Components/Form/FormGroup';
@@ -6,6 +5,9 @@ import FormInputGroup from 'Components/Form/FormInputGroup';
 import FormLabel from 'Components/Form/FormLabel';
 import { inputTypes } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
+import { generalDrafts, type SettingsFieldsProps } from '../settingDrafts';
+
+type LoggingSettingsProps = SettingsFieldsProps;
 
 const logLevelOptions = [
   { key: 'info', value: 'Info' },
@@ -13,7 +15,7 @@ const logLevelOptions = [
   { key: 'trace', value: 'Trace' }
 ];
 
-function LoggingSettings(props) {
+function LoggingSettings(props: LoggingSettingsProps) {
   const {
     settings,
     onInputChange
@@ -21,7 +23,7 @@ function LoggingSettings(props) {
 
   const {
     logLevel
-  } = settings;
+  } = generalDrafts(settings);
 
   return (
     <FieldSet legend={translate('Logging')}>
@@ -42,10 +44,5 @@ function LoggingSettings(props) {
     </FieldSet>
   );
 }
-
-LoggingSettings.propTypes = {
-  settings: PropTypes.object.isRequired,
-  onInputChange: PropTypes.func.isRequired
-};
 
 export default LoggingSettings;

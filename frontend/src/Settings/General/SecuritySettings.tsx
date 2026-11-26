@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import FieldSet from 'Components/FieldSet';
 import FormGroup from 'Components/Form/FormGroup';
@@ -10,6 +9,12 @@ import ClipboardButton from 'Components/Link/ClipboardButton';
 import ConfirmModal from 'Components/Modal/ConfirmModal';
 import { icons, inputTypes, kinds } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
+import { generalDrafts, type SettingsFieldsProps } from '../settingDrafts';
+
+interface SecuritySettingsProps extends SettingsFieldsProps {
+  isResettingApiKey: boolean;
+  onConfirmResetApiKey: () => void;
+}
 
 export const authenticationMethodOptions = [
   {
@@ -76,13 +81,13 @@ const certificateValidationOptions = [
   }
 ];
 
-class SecuritySettings extends Component {
+class SecuritySettings extends Component<SecuritySettingsProps, { isConfirmApiKeyResetModalOpen: boolean }> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: SecuritySettingsProps) {
+    super(props);
 
     this.state = {
       isConfirmApiKeyResetModalOpen: false
@@ -92,7 +97,7 @@ class SecuritySettings extends Component {
   //
   // Listeners
 
-  onApikeyFocus = (event) => {
+  onApikeyFocus = (event: React.FocusEvent<HTMLInputElement>) => {
     event.target.select();
   };
 
@@ -129,9 +134,9 @@ class SecuritySettings extends Component {
       certificateValidation,
       accounts,
       userIdentifier
-    } = settings;
+    } = generalDrafts(settings);
 
-    const authenticationEnabled = authenticationMethod && authenticationMethod.value !== 'none';
+    const authenticationEnabled = authenticationMethod.value !== null && authenticationMethod.value !== 'none';
 
     return (
       <FieldSet legend={translate('Security')}>
@@ -240,7 +245,7 @@ class SecuritySettings extends Component {
             buttons={[
               <ClipboardButton
                 key="copy"
-                value={apiKey.value}
+                value={apiKey.value ?? ''}
                 kind={kinds.DEFAULT}
               />,
 
@@ -287,12 +292,5 @@ class SecuritySettings extends Component {
     );
   }
 }
-
-SecuritySettings.propTypes = {
-  settings: PropTypes.object.isRequired,
-  isResettingApiKey: PropTypes.bool.isRequired,
-  onInputChange: PropTypes.func.isRequired,
-  onConfirmResetApiKey: PropTypes.func.isRequired
-};
 
 export default SecuritySettings;

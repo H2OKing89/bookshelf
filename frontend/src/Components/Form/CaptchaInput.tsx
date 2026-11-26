@@ -1,19 +1,32 @@
 import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import React from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 import Icon from 'Components/Icon';
 import { icons } from 'Helpers/Props';
-import formControlProps from './formControlProps';
+import formControlProps, { type FormControlProps } from './formControlProps';
 import FormInputButton from './FormInputButton';
-import TextInput from './TextInput';
+import TextInput, { type TextInputChange } from './TextInput';
 import styles from './CaptchaInput.css';
 
-function CaptchaInput(props) {
+interface CaptchaInputProps extends FormControlProps {
+  className?: string;
+  name: string;
+  value?: string | null;
+  hasError?: boolean;
+  hasWarning?: boolean;
+  refreshing: boolean;
+  siteKey?: string | null;
+  secretToken?: string | null;
+  onChange: (change: TextInputChange) => void;
+  onRefreshPress: () => void;
+  onCaptchaChange: (response: string | null) => void;
+}
+
+function CaptchaInput(props: CaptchaInputProps) {
   const {
-    className,
+    className = styles.input,
     name,
-    value,
+    value = '',
     hasError,
     hasWarning,
     refreshing,
@@ -63,24 +76,5 @@ function CaptchaInput(props) {
     </div>
   );
 }
-
-CaptchaInput.propTypes = {
-  className: PropTypes.string.isRequired,
-  name: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
-  hasError: PropTypes.bool,
-  hasWarning: PropTypes.bool,
-  refreshing: PropTypes.bool.isRequired,
-  siteKey: PropTypes.string,
-  secretToken: PropTypes.string,
-  onChange: PropTypes.func.isRequired,
-  onRefreshPress: PropTypes.func.isRequired,
-  onCaptchaChange: PropTypes.func.isRequired
-};
-
-CaptchaInput.defaultProps = {
-  className: styles.input,
-  value: ''
-};
 
 export default CaptchaInput;

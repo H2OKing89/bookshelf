@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Alert from 'Components/Alert';
 import FieldSet from 'Components/FieldSet';
@@ -14,6 +13,11 @@ import SettingsToolbarConnector from 'Settings/SettingsToolbarConnector';
 import themes from 'Styles/Themes';
 import titleCase from 'Utilities/String/titleCase';
 import translate from 'Utilities/String/translate';
+import { type SettingsViewProps,uiDrafts } from '../settingDrafts';
+
+interface UISettingsProps extends SettingsViewProps {
+  languages: { key: number; value: string }[];
+}
 
 export const firstDayOfWeekOptions = [
   { key: 0, value: 'Sunday' },
@@ -46,7 +50,7 @@ export const timeFormatOptions = [
   { key: 'HH:mm', value: '17:00/17:30' }
 ];
 
-class UISettings extends Component {
+class UISettings extends Component<UISettingsProps> {
 
   //
   // Render
@@ -55,13 +59,15 @@ class UISettings extends Component {
     const {
       isFetching,
       error,
-      settings,
+      settings: rawSettings,
       hasSettings,
       onInputChange,
       onSavePress,
       languages,
       ...otherProps
     } = this.props;
+
+    const settings = uiDrafts(rawSettings);
 
     const uiLanguages = languages.filter((item) => item.value !== 'Original');
     const themeOptions = Object.keys(themes)
@@ -81,7 +87,7 @@ class UISettings extends Component {
           }
 
           {
-            !isFetching && error &&
+            !isFetching && !!error &&
               <Alert kind={kinds.DANGER}>
                 {translate('UnableToLoadUISettings')}
               </Alert>
@@ -90,7 +96,6 @@ class UISettings extends Component {
           {
             hasSettings && !isFetching && !error &&
               <Form
-                id="uiSettings"
                 {...otherProps}
               >
                 <FieldSet legend={translate('Calendar')}>
@@ -242,14 +247,5 @@ class UISettings extends Component {
 
 }
 
-UISettings.propTypes = {
-  isFetching: PropTypes.bool.isRequired,
-  error: PropTypes.object,
-  settings: PropTypes.object.isRequired,
-  hasSettings: PropTypes.bool.isRequired,
-  onSavePress: PropTypes.func.isRequired,
-  languages: PropTypes.arrayOf(PropTypes.object).isRequired,
-  onInputChange: PropTypes.func.isRequired
-};
 
 export default UISettings;

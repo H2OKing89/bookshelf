@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import FieldSet from 'Components/FieldSet';
 import FormGroup from 'Components/Form/FormGroup';
@@ -6,8 +5,11 @@ import FormInputGroup from 'Components/Form/FormInputGroup';
 import FormLabel from 'Components/Form/FormLabel';
 import { inputTypes, sizes } from 'Helpers/Props';
 import translate from 'Utilities/String/translate';
+import { generalDrafts, type SettingsFieldsProps } from '../settingDrafts';
 
-function ProxySettings(props) {
+type ProxySettingsProps = SettingsFieldsProps;
+
+function ProxySettings(props: ProxySettingsProps) {
   const {
     settings,
     onInputChange
@@ -22,7 +24,7 @@ function ProxySettings(props) {
     proxyPassword,
     proxyBypassFilter,
     proxyBypassLocalAddresses
-  } = settings;
+  } = generalDrafts(settings);
 
   const proxyTypeOptions = [
     { key: 'http', value: 'HTTP(S)' },
@@ -149,10 +151,5 @@ function ProxySettings(props) {
     </FieldSet>
   );
 }
-
-ProxySettings.propTypes = {
-  settings: PropTypes.object.isRequired,
-  onInputChange: PropTypes.func.isRequired
-};
 
 export default ProxySettings;

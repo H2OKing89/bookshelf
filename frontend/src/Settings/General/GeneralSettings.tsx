@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Alert from 'Components/Alert';
 import Form from 'Components/Form/Form';
@@ -10,12 +9,24 @@ import PageContentBody from 'Components/Page/PageContentBody';
 import { kinds } from 'Helpers/Props';
 import SettingsToolbarConnector from 'Settings/SettingsToolbarConnector';
 import translate from 'Utilities/String/translate';
+import { getDraft, type SettingsViewProps } from '../settingDrafts';
 import BackupSettings from './BackupSettings';
 import HostSettings from './HostSettings';
 import LoggingSettings from './LoggingSettings';
 import ProxySettings from './ProxySettings';
 import SecuritySettings from './SecuritySettings';
 import UpdateSettings from './UpdateSettings';
+
+interface GeneralSettingsProps extends SettingsViewProps {
+  advancedSettings: boolean;
+  isResettingApiKey: boolean;
+  isWindows: boolean;
+  isWindowsService: boolean;
+  mode: string;
+  packageUpdateMechanism: string;
+  onConfirmResetApiKey: () => void;
+  onConfirmRestart: () => void;
+}
 
 const requiresRestartKeys = [
   'bindAddress',
@@ -31,20 +42,20 @@ const requiresRestartKeys = [
   'performanceProfilingEnabled'
 ];
 
-class GeneralSettings extends Component {
+class GeneralSettings extends Component<GeneralSettingsProps, { isRestartRequiredModalOpen: boolean }> {
 
   //
   // Lifecycle
 
-  constructor(props, context) {
-    super(props, context);
+  constructor(props: GeneralSettingsProps) {
+    super(props);
 
     this.state = {
       isRestartRequiredModalOpen: false
     };
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: GeneralSettingsProps) {
     const {
       settings,
       isSaving,
@@ -64,8 +75,8 @@ class GeneralSettings extends Component {
     const prevSettings = prevProps.settings;
 
     const pendingRestart = _.some(requiresRestartKeys, (key) => {
-      const setting = settings[key];
-      const prevSetting = prevSettings[key];
+      const setting = getDraft(settings, key);
+      const prevSetting = getDraft(prevSettings, key);
 
       if (!setting || !prevSetting) {
         return false;
@@ -133,7 +144,7 @@ class GeneralSettings extends Component {
           }
 
           {
-            !isFetching && error &&
+            !isFetching && !!error &&
               <Alert kind={kinds.DANGER}>
                 {translate('UnableToLoadGeneralSettings')}
               </Alert>
@@ -142,7 +153,6 @@ class GeneralSettings extends Component {
           {
             hasSettings && isPopulated && !error &&
               <Form
-                id="generalSettings"
                 {...otherProps}
               >
                 <HostSettings
@@ -204,24 +214,5 @@ class GeneralSettings extends Component {
   }
 
 }
-
-GeneralSettings.propTypes = {
-  advancedSettings: PropTypes.bool.isRequired,
-  isFetching: PropTypes.bool.isRequired,
-  isPopulated: PropTypes.bool.isRequired,
-  error: PropTypes.object,
-  isSaving: PropTypes.bool.isRequired,
-  saveError: PropTypes.object,
-  settings: PropTypes.object.isRequired,
-  isResettingApiKey: PropTypes.bool.isRequired,
-  hasSettings: PropTypes.bool.isRequired,
-  isWindows: PropTypes.bool.isRequired,
-  isWindowsService: PropTypes.bool.isRequired,
-  mode: PropTypes.string.isRequired,
-  packageUpdateMechanism: PropTypes.string.isRequired,
-  onInputChange: PropTypes.func.isRequired,
-  onConfirmResetApiKey: PropTypes.func.isRequired,
-  onConfirmRestart: PropTypes.func.isRequired
-};
 
 export default GeneralSettings;

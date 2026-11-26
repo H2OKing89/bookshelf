@@ -188,6 +188,13 @@
     "./src/Components/Scroller/OverlayScroller.tsx",
     "./src/Components/TextTruncate.tsx",
     "./src/Settings/Quality/Definition/QualityDefinition.tsx",
-    "./src/Settings/Quality/Definition/qualitySizeSlider.ts"
+    "./src/Settings/Quality/Definition/qualitySizeSlider.ts",
+    "./src/Settings/settingDrafts.ts",
+    "./src/Settings/General/*.tsx",
+    "./src/Settings/UI/*.tsx",
+    "./src/Settings/MediaManagement/MediaManagement*.tsx",
+    "./src/Components/Form/ProviderFieldFormGroup.tsx",
+    "./src/Components/Form/CaptchaInput.tsx",
+    "./src/Components/Form/OAuthInput.tsx"
   ]
 }

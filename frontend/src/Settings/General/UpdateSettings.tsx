@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import Alert from 'Components/Alert';
@@ -8,8 +7,16 @@ import FormInputGroup from 'Components/Form/FormInputGroup';
 import FormLabel from 'Components/Form/FormLabel';
 import { inputTypes, kinds, sizes } from 'Helpers/Props';
 import createSystemStatusSelector from 'Store/Selectors/createSystemStatusSelector';
+import { asStateRecord } from 'Store/StateTypes';
 import titleCase from 'Utilities/String/titleCase';
 import translate from 'Utilities/String/translate';
+import { generalDrafts, type SettingsFieldsProps } from '../settingDrafts';
+
+interface UpdateSettingsProps extends SettingsFieldsProps {
+  advancedSettings: boolean;
+  isWindows: boolean;
+  packageUpdateMechanism: string;
+}
 
 const branchValues = [
   'master',
@@ -17,8 +24,8 @@ const branchValues = [
   'nightly'
 ];
 
-function UpdateSettings(props) {
-  const { builtInUpdatesAvailable, isDocker } = useSelector(createSystemStatusSelector());
+function UpdateSettings(props: UpdateSettingsProps) {
+  const { builtInUpdatesAvailable, isDocker } = asStateRecord(useSelector(createSystemStatusSelector()));
   const {
     advancedSettings,
     settings,
@@ -31,7 +38,7 @@ function UpdateSettings(props) {
     updateAutomatically,
     updateMechanism,
     updateScriptPath
-  } = settings;
+  } = generalDrafts(settings);
 
   if (!advancedSettings) {
     return null;
@@ -138,13 +145,5 @@ function UpdateSettings(props) {
     </FieldSet>
   );
 }
-
-UpdateSettings.propTypes = {
-  advancedSettings: PropTypes.bool.isRequired,
-  settings: PropTypes.object.isRequired,
-  isWindows: PropTypes.bool.isRequired,
-  packageUpdateMechanism: PropTypes.string.isRequired,
-  onInputChange: PropTypes.func.isRequired
-};
 
 export default UpdateSettings;

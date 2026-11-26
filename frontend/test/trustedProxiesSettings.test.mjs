@@ -23,7 +23,7 @@ const { default: FormGroup } = loadFrontendModule('Components/Form/FormGroup.tsx
   './FormInputGroup': FormInputGroup,
   './FormLabel': FormLabel
 });
-const { default: HostSettings } = loadFrontendModule('Settings/General/HostSettings.js', {
+const { default: HostSettings } = loadFrontendModule('Settings/General/HostSettings.tsx', {
   'Components/FieldSet': () => null,
   'Components/Form/FormGroup': FormGroup,
   'Components/Form/FormInputGroup': FormInputGroup,
@@ -77,7 +77,7 @@ const generalBoundaries = Object.fromEntries([
   'Settings/SettingsToolbarConnector', './BackupSettings', './HostSettings', './LoggingSettings',
   './ProxySettings', './SecuritySettings', './UpdateSettings'
 ].map((name) => [name, () => null]));
-const { default: GeneralSettings } = loadFrontendModule('Settings/General/GeneralSettings.js', {
+const { default: GeneralSettings } = loadFrontendModule('Settings/General/GeneralSettings.tsx', {
   ...generalBoundaries,
   'Helpers/Props': props,
   'Utilities/String/translate': translate

@@ -1,40 +1,38 @@
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 import { createSelector } from 'reselect';
+import type { ValueChange } from 'Components/Form/formTypes';
 import { clearPendingChanges } from 'Store/Actions/baseActions';
 import { fetchUISettings, saveUISettings, setUISettingsValue } from 'Store/Actions/settingsActions';
 import createSettingsSectionSelector from 'Store/Selectors/createSettingsSectionSelector';
+import { asStateRecord, type LegacyRootState } from 'Store/StateTypes';
 import UISettings from './UISettings';
 
 const SECTION = 'ui';
 
 function createLanguagesSelector() {
   return createSelector(
-    (state) => state.settings.languages,
+    (state: LegacyRootState) => state.settings.languages,
     (languages) => {
-      const items = languages.items;
+      const items = asStateRecord(languages).items;
       const filterItems = ['Any', 'Unknown'];
 
-      if (!items) {
+      if (!Array.isArray(items)) {
         return [];
       }
 
-      const newItems = items.filter((lang) => !filterItems.includes(lang.name)).map((item) => {
-        return {
-          key: item.id,
-          value: item.name
-        };
+      return items.flatMap((entry: unknown) => {
+        const item = asStateRecord(entry);
+        return typeof item.id === 'number' && typeof item.name === 'string' &&
+          !filterItems.includes(item.name) ? [{ key: item.id, value: item.name }] : [];
       });
-
-      return newItems;
     }
   );
 }
 
 function createMapStateToProps() {
   return createSelector(
-    (state) => state.settings.advancedSettings,
+    (state: LegacyRootState) => state.settings.advancedSettings === true,
     createSettingsSectionSelector(SECTION),
     createLanguagesSelector(),
     (advancedSettings, sectionSettings, languages) => {
@@ -48,13 +46,16 @@ function createMapStateToProps() {
 }
 
 const mapDispatchToProps = {
-  setUISettingsValue,
+  setUISettingsValue: setUISettingsValue as unknown as (change: ValueChange<unknown>) => { type: string; payload?: unknown },
   saveUISettings,
   fetchUISettings,
   clearPendingChanges
 };
 
-class UISettingsConnector extends Component {
+const connector = connect(createMapStateToProps, mapDispatchToProps);
+type Props = ConnectedProps<typeof connector>;
+
+class UISettingsConnector extends Component<Props> {
 
   //
   // Lifecycle
@@ -70,7 +71,7 @@ class UISettingsConnector extends Component {
   //
   // Listeners
 
-  onInputChange = ({ name, value }) => {
+  onInputChange = ({ name, value }: ValueChange<unknown>) => {
     this.props.setUISettingsValue({ name, value });
   };
 
@@ -92,11 +93,4 @@ class UISettingsConnector extends Component {
   }
 }
 
-UISettingsConnector.propTypes = {
-  setUISettingsValue: PropTypes.func.isRequired,
-  saveUISettings: PropTypes.func.isRequired,
-  fetchUISettings: PropTypes.func.isRequired,
-  clearPendingChanges: PropTypes.func.isRequired
-};
-
-export default connect(createMapStateToProps, mapDispatchToProps)(UISettingsConnector);
+export default connector(UISettingsConnector);
