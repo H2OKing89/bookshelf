@@ -15,7 +15,7 @@ namespace NzbDrone.Core.Books
         Dictionary<int, string> AllAuthorPaths();
         Dictionary<int, List<int>> AllAuthorTags();
         Author GetAuthorByMetadataId(int authorMetadataId);
-        List<Author> GetAuthorsByMetadataId(IEnumerable<int> authorMetadataId);
+        List<Author> GetAuthorsByMetadataId(IEnumerable<int> authorMetadataIds);
         List<Author> FindByIds(IEnumerable<int> ids);
     }
 

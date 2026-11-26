@@ -25,7 +25,7 @@ namespace NzbDrone.Windows.Disk
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool CreateHardLink(string lpFileName, string lpExistingFileName, IntPtr lpSecurityAttributes);
+        private static extern bool CreateHardLink(string lpFileName, string lpExistingFileName, nint lpSecurityAttributes);
 
         public DiskProvider()
         : this(new FileSystem())
@@ -170,7 +170,7 @@ namespace NzbDrone.Windows.Disk
                     source = @"\\?\" + source;
                 }
 
-                return CreateHardLink(destination, source, IntPtr.Zero);
+                return CreateHardLink(destination, source, nint.Zero);
             }
             catch (Exception ex)
             {

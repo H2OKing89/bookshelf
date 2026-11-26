@@ -15,13 +15,15 @@ namespace NzbDrone.Core.Test.ParserTests
     {
         private static Book Recording(string asin, string title, string position, string narrator = "Reader One")
         {
-            return AudiobookMetadataMapper.Book(new AudnexusBookResource
-            {
-                Asin = asin, Region = "us", Title = title,
-                Authors = new List<AudnexusContributorResource> { new AudnexusContributorResource { Name = "Example Author" } },
-                Narrators = new List<AudnexusContributorResource> { new AudnexusContributorResource { Name = narrator } },
-                SeriesPrimary = new AudnexusSeriesResource { Name = "Example Series", Position = position }
-            }, "us");
+            return AudiobookMetadataMapper.Book(
+                new AudnexusBookResource
+                {
+                    Asin = asin, Region = "us", Title = title,
+                    Authors = new List<AudnexusContributorResource> { new AudnexusContributorResource { Name = "Example Author" } },
+                    Narrators = new List<AudnexusContributorResource> { new AudnexusContributorResource { Name = narrator } },
+                    SeriesPrimary = new AudnexusSeriesResource { Name = "Example Series", Position = position }
+                },
+                "us");
         }
 
         private static ReleaseInfo Release(string title, string position, string narrator = "Reader One") => new ReleaseInfo

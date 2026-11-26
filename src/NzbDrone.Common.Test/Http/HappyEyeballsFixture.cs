@@ -120,15 +120,17 @@ namespace NzbDrone.Common.Test.Http
             var delayEntered = Signal();
             var releaseDelay = Signal();
             var attempts = new List<IPAddress>();
-            var connector = new HappyEyeballs<Connection>((address, token) =>
-            {
-                attempts.Add(address);
-                return address.Equals(V6First) ? AfterCancellation(token, loser) : Task.FromResult(winner);
-            }, token =>
-            {
-                delayEntered.TrySetResult(true);
-                return releaseDelay.Task.WaitAsync(token);
-            });
+            var connector = new HappyEyeballs<Connection>(
+                (address, token) =>
+                {
+                    attempts.Add(address);
+                    return address.Equals(V6First) ? AfterCancellation(token, loser) : Task.FromResult(winner);
+                },
+                token =>
+                {
+                    delayEntered.TrySetResult(true);
+                    return releaseDelay.Task.WaitAsync(token);
+                });
 
             var pending = connector.Connect(new[] { V4First, V6First }, CancellationToken.None).AsTask();
             await delayEntered.Task.WaitAsync(Deadline);
@@ -150,16 +152,18 @@ namespace NzbDrone.Common.Test.Http
             var first = new Connection();
             var second = new Connection();
             var firstPending = new TaskCompletionSource<Connection>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var connector = new HappyEyeballs<Connection>((address, token) =>
-            {
-                if (address.Equals(V6First))
+            var connector = new HappyEyeballs<Connection>(
+                (address, token) =>
                 {
-                    return firstPending.Task;
-                }
+                    if (address.Equals(V6First))
+                    {
+                        return firstPending.Task;
+                    }
 
-                firstPending.TrySetResult(first);
-                return Task.FromResult(second);
-            }, token => Task.CompletedTask);
+                    firstPending.TrySetResult(first);
+                    return Task.FromResult(second);
+                },
+                token => Task.CompletedTask);
 
             var result = await connector.Connect(new[] { V6First, V4First }, CancellationToken.None).AsTask().WaitAsync(Deadline);
 

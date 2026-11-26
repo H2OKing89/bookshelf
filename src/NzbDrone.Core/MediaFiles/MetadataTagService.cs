@@ -12,10 +12,10 @@ namespace NzbDrone.Core.MediaFiles
     public interface IMetadataTagService
     {
         ParsedTrackInfo ReadTags(IFileInfo file);
-        void WriteTags(BookFile trackfile, bool newDownload, bool force = false);
-        void SyncTags(List<Edition> books);
+        void WriteTags(BookFile bookFile, bool newDownload, bool force = false);
+        void SyncTags(List<Edition> editions);
         List<RetagBookFilePreview> GetRetagPreviewsByAuthor(int authorId);
-        List<RetagBookFilePreview> GetRetagPreviewsByBook(int authorId);
+        List<RetagBookFilePreview> GetRetagPreviewsByBook(int bookId);
     }
 
     public class MetadataTagService : IMetadataTagService,

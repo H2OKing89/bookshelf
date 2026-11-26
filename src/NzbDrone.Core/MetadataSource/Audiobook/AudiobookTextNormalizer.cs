@@ -13,8 +13,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
     {
         private static readonly Regex Whitespace = new Regex(@"\s+", RegexOptions.Compiled);
         private static readonly Regex CommaSpacing = new Regex(@",\s*", RegexOptions.Compiled);
-        public static string Text(string value) => string.IsNullOrWhiteSpace(value)
-            ? null : Whitespace.Replace(value.Normalize(NormalizationForm.FormC).Trim(), " ");
+        public static string Text(string value) => string.IsNullOrWhiteSpace(value) ? null : Whitespace.Replace(value.Normalize(NormalizationForm.FormC).Trim(), " ");
 
         public static string Publisher(string value)
         {
@@ -27,8 +26,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         public static List<string> Names(IEnumerable<string> values) => values?.Select(Text).Where(v => v != null)
             .Distinct(StringComparer.OrdinalIgnoreCase).ToList() ?? new List<string>();
 
-        public static string Position(string value) => TryPosition(value, out var number)
-            ? number.ToString("0.###########################", CultureInfo.InvariantCulture) : Text(value);
+        public static string Position(string value) => TryPosition(value, out var number) ? number.ToString("0.###########################", CultureInfo.InvariantCulture) : Text(value);
 
         private static bool TryPosition(string value, out decimal number)
         {
@@ -59,8 +57,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             }
 
             // Only reshape titles built from this recording's own series name and number.
-            var prefix = series.StartsWith("The ", StringComparison.OrdinalIgnoreCase)
-                ? @"(?:The\s+)?" + Regex.Escape(series.Substring(4)) : Regex.Escape(series);
+            var prefix = series.StartsWith("The ", StringComparison.OrdinalIgnoreCase) ? @"(?:The\s+)?" + Regex.Escape(series.Substring(4)) : Regex.Escape(series);
             var pattern = @"\A" + prefix + @"(?:\s+\(Light Novel\))?[,\s:]*(?:(?:vol(?:ume)?\.?|book)\s*)?(?<number>\d+(?:\.\d+)?)?(?:\s+\(Light Novel\))?(?<suffix>\s*[:–—-].+)?\z";
             foreach (var candidate in candidates)
             {

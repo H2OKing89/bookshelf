@@ -38,7 +38,7 @@ namespace Readarr.Api.V1.Queue
         }
 
         [HttpGet]
-        public List<QueueResource> GetQueue(int? authorId, [FromQuery]List<int> bookIds, bool includeAuthor = false, bool includeBook = true)
+        public List<QueueResource> GetQueue(int? authorId, [FromQuery] List<int> bookIds, bool includeAuthor = false, bool includeBook = true)
         {
             var queue = _queueService.GetQueue();
             var pending = _pendingReleaseService.GetPendingQueue();

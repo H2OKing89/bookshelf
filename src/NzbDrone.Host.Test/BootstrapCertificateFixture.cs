@@ -157,16 +157,20 @@ namespace NzbDrone.App.Test
 
                 // The client trusts only the root; the intermediate must
                 // actually travel across this owned local TLS connection.
-                await Task.WhenAll(serverStream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
-                    {
-                        ServerCertificateContext = material.Context,
-                        EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13
-                    }, timeout.Token),
-                    clientStream.AuthenticateAsClientAsync(new SslClientAuthenticationOptions
-                    {
-                        TargetHost = "localhost",
-                        CertificateChainPolicy = policy
-                    }, timeout.Token));
+                await Task.WhenAll(serverStream.AuthenticateAsServerAsync(
+                    new SslServerAuthenticationOptions
+                        {
+                            ServerCertificateContext = material.Context,
+                            EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13
+                        },
+                    timeout.Token),
+                    clientStream.AuthenticateAsClientAsync(
+                        new SslClientAuthenticationOptions
+                        {
+                            TargetHost = "localhost",
+                            CertificateChainPolicy = policy
+                        },
+                        timeout.Token));
                 clientStream.IsAuthenticated.Should().BeTrue();
                 clientStream.RemoteCertificate.GetCertHashString().Should().Be(chain.Leaf.Thumbprint);
             }

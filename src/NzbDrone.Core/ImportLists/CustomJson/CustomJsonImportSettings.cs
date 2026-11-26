@@ -28,7 +28,7 @@ namespace NzbDrone.Core.ImportLists.CustomJson
 
     public class CustomJsonImportSettings : IImportListSettings
     {
-        private static readonly CustomJsonImportSettingsValidator Validator = new ();
+        private static readonly CustomJsonImportSettingsValidator Validator = new();
 
         [FieldDefinition(0, Label = "Endpoint URL", Type = FieldType.Url, HelpText = "Full URL of the Bookshelf custom JSON list endpoint; use HTTPS for private endpoints. Paging parameters are supplied automatically.")]
         public string BaseUrl { get; set; } = string.Empty;
@@ -36,6 +36,6 @@ namespace NzbDrone.Core.ImportLists.CustomJson
         [FieldDefinition(1, Label = "Bearer Token", Type = FieldType.Password, Privacy = PrivacyLevel.ApiKey, HelpText = "Optional bearer token sent in the Authorization header. Leave empty for public lists.")]
         public string ApiKey { get; set; } = string.Empty;
 
-        public NzbDroneValidationResult Validate() => new (Validator.Validate(this));
+        public NzbDroneValidationResult Validate() => new(Validator.Validate(this));
     }
 }

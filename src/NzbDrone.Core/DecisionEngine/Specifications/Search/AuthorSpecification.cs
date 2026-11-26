@@ -16,7 +16,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.Search
         public SpecificationPriority Priority => SpecificationPriority.Default;
         public RejectionType Type => RejectionType.Permanent;
 
-        public Decision IsSatisfiedBy(RemoteBook remoteBook, SearchCriteriaBase searchCriteria)
+        public Decision IsSatisfiedBy(RemoteBook subject, SearchCriteriaBase searchCriteria)
         {
             if (searchCriteria == null)
             {
@@ -25,9 +25,9 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.Search
 
             _logger.Debug("Checking if author matches searched author");
 
-            if (remoteBook.Author.Id != searchCriteria.Author.Id)
+            if (subject.Author.Id != searchCriteria.Author.Id)
             {
-                _logger.Debug("Author {0} does not match {1}", remoteBook.Author, searchCriteria.Author);
+                _logger.Debug("Author {0} does not match {1}", subject.Author, searchCriteria.Author);
                 return Decision.RejectCode(RejectionCode.AuthorMismatch, "Wrong author");
             }
 

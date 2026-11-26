@@ -71,8 +71,7 @@ namespace NzbDrone.Core.Download.Clients.Transmission
                 item.OutputPath = GetOutputPath(outputPath, torrent);
                 item.TotalSize = torrent.TotalSize;
                 item.RemainingSize = torrent.LeftUntilDone;
-                item.SeedRatio = torrent.DownloadedEver <= 0 ? 0 :
-                    (double)torrent.UploadedEver / torrent.DownloadedEver;
+                item.SeedRatio = torrent.DownloadedEver <= 0 ? 0 : (double)torrent.UploadedEver / torrent.DownloadedEver;
 
                 if (torrent.Eta >= 0)
                 {

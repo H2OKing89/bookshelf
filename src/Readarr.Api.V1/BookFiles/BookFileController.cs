@@ -68,7 +68,7 @@ namespace Readarr.Api.V1.BookFiles
         }
 
         [HttpGet]
-        public List<BookFileResource> GetBookFiles(int? authorId, [FromQuery]List<int> bookFileIds, [FromQuery(Name="bookId")]List<int> bookIds, bool? unmapped)
+        public List<BookFileResource> GetBookFiles(int? authorId, [FromQuery] List<int> bookFileIds, [FromQuery(Name="bookId")] List<int> bookIds, bool? unmapped)
         {
             if (!authorId.HasValue && !bookFileIds.Any() && !bookIds.Any() && !unmapped.HasValue)
             {

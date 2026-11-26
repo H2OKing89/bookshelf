@@ -10,7 +10,7 @@ namespace NzbDrone.Core.Indexers
 {
     public interface ISeedConfigProvider
     {
-        TorrentSeedConfiguration GetSeedConfiguration(RemoteBook release);
+        TorrentSeedConfiguration GetSeedConfiguration(RemoteBook remoteBook);
         TorrentSeedConfiguration GetSeedConfiguration(int indexerId, bool fullSeason);
     }
 

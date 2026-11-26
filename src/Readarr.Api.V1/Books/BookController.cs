@@ -72,10 +72,10 @@ namespace Readarr.Api.V1.Books
         }
 
         [HttpGet]
-        public List<BookResource> GetBooks([FromQuery]int? authorId,
-            [FromQuery]List<int> bookIds,
-            [FromQuery]string titleSlug,
-            [FromQuery]bool includeAllAuthorBooks = false)
+        public List<BookResource> GetBooks([FromQuery] int? authorId,
+            [FromQuery] List<int> bookIds,
+            [FromQuery] string titleSlug,
+            [FromQuery] bool includeAllAuthorBooks = false)
         {
             if (!authorId.HasValue && !bookIds.Any() && titleSlug.IsNullOrWhiteSpace())
             {
@@ -174,7 +174,7 @@ namespace Readarr.Api.V1.Books
         }
 
         [RestPostById]
-        public ActionResult<BookResource> AddBook(BookResource bookResource, [FromQuery]bool doRefresh = true)
+        public ActionResult<BookResource> AddBook(BookResource bookResource, [FromQuery] bool doRefresh = true)
         {
             var book = _addBookService.AddBook(bookResource.ToModel(), doRefresh);
 
@@ -225,7 +225,7 @@ namespace Readarr.Api.V1.Books
         }
 
         [HttpPut("monitor")]
-        public IActionResult SetBooksMonitored([FromBody]BooksMonitoredResource resource)
+        public IActionResult SetBooksMonitored([FromBody] BooksMonitoredResource resource)
         {
             _listPolicy.ReleaseBookOwnership(resource.BookIds);
             _bookService.SetMonitored(resource.BookIds, resource.Monitored);

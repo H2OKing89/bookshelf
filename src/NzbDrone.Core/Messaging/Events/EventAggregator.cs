@@ -105,10 +105,12 @@ namespace NzbDrone.Core.Messaging.Events
             {
                 var handlerLocal = handler;
 
-                _taskFactory.StartNew(() =>
-                {
-                    handlerLocal.HandleAsync(@event);
-                }, TaskCreationOptions.PreferFairness)
+                _taskFactory.StartNew(
+                    () =>
+                    {
+                        handlerLocal.HandleAsync(@event);
+                    },
+                    TaskCreationOptions.PreferFairness)
                 .LogExceptions();
             }
 
@@ -116,12 +118,14 @@ namespace NzbDrone.Core.Messaging.Events
             {
                 var handlerLocal = handler;
 
-                _taskFactory.StartNew(() =>
-                {
-                    _logger.Trace("{0} ~> {1}", eventName, handlerLocal.GetType().Name);
-                    handlerLocal.HandleAsync(@event);
-                    _logger.Trace("{0} <~ {1}", eventName, handlerLocal.GetType().Name);
-                }, TaskCreationOptions.PreferFairness)
+                _taskFactory.StartNew(
+                    () =>
+                    {
+                        _logger.Trace("{0} ~> {1}", eventName, handlerLocal.GetType().Name);
+                        handlerLocal.HandleAsync(@event);
+                        _logger.Trace("{0} <~ {1}", eventName, handlerLocal.GetType().Name);
+                    },
+                    TaskCreationOptions.PreferFairness)
                 .LogExceptions();
             }
         }

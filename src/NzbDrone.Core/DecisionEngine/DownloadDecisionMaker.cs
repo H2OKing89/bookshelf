@@ -77,12 +77,10 @@ namespace NzbDrone.Core.DecisionEngine
                     if (report.HasStructuredBookIdentity())
                     {
                         var names = report.BookAuthors;
-                        var expectedNames = searchCriteria == null ? new List<string>() :
-                            searchCriteria.Author.Metadata.Value.Aliases.Append(searchCriteria.Author.Name).Select(name => name.CleanAuthorName()).ToList();
+                        var expectedNames = searchCriteria == null ? new List<string>() : searchCriteria.Author.Metadata.Value.Aliases.Append(searchCriteria.Author.Name).Select(name => name.CleanAuthorName()).ToList();
                         parsedBookInfo = new ParsedBookInfo
                         {
-                            AuthorName = searchCriteria != null && names.Any(name => expectedNames.Contains(name.CleanAuthorName()))
-                                ? searchCriteria.Author.Name : names.First(),
+                            AuthorName = searchCriteria != null && names.Any(name => expectedNames.Contains(name.CleanAuthorName())) ? searchCriteria.Author.Name : names.First(),
                             BookTitle = report.Book,
                             StructuredRelease = report,
                             ReleaseTitle = report.Title,

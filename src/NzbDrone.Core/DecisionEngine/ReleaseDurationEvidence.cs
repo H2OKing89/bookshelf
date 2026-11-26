@@ -100,10 +100,7 @@ namespace NzbDrone.Core.DecisionEngine
 
             // Persisted part numbers alone cannot establish recording completeness.
             // A complete in-memory inventory or corroborating catalog length can.
-            return files.All(file => file.PartCount == files.Count) ||
-                (catalogSeconds.HasValue && Math.Abs(measured - catalogSeconds.Value) <= (chapterSeconds.HasValue ? 1m : 60m))
-                ? measured
-                : catalogSeconds;
+            return files.All(file => file.PartCount == files.Count) || (catalogSeconds.HasValue && Math.Abs(measured - catalogSeconds.Value) <= (chapterSeconds.HasValue ? 1m : 60m)) ? measured : catalogSeconds;
         }
 
         private static bool HasDistinctLocalPaths(List<BookFile> files)

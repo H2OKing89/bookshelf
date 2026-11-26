@@ -52,10 +52,12 @@ namespace NzbDrone.Core.Books
             using var transaction = connection.BeginTransaction(IsolationLevel.Serializable);
             if (_database.DatabaseType == DatabaseType.PostgreSQL)
             {
-                connection.Execute("""
+                connection.Execute(
+                    """
                     LOCK TABLE "AuthorMetadata", "Authors", "Books", "Editions", "ImportListExclusions"
                     IN SHARE ROW EXCLUSIVE MODE
-                    """, transaction: transaction);
+                    """,
+                    transaction: transaction);
             }
 
             var canonicalIds = AudnexusProxy.Regions.Select(region => AudiobookId.ForAsin(region, canonical.Value)).ToArray();

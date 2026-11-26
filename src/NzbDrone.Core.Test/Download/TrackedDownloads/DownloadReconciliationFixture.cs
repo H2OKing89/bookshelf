@@ -219,8 +219,10 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
             Subject.Handle(new ProviderUpdatedEvent<IDownloadClient>(_definition));
             Subject.Handle(new ProviderDeletedEvent<IDownloadClient>(_definition.Id));
 
-            SpinWait.SpinUntil(() => Mocker.GetMock<IManageCommandQueue>().Invocations.Any(invocation =>
-                invocation.Arguments.FirstOrDefault() is RefreshMonitoredDownloadsCommand), TimeSpan.FromSeconds(10)).Should().BeTrue();
+            SpinWait.SpinUntil(
+                () => Mocker.GetMock<IManageCommandQueue>().Invocations.Any(invocation =>
+                    invocation.Arguments.FirstOrDefault() is RefreshMonitoredDownloadsCommand),
+                TimeSpan.FromSeconds(10)).Should().BeTrue();
 
             Mocker.GetMock<IManageCommandQueue>().Verify(queue => queue.Push(It.IsAny<RefreshMonitoredDownloadsCommand>(), CommandPriority.High, CommandTrigger.Unspecified), Times.Once());
         }

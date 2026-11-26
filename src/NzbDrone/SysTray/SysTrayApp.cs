@@ -66,20 +66,20 @@ namespace NzbDrone.SysTray
             base.OnLoad(e);
         }
 
-        protected override void Dispose(bool isDisposing)
+        protected override void Dispose(bool disposing)
         {
-            if (isDisposing)
+            if (disposing)
             {
                 _trayIcon.Dispose();
             }
 
             if (InvokeRequired)
             {
-                Invoke(new MethodInvoker(() => Dispose(isDisposing)));
+                Invoke(new MethodInvoker(() => Dispose(disposing)));
             }
             else
             {
-                base.Dispose(isDisposing);
+                base.Dispose(disposing);
             }
         }
 

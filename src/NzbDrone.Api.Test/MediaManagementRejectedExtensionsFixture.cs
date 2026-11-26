@@ -46,8 +46,10 @@ namespace NzbDrone.Api.Test
 
             Subject.SaveConfig(resource);
 
-            Mocker.GetMock<IConfigService>().Verify(config => config.SaveConfigDictionary(It.Is<Dictionary<string, object>>(
-                values => values.ContainsKey("UserRejectedExtensions") && values["UserRejectedExtensions"] == null)), Times.Once());
+            Mocker.GetMock<IConfigService>().Verify(
+                config => config.SaveConfigDictionary(It.Is<Dictionary<string, object>>(
+                    values => values.ContainsKey("UserRejectedExtensions") && values["UserRejectedExtensions"] == null)),
+                Times.Once());
         }
 
         [TestCase("{}", null)]
@@ -60,8 +62,10 @@ namespace NzbDrone.Api.Test
 
             Subject.SaveConfig(resource);
 
-            Mocker.GetMock<IConfigService>().Verify(config => config.SaveConfigDictionary(It.Is<Dictionary<string, object>>(
-                values => Equals(values["CheckFreeSpaceWhenGrabbing"], enabled))), Times.Once());
+            Mocker.GetMock<IConfigService>().Verify(
+                config => config.SaveConfigDictionary(It.Is<Dictionary<string, object>>(
+                    values => Equals(values["CheckFreeSpaceWhenGrabbing"], enabled))),
+                Times.Once());
         }
 
         public class TestMediaManagementConfigController : MediaManagementConfigController

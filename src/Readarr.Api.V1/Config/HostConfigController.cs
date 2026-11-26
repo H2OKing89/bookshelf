@@ -123,9 +123,11 @@ namespace Readarr.Api.V1.Config
             }
             catch (SslCertificateLoadException error)
             {
-                return new ValidationFailure(error.Field == SslCertificateField.KeyPath
-                    ? nameof(resource.SslKeyPath)
-                    : nameof(resource.SslCertPath), error.Message);
+                return new ValidationFailure(
+                    error.Field == SslCertificateField.KeyPath
+                        ? nameof(resource.SslKeyPath)
+                        : nameof(resource.SslCertPath),
+                    error.Message);
             }
         }
 

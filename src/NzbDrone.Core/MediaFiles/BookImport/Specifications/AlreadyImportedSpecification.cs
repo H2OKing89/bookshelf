@@ -22,7 +22,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Specifications
 
         public SpecificationPriority Priority => SpecificationPriority.Database;
 
-        public Decision IsSatisfiedBy(LocalEdition localBookRelease, DownloadClientItem downloadClientItem)
+        public Decision IsSatisfiedBy(LocalEdition item, DownloadClientItem downloadClientItem)
         {
             if (downloadClientItem == null)
             {
@@ -30,7 +30,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Specifications
                 return Decision.Accept();
             }
 
-            var bookRelease = localBookRelease.Edition;
+            var bookRelease = item.Edition;
 
             if ((!bookRelease.BookFiles?.Value?.Any()) ?? true)
             {

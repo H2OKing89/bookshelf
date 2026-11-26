@@ -7,11 +7,11 @@ namespace NzbDrone.Core.Notifications.Synology
     public interface ISynologyIndexerProxy
     {
         bool Test();
-        void AddFile(string filepath);
-        void DeleteFile(string filepath);
-        void AddFolder(string folderpath);
-        void DeleteFolder(string folderpath);
-        void UpdateFolder(string folderpath);
+        void AddFile(string filePath);
+        void DeleteFile(string filePath);
+        void AddFolder(string folderPath);
+        void DeleteFolder(string folderPath);
+        void UpdateFolder(string folderPath);
         void UpdateLibrary();
     }
 

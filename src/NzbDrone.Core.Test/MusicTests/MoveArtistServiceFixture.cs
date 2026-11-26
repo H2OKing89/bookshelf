@@ -148,7 +148,8 @@ namespace NzbDrone.Core.Test.MusicTests
                 .Verify(
                     v => v.TransferFolder(_command.SourcePath,
                         _command.DestinationPath,
-                        TransferMode.Move), Times.Never());
+                        TransferMode.Move),
+                    Times.Never());
 
             Mocker.GetMock<IBuildAuthorPaths>()
                 .Verify(v => v.BuildPath(It.IsAny<Author>(), It.IsAny<bool>()), Times.Never());

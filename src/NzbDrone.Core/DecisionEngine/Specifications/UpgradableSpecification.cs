@@ -62,9 +62,9 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             return ProfileComparisonResult.Upgrade;
         }
 
-        public bool IsUpgradable(QualityProfile qualityProfile, QualityModel currentQualities, List<CustomFormat> currentCustomFormats, QualityModel newQuality, List<CustomFormat> newCustomFormats)
+        public bool IsUpgradable(QualityProfile profile, QualityModel currentQuality, List<CustomFormat> currentCustomFormats, QualityModel newQuality, List<CustomFormat> newCustomFormats)
         {
-            return IsUpgradable(qualityProfile, currentQualities, currentCustomFormats, newQuality, newCustomFormats, out _);
+            return IsUpgradable(profile, currentQuality, currentCustomFormats, newQuality, newCustomFormats, out _);
         }
 
         public bool IsUpgradable(QualityProfile qualityProfile, QualityModel currentQualities, List<CustomFormat> currentCustomFormats, QualityModel newQuality, List<CustomFormat> newCustomFormats, out bool belowMinimumScoreImprovement)

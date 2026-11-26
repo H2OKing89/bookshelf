@@ -60,8 +60,10 @@ namespace NzbDrone.Core.Test.Profiles
 
             Subject.Update(profile);
 
-            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.Is<MinimumUpgradeFormatScoreChangedEvent>(change =>
-                change.QualityProfileId == profile.Id)), Times.Exactly(publishes));
+            Mocker.GetMock<IEventAggregator>().Verify(
+                events => events.PublishEvent(It.Is<MinimumUpgradeFormatScoreChangedEvent>(change =>
+                    change.QualityProfileId == profile.Id)),
+                Times.Exactly(publishes));
         }
 
         [Test]

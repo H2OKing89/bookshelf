@@ -67,13 +67,7 @@ namespace NzbDrone.Core.Notifications.Webhook
             {
                 EventType = WebhookEventType.ManualInteractionRequired,
                 InstanceName = _configFileProvider.InstanceName,
-                Author = message.Author == null ? null : new WebhookAuthor
-                {
-                    Id = message.Author.Id,
-                    Name = message.Author.Name,
-                    Path = message.Author.Path,
-                    GoodreadsId = message.Author.Metadata?.Value?.ForeignAuthorId
-                },
+                Author = message.Author == null ? null : new WebhookAuthor { Id = message.Author.Id, Name = message.Author.Name, Path = message.Author.Path, GoodreadsId = message.Author.Metadata?.Value?.ForeignAuthorId },
                 Books = message.BookIdentities,
                 Message = message.Message,
                 DownloadClientId = message.DownloadClientInfo?.Id ?? 0,

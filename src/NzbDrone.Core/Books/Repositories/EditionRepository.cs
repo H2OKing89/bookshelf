@@ -14,7 +14,7 @@ namespace NzbDrone.Core.Books
         Edition FindByForeignEditionId(string foreignEditionId);
         List<Edition> FindByBook(IEnumerable<int> ids);
         List<Edition> FindByAuthor(int id);
-        List<Edition> FindByAuthorMetadataId(int id, bool onlyMonitored);
+        List<Edition> FindByAuthorMetadataId(int authorMetadataId, bool onlyMonitored);
         Edition FindByTitle(int authorMetadataId, string title);
         List<Edition> GetEditionsForRefresh(int bookId, List<string> foreignEditionIds);
         List<Edition> SetMonitored(Edition edition);

@@ -45,8 +45,10 @@ namespace NzbDrone.Api.Test
 
             Subject.Update(resource);
 
-            service.Verify(profiles => profiles.Update(It.Is<QualityProfile>(profile => profile.Id == existing.Id &&
-                profile.MinUpgradeFormatScore == expected)), Times.Once());
+            service.Verify(
+                profiles => profiles.Update(It.Is<QualityProfile>(profile => profile.Id == existing.Id &&
+                    profile.MinUpgradeFormatScore == expected)),
+                Times.Once());
         }
 
         [Test]

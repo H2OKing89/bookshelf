@@ -50,8 +50,10 @@ namespace NzbDrone.Core.Test.HealthCheck
             Subject.HandleAsync(new FakeEvent2());
 
             Subject.Results().Should().BeEmpty();
-            Mocker.GetMock<IEventAggregator>().Verify(aggregator => aggregator.PublishEvent(It.Is<HealthCheckRestoredEvent>(
-                restored => restored.PreviousCheck == previous && !restored.IsInStartupGracePeriod)), Times.Once());
+            Mocker.GetMock<IEventAggregator>().Verify(
+                aggregator => aggregator.PublishEvent(It.Is<HealthCheckRestoredEvent>(
+                    restored => restored.PreviousCheck == previous && !restored.IsInStartupGracePeriod)),
+                Times.Once());
             Mocker.GetMock<IEventAggregator>().Verify(aggregator => aggregator.PublishEvent(It.IsAny<HealthCheckRestoredEvent>()), Times.Once());
             Mocker.GetMock<IEventAggregator>().Verify(aggregator => aggregator.PublishEvent(It.IsAny<HealthCheckFailedEvent>()), Times.Once());
         }
@@ -66,8 +68,10 @@ namespace NzbDrone.Core.Test.HealthCheck
             Subject.HandleAsync(new FakeEvent2());
 
             Subject.Results().Should().BeEmpty();
-            Mocker.GetMock<IEventAggregator>().Verify(aggregator => aggregator.PublishEvent(It.Is<HealthCheckRestoredEvent>(
-                restored => restored.IsInStartupGracePeriod)), Times.Once());
+            Mocker.GetMock<IEventAggregator>().Verify(
+                aggregator => aggregator.PublishEvent(It.Is<HealthCheckRestoredEvent>(
+                    restored => restored.IsInStartupGracePeriod)),
+                Times.Once());
         }
 
         [Test]

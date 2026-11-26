@@ -205,8 +205,7 @@ namespace NzbDrone.Core.Datastore.Migration.Framework
 
         private static int NamedConstraintStart(List<Token> tokens, int index)
         {
-            return index >= 2 && !tokens[index - 2].Quoted && tokens[index - 2].Value.Equals("CONSTRAINT", StringComparison.OrdinalIgnoreCase)
-                ? index - 2 : index;
+            return index >= 2 && !tokens[index - 2].Quoted && tokens[index - 2].Value.Equals("CONSTRAINT", StringComparison.OrdinalIgnoreCase) ? index - 2 : index;
         }
 
         private static int DefaultEnd(List<Token> tokens, int index, int length)

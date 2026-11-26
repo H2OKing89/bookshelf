@@ -11,8 +11,8 @@ namespace Readarr.Api.V1.ImportLists
     [V1ApiController]
     public class ImportListController : ProviderControllerBase<ImportListResource, ImportListBulkResource, IImportList, ImportListDefinition>
     {
-        public static readonly ImportListResourceMapper ResourceMapper = new ();
-        public static readonly ImportListBulkResourceMapper BulkResourceMapper = new ();
+        public static readonly ImportListResourceMapper ResourceMapper = new();
+        public static readonly ImportListBulkResourceMapper BulkResourceMapper = new();
 
         public ImportListController(IImportListFactory importListFactory,
                                     QualityProfileExistsValidator qualityProfileExistsValidator,
@@ -31,11 +31,11 @@ namespace Readarr.Api.V1.ImportLists
         [RestPutById]
         [Consumes("application/json")]
         [Produces("application/json")]
-        public override ActionResult<ImportListResource> UpdateProvider([FromBody] ImportListResource resource, [FromQuery] bool forceSave = false)
+        public override ActionResult<ImportListResource> UpdateProvider([FromBody] ImportListResource providerResource, [FromQuery] bool forceSave = false)
         {
             // Older clients omit the new setting. None is an explicit choice.
-            resource.TagExisting ??= GetResourceById(resource.Id).TagExisting;
-            return base.UpdateProvider(resource, forceSave);
+            providerResource.TagExisting ??= GetResourceById(providerResource.Id).TagExisting;
+            return base.UpdateProvider(providerResource, forceSave);
         }
     }
 }

@@ -73,9 +73,9 @@ namespace NzbDrone.Core.Notifications.Email
             SendEmail(Settings, AUTHOR_DELETED_TITlE_BRANDED, body);
         }
 
-        public override void OnHealthIssue(HealthCheck.HealthCheck message)
+        public override void OnHealthIssue(HealthCheck.HealthCheck healthCheck)
         {
-            SendEmail(Settings, HEALTH_ISSUE_TITLE_BRANDED, message.Message);
+            SendEmail(Settings, HEALTH_ISSUE_TITLE_BRANDED, healthCheck.Message);
         }
 
         public override void OnHealthRestored(HealthCheck.HealthCheck previousCheck)

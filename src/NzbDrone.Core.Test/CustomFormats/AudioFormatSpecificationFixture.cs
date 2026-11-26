@@ -28,15 +28,17 @@ namespace NzbDrone.Core.Test.CustomFormats
         [TestCase("Not a known codec", "", "", "", AudioCodecKind.Unknown)]
         public void structured_audio_fields_should_distinguish_profiles_and_carriers(string format, string profile, string features, string commercial, AudioCodecKind expected)
         {
-            var evidence = AudioFormatEvidence.ForFile(new MediaInfoModel
-            {
-                Source = "MediaInfo",
-                AudioFormat = format,
-                AudioProfile = profile,
-                AudioAdditionalFeatures = features,
-                AudioCommercialName = commercial,
-                AudioChannels = 8
-            }, null);
+            var evidence = AudioFormatEvidence.ForFile(
+                new MediaInfoModel
+                {
+                    Source = "MediaInfo",
+                    AudioFormat = format,
+                    AudioProfile = profile,
+                    AudioAdditionalFeatures = features,
+                    AudioCommercialName = commercial,
+                    AudioChannels = 8
+                },
+                null);
 
             evidence.Codec.Should().Be(expected);
             new AudioCodecSpecification { Value = (int)expected }.IsSatisfiedBy(new CustomFormatInput { Audio = evidence }).Should().BeTrue();

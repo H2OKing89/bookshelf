@@ -100,9 +100,7 @@ namespace Readarr.Api.V1.MetadataOverrides
             var edition = book?.Editions?.Value?.SingleOrDefault(value => value.Monitored);
             var observed = edition?.Title ?? book?.Title;
             var observedSubtitle = edition?.Subtitle;
-            var needsReview = item.Kind == "title" ? observed != item.OriginalTitle :
-                (item.OriginalTitle != null && observed != item.OriginalTitle) ||
-                (item.OriginalSubtitle != null && observedSubtitle != item.OriginalSubtitle);
+            var needsReview = item.Kind == "title" ? observed != item.OriginalTitle : (item.OriginalTitle != null && observed != item.OriginalTitle) || (item.OriginalSubtitle != null && observedSubtitle != item.OriginalSubtitle);
             return new MetadataOverrideResource
             {
                 Id = item.Id, Kind = item.Kind, Region = item.Region, Asin = item.Asin, Name = item.Name,
@@ -110,8 +108,7 @@ namespace Readarr.Api.V1.MetadataOverrides
                 OriginalTitle = item.OriginalTitle, OriginalSubtitle = item.OriginalSubtitle, ReplacementTitle = item.ReplacementTitle,
                 SourceUrl = item.SourceUrl, Reason = item.Reason, Enabled = item.Enabled, UpdatedAt = item.UpdatedAt,
                 ObservedTitle = observed, ObservedSubtitle = observedSubtitle,
-                Status = !item.Enabled ? "disabled" : !recordingOverride ? "enabled" : book == null ? "notInLibrary" :
-                    needsReview ? "needsReview" : "enabled"
+                Status = !item.Enabled ? "disabled" : !recordingOverride ? "enabled" : book == null ? "notInLibrary" : needsReview ? "needsReview" : "enabled"
             };
         }
 

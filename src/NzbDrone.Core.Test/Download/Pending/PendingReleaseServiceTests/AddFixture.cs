@@ -128,8 +128,10 @@ namespace NzbDrone.Core.Test.Download.Pending.PendingReleaseServiceTests
             });
 
             Mocker.GetMock<IPendingReleaseRepository>()
-                .Verify(repository => repository.Insert(It.Is<PendingRelease>(pending =>
-                    pending.AdditionalInfo.BookIds.SequenceEqual(new[] { _book.Id }))), Times.Once());
+                .Verify(
+                    repository => repository.Insert(It.Is<PendingRelease>(pending =>
+                        pending.AdditionalInfo.BookIds.SequenceEqual(new[] { _book.Id }))),
+                    Times.Once());
         }
 
         [Test]

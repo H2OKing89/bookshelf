@@ -99,8 +99,7 @@ namespace NzbDrone.Core.Parser
 
         private static string Position(string value)
         {
-            return decimal.TryParse(value?.Trim(), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var number)
-                ? number.ToString("0.############################", CultureInfo.InvariantCulture) : null;
+            return decimal.TryParse(value?.Trim(), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var number) ? number.ToString("0.############################", CultureInfo.InvariantCulture) : null;
         }
 
         private static string Key(string value)

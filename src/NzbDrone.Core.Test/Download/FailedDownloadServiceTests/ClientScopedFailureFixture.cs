@@ -57,8 +57,10 @@ namespace NzbDrone.Core.Test.Download.FailedDownloadServiceTests
 
             Subject.MarkAsFailed("same-hash", 1, true);
 
-            Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.Is<DownloadFailedEvent>(failed =>
-                failed.BookIds.Count == 1 && failed.BookIds[0] == 11 && failed.SkipRedownload)), Times.Once());
+            Mocker.GetMock<IEventAggregator>().Verify(
+                events => events.PublishEvent(It.Is<DownloadFailedEvent>(failed =>
+                    failed.BookIds.Count == 1 && failed.BookIds[0] == 11 && failed.SkipRedownload)),
+                Times.Once());
             Mocker.GetMock<ITrackedDownloadService>().Verify(tracker => tracker.Find("same-hash"), Times.Never());
             Mocker.GetMock<IHistoryService>().Verify(history => history.Find("same-hash", EntityHistoryEventType.Grabbed), Times.Never());
         }

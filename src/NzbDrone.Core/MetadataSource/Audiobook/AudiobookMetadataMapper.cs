@@ -26,8 +26,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             var result = new AuthorMetadata
             {
                 ForeignAuthorId = id,
-                TitleSlug = "author-" + region + "-" + (AudiobookId.IsAsin(asin) ? asin :
-                    Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(contributor.Name))).Substring(0, 16).ToLowerInvariant()),
+                TitleSlug = "author-" + region + "-" + (AudiobookId.IsAsin(asin) ? asin : Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(contributor.Name))).Substring(0, 16).ToLowerInvariant()),
                 Name = name,
                 SortName = name,
                 NameLastFirst = name,

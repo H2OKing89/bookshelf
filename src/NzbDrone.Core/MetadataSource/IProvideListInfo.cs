@@ -4,6 +4,6 @@ namespace NzbDrone.Core.MetadataSource
 {
     public interface IProvideListInfo
     {
-        ListResource GetListInfo(int id, int page, bool useCache = true);
+        ListResource GetListInfo(int foreignListId, int page, bool useCache = true);
     }
 }

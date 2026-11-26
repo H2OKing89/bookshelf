@@ -60,12 +60,14 @@ namespace NzbDrone.Core.Books
             // Treat punctuation in the search literally (including LIKE wildcards).
             var pattern = "%" + term.ToLowerInvariant().Replace("!", "!!").Replace("%", "!%").Replace("_", "!_") + "%";
             using var connection = _database.OpenConnection();
-            return connection.Query<RecordingWork>("""
+            return connection.Query<RecordingWork>(
+                """
                 SELECT * FROM "RecordingWorks"
                 WHERE LOWER("Title") LIKE @pattern ESCAPE '!' OR LOWER("Author") LIKE @pattern ESCAPE '!'
                     OR LOWER("Series") LIKE @pattern ESCAPE '!' OR LOWER("Position") LIKE @pattern ESCAPE '!'
                 ORDER BY "Title", "Author", "Id" LIMIT 50
-                """, new { pattern }).AsList();
+                """,
+                new { pattern }).AsList();
         }
 
         public RecordingWorkSnapshot Inspect(int editionId)

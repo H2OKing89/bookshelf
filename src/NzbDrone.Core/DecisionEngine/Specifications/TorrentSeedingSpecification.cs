@@ -20,9 +20,9 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
         public SpecificationPriority Priority => SpecificationPriority.Default;
         public RejectionType Type => RejectionType.Permanent;
 
-        public Decision IsSatisfiedBy(RemoteBook remoteBook, SearchCriteriaBase searchCriteria)
+        public Decision IsSatisfiedBy(RemoteBook subject, SearchCriteriaBase searchCriteria)
         {
-            var torrentInfo = remoteBook.Release as TorrentInfo;
+            var torrentInfo = subject.Release as TorrentInfo;
 
             if (torrentInfo == null || torrentInfo.IndexerId == 0)
             {

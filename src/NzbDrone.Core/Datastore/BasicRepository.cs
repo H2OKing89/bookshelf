@@ -26,10 +26,10 @@ namespace NzbDrone.Core.Datastore
         void Delete(TModel model);
         void Delete(int id);
         IEnumerable<TModel> Get(IEnumerable<int> ids);
-        void InsertMany(IList<TModel> model);
-        void UpdateMany(IList<TModel> model);
+        void InsertMany(IList<TModel> models);
+        void UpdateMany(IList<TModel> models);
         void SetFields(IList<TModel> models, params Expression<Func<TModel, object>>[] properties);
-        void DeleteMany(List<TModel> model);
+        void DeleteMany(List<TModel> models);
         void DeleteMany(IEnumerable<int> ids);
         void Purge(bool vacuum = false);
         bool HasItems();

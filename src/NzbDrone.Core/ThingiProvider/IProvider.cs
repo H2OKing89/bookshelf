@@ -12,6 +12,6 @@ namespace NzbDrone.Core.ThingiProvider
         IEnumerable<ProviderDefinition> DefaultDefinitions { get; }
         ProviderDefinition Definition { get; set; }
         ValidationResult Test();
-        object RequestAction(string stage, IDictionary<string, string> query);
+        object RequestAction(string action, IDictionary<string, string> query);
     }
 }

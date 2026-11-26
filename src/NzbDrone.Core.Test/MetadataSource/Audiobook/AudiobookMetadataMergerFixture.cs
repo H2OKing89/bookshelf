@@ -14,14 +14,16 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
     {
         private static Book Recording(DateTime? date = null)
         {
-            return AudiobookMetadataMapper.Book(new AudnexusBookResource
-            {
-                Asin = "B0B75NY8F2",
-                Region = "us",
-                Title = "A recording",
-                ReleaseDate = date,
-                Authors = new List<AudnexusContributorResource> { new AudnexusContributorResource { Name = "Example Author", Asin = "B000000001" } }
-            }, "us");
+            return AudiobookMetadataMapper.Book(
+                new AudnexusBookResource
+                {
+                    Asin = "B0B75NY8F2",
+                    Region = "us",
+                    Title = "A recording",
+                    ReleaseDate = date,
+                    Authors = new List<AudnexusContributorResource> { new AudnexusContributorResource { Name = "Example Author", Asin = "B000000001" } }
+                },
+                "us");
         }
 
         private static void SeriesLink(Book book, string asin, string name, string position, bool primary)

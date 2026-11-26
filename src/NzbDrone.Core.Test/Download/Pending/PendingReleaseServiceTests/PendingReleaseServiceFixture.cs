@@ -107,8 +107,10 @@ namespace NzbDrone.Core.Test.Download.Pending.PendingReleaseServiceTests
 
             Subject.Handle(new MinimumUpgradeFormatScoreChangedEvent(author.QualityProfileId));
 
-            Mocker.GetMock<IPendingReleaseRepository>().Verify(repository => repository.DeleteMany(It.Is<IEnumerable<int>>(ids =>
-                ids.SequenceEqual(new[] { tooSmall.Id }))), Times.Once());
+            Mocker.GetMock<IPendingReleaseRepository>().Verify(
+                repository => repository.DeleteMany(It.Is<IEnumerable<int>>(ids =>
+                    ids.SequenceEqual(new[] { tooSmall.Id }))),
+                Times.Once());
             Mocker.GetMock<IEventAggregator>().Verify(events => events.PublishEvent(It.IsAny<PendingReleasesUpdatedEvent>()), Times.Once());
             calculator.Verify(service => service.ParseCustomFormat(It.Is<RemoteBook>(book => book.Release == unrelated.Release), It.IsAny<long>()), Times.Never());
         }

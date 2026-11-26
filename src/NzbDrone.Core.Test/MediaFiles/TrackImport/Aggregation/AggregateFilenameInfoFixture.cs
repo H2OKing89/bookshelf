@@ -39,13 +39,15 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport.Aggregation.Aggregators
         [Test]
         public void should_aggregate_filenames_example()
         {
-            var release = GivenTracks(new List<string>
-            {
-                    "Adele - 19 - 101 - Daydreamer.mp3",
-                    "Adele - 19 - 102 - Best for Last.mp3",
-                    "Adele - 19 - 103 - Chasing Pavements.mp3",
-                    "Adele - 19 - 203 - That's It, I Quit, I'm Moving On.mp3"
-            }, @"C:\incoming".AsOsAgnostic());
+            var release = GivenTracks(
+                new List<string>
+                {
+                        "Adele - 19 - 101 - Daydreamer.mp3",
+                        "Adele - 19 - 102 - Best for Last.mp3",
+                        "Adele - 19 - 103 - Chasing Pavements.mp3",
+                        "Adele - 19 - 203 - That's It, I Quit, I'm Moving On.mp3"
+                },
+                @"C:\incoming".AsOsAgnostic());
 
             Subject.Aggregate(release, true);
 

@@ -55,9 +55,9 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Aggregation.Aggregators
             _logger = logger;
         }
 
-        public LocalEdition Aggregate(LocalEdition release, bool others)
+        public LocalEdition Aggregate(LocalEdition item, bool otherFiles)
         {
-            var tracks = release.LocalBooks;
+            var tracks = item.LocalBooks;
             if (tracks.Any(x => x.FileTrackInfo.BookTitle.IsNullOrWhiteSpace())
                 || tracks.Any(x => x.FileTrackInfo.AuthorTitle.IsNullOrWhiteSpace()))
             {
@@ -75,7 +75,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Aggregation.Aggregators
                 }
             }
 
-            return release;
+            return item;
         }
 
         private Dictionary<LocalBook, Match> AllMatches(List<LocalBook> tracks, Regex pattern)

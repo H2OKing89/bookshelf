@@ -123,9 +123,11 @@ namespace NzbDrone.Core.Test.Download
             Subject.Handle(failedEvent);
 
             Mocker.GetMock<IManageCommandQueue>()
-                .Verify(x => x.Push(It.Is<BookSearchCommand>(c => c.BookIds.Count == 3 && c.BookIds[0] == 4 && c.BookIds[1] == 5 && c.BookIds[2] == 6),
-                                    It.IsAny<CommandPriority>(),
-                                    It.IsAny<CommandTrigger>()), Times.Once());
+                .Verify(
+                    x => x.Push(It.Is<BookSearchCommand>(c => c.BookIds.Count == 3 && c.BookIds[0] == 4 && c.BookIds[1] == 5 && c.BookIds[2] == 6),
+                                        It.IsAny<CommandPriority>(),
+                                        It.IsAny<CommandTrigger>()),
+                    Times.Once());
             Mocker.GetMock<IManageCommandQueue>().Verify(x => x.Push(It.IsAny<AuthorSearchCommand>(), It.IsAny<CommandPriority>(), It.IsAny<CommandTrigger>()), Times.Never());
         }
 

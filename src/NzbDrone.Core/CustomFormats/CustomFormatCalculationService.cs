@@ -17,10 +17,10 @@ namespace NzbDrone.Core.CustomFormats
     public interface ICustomFormatCalculationService
     {
         List<CustomFormat> ParseCustomFormat(RemoteBook remoteBook, long size);
-        List<CustomFormat> ParseCustomFormat(BookFile bookFile, Author artist);
+        List<CustomFormat> ParseCustomFormat(BookFile bookFile, Author author);
         List<CustomFormat> ParseCustomFormat(BookFile bookFile);
-        List<CustomFormat> ParseCustomFormat(Blocklist blocklist, Author artist);
-        List<CustomFormat> ParseCustomFormat(EntityHistory history, Author artist);
+        List<CustomFormat> ParseCustomFormat(Blocklist blocklist, Author author);
+        List<CustomFormat> ParseCustomFormat(EntityHistory history, Author author);
         List<CustomFormat> ParseCustomFormat(LocalBook localBook);
     }
 

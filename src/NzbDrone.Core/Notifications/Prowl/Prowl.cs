@@ -17,9 +17,9 @@ namespace NzbDrone.Core.Notifications.Prowl
         public override string Link => "https://www.prowlapp.com/";
         public override string Name => "Prowl";
 
-        public override void OnGrab(GrabMessage message)
+        public override void OnGrab(GrabMessage grabMessage)
         {
-            _prowlProxy.SendNotification(BOOK_GRABBED_TITLE, message.Message, Settings);
+            _prowlProxy.SendNotification(BOOK_GRABBED_TITLE, grabMessage.Message, Settings);
         }
 
         public override void OnReleaseImport(BookDownloadMessage message)

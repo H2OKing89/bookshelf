@@ -28,7 +28,7 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Manual
     public interface IManualImportService
     {
         List<ManualImportItem> GetMediaFiles(string path, string downloadId, Author author, FilterFilesType filter, bool replaceExistingFiles, int? downloadClientId = null);
-        List<ManualImportItem> UpdateItems(List<ManualImportItem> item);
+        List<ManualImportItem> UpdateItems(List<ManualImportItem> items);
     }
 
     public class ManualImportService : IExecute<ManualImportCommand>, IManualImportService

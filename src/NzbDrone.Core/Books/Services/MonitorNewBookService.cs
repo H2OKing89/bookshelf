@@ -7,7 +7,7 @@ namespace NzbDrone.Core.Books
 {
     public interface IMonitorNewBookService
     {
-        bool ShouldMonitorNewBook(Book addedBook, List<Book> existingBooks, NewItemMonitorTypes author);
+        bool ShouldMonitorNewBook(Book addedBook, List<Book> existingBooks, NewItemMonitorTypes monitorNewItems);
     }
 
     public class MonitorNewBookService : IMonitorNewBookService

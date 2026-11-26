@@ -50,9 +50,11 @@ namespace NzbDrone.Api.Test
 
             Subject.Update(updated.ToResource());
 
-            Mocker.GetMock<IQualityProfileService>().Verify(service => service.Update(It.Is<QualityProfile>(profile =>
-                profile.Items[0].Items[0].MinSize == 20 && profile.Items[0].Items[0].PreferredSize == 0 &&
-                profile.Items[0].Items[0].MaxSize == 100)), Times.Once());
+            Mocker.GetMock<IQualityProfileService>().Verify(
+                service => service.Update(It.Is<QualityProfile>(profile =>
+                    profile.Items[0].Items[0].MinSize == 20 && profile.Items[0].Items[0].PreferredSize == 0 &&
+                    profile.Items[0].Items[0].MaxSize == 100)),
+                Times.Once());
         }
 
         [TestCase(-1, 0, 0)]

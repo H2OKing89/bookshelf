@@ -87,12 +87,14 @@ namespace NzbDrone.Core.Books
             {
                 // Writers on either side of this merge must not add references
                 // to a disappearing author between the snapshot and deletion.
-                connection.Execute("""
+                connection.Execute(
+                    """
                     LOCK TABLE "AuthorMetadata", "Authors", "AudiobookMetadataOverrides", "Blocklist", "BookFiles", "Books",
                         "DownloadHistory", "Editions", "ExtraFiles", "History", "ImportListManagedRecordings",
                         "ImportListMembershipItems", "ImportListTagOwners", "MetadataFiles", "PendingReleases"
                     IN SHARE ROW EXCLUSIVE MODE
-                    """, transaction: transaction);
+                    """,
+                    transaction: transaction);
             }
 
             var snapshot = ReadSnapshot(connection, transaction, confirmation);

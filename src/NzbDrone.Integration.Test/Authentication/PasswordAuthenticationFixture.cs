@@ -81,8 +81,10 @@ namespace NzbDrone.Integration.Test.Authentication
                 Times.Never());
             user.Should().BeEquivalentTo(original);
             _storedUser.Should().BeEquivalentTo(original);
-            Mocker.GetMock<IUserRepository>().Verify(repository => repository.TryUpdateCredentials(
-                It.IsAny<User>(), It.IsAny<User>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never());
+            Mocker.GetMock<IUserRepository>().Verify(
+                repository => repository.TryUpdateCredentials(
+                    It.IsAny<User>(), It.IsAny<User>(), It.IsAny<bool>(), It.IsAny<bool>()),
+                Times.Never());
             Mocker.GetMock<IUserRepository>().Verify(repository => repository.Update(It.IsAny<User>()), Times.Never());
             ExceptionVerification.ExpectedWarns(1);
         }
@@ -116,8 +118,10 @@ namespace NzbDrone.Integration.Test.Authentication
             result.Principal.Should().BeNull();
             user.Should().BeEquivalentTo(original);
             _storedUser.Should().BeEquivalentTo(original);
-            Mocker.GetMock<IUserRepository>().Verify(repository => repository.TryUpdateCredentials(
-                It.IsAny<User>(), It.IsAny<User>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never());
+            Mocker.GetMock<IUserRepository>().Verify(
+                repository => repository.TryUpdateCredentials(
+                    It.IsAny<User>(), It.IsAny<User>(), It.IsAny<bool>(), It.IsAny<bool>()),
+                Times.Never());
             Mocker.GetMock<IUserRepository>().Verify(repository => repository.Update(It.IsAny<User>()), Times.Never());
             ExceptionVerification.ExpectedWarns(1);
         }
@@ -202,8 +206,10 @@ namespace NzbDrone.Integration.Test.Authentication
             _storedUser.Username.Should().Be("reader");
             _storedUser.Iterations.Should().Be(220000);
             Convert.FromBase64String(_storedUser.Salt).Should().HaveCount(16);
-            Mocker.GetMock<IUserRepository>().Verify(repository => repository.TryUpdateCredentials(
-                It.IsAny<User>(), It.IsAny<User>(), It.IsAny<bool>(), It.IsAny<bool>()), legacy ? Times.Once() : Times.Never());
+            Mocker.GetMock<IUserRepository>().Verify(
+                repository => repository.TryUpdateCredentials(
+                    It.IsAny<User>(), It.IsAny<User>(), It.IsAny<bool>(), It.IsAny<bool>()),
+                legacy ? Times.Once() : Times.Never());
             Mocker.GetMock<IUserRepository>().Verify(repository => repository.Update(It.IsAny<User>()), Times.Never());
             user.Password.Should().Be(originalPassword);
 

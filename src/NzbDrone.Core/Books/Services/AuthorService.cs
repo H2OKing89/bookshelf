@@ -281,15 +281,15 @@ namespace NzbDrone.Core.Books
             return updatedAuthor;
         }
 
-        public List<Author> UpdateAuthors(List<Author> author, bool useExistingRelativeFolder)
+        public List<Author> UpdateAuthors(List<Author> authors, bool useExistingRelativeFolder)
         {
             _cache.Clear();
-            _logger.Debug("Updating {0} author", author.Count);
-            var previousProfiles = _authorRepository.Get(author.Select(item => item.Id).Distinct().ToList())
+            _logger.Debug("Updating {0} author", authors.Count);
+            var previousProfiles = _authorRepository.Get(authors.Select(item => item.Id).Distinct().ToList())
                 .ToDictionary(item => item.Id, item => item.QualityProfileId);
-            var rankChanged = author.Any(item => previousProfiles.TryGetValue(item.Id, out var profileId) && profileId != item.QualityProfileId);
+            var rankChanged = authors.Any(item => previousProfiles.TryGetValue(item.Id, out var profileId) && profileId != item.QualityProfileId);
 
-            foreach (var s in author)
+            foreach (var s in authors)
             {
                 _logger.Trace("Updating: {0}", s.Name);
 
@@ -305,17 +305,17 @@ namespace NzbDrone.Core.Books
                 }
             }
 
-            _authorRepository.UpdateMany(author);
-            _eventAggregator.PublishEvent(new AuthorsEditedEvent(author.Select(item => item.Id).ToList()));
+            _authorRepository.UpdateMany(authors);
+            _eventAggregator.PublishEvent(new AuthorsEditedEvent(authors.Select(item => item.Id).ToList()));
 
             if (rankChanged)
             {
                 _eventAggregator.PublishEvent(new QualityRankingChangedEvent(authorAssignmentsChanged: true));
             }
 
-            _logger.Debug("{0} authors updated", author.Count);
+            _logger.Debug("{0} authors updated", authors.Count);
 
-            return author;
+            return authors;
         }
     }
 }

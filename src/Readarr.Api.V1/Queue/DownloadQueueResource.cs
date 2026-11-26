@@ -65,11 +65,7 @@ namespace Readarr.Api.V1.Queue
                 CoverageSource = download.CoverageSource,
                 Recordings = download.Recordings,
                 AuthorId = download.AuthorId,
-                Author = download.Author == null ? null : new DownloadQueueAuthor
-                {
-                    AuthorName = download.Author.Name,
-                    TitleSlug = download.Author.Metadata.Value.TitleSlug
-                },
+                Author = download.Author == null ? null : new DownloadQueueAuthor { AuthorName = download.Author.Name, TitleSlug = download.Author.Metadata.Value.TitleSlug },
                 CanRemove = download.CanRemove,
                 CanRemoveFromClient = download.CanRemoveFromClient,
                 CanChangeCategory = download.CanChangeCategory,

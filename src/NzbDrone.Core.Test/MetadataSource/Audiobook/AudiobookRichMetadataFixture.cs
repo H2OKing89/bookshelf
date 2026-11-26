@@ -131,15 +131,17 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
         [Test]
         public void should_retain_author_genres_and_similar_author_identifiers()
         {
-            var author = AudiobookMetadataMapper.Author(new AudnexusAuthorResource
-            {
-                Asin = "B000000001", Name = "Author One", Description = "<p>Biography.</p>",
-                Genres = new List<AudnexusGenreResource> { new AudnexusGenreResource { Name = "Fantasy" } },
-                Similar = new List<AudnexusContributorResource>
+            var author = AudiobookMetadataMapper.Author(
+                new AudnexusAuthorResource
                 {
-                    new AudnexusContributorResource { Asin = "B000000002", Name = "Another Author" }
-                }
-            }, "us");
+                    Asin = "B000000001", Name = "Author One", Description = "<p>Biography.</p>",
+                    Genres = new List<AudnexusGenreResource> { new AudnexusGenreResource { Name = "Fantasy" } },
+                    Similar = new List<AudnexusContributorResource>
+                    {
+                        new AudnexusContributorResource { Asin = "B000000002", Name = "Another Author" }
+                    }
+                },
+                "us");
 
             author.Genres.Should().Equal("Fantasy");
             author.SimilarAuthors.Should().ContainSingle(person => person.Asin == "B000000002" && person.Name == "Another Author");

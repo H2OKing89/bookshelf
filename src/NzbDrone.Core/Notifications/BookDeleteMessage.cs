@@ -18,9 +18,7 @@ namespace NzbDrone.Core.Notifications
         {
             Book = book;
             DeletedFiles = deleteFiles;
-            DeletedFilesMessage = DeletedFiles ?
-                "Book removed and all files were deleted" :
-                "Book removed, files were not deleted";
+            DeletedFilesMessage = DeletedFiles ? "Book removed and all files were deleted" : "Book removed, files were not deleted";
             Message = book.Title + " - " + DeletedFilesMessage;
         }
     }

@@ -42,8 +42,7 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
                 .Returns(new List<AudnexusBookResource> { book });
             Mocker.GetMock<IAudnexusProxy>().Setup(x => x.GetAuthor(profile.Asin, "us")).Returns(profile);
             Mocker.GetMock<IAudibleCatalogProxy>().Setup(x => x.GetAuthorBooks(It.IsAny<string>(), "us"))
-                .Returns((string name, string region) => name == credit
-                    ? new List<AudnexusBookResource> { book } : new List<AudnexusBookResource>());
+                .Returns((string name, string region) => name == credit ? new List<AudnexusBookResource> { book } : new List<AudnexusBookResource>());
 
             Subject.SearchForNewAuthor(query);
             var first = Subject.GetAuthorInfo(id);

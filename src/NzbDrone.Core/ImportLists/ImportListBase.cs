@@ -62,7 +62,7 @@ namespace NzbDrone.Core.ImportLists
 
         public abstract IList<ImportListItemInfo> Fetch();
 
-        public virtual ImportListFetchResult FetchWithStatus() => new (Fetch(), false);
+        public virtual ImportListFetchResult FetchWithStatus() => new(Fetch(), false);
 
         protected virtual IList<ImportListItemInfo> CleanupListItems(IEnumerable<ImportListItemInfo> releases)
         {

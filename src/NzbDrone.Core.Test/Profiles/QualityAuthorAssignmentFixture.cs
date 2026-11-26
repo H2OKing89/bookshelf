@@ -47,11 +47,11 @@ namespace NzbDrone.Core.Test.Profiles
         [TestCase(true)]
         public void should_publish_at_most_one_assignment_rank_change_for_bulk_edits_and_none_for_tag_only_changes(bool profileChanged)
         {
-            var original = new List<Author> { new () { Id = 12, QualityProfileId = 1 }, new () { Id = 13, QualityProfileId = 2 } };
+            var original = new List<Author> { new() { Id = 12, QualityProfileId = 1 }, new() { Id = 13, QualityProfileId = 2 } };
             var updated = new List<Author>
             {
-                new () { Id = 12, QualityProfileId = profileChanged ? 2 : 1, Tags = new HashSet<int> { 8 } },
-                new () { Id = 13, QualityProfileId = 2, Tags = new HashSet<int> { 9 } }
+                new() { Id = 12, QualityProfileId = profileChanged ? 2 : 1, Tags = new HashSet<int> { 8 } },
+                new() { Id = 13, QualityProfileId = 2, Tags = new HashSet<int> { 9 } }
             };
             var committed = false;
             Mocker.GetMock<IAuthorRepository>().Setup(repository => repository.Get(It.IsAny<IEnumerable<int>>())).Returns(original);
@@ -95,7 +95,7 @@ namespace NzbDrone.Core.Test.Profiles
             var cache = new CacheManager();
             var repository = Mocker.GetMock<IAuthorStatisticsRepository>();
             var rank = 0.75;
-            List<BookStatistics> ReadStats() => new () { new BookStatistics { AuthorId = 12, BookId = 7, FileQualityRank = rank } };
+            List<BookStatistics> ReadStats() => new() { new BookStatistics { AuthorId = 12, BookId = 7, FileQualityRank = rank } };
             repository.Setup(value => value.AuthorStatistics()).Returns(ReadStats);
             repository.Setup(value => value.AuthorStatistics(12)).Returns(ReadStats);
             var service = new AuthorStatisticsService(repository.Object, cache);

@@ -366,10 +366,14 @@ namespace NzbDrone.Core.Test.MediaFiles
 
             Subject.Execute(command);
 
-            Mocker.GetMock<IImportApprovedBooks>().Verify(service => service.Import(
-                It.Is<List<ImportDecision<LocalBook>>>(items => items.Count == 1 && items[0].Item.Path == _path), false, first.DownloadItem, ImportMode.Copy), Times.Once());
-            Mocker.GetMock<IImportApprovedBooks>().Verify(service => service.Import(
-                It.Is<List<ImportDecision<LocalBook>>>(items => items.Count == 1 && items[0].Item.Path == secondPath), false, second.DownloadItem, ImportMode.Copy), Times.Once());
+            Mocker.GetMock<IImportApprovedBooks>().Verify(
+                service => service.Import(
+                    It.Is<List<ImportDecision<LocalBook>>>(items => items.Count == 1 && items[0].Item.Path == _path), false, first.DownloadItem, ImportMode.Copy),
+                Times.Once());
+            Mocker.GetMock<IImportApprovedBooks>().Verify(
+                service => service.Import(
+                    It.Is<List<ImportDecision<LocalBook>>>(items => items.Count == 1 && items[0].Item.Path == secondPath), false, second.DownloadItem, ImportMode.Copy),
+                Times.Once());
             Mocker.GetMock<ICompletedDownloadService>().Verify(service => service.VerifyImport(first, It.Is<List<ImportResult>>(items => items.Count == 1)), Times.Once());
             Mocker.GetMock<ICompletedDownloadService>().Verify(service => service.VerifyImport(second, It.Is<List<ImportResult>>(items => items.Count == 1)), Times.Once());
             Mocker.GetMock<ITrackedDownloadService>().Verify(service => service.Find("same-hash"), Times.Never());
@@ -390,8 +394,10 @@ namespace NzbDrone.Core.Test.MediaFiles
             Assert.Throws<AmbiguousTrackedDownloadException>(() => Subject.Execute(command));
 
             Mocker.GetMock<IDownloadHistoryService>().Verify(service => service.RecordSourceRetention(It.IsAny<TrackedDownload>()), Times.Never());
-            Mocker.GetMock<IImportApprovedBooks>().Verify(service => service.Import(
-                It.IsAny<List<ImportDecision<LocalBook>>>(), It.IsAny<bool>(), It.IsAny<DownloadClientItem>(), It.IsAny<ImportMode>()), Times.Never());
+            Mocker.GetMock<IImportApprovedBooks>().Verify(
+                service => service.Import(
+                    It.IsAny<List<ImportDecision<LocalBook>>>(), It.IsAny<bool>(), It.IsAny<DownloadClientItem>(), It.IsAny<ImportMode>()),
+                Times.Never());
         }
 
         [Test]
@@ -428,8 +434,10 @@ namespace NzbDrone.Core.Test.MediaFiles
             Assert.Throws<ArgumentException>(() => Subject.Execute(command));
 
             Mocker.GetMock<IDownloadHistoryService>().Verify(service => service.RecordSourceRetention(It.IsAny<TrackedDownload>()), Times.Never());
-            Mocker.GetMock<IImportApprovedBooks>().Verify(service => service.Import(
-                It.IsAny<List<ImportDecision<LocalBook>>>(), It.IsAny<bool>(), It.IsAny<DownloadClientItem>(), It.IsAny<ImportMode>()), Times.Never());
+            Mocker.GetMock<IImportApprovedBooks>().Verify(
+                service => service.Import(
+                    It.IsAny<List<ImportDecision<LocalBook>>>(), It.IsAny<bool>(), It.IsAny<DownloadClientItem>(), It.IsAny<ImportMode>()),
+                Times.Never());
             Mocker.GetMock<IMakeImportDecision>().Verify(service => service.GetImportDecisions(It.IsAny<List<IFileInfo>>(), It.IsAny<IdentificationOverrides>(), It.IsAny<ImportDecisionMakerInfo>(), It.IsAny<ImportDecisionMakerConfig>()), Times.Never());
         }
 
@@ -486,8 +494,10 @@ namespace NzbDrone.Core.Test.MediaFiles
 
             Assert.Throws<System.IO.IOException>(() => Subject.Execute(command));
 
-            Mocker.GetMock<IImportApprovedBooks>().Verify(service => service.Import(
-                It.IsAny<List<ImportDecision<LocalBook>>>(), It.IsAny<bool>(), It.IsAny<DownloadClientItem>(), It.IsAny<ImportMode>()), Times.Never());
+            Mocker.GetMock<IImportApprovedBooks>().Verify(
+                service => service.Import(
+                    It.IsAny<List<ImportDecision<LocalBook>>>(), It.IsAny<bool>(), It.IsAny<DownloadClientItem>(), It.IsAny<ImportMode>()),
+                Times.Never());
         }
 
         [Test]
@@ -535,8 +545,10 @@ namespace NzbDrone.Core.Test.MediaFiles
             command.ReplaceExistingFiles = true;
             Subject.Execute(command);
 
-            Mocker.GetMock<IImportApprovedBooks>().Verify(service => service.Import(
-                It.Is<List<ImportDecision<LocalBook>>>(items => items.All(item => item.Approved)), true, null, ImportMode.Copy), Times.Once());
+            Mocker.GetMock<IImportApprovedBooks>().Verify(
+                service => service.Import(
+                    It.Is<List<ImportDecision<LocalBook>>>(items => items.All(item => item.Approved)), true, null, ImportMode.Copy),
+                Times.Once());
         }
 
         private ManualImportCommand Command(string choice)

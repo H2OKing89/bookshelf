@@ -65,7 +65,7 @@ namespace Readarr.Api.V1.Config
         }
 
         [HttpGet("examples")]
-        public object GetExamples([FromQuery]NamingConfigResource config)
+        public object GetExamples([FromQuery] NamingConfigResource config)
         {
             if (config.Id == 0)
             {

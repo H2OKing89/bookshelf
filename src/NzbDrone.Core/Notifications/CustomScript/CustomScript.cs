@@ -35,10 +35,10 @@ namespace NzbDrone.Core.Notifications.CustomScript
 
         public override ProviderMessage Message => new ProviderMessage("Testing will execute the script with the EventType set to Test, ensure your script handles this correctly", ProviderMessageType.Warning);
 
-        public override void OnGrab(GrabMessage message)
+        public override void OnGrab(GrabMessage grabMessage)
         {
-            var author = message.Author;
-            var remoteBook = message.RemoteBook;
+            var author = grabMessage.Author;
+            var remoteBook = grabMessage.RemoteBook;
             var releaseGroup = remoteBook.ParsedBookInfo.ReleaseGroup;
             var environmentVariables = new StringDictionary();
 
@@ -58,9 +58,9 @@ namespace NzbDrone.Core.Notifications.CustomScript
             environmentVariables.Add("Readarr_Release_QualityVersion", remoteBook.ParsedBookInfo.Quality.Revision.Version.ToString());
             environmentVariables.Add("Readarr_Release_ReleaseGroup", releaseGroup ?? string.Empty);
             environmentVariables.Add("Readarr_Release_IndexerFlags", remoteBook.Release.IndexerFlags.ToString());
-            environmentVariables.Add("Readarr_Download_Client", message.DownloadClientName ?? string.Empty);
-            environmentVariables.Add("Readarr_Download_Client_Type", message.DownloadClientType ?? string.Empty);
-            environmentVariables.Add("Readarr_Download_Id", message.DownloadId ?? string.Empty);
+            environmentVariables.Add("Readarr_Download_Client", grabMessage.DownloadClientName ?? string.Empty);
+            environmentVariables.Add("Readarr_Download_Client_Type", grabMessage.DownloadClientType ?? string.Empty);
+            environmentVariables.Add("Readarr_Download_Id", grabMessage.DownloadId ?? string.Empty);
 
             ExecuteScript(environmentVariables);
         }

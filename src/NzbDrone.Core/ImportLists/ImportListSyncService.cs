@@ -245,8 +245,7 @@ namespace NzbDrone.Core.ImportLists
 
         private void MapBookReport(ImportListItemInfo report)
         {
-            var nativeId = AudiobookId.IsNative(report.BookGoodreadsId) ? report.BookGoodreadsId :
-                AudiobookId.IsNative(report.EditionGoodreadsId) ? report.EditionGoodreadsId : null;
+            var nativeId = AudiobookId.IsNative(report.BookGoodreadsId) ? report.BookGoodreadsId : AudiobookId.IsNative(report.EditionGoodreadsId) ? report.EditionGoodreadsId : null;
             Book mapped = null;
             if (nativeId != null)
             {
@@ -421,9 +420,11 @@ namespace NzbDrone.Core.ImportLists
 
         private void MapAuthorReport(ImportListItemInfo report)
         {
-            var matches = report.Author.IsNullOrWhiteSpace() ? new List<Author>() : _authorSearch.SearchForNewAuthor(report.Author)
-                .Where(a => Parser.Parser.CleanAuthorName(a.Name) == Parser.Parser.CleanAuthorName(report.Author))
-                .DistinctBy(a => a.ForeignAuthorId).ToList();
+            var matches = report.Author.IsNullOrWhiteSpace()
+                ? new List<Author>()
+                : _authorSearch.SearchForNewAuthor(report.Author)
+                    .Where(a => Parser.Parser.CleanAuthorName(a.Name) == Parser.Parser.CleanAuthorName(report.Author))
+                    .DistinctBy(a => a.ForeignAuthorId).ToList();
             report.AuthorGoodreadsId = matches.Count == 1 ? matches[0].ForeignAuthorId : null;
             if (matches.Count == 1)
             {

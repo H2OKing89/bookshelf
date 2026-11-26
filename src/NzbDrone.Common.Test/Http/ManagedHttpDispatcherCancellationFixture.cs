@@ -327,9 +327,9 @@ namespace NzbDrone.Common.Test.Http
                 }
             }
 
-            protected override System.Net.Http.HttpClient CreateHttpClient(HttpProxySettings settings)
+            protected override System.Net.Http.HttpClient CreateHttpClient(HttpProxySettings proxySettings)
             {
-                var client = base.CreateHttpClient(settings);
+                var client = base.CreateHttpClient(proxySettings);
                 Clients.Add(client);
                 return client;
             }

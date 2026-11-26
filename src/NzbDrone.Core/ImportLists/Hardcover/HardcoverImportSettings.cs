@@ -20,7 +20,7 @@ namespace NzbDrone.Core.ImportLists.Hardcover
 
     public class HardcoverImportSettings : IImportListSettings
     {
-        private static readonly HardcoverImportSettingsValidator Validator = new ();
+        private static readonly HardcoverImportSettingsValidator Validator = new();
 
         public HardcoverImportSettings()
         {

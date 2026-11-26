@@ -305,7 +305,7 @@ namespace NzbDrone.Core.Test.ImportListTests
         }
 
         private static HttpResponse Response(HttpRequest request, string content, HttpStatusCode status = HttpStatusCode.OK) =>
-            new (request, new HttpHeader { ContentType = "application/json; charset=utf-8" }, Encoding.UTF8.GetBytes(content), status);
+            new(request, new HttpHeader { ContentType = "application/json; charset=utf-8" }, Encoding.UTF8.GetBytes(content), status);
 
         private static object Author() => new { kind = "author", author = "Owned author", authorId = AuthorId };
 

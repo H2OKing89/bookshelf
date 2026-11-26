@@ -223,11 +223,13 @@ namespace NzbDrone.Integration.Test.Authentication
 
         private void VerifyNoSignIn()
         {
-            _cookies.Verify(service => service.SignInAsync(
-                It.IsAny<HttpContext>(),
-                It.IsAny<string>(),
-                It.IsAny<ClaimsPrincipal>(),
-                It.IsAny<AuthenticationProperties>()), Times.Never());
+            _cookies.Verify(
+                service => service.SignInAsync(
+                    It.IsAny<HttpContext>(),
+                    It.IsAny<string>(),
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<AuthenticationProperties>()),
+                Times.Never());
         }
 
         private static DefaultHttpContext CreateContext()

@@ -1394,11 +1394,13 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
 
         private static AuthorMetadata RichAuthorMetadata()
         {
-            var metadata = AudiobookMetadataMapper.Author(new AudnexusAuthorResource
-            {
-                Asin = "B0GVW7FF1Q", Name = "Yu Omiya", Region = "us", Description = "Stored author biography",
-                Image = "https://example.com/author.jpg"
-            }, "us");
+            var metadata = AudiobookMetadataMapper.Author(
+                new AudnexusAuthorResource
+                {
+                    Asin = "B0GVW7FF1Q", Name = "Yu Omiya", Region = "us", Description = "Stored author biography",
+                    Image = "https://example.com/author.jpg"
+                },
+                "us");
             metadata.Genres.Add("Fantasy");
             metadata.SimilarAuthors.Add(new AudiobookPersonReference { Name = "Related Author", Asin = "B000000030" });
             metadata.Links.Add(new Links { Name = "Website", Url = "https://example.com/author" });

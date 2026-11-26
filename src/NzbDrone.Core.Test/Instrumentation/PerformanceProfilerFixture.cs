@@ -90,23 +90,25 @@ namespace NzbDrone.Core.Test.Instrumentation
         {
             using var profiler = Create(true);
             var databaseType = Mocker.Resolve<IMainDatabase>().DatabaseType;
-            await Task.WhenAll(Task.Run(() =>
-            {
-                using (profiler.Begin("One.Get", "GET"))
+            await Task.WhenAll(
+                Task.Run(() =>
                 {
-                    Query("First request");
-                }
-            }), Task.Run(() =>
-            {
-                using var capture = profiler.Begin("Two.Get", "GET");
-                Query("Second request");
-                capture.Complete(cancelled: true);
-                var completed = profiler.Snapshot().Operations.Single(group => group.Operation == "Two.Get");
-                Query("Late work must not update the completed request");
-                var after = profiler.Snapshot().Operations.Single(group => group.Operation == "Two.Get");
-                after.SqliteStatements.Should().Be(completed.SqliteStatements);
-                after.PostgresOperations.Should().Be(completed.PostgresOperations);
-            }));
+                    using (profiler.Begin("One.Get", "GET"))
+                    {
+                        Query("First request");
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    using var capture = profiler.Begin("Two.Get", "GET");
+                    Query("Second request");
+                    capture.Complete(cancelled: true);
+                    var completed = profiler.Snapshot().Operations.Single(group => group.Operation == "Two.Get");
+                    Query("Late work must not update the completed request");
+                    var after = profiler.Snapshot().Operations.Single(group => group.Operation == "Two.Get");
+                    after.SqliteStatements.Should().Be(completed.SqliteStatements);
+                    after.PostgresOperations.Should().Be(completed.PostgresOperations);
+                }));
 
             var groups = profiler.Snapshot().Operations.ToDictionary(g => g.Operation);
             groups.Keys.Should().BeEquivalentTo("One.Get", "Two.Get");
@@ -124,20 +126,22 @@ namespace NzbDrone.Core.Test.Instrumentation
         {
             using var profiler = Create(true);
             var databaseType = Mocker.Resolve<IMainDatabase>().DatabaseType;
-            await Task.WhenAll(Task.Run(() =>
-            {
-                using var capture = profiler.BeginJob(new RefreshAuthorCommand(891234), CommandTrigger.Scheduled);
-                profiler.BeginJob(new RescanFoldersCommand(), CommandTrigger.Unspecified).Should().BeNull();
-                Query("Owned secret job marker");
-                Query("Owned second query inside job");
-                capture.Complete(cancelled: true);
-                Query("Late work is not added to the completed job");
-            }), Task.Run(() =>
-            {
-                using var capture = profiler.Begin("Library.Get", "GET");
-                profiler.BeginJob(new ManualImportCommand(), CommandTrigger.Manual).Should().BeNull();
-                Query("Owned request marker");
-            }));
+            await Task.WhenAll(
+                Task.Run(() =>
+                {
+                    using var capture = profiler.BeginJob(new RefreshAuthorCommand(891234), CommandTrigger.Scheduled);
+                    profiler.BeginJob(new RescanFoldersCommand(), CommandTrigger.Unspecified).Should().BeNull();
+                    Query("Owned secret job marker");
+                    Query("Owned second query inside job");
+                    capture.Complete(cancelled: true);
+                    Query("Late work is not added to the completed job");
+                }),
+                Task.Run(() =>
+                {
+                    using var capture = profiler.Begin("Library.Get", "GET");
+                    profiler.BeginJob(new ManualImportCommand(), CommandTrigger.Manual).Should().BeNull();
+                    Query("Owned request marker");
+                }));
 
             var snapshot = profiler.Snapshot();
             snapshot.Samples.Should().Be(1);

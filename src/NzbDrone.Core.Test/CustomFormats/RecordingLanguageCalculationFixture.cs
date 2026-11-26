@@ -21,10 +21,10 @@ namespace NzbDrone.Core.Test.CustomFormats
         {
             Mocker.GetMock<ICustomFormatService>().Setup(service => service.All()).Returns(new List<CustomFormat>
             {
-                new ("English", new LanguageSpecification { Value = Language.English.Id }),
-                new ("French", new LanguageSpecification { Value = Language.French.Id }),
-                new ("Selected", new LanguageSpecification { Value = LanguageSpecification.SelectedEdition }),
-                new ("Unknown", new LanguageSpecification { Value = Language.Unknown.Id })
+                new("English", new LanguageSpecification { Value = Language.English.Id }),
+                new("French", new LanguageSpecification { Value = Language.French.Id }),
+                new("Selected", new LanguageSpecification { Value = LanguageSpecification.SelectedEdition }),
+                new("Unknown", new LanguageSpecification { Value = Language.Unknown.Id })
             });
         }
 

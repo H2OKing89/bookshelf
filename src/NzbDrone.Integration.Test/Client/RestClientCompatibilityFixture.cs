@@ -196,8 +196,7 @@ namespace NzbDrone.Integration.Test.Client
                 using var reader = new System.IO.StreamReader(request.Body);
                 Body = await reader.ReadToEndAsync();
 
-                context.Response.StatusCode = int.TryParse(request.Query["status"], out var status) ? status :
-                    HttpMethods.IsPost(request.Method) ? 201 : 200;
+                context.Response.StatusCode = int.TryParse(request.Query["status"], out var status) ? status : HttpMethods.IsPost(request.Method) ? 201 : 200;
                 context.Response.Headers.CacheControl = "no-store, no-cache";
                 context.Response.Headers.Pragma = "no-cache";
                 context.Response.Headers.Expires = "-1";

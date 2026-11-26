@@ -388,9 +388,7 @@ namespace NzbDrone.Core.Organizer
 
             var audioCodec = MediaInfoFormatter.FormatAudioCodec(bookFile.MediaInfo);
             var audioChannels = MediaInfoFormatter.FormatAudioChannels(bookFile.MediaInfo);
-            var audioChannelsFormatted = audioChannels > 0 ?
-                                audioChannels.ToString("F1", CultureInfo.InvariantCulture) :
-                                string.Empty;
+            var audioChannelsFormatted = audioChannels > 0 ? audioChannels.ToString("F1", CultureInfo.InvariantCulture) : string.Empty;
 
             tokenHandlers["{MediaInfo AudioCodec}"] = m => audioCodec;
             tokenHandlers["{MediaInfo AudioChannels}"] = m => audioChannelsFormatted;

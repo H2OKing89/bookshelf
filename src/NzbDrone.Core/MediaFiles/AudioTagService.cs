@@ -20,9 +20,9 @@ namespace NzbDrone.Core.MediaFiles
     public interface IAudioTagService
     {
         AudioTag ReadAudioTag(string path);
-        ParsedTrackInfo ReadTags(string file);
+        ParsedTrackInfo ReadTags(string path);
         void WriteTags(BookFile trackfile, bool newDownload, bool force = false);
-        void SyncTags(List<Edition> tracks);
+        void SyncTags(List<Edition> editions);
         List<RetagBookFilePreview> GetRetagPreviewsByAuthor(int authorId);
         List<RetagBookFilePreview> GetRetagPreviewsByBook(int bookId);
         void RetagFiles(RetagFilesCommand message);

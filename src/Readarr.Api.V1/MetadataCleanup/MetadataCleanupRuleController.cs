@@ -79,10 +79,7 @@ namespace Readarr.Api.V1.MetadataCleanup
             return NoContent();
         }
 
-        public static AudiobookMetadataCleanupRule ToModel(MetadataCleanupRuleResource item) => item == null ? null : new AudiobookMetadataCleanupRule
-        {
-            Id = item.Id, Phrase = item.Phrase, Labels = item.Labels, Enabled = item.Enabled, Reason = item.Reason
-        };
+        public static AudiobookMetadataCleanupRule ToModel(MetadataCleanupRuleResource item) => item == null ? null : new AudiobookMetadataCleanupRule { Id = item.Id, Phrase = item.Phrase, Labels = item.Labels, Enabled = item.Enabled, Reason = item.Reason };
 
         private static MetadataCleanupRuleResource ToResource(AudiobookMetadataCleanupRule item) => new MetadataCleanupRuleResource
         {

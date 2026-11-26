@@ -32,7 +32,7 @@ namespace NzbDrone.Core.Books.Calibre
         void SetFields(BookFile file, CalibreSettings settings, bool updateCover = true, bool embed = false);
         List<string> GetAllBookFilePaths(CalibreSettings settings);
         CalibreBook GetBook(int calibreId, CalibreSettings settings);
-        List<CalibreBook> GetBooks(List<int> calibreId, CalibreSettings settings);
+        List<CalibreBook> GetBooks(List<int> calibreIds, CalibreSettings settings);
         void Test(CalibreSettings settings);
     }
 

@@ -20,11 +20,11 @@ namespace Readarr.Api.V1.Profiles.Quality
 
         protected override string GetDefaultMessageTemplate(string errorCode) => "Cutoff must be an allowed quality or group";
 
-        public override bool IsValid(ValidationContext<T> context, int cutoff)
+        public override bool IsValid(ValidationContext<T> context, int value)
         {
             var items = context.InstanceToValidate.Items;
 
-            var cutoffItem = items?.SingleOrDefault(i => (i.Quality == null && i.Id == cutoff) || i.Quality?.Id == cutoff);
+            var cutoffItem = items?.SingleOrDefault(i => (i.Quality == null && i.Id == value) || i.Quality?.Id == value);
 
             return cutoffItem is { Allowed: true };
         }

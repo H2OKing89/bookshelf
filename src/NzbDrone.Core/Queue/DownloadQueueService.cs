@@ -164,8 +164,7 @@ namespace NzbDrone.Core.Queue
         private QueueDownload Project(string id, List<Queue> rows)
         {
             var item = rows[0];
-            var kind = id.StartsWith("pending:", StringComparison.Ordinal) ? QueueDownloadKind.Pending
-                : id.StartsWith("download:", StringComparison.Ordinal) ? QueueDownloadKind.Download : QueueDownloadKind.Unaddressable;
+            var kind = id.StartsWith("pending:", StringComparison.Ordinal) ? QueueDownloadKind.Pending : id.StartsWith("download:", StringComparison.Ordinal) ? QueueDownloadKind.Download : QueueDownloadKind.Unaddressable;
 
             // A conflicting snapshot must never grant action authority or claim
             // combined coverage just because a client reused its download ID.

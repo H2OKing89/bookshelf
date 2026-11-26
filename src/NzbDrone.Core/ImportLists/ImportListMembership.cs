@@ -34,7 +34,7 @@ namespace NzbDrone.Core.ImportLists
         public string EditionId { get; set; }
         public bool Excluded { get; set; }
 
-        public static ImportListMembershipItem FromSource(ImportListItemInfo report) => new ()
+        public static ImportListMembershipItem FromSource(ImportListItemInfo report) => new()
         {
             SourceAuthor = report.Author,
             SourceTitle = report.Book,
@@ -124,7 +124,7 @@ namespace NzbDrone.Core.ImportLists
         public int ImportListId { get; set; }
         public DateTime? LastSuccessfulSync { get; set; }
         public bool IsCurrent { get; set; }
-        public List<ImportListMembershipItem> Items { get; set; } = new ();
+        public List<ImportListMembershipItem> Items { get; set; } = new();
     }
 
     public class ImportListFetchResult

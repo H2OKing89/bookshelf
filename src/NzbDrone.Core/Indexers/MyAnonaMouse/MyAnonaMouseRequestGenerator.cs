@@ -30,15 +30,15 @@ namespace NzbDrone.Core.Indexers.MyAnonaMouse
             return requests;
         }
 
-        public IndexerPageableRequestChain GetSearchRequests(BookSearchCriteria criteria)
+        public IndexerPageableRequestChain GetSearchRequests(BookSearchCriteria searchCriteria)
         {
-            var bookQuery = criteria.BookQuery;
-            return Search(GetAuthorQueries(criteria).Select(author => author + " " + bookQuery));
+            var bookQuery = searchCriteria.BookQuery;
+            return Search(GetAuthorQueries(searchCriteria).Select(author => author + " " + bookQuery));
         }
 
-        public IndexerPageableRequestChain GetSearchRequests(AuthorSearchCriteria criteria)
+        public IndexerPageableRequestChain GetSearchRequests(AuthorSearchCriteria searchCriteria)
         {
-            return Search(GetAuthorQueries(criteria));
+            return Search(GetAuthorQueries(searchCriteria));
         }
 
         private static IEnumerable<string> GetAuthorQueries(SearchCriteriaBase criteria)

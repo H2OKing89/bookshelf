@@ -4,22 +4,22 @@ namespace NzbDrone.Core.MediaFiles.BookImport.Aggregation.Aggregators
 {
     public class AggregateQuality : IAggregate<LocalBook>
     {
-        public LocalBook Aggregate(LocalBook localTrack, bool otherFiles)
+        public LocalBook Aggregate(LocalBook item, bool otherFiles)
         {
-            var quality = localTrack.FileTrackInfo?.Quality;
+            var quality = item.FileTrackInfo?.Quality;
 
             if (quality == null)
             {
-                quality = localTrack.FolderTrackInfo?.Quality;
+                quality = item.FolderTrackInfo?.Quality;
             }
 
             if (quality == null)
             {
-                quality = localTrack.DownloadClientBookInfo?.Quality;
+                quality = item.DownloadClientBookInfo?.Quality;
             }
 
-            localTrack.Quality = quality;
-            return localTrack;
+            item.Quality = quality;
+            return item;
         }
     }
 }

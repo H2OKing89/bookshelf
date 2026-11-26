@@ -132,14 +132,14 @@ namespace NzbDrone.Core.Test.Download
             var client = WithUsenetClient();
             _parseResult.Release.Size = 10 * 1024 * 1024;
             _parseResult.ParsedBookInfo = new ParsedBookInfo { Quality = new QualityModel(Quality.EPUB) };
-            var cachedProfile = new QualityProfile { Items = new List<QualityProfileQualityItem> { new () { Quality = Quality.EPUB } } };
+            var cachedProfile = new QualityProfile { Items = new List<QualityProfileQualityItem> { new() { Quality = Quality.EPUB } } };
             _parseResult.Author.QualityProfile = cachedProfile;
             var currentAuthor = new Author
             {
                 Id = _parseResult.Author.Id,
                 QualityProfile = new QualityProfile
                 {
-                    Items = new List<QualityProfileQualityItem> { new () { Quality = Quality.EPUB, MaxSize = 8 } }
+                    Items = new List<QualityProfileQualityItem> { new() { Quality = Quality.EPUB, MaxSize = 8 } }
                 }
             };
             Mocker.GetMock<IAuthorService>().Setup(service => service.GetAuthor(_parseResult.Author.Id)).Returns(currentAuthor);
@@ -249,8 +249,10 @@ namespace NzbDrone.Core.Test.Download
             await Assert.ThrowsAsync<ReleaseDownloadException>(async () => await Subject.DownloadReport(_parseResult, null));
 
             Mocker.GetMock<IIndexerStatusService>()
-                .Verify(v => v.RecordFailure(It.IsAny<int>(),
-                    It.IsInRange<TimeSpan>(TimeSpan.FromMinutes(4.9), TimeSpan.FromMinutes(5.1), Moq.Range.Inclusive)), Times.Once());
+                .Verify(
+                    v => v.RecordFailure(It.IsAny<int>(),
+                        It.IsInRange<TimeSpan>(TimeSpan.FromMinutes(4.9), TimeSpan.FromMinutes(5.1), Moq.Range.Inclusive)),
+                    Times.Once());
         }
 
         [Test]
@@ -455,8 +457,10 @@ namespace NzbDrone.Core.Test.Download
             first.Verify(client => client.GetItems(), Times.Once());
             second.Verify(client => client.Download(It.IsAny<RemoteBook>(), It.IsAny<IIndexer>()), Times.Never());
             Mocker.GetMock<IDownloadSubmissionGuard>().Verify(guard => guard.Complete(It.IsAny<string>()), Times.Once());
-            Mocker.GetMock<NzbDrone.Core.Messaging.Events.IEventAggregator>().Verify(events => events.PublishEvent(
-                It.Is<BookGrabbedEvent>(grab => grab.DownloadClientId == first.Object.Definition.Id && grab.DownloadId == ExpectedHash.ToLowerInvariant())), Times.Once());
+            Mocker.GetMock<NzbDrone.Core.Messaging.Events.IEventAggregator>().Verify(
+                events => events.PublishEvent(
+                    It.Is<BookGrabbedEvent>(grab => grab.DownloadClientId == first.Object.Definition.Id && grab.DownloadId == ExpectedHash.ToLowerInvariant())),
+                Times.Once());
             VerifyEventPublished<BookGrabbedEvent>();
         }
 
@@ -485,8 +489,10 @@ namespace NzbDrone.Core.Test.Download
             if (matching)
             {
                 await Subject.DownloadReport(_parseResult, null);
-                Mocker.GetMock<NzbDrone.Core.Messaging.Events.IEventAggregator>().Verify(events => events.PublishEvent(
-                    It.Is<BookGrabbedEvent>(grab => grab.DownloadId == nativeHandle)), Times.Once());
+                Mocker.GetMock<NzbDrone.Core.Messaging.Events.IEventAggregator>().Verify(
+                    events => events.PublishEvent(
+                        It.Is<BookGrabbedEvent>(grab => grab.DownloadId == nativeHandle)),
+                    Times.Once());
             }
             else
             {

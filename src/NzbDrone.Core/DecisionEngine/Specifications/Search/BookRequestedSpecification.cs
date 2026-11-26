@@ -17,7 +17,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.Search
         public SpecificationPriority Priority => SpecificationPriority.Default;
         public RejectionType Type => RejectionType.Permanent;
 
-        public Decision IsSatisfiedBy(RemoteBook remoteBook, SearchCriteriaBase searchCriteria)
+        public Decision IsSatisfiedBy(RemoteBook subject, SearchCriteriaBase searchCriteria)
         {
             if (searchCriteria == null)
             {
@@ -25,11 +25,11 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.Search
             }
 
             var criteriaBook = searchCriteria.Books.Select(v => v.Id).ToList();
-            var remoteBooks = remoteBook.Books.Select(v => v.Id).ToList();
+            var remoteBooks = subject.Books.Select(v => v.Id).ToList();
 
             if (!criteriaBook.Intersect(remoteBooks).Any())
             {
-                _logger.Debug("Release rejected since the book wasn't requested: {0}", remoteBook.ParsedBookInfo);
+                _logger.Debug("Release rejected since the book wasn't requested: {0}", subject.ParsedBookInfo);
                 return Decision.RejectCode(RejectionCode.BookNotRequested, "Book wasn't requested");
             }
 

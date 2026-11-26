@@ -29,10 +29,10 @@ namespace Readarr.Api.V1.Profiles.Quality
 
         protected override string GetDefaultMessageTemplate(string errorCode) => "Must contain at least one allowed quality";
 
-        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> items)
+        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> value)
         {
-            return items != null &&
-                   items.Any(c => c.Allowed);
+            return value != null &&
+                   value.Any(c => c.Allowed);
         }
     }
 
@@ -42,14 +42,14 @@ namespace Readarr.Api.V1.Profiles.Quality
 
         protected override string GetDefaultMessageTemplate(string errorCode) => "Groups must contain multiple qualities";
 
-        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> items)
+        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> value)
         {
-            if (items == null)
+            if (value == null)
             {
                 return false;
             }
 
-            return !items.Any(i => i.Name.IsNotNullOrWhiteSpace() && i.Items.Count <= 1);
+            return !value.Any(i => i.Name.IsNotNullOrWhiteSpace() && i.Items.Count <= 1);
         }
     }
 
@@ -59,14 +59,14 @@ namespace Readarr.Api.V1.Profiles.Quality
 
         protected override string GetDefaultMessageTemplate(string errorCode) => "Individual qualities should not be named";
 
-        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> items)
+        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> value)
         {
-            if (items == null)
+            if (value == null)
             {
                 return false;
             }
 
-            return !items.Any(i => i.Name.IsNotNullOrWhiteSpace() && i.Quality != null);
+            return !value.Any(i => i.Name.IsNotNullOrWhiteSpace() && i.Quality != null);
         }
     }
 
@@ -76,14 +76,14 @@ namespace Readarr.Api.V1.Profiles.Quality
 
         protected override string GetDefaultMessageTemplate(string errorCode) => "Groups must have a name";
 
-        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> items)
+        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> value)
         {
-            if (items == null)
+            if (value == null)
             {
                 return false;
             }
 
-            return !items.Any(i => i.Quality == null && i.Name.IsNullOrWhiteSpace());
+            return !value.Any(i => i.Quality == null && i.Name.IsNullOrWhiteSpace());
         }
     }
 
@@ -93,14 +93,14 @@ namespace Readarr.Api.V1.Profiles.Quality
 
         protected override string GetDefaultMessageTemplate(string errorCode) => "Groups must have an ID";
 
-        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> items)
+        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> value)
         {
-            if (items == null)
+            if (value == null)
             {
                 return false;
             }
 
-            return !items.Any(i => i.Quality == null && i.Id == 0);
+            return !value.Any(i => i.Quality == null && i.Id == 0);
         }
     }
 
@@ -110,14 +110,14 @@ namespace Readarr.Api.V1.Profiles.Quality
 
         protected override string GetDefaultMessageTemplate(string errorCode) => "Groups must have a unique ID";
 
-        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> items)
+        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> value)
         {
-            if (items == null)
+            if (value == null)
             {
                 return false;
             }
 
-            var ids = items.Where(i => i.Id > 0).Select(i => i.Id);
+            var ids = value.Where(i => i.Id > 0).Select(i => i.Id);
             var groupedIds = ids.GroupBy(i => i);
 
             return groupedIds.All(g => g.Count() == 1);
@@ -130,16 +130,16 @@ namespace Readarr.Api.V1.Profiles.Quality
 
         protected override string GetDefaultMessageTemplate(string errorCode) => "Qualities can only be used once";
 
-        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> items)
+        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> value)
         {
-            if (items == null)
+            if (value == null)
             {
                 return false;
             }
 
             var qualityIds = new HashSet<int>();
 
-            foreach (var item in items)
+            foreach (var item in value)
             {
                 if (item.Id > 0)
                 {
@@ -174,16 +174,16 @@ namespace Readarr.Api.V1.Profiles.Quality
 
         protected override string GetDefaultMessageTemplate(string errorCode) => "Must contain all qualities";
 
-        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> items)
+        public override bool IsValid(ValidationContext<T> context, IList<QualityProfileQualityItemResource> value)
         {
-            if (items == null)
+            if (value == null)
             {
                 return false;
             }
 
             var qualityIds = new HashSet<int>();
 
-            foreach (var item in items)
+            foreach (var item in value)
             {
                 if (item.Id > 0)
                 {

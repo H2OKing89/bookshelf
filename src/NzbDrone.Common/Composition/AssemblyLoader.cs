@@ -60,7 +60,7 @@ namespace NzbDrone.Common.Composition
             }
         }
 
-        private static IntPtr LoadSqliteNativeLib(string libraryName, Assembly assembly, DllImportSearchPath? dllImportSearchPath)
+        private static nint LoadSqliteNativeLib(string libraryName, Assembly assembly, DllImportSearchPath? dllImportSearchPath)
         {
             if (libraryName is "sqlite3" or "e_sqlite3")
             {
@@ -82,7 +82,7 @@ namespace NzbDrone.Common.Composition
                 throw new DllNotFoundException($"The bundled SQLite engine ({fileName}) is missing.");
             }
 
-            return IntPtr.Zero;
+            return nint.Zero;
         }
     }
 }

@@ -87,9 +87,9 @@ namespace NzbDrone.Core.Instrumentation
         public const int Capacity = 256;
         public const int RetentionMinutes = 10;
         private const string ActivityCaptureKey = "Bookshelf.PerformanceCapture";
-        private static readonly AsyncLocal<RequestCapture> Current = new ();
-        private readonly Queue<ProfileSample> _samples = new ();
-        private readonly object _gate = new ();
+        private static readonly AsyncLocal<RequestCapture> Current = new();
+        private readonly Queue<ProfileSample> _samples = new();
+        private readonly object _gate = new();
         private readonly TimeProvider _time;
         private readonly ActivityListener _listener;
         private readonly ITimer _expiryTimer;
@@ -364,7 +364,7 @@ namespace NzbDrone.Core.Instrumentation
 
         public sealed class RequestCapture : IDisposable
         {
-            private readonly object _gate = new ();
+            private readonly object _gate = new();
             private readonly RequestCapture _parent;
             private readonly string _operation;
             private readonly string _method;

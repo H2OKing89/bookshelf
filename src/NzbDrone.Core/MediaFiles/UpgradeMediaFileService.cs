@@ -146,10 +146,8 @@ namespace NzbDrone.Core.MediaFiles
             {
                 var oldRecordingFiles = recording.SelectMany(result => result.OldFiles).DistinctBy(file => file.Id).ToList();
                 var incomingParts = recording.Select(result => result.BookFile.Part).ToHashSet();
-                var oldDuration = oldRecordingFiles.All(file => file.MediaInfo?.DurationSeconds > 0)
-                    ? oldRecordingFiles.Sum(file => file.MediaInfo.DurationSeconds.Value) : 0;
-                var newDuration = recording.All(result => result.BookFile.MediaInfo?.DurationSeconds > 0)
-                    ? recording.Sum(result => result.BookFile.MediaInfo.DurationSeconds.Value) : 0;
+                var oldDuration = oldRecordingFiles.All(file => file.MediaInfo?.DurationSeconds > 0) ? oldRecordingFiles.Sum(file => file.MediaInfo.DurationSeconds.Value) : 0;
+                var newDuration = recording.All(result => result.BookFile.MediaInfo?.DurationSeconds > 0) ? recording.Sum(result => result.BookFile.MediaInfo.DurationSeconds.Value) : 0;
                 if (oldRecordingFiles.Count > recording.Count() && !(oldDuration > 0 && newDuration >= oldDuration * 0.95))
                 {
                     // Another recording's runtime cannot prove that missing parts of
@@ -228,20 +226,22 @@ namespace NzbDrone.Core.MediaFiles
                 {
                     if (file.CalibreId > 0)
                     {
-                        TryCleanup(() =>
-                        {
-                            // Calibre deletes a whole record, including other formats.
-                            // A retained part/edition/author may still own that record.
-                            var root = _rootFolderService.GetBestRootFolder(file.Path);
-                            var knownFiles = root == null ? null : _mediaFileService.GetFilesWithBasePath(root.Path);
-                            if (knownFiles == null || knownFiles.Any(other => other.CalibreId == file.CalibreId &&
-                                !oldFiles.Any(retired => retired.Id == other.Id)))
+                        TryCleanup(
+                            () =>
                             {
-                                return;
-                            }
+                                // Calibre deletes a whole record, including other formats.
+                                // A retained part/edition/author may still own that record.
+                                var root = _rootFolderService.GetBestRootFolder(file.Path);
+                                var knownFiles = root == null ? null : _mediaFileService.GetFilesWithBasePath(root.Path);
+                                if (knownFiles == null || knownFiles.Any(other => other.CalibreId == file.CalibreId &&
+                                    !oldFiles.Any(retired => retired.Id == other.Id)))
+                                {
+                                    return;
+                                }
 
-                            _calibre.DeleteBook(file, calibreReplacement.CalibreSettings);
-                        }, file.Path);
+                                _calibre.DeleteBook(file, calibreReplacement.CalibreSettings);
+                            },
+                            file.Path);
                     }
                 }
                 else

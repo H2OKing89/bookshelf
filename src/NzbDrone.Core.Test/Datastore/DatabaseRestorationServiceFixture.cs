@@ -166,9 +166,7 @@ namespace NzbDrone.Core.Test.Datastore
         public void should_roll_back_every_file_when_a_move_fails_before_or_after_renaming(string failedSuffix, bool failAfterMove)
         {
             WriteCurrentAndPending();
-            var failedSource = failedSuffix == "pending" ? _restorePath :
-                failedSuffix.StartsWith("cache", StringComparison.Ordinal) ? _cachePath + failedSuffix.Substring("cache".Length) :
-                _databasePath + failedSuffix;
+            var failedSource = failedSuffix == "pending" ? _restorePath : failedSuffix.StartsWith("cache", StringComparison.Ordinal) ? _cachePath + failedSuffix.Substring("cache".Length) : _databasePath + failedSuffix;
             var failed = false;
             Mocker.GetMock<IDiskProvider>()
                 .Setup(x => x.MoveFile(It.IsAny<string>(), It.IsAny<string>(), false))

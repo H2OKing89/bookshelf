@@ -10,6 +10,6 @@ namespace NzbDrone.Core.ImportLists
         ImportListType ListType { get; }
         TimeSpan MinRefreshInterval { get; }
         IList<ImportListItemInfo> Fetch();
-        ImportListFetchResult FetchWithStatus() => new (Fetch(), false);
+        ImportListFetchResult FetchWithStatus() => new(Fetch(), false);
     }
 }

@@ -271,8 +271,7 @@ namespace NzbDrone.Core.Books
                 Language = first.Language,
                 Publisher = first.Publisher,
                 Year = years.Count == 1 ? (int?)years[0] : null,
-                RuntimeLengthMinutes = selected.Any(item => item.Tag.Duration <= TimeSpan.Zero) ? (int?)null :
-                    (int)Math.Round(selected.Sum(item => item.Tag.Duration.TotalMinutes))
+                RuntimeLengthMinutes = selected.Any(item => item.Tag.Duration <= TimeSpan.Zero) ? (int?)null : (int)Math.Round(selected.Sum(item => item.Tag.Duration.TotalMinutes))
             };
             result.Provenance = LocalRecordingMetadata.Sources(result, "fileTags");
             if (string.IsNullOrWhiteSpace(title))
@@ -316,8 +315,7 @@ namespace NzbDrone.Core.Books
         private static string RecordingFolder(string path)
         {
             var folder = Path.GetDirectoryName(path);
-            return Regex.IsMatch(Path.GetFileName(folder), @"^(?:cd|disc|disk)[ _.-]*\d+$", RegexOptions.IgnoreCase)
-                ? Path.GetDirectoryName(folder) : folder;
+            return Regex.IsMatch(Path.GetFileName(folder), @"^(?:cd|disc|disk)[ _.-]*\d+$", RegexOptions.IgnoreCase) ? Path.GetDirectoryName(folder) : folder;
         }
 
         private static NzbDroneClientException Invalid(string message) => new NzbDroneClientException(HttpStatusCode.BadRequest, message);

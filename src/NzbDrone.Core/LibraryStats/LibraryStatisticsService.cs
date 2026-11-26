@@ -41,10 +41,12 @@ namespace NzbDrone.Core.LibraryStats
             // to work memberships or read media from disk while counting the catalog.
             using var connection = _database.OpenConnection();
             using var transaction = connection.BeginTransaction(_database.DatabaseType == DatabaseType.SQLite ? IsolationLevel.ReadCommitted : IsolationLevel.RepeatableRead);
-            var authors = connection.Query<AuthorRow>("""
+            var authors = connection.Query<AuthorRow>(
+                """
                 SELECT a."Id", a."AuthorMetadataId", m."Name"
                 FROM "Authors" a LEFT JOIN "AuthorMetadata" m ON m."Id" = a."AuthorMetadataId"
-                """, transaction: transaction).ToList();
+                """,
+                transaction: transaction).ToList();
             var books = connection.Query<BookRow>("SELECT \"Id\", \"AuthorMetadataId\" FROM \"Books\"", transaction: transaction).ToDictionary(book => book.Id);
             var metadataIds = authors.Where(author => !authorId.HasValue || author.Id == authorId).Select(author => author.AuthorMetadataId).ToHashSet();
             var filteredBooks = books.Values.Where(book => !authorId.HasValue || metadataIds.Contains(book.AuthorMetadataId)).Select(book => book.Id).ToHashSet();
@@ -54,10 +56,12 @@ namespace NzbDrone.Core.LibraryStats
                     .Select(author => new LibraryStatisticsAuthor { Id = author.Id, Name = Clean(author.Name) }).ToList()
             };
 
-            var editions = connection.Query<Edition>("""
+            var editions = connection.Query<Edition>(
+                """
                 SELECT "Id", "BookId", "ForeignEditionId", "Asin", "AudibleRegion", COALESCE("IsEbook", FALSE) AS "IsEbook", "Narrators", "Language"
                 FROM "Editions"
-                """, transaction: transaction).Where(edition => books.ContainsKey(edition.BookId)).ToDictionary(edition => edition.Id);
+                """,
+                transaction: transaction).Where(edition => books.ContainsKey(edition.BookId)).ToDictionary(edition => edition.Id);
             var selected = editions.Values.Where(edition => filteredBooks.Contains(edition.BookId) &&
                 (media == "all" || media == (edition.IsEbook ? "ebook" : "audiobook")) &&
                 (source == "all" || source == Source(edition))).ToDictionary(edition => edition.Id);

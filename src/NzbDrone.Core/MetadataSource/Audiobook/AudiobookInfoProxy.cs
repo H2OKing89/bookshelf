@@ -295,11 +295,13 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
                     : _audnexus.SearchBooks(name, identity.Region))
                 .ToList();
             var resources = catalog.DistinctBy(resource => resource.Asin).ToList();
-            var authorIdentity = _overrides.FindAuthor(new AudnexusContributorResource
-            {
-                Asin = identity.IsName ? null : identity.Value,
-                Name = metadata.Name
-            }, identity.Region);
+            var authorIdentity = _overrides.FindAuthor(
+                new AudnexusContributorResource
+                {
+                    Asin = identity.IsName ? null : identity.Value,
+                    Name = metadata.Name
+                },
+                identity.Region);
             AudiobookAuthorIdentity.PreferDisplayName(metadata, local?.Metadata.Value, authorIdentity, resources);
 
             // Neither a capped search nor a regional catalog is an authoritative deletion feed.
@@ -465,8 +467,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             }
 
             var credit = UniqueLegacyCredit(resource, owner);
-            return credit != null && StoredCreditsAgree(book, owner, credit.Asin) && !HasOtherAuthorOwner(credit.Asin, region, owner) &&
-                _overrides.CanonicalAuthorId(AudiobookId.ForAsin(region, credit.Asin)) == AudiobookId.ForAsin(region, credit.Asin) ? credit : null;
+            return credit != null && StoredCreditsAgree(book, owner, credit.Asin) && !HasOtherAuthorOwner(credit.Asin, region, owner) && _overrides.CanonicalAuthorId(AudiobookId.ForAsin(region, credit.Asin)) == AudiobookId.ForAsin(region, credit.Asin) ? credit : null;
         }
 
         private LegacyAuthorPromotion FindLegacyPromotion(Author local, AuthorMetadata metadata, string region, List<AudnexusBookResource> catalog, List<Book> known)
@@ -642,9 +643,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
 
             foreach (var credit in book.Editions.Value.SelectMany(edition => edition.Contributors)
                 .Where(credit => credit.Role == "Author" &&
-                    (AudiobookId.IsAsin(credit.Asin) ? !AudiobookId.Parse(metadata.ForeignAuthorId).IsName &&
-                        credit.Asin == AudiobookId.Parse(metadata.ForeignAuthorId).Value :
-                        new[] { metadata.Name }.Concat(metadata.Aliases).Contains(credit.Name, StringComparer.OrdinalIgnoreCase))))
+                    (AudiobookId.IsAsin(credit.Asin) ? !AudiobookId.Parse(metadata.ForeignAuthorId).IsName && credit.Asin == AudiobookId.Parse(metadata.ForeignAuthorId).Value : new[] { metadata.Name }.Concat(metadata.Aliases).Contains(credit.Name, StringComparer.OrdinalIgnoreCase))))
             {
                 credit.Name = metadata.Name;
             }
@@ -961,11 +960,13 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             PreserveAuthorMetadata(metadata, _authors.Find(metadata.ForeignAuthorId));
             PreserveAuthorMetadata(metadata, _authorService.FindById(metadata.ForeignAuthorId)?.Metadata.Value);
             var parsed = AudiobookId.Parse(metadata.ForeignAuthorId);
-            AudiobookAuthorIdentity.PreferDisplayName(metadata, previous, _overrides.FindAuthor(new AudnexusContributorResource
-            {
-                Asin = parsed.IsName ? null : parsed.Value,
-                Name = metadata.Name
-            }, parsed.Region));
+            AudiobookAuthorIdentity.PreferDisplayName(metadata, previous, _overrides.FindAuthor(
+                new AudnexusContributorResource
+                {
+                    Asin = parsed.IsName ? null : parsed.Value,
+                    Name = metadata.Name
+                },
+                parsed.Region));
             _authors.Set(metadata.ForeignAuthorId, metadata, TimeSpan.FromHours(1));
         }
 

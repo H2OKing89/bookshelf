@@ -22,19 +22,19 @@ namespace NzbDrone.Core.Notifications.Discord
         public override string Name => "Discord";
         public override string Link => "https://support.discordapp.com/hc/en-us/articles/228383668-Intro-to-Webhooks";
 
-        public override void OnGrab(GrabMessage message)
+        public override void OnGrab(GrabMessage grabMessage)
         {
             var embeds = new List<Embed>
             {
-                new ()
+                new()
                 {
-                    Description = message.Message,
-                    Title = message.Author.Name,
-                    Text = message.Message,
+                    Description = grabMessage.Message,
+                    Title = grabMessage.Author.Name,
+                    Text = grabMessage.Message,
                     Color = (int)DiscordColors.Warning
                 }
             };
-            var payload = CreatePayload($"Grabbed: {message.Message}", embeds);
+            var payload = CreatePayload($"Grabbed: {grabMessage.Message}", embeds);
 
             _proxy.SendPayload(payload, Settings);
         }
@@ -43,7 +43,7 @@ namespace NzbDrone.Core.Notifications.Discord
         {
             var attachments = new List<Embed>
             {
-                new ()
+                new()
                 {
                     Description = message.Message,
                     Title = message.Author.Name,
@@ -60,7 +60,7 @@ namespace NzbDrone.Core.Notifications.Discord
         {
             var attachments = new List<Embed>
             {
-                new ()
+                new()
                 {
                     Title = author.Name,
                 }
@@ -75,12 +75,12 @@ namespace NzbDrone.Core.Notifications.Discord
         {
             var attachments = new List<Embed>
             {
-                new ()
+                new()
                 {
                     Title = author.Name,
                     Fields = new List<DiscordField>()
                     {
-                        new ()
+                        new()
                         {
                             Name = "Links",
                             Value = string.Join(" / ", author.Metadata.Value.Links.Select(link => $"[{link.Name}]({link.Url})"))
@@ -97,7 +97,7 @@ namespace NzbDrone.Core.Notifications.Discord
         {
             var attachments = new List<Embed>
             {
-                new ()
+                new()
                 {
                     Title = deleteMessage.Author.Name,
                     Description = deleteMessage.DeletedFilesMessage
@@ -113,7 +113,7 @@ namespace NzbDrone.Core.Notifications.Discord
         {
             var attachments = new List<Embed>
             {
-                new ()
+                new()
                 {
                     Title = $"{deleteMessage.Book.Author.Value.Name} - ${deleteMessage.Book.Title}",
                     Description = deleteMessage.DeletedFilesMessage
@@ -129,7 +129,7 @@ namespace NzbDrone.Core.Notifications.Discord
         {
             var attachments = new List<Embed>
             {
-                new ()
+                new()
                 {
                     Title = $"{deleteMessage.Book.Author.Value.Name} - ${deleteMessage.Book.Title} - file deleted",
                     Description = deleteMessage.BookFile.Path
@@ -145,7 +145,7 @@ namespace NzbDrone.Core.Notifications.Discord
         {
             var attachments = new List<Embed>
             {
-                new ()
+                new()
                 {
                     Title = healthCheck.Source.Name,
                     Text = healthCheck.Message,
@@ -162,7 +162,7 @@ namespace NzbDrone.Core.Notifications.Discord
         {
             var attachments = new List<Embed>
             {
-                new ()
+                new()
                 {
                     Title = previousCheck.Source.Name,
                     Text = previousCheck.Message,
@@ -179,7 +179,7 @@ namespace NzbDrone.Core.Notifications.Discord
         {
             var attachments = new List<Embed>
             {
-                new ()
+                new()
                 {
                     Title = BOOK_RETAGGED_TITLE,
                     Text = message.Message
@@ -195,7 +195,7 @@ namespace NzbDrone.Core.Notifications.Discord
         {
             var attachments = new List<Embed>
             {
-                new ()
+                new()
                 {
                     Description = message.Message,
                     Title = message.SourceTitle,
@@ -212,7 +212,7 @@ namespace NzbDrone.Core.Notifications.Discord
         {
             var attachments = new List<Embed>
             {
-                new ()
+                new()
                 {
                     Description = message.Message,
                     Title = message.Book?.Title ?? message.Message,
@@ -229,7 +229,7 @@ namespace NzbDrone.Core.Notifications.Discord
         {
             var attachments = new List<Embed>
             {
-                new ()
+                new()
                 {
                     Author = new DiscordAuthor
                     {
@@ -241,12 +241,12 @@ namespace NzbDrone.Core.Notifications.Discord
                     Color = (int)DiscordColors.Standard,
                     Fields = new List<DiscordField>()
                     {
-                        new ()
+                        new()
                         {
                             Name = "Previous Version",
                             Value = updateMessage.PreviousVersion.ToString()
                         },
-                        new ()
+                        new()
                         {
                             Name = "New Version",
                             Value = updateMessage.NewVersion.ToString()

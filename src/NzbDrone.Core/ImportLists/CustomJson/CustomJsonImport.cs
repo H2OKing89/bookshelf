@@ -16,7 +16,7 @@ namespace NzbDrone.Core.ImportLists.CustomJson
         public override string Name => "Custom JSON";
         public override ImportListType ListType => ImportListType.Other;
         public override TimeSpan MinRefreshInterval => TimeSpan.FromHours(6);
-        public override ProviderMessage Message => new ("Imports a complete, versioned Bookshelf JSON list. Each recording must have an exact qualified identity; bare ASINs, title-only matches and inferred volume ranges are not imported.", ProviderMessageType.Info);
+        public override ProviderMessage Message => new("Imports a complete, versioned Bookshelf JSON list. Each recording must have an exact qualified identity; bare ASINs, title-only matches and inferred volume ranges are not imported.", ProviderMessageType.Info);
 
         public CustomJsonImport(ICustomJsonImportProxy proxy,
                                 IImportListStatusService importListStatusService,

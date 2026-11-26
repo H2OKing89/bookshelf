@@ -53,8 +53,10 @@ namespace NzbDrone.Integration.Test.ApiTests
             result.BookId.Should().Be(0);
             result.Quality.Should().Be(quality);
             file.Quality.Should().Be(quality);
-            Mocker.GetMock<IUpgradableSpecification>().Verify(specification => specification.QualityCutoffNotMet(
-                It.IsAny<QualityProfile>(), It.IsAny<QualityModel>(), It.IsAny<QualityModel>()), Times.Never());
+            Mocker.GetMock<IUpgradableSpecification>().Verify(
+                specification => specification.QualityCutoffNotMet(
+                    It.IsAny<QualityProfile>(), It.IsAny<QualityModel>(), It.IsAny<QualityModel>()),
+                Times.Never());
         }
 
         [Test]

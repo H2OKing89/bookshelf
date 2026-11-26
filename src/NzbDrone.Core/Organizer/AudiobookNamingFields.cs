@@ -98,8 +98,7 @@ namespace NzbDrone.Core.Organizer
         private static bool TryWorkTitle(string title, string series, string position, out string workTitle)
         {
             workTitle = title;
-            var prefix = series.StartsWith("The ", StringComparison.OrdinalIgnoreCase)
-                ? @"(?:The\s+)?" + Regex.Escape(series.Substring(4)) : Regex.Escape(series);
+            var prefix = series.StartsWith("The ", StringComparison.OrdinalIgnoreCase) ? @"(?:The\s+)?" + Regex.Escape(series.Substring(4)) : Regex.Escape(series);
             var seriesOnly = @"\A" + prefix + @"\z";
             if (Regex.IsMatch(title, seriesOnly, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100)))
             {

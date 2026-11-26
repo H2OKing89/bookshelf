@@ -17,7 +17,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.Search
         public SpecificationPriority Priority => SpecificationPriority.Default;
         public RejectionType Type => RejectionType.Permanent;
 
-        public virtual Decision IsSatisfiedBy(RemoteBook remoteBook, SearchCriteriaBase searchCriteria)
+        public virtual Decision IsSatisfiedBy(RemoteBook subject, SearchCriteriaBase searchCriteria)
         {
             if (searchCriteria == null)
             {
@@ -30,7 +30,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.Search
                 return Decision.Accept();
             }
 
-            if (!remoteBook.ParsedBookInfo.BookTitle.Any())
+            if (!subject.ParsedBookInfo.BookTitle.Any())
             {
                 _logger.Debug("Full discography result during single book search, skipping.");
                 return Decision.RejectCode(RejectionCode.FullAuthorPack, "Full author pack");

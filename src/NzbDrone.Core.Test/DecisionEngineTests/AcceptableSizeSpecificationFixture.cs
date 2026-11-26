@@ -56,13 +56,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             var subject = Release(Quality.EPUB, 4 * Mib, 30 * 3600);
             subject.Author.QualityProfile.Value.Items = new List<QualityProfileQualityItem>
             {
-                new ()
+                new()
                 {
                     Id = 1000,
                     MaxSize = 1,
                     Items = new List<QualityProfileQualityItem>
                     {
-                        new () { Quality = Quality.EPUB, MinSize = 3, MaxSize = 5, PreferredSize = 4 }
+                        new() { Quality = Quality.EPUB, MinSize = 3, MaxSize = 5, PreferredSize = 4 }
                     }
                 }
             };
@@ -178,7 +178,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
                     {
                         Items = new List<QualityProfileQualityItem>
                         {
-                            new () { Quality = quality, MinSize = 100, PreferredSize = 310m / 3, MaxSize = 120 }
+                            new() { Quality = quality, MinSize = 100, PreferredSize = 310m / 3, MaxSize = 120 }
                         }
                     }
                 },

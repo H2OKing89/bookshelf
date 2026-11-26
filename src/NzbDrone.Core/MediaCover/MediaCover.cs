@@ -30,7 +30,11 @@ namespace NzbDrone.Core.MediaCover
         private string _url;
         public string Url
         {
-            get => _url;
+            get
+            {
+                return _url;
+            }
+
             set
             {
                 _url = value;

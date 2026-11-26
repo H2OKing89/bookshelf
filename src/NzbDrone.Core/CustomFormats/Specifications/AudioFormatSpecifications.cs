@@ -23,8 +23,7 @@ namespace NzbDrone.Core.CustomFormats
 
         protected static NzbDroneValidationResult ValidateValue(bool valid, string message)
         {
-            return valid ? new NzbDroneValidationResult() :
-                new NzbDroneValidationResult(new[] { new ValidationFailure("Value", message) });
+            return valid ? new NzbDroneValidationResult() : new NzbDroneValidationResult(new[] { new ValidationFailure("Value", message) });
         }
     }
 

@@ -390,8 +390,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
             return projection.Title;
         }
 
-        private static string SeriesPrefix(string series) => series.StartsWith("The ", StringComparison.OrdinalIgnoreCase)
-            ? @"(?:The\s+)?" + Regex.Escape(series.Substring(4)) : Regex.Escape(series);
+        private static string SeriesPrefix(string series) => series.StartsWith("The ", StringComparison.OrdinalIgnoreCase) ? @"(?:The\s+)?" + Regex.Escape(series.Substring(4)) : Regex.Escape(series);
 
         private static string NormalizedPosition(string value) => string.Join("-", value.Split('-').Select(part =>
         {

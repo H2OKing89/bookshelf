@@ -44,8 +44,8 @@ namespace NzbDrone.Core.ImportLists
     {
         public ImportListCleanupMode Mode { get; set; }
         public int? TagId { get; set; }
-        public List<string> Blockers { get; set; } = new ();
-        public List<ImportListCleanupCandidate> Candidates { get; set; } = new ();
+        public List<string> Blockers { get; set; } = new();
+        public List<ImportListCleanupCandidate> Candidates { get; set; } = new();
         public string ConfirmationToken { get; set; }
     }
 
@@ -406,13 +406,15 @@ namespace NzbDrone.Core.ImportLists
                 connection.Execute("LOCK TABLE \"ImportListExclusions\", \"ImportListStatus\" IN SHARE MODE", transaction: transaction);
             }
 
-            var lists = connection.Query<ListState>("""
+            var lists = connection.Query<ListState>(
+                """
                 SELECT l."Id", l."Name", l."EnableAutomaticAdd", l."Implementation", l."TagExisting", l."Tags", l."MembershipRevision",
                     s."AttemptToken", s."SuccessfulRevision", s."LastSuccessfulSync",
                     EXISTS(SELECT 1 FROM "ImportListStatus" st WHERE st."ProviderId" = l."Id" AND st."MostRecentFailure" IS NOT NULL
                         AND (s."LastSuccessfulSync" IS NULL OR st."MostRecentFailure" >= s."LastSuccessfulSync")) AS "Failed"
                 FROM "ImportLists" l LEFT JOIN "ImportListMembershipSnapshots" s ON s."ImportListId" = l."Id" ORDER BY l."Id"
-                """, transaction: transaction).ToDictionary(list => list.Id);
+                """,
+                transaction: transaction).ToDictionary(list => list.Id);
             var exclusions = ReadExclusions(connection, transaction);
             foreach (var item in connection.Query<MembershipRow>("SELECT * FROM \"ImportListMembershipItems\" ORDER BY \"ImportListId\", \"Id\"", transaction: transaction))
             {
@@ -420,10 +422,12 @@ namespace NzbDrone.Core.ImportLists
                 lists[item.ImportListId].Items.Add(item);
             }
 
-            var credits = connection.Query<CatalogCredit>("""
+            var credits = connection.Query<CatalogCredit>(
+                """
                 SELECT b."ForeignBookId" AS "BookId", m."ForeignAuthorId" AS "AuthorId"
                 FROM "Books" b JOIN "AuthorMetadata" m ON m."Id" = b."AuthorMetadataId"
-                """, transaction: transaction).ToLookup(row => row.BookId, StringComparer.Ordinal);
+                """,
+                transaction: transaction).ToLookup(row => row.BookId, StringComparer.Ordinal);
             foreach (var list in lists.Values)
             {
                 foreach (var item in list.Items.Where(item => !item.Excluded && item.AuthorId != null))
@@ -512,14 +516,14 @@ namespace NzbDrone.Core.ImportLists
             public bool EnableAutomaticAdd { get; set; }
             public string Implementation { get; set; }
             public ImportListTagExisting TagExisting { get; set; }
-            public HashSet<int> Tags { get; set; } = new ();
+            public HashSet<int> Tags { get; set; } = new();
             public long MembershipRevision { get; set; }
             public long? SuccessfulRevision { get; set; }
             public string AttemptToken { get; set; }
             public DateTime? LastSuccessfulSync { get; set; }
             public bool Failed { get; set; }
-            public List<ImportListMembershipItem> Items { get; } = new ();
-            public HashSet<string> EffectiveAuthors { get; } = new (StringComparer.Ordinal);
+            public List<ImportListMembershipItem> Items { get; } = new();
+            public HashSet<string> EffectiveAuthors { get; } = new(StringComparer.Ordinal);
             public bool CatalogConflict { get; set; }
             public bool Available => EnableAutomaticAdd && Implementation != null && !Implementation.StartsWith("Goodreads", StringComparison.Ordinal);
             public bool IsSuccessful => Available && SuccessfulRevision == MembershipRevision && LastSuccessfulSync.HasValue &&
@@ -573,12 +577,12 @@ namespace NzbDrone.Core.ImportLists
         {
             public int AuthorId { get; set; }
             public string ForeignAuthorId { get; set; }
-            public HashSet<int> Tags { get; set; } = new ();
+            public HashSet<int> Tags { get; set; } = new();
         }
 
         private class CleanupRow : ImportListCleanupCandidate
         {
-            public HashSet<int> Tags { get; set; } = new ();
+            public HashSet<int> Tags { get; set; } = new();
             public string ForeignAuthorId { get; set; }
             public int ImportListId { get; set; }
         }

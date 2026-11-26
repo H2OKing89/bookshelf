@@ -21,10 +21,10 @@ namespace NzbDrone.Core.Test.CustomFormats
         {
             Mocker.GetMock<ICustomFormatService>().Setup(service => service.All()).Returns(new List<CustomFormat>
             {
-                new ("Atmos", new AudioCodecSpecification { Value = (int)AudioCodecKind.Atmos }),
-                new ("Lossless", new AudioCodecSpecification { Value = (int)AudioCodecKind.Lossless }),
-                new ("Preferred narrator", new NarratorSpecification { Value = "Synthetic Narrator" }),
-                new ("Unknown codec", new AudioCodecSpecification { Value = (int)AudioCodecKind.Unknown })
+                new("Atmos", new AudioCodecSpecification { Value = (int)AudioCodecKind.Atmos }),
+                new("Lossless", new AudioCodecSpecification { Value = (int)AudioCodecKind.Lossless }),
+                new("Preferred narrator", new NarratorSpecification { Value = "Synthetic Narrator" }),
+                new("Unknown codec", new AudioCodecSpecification { Value = (int)AudioCodecKind.Unknown })
             });
         }
 

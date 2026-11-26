@@ -32,7 +32,7 @@ namespace NzbDrone.Core.Test.ImportListTests
 
             Mocker.GetMock<IFetchAndParseImportList>()
                 .Setup(v => v.Fetch())
-                .Returns(() => new List<ImportListFetchBatch> { new (new ImportListMembershipAttempt(0, 0, "fixture"), _importListReports) });
+                .Returns(() => new List<ImportListFetchBatch> { new(new ImportListMembershipAttempt(0, 0, "fixture"), _importListReports) });
 
             Mocker.GetMock<ISearchForNewBook>()
                 .Setup(v => v.SearchForNewBook(It.IsAny<string>(), It.IsAny<string>(), true))
@@ -64,7 +64,7 @@ namespace NzbDrone.Core.Test.ImportListTests
 
             Mocker.GetMock<IFetchAndParseImportList>()
                 .Setup(v => v.Fetch())
-                .Returns(() => new List<ImportListFetchBatch> { new (new ImportListMembershipAttempt(0, 0, "fixture"), _importListReports) });
+                .Returns(() => new List<ImportListFetchBatch> { new(new ImportListMembershipAttempt(0, 0, "fixture"), _importListReports) });
 
             Mocker.GetMock<IImportListExclusionService>()
                 .Setup(v => v.All())
@@ -343,9 +343,11 @@ namespace NzbDrone.Core.Test.ImportListTests
             Mocker.GetMock<IAddBookService>()
                 .Verify(v => v.AddBooks(It.Is<List<Book>>(t => t.Count == 2), false));
             Mocker.GetMock<IAddAuthorService>()
-                .Verify(v => v.AddAuthors(It.Is<List<Author>>(t => t.Count == 1 &&
-                                                                   t.First().AddOptions.BooksToMonitor.Count == expectedBooksMonitored &&
-                                                                   t.First().Monitored == expectedAuthorMonitored), false));
+                .Verify(v => v.AddAuthors(
+                    It.Is<List<Author>>(t => t.Count == 1 &&
+                                                                       t.First().AddOptions.BooksToMonitor.Count == expectedBooksMonitored &&
+                                                                       t.First().Monitored == expectedAuthorMonitored),
+                    false));
         }
 
         [Test]

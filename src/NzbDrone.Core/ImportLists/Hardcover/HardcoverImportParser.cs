@@ -82,7 +82,7 @@ namespace NzbDrone.Core.ImportLists.Hardcover
             return items;
         }
 
-        private ImportListException IncompleteResponse() => new (_importListResponse, "Hardcover did not return a complete list response.");
+        private ImportListException IncompleteResponse() => new(_importListResponse, "Hardcover did not return a complete list response.");
 
         private ImportListItemInfo ParseEntry(JToken entry)
         {

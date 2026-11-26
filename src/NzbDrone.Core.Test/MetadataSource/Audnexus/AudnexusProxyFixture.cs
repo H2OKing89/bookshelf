@@ -82,11 +82,13 @@ namespace NzbDrone.Core.Test.MetadataSource.Audnexus
             book.RuntimeLengthMin.Should().Be(970);
             book.Narrators.Should().ContainSingle(x => x.Name == "Ray Porter");
             book.ReleaseDate.Should().Be(new DateTime(2021, 5, 4, 0, 0, 0, DateTimeKind.Utc));
-            Mocker.GetMock<ICachedHttpResponseService>().Verify(x => x.Get(
-                It.Is<HttpRequest>(r => r.Url.FullUri == "https://audnexus.example/api/books/B08G9PRS1K?region=us" &&
-                    r.RequestTimeout == TimeSpan.FromSeconds(15) && !r.AllowAutoRedirect),
-                true,
-                TimeSpan.FromDays(1)), Times.Once());
+            Mocker.GetMock<ICachedHttpResponseService>().Verify(
+                x => x.Get(
+                    It.Is<HttpRequest>(r => r.Url.FullUri == "https://audnexus.example/api/books/B08G9PRS1K?region=us" &&
+                        r.RequestTimeout == TimeSpan.FromSeconds(15) && !r.AllowAutoRedirect),
+                    true,
+                    TimeSpan.FromDays(1)),
+                Times.Once());
         }
 
         [Test]
@@ -98,10 +100,12 @@ namespace NzbDrone.Core.Test.MetadataSource.Audnexus
 
             chapters.RuntimeLengthMs.Should().Be(2000);
             chapters.Chapters.Should().ContainSingle(chapter => chapter.Title == "Opening Credits");
-            Mocker.GetMock<ICachedHttpResponseService>().Verify(x => x.Get(
-                It.Is<HttpRequest>(request => request.Url.FullUri == "https://audnexus.example/api/books/B08G9PRS1K/chapters?region=us"),
-                true,
-                TimeSpan.FromDays(1)), Times.Once());
+            Mocker.GetMock<ICachedHttpResponseService>().Verify(
+                x => x.Get(
+                    It.Is<HttpRequest>(request => request.Url.FullUri == "https://audnexus.example/api/books/B08G9PRS1K/chapters?region=us"),
+                    true,
+                    TimeSpan.FromDays(1)),
+                Times.Once());
         }
 
         [TestCase("B000000000", "us")]

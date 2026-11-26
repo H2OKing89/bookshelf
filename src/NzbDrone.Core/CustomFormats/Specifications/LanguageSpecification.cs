@@ -24,7 +24,7 @@ namespace NzbDrone.Core.CustomFormats
     {
         public const int SelectedEdition = -2;
 
-        private static readonly LanguageSpecificationValidator Validator = new ();
+        private static readonly LanguageSpecificationValidator Validator = new();
 
         public override int Order => 3;
         public override string ImplementationName => "Language";

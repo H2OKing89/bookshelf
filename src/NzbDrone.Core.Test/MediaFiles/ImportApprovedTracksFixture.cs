@@ -571,7 +571,7 @@ namespace NzbDrone.Core.Test.MediaFiles
                 .Setup(x => x.UpgradeBookFile(It.IsAny<BookFile>(), second, false))
                 .Throws(new IOException("tag write failed"));
 
-            var results = Subject.Import(new List<ImportDecision<LocalBook>> { new (first), new (second) }, true);
+            var results = Subject.Import(new List<ImportDecision<LocalBook>> { new(first), new(second) }, true);
 
             results.Should().OnlyContain(result => result.Result != ImportResultType.Imported);
             results.Should().OnlyContain(result => result.ImportedFile == null);
@@ -596,7 +596,7 @@ namespace NzbDrone.Core.Test.MediaFiles
                 .Setup(x => x.UpgradeBookFile(It.IsAny<BookFile>(), alternative, false))
                 .Returns<BookFile, LocalBook, bool>((file, _, _) => new BookFileMoveResult { BookFile = file });
 
-            var results = Subject.Import(new List<ImportDecision<LocalBook>> { new (first), new (alternative) }, true);
+            var results = Subject.Import(new List<ImportDecision<LocalBook>> { new(first), new(alternative) }, true);
 
             results.Should().ContainSingle(result => result.Result == ImportResultType.Imported);
             Mocker.GetMock<IUpgradeMediaFiles>().Verify(x => x.CommitUpgrade(It.Is<List<BookFileMoveResult>>(items => items.Count == 1)), Times.Once());

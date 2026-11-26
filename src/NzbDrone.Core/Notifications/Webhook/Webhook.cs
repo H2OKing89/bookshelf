@@ -20,9 +20,9 @@ namespace NzbDrone.Core.Notifications.Webhook
 
         public override string Link => "https://wiki.servarr.com/readarr/settings#connections";
 
-        public override void OnGrab(GrabMessage message)
+        public override void OnGrab(GrabMessage grabMessage)
         {
-            _proxy.SendWebhook(BuildOnGrabPayload(message), Settings);
+            _proxy.SendWebhook(BuildOnGrabPayload(grabMessage), Settings);
         }
 
         public override void OnReleaseImport(BookDownloadMessage message)

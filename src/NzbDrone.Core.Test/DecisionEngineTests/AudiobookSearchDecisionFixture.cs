@@ -53,13 +53,15 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
                 .Returns(new List<CustomFormat>());
         }
 
-        private static Book Recording(string asin, string title, string position) => AudiobookMetadataMapper.Book(new AudnexusBookResource
-        {
-            Asin = asin, Region = "us", Title = title,
-            Authors = new List<AudnexusContributorResource> { new AudnexusContributorResource { Asin = "B000000099", Name = "Example Author" } },
-            Narrators = new List<AudnexusContributorResource> { new AudnexusContributorResource { Name = "Example Reader" } },
-            SeriesPrimary = new AudnexusSeriesResource { Name = "Example Series", Position = position }
-        }, "us");
+        private static Book Recording(string asin, string title, string position) => AudiobookMetadataMapper.Book(
+            new AudnexusBookResource
+            {
+                Asin = asin, Region = "us", Title = title,
+                Authors = new List<AudnexusContributorResource> { new AudnexusContributorResource { Asin = "B000000099", Name = "Example Author" } },
+                Narrators = new List<AudnexusContributorResource> { new AudnexusContributorResource { Name = "Example Reader" } },
+                SeriesPrimary = new AudnexusSeriesResource { Name = "Example Series", Position = position }
+            },
+            "us");
 
         [TestCase("Example Series - Recollections", "27", false)]
         [TestCase("Example Series, Vol. 1", "1", true)]

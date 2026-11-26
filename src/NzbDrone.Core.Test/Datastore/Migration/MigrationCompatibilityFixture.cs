@@ -346,8 +346,10 @@ namespace NzbDrone.Core.Test.Datastore.Migration
                 parameters.Add("p" + index, row[index].Value);
             }
 
-            connection.Execute("INSERT INTO \"" + table + "\" (" + string.Join(",", row.Select(pair => "\"" + pair.Key + "\"")) +
-                ") VALUES (" + string.Join(",", row.Select((pair, index) => "@p" + index)) + ")", parameters);
+            connection.Execute(
+                "INSERT INTO \"" + table + "\" (" + string.Join(",", row.Select(pair => "\"" + pair.Key + "\"")) +
+                    ") VALUES (" + string.Join(",", row.Select((pair, index) => "@p" + index)) + ")",
+                parameters);
         }
     }
 

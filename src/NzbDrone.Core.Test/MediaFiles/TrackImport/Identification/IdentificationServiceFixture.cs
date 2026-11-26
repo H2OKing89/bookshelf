@@ -40,7 +40,7 @@ namespace NzbDrone.Core.Test.MediaFiles.BookImport.Identification
             }
 
             public Author GetAuthorInfo(string id, bool useCache = true) => _proxy.GetAuthorInfo(id, useCache);
-            public HashSet<string> GetChangedAuthors(DateTime since) => _proxy.GetChangedAuthors(since);
+            public HashSet<string> GetChangedAuthors(DateTime startTime) => _proxy.GetChangedAuthors(startTime);
             public Tuple<string, Book, List<AuthorMetadata>> GetBookInfo(string id) => _proxy.GetBookInfo(id);
         }
 

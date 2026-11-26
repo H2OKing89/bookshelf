@@ -18,9 +18,7 @@ namespace NzbDrone.Core.Notifications
         {
             Author = author;
             DeletedFiles = deleteFiles;
-            DeletedFilesMessage = DeletedFiles ?
-                "Author removed and all files were deleted" :
-                "Author removed, files were not deleted";
+            DeletedFilesMessage = DeletedFiles ? "Author removed and all files were deleted" : "Author removed, files were not deleted";
             Message = author.Name + " - " + DeletedFilesMessage;
         }
     }

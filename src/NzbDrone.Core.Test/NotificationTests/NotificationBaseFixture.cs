@@ -69,22 +69,22 @@ namespace NzbDrone.Core.Test.NotificationTests
                 TestLogger.Info("OnAuthorAdded was called");
             }
 
-            public override void OnAuthorDelete(AuthorDeleteMessage message)
+            public override void OnAuthorDelete(AuthorDeleteMessage deleteMessage)
             {
                 TestLogger.Info("OnAuthorDelete was called");
             }
 
-            public override void OnBookDelete(BookDeleteMessage message)
+            public override void OnBookDelete(BookDeleteMessage deleteMessage)
             {
                 TestLogger.Info("OnBookDelete was called");
             }
 
-            public override void OnBookFileDelete(BookFileDeleteMessage message)
+            public override void OnBookFileDelete(BookFileDeleteMessage deleteMessage)
             {
                 TestLogger.Info("OnBookFileDelete was called");
             }
 
-            public override void OnHealthIssue(NzbDrone.Core.HealthCheck.HealthCheck author)
+            public override void OnHealthIssue(NzbDrone.Core.HealthCheck.HealthCheck healthCheck)
             {
                 TestLogger.Info("OnHealthIssue was called");
             }

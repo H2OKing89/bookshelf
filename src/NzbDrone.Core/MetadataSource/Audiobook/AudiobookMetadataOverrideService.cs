@@ -110,11 +110,13 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         public string CanonicalAuthorId(string id)
         {
             var parsed = AudiobookId.Parse(id);
-            var identity = FindAuthor(new AudnexusContributorResource
-            {
-                Asin = parsed.IsName ? null : parsed.Value,
-                Name = parsed.IsName ? parsed.Value : null
-            }, parsed.Region);
+            var identity = FindAuthor(
+                new AudnexusContributorResource
+                {
+                    Asin = parsed.IsName ? null : parsed.Value,
+                    Name = parsed.IsName ? parsed.Value : null
+                },
+                parsed.Region);
             return identity == null ? id : AudiobookId.ForAsin(parsed.Region, identity.Asin);
         }
 
@@ -167,8 +169,7 @@ namespace NzbDrone.Core.MetadataSource.Audiobook
         private static string NativeRecordingId(string id)
         {
             var parts = id?.Split(':');
-            return parts?.Length == 3 && parts[0] == "audible" && AudnexusProxy.Regions.Contains(parts[1]) && AudiobookId.IsAsin(parts[2])
-                ? id : null;
+            return parts?.Length == 3 && parts[0] == "audible" && AudnexusProxy.Regions.Contains(parts[1]) && AudiobookId.IsAsin(parts[2]) ? id : null;
         }
 
         public string DisplayTitle(Book book, string publishedTitle = null, Edition edition = null)

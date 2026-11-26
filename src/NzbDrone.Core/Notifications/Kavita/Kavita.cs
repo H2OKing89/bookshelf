@@ -35,9 +35,9 @@ public class Kavita : NotificationBase<KavitaSettings>
         Notify(Settings, BOOK_FILE_DELETED_TITLE_BRANDED, path);
     }
 
-    public override void OnBookFileDelete(BookFileDeleteMessage message)
+    public override void OnBookFileDelete(BookFileDeleteMessage deleteMessage)
     {
-        Notify(Settings, BOOK_FILE_DELETED_TITLE_BRANDED, Directory.GetParent(message.BookFile.Path)?.FullName);
+        Notify(Settings, BOOK_FILE_DELETED_TITLE_BRANDED, Directory.GetParent(deleteMessage.BookFile.Path)?.FullName);
     }
 
     public override void OnBookRetag(BookRetagMessage message)

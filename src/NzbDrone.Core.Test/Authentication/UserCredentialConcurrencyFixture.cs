@@ -218,8 +218,10 @@ namespace NzbDrone.Core.Test.Authentication
             _original.Salt.Should().BeNull();
             _original.Iterations.Should().Be(0);
             _credentialWrites.Should().Be(1);
-            _serviceRepository.Verify(repository => repository.TryUpdateCredentials(
-                It.IsAny<User>(), It.IsAny<User>(), true, true), Times.Once());
+            _serviceRepository.Verify(
+                repository => repository.TryUpdateCredentials(
+                    It.IsAny<User>(), It.IsAny<User>(), true, true),
+                Times.Once());
         }
 
         [Test]
@@ -252,8 +254,10 @@ namespace NzbDrone.Core.Test.Authentication
             stored.Identifier.Should().Be(_original.Identifier);
             AssertMetadata(stored, concurrentLogin);
             _credentialWrites.Should().Be(1);
-            _serviceRepository.Verify(repository => repository.TryUpdateCredentials(
-                It.IsAny<User>(), It.IsAny<User>(), true, false), Times.Once());
+            _serviceRepository.Verify(
+                repository => repository.TryUpdateCredentials(
+                    It.IsAny<User>(), It.IsAny<User>(), true, false),
+                Times.Once());
         }
 
         [Test]

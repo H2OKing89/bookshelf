@@ -48,14 +48,11 @@ namespace NzbDrone.Core.Datastore
             }
 
             // Keep legacy component selection and defaults when full strings are absent.
-            MainDbConnection = _configFileProvider.PostgresHost.IsNotNullOrWhiteSpace() ? GetPostgresConnectionString(_configFileProvider.PostgresMainDb) :
-                GetConnectionString(appFolderInfo.GetDatabase());
+            MainDbConnection = _configFileProvider.PostgresHost.IsNotNullOrWhiteSpace() ? GetPostgresConnectionString(_configFileProvider.PostgresMainDb) : GetConnectionString(appFolderInfo.GetDatabase());
 
-            LogDbConnection = _configFileProvider.PostgresHost.IsNotNullOrWhiteSpace() ? GetPostgresConnectionString(_configFileProvider.PostgresLogDb) :
-                GetConnectionString(appFolderInfo.GetLogDatabase());
+            LogDbConnection = _configFileProvider.PostgresHost.IsNotNullOrWhiteSpace() ? GetPostgresConnectionString(_configFileProvider.PostgresLogDb) : GetConnectionString(appFolderInfo.GetLogDatabase());
 
-            CacheDbConnection = _configFileProvider.PostgresHost.IsNotNullOrWhiteSpace() ? GetPostgresConnectionString(_configFileProvider.PostgresCacheDb) :
-                GetConnectionString(appFolderInfo.GetCacheDatabase());
+            CacheDbConnection = _configFileProvider.PostgresHost.IsNotNullOrWhiteSpace() ? GetPostgresConnectionString(_configFileProvider.PostgresCacheDb) : GetConnectionString(appFolderInfo.GetCacheDatabase());
         }
 
         public DatabaseConnectionInfo MainDbConnection { get; private set; }

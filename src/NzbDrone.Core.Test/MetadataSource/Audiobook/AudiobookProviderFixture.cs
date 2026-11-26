@@ -50,8 +50,10 @@ namespace NzbDrone.Core.Test.MetadataSource.Audiobook
             fromAudible.Genres.Should().NotBeEmpty().And.OnlyHaveUniqueItems();
             fromAudnexus.Genres.Should().NotBeEmpty();
             fromAudible.SeriesLinks.Value.Single().Position.Should().Be(fromAudnexus.SeriesLinks.Value.Single().Position);
-            Mocker.GetMock<IHttpClient>().Verify(c => c.Post(It.Is<HttpRequest>(r =>
-                System.Text.Encoding.UTF8.GetString(r.ContentData).Contains("category_ladders"))), Times.Once());
+            Mocker.GetMock<IHttpClient>().Verify(
+                c => c.Post(It.Is<HttpRequest>(r =>
+                    System.Text.Encoding.UTF8.GetString(r.ContentData).Contains("category_ladders"))),
+                Times.Once());
         }
 
         [Test]

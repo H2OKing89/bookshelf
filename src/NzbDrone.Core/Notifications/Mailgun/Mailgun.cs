@@ -25,9 +25,9 @@ namespace NzbDrone.Core.Notifications.Mailgun
             _proxy.SendNotification(BOOK_GRABBED_TITLE, grabMessage.Message, Settings);
         }
 
-        public override void OnReleaseImport(BookDownloadMessage downloadMessage)
+        public override void OnReleaseImport(BookDownloadMessage message)
         {
-            _proxy.SendNotification(BOOK_DOWNLOADED_TITLE, downloadMessage.Message, Settings);
+            _proxy.SendNotification(BOOK_DOWNLOADED_TITLE, message.Message, Settings);
         }
 
         public override void OnAuthorAdded(Author author)
@@ -50,9 +50,9 @@ namespace NzbDrone.Core.Notifications.Mailgun
             _proxy.SendNotification(BOOK_FILE_DELETED_TITLE, deleteMessage.Message, Settings);
         }
 
-        public override void OnHealthIssue(HealthCheck.HealthCheck healthCheckMessage)
+        public override void OnHealthIssue(HealthCheck.HealthCheck healthCheck)
         {
-            _proxy.SendNotification(HEALTH_ISSUE_TITLE, healthCheckMessage.Message, Settings);
+            _proxy.SendNotification(HEALTH_ISSUE_TITLE, healthCheck.Message, Settings);
         }
 
         public override void OnHealthRestored(HealthCheck.HealthCheck previousCheck)

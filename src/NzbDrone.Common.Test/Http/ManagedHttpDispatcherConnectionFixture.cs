@@ -131,15 +131,17 @@ namespace NzbDrone.Common.Test.Http
                 tunnelRequest.TrySetResult(await ReadRequest(stream, stop));
                 await Write(stream, "HTTP/1.1 200 Connection Established\r\n\r\n", stop);
                 await using var tls = new SslStream(stream, true);
-                await tls.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
-                {
-                    ServerCertificateSelectionCallback = (sender, host) =>
+                await tls.AuthenticateAsServerAsync(
+                    new SslServerAuthenticationOptions
                     {
-                        tlsHost.TrySetResult(host);
-                        return certificate;
+                        ServerCertificateSelectionCallback = (sender, host) =>
+                        {
+                            tlsHost.TrySetResult(host);
+                            return certificate;
+                        },
+                        EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13
                     },
-                    EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13
-                }, stop);
+                    stop);
                 await ServeHttp(tls, stop, request => request.Headers["Host"] + " " + request.Line);
             });
             var settings = new HttpProxySettings(ProxyType.Http, "127.0.0.1", proxy.Port, null, false);
@@ -163,11 +165,13 @@ namespace NzbDrone.Common.Test.Http
             await using var server = Server(IPAddress.Loopback, async (stream, stop) =>
             {
                 await using var tls = new SslStream(stream, true);
-                await tls.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
-                {
-                    ServerCertificate = certificate,
-                    EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13
-                }, stop);
+                await tls.AuthenticateAsServerAsync(
+                    new SslServerAuthenticationOptions
+                    {
+                        ServerCertificate = certificate,
+                        EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13
+                    },
+                    stop);
                 await ServeHttp(tls, stop, request => "tls");
             });
             SslPolicyErrors? observedErrors = null;
@@ -515,10 +519,10 @@ namespace NzbDrone.Common.Test.Http
                 }
             }
 
-            protected override SocketsHttpHandler CreateHttpHandler(HttpProxySettings settings)
+            protected override SocketsHttpHandler CreateHttpHandler(HttpProxySettings proxySettings)
             {
-                var handler = base.CreateHttpHandler(settings);
-                handler.UseProxy = settings != null;
+                var handler = base.CreateHttpHandler(proxySettings);
+                handler.UseProxy = proxySettings != null;
                 if (Lifetime.HasValue)
                 {
                     handler.PooledConnectionLifetime = Lifetime.Value;
@@ -528,9 +532,9 @@ namespace NzbDrone.Common.Test.Http
                 return handler;
             }
 
-            protected override System.Net.Http.HttpClient CreateHttpClient(HttpProxySettings settings)
+            protected override System.Net.Http.HttpClient CreateHttpClient(HttpProxySettings proxySettings)
             {
-                var client = base.CreateHttpClient(settings);
+                var client = base.CreateHttpClient(proxySettings);
                 Clients.Add(client);
                 return client;
             }

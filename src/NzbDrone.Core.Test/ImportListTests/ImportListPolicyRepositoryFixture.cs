@@ -276,7 +276,7 @@ namespace NzbDrone.Core.Test.ImportListTests
             return book;
         }
 
-        private static ImportListMembershipItem Entry(Book book) => new ()
+        private static ImportListMembershipItem Entry(Book book) => new()
         {
             SourceTitle = book.Title, SourceAuthor = "Owned author",
             SourceBookId = book.ForeignBookId, SourceEditionId = book.ForeignBookId, SourceAuthorId = "audible:us:B055555555",
@@ -310,6 +310,6 @@ namespace NzbDrone.Core.Test.ImportListTests
         }
 
         private static ImportListCleanupRequest Request(ImportListCleanupPreview preview) =>
-            new () { Mode = preview.Mode, TagId = preview.TagId, ConfirmationToken = preview.ConfirmationToken };
+            new() { Mode = preview.Mode, TagId = preview.TagId, ConfirmationToken = preview.ConfirmationToken };
     }
 }

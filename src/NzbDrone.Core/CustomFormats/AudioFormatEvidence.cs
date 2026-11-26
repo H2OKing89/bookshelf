@@ -218,8 +218,7 @@ namespace NzbDrone.Core.CustomFormats
                     return AudioCodecKind.HeAac;
                 }
 
-                return format == "AACLC" || profile is "LC" or "AACLC" || features == "LC" || codecId == "MP4A402"
-                    ? AudioCodecKind.AacLc : AudioCodecKind.Aac;
+                return format == "AACLC" || profile is "LC" or "AACLC" || features == "LC" || codecId == "MP4A402" ? AudioCodecKind.AacLc : AudioCodecKind.Aac;
             }
 
             var atmos = commercial.EndsWith("WITHDOLBYATMOS", StringComparison.Ordinal) || commercial == "DOLBYATMOS";

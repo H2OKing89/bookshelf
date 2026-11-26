@@ -11,8 +11,8 @@ namespace Readarr.Api.V1.Indexers
     [V1ApiController]
     public class IndexerController : ProviderControllerBase<IndexerResource, IndexerBulkResource, IIndexer, IndexerDefinition>
     {
-        public static readonly IndexerResourceMapper ResourceMapper = new ();
-        public static readonly IndexerBulkResourceMapper BulkResourceMapper = new ();
+        public static readonly IndexerResourceMapper ResourceMapper = new();
+        public static readonly IndexerBulkResourceMapper BulkResourceMapper = new();
 
         public IndexerController(IndexerFactory indexerFactory, DownloadClientExistsValidator downloadClientExistsValidator)
             : base(indexerFactory, "indexer", ResourceMapper, BulkResourceMapper)
@@ -29,19 +29,19 @@ namespace Readarr.Api.V1.Indexers
         [RestPutById]
         [Consumes("application/json")]
         [Produces("application/json")]
-        public override ActionResult<IndexerResource> UpdateProvider([FromBody] IndexerResource resource, [FromQuery] bool forceSave = false)
+        public override ActionResult<IndexerResource> UpdateProvider([FromBody] IndexerResource providerResource, [FromQuery] bool forceSave = false)
         {
             // Preserve the newly added choices for older v1 clients that omit them.
             // An explicit Review (zero) is not omission.
-            if (!resource.DangerousFileAction.HasValue || !resource.ExecutableFileAction.HasValue || !resource.UserRejectedExtensionAction.HasValue)
+            if (!providerResource.DangerousFileAction.HasValue || !providerResource.ExecutableFileAction.HasValue || !providerResource.UserRejectedExtensionAction.HasValue)
             {
-                var saved = GetResourceById(resource.Id);
-                resource.DangerousFileAction ??= saved.DangerousFileAction;
-                resource.ExecutableFileAction ??= saved.ExecutableFileAction;
-                resource.UserRejectedExtensionAction ??= saved.UserRejectedExtensionAction;
+                var saved = GetResourceById(providerResource.Id);
+                providerResource.DangerousFileAction ??= saved.DangerousFileAction;
+                providerResource.ExecutableFileAction ??= saved.ExecutableFileAction;
+                providerResource.UserRejectedExtensionAction ??= saved.UserRejectedExtensionAction;
             }
 
-            return base.UpdateProvider(resource, forceSave);
+            return base.UpdateProvider(providerResource, forceSave);
         }
     }
 }

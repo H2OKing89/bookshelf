@@ -426,8 +426,7 @@ namespace NzbDrone.Core.Download
                 }
 
                 count = count == 0 ? parts.Count : count;
-                if (count > 10000 || count != parts.Count || (count == 1 && parts[0] == 0 ? false :
-                    !parts.OrderBy(part => part).SequenceEqual(Enumerable.Range(1, count))))
+                if (count > 10000 || count != parts.Count || (count == 1 && parts[0] == 0 ? false : !parts.OrderBy(part => part).SequenceEqual(Enumerable.Range(1, count))))
                 {
                     return false;
                 }
