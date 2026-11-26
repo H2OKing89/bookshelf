@@ -1002,6 +1002,33 @@ hosted checks. See [validation evidence](dependencies/2026-11-25-test-acquisitio
 **In progress** for cross-client v2-only tracking, remaining coupled managed
 major/runtime migrations, native ARM64 execution and release/CI gates.
 
+**2026-11-25 full content identity and managed dependency follow-up:** preserve
+the full v1 and v2 hashes independently of a download client's native handle.
+On an isolated real qBittorrent 5.2.4 (Web API 2.15.1), hybrid and v2-only
+torrents report a 40-character native handle derived from the v2 hash.
+Bookshelf confirms that handle using the complete client-reported hashes,
+retains full identity in history and blocklist matching, and refuses to
+infer acceptance from a truncated prefix. V2-only file and magnet submission,
+inventory and removal preserving source files pass 25 real-client assertions;
+other adapters without verified full-hash tracking still reject v2-only
+before submission. Older qBittorrent uses its existing v1/hybrid behavior.
+The real-client probe also uncovered and fixed the required explicit
+`deleteFiles=false` removal parameter. This does not establish v2-only
+support for every client, or retroactively provide the v2 alias for
+historical hybrid blocklist entries that stored only v1.
+
+Swashbuckle 11.0.1 and Microsoft.OpenApi 3.11.1 are adopted; both existing
+OpenAPI 3.0 reference documents remain semantically identical in the actual
+hosted endpoints. Magick.NET 15.1.1 passes 68 image/media-cover cases and
+the exact native asset and notice checks. StyleCop 1.3.180 remains staged:
+its trial exposes broad analyzer/naming changes. DryIoc 6 and the .NET/DI
+11-coupled adapters and Npgsql lines remain staged; no incompatible graph
+is forced. Exact clean source `0f7a8ac45` passes 6,265 managed/owned
+compatibility tests and 2,467 hosted checks. See
+[validation evidence](dependencies/2026-11-25-v2-identity/summary.json).
+P09 remains **In progress** for the remaining adapters and coupled
+managed/runtime, ARM64 native execution and CI/release gates.
+
 ### P10
 
 **Carry cancellation through the HTTP client stack**
@@ -3074,6 +3101,22 @@ creator modules remain. Both TS projects, ESLint, Stylelint, Vite verification
 and 237 frontend tests pass. Remaining dynamic AutoComplete/EnhancedSelect,
 generic tag rendering and other legacy action/reducer/UI families are staged.
 U07 remains **In progress**. See [exact results](dependencies/2026-11-25-test-acquisition/summary.json).
+
+**2026-11-25 shared controls, custom formats, and detail follow-up:** all
+remaining JavaScript shared form controls are migrated, including the generic
+AutoComplete/AutoSuggest, EnhancedSelect, tag input stack, provider and
+book-edition selectors, and explicit typed dynamic form branches. Custom
+format editors, specifications and Redux actions, import/export, provider
+cards and their list connectors are typed; malformed imports preserve the
+edited draft, explicit zero/false/null values survive valid round trips, and
+draft copies remain independent. Five author-series and book recording
+detail components/connectors add typed missing-metadata, file grouping and
+tag handling. Ordinary JS/TS/strict counts are now **591/547/518** (previous
+642/491/462); there are no JavaScript modules under Components/Form. Both TS
+projects, ESLint, Stylelint, Vite verification and 250 frontend tests passed.
+U07 stays **In progress** for the remaining legacy author/book detail,
+settings/modal/table and store action/reducer families (44 JS actions).
+See [exact results](dependencies/2026-11-25-v2-identity/summary.json).
 
 ### U08
 

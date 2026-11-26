@@ -1,0 +1,58 @@
+{
+  "sourceCommit": "0f7a8ac455a6543cad97570613d18d544765a02b",
+  "checks": {
+    "actual_api_2_15_1": true,
+    "network_discovery_disabled": true,
+    "v1_full_content_hash": true,
+    "v1_native_handle": true,
+    "v1_queue_full_hashes": true,
+    "v1_stopped": true,
+    "v1_file_inventory": true,
+    "v1_removed_by_native_handle": true,
+    "v1_payload_preserved": true,
+    "hybrid_full_content_hash": true,
+    "hybrid_native_handle": true,
+    "hybrid_queue_full_hashes": true,
+    "hybrid_stopped": true,
+    "hybrid_file_inventory": true,
+    "hybrid_removed_by_native_handle": true,
+    "hybrid_payload_preserved": true,
+    "v2_full_content_hash": true,
+    "v2_native_handle": true,
+    "v2_queue_full_hashes": true,
+    "v2_stopped": true,
+    "v2_file_inventory": true,
+    "v2_removed_by_native_handle": true,
+    "v2_payload_preserved": true,
+    "v2_magnet_full_hash_and_handle": true,
+    "v2_magnet_removed_by_native_handle": true
+  },
+  "results": [
+    {
+      "mode": "v1",
+      "actual": "24B14ECC1E6F7B585FFC8EA9EB9FEDA4797640D2",
+      "content": "24B14ECC1E6F7B585FFC8EA9EB9FEDA4797640D2",
+      "v1": "24B14ECC1E6F7B585FFC8EA9EB9FEDA4797640D2",
+      "v2": null
+    },
+    {
+      "mode": "hybrid",
+      "actual": "15BB0BE61FF191A022149191C6802CF06E67D0CC",
+      "content": "D2924D9D83E29D3397D4EEAAE73B1FBF41CA05C8",
+      "v1": "D2924D9D83E29D3397D4EEAAE73B1FBF41CA05C8",
+      "v2": "15BB0BE61FF191A022149191C6802CF06E67D0CC211E9D4203D10FD41C0885AB"
+    },
+    {
+      "mode": "v2",
+      "actual": "FA13EAB08591BA88D86B537830587D9460D9C0EF",
+      "content": "FA13EAB08591BA88D86B537830587D9460D9C0EF7C752CDCA5BFBA9414A1F7AB",
+      "v1": null,
+      "v2": "FA13EAB08591BA88D86B537830587D9460D9C0EF7C752CDCA5BFBA9414A1F7AB"
+    }
+  ],
+  "passed": 25,
+  "failed": 0,
+  "ownedPayloadHashesPreserved": true,
+  "expectedSourceCommit": "0f7a8ac455a6543cad97570613d18d544765a02b",
+  "ownedLoopbackOnly": true
+}

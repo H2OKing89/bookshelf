@@ -2224,3 +2224,42 @@ is reported separately in aggregate ([audit summary](dependencies/2026-11-25-tes
 its provider and database queries were read-only and no user-library identities,
 records or files changed. The existing dev service/authentication and production
 were not redeployed or altered; unmapped-file investigation was skipped.
+
+### Final development update — 2026-11-25 (full v2 identity and U07)
+
+Exact clean functional source `0f7a8ac455a6543cad97570613d18d544765a02b`
+passed 6,265 managed and owned compatibility cases, including 66 restore
+fixture cases, 16 qBittorrent proxy cases, 18 torrent identity/acquisition
+cases, 68 image/media-cover cases and nine PostgreSQL author-promotion
+cases. The 100 pre-existing selected skips remain. Frontend: both TypeScript
+projects, ESLint, Stylelint, Vite build verification and 250 unit tests
+passed, plus 174 tooling tests. All 2,467 hosted checks across the same
+15 isolated receipt groups passed, including both SQLite implementations
+in the baseline comparison, Docker musl x64, and static ARM64 package
+checks (native ARM64 execution is not verified).
+
+The real, isolated qBittorrent adapter additionally passed 25 assertions
+with synthetic stopped torrents and loopback traffic only; complete v1/v2
+identity and native handles were verified independently, and removing
+items preserved the payload hashes. The initial full hosted check exposed
+a config-only restore race; three deterministic regression cases fail
+against the old code and pass with synchronized config writes. The final
+hosted restore passes all 39 cases and an independent repeat; eight more
+config-only uploads immediately following disposable restarts preserve
+the API key and do not stage a DB.
+
+The exact native Linux x64 package was then deployed **only** to the
+local development service, version 10.0.0.38114. A private offline home and
+old-runtime backup was retained. Database schema 169 and integrity,
+resource/author/edition identities, configuration, credentials, history,
+recording mappings and file size/mtime all match the pre-swap snapshot.
+The verified newly refreshed recording remains monitored; 73 live API
+and 10 desktop/phone login-page checks passed. The full authenticated UI
+regression is on isolated synthetic homes, not the user's live library.
+The same three prior configured indexer/download-client health diagnostic
+categories reappeared after startup. Production, existing audiobook
+payloads, and GitHub workflows were untouched. No unmapped-file audit was
+performed. See [combined receipt](dependencies/2026-11-25-v2-identity/summary.json),
+[managed source tests](dependencies/2026-11-25-v2-identity/managed-source-tests.json),
+[hosted evidence](dependencies/2026-11-25-v2-identity/hosted-validation.json),
+and [owned qBittorrent verification](dependencies/2026-11-25-v2-identity/owned-qbittorrent.json).

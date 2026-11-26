@@ -1568,3 +1568,37 @@ The roadmap remains **83 of 92 Verified**, eight In progress and one Deferred.
 U07/P09, coupled runtime/native changes and release/CI gates remain open; P17
 remains deferred. No live development deployment, production changes, release
 publication or GitHub workflow invocation was part of this batch.
+
+### Full torrent identity, typed shared controls and deployment — 2026-11-25
+
+U07 removes 51 more legacy JS modules; JS 642 → 591, TS/TSX 491 → 547,
+and strict modules 462 → 518. All shared form controls are typed, the
+custom-format and provider management workflows advance, and the bounded
+author/book detail slice preserves file grouping, missing metadata and zero
+values. P09 adopts Swashbuckle 11.0.1/OpenAPI 3.11.1 while retaining both
+published API documents, and Magick.NET 15.1.1 with exact native assets.
+qBittorrent 5.2.4 can now track v2-only and hybrid releases by complete
+content identity and a separate native handle. An actual owned-client
+probe passes v1/hybrid/v2 file and magnet checks and safe removal; unverified
+v2-only adapters remain guarded. A separate intermittent config-only restore
+race found during integrated validation is fixed by serializing config
+mutations and restore publication/rollback, with deterministic negative
+controls against the old code.
+
+The final functional source `0f7a8ac45` passes 6,265 managed/owned
+compatibility cases (100 existing skips), 250 frontend units, 174 tooling
+tests and 2,467 hosted checks. Locked NuGet and Yarn advisory audits have zero
+reported findings; the three Linux packages contain all 29 exact managed
+notices. The local development server was backed up and updated to
+10.0.0.38114; 73 authenticated/read-only API and ten desktop/phone login-page
+checks passed. One verified author refresh adds one monitored recording;
+two other author-identity pairs remain separate because their paths and/or
+settings need review. All original library IDs, settings, credentials,
+history, recording mappings and media file statistics are preserved. The
+unmapped audit remains skipped; only aggregate author review evidence is
+committed. Production was not touched. See [exact validation summary](dependencies/2026-11-25-v2-identity/summary.json).
+
+The roadmap remains **83 of 92 Verified**, eight In progress and one Deferred.
+U07/P09, the remaining download-client adapters, StyleCop/coupled major
+updates, native ARM64 execution and CI/release gates remain open; P17 remains
+deferred.

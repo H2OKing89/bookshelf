@@ -1,0 +1,113 @@
+{
+  "sourceProvenance": {
+    "productId": "bookshelf-audiobooks",
+    "sourceCommit": "0f7a8ac455a6543cad97570613d18d544765a02b",
+    "sourceTree": "b8785fd8ed88b4ed48d0800d3670abbac1559631",
+    "sourceBranch": "fix/sonarr-v5-foundation",
+    "buildDirty": false
+  },
+  "frontendSourceModules": {
+    "before": {
+      "javascript": 642,
+      "typescript": 491,
+      "strict": 462
+    },
+    "after": {
+      "javascript": 591,
+      "typescript": 547,
+      "strict": 518
+    }
+  },
+  "remainingJsSharedFormModules": 0,
+  "remainingJsActionModules": 44,
+  "selectedManagedDependencies": {
+    "Microsoft.OpenApi": "3.11.1",
+    "Magick.NET-Q8-AnyCPU": "15.1.1",
+    "Magick.NET.Core": "15.1.1",
+    "Swashbuckle.AspNetCore.Annotations": "11.0.1",
+    "Swashbuckle.AspNetCore.SwaggerGen": "11.0.1"
+  },
+  "existingOpenApiDocumentsPreserved": true,
+  "torrentTracking": {
+    "v1": true,
+    "hybridFullIdentity": true,
+    "v2Only": true,
+    "verifiedClient": "qBittorrent 5.2.4 / Web API 2.15.1",
+    "unverifiedV2OnlyClientsRejectedBeforeAdd": true,
+    "realOwnedChecksPassed": 25,
+    "payloadsPreserved": true
+  },
+  "backupRestoreConcurrencyFixed": true,
+  "authorCleanup": {
+    "verifiedAuthorRefreshes": 1,
+    "newRecordingCount": 1,
+    "originalResourceIdsPreserved": true,
+    "recordingMappingsAndMediaStatsPreserved": true,
+    "unmappedAuditSkipped": true,
+    "reviewedDuplicateAuthorPairsNotMerged": 2
+  },
+  "managedTestsPassed": 6265,
+  "managedTestsNotExecuted": 100,
+  "frontendUnitPassed": 250,
+  "toolingTestsPassed": 174,
+  "hostedChecksPassed": 2467,
+  "completedHostedReceipts": 15,
+  "frontendAudit": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "dependencies": 1242,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 1242
+  },
+  "nugetAuditedProjects": 25,
+  "nugetReportedVulnerablePackages": 0,
+  "packageNotices": {
+    "linux-x64": {
+      "noticeFilesVerified": 29,
+      "manifestMatchesSource": true
+    },
+    "linux-musl-x64": {
+      "noticeFilesVerified": 29,
+      "manifestMatchesSource": true
+    },
+    "linux-musl-arm64": {
+      "noticeFilesVerified": 29,
+      "manifestMatchesSource": true
+    }
+  },
+  "developmentUpdated": true,
+  "developmentLibraryCounts": {
+    "Authors": 308,
+    "Books": 4639,
+    "Editions": 4639,
+    "BookFiles": 2305,
+    "RootFolders": 1,
+    "Users": 1
+  },
+  "developmentLiveApiChecksPassed": 73,
+  "developmentLiveBrowserChecksPassed": 10,
+  "developmentIdentityAndFilesPreserved": true,
+  "productionTouched": false,
+  "nativeArm64ExecutionVerified": false,
+  "githubWorkflowsUsed": false,
+  "remaining": [
+    "remaining legacy JS including author/book detail and store actions",
+    "v2-only clients beyond verified qBittorrent",
+    "StyleCop and coupled managed major/runtime updates",
+    "native ARM64 execution and CI/release acceptance",
+    "P17 deferred"
+  ],
+  "developmentHealthDiagnosticCategoriesUnchanged": true,
+  "restoreVerification": {
+    "newDeterministicCasesPassed": 3,
+    "sameCasesFailedAgainstPreviousImplementation": 3,
+    "independentHostedRestorePassed": 39,
+    "configOnlyRestartsPassed": 8
+  }
+}

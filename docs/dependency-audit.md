@@ -871,3 +871,40 @@ audits. See the [summary](dependencies/2026-11-25-test-acquisition/summary.json)
 and [managed notice evidence](dependencies/2026-11-25-test-acquisition/managed-notices.json). P09 remains **In
 progress** for the remaining coupled runtime/managed major lines, v2-only
 client tracking, native ARM64 execution, release and CI acceptance.
+
+### Full v2 identity and OpenAPI/native codec follow-up — 2026-11-25
+
+[Swashbuckle 11.0.1](https://www.nuget.org/packages/Swashbuckle.AspNetCore.SwaggerGen/11.0.1)
+and [Microsoft.OpenApi 3.11.1](https://www.nuget.org/packages/Microsoft.OpenApi/3.11.1)
+replace the previous OpenAPI object model. The narrow legacy 3.0
+serialization adapter preserves the unrestricted nullable Field.value
+shape and suppresses the newly synthesized top-level tag registry.
+Both actual hosted v1/v2 documents are unchanged after normalization of
+their listener URL, including security alternatives and endpoint schemas.
+[Magick.NET-Q8-AnyCPU 15.1.1](https://www.nuget.org/packages/Magick.NET-Q8-AnyCPU/15.1.1)
+and its matching core/native ImageMagick codec patch pass 68 image and
+media-cover tests. The original package hashes, 29 notices, and native
+library bytes match each of the three delivered Linux packages.
+
+MonoTorrent 3.0.2 now preserves both complete hashes. A real owned
+qBittorrent 5.2.4/Web API 2.15.1 confirms that the hybrid/v2-only native
+handle can be shortened even though the client exposes the whole SHA-256
+identity. The confirmed handle is used for client operations; the full
+content hash is used in history and blocklists. Ambiguous response
+reconciliation requires full reported evidence, never a truncated prefix.
+The isolated actual-adapter run includes magnet and file adds, inventory
+and removal with unchanged synthetic payloads (25/25). V2-only tracking
+for other adapters remains staged. The explicit file-retention parameter
+required by modern qBittorrent was corrected as part of this exercise.
+
+StyleCop 1.3.180 is not adopted: its trial exposes substantive analyzer and
+domain naming changes beyond this batch. DryIoc 6 generates compile-time
+DI example/source artifacts and requires compatibility work even with the
+existing adapter; the newer adapter and Npgsql 11 are coupled to .NET/DI
+11. No mixed-major graph, generated-source suppression, or license-sensitive
+ImageSharp change is forced. Locked solution and Windows GUI restores,
+25-project NuGet audit, 1,242-entry Yarn audit, and 122-component inventory
+are recorded in [the exact final receipt](dependencies/2026-11-25-v2-identity/summary.json).
+Both audits report zero known advisory findings; they are snapshots rather
+than exhaustive security or native-runtime assurance. P09 remains in
+progress.
